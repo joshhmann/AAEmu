@@ -1,3 +1,8 @@
+# ArcheAge Slums — Feature Completeness Scorecard (enriched)
+
+Layers: (1) canonical 1.2 data surface (679 sqlite tables), (2) code wiring,
+(3) upstream issue tracker (AAEmu/AAEmu open issues, 2026-08-03).
+
 # ArcheAge 1.2 Feature Completeness Scorecard
 
 Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 managers).
@@ -66,3 +71,34 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
 - **models** (3 tables): model_attach_point_strings, model_bindings, model_quest_cameras
 - **moulds** (3 tables): mould_pack_items, mould_packs, moulds
 - **world** (3 tables): world_groups, world_spec_configs, world_var_defaults
+
+## Upstream issue tracker — known gaps
+
+- 67 open issues: 50 bug · 30 quest · 9 missing-data · 4 enhancement · 3 skill
+
+### Quests reported broken (playtest targets, by ID)
+
+1208, 1255, 1256, 1257, 1258, 1259, 1260, 1261, 1262, 1263, 1264, 1265, 1266, 1267, 1268, 1269, 1270, 1271, 1272, 1274, 1275, 1276, 1277, 1278, 1279, 1280, 1281, 1282, 1329, 1450
+
+### System-level bugs (non-quest)
+
+- #696 [skill] [BUG] Tree thinning of old trees doesn't work as intended
+- #920 [bug] [BUG] Ezna misses a lot of things
+- #949 [bug] [BUG]  Pack that disappeared
+- #972 [bug] [BUG] Red farm hauler
+- #973 [bug] [BUG] Letter box
+- #974 [bug] [BUG] Letter box  Shipping problem
+- #978 [skill] [BUG] [Skill] (24353) Fortuna Die does not function correctly
+- #985 [question] [BUG] Save character database
+- #1011 [bug] [BUG] Harani main quest 3509 invisible quest npc
+- #1033 [missing functionality] [BUG] Issue with NavMesh on the main_world, NPCs and monsters not being on the correct "height"
+- #1046 [question] [BUG] with item
+- #1047 [bug] [BUG] Quest NPC Nubo spawned inside mountain
+- #1091 [bug] [BUG] <with farm hauler>
+- #1152 [feedback to address] [BUG]  Treasure map
+- #1168 [missing functionality] [BUG]  the packs in the merchant ship disappear
+- #1170 [bug] [BUG]  Sometimes a player character looses its model and items (It happens randomly)
+- #1175 [bug] [BUG] Return to email sender
+- #1323 [bug] [BUG] PvP Arena scoring not working
+- #1425 [bug] [BUG] NPCs and monsters floating above ground on develop
+- #1491 [bug] [BUG] ActiveRegionTick is subscribed synchronously and starves the 100 ms AI tick
