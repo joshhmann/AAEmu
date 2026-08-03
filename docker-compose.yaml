@@ -55,7 +55,7 @@ services:
             DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 1
             GameServers__0__ID: 1
             GameServers__0__Name: AAEmu.Game
-            GameServers__0__Host: 192.168.0.165
+            GameServers__0__Host: archeage.asslorde.com
             GameServers__0__Port: 1239
         ports:
             - 1237:1237
