@@ -14,7 +14,7 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-002 | compact.sqlite3 schema too old for develop (missing item_socket_chances) | FIXED |
 | BUG-003 | Missing game data files (compact.sqlite3 + game_pak) | RESOLVED |
 | BUG-004 | Login advertises game server as 127.0.0.1 (LAN unreachable) | FIXED |
-| BUG-005 | game_pak (2023) vs compact.sqlite3 (2026) version drift | OPEN |
+| BUG-005 | game_pak (2023) vs compact.sqlite3 (2026) version drift | RETIRED (md5 identical) |
 
 ## Environment notes
 - Login (client-facing): 1237 | Game: 1239, 1250 | adminer: 8080 | mysql: 3306

@@ -1,6 +1,6 @@
 # BUG-005 — game_pak (2023) vs compact.sqlite3 (2026) version drift
 
-- **Status:** OPEN / watch item
+- **Status:** RETIRED (2026-08-02) — server pak md5 7f77c6a8f4d116ff0f49dd558c2b1323 verified byte-identical to official r208022 client pak
 - **Severity:** Low now, content-parity risk later
 - **Component:** Client data vs server data versions
 
