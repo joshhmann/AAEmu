@@ -102,3 +102,15 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
 - #1323 [bug] [BUG] PvP Arena scoring not working
 - #1425 [bug] [BUG] NPCs and monsters floating above ground on develop
 - #1491 [bug] [BUG] ActiveRegionTick is subscribed synchronously and starves the 100 ms AI tick
+
+## Canonical resources — how 1.2 mechanics actually worked
+
+| Resource | Use | URL |
+|----------|-----|-----|
+| ArcheAge Fandom Wiki | feature/mechanic reference (trade packs, labor, housing) | https://archeage.fandom.com/wiki/ArcheAge_Wiki |
+| Ten Ton Hammer 1.2-era guides | trade pack economy, shipbuilding (2014 era = 1.2) | https://www.tentonhammer.com/guides/archeage-trade-pack-guide |
+| AAEmu wiki (in-repo) | project's own component/architecture docs | Docs/wiki/ |
+| AAEmu GitHub issues | known-broken list (50 bug / 30 quest / 9 data) | https://github.com/AAEmu/AAEmu/issues |
+| compact.sqlite3 | the canonical 1.2 data surface (679 tables) | server: .server_files/AAEmu.Game/Data/ |
+| game_pak (r208022) | client-side assets the server references | server: .server_files/AAEmu.Game/ClientData/ |
+| ArcheAge Classic / ArcheRage | private-server behavior reference (what "working" looks like) | https://aa-classic.com |
