@@ -206,14 +206,40 @@ command correctly) pass independent of any controller.
 
 ## M6 — Deterministic playerbot framework
 
-- **6.0 PlayerBot embodiment decision (checkpoint at end of M5 / start of M6):**
-  Determine and document whether PlayerBot wraps a normal Character,
-  subclasses/extends an existing player entity, or uses another additive
-  composition model. **Preference: a playerbot owns or inhabits an ORDINARY
-  character record wherever technically feasible** — real inventory,
-  equipment, skills, quests, mounts, property ownership, mail, economy
-  participation. A separate bot persistence model risks becoming a parallel
-  game implementation; keep any runtime wrapper additive and thin.
+- **6.0 PlayerBot embodiment decision — LOCKED (AzerothCore Playerbots pattern,
+  2026-08-03):** Persistent bots use ORDINARY AAEmu login accounts and
+  ordinary character records. Gameplay state lives in normal character,
+  inventory, quest, mount, mail, housing and economy systems. At runtime,
+  BotManager activates the character through a **trusted internal headless
+  game session** — bots do NOT emulate the external client login handshake
+  and no real game client process is involved.
+
+  ```
+  ManagedBotAccount (account_type=HeadlessBot)
+      └── ordinary Character (real account ownership, real character row)
+              ↓
+        HeadlessGameSession (internal, trusted)
+              ↓
+        normal Character loading pipeline
+              ↓
+        PlayerBotController (additive, temporary)
+  ```
+
+  **Account model:** one managed bot account per bot character initially
+  (`bot_managed_000001`…); strong random credentials; accounts flagged
+  HeadlessBot and BLOCKED from public client login. (PlayerAltBot — humans
+  activating their own alts as companions — is a later category, once
+  permissions/abuse are understood.)
+
+  **Core policy:** reuse standard character loading + gameplay services.
+  Permit ONLY narrowly scoped lifecycle hooks (internal character loading,
+  headless session create/cleanup, world registration, distinguishing
+  connected humans from headless actors) — no broad core rewrites, no
+  parallel player persistence model, no direct gameplay-state DB writes.
+
+  **Bot-specific persistence is limited to metadata with no normal
+  character equivalent:** personality profile, schedule, profession, home
+  assignment, behavior config, last planner state.
 - **6.1 Core:** BotManager, PlayerBot entity, tick registration, spawn/
   despawn, persistent identity/inventory/position, controlled logout,
   per-bot diagnostics, tick budget accounting
@@ -270,6 +296,97 @@ Sequenced carefully — tasks BEFORE talk.
 **Exit test:** a village with 2 farmers, 1 crafter, 2 haulers, 3 adventurers
 + human-owned homes/farms operates a full day across multiple restarts with
 an auditable economy.
+
+---
+
+## Module architecture (AzerothCore-inspired, additive capability layers)
+
+Playerbots is the SUBSTRATE; modules are specialized layers around it.
+Inspired by: mod-ah-bot-plus · mod-llm-chatter · mod-player-bot-level-brackets
+· mod-dungeon-clear · mod-llm-guide. Copy the ARCHITECTURAL ROLES, not the
+code. Modules split into two categories:
+
+**Embodied modules** (control real bot characters — MUST use the M5 Gameplay
+Actor Contract): adventuring, farming, hauling, dungeon clearing, party
+behavior, homesteading.
+
+**Ambient services** (affect the world but are NOT embodied players — must
+not masquerade as bot behavior): market liquidity, population direction,
+LLM bridge, guide, test coordinator.
+
+Proposed module set (each declares: required observations, required actions,
+emitted events, persisted metadata, commands/config, performance budget,
+failure modes):
+
+| Module | Role | Inspiration |
+|--------|------|-------------|
+| AAEmu.Bot.Core | runtime controller, headless sessions | Playerbots core |
+| AAEmu.Bot.Population | Population Director — level/faction/zone/profession distribution, human-presence weighting, schedules | mod-player-bot-level-brackets |
+| AAEmu.Bot.Adventure | quest route, combat, loot, death recovery | mod-dungeon-clear pattern |
+| AAEmu.Bot.Party | group/assist/roles/rally | — |
+| AAEmu.Bot.Homestead | farm cycle, harvest, replant | — |
+| AAEmu.Bot.Trade | pack craft, vehicle load, route, sell | — |
+| AAEmu.Bot.Dungeon | group dungeon clear with scenario harness | mod-dungeon-clear |
+| AAEmu.Economy.MarketMaker | TWO MODES: bootstrap (capped synthetic supply, labeled internal) → living economy (bots list real produced goods; service only fills gaps) | mod-ah-bot-plus |
+| AAEmu.Social.Chatter | async LLM bridge — game writes events to queue, NEVER blocks on Ollama; personality/memory/cooldowns | mod-llm-chatter |
+| AAEmu.Guide | grounded Q&A — live server data only, NEVER model memory for mechanics | mod-llm-guide |
+| AAEmu.Bot.TestHarness | deterministic seeded scenario runs (seed, replay, JSONL results) | mod-dungeon-clear harness |
+
+**Test harness pattern (copy wholesale):** `.bot test start golden-path
+seed=1234` → run → `{run_id, seed, activity, result, failure, stage,
+elapsed_seconds}` → replay failed runs. Fits the actor-vs-playerbot
+failure taxonomy exactly.
+
+**LLM boundary (locked):** Chatter explains/embellishes — never controls
+movement, combat or economy. Guide answers facts — live data only.
+Server NEVER waits on an LLM; events queue in, responses queue out.
+
+**Development loop (Hermes as prototype lab):** prototype behaviors in
+Hermes → observe failures/edge cases → distill into deterministic game
+logic → deploy to thousands of bots. Hermes is the research environment,
+not the per-bot runtime.
+
+---
+
+## M8.5 — Social services & grounded guide (post-village, pre-activities)
+
+- **8.5a Lightweight social (pre-LLM):** greetings, task acks, status
+  messages, contextual canned dialogue, party callouts, trade-route warnings
+- **8.5b External LLM bridge (async):** personality + memory + ambient
+  chatter via queue — homelab bridge (gestalt/openclaw), never blocking
+- **8.5c Grounded guide:** `.guide` commands querying live character state,
+  quest/recipe/NPC/housing tables, server-known-issue awareness
+
+---
+
+## M9.5 — Emergent world systems (the "world simulator" layer)
+
+ArcheAge was memorable because SYSTEMS COLLIDED — emergent stories, not
+scripted quests. These make the world generate stories whether players are
+online or not. Each is event-propagation driven; LLM only decides how to
+TELL the story, never what happens.
+
+- **Illegal tree farms:** bots follow incentives (need lumber → public farms
+  crowded → remote mountain → plant → leave; other bots spot + harvest +
+  sell; owner marks area unsafe, relocates). Emerges from incentive rules,
+  NOT scripted "bot steals farm" behavior.
+- **Trade pack economy:** market price changes → pack value shifts → farmers
+  grow materials → crafters produce → haulers schedule → escorts join →
+  scouts spot pirates → route changes. An economy, not a loop.
+- **Crime & justice system:** steal → witnesses report → crime points →
+  guards pursue → escape/capture → TRIAL → sentence → prison labor →
+  release → behavior changes. Bots carry lawfulness/risk-tolerance/faction-
+  loyalty/greed/mercy traits — juries become recognizable individuals
+  ("don't get arrested while Farmer Edwin is on the jury").
+- **Pirates & convoys:** merchant guild schedules convoy → scouts route →
+  pirates notice → ambush → escort responds → guards react. Not every
+  convoy attacked; not every pirate wins.
+- **Rumors (event propagation, no perfect information):** "heard someone
+  stole cedar north of Lilyut" → merchants adjust → guards patrol more →
+  players hear it from a trader passing through. LLM only narrates.
+- **Politics & village identity:** village A (4 farmers/2 traders/1 smith)
+  produces excess lumber → trades with village B (ore) → guilds form →
+  taxes matter → castles become infrastructure, not just PvP objectives.
 
 ---
 
