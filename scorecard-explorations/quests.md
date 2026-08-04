@@ -36,7 +36,7 @@ World events funnel through `CharacterEvents`/`UnitEvents` → `QuestManagerEven
 | Group | Loaded | Notes |
 |---|---|---|
 | check_* (5) | ✅ all | CheckDistance/Buff live in `UnusedActs/` but **are instantiated** by the loader |
-| con_accept_* (13) | ✅ all | bug: `QuestActConAcceptNpcKill` logic is broken (see §3) |
+| con_accept_* (13) | ✅ all | ✅ kill-accept bug FIXED 2026-08-03 (BUG-006, fix/quest-kill-acceptor) |
 | con_* (4) | ✅ all | |
 | etc_* (1) | ✅ | |
 | obj_* (30) | ❌ **`quest_act_obj_aliases` never SELECTed** (0 refs in `AAEmu.Game`; 2,746 rows in DB) | 29 loaded |
@@ -54,11 +54,17 @@ World events funnel through `CharacterEvents`/`UnitEvents` → `QuestManagerEven
 - **#1329 → quest 3889**: Progress `QuestActObjItemUse(item 24165, count 1, highlight doodad 4614)`, skill 18017, SphereQuest 789 → **quest 3889** (confirmed `sphere_quests` 789 = quest 3889 trigger 1 — the "unrelated quest" claim in the issue is stale). Item-use objectives depend on item-use event wiring + sphere gating to advance.
 - **#1450 → quest 3447**: Progress `QuestActObjInteraction(doodad 4252, wi_id 19, alias 1883)`. Complaint is doodad 4252 disappearing and mob-spawn lifetime (spawner 61649 via skill 16790) — world/doodad lifecycle, outside the act engine.
 
-**Root-cause class found in code (quest 1208 + the 40-quest kill-acceptor family):** `QuestActConAcceptNpcKill.RunAct` is a copy-paste of `QuestActConAcceptNpc.RunAct` — it returns `quest.QuestAcceptorType == QuestAcceptorType.Npc && quest.AcceptorId == NpcId` (QuestActConAcceptNpcKill.cs:19-25). There is **no code path that ever adds a quest with a kill acceptor**: the only kill-triggered starter, `npc.Template.EngageCombatGiveQuestId` (`Unit.cs:1636-1640`), calls `AddQuestFromNpc` → `QuestAcceptorType.Npc` with the aggro'd NPC's template id. So any quest whose Start component holds `QuestActConAcceptNpcKill` (40 quests in DB, including 1208 with npcs 5006/5007/5008) can never have its start acts pass. `DoOnMonsterHuntEvents` (`QuestManagerEvents.cs:169-203`) also fires no accept-starter — kills are only wired to `OnMonsterHunt`/`OnMonsterGroupHunt`/`OnZoneKill` objectives, never to quest acceptance.
+**Root-cause class found in code (quest 1208 + the kill-acceptor family):** `QuestActConAcceptNpcKill.RunAct` is a copy-paste of `QuestActConAcceptNpc.RunAct` — it returns `quest.QuestAcceptorType == QuestAcceptorType.Npc && quest.AcceptorId == NpcId` (QuestActConAcceptNpcKill.cs:19-25). There is **no code path that ever adds a quest with a kill acceptor**: the only kill-triggered starter, `npc.Template.EngageCombatGiveQuestId` (`Unit.cs:1636-1640`), calls `AddQuestFromNpc` → `QuestAcceptorType.Npc` with the aggro'd NPC's template id. So any quest whose Start component holds `QuestActConAcceptNpcKill` can never have its start acts pass. `DoOnMonsterHuntEvents` (`QuestManagerEvents.cs:169-203`) also fires no accept-starter — kills are only wired to `OnMonsterHunt`/`OnMonsterGroupHunt`/`OnZoneKill` objectives, never to quest acceptance.
+
+**✅ FIXED 2026-08-03 (branch `fix/quest-kill-acceptor`, BUG-006):** added `QuestAcceptorType.Kill`,
+wired `DoOnMonsterHuntEvents` to start matching quests with the Kill acceptor (index built in
+`QuestManager.Load`), fixed `RunAct` to match. Live data check: **380 quests** had ALL Start acts
+as kill-accepts (182, 205, 556, 913, 1057, 1079, 1082, 1089, 1165, 1208...) — all now startable.
+Quest 1119 (upstream #1208) is actually a plain Npc-accept quest (Npc 2237), not part of this family.
 
 ## 4. What fixing the most common failure classes takes
 
-1. **Kill-accept starters (highest impact, ~40 quests):** add a `QuestAcceptorType.Kill` (or reuse Npc + acceptor=kill flag), wire `Npc.cs` death path (`DoOnMonsterHuntEvents` call site, `Npc.cs:877/986/1019`) to also check `QuestActConAcceptNpcKill` templates (`_actTemplatesByDetailType["QuestActConAcceptNpcKill"]`) and call `AddQuest(..., Kill, npc.TemplateId)`; then fix `QuestActConAcceptNpcKill.RunAct` to match that acceptor.
+1. ~~**Kill-accept starters (highest impact, ~40 quests)**~~ — **✅ DONE 2026-08-03** (BUG-006, branch `fix/quest-kill-acceptor`): added `QuestAcceptorType.Kill`, wired `Npc.cs` death path (`DoOnMonsterHuntEvents`, `Npc.cs:877/986/1019`) to check `QuestActConAcceptNpcKill` via a load-time index and call `AddQuest(..., Kill, npc.TemplateId)`, and fixed `QuestActConAcceptNpcKill.RunAct` to match. Live data: 380 quests affected, not ~40.
 2. **Load `quest_act_obj_aliases`:** add one loader block to `LoadDetailQuestActTemplates` (`QuestManager.cs`), populate `_actTemplatesByDetailType["QuestActObjAlias"]`, and resolve FK lookups where `use_alias=true` acts reference alias ids (2,746 rows) so alias/UI-only acts resolve and don't dangle.
 3. **Audit stub acts**: `QuestActCheckCompleteComponent`..`QuestActConAcceptComponent` etc. (UnusedActs) return `true`/`false` without real checks; each needs a gameplay decision (must-return-`false` vs functional), since quests relying on them either auto-complete or stall silently.
 4. **Doodad-interaction/phase objectives (`QuestActObjInteraction` wi_id+phase TODOs, `QuestActObjItemUse` skill-use gating):** verify the doodad phase-change event source reaches `DoDoodadInteractionEvents` and that `Phase`/`highlight` semantics are honored — this is the observed failure in 922/3889/3447.

@@ -80,6 +80,17 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
 
 1208, 1255, 1256, 1257, 1258, 1259, 1260, 1261, 1262, 1263, 1264, 1265, 1266, 1267, 1268, 1269, 1270, 1271, 1272, 1274, 1275, 1276, 1277, 1278, 1279, 1280, 1281, 1282, 1329, 1450
 
+## Fork fixes (our lane, no upstream PR)
+
+- **BUG-006 — kill-acceptor quests can never start (FIXED on `fix/quest-kill-acceptor`, 2026-08-03).**
+  `QuestActConAcceptNpcKill.RunAct` was a copy-paste of the Npc accept check, and no code
+  path ever set a Kill acceptor. Added `QuestAcceptorType.Kill`, wired
+  `DoOnMonsterHuntEvents` (the Npc.cs death path funnel, Npc.cs:877/986/1019) to start
+  matching quests with the Kill acceptor, and fixed `RunAct` to match. Live data check:
+  **380 quests** had ALL Start acts as kill-accepts (e.g. 182, 205, 556, 913, 1057, 1208)
+  — all now startable on kill. Quest 1119 (upstream #1208) is actually a plain
+  Npc-accept quest (Npc 2237), not part of this family.
+
 ### System-level bugs (non-quest)
 
 - #696 [skill] [BUG] Tree thinning of old trees doesn't work as intended

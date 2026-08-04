@@ -15,6 +15,7 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-003 | Missing game data files (compact.sqlite3 + game_pak) | RESOLVED |
 | BUG-004 | Login advertises game server as 127.0.0.1 (LAN unreachable) | FIXED |
 | BUG-005 | game_pak (2023) vs compact.sqlite3 (2026) version drift | RETIRED — paks verified byte-identical (md5 7f77c6a8) |
+| BUG-006 | Kill-acceptor quests can never start (380 quests, e.g. 182/205/556/913/1208) — QuestActConAcceptNpcKill checked Npc acceptor, no code path set Kill | FIXED — branch fix/quest-kill-acceptor (2026-08-03) |
 
 ## Production state (2026-08-02)
 
