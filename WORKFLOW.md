@@ -154,6 +154,13 @@ backup.
 - **Scorecard updates** happen IN THE SAME PR/branch as the work — never
   separately. `SCORECARD.md` + `scorecard-explorations/` are living docs.
 - Commit messages: present tense, conventional prefix, <72 chars title.
+- Commit identity — OPERATORS author the work, never `root@openclaw`:
+  - default: the sister who did it (`git -c user.name="Tai" -c
+    user.email="tai@asslorde.com" commit ...`) — Tai/Rei/Nei/Mai @ asslorde.com
+  - fallback for collective changes: `Hyraxknot Division
+    <division@asslorde.com>`
+  - upstream PRs are fronted by Josh's identity (`--author="Josh Anderson
+    <joshhmann@users.noreply.github.com>"`), only with his approval.
 - Branch merged to fork `develop` only after: full local gate green +
   graphify update + scorecard row updated.
 - Fix log: add a line to `ISSUES.md`/`bugs/` when fixing a known bug
