@@ -45,6 +45,11 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
     private readonly Dictionary<uint, List<uint>> _killAcceptQuestsByNpc = [];
     private readonly Dictionary<uint, QuestComponentTemplate> _componentTemplates = [];
     public Dictionary<uint, Dictionary<uint, QuestTimeoutTask>> QuestTimeoutTask { get; } = [];
+
+    /// <summary>
+    /// M1-3: result of the startup quest sanity cross-check, set at the end of <see cref="Load"/>.
+    /// </summary>
+    public QuestSanityVerifier.SanityReport LastSanityReport { get; private set; }
     private Queue<Quest> EvaluationQueue { get; } = new();
     private readonly object _evaluationQueueLock = new();
 
@@ -256,6 +261,17 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
 
             BuildKillAcceptQuestIndex();
             UpdateQuestComponentActs();
+
+            // M1-3: startup sanity cross-check — broken quests fail LOUDLY instead of silently.
+            // Collects defects (unresolvable act references, known stubs, missing objective
+            // targets) and logs them; never throws (matches sibling loader behavior).
+            var dataFindings = QuestSanityVerifier.VerifyData(connection, _actTemplatesByDetailType.Keys.ToHashSet());
+            var loadedReport = QuestSanityVerifier.VerifyLoadedState(
+                _questTemplates, _componentTemplates, _actsBaseByActId, _actTemplatesByDetailType, _groupItems);
+            LastSanityReport = new QuestSanityVerifier.SanityReport(
+                [.. dataFindings, .. loadedReport.Findings],
+                loadedReport.QuestCount, loadedReport.ComponentCount, loadedReport.ActCount);
+            QuestSanityVerifier.LogReport(LastSanityReport);
         }
         Logger.Info($"Loaded {_questTemplates.Count} quests");
         _loaded = true;
