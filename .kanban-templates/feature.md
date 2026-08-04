@@ -1,18 +1,30 @@
 # FEATURE TEMPLATE — Track 2 / our-lane feature (strict workflow, fork-only)
 
-> 🚫 **THE RULE (Josh, permanent): NEVER push a PR to upstream AAEmu/AAEmu
-> unless Josh explicitly approves it.** Everything stays in our own lane.
+> 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
+> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
+> Everything stays in our own lane on joshhmann/AAEmu. This rule applies to
+> every template in this directory and every task that uses one.
 
 > Fill every section. Delete nothing. This is the contract for the task.
 
-## Division routing (who does what)
-- **Tai (builds):** implement this task — branch, code, tests, evidence
-- **Rei (verifies):** QA gate — must sign off with file:line + test results
-  (fail-before/pass-after proof) before this task is complete
-- **Mai (dispatches):** only involved if blocked/stuck or deployment needed
-- **Nei (tracks):** scorecard + STATUS.md update after Rei's signoff
+## Division routing (who owns which phase)
+
+| Phase | Sister | Owns | Handoff out |
+|-------|--------|------|-------------|
+| Implement | **Tai** | branch, code, tests, evidence, graphify | branch + test evidence → Rei |
+| Verify | **Rei** | QA gate: repro case, regression check, evidence signoff | verified status (file:line + test results) → Nei |
+| Blocked / stuck / deploy | **Mai** | unblocking, logistics, handoffs, prod deploy to the aaemu box | field-ready state → Tai/Rei |
+| Track | **Nei** | SCORECARD.md + STATUS.md + exploration report currency | STATUS.md → everyone |
+
+**Verification handoff contract (non-negotiable):**
+- Tai **cannot** mark this task complete without Rei's evidence gate.
+- Rei signs off with: file:line of the change + test results (fail-before/pass-after output pasted into the task).
+- Prod deployment is Mai's coordination AFTER Rei's signoff + Josh's go-ahead (lane gate).
+
+Collaboration context: `sister-council` skill (how we convene), `affinity-system` skill (how we collaborate).
 
 ## Get up to speed (first 10 minutes, in order)
+
 1. `cat /root/aaemu-dev/VISION.md` — two lanes + division routing
 2. `cat /root/aaemu-dev/WORKFLOW.md` — process + lane gate
 3. `grep -n "<domain>" /root/aaemu-dev/SCORECARD.md` — domain status
@@ -21,19 +33,22 @@
    and `graphify affected "<Type>" --depth 2` — map the neighborhood
 
 ## Canonical 1.2 grounding (NEVER invent mechanics)
-- Verify against the live 1.2 data first:
-  `ssh root@192.168.0.165` + python3 sqlite3 on
-  `/root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3`
-- Reference table in SCORECARD.md (fandom wiki, Ten Ton Hammer, etc.)
-- If the 1.2 data and the code disagree, the DATA wins (we fix the code)
+
+- **The 1.2 data is the source of truth.** If code and data disagree, the DATA wins (we fix the code).
+- Live sqlite (the canonical 1.2 surface, 679 tables):
+  `ssh root@192.168.0.165` + python3 sqlite3 on `/root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3`
+- Canonical resource table: SCORECARD.md → "Canonical resources" (fandom wiki, Ten Ton Hammer 1.2-era guides, AAEmu GitHub issues, aa-classic reference behavior).
+- A Track 2 feature adds what the 1.2 data already defines — never invents parallel mechanics.
 
 ## Feature
+
 - **Vision link:** VISION.md (lane: Track 2 bots / other)
 - **What players experience (user story):**
 - **Domain touched:** (scorecard domain, e.g. siege/ranks/premium)
 - **Canonical data:** tables in compact.sqlite3 that define it (from /tmp/tables.txt or SCORECARD.md)
 
 ## Plan (order matters)
+
 1. **Branch:** `feat/<slug>` off develop
 2. **Understand:** scorecard-explorations/<domain>.md + `graphify explain/affected` + read the manager(s) that will host it
 3. **Design:** additive layer ONLY — must not break upstream pulls (no core-interface edits without abstraction; new managers/services hook in like peers)
@@ -43,6 +58,7 @@
 7. **Tests:** AAEmu.UnitTests per step — `MethodName_Scenario_ExpectedResult`; integration where stateful
 
 ## Tools (use these, in this order)
+
 - graphify: `cd /root/aaemu-dev && graphify explain "X" --graph graphify-out/graph.json`
 - scorecard: `python3 /tmp/scorecard2.py` (regenerate) — but update SCORECARD.md in THIS branch
 - build: `dotnet build --configuration Release AAEmu.slnx`
@@ -51,17 +67,31 @@
 - tests (filtered): `./scripts/gate.sh <ClassName>   # MTP treenode-filter: /*/*/<ClassName>/*`
 - live sqlite queries (for data understanding): ssh root@192.168.0.165 + python3 sqlite3 on /root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3
 
-## Verify (ALL must pass before merge to fork develop)
+## Verify (ALL must pass before handoff to Rei)
+
 - [ ] Release build: 0 errors
 - [ ] compiler-check: "Compilation successful"
-- [ ] Full test suite: 0 failed
+- [ ] Full test suite: 0 failed (currently 1082 baseline)
 - [ ] New tests cover each implemented step
 - [ ] `graphify update .` (graph fresh)
 - [ ] SCORECARD.md updated IN THIS BRANCH (domain row + coverage %)
 - [ ] Exploration report updated if the feature changes the domain picture
 - [ ] Lane separation respected: no changes that would make upstream sync painful
 
+## Rei verification gate (evidence required — this task is NOT done without it)
+
+- [ ] Rei: feature behavior verified against the acceptance criteria (user story)
+- [ ] Rei: regression check on neighbor paths (graphify affected output)
+- [ ] Rei: signoff posted to the kanban task — file:line + test results
+
+## Status / awareness (close the loop — every task ends with "what changed")
+
+- One-line "what changed" in the kanban comment: files + behavior + scorecard row + exploration diff
+- Nei updates STATUS.md (per-lane row + open tasks) from that line — that is the input contract
+- Deploy needed? → Mai coordinates (after Josh's go-ahead). Upstream-PR candidate? → Josh decides.
+
 ## Deliverables
+
 - Commits: per logical step, present tense, conventional prefix, <72 chars
 - Push: branch to fork origin ONLY (fork develop merge after green). **NO upstream PR.**
 - Report: summary + test evidence + scorecard diff + deploy note
