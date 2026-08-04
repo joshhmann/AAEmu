@@ -7,6 +7,13 @@
 > building playerbots. Build ONE dependable classic-ArcheAge life loop, make
 > bots master that slice, and expand outward together. Bots continuously
 > expose real server defects while the world comes alive.
+>
+> **THE PHILOSOPHY (project-wide, permanent):** *PlayerBots are not the
+> feature. The living world is the feature.* PlayerBots are just the
+> mechanism that gives life to neighborhoods, farms, caravans, pirates,
+> prisons, juries, markets, villages, festivals — and all the weird stories
+> that made 2014 ArcheAge memorable. If every decision on this project
+> passes that test, the architecture stays right.
 
 ## Three phases
 
@@ -33,6 +40,33 @@
 - **The golden path is the product.** All work is judged against:
   level with friends, get mounts, claim land, grow things, craft packs,
   ride carts, sail and trade.
+- **THREE TIERS OF INTELLIGENCE (never mix them):**
+  - **Game AI (deterministic):** combat, farming, crafting, trade packs,
+    navigation, prison, juries, schedules, economy, recovery, parties —
+    the simulation itself. Local, predictable, always on.
+  - **Social AI (mostly deterministic):** canned + contextual chatter,
+    greetings, gossip, taunts, trade warnings, event reactions — no LLM.
+  - **Narrative AI (optional):** long conversations, remembering a player,
+    rumors, backstories, special events — lives entirely OUTSIDE the server
+    thread; the API is only called when there's something worth saying.
+- **THE WORLD RUNS WITH ZERO EXTERNAL AI (permanent design principle):**
+  Ollama dies → world keeps running. OpenRouter quota exhausted → bots
+  still farm. Internet down → caravans continue. LLM bridge crashes →
+  juries still work. **The LLM is flavor, not infrastructure.**
+- **LLM usage boundary (locked):** dialogue, personality, memories, rumors,
+  contextual reactions, high-level flavor choices ONLY. Movement, combat,
+  farming, trade runs, crime, juries, schedules, recovery = deterministic.
+  Never "bot deciding every second → LLM call." Rate-limit heavily: no
+  ambient chatter in combat, per-bot cooldowns, per-zone message budgets,
+  shared summaries not full histories, cheap model for routine lines,
+  stronger model only for memorable events.
+- **Chatter tiering:** Layer 1 template chatter (everyday reactions) → Layer
+  2 procedural chatter (templates filled with names/places/items/events:
+  "Someone paid {price} for {item_name}? Robbery.") → Layer 3 LLM chatter
+  (rare personalized/narrative moments). Personality archetype files:
+  `chatter/{lawful,greedy,cheerful,paranoid,pirate,farmer,merchant,guard}/`.
+  **Living Village launches with ZERO LLM dependency** — canned + procedural
+  chatter must feel good first; the API is an enhancement, not a requirement.
 
 ---
 
@@ -345,6 +379,27 @@ Server NEVER waits on an LLM; events queue in, responses queue out.
 Hermes → observe failures/edge cases → distill into deterministic game
 logic → deploy to thousands of bots. Hermes is the research environment,
 not the per-bot runtime.
+
+**The modular shape (what this project actually is):**
+
+```
+AAEmu
+├── Core gameplay                    (upstream + our canonical fixes)
+├── Gameplay Actor Contract          (M5 — the normalize layer)
+├── PlayerBot Runtime                (M6 — headless sessions + controllers)
+├── Population Director              (level/faction/zone/profession balance)
+├── Activity Modules                 (each pluggable, no core edits)
+│   ├── Farming · Trading · Adventure · Dungeon · Party
+│   ├── Crime · Homestead · Fishing · Siege (later)
+│   └── future: Bot Fishing Fleet, Festival Coordinator…
+├── Economy Services                 (MarketMaker: bootstrap → living)
+├── Social Services                  (Chatter tiers 1-3, async LLM bridge)
+├── Guide Services                   (grounded, live-data-only)
+└── Test Harness                     (seeded runs, replay, JSONL)
+```
+
+New modules (a fishing fleet, a festival coordinator) slot in WITHOUT
+touching combat AI or the bot framework — that modularity is the point.
 
 ---
 
