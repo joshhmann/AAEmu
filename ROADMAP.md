@@ -11,7 +11,7 @@
 ## Three phases
 
 1. **Playable Classic Loop** (M1-M4) — a dependable slice humans can enjoy
-2. **Bot-Compatible Game Platform** (M5-M6) — the observation/action boundary
+2. **Bot-Compatible Game Platform** (M5-M6) — the gameplay actor contract
    + deterministic bot framework
 3. **Living Village** (M7-M8+) — bots populate, extend, and test the loop
 
@@ -25,6 +25,14 @@
 - Bots must invoke normal AAEmu gameplay services — no direct DB
   manipulation, no bot-only resource creation.
 - Additive layer rule: no core-interface rewrites; keeps upstream pulls clean.
+- **Test boundary rule (actor vs playerbot):** *Actor contract tests* prove
+  the server can execute and observe a command correctly. *Playerbot
+  behavior tests* prove a controller chooses the right command sequence.
+  Never blur them — every bot failure must be debuggable to one of:
+  wrong choice / navigation / action rejected / state transition / persistence.
+- **The golden path is the product.** All work is judged against:
+  level with friends, get mounts, claim land, grow things, craft packs,
+  ride carts, sail and trade.
 
 ---
 
@@ -62,45 +70,54 @@ the same chain via the golden path.
 
 ---
 
-## M2 — Golden-path playtest harness
+## M2 — Golden-path release gate
 
-The repeatable playable journey — the largest missing piece. Mostly test
-tooling + documentation; parallelizable with M3 prep (we already have
-nightly backups, test accounts, the box).
+The repeatable playable journey — the first real definition of "playable."
+**Classified lightweight + parallelizable**: M3 investigation may begin while
+M2 documentation and test tooling are finalized.
 
 **Golden path:** create character → starter progression → unlock mount →
 acquire farm → plant & harvest → build house → craft trade pack → transport
 pack → sell → return home.
 
-**Deliverables:** selected race/faction, zones, approved quest chain, skill
-builds, mount, one housing zone, one crop chain, one crafting chain, one
-trade-pack recipe, one land route, one cart/hauler, one short sea route (if
-ships viable). Artifacts: human playtest checklist, known-blocker doc,
-save/restart checkpoints, structured event log, repeatable DB snapshot.
+**Primary outputs:** curated route · human playtest checklist · scenario
+manifest · restart checkpoints · known-blocker registry · structured logging
+expectations · clean database snapshot. (Selected race/faction, zones,
+quest chain, skill builds, mount, housing zone, crop chain, crafting chain,
+trade-pack recipe, land route, cart/hauler, short sea route if viable.)
 
 **Exit test:** four humans complete the loop twice including one server
 restart. **This is the first real playable release.**
 
 ---
 
-## M3 — Homestead integrity (split internally M3a/M3b)
+## M3 — Homestead integrity (two gates, M3a then M3b)
 
-Housing + property + farming as the dependable homestead loop.
+Prevents "housing is playable" from being blocked by every persistence edge
+case, while refusing to declare the milestone complete prematurely.
 
-- **M3a shell:** decoration-limit enforcement, placement-zone validation,
-  housing-group/UI data, ownership + permission validation, construction
-  state, taxes + tax mail, demolition/reclaim safeguards
-- **M3b persistence:** bound doodad persistence, door/window phase
-  persistence, furniture placement/pickup, containers/storage, rotation/
-  attachment, crop placement, growth timers, harvesting, livestock (where
-  stable), restart recovery, no duplicated/orphaned doodads
+### M3a — Homestead shell (visible, interactive loop)
 
-**Exit test:** two players maintain adjacent farms + houses over THREE
-server restarts without losing/duplicating/relocating property.
+Housing placement-zone validation · decoration-limit enforcement ·
+housing-group/UI data · ownership + permissions · construction · crop
+placement · growth + harvest · selected storage and furniture interactions.
 
-**Scorecard targets (bounded — not gold-plating):** housing ~75-85% usable
-for curated loop, farming ~70-80%, property persistence green for tested
-items.
+**Exit condition:** two players establish adjacent homesteads and use the
+curated objects during ONE uninterrupted session.
+
+### M3b — Property persistence and recovery (engineering-heavy)
+
+Furniture + bound doodad persistence · door/window phase state · crop +
+livestock recovery · rotation/attachment integrity · storage persistence ·
+server restart restoration · disconnect + logout cleanup · orphan/duplicate
+prevention · administrative repair tooling.
+
+**Exit condition:** the same two homesteads survive repeated logout,
+restart, crash-recovery, and re-entry tests WITHOUT state loss or
+duplication.
+
+**Scorecard targets:** housing ~75-85% usable for curated loop, farming
+~70-80%, property persistence green for tested items.
 
 ---
 
@@ -122,29 +139,43 @@ restart. **The server becomes recognizably classic ArcheAge here.**
 
 ---
 
-## M5 — Bot-compatible action and observation layer
+## M5 — Gameplay Actor Contract
 
-**NOT autonomous bots yet — the boundary first.** Largely wraps EXISTING
-capabilities (NpcAi move/target/cast/interact primitives + admin commands)
-into a clean contract + lifecycle states. Smaller than greenfield.
+**NOT autonomous bots — the contract first.** This is normalization, not
+invention: wrap existing capabilities behind ONE additive, inspectable
+contract. Estimated 2-4 focused sessions (existing primitives are reusable).
 
-**Observation snapshot:** position/movement, health/mana/buffs, target,
-nearby units + interactables, inventory, equipment, skills/cooldowns,
-quests/objectives, mount state, property ownership, party state, current
-action, last failure, stuck status.
+**Existing primitives to wrap:**
+- NPC AI movement (NpcAi)
+- target selection
+- skill execution
+- interaction
+- inventory/game services
+- administrator commands (where useful for development)
+- normal player and unit state
 
-**Action interface:** Move, Stop, Follow, Target, Cast, Interact, Loot,
-UseItem, EquipItem, AcceptQuest, CompleteQuest, SummonMount, Mount/
-Dismount, Plant, Harvest, Craft, PackPickup/PutDown, Board/LeaveVehicle,
-Buy/Sell, Deposit/Withdraw.
+**New work:**
+- one unified observation snapshot
+- one validated action request format
+- lifecycle tracking (Requested → Accepted → Running → Completed |
+  Rejected(reason) | Interrupted(reason) | TimedOut)
+- failure reasons
+- cancellation + timeout
+- diagnostics + trace IDs
+- policy forbidding database shortcuts
+- adapter implementations over existing systems
 
-**Lifecycle:** every action returns Requested → Accepted → Running →
-Completed | Rejected(reason) | Interrupted(reason) | TimedOut.
+**Explicit NON-GOALS:** no autonomous planning · no LLM integration · no
+generalized navigation rewrite · no core gameplay interface replacement ·
+no bot-only inventory or combat behavior.
 
-**Architectural rule:** invokes normal gameplay services only.
+**Architectural rule:** invokes normal gameplay services only — no direct
+DB manipulation, no bot-only resource creation.
 
-**Exit test:** admin manually instructs one controlled actor to complete
-every golden-path primitive.
+**Exit test:** a scripted actor completes the curated golden-path primitives
+and produces a machine-readable trace showing every request, transition,
+result, and failure. Actor contract tests (server executes/observes a
+command correctly) pass independent of any controller.
 
 ---
 
@@ -163,6 +194,10 @@ every golden-path primitive.
 
 **Exit test:** 10 bots run 6 hours with no unrecovered loops, no inventory
 duplication, no runaway combat, no DB corruption, no tick-budget overrun.
+Playerbot behavior tests (controller chooses the right command sequence)
+run against the M5 actor contract — a failed bot harvest must resolve to
+one of: wrong choice / navigation / action rejected / state transition /
+persistence.
 
 ---
 
@@ -273,7 +308,7 @@ separate measurements — update both.
 | Week 3 | M2 golden-path harness |
 | Weeks 4-5 | M3 homestead integrity |
 | Weeks 6-7 | M4 trade and transport |
-| Weeks 8-9 | M5 bot action/observation layer |
+| Weeks 8-9 | M5 gameplay actor contract |
 | Weeks 10-12 | M6 deterministic bot framework |
 | Weeks 13-15 | M7 adventurer and party bots |
 | Weeks 16-19 | M8 Living Village |
