@@ -90,6 +90,12 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   **380 quests** had ALL Start acts as kill-accepts (e.g. 182, 205, 556, 913, 1057, 1208)
   — all now startable on kill. Quest 1119 (upstream #1208) is actually a plain
   Npc-accept quest (Npc 2237), not part of this family.
+- **BUG-008 — QuestActCheckGuard silently auto-completes (FIXED on `fix/quest-check-guard`, 2026-08-04).**
+  `RunAct` returned true unconditionally, so 6 escort/protect quests' guard objectives
+  always passed (silent false positive). Now resolves the guard NPC in the owner's world
+  (`ParentWorld.GetNpcByTemplateId`) and returns true only when present and alive; dead,
+  despawned, or unresolvable → false. 3 new `QuestActCheckGuardTests` (dead/missing
+  cases failed before the fix). Full gate 1085/1085. Catalog: bugs/008-check-guard.md.
 
 ### System-level bugs (non-quest)
 
