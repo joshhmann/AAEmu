@@ -1,9 +1,18 @@
-# AAEmu Fork — Fix/Feature Workflow (Tai's playbook, v2)
+# AAEmu Fork — Fix/Feature Workflow (Tai's playbook, v3)
 
 Goal: safe, reviewable changes to joshhmann/AAEmu that keep the running
-server stable AND pass upstream (AAEmu/AAEmu) merge gates when we push PRs.
-v2 adds the upstream-compliance layer: CI gates, Greptile review
-expectations, and the PR-ready checklist (from Nei's COMMUNITY-GUIDELINES.md).
+server stable AND follow community standards — WITHOUT pushing upstream
+unless Josh explicitly approves it.
+
+> **THE RULE (Josh, 2026-08-03):** Every fix and every feature follows the
+> full workflow — branch, separate commits, tests, scorecard update, all
+> tracked. We stay in OUR OWN LANE. No upstream PRs for now. When we feel
+> ready after testing, we decide together and push then.
+
+v3 changes: added the lane gate — upstream PRs are OFF by default; the
+community-standard process is followed regardless, so PRs stay possible.
+v2 added the upstream merge bar (CI gates, Greptile, PR checklist) — that
+knowledge is still the standard we hold ourselves to internally.
 
 ## Environment
 
@@ -65,11 +74,11 @@ Sonar + CodeQL run on push to develop/master (quality gates, no PR block).
    ```
    All green before anything else.
 8. **Graph refresh** — `graphify update .`
-9. **PR** — push branch to fork; PR vs develop with:
-   - single squashed commit, present tense ("fix(docker): …")
-   - PR body: Problem / Root cause (with evidence) / Fix / Verification / Notes
-   - mention what you tested locally (build + compiler-check + tests)
-   - don't rush the merge — Greptile comments in ~minutes; maintainers follow
+9. **PR** — push branch to fork. Upstream PR **ONLY with Josh's explicit
+   go-ahead** (lane gate). When approved: single squashed commit, present
+   tense ("fix(docker): …"), PR body: Problem / Root cause (with evidence) /
+   Fix / Verification / Notes. Until then the branch lives on our fork —
+   the process is identical either way, so a future PR is just a push + form.
 
 ## Deploy to prod (only after PR merged to fork develop)
 
@@ -81,6 +90,21 @@ docker compose ps   # verify healthy
 ```
 
 Rollback: `git revert` on the box + `docker compose up -d --build game`.
+
+## Tracking discipline (every change, no exceptions)
+
+- **Every fix** → one branch (`fix/<slug>`), one logical commit (or a small
+  series), tests added/extended, scorecard row updated if the fix changes a
+  domain's status.
+- **Every feature** → one branch (`feat/<slug>`), commits per logical step,
+  tests per step, scorecard row added with the new coverage.
+- **Scorecard updates** happen IN THE SAME PR/branch as the work — never
+  separately. `SCORECARD.md` + `scorecard-explorations/` are living docs.
+- Commit messages: present tense, conventional prefix, <72 chars title.
+- Branch merged to fork `develop` only after: full local gate green +
+  graphify update + scorecard row updated.
+- Fix log: add a line to `ISSUES.md`/`bugs/` when fixing a known bug
+  (reference the bug id, root cause, files changed, tests added).
 
 ## PR-READY CHECKLIST (pre-push)
 
