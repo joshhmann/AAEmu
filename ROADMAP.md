@@ -1,202 +1,294 @@
-# ArcheAge Slums — Roadmap & Milestones (2026-08-03)
+# ArcheAge Slums — Roadmap & Milestones (v2, reshaped 2026-08-03)
 
 > **🚫 THE RULE (Josh, permanent): NEVER push a PR to upstream AAEmu/AAEmu
 > unless Josh explicitly approves it.** Everything stays in our own lane.
 >
-> Two tracks: Track 1 = canonical 1.2 fixes (primary, learn first). Track 2 =
-> playerbots/LLM/economy (bonus, after Track 1 momentum).
-> Division routing on every task: Tai builds → Rei verifies → Nei tracks,
-> Mai dispatches/deploys.
+> **THE CORE SHIFT (Codex review, endorsed):** Do not finish AAEmu before
+> building playerbots. Build ONE dependable classic-ArcheAge life loop, make
+> bots master that slice, and expand outward together. Bots continuously
+> expose real server defects while the world comes alive.
 
-## Guiding principles
+## Three phases
 
-1. **Canonical first.** Ground every change in 1.2 data (live sqlite) + docs.
-   If data and code disagree, the data wins.
-2. **Small, shippable slices.** Every milestone is a set of focused tasks,
-   each with its own branch, tests, scorecard update. No mega-branches.
-3. **Scorecard is the map.** A domain's % is the definition of done — every
-   milestone moves at least one scorecard row.
-4. **Bots inherit correctness.** Track 2 bots need quests/housing/trade to
-   WORK before bots can USE them. That's why Track 1 comes first.
-5. **Continuous upstream pulls.** Keep the fork current (`git pull upstream
-   develop`) — our lane stays mergeable, our knowledge stays fresh.
+1. **Playable Classic Loop** (M1-M4) — a dependable slice humans can enjoy
+2. **Bot-Compatible Game Platform** (M5-M6) — the observation/action boundary
+   + deterministic bot framework
+3. **Living Village** (M7-M8+) — bots populate, extend, and test the loop
 
----
+## Standing rules (every milestone)
 
-## MILESTONE 0 — Foundation (status: ~DONE)
-
-Workflow v3 (lane gate + tracking discipline), COMMUNITY-GUIDELINES (Nei),
-kanban templates (Nei in progress), gate.sh verified, SCORECARD.md + 3
-exploration reports, graphify graph (17.5k nodes), VISION.md division routing.
-
-Remaining: Nei's template v2 set + STATUS.md convention (task t_7aa85a0f).
-Acceptance: templates used by first real task.
+- **Every feature milestone defines THREE scenarios:** a human scenario, an
+  automated scenario, and a restart-persistence scenario. These are the
+  definition of done.
+- Technical wiring scorecard AND experience scorecard both update per
+  milestone (they measure different things).
+- Bots must invoke normal AAEmu gameplay services — no direct DB
+  manipulation, no bot-only resource creation.
+- Additive layer rule: no core-interface rewrites; keeps upstream pulls clean.
 
 ---
 
-## MILESTONE 1 — Quest engine correctness (Track 1, highest impact)
+## M0 — Foundation ✅ COMPLETE
 
-**Why first:** 30+ upstream quest bugs; the kill-acceptor bug alone blocks
-~40 quests. Quests are the spine of the game — bots (Track 2) can't quest
-if quests don't work. Also the cleanest "canonical fix" story we have.
-
-| # | Task | Size | Scorecard effect | Evidence source |
-|---|------|------|------------------|-----------------|
-| 1.1 | **Kill-acceptor quest fix** (QuestActConAcceptNpcKill copy-paste bug: add QuestAcceptorType.Kill, wire Npc death path, fix RunAct) | S-M | quests 82%→84%, unlocks ~40 quests | quests.md §3 (already queued: t_71e48494) |
-| 1.2 | **Load quest_act_obj_aliases** (2,746 rows dangling; add loader block, resolve use_alias FKs) | S | quests data-wired 82%→84% | quests.md §2, §4.2 |
-| 1.3 | **Stub-act audit** (UnusedActs: must-return-false vs functional decision per act) | M | prevents silent auto-complete/stall | quests.md §4.3 |
-| 1.4 | **Quest sanity verifier** (startup cross-check: act_detail_type vs class registry, detail-ids vs loaded tables) | M | ops safety net for all future quest work | quests.md §4.5 |
-| 1.5 | **Doodad phase/interaction objectives** (QuestActObjInteraction wi_id+phase TODOs, QuestActObjItemUse gating; fixes quests 922/3889/3447) | M | quests runtime reliability | quests.md §3, §4.4 |
-
-**Division:** Tai implements 1.1→1.4 (1.5 can parallel). Rei verifies each
-with fail-before/pass-after tests. Nei updates scorecard + STATUS.md.
-**Acceptance:** 0 failed tests; kill-acceptor quests (e.g. 1119) start in
-game; sanity verifier passes on boot; scorecard quests row updated.
-**Effort:** ~4-8 focused sessions. **Risk:** low — all code-grounded findings.
+Workflow v3 (lane gate), community guidelines, kanban templates, gate.sh
+verified, scorecard + 3 exploration reports, graphify graph (17.6k nodes),
+shared division skill enabled on all 4 profiles, ROADMAP v1.
+BUG-006 (kill-acceptor, 380 quests, 1082/1082 tests) parked awaiting Josh's
+merge/deploy decision.
 
 ---
 
-## MILESTONE 2 — Housing depth (Track 1)
+## M1 — Quest and progression spine (Track 1)
 
-**Why:** housing is a signature ArcheAge feature and only 38% wired; humans
-AND bots want houses. Small gaps on a working system = high value per hour.
+Trimmed, not exhaustive. Fix shared engine defects + the selected golden
+route. Individual peripheral quest bugs → Lane B (maintenance).
 
-| # | Task | Size | Scorecard effect |
-|---|------|------|------------------|
-| 2.1 | **Deco-limit enforcement** (deco_limit read at HousingGameData.cs:103-105 but never checked; :1651 TODO) | S-M | housing 38%→~55% |
-| 2.2 | **Zone validation** (:477 TODO — housing placement zone checks) | S | housing →~65% |
-| 2.3 | **housing_groups UI tables** (load + serve; currently no consumer) | S | housing →~75% |
+**Work:**
+- Merge/reconcile the parked kill-acceptor fix (BUG-006)
+- Load + validate quest_act_obj_aliases (2,746 dangling rows)
+- Audit stub acts (silent auto-complete/stall)
+- Quest sanity verifier (startup cross-check)
+- Fix common doodad phase/interaction objectives (quests 922/3889/3447)
+- Select ONE faction + starting progression route; document intentionally
+  excluded quests
 
-**Division:** Tai → Rei → Nei. **Acceptance:** place/decorate respects limits,
-invalid zones rejected, scorecard updated. **Effort:** ~2-4 sessions. **Risk:** low.
+**Priority order:** shared engine defects → golden-route blockers → silent
+corruption → peripheral quests.
 
----
-
-## MILESTONE 3 — Zero-wired quick wins (Track 1)
-
-**Why:** fast scorecard movement, satisfying momentum, fills world depth.
-
-| # | Task | Size | Notes |
-|---|------|------|-------|
-| 3.1 | **Music wiring** (load instrument_sounds into MusicManager; PlayUserMusic.cs:40 names the gap) | S | 0%→100% on music domain |
-| 3.2 | **Premium benefits** (read premium_benefits/grades; drive labor from data instead of hardcoded 5000) | S-M | 0%→100%; changes gameplay feel |
-| 3.3 | **FxGroup/FxGroupAnim stubs** (implement or delete; client-only but skill chain touches them) | S | cleans the 15-table 0% row |
-
-**Division:** Tai → Rei → Nei. **Effort:** ~2-3 sessions. **Risk:** very low.
+**Exit test (human + automated):** new character enters world, completes
+curated opening chain, gains levels, receives rewards, logs out and
+continues, reaches first-mount prerequisite. Automated: scripted actor runs
+the same chain via the golden path.
 
 ---
 
-## MILESTONE 4 — Contest & activity systems (Track 1)
+## M2 — Golden-path playtest harness
 
-**Why:** gives the world *things happening* — feeds the "living world" feel
-even before bots.
+The repeatable playable journey — the largest missing piece. Mostly test
+tooling + documentation; parallelizable with M3 prep (we already have
+nightly backups, test accounts, the box).
 
-| # | Task | Size | Notes |
-|---|------|------|-------|
-| 4.1 | **Ranks: fishing contest** (collect max catch length, rank, mail reward chests — SCRankRewardMailPacket offset exists) | M | ranks 0%→60% |
-| 4.2 | **Race tracks: time trial** (doodad start, loop timer, record, mail chest) | M | race-tracks 0%→80% |
+**Golden path:** create character → starter progression → unlock mount →
+acquire farm → plant & harvest → build house → craft trade pack → transport
+pack → sell → return home.
 
-**Division:** Tai → Rei → Nei. **Effort:** ~4-6 sessions. **Risk:** medium
-(new packet flows, but offsets exist).
+**Deliverables:** selected race/faction, zones, approved quest chain, skill
+builds, mount, one housing zone, one crop chain, one crafting chain, one
+trade-pack recipe, one land route, one cart/hauler, one short sea route (if
+ships viable). Artifacts: human playtest checklist, known-blocker doc,
+save/restart checkpoints, structured event log, repeatable DB snapshot.
 
----
-
-## MILESTONE 5 — Siege (M slice: declare + own + tax) (Track 1 capstone)
-
-**Why:** the biggest zero-wired feature; rich partial code (DeclareDominion
-hardcoded, 5 packet offsets, doodad funcs loaded). Canonical capstone before
-Track 2 — and bots will fight sieges later.
-
-**Slice:** persistent single-castle dominion lifecycle WITHOUT combat:
-schedule windows (siege_settings/plans), declare at monument doodad, owner +
-tax state persisted (MySQL). Full combat war = L, later.
-
-**Division:** Tai (design doc first → implement) → Rei (integration tests +
-repro) → Nei. **Effort:** ~6-10 sessions. **Risk:** medium-high — new
-persistence + lifecycle; mitigated by the existing packet surface.
+**Exit test:** four humans complete the loop twice including one server
+restart. **This is the first real playable release.**
 
 ---
 
-## MILESTONE 6 — Track 2 foundation: bot framework
+## M3 — Homestead integrity (split internally M3a/M3b)
 
-**Why:** everything after this is built on it. Must be an ADDITIVE layer
-(lane-separation): new BotManager + PlayerBot entity, hooks into existing
-TickManager (100ms) + AStar pathfinding + NpcAi pattern — NO core-interface
-rewrites (keeps upstream pulls clean).
+Housing + property + farming as the dependable homestead loop.
 
-| # | Task | Size | Notes |
-|---|------|------|-------|
-| 6.1 | **BotManager + PlayerBot entity** (fake Character owner, tick registration, spawn/despawn, persistence stub) | L | the skeleton |
-| 6.2 | **Bot behaviors v1** (roam, idle, follow, aggro-reply via existing combat) | M | reuse NpcAi behavior pattern |
-| 6.3 | **Bot config + admin commands** (spawn N bots, /bot list, density zones) | S-M | ops + demo |
+- **M3a shell:** decoration-limit enforcement, placement-zone validation,
+  housing-group/UI data, ownership + permission validation, construction
+  state, taxes + tax mail, demolition/reclaim safeguards
+- **M3b persistence:** bound doodad persistence, door/window phase
+  persistence, furniture placement/pickup, containers/storage, rotation/
+  attachment, crop placement, growth timers, harvesting, livestock (where
+  stable), restart recovery, no duplicated/orphaned doodads
 
-**Division:** Tai (architecture) → Rei (integration tests) → Mai (deploy to
-box for live test) → Nei. **Effort:** ~8-12 sessions. **Risk:** medium —
-new system; mitigated by additive design + graphify maps.
+**Exit test:** two players maintain adjacent farms + houses over THREE
+server restarts without losing/duplicating/relocating property.
 
----
-
-## MILESTONE 7 — Bot living world (Track 2)
-
-| # | Task | Size | Notes |
-|---|------|------|-------|
-| 7.1 | **Bot chat (LLM bridge)** — bots respond to /say + zone chat via homelab ollama (gestalt .96); personality config per bot | M | the "talk to the world" feature |
-| 7.2 | **Party bots** — bots accept invites, follow, assist, role (tank/heal/dps) | M | requires combat confidence |
-| 7.3 | **Economy sim v1** — bots craft/trade-run/auction at configurable rates; feeds auction house + specialty demand | M-L | uses M2/3/4 systems |
-| 7.4 | **Simulated PvP/sieges v1** — bot squads in conflict zones + siege defense/attack participation | L | uses M5 |
-
-**Division:** Tai → Rei (QA each) → Mai (field-test with Josh's friends) →
-Nei. **Effort:** ~10-16 sessions. **Risk:** medium-high per feature; each is
-independent so they can land one at a time.
+**Scorecard targets (bounded — not gold-plating):** housing ~75-85% usable
+for curated loop, farming ~70-80%, property persistence green for tested
+items.
 
 ---
 
-## MILESTONE 8 — Polish & scale
+## M4 — Trade, crafting and transport integrity
 
-- Performance: bot count tuning, tick budget profiling (AI tick starvation
-  upstream bug #1491 is a warning)
-- STATUS.md always current; scorecard reviewed weekly
-- Optional: community showcase (screenshots/video of the living world)
-- Revisit upstream PRs ONLY with Josh's explicit approval
+The connective tissue of classic ArcheAge — ahead of music/contests/siege.
+
+**Crafting:** recipe prerequisites, material + labor consumption, output
+correctness, workstation range/ownership, inventory-full handling.
+**Trade packs:** creation, backpack occupancy, placement/pickup, ownership,
+storage on property, maturation, sale + reward correctness.
+**Vehicles/ships:** summon/despawn, passenger + cargo attachment, death/
+disconnect cleanup, portal/instance behavior, restart recovery, stuck
+recovery.
+
+**Exit test:** group harvests real materials → crafts pack → loads vehicle →
+travels defined route → unloads + sells → correct reward → repeats after
+restart. **The server becomes recognizably classic ArcheAge here.**
 
 ---
 
-## Timeline estimate (side-project cadence, ~3-5 sessions/week)
+## M5 — Bot-compatible action and observation layer
 
-| Milestone | Weeks (est) | Cumulative |
-|-----------|-------------|------------|
-| M0 foundation | done | — |
-| M1 quest engine | 1-2 | wk 2 |
-| M2 housing | 1 | wk 3 |
-| M3 quick wins | 0.5-1 | wk 4 |
-| M4 contests | 1-2 | wk 5-6 |
-| M5 siege (M slice) | 2-3 | wk 8-9 |
-| M6 bot framework | 2-3 | wk 11-12 |
-| M7 living world | 3-5 | wk 15-17 |
-| M8 polish | ongoing | — |
+**NOT autonomous bots yet — the boundary first.** Largely wraps EXISTING
+capabilities (NpcAi move/target/cast/interact primitives + admin commands)
+into a clean contract + lifecycle states. Smaller than greenfield.
 
-First real playtest milestone: **end of M1** (quests visibly fixed in-game).
+**Observation snapshot:** position/movement, health/mana/buffs, target,
+nearby units + interactables, inventory, equipment, skills/cooldowns,
+quests/objectives, mount state, property ownership, party state, current
+action, last failure, stuck status.
 
-## Dependencies map
+**Action interface:** Move, Stop, Follow, Target, Cast, Interact, Loot,
+UseItem, EquipItem, AcceptQuest, CompleteQuest, SummonMount, Mount/
+Dismount, Plant, Harvest, Craft, PackPickup/PutDown, Board/LeaveVehicle,
+Buy/Sell, Deposit/Withdraw.
 
-```
-M1 (quests) ──► M2 (housing) ──► M3 (quick wins) ──► M4 (contests) ──► M5 (siege)
-                                                                          │
-M6 (bot framework) ◄──────────────────────────────────────────────────────┘
-      │
-      ▼
-M7 (LLM chat / party / economy / PvP) ──► M8 (polish)
-```
+**Lifecycle:** every action returns Requested → Accepted → Running →
+Completed | Rejected(reason) | Interrupted(reason) | TimedOut.
 
-M1-M5 are Track 1 (canonical, PR-able if ever approved). M6-M7 are Track 2
-(fork-only product features). Bots depend on M1 (quests work), M2 (housing),
-M4 (contests), M5 (siege) for their behaviors to have meaning.
+**Architectural rule:** invokes normal gameplay services only.
+
+**Exit test:** admin manually instructs one controlled actor to complete
+every golden-path primitive.
+
+---
+
+## M6 — Deterministic playerbot framework
+
+- **6.1 Core:** BotManager, PlayerBot entity, tick registration, spawn/
+  despawn, persistent identity/inventory/position, controlled logout,
+  per-bot diagnostics, tick budget accounting
+- **6.2 Safety FIRST (before "roam"):** stuck detection, navigation timeout,
+  invalid-target recovery, death/resurrection, unreachable-object handling,
+  inventory-full handling, mount-state repair, retry budgets, safe return
+- **6.3 Behaviors:** idle, roam (permitted zone), follow, defend self,
+  assist party target, loot, return home
+- **6.4 Config:** spawn count, zone density, tick rate, allowed activities,
+  home position, class/equipment templates, debug overlay, admin pause
+
+**Exit test:** 10 bots run 6 hours with no unrecovered loops, no inventory
+duplication, no runaway combat, no DB corruption, no tick-budget overrun.
+
+---
+
+## M7 — Adventurer and party bots (Playerbots Alpha)
+
+Split by archetype, not one universal mind.
+
+- **Adventurer v1:** curated quest route, hostile targeting, fixed skill
+  priority, distance maintenance, heal/retreat, loot, equip upgrades,
+  return to quest NPC, death recovery
+- **Party v1:** invite/join, follow leader, rally, assist target, avoid
+  extra pulls, tank/damage/healer roles, wait for missing members,
+  resurrect, mount + travel together
+
+**Exit test:** one human + three bots complete the curated leveling route
+and a selected group encounter.
+
+---
+
+## M8 — Living Village (first true vision release: "AAEmu: Living Village")
+
+Sequenced carefully — tasks BEFORE talk.
+
+- **8.1 Farmer bot:** check farm, identify mature crops, harvest, deposit,
+  replant approved crops, report shortages
+- **8.2 Crafter bot:** read production request, check/withdraw materials,
+  use workstation, store output, report shortages
+- **8.3 Hauler/trader bot:** acquire pack materials, craft pack, load
+  vehicle, navigate route, sell, deposit proceeds, return home
+- **8.4 Schedules:** home / work / travel / rest / social / emergency
+- **8.5 Lightweight social (pre-LLM):** greetings, task acks, status
+  messages, contextual canned dialogue, party callouts, trade-route warnings
+- **8.6 LLM bridge LAST:** high-level goal choice, conversational variation,
+  relationship memory, activity explanations, rumors/flavor. **The model
+  does not issue raw gameplay commands — it selects validated goals.**
+
+**Exit test:** a village with 2 farmers, 1 crafter, 2 haulers, 3 adventurers
++ human-owned homes/farms operates a full day across multiple restarts with
+an auditable economy.
+
+---
+
+## M9 — Activities and world events
+
+Contests fit here — they now have actual residents to participate.
+
+Candidates: fishing contest, race-track time trials, scheduled trade
+caravans, bot-organized fishing trips, regional monster hunts, community
+construction events, simple festival schedule. Music/FX wiring → Lane C.
+
+---
+
+## M10 — Territory and siege (deferred, two slices)
+
+Only after guilds work, combat is stable, bots form groups, and the economy
+generates something worth controlling.
+
+- **Slice 1 (no combat):** one castle, one owner, declaration window,
+  persistent ownership, tax state, monument interaction, admin recovery
+- **Slice 2 (combat-lite):** attacker/defender registration, bot squads,
+  objectives, structure health, victory state, reward settlement
+
+---
+
+## Work lanes (permanent, parallel)
+
+- **Lane A — Vision-critical milestones:** the roadmap above (M1-M10)
+- **Lane B — Upstream & correctness maintenance:** new regressions, upstream
+  merges, security/duplication bugs, persistence corruption, broad engine
+  defects, PR preparation ONLY with Josh's approval
+- **Lane C — Quick wins:** music wiring, premium labor data, FX groups,
+  small packet completions, low-risk data imports. Completed between larger
+  tasks; never delays the golden path.
+
+## Resolved planning decisions
+
+| Question | Decision |
+|----------|----------|
+| M1 full or trimmed? | Trimmed — shared engine fixes + golden route; backlog to Lane B |
+| Playtest cadence? | Per-change (focused repro + tests) / per-milestone (golden-path segment) / weekly (integrated human session from clean snapshot); restart mid-play every second week |
+| Siege slice? | Deferred to M10; begins no-combat ownership + tax |
+| Track 1 capstone? | The complete homestead-to-trade loop (M2-M4), NOT siege |
+| Bot density? | Staged gates: 10 correctness → 25 village → 50 soak → 100 only after profiling |
+| Track 2 priority? | Action contract → recovery → deterministic combat → curated questing → party → farming → crafting/hauling → schedules → social → LLM → siege |
+| Economy sim? | NO abstraction — bots use real systems (Bot Economic Participation) |
+
+## Experience scorecard (alongside the technical scorecard)
+
+| Experience | Current (provisional) | First target |
+|------------|----------------------|--------------|
+| Start and level with friends | 65% | 90% |
+| Build and maintain a homestead | 65% | 90% |
+| Craft and transport goods | 55% | 85% |
+| Travel using mounts and vehicles | 70% | 90% |
+| Survive restart without lost state | 65% | 95% |
+| Play with deterministic bots | 10% | 80% |
+| World continues while offline | 0-5% | 75% |
+| Competitive warfare | 40% | Deferred |
+
+Technical wiring (SCORECARD.md) and experience coverage are related but
+separate measurements — update both.
+
+## Timeline (directional, 3-5 sessions/week)
+
+| Period | Target |
+|--------|--------|
+| Weeks 1-2 | M1 quest and progression spine |
+| Week 3 | M2 golden-path harness |
+| Weeks 4-5 | M3 homestead integrity |
+| Weeks 6-7 | M4 trade and transport |
+| Weeks 8-9 | M5 bot action/observation layer |
+| Weeks 10-12 | M6 deterministic bot framework |
+| Weeks 13-15 | M7 adventurer and party bots |
+| Weeks 16-19 | M8 Living Village |
+| Later | M9 activities, M10 territory/siege |
+
+Dates are directional — quest data or vehicle attachment may reveal deeper
+work.
 
 ## Definition of done per milestone
 
+- [ ] Human scenario, automated scenario, AND restart-persistence scenario
+      defined and passing
 - [ ] Every task: branch, commits, tests (fail-before/pass-after), Rei signoff
 - [ ] Full local gate green: Release build + compiler-check + all tests
-- [ ] Scorecard row(s) updated in-branch; exploration report updated if needed
+- [ ] Both scorecards updated in-branch (technical wiring + experience)
 - [ ] STATUS.md reflects the milestone (Nei)
-- [ ] Deployed to the aaemu box (Mai) and sanity-checked in-game where possible
+- [ ] Deployed to aaemu box (Mai) + sanity-checked in-game where possible
 - [ ] No upstream PR without Josh's explicit approval
