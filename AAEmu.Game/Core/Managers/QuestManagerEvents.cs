@@ -200,6 +200,16 @@ public partial class QuestManager
             Killer = owner,
             Victim = npc
         });
+
+        // Start any quests that are accepted by killing this NPC (QuestActConAcceptNpcKill).
+        // The kill is the acceptor: the quest is added with QuestAcceptorType.Kill and the
+        // NPC's template id, which QuestActConAcceptNpcKill.RunAct matches on.
+        foreach (var questId in GetQuestIdsFromKillAcceptNpc(npc.TemplateId))
+        {
+            if (owner.Quests.HasQuest(questId) || owner.Quests.IsQuestComplete(questId))
+                continue;
+            owner.Quests.AddQuest(questId, false, QuestAcceptorType.Kill, npc.TemplateId);
+        }
     }
 
     /// <summary>

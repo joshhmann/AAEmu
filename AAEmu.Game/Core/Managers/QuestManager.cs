@@ -42,6 +42,7 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
     private readonly Dictionary<string, Dictionary<uint, QuestActTemplate>> _actTemplatesByDetailType = [];
     private readonly Dictionary<uint, List<uint>> _groupItems = [];
     private readonly Dictionary<uint, List<uint>> _groupNpcs = [];
+    private readonly Dictionary<uint, List<uint>> _killAcceptQuestsByNpc = [];
     private readonly Dictionary<uint, QuestComponentTemplate> _componentTemplates = [];
     public Dictionary<uint, Dictionary<uint, QuestTimeoutTask>> QuestTimeoutTask { get; } = [];
     private Queue<Quest> EvaluationQueue { get; } = new();
@@ -253,6 +254,7 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
             LoadQuestItemGroups(connection);
             LoadQuestMonsterNpcs(connection);
 
+            BuildKillAcceptQuestIndex();
             UpdateQuestComponentActs();
         }
         Logger.Info($"Loaded {_questTemplates.Count} quests");
@@ -344,6 +346,48 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
                 npcs = npcIdList;
             npcs.Add(npcId);
         }
+    }
+
+    /// <summary>
+    /// Builds a lookup of NpcId -> quest template ids whose Start component contains a
+    /// QuestActConAcceptNpcKill act for that NPC. Used by the kill path to start quests
+    /// that are accepted by killing a specific NPC.
+    /// </summary>
+    private void BuildKillAcceptQuestIndex()
+    {
+        _killAcceptQuestsByNpc.Clear();
+        if (!_actTemplatesByDetailType.TryGetValue(nameof(QuestActConAcceptNpcKill), out var killAcceptActs))
+            return;
+
+        foreach (var act in killAcceptActs.Values)
+        {
+            if (act is not QuestActConAcceptNpcKill killAct)
+                continue;
+            if (killAct.ParentComponent?.KindId != QuestComponentKind.Start)
+                continue;
+            var questId = killAct.ParentComponent.ParentQuestTemplate?.Id ?? 0;
+            if (questId == 0)
+                continue;
+            if (!_killAcceptQuestsByNpc.TryGetValue(killAct.NpcId, out var questIds))
+            {
+                questIds = [];
+                _killAcceptQuestsByNpc.Add(killAct.NpcId, questIds);
+            }
+            if (!questIds.Contains(questId))
+                questIds.Add(questId);
+        }
+
+        Logger.Info($"Built kill-accept quest index for {_killAcceptQuestsByNpc.Count} NPCs");
+    }
+
+    /// <summary>
+    /// Gets quest template ids that can be accepted by killing the given NPC
+    /// </summary>
+    /// <param name="npcId">Template id of the killed NPC</param>
+    /// <returns>List of quest template ids (empty if none)</returns>
+    public List<uint> GetQuestIdsFromKillAcceptNpc(uint npcId)
+    {
+        return _killAcceptQuestsByNpc.TryGetValue(npcId, out var questIds) ? questIds : [];
     }
 
     /// <summary>

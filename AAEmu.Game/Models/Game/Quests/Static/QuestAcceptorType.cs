@@ -8,5 +8,6 @@ public enum QuestAcceptorType
     Sphere = 3,
     Item = 4,
     Skill = 5,
-    Buff = 6
+    Buff = 6,
+    Kill = 7
 }

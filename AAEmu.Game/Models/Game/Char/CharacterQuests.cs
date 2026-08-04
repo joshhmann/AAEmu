@@ -167,6 +167,8 @@ public class CharacterQuests(Character owner)
     public bool AddQuestFromNpc(uint questId, uint npcObjId)
     {
         var npc = Owner.ParentWorld.GetNpc(npcObjId);
+        if (npc == null)
+            return false;
         Owner.CurrentTarget = npc;
         return AddQuest(questId, false, QuestAcceptorType.Npc, npc.TemplateId);
     }
