@@ -22,8 +22,8 @@
 - scorecard: `python3 /tmp/scorecard2.py` (regenerate) — but update SCORECARD.md in THIS branch
 - build: `dotnet build --configuration Release AAEmu.slnx`
 - compiler-check: `dotnet run --configuration Release --no-build --project AAEmu.Game/AAEmu.Game.csproj compiler-check`
-- tests (full): `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build`
-- tests (filtered): `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --filter "FullyQualifiedName~<Name>"`
+- tests (full): `./scripts/gate.sh`
+- tests (filtered): `./scripts/gate.sh <ClassName>   # MTP treenode-filter: /*/*/<ClassName>/*`
 - live sqlite queries (for data understanding): ssh root@192.168.0.165 + python3 sqlite3 on /root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3
 
 ## Verify (ALL must pass before merge to fork develop)
