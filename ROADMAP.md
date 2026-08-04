@@ -284,6 +284,17 @@ command correctly) pass independent of any controller.
   assist party target, loot, return home
 - **6.4 Config:** spawn count, zone density, tick rate, allowed activities,
   home position, class/equipment templates, debug overlay, admin pause
+- **6.5 Fidelity tiers (population scalability — do NOT simulate 1000 full
+  players; only nearby/relevant bots run expensive):**
+  - **Tier 1 — Full PlayerBot:** combat, navigation, parties
+  - **Tier 2 — Reduced simulation:** coarse movement, trade, farming
+  - **Tier 3 — Scheduled simulation:** harvest timers, crafting, travel
+    progress (DB-driven, tick-light)
+  - **Tier 4 — Dormant:** loaded only when needed
+  - The Population Director (M7+) assigns fidelity by proximity, relevance,
+    and activity; a player walking into town "upgrades" nearby citizens
+    from Tier 3/4 to Tier 1/2 without the world paying for 1000 full
+    simulations at once.
 
 **Exit test:** 10 bots run 6 hours with no unrecovered loops, no inventory
 duplication, no runaway combat, no DB corruption, no tick-budget overrun.
