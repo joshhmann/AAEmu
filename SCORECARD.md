@@ -91,6 +91,15 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   — all now startable on kill. Quest 1119 (upstream #1208) is actually a plain
   Npc-accept quest (Npc 2237), not part of this family.
 
+- **BUG-009 — item-group gather/use objectives stall (FIXED on `fix/quest-item-group-objectives`, 2026-08-04).**
+  `QuestActObjItemGroupGather`/`QuestActObjItemGroupUse` RunAct fell through to the base
+  stub ("not implemented", returns false) — 9 act rows stall: 4 live gather quests
+  (5490 신기루 섬을 깨끗하게, 6578 이이제이, 6600 보다 더 강력한 힘, 6615 신의 방패
+  정식 대원이 되다!) + test quest 5489 (use), 4 orphaned contexts (1955/1957/2140/1958).
+  Both acts now implement real objective counting following their single-item siblings,
+  group-expanded via `QuestManager.GetGroupItems`/`CheckGroupItem` (any group item
+  counts). Gather also mirrors cleanup/destroy-on-drop item removal. 14 new unit tests.
+
 ### System-level bugs (non-quest)
 
 - #696 [skill] [BUG] Tree thinning of old trees doesn't work as intended
