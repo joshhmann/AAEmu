@@ -1,0 +1,14 @@
+{
+  "environment": "aaemu-.165",
+  "git_sha": "3040508a3b62ee8d90e6ce4ab01c978353bd8500",
+  "deployed_at": "2026-08-03T21:35:00-07:00",
+  "milestone": "M1.0 (BUG-006 kill-acceptor)",
+  "database_backup": "none_required_no_schema_change",
+  "services": {
+    "db": "healthy",
+    "login": "healthy",
+    "game": "healthy (0 errors in boot log)",
+    "adminer": "healthy"
+  },
+  "notes": "380 kill-starter quests unstuck. Deployed per WORKFLOW.md exact-SHA procedure (git merge --ff-only fork/develop). No upstream PR (lane gate)."
+}
