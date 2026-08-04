@@ -127,6 +127,11 @@ expectations · clean database snapshot. (Selected race/faction, zones,
 quest chain, skill builds, mount, housing zone, crop chain, crafting chain,
 trade-pack recipe, land route, cart/hauler, short sea route if viable.)
 
+**Golden-path zone — LOCKED (Josh, 2026-08-03): SOLZREED.** The Nuian
+coastal starter zone: starter quests, nearby farms, trade pack routes, safe
+waters. Route selection starts from Solzreed outward (Solzreed → adjacent
+zones as the loop expands).
+
 **Exit tests (two tiers — don't let scheduling block readiness):**
 - **Required correctness run:** two players complete the full loop twice,
   including a server restart, without GM repair.
