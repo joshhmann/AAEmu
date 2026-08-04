@@ -39,11 +39,11 @@ World events funnel through `CharacterEvents`/`UnitEvents` → `QuestManagerEven
 | con_accept_* (13) | ✅ all | ✅ kill-accept bug FIXED 2026-08-03 (BUG-006, fix/quest-kill-acceptor) |
 | con_* (4) | ✅ all | |
 | etc_* (1) | ✅ | |
-| obj_* (30) | ❌ **`quest_act_obj_aliases` never SELECTed** (0 refs in `AAEmu.Game`; 2,746 rows in DB) | 29 loaded |
+| obj_* (30) | ✅ 29 loaded + 1 verified dormant | `quest_act_obj_aliases` = id→name dict, ZERO live refs in 1.2 data (verdict 2026-08-04, see §2 note) |
 | supply_* (11) | ✅ all | |
 
 - **All 15 `UnusedActs` classes are actually instantiated by the loader** (verified `new QuestActXxx(` for each) — the "Unused" label means stub logic, not unloaded.
-- **2,746 DB rows reference aliases via `use_alias`/`quest_act_obj_alias_id`** (e.g. `QuestManager.cs:905-906, 943-944, 1018-1019, 1040-1041, 1041, 1260-1261…`), but `quest_act_obj_aliases` data never loads — dangling FKs everywhere.
+- **CORRECTED 2026-08-04 (Tai verdict, live evidence against prod compact.sqlite3):** `quest_act_obj_aliases` is a DORMANT id→name dictionary — **0 rows** across all 27 act-obj tables have `use_alias=1`, **0** `quest_acts` rows have `act_detail_type=QuestActObjAlias` (26,886 acts total), and nothing in AAEmu.Game SELECTs it. The earlier "2,746 dangling FKs" read was wrong: the rows are the dictionary itself and nothing in the 1.2 data references them. (The 17,735 act_detail_id "collisions" with alias ids are per-table id-space restart, not FKs.) `use_alias` is read at QuestManager.cs:949/987/1031/1062/1084/1107/… — column exists, every row is 0. **No loader needed.**
 - Non-act quest tables: `quest_contexts`, `quest_components`, `quest_acts`, `quest_supplies`, `quest_item_group_items`, `quest_monster_npcs` loaded. **Zero refs**: `quest_cameras`, `quest_chat_bubbles`, `quest_component_texts`, `quest_context_texts`, `quest_item_groups`, `quest_names`, `quest_mail_*` (5), `quest_tasks`/`quest_task_quests` (DB has 0 rows anyway), `quest_monster_groups`.
 
 ## 3. Upstream-broken quests (issue # → real quest id)
@@ -65,13 +65,13 @@ Quest 1119 (upstream #1208) is actually a plain Npc-accept quest (Npc 2237), not
 ## 4. What fixing the most common failure classes takes
 
 1. ~~**Kill-accept starters (highest impact, ~40 quests)**~~ — **✅ DONE 2026-08-03** (BUG-006, branch `fix/quest-kill-acceptor`): added `QuestAcceptorType.Kill`, wired `Npc.cs` death path (`DoOnMonsterHuntEvents`, `Npc.cs:877/986/1019`) to check `QuestActConAcceptNpcKill` via a load-time index and call `AddQuest(..., Kill, npc.TemplateId)`, and fixed `QuestActConAcceptNpcKill.RunAct` to match. Live data: 380 quests affected, not ~40.
-2. **Load `quest_act_obj_aliases`:** add one loader block to `LoadDetailQuestActTemplates` (`QuestManager.cs`), populate `_actTemplatesByDetailType["QuestActObjAlias"]`, and resolve FK lookups where `use_alias=true` acts reference alias ids (2,746 rows) so alias/UI-only acts resolve and don't dangle.
+2. ~~**Load `quest_act_obj_aliases`**~~ — **✅ NO-OP 2026-08-04**: investigated with live data (verdict above) — dormant table, zero references in 1.2 data. No loader, no reconciliation. Revisit only if a future data pack sets `use_alias=1`.
 3. **Audit stub acts**: `QuestActCheckCompleteComponent`..`QuestActConAcceptComponent` etc. (UnusedActs) return `true`/`false` without real checks; each needs a gameplay decision (must-return-`false` vs functional), since quests relying on them either auto-complete or stall silently.
 4. **Doodad-interaction/phase objectives (`QuestActObjInteraction` wi_id+phase TODOs, `QuestActObjItemUse` skill-use gating):** verify the doodad phase-change event source reaches `DoDoodadInteractionEvents` and that `Phase`/`highlight` semantics are honored — this is the observed failure in 922/3889/3447.
-5. **Sanity tooling:** a startup verifier that cross-checks every `quest_acts.act_detail_type` against the class registry and every referred detail-id against its loaded detail table (catches missing tables like `quest_act_obj_aliases` and orphaned acts immediately).
+5. **Sanity tooling:** a startup verifier that cross-checks every `quest_acts.act_detail_type` against the class registry and every referred detail-id against its loaded detail table (catches orphaned act types immediately; dormant tables like `quest_act_obj_aliases` are informational, not errors).
 
 ## Findings summary
 
 - Traced the full engine: `QuestManager.Load` (7-stage loader), runtime `Quest→QuestStep→QuestComponent→QuestAct`, accept/progress/complete packet handlers (`CSStartQuestContextPacket`, `CSCompleteQuestContextPacket`, `CSQuestTalkMadePacket`, `CSDropQuestContextPacket`), event queue, persistence.
-- Table coverage: 64/65 `quest_act_*` SELECTed; produced exact missing-table, missing-act-class, and missing-non-act findings.
+- Table coverage: 64/65 `quest_act_*` SELECTed (the 1 unloaded, `quest_act_obj_aliases`, verified DORMANT 2026-08-04 — no live references in 1.2 data); produced exact missing-table, missing-act-class, and missing-non-act findings.
 - Queried live sqlite on 192.168.0.165 for quests 1208/1257/1329/922/111/3889/3447/1119 and pulled real upstream issue bodies; identified the copy-paste `QuestActConAcceptNpcKill` acceptor bug as the cleanest root-cause across the 40-quest kill-starter family.

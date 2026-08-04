@@ -87,7 +87,7 @@ route. Individual peripheral quest bugs → Lane B (maintenance).
 
 **Work:**
 - Merge/reconcile the parked kill-acceptor fix (BUG-006)
-- Load + validate quest_act_obj_aliases (2,746 dangling rows)
+- ~~Load + validate quest_act_obj_aliases (2,746 dangling rows)~~ — ✅ VERDICT 2026-08-04: dormant id→name dict, zero live refs in 1.2 data (no use_alias=1 rows, no QuestActObjAlias act type) — no-op
 - Audit stub acts (silent auto-complete/stall)
 - Quest sanity verifier (startup cross-check)
 - Fix common doodad phase/interaction objectives (quests 922/3889/3447)
