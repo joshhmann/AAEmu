@@ -1,4 +1,4 @@
-# ArcheAge Slums — Roadmap & Milestones (v2, reshaped 2026-08-03)
+# ArcheAge Slums — Roadmap & Milestones (v4, locked-shape 2026-08-03)
 
 > **🚫 THE RULE (Josh, permanent): NEVER push a PR to upstream AAEmu/AAEmu
 > unless Josh explicitly approves it.** Everything stays in our own lane.
@@ -63,10 +63,17 @@ route. Individual peripheral quest bugs → Lane B (maintenance).
 **Priority order:** shared engine defects → golden-route blockers → silent
 corruption → peripheral quests.
 
-**Exit test (human + automated):** new character enters world, completes
-curated opening chain, gains levels, receives rewards, logs out and
-continues, reaches first-mount prerequisite. Automated: scripted actor runs
-the same chain via the golden path.
+**Exit tests (pre-M5 automation distinction — NO accidental M5 dependency):**
+- **Human:** new character enters world, completes curated opening chain,
+  gains levels, receives rewards, logs out and continues, reaches
+  first-mount prerequisite.
+- **Automated (pre-M5):** engine-level scenario tests verify shared quest
+  transitions, aliases, rewards, persistence, and known blockers — using
+  existing test facilities, NOT the gameplay actor contract (that arrives
+  in M5). After M5, the golden route is replayed THROUGH the actor contract
+  as a contract-level regression scenario.
+- **Restart-persistence:** the character resumes the route after server
+  restart.
 
 ---
 
@@ -86,8 +93,12 @@ expectations · clean database snapshot. (Selected race/faction, zones,
 quest chain, skill builds, mount, housing zone, crop chain, crafting chain,
 trade-pack recipe, land route, cart/hauler, short sea route if viable.)
 
-**Exit test:** four humans complete the loop twice including one server
-restart. **This is the first real playable release.**
+**Exit tests (two tiers — don't let scheduling block readiness):**
+- **Required correctness run:** two players complete the full loop twice,
+  including a server restart, without GM repair.
+- **Release validation:** four players complete one integrated session
+  before the milestone is marked production-validated.
+**This is the first real playable release.**
 
 ---
 
@@ -169,8 +180,22 @@ contract. Estimated 2-4 focused sessions (existing primitives are reusable).
 generalized navigation rewrite · no core gameplay interface replacement ·
 no bot-only inventory or combat behavior.
 
+**Action surface tiers (contract defines the FULL vocabulary; implementations land in slices):**
+- **M5 required actions:** Observe · Move · Stop · Target · Cast · Interact ·
+  Loot · UseItem · Mount/Dismount
+- **M5.1 economic extension:** Plant · Harvest · Craft · PackPickup/PutDown ·
+  BoardVehicle · Buy/Sell · Deposit/Withdraw
+
+Slicing keeps M5 from expanding when crafting or vehicle APIs expose
+special cases.
+
 **Architectural rule:** invokes normal gameplay services only — no direct
 DB manipulation, no bot-only resource creation.
+
+**Bot audit trail:** every action emits a structured trace record —
+`{trace_id, actor_id, action, target_id, requested_at, started_at,
+completed_at, result, state_changes}` — supporting both debugging and the
+M8 economic audit.
 
 **Exit test:** a scripted actor completes the curated golden-path primitives
 and produces a machine-readable trace showing every request, transition,
@@ -181,6 +206,14 @@ command correctly) pass independent of any controller.
 
 ## M6 — Deterministic playerbot framework
 
+- **6.0 PlayerBot embodiment decision (checkpoint at end of M5 / start of M6):**
+  Determine and document whether PlayerBot wraps a normal Character,
+  subclasses/extends an existing player entity, or uses another additive
+  composition model. **Preference: a playerbot owns or inhabits an ORDINARY
+  character record wherever technically feasible** — real inventory,
+  equipment, skills, quests, mounts, property ownership, mail, economy
+  participation. A separate bot persistence model risks becoming a parallel
+  game implementation; keep any runtime wrapper additive and thin.
 - **6.1 Core:** BotManager, PlayerBot entity, tick registration, spawn/
   despawn, persistent identity/inventory/position, controlled logout,
   per-bot diagnostics, tick budget accounting
@@ -305,14 +338,19 @@ separate measurements — update both.
 | Period | Target |
 |--------|--------|
 | Weeks 1-2 | M1 quest and progression spine |
-| Week 3 | M2 golden-path harness |
-| Weeks 4-5 | M3 homestead integrity |
-| Weeks 6-7 | M4 trade and transport |
-| Weeks 8-9 | M5 gameplay actor contract |
-| Weeks 10-12 | M6 deterministic bot framework |
-| Weeks 13-15 | M7 adventurer and party bots |
-| Weeks 16-19 | M8 Living Village |
+| Week 3 | M2 golden-path release gate |
+| Week 4 | M3a homestead shell |
+| Weeks 5-6 | M3b persistence and recovery |
+| Weeks 7-8 | M4 trade and transport |
+| Weeks 9-10 | M5 gameplay actor contract |
+| Weeks 11-13 | M6 deterministic bot framework |
+| Weeks 14-16 | M7 adventurer and party bots |
+| Weeks 17-20 | M8 Living Village |
 | Later | M9 activities, M10 territory/siege |
+
+M3b and M4 are the highest-variance items — persistence bugs have
+nonlinear scope (object identity, save ordering, parent/child restoration,
+phase-state serialization, duplicate loading, schema deficiencies).
 
 Dates are directional — quest data or vehicle attachment may reveal deeper
 work.
@@ -325,5 +363,27 @@ work.
 - [ ] Full local gate green: Release build + compiler-check + all tests
 - [ ] Both scorecards updated in-branch (technical wiring + experience)
 - [ ] STATUS.md reflects the milestone (Nei)
-- [ ] Deployed to aaemu box (Mai) + sanity-checked in-game where possible
+- [ ] Milestone release candidate deployed to the AAEmu box by Mai and
+      sanity-checked in-game (individual tasks pass the local gate first —
+      production churn only at milestone / release-candidate boundaries)
 - [ ] No upstream PR without Josh's explicit approval
+
+## Deployment discipline (exact-SHA, auditable)
+
+- **Deployments are EXACT-SHA, never convenience pulls:** on prod,
+  `git merge --ff-only fork/develop` — production never generates merge
+  commits. Refuse deployment if `git status --short` shows uncommitted
+  source changes (environment drift check).
+- **Milestone releases get tags:** `git tag living-village-m1-rc1 <sha>`
+  pushed to the fork; production deploys the exact tag or SHA. The
+  production record becomes: `M1 deployed: <sha>` / previous deployment:
+  `<sha>`.
+- **Deployment manifest** (`deployments/production.json`, written by the
+  deploy script, not hand-maintained): environment, git SHA, deployed_at,
+  milestone, database backup name, service health (db/login/game/adminer).
+- **DB-changing milestones (M3b, M4+):** record pre-deploy database backup,
+  schema/update revision, and Docker image IDs alongside the SHA.
+- **Rollback:** `git reset --hard <previous SHA>` + rebuild. For
+  DB-changing releases, roll back per the manifest's backup.
+- **Bot audit trail** (M5+): structured trace records support debugging AND
+  economic auditing — see M5.

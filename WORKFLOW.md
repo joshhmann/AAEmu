@@ -15,6 +15,50 @@ community-standard process is followed regardless, so PRs stay possible.
 v2 added the upstream merge bar (CI gates, Greptile, PR checklist) — that
 knowledge is still the standard we hold ourselves to internally.
 
+## Repository topology (canonical)
+
+```
+OPENCLAW (dev box)               GITHUB (fork)                  AAEMU BOX .165 (prod)
+/root/aaemu-dev                  joshhmann/AAEmu                /root/AAEmu
+origin = joshhmann/AAEmu  ─────►  develop ◄───────────────────  fork = joshhmann/AAEmu
+(branch/work/test here)          (source of truth)              (docker compose runs here)
+                                                                origin = AAEmu/AAEmu (upstream pulls)
+```
+
+- **Host roles:** openclaw = development only. aaemu box = production only.
+- **Source-of-truth rule:** GitHub fork `develop` is the only relay between
+  them. Never copy source directly openclaw→prod; never develop in
+  /root/AAEmu on prod; production never receives unreviewed working-tree
+  changes.
+- **Remote mapping (intentional asymmetry):** openclaw's `origin` is the
+  fork (dev default). Prod's `origin` is upstream AAEmu/AAEmu (for `git pull
+  upstream`); prod's `fork` is joshhmann/AAEmu (deployable).
+- **Deploy procedure** (Mai coordinates; exact-SHA, see ROADMAP §Deployment
+  discipline):
+
+```bash
+ssh aaemu
+cd /root/AAEmu
+git status --short          # refuse if dirty (drift check)
+git fetch fork
+git switch develop
+git merge --ff-only fork/develop   # production never generates merge commits
+DEPLOY_SHA="$(git rev-parse HEAD)"
+docker compose config --quiet
+docker compose up -d --build game
+docker compose ps
+echo "Deployed ${DEPLOY_SHA}"      # record in deployments/production.json
+```
+
+- **Rollback:** `git reset --hard <previous-sha>` + `docker compose up -d
+  --build game`. For DB-changing releases, restore per the deployment
+  manifest's pre-deploy backup.
+- **Milestone releases:** tag on the fork (`git tag living-village-m1-rc1
+  <sha>`), prod deploys the exact tag/SHA.
+- **Deployment manifest:** `deployments/production.json` (env, git SHA,
+  deployed_at, milestone, DB backup, service health) — written by the
+  deploy script, never hand-maintained.
+
 ## Environment
 
 - Repo (dev): /root/aaemu-dev — fork clone, branch `develop`, tracks joshhmann/AAEmu
@@ -81,16 +125,24 @@ Sonar + CodeQL run on push to develop/master (quality gates, no PR block).
    Fix / Verification / Notes. Until then the branch lives on our fork —
    the process is identical either way, so a future PR is just a push + form.
 
-## Deploy to prod (only after PR merged to fork develop)
+## Deploy to prod (exact-SHA — see §Repository topology for full procedure)
 
 ```bash
 ssh aaemu
-cd /root/AAEmu && git fetch fork && git checkout develop && git pull fork develop
+cd /root/AAEmu
+git status --short          # refuse if dirty (drift check)
+git fetch fork
+git switch develop
+git merge --ff-only fork/develop
+DEPLOY_SHA="$(git rev-parse HEAD)"
 docker compose up -d --build game
-docker compose ps   # verify healthy
+docker compose ps
+echo "Deployed ${DEPLOY_SHA}"   # record in deployments/production.json
 ```
 
-Rollback: `git revert` on the box + `docker compose up -d --build game`.
+Rollback: `git reset --hard <previous-sha>` + `docker compose up -d
+--build game`. DB-changing releases restore per the manifest's pre-deploy
+backup.
 
 ## Tracking discipline (every change, no exceptions)
 
