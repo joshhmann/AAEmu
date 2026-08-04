@@ -4,10 +4,11 @@ Goal: safe, reviewable changes to joshhmann/AAEmu that keep the running
 server stable AND follow community standards — WITHOUT pushing upstream
 unless Josh explicitly approves it.
 
-> **THE RULE (Josh, 2026-08-03):** Every fix and every feature follows the
-> full workflow — branch, separate commits, tests, scorecard update, all
-> tracked. We stay in OUR OWN LANE. No upstream PRs for now. When we feel
-> ready after testing, we decide together and push then.
+> **🚫 THE RULE (Josh, 2026-08-03 — at the top, permanent):** **NEVER push a
+> PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.** Every fix
+> and every feature follows the full workflow — branch, separate commits,
+> tests, scorecard update, all tracked. We stay in OUR OWN LANE. When we
+> feel ready after testing, we decide together and push then.
 
 v3 changes: added the lane gate — upstream PRs are OFF by default; the
 community-standard process is followed regardless, so PRs stay possible.

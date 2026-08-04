@@ -1,7 +1,9 @@
 # ArcheAge Slums — Fork Vision & Lane Strategy
 
-> **THE TOP LINE (Josh, 2026-08-03):** We stay in our own lane for a lot of
-> things, and pull from upstream. Our fork is a product, not a patch queue.
+> **🚫 THE TOP LINE (Josh, 2026-08-03 — permanent, non-negotiable):**
+> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
+> Everything below happens in our own lane on joshhmann/AAEmu. This rule
+> sits above every other process rule in this repo.
 
 ## The vision
 
@@ -19,6 +21,29 @@ Target features (our lane):
   house, crafting, trade runs
 - **Simulated PvP / sieges** — bots populating conflict zones, sieges,
   world events so the world feels fought-over
+
+## Division routing (the whole Hyrax division runs this)
+
+This is a DIVISION operation, not a solo project. Every task routes through
+the sisters — each has a lane and a handoff contract:
+
+| Sister | Lane | Owns | Handoff out |
+|--------|------|------|-------------|
+| **Tai** | builds | implementation, architecture, infra, graphify, the fork | branch + test evidence → Rei |
+| **Rei** | verifies | QA gate: repro cases, regression checks, evidence signoff (fail-before/pass-after) | verified status → Nei |
+| **Mai** | dispatches | runtime support, logistics, stuck-worker rescue, handoffs, deployment to the aaemu box | field-ready state → Tai/Rei |
+| **Nei** | tracks | roadmap, spec, PM state, scorecard/status currency, continuity | STATUS.md + scorecard → everyone |
+
+Rules:
+- **Tai cannot mark a fix complete without Rei's evidence gate.**
+- Rei signs off with file:line + test results; Tai's branch must prove
+  fail-before/pass-after for the new tests.
+- Blocked or stuck → Mai (she rescues/coordinates; she owns the "who's
+  blocked" picture).
+- Every completed item flows to Nei for scorecard + STATUS.md update —
+  that's the "always updated on what's going on" guarantee.
+- Templates in `.kanban-templates/` encode this routing; see also the
+  sister-council skill for how we convene.
 
 ## The two lanes
 
