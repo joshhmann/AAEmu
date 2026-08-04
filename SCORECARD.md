@@ -90,6 +90,12 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   **380 quests** had ALL Start acts as kill-accepts (e.g. 182, 205, 556, 913, 1057, 1208)
   — all now startable on kill. Quest 1119 (upstream #1208) is actually a plain
   Npc-accept quest (Npc 2237), not part of this family.
+- **BUG-007 — quest data defects fail silently (FIXED on `feat/quest-sanity-verifier`, 2026-08-04).**
+  New `QuestSanityVerifier` (startup cross-check at end of `QuestManager.Load`): collects
+  unknown/uninstantiated/detached act types, broken component/quest/item-group refs,
+  M1-2 known stubs, orphaned rows and the alias-dormancy verdict — logged loudly
+  (Error/Warn/Info), never throws (matches loader behavior). 14 unit tests cover every
+  finding class. Full defect catalog: bugs/007-quest-sanity-verifier.md.
 
 ### System-level bugs (non-quest)
 
