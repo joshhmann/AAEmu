@@ -98,7 +98,7 @@ backing-field injection to bypass the ItemManager singleton), and fires the real
 `UnitEvents` delegates — no mocks on the code under test.
 
 Gate: Release build 0 errors · compiler-check 0 errors · full unit suite green
-(baseline 1096 + 14 new = 1110).
+(baseline 1082 + 14 new = 1096).
 
 ## Upstream note
 
