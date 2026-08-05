@@ -18,6 +18,7 @@
         "GodMode": false,
         "GeoDataMode": true,
         "PreLoadTerrain": false,
+        "NpcMaxStepHeight": 0.5,
         "MaxInstances": 32,
         "TargetPhysicsTps": 25.0,
         "WindModel": "Official",

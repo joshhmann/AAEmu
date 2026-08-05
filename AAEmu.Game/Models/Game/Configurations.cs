@@ -159,6 +159,18 @@ public class WorldConfig
     /// Level at which a player starts losing exp and durability on death
     /// </summary>
     public int MinimumExpLossLevel { get; set; } = 10;
+
+    /// <summary>
+    /// Max vertical rise (in meters) an NPC may climb in a single movement tick
+    /// before the slope/step gate in <c>Npc.MoveTowards</c> rejects the step.
+    /// Stops NPCs from walking straight up cliff faces and steep slopes where
+    /// navmesh data is missing (chase/roam beeline would otherwise climb any
+    /// wall at full speed). Flat ground is unaffected (height delta ~ 0);
+    /// downward steps are never blocked. Set to 0 to disable the gate entirely.
+    /// Default: 0.5 — typical walkable step height (≈ client step-up).
+    /// Configure in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.NpcMaxStepHeight</c>.
+    /// </summary>
+    public float NpcMaxStepHeight { get; set; } = 0.5f;
 }
 
 public class DungeonLoadConfig
