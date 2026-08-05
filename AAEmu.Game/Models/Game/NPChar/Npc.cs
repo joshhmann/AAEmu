@@ -1147,6 +1147,39 @@ public partial class Npc : Unit
     }
 
     /// <summary>
+    /// Cells (1024m) already warned about missing terrain height data — the warning
+    /// fires once per cell instead of on every 100ms movement tick.
+    /// </summary>
+    private static readonly ConcurrentDictionary<(int CellX, int CellY), byte> s_missingHeightmapCells = [];
+
+    /// <summary>
+    /// Slope/step gate decision for <see cref="MoveTowards"/>: a tick's XY step is
+    /// rejected when the terrain at the destination is more than
+    /// <paramref name="maxStepHeight"/> above the current position (steep uphill
+    /// step / cliff face). Returns false — step allowed — when there is no terrain
+    /// data (heightmap/navmesh missing, <paramref name="destinationTerrainZ"/> == 0)
+    /// or when the rise is within the walkable step. Downward steps are never blocked.
+    /// </summary>
+    internal static bool IsStepBlocked(float currentZ, float destinationTerrainZ, float maxStepHeight)
+    {
+        return destinationTerrainZ != 0f && destinationTerrainZ - currentZ > maxStepHeight;
+    }
+
+    /// <summary>
+    /// Logs a one-time warning (per 1024m cell) when no terrain height data exists at
+    /// the destination, then falls back to the legacy movement behavior.
+    /// </summary>
+    private static void WarnMissingTerrainDataOnce(float x, float y)
+    {
+        var cellX = (int)(x / WorldManager.CELL_SIZE);
+        var cellY = (int)(y / WorldManager.CELL_SIZE);
+        if (s_missingHeightmapCells.TryAdd((cellX, cellY), 0))
+        {
+            Logger.Warn($"MoveTowards: no terrain height data at cell {cellX:000}_{cellY:000} (x={x:0.#}, y={y:0.#}) — skipping slope gate, using fallback height (legacy behavior)");
+        }
+    }
+
+    /// <summary>
     /// Moves towards the target position
     /// </summary>
     /// <param name="other">Target position</param>
@@ -1208,6 +1241,30 @@ public partial class Npc : Unit
         // TODO: Implement proper use for Transform.World.AddDistanceToFront
         var (newX, newY, newZ) = World.Transform.PositionAndRotation.AddDistanceToFront(travelDist, targetDist, Transform.Local.Position, other);
         var targetPositionZ = WorldManager.Instance.GetReferenceHeight(Ai, newX, newY, newZ, Transform.ZoneId);
+
+        // Slope/step gate: before committing this tick's XY step, verify the terrain
+        // at the destination does not rise more than a walkable step above the current
+        // position. Without this, the straight-line chase/roam fallback (empty navmesh
+        // -> FindPath returns []) walks NPCs straight up cliff faces ("walking into
+        // hills"). Flat ground and gentle slopes pass (delta <= NpcMaxStepHeight);
+        // steep upward steps are rejected and the NPC halts until the path re-evaluates.
+        // Downward steps are never blocked (NPCs may walk off ledges). Where no terrain
+        // data exists (missing heightmap cell / navmesh) the gate is skipped and the
+        // legacy fallback behavior is kept, with a one-time warning per cell.
+        var maxStepHeight = AppConfiguration.Instance.World.NpcMaxStepHeight;
+        if (maxStepHeight > 0f)
+        {
+            var terrainHeight = WorldManager.Instance.GetHeight(Transform.ZoneId, newX, newY, newZ);
+            if (terrainHeight == 0f)
+            {
+                WarnMissingTerrainDataOnce(newX, newY);
+            }
+            else if (IsStepBlocked(Transform.Local.Position.Z, terrainHeight, maxStepHeight))
+            {
+                return false; // blocked by a step/slope steeper than walkable — halt
+            }
+        }
+
         Transform.Local.SetPosition(newX, newY, targetPositionZ);
 
         var angle = MathUtil.CalculateAngleFrom(Transform.Local.Position, other);
