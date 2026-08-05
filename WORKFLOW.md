@@ -59,6 +59,32 @@ echo "Deployed ${DEPLOY_SHA}"      # record in deployments/production.json
   deployed_at, milestone, DB backup, service health) — written by the
   deploy script, never hand-maintained.
 
+## Upstream alignment rules (Josh, locked 2026-08-04)
+
+These sit with THE RULE — they keep the fork community-shaped. Full text in
+`ROADMAP.md` §Standing rules + `Docs/wiki/Development-Conventions.md`
+(current-state verification notes included there).
+
+1. Target AAEmu `develop`, .NET 10 (global.json).
+2. Aspire AppHost for LOCAL contributor debugging; prod stays on the current
+   Docker Compose deployment (deployments/production.json).
+3. `compact.sqlite3` = read-only reference data. Mutable state → MySQL or an
+   additive bot metadata schema.
+4. Config precedence `Config.json` → `Configurations/*.json` →
+   `Config.Local.json`; machine-specific hosts/secrets/paths never in shared
+   config.
+5. Server listings via `GameServers` config — never legacy
+   `aaemu_login.game_servers`.
+6. Explicit constructor dependencies where AAEmu supports them; no hidden
+   singleton lookup / undocumented startup order.
+7. Startup loading can be parallel — concurrency-safe collections + init.
+8. AAEmu-native terminology: Doodad/Mate/Slave/Transfer/Expedition/Dominion/
+   Ability/ActAbility (see wiki table).
+9. PlayerBots compose around ordinary `Character` records + normal gameplay
+   services — no parallel gameplay implementation.
+10. Additive layer: composition/adapters/extension points first; narrow
+    reviewed core hooks only; never a parallel gameplay path.
+
 ## Environment
 
 - Repo (dev): /root/aaemu-dev — fork clone, branch `develop`, tracks joshhmann/AAEmu

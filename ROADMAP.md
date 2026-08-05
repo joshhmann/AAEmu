@@ -31,7 +31,10 @@
   milestone (they measure different things).
 - Bots must invoke normal AAEmu gameplay services — no direct DB
   manipulation, no bot-only resource creation.
-- Additive layer rule: no core-interface rewrites; keeps upstream pulls clean.
+- Additive layer rule (refined 2026-08-04): prefer composition, adapters, and
+  existing extension points. Allow only narrow, reviewed core hooks when
+  required to reuse the normal Character/session lifecycle — and NEVER create
+  a parallel character, inventory, quest, property, or economy implementation.
 - **Test boundary rule (actor vs playerbot):** *Actor contract tests* prove
   the server can execute and observe a command correctly. *Playerbot
   behavior tests* prove a controller chooses the right command sequence.
@@ -67,6 +70,42 @@
   `chatter/{lawful,greedy,cheerful,paranoid,pirate,farmer,merchant,guard}/`.
   **Living Village launches with ZERO LLM dependency** — canned + procedural
   chatter must feel good first; the API is an enhancement, not a requirement.
+
+## Upstream alignment rules (Josh, locked 2026-08-04 — every milestone)
+
+These keep the fork community-shaped so upstream PRs stay an option and
+upstream pulls stay clean. Verify against the wiki/code before applying; the
+current-state check is recorded in `Docs/wiki/Development-Conventions.md`.
+
+1. Target AAEmu `develop` and .NET 10 (global.json pins 10.0.0).
+2. Local contributor debugging: prefer the Aspire AppHost when practical.
+   Production stays on the current Docker Compose deployment (see
+   `deployments/production.json` — db/login/game/adminer stack on `.165`).
+3. `compact.sqlite3` is READ-ONLY reference data. Mutable bot, character,
+   economy, schedule, memory, and runtime state lives in MySQL or an additive
+   bot metadata schema. Never write to the reference sqlite.
+4. Config precedence: `Config.json` → `Configurations/*.json` →
+   `Config.Local.json`. Keep machine-specific hosts, secrets, API endpoints,
+   paths, and credentials OUT of shared config.
+5. Server listings come from `GameServers` configuration. Do NOT reintroduce
+   the legacy `aaemu_login.game_servers` approach.
+6. New managers and services use explicit constructor dependencies where
+   AAEmu supports them. No hidden singleton lookup, no undocumented startup
+   order.
+7. Startup loading can be parallel. Shared mutable collections and
+   initialization logic must be concurrency-safe.
+8. AAEmu-native terminology everywhere (code, logs, cards, searches):
+   Doodad = crops/trees/furniture/doors · Mate = pets and mounts ·
+   Slave = carts/cars/ships · Transfer = fixed-route transports ·
+   Expedition = guild · Dominion = castle/siege · Ability = combat skill
+   tree · ActAbility = vocation/proficiency.
+9. PlayerBots compose around ordinary `Character` records and normal
+   gameplay services (headless login accounts + `HeadlessGameSession` +
+   additive `PlayerBotController`, M6.0). No parallel character/inventory/
+   quest/property/economy implementation.
+10. Additive-layer rule (refined): composition, adapters, existing extension
+    points first; narrow, reviewed core hooks only when required to reuse the
+    normal Character/session lifecycle; never a parallel gameplay path.
 
 ---
 

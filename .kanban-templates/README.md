@@ -5,6 +5,19 @@
 > upstream AAEmu/AAEmu unless Josh explicitly approves it.** Everything stays in
 > our own lane on joshhmann/AAEmu.
 
+> 📐 **UPSTREAM ALIGNMENT (Josh, locked 2026-08-04 — applies to every card):**
+> 1) target develop + .NET 10; 2) Aspire for local dev, prod stays Docker
+> Compose; 3) `compact.sqlite3` read-only — mutable state in MySQL/additive
+> schema; 4) config precedence Config.json → Configurations/*.json →
+> Config.Local.json, no secrets in shared config; 5) `GameServers` config, not
+> legacy `game_servers`; 6) explicit constructor deps where supported; 7)
+> parallel-safe startup loading; 8) AAEmu-native terminology (Doodad/Mate/
+> Slave/Transfer/Expedition/Dominion/Ability/ActAbility); 9) PlayerBots
+> compose around ordinary Character records — no parallel gameplay paths; 10)
+> additive layer = composition/adapters/extension points first, narrow
+> reviewed core hooks only. Full text + verification: ROADMAP.md,
+> WORKFLOW.md, Docs/wiki/Development-Conventions.md.
+
 ## What this is
 
 The canonical task template set for the ArcheAge Slums fork. Every kanban card
