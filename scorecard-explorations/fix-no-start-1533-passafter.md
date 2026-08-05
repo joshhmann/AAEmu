@@ -94,7 +94,7 @@ patch + verifier change.
 
 ## Evidence commit
 
-Committed on `fix/no-start-1533` as `1ec23a1c` (2026-08-05), pushed fork-only
+Committed on `fix/no-start-1533` as `60d1c2a8` (2026-08-05), pushed fork-only
 (`joshhmann/AAEmu` — upstream is intake-only, no PR). Restore pointer if the cluster is ever
 rebuilt: `scorecard-explorations/dropped-content-register.md` §2.
 
