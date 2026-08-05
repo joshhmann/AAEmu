@@ -1,0 +1,109 @@
+# QUEST_NO_COMPONENTS 1391 — fail-before rig evidence
+
+**Card:** t_6c5430e6 (M1 widened backlog, ROADMAP.md §M1 — Josh 2026-08-04)
+**Date:** 2026-08-05 · **Branch:** fix/no-components-1391-rig
+**Rig:** `AAEmu.UnitTests/Game/Quests/Scenario/Quest1391NoComponentsRigTests.cs`
+**Data:** prod `compact.sqlite3` (md5 `78b3bdbf038db3b927056106efdf91af`; same file on
+192.168.0.165 and the /tmp copies) — READ-ONLY reference, untouched.
+
+## Verdict
+
+**Quest 1391 ("마을을 지켜라", category 27, zone 0, level 0) is BROKEN: its template
+has no components at all, so the engine can never accept or run it.** The rig proves
+it at three levels (data, lifecycle, verifier). The verifier allowlist currently
+masks the defect to INFO (`QuestSanityVerifier.cs:93`), which is why the live census
+stays green while the quest stays permanently dead — the exact silent-defect class
+this rig exists to expose.
+
+## 1. Data-level ground truth (compact.sqlite3, read-only)
+
+```sql
+SELECT * FROM quest_contexts WHERE id=1391;
+-- id=1391  name='마을을 지켜라'  category_id=27  zone_id=0  LEVEL=0
+-- let_it_done='t'  score=0  milestone_id=5  use_quest_camera='t'  grade_id=1
+
+SELECT count(*) FROM quest_components WHERE quest_context_id=1391;   -- 0 rows
+SELECT count(*) FROM quest_acts
+  JOIN quest_components qc ON quest_acts.quest_component_id = qc.id
+  WHERE qc.quest_context_id=1391;                                    -- 0 rows
+```
+
+Zero components → zero acts. No accept path exists anywhere: no Start component, no
+`QuestActConAccept*` act, so no NPC/doodad/sphere/item can offer quest 1391. It is not
+self-starting either (no `QuestActConAcceptComponent`), and nothing else references it
+as a dependency — the only `unit_reqs` row touching 1391 (`id 33609`, owner Skill 17113,
+kind 35) is a sphere reference, not a quest gate.
+
+## 2. Engine-level fail-before (scenario harness, pre-fix run)
+
+The rig drives quest 1391's real shape (empty template) through the M1-5 scenario
+harness (`QuestScenarioDriver`). The engine cannot accept the quest:
+
+- `Quest.CreateQuestSteps()` — `NewQuestCode.cs:34-35` — produces an **empty**
+  `QuestSteps` map and logs `Quest 1391 does not seem to have any components!`
+- `Quest.StartQuest()` — `NewQuestCode.cs:44-48` — `QuestSteps.TryGetValue(Start)`
+  fails → returns **false** ("Tried to start a quest without a starter component").
+- Harness verdict (driver `QuestScenarioDriver.cs:700-710`): the accept path throws
+  `StartQuest() returned false - quest has no Start component` and the run reports:
+
+```
+Quest 1391 (마을을 지켜라 (no-components rig)): Fail
+  [Fail] START - accept failed: System.InvalidOperationException: StartQuest()
+  returned false - quest has no Start component
+```
+
+Test evidence (`dotnet test --treenode-filter "/*/*/Quest1391NoComponentsRigTests/*"`):
+
+```
+Test run summary: Passed!  total: 3  failed: 0  succeeded: 3  skipped: 0
+```
+
+| test | asserts | result |
+|---|---|---|
+| `Quest1391_TemplateShape_ZeroComponentsZeroActs` | template components == 0 | Pass |
+| `Quest1391_Lifecycle_CannotStart_FailsAtStart` | verdict Fail, START stage, reason "StartQuest() returned false … no Start component" | Pass |
+| `Quest1391_Verifier_NoComponentsFindingMaskedToInfoByAllowlist` | QUEST_NO_COMPONENTS finding fired, severity Info (allowlist-masked), no Warn | Pass |
+
+Per the fail-before convention (M1-5a, t_1e0e9717): the rig asserts the CURRENT broken
+behavior and passes — this is the pre-fix baseline. The fix card flips it.
+
+## 3. Verifier cross-check
+
+`QuestSanityVerifier.VerifyLoadedState` fires `QUEST_NO_COMPONENTS` for quest 1391
+(`QuestSanityVerifier.cs:181-187`, message "template has no components — can never be
+accepted or run"), but the allowlist (`QuestSanityVerifier.cs:89-93`, group "dummy
+shells", data-defects.md §6) downgrades it to INFO. The finding is real; the census
+just can't see it. Classification history: data-defects.md §6 verdict **(c) drop** for
+the dummy shell — the fix card must decide restore-vs-drop with Josh (see §5).
+
+## 4. Player-visible impact
+
+A player can never receive or hold quest 1391. No acceptor exists (no accept act in
+any component — there are no components), and no other quest's reward/act references
+it as a start target. If any NPC, item, or event were wired to grant it, the grant
+would fail at `StartQuest()` and the quest would silently never appear. It is dead
+content in the live quest table — reachable only by DB query.
+
+## 5. Fix contract (for the downstream fix card)
+
+1. **Decision first (Josh/data-defects §6):** restore the template from the canonical
+   client data, or drop quest 1391 (delete `quest_contexts` row 1391). This rig
+   documents the defect; it does not pick the fix.
+2. **If restore:** SQL patch on compact.sqlite3 — `quest_components` +
+   `quest_acts` + `quest_act_*` rows for quest 1391 matching the canonical client
+   shape (category 27 event quest, zone 0, lvl 0, let_it_done) — following the
+   pattern of `SQL/patches/compact/2026-08-04-fix-quest-data-defects.sql`.
+3. **Either way:** remove 1391 from the verifier allowlist
+   (`QuestSanityVerifier.cs:93`) so a regression re-reports at WARN.
+4. **Flip the rig:** extend the manifest with the restored component shape and update
+   `Quest1391_Lifecycle_CannotStart_FailsAtStart` to assert PASS (drop
+   `Quest1391_TemplateShape_ZeroComponentsZeroActs` only if the quest is dropped).
+
+## 6. Gate evidence
+
+- Rig class: 3/3 Pass (above).
+- Scenario suite: `QuestScenarioTests` 12/12 Pass; `QuestScenarioTierTests` 1/1 Pass
+  (census regenerated identical: 153 PASS / 0 FAIL / 33 SKIP — no headline change).
+- Verifier suite: `QuestSanityVerifierTests` 27/27 Pass.
+- Full gate `./scripts/gate.sh`: build 0 errors + compiler-check 0 errors + full
+  test run (see card completion metadata for the full-gate numbers).
