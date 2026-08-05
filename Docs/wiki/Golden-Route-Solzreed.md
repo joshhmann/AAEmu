@@ -5,7 +5,7 @@
 - Scope: M1 golden-route document — the curated opening progression for a new Nuian character in Solzreed, plus intentionally excluded quests
 - Sources: `scorecard-explorations/solzreed-zone-report.md` (97 quests, kind-31 chains, gates), `scorecard-explorations/runnability.md` (86/97 T1 pass), `tools/quest-graph/README.md`
 
-Solzreed is the LOCKED golden zone (ROADMAP.md v4, Josh 2026-08-03). This page is the
+Solzreed is the LOCKED golden zone (ROADMAP.md — locked-shape, Josh 2026-08-03). This page is the
 curated route: which quests a fresh Nuian character follows, in what order, what each
 step gates on, what is currently broken (with quest ids), and what we are deliberately
 leaving out and why.

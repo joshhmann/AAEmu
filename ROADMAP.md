@@ -1,4 +1,4 @@
-# ArcheAge Slums — Roadmap & Milestones (v4, locked-shape 2026-08-03)
+# ArcheAge Slums — Roadmap & Milestones (locked-shape 2026-08-03; version number retired 2026-08-04 — v1/v4/v6/v7 label drift, the date is canonical)
 
 > **🚫 THE RULE (Josh, permanent): NEVER push a PR to upstream AAEmu/AAEmu
 > unless Josh explicitly approves it.** Everything stays in our own lane.
@@ -74,7 +74,7 @@
 
 Workflow v3 (lane gate), community guidelines, kanban templates, gate.sh
 verified, scorecard + 3 exploration reports, graphify graph (17.6k nodes),
-shared division skill enabled on all 4 profiles, ROADMAP v1.
+shared division skill enabled on all 4 profiles.
 BUG-006 (kill-acceptor, 380 quests, 1082/1082 tests) parked awaiting Josh's
 merge/deploy decision.
 
@@ -86,13 +86,25 @@ Trimmed, not exhaustive. Fix shared engine defects + the selected golden
 route. Individual peripheral quest bugs → Lane B (maintenance).
 
 **Work:**
-- Merge/reconcile the parked kill-acceptor fix (BUG-006)
+- ✅ BUG-006 kill-acceptor (380 quests, 1082/1082 tests) merged to fork
+  develop; prod deploy pending Josh (2026-08-04)
 - ~~Load + validate quest_act_obj_aliases (2,746 dangling rows)~~ — ✅ VERDICT 2026-08-04: dormant id→name dict, zero live refs in 1.2 data (no use_alias=1 rows, no QuestActObjAlias act type) — no-op
-- Audit stub acts (silent auto-complete/stall)
-- Quest sanity verifier (startup cross-check)
-- Fix common doodad phase/interaction objectives (quests 922/3889/3447)
-- Select ONE faction + starting progression route; document intentionally
-  excluded quests
+- ✅ Stub-act audit — 2026-08-04: 3 real stubs (CheckGuard silent-pass,
+  ItemGroup gather/use stall), 274-ctx watch item, 7,607 orphaned act rows;
+  fixes gated on develop (BUG-008/009, 30c2b689)
+- ✅ Quest sanity verifier (startup cross-check) — BUG-007, 14 tests, gated
+- 🔶 Fix common doodad phase/interaction objectives (quests 922/3889/3447) — remaining
+- ✅ Solzreed golden route selected; curated Nuian opening chain +
+  intentionally excluded quests documented — Docs/wiki/Golden-Route-Solzreed.md (99e7c4ec)
+
+**M1 status (2026-08-04):** 5 of 6 items done. Scenario-harness census
+(QuestScenarioTierTests): T1 Solzreed golden zone 88 PASS / 9 FAIL / 0 SKIP;
+T2 fix families 22 PASS / 7 FAIL / 6 SKIP. BUG-010 (UnixTime clamp) fixed
+(581f0f17) with CheckSphere + Ability-seeds fixes in the Rei gate queue
+(t_59a623c4) — merge to develop pending. Census FAILs are harness-gap
+(step-suppression "expected Ready, got Progress" + reward-stage
+KeyNotFoundException 'General' families) — tracked via t_71ac7013;
+runnability line NOT green until the harness cards land.
 
 **Priority order:** shared engine defects → golden-route blockers → silent
 corruption → peripheral quests.
