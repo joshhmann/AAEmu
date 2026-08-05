@@ -117,3 +117,43 @@ ORDER BY qc.quest_context_id, qc.id;
   (COMPONENT_NEXT_MISSING in `VerifyLoadedState`; severity refinement @61bef4c0,
   merged into develop)
 - Data overlay decision: data-defects.md §3/§7 (t_25744130)
+
+## 7. Fix branch — pass-after evidence (t_cdbf231b)
+
+**Branch:** fix/next-missing-776-777 (rig f1503b3f + overlay mechanism carried from
+fix/verifier-data-overlay @ 7a1ef90a/368fd254, rebased onto develop ffa4bbeb)
+
+**Mechanism (NOT a second fix — the existing one, carried):** the 3-row correction
+lands as the additive startup sanitizer `QuestDataOverlay`
+(`AAEmu.Game/Core/Managers/QuestDataOverlay.cs`), applied by `QuestManager.Load`
+right after `LoadQuestComponents` — 1520→1521, 3480→3482, 3488→11591. The
+reference `compact.sqlite3` is never edited (upstream alignment rule 3); the SQL
+patch `2026-08-04-fix-quest-data-defects.sql` remains the data-sync mirror.
+Drift rows Warn, never throw (sanitizer policy matches the verifier).
+
+**Pass-after evidence (all re-run on this branch, 2026-08-05):**
+
+1. **Real load path, real reference DB** — `QuestDataCensusTests` boots
+   `QuestManager.Load()` against the canonical compact.sqlite3 (md5
+   78b3bdbf038db3b927056106efdf91af, 4775 quests / 17720 components / 19047 acts)
+   exactly like GameService startup, then asserts the verifier report has **0**
+   `COMPONENT_NEXT_MISSING` findings. Result (TRX-captured):
+
+   ```
+   [QuestCensus] 0 ERR / 11 WARN / 136 INFO across 4775 quests / 17720 components / 19047 acts
+   ```
+   The report contains **zero** COMPONENT_NEXT_MISSING rows; the 3 former
+   findings (330/776/777) are gone. Remaining WARN/INFO findings are other
+   backlog items (QUEST_NO_COMPONENTS 96, QUEST_NO_START 23, UNIT_REQS_* 21,
+   ACT_REF_MISSING_QUEST 2 — separate M1 cards, explicitly out of scope).
+
+2. **Full gate** — `./scripts/gate.sh` green: Release build OK, compiler-check
+   0 errors / 0 warnings, test suite **1214 passed / 0 failed / 0 skipped**
+   (1210 develop suite + 2 rig tests + 3 `QuestDataOverlayTests` + 1 real-data
+   census test — the census test ran, not skipped, because the canonical DB was
+   present under the test host's Data/ dir).
+
+3. **SQL census** — `Scripts/quest_next_missing_census.sh --apply-fix` against
+   the canonical DB: fail-before exactly 3 rows (330 comp 1520→3543, 776 comp
+   3480→4370, 777 comp 3488→3487), pass-after 0 rows on the fixed copy — the
+   runtime overlay mirrors exactly this SQL patch.
