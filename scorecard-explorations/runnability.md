@@ -1,22 +1,13 @@
 # Quest Runnability — M1-5 scenario harness census
 
-<<<<<<< HEAD
-Generated: 2026-08-05 00:53Z by QuestScenarioTierTests (M1-5b)
-=======
-Generated: 2026-08-05 02:13Z by QuestScenarioTierTests (M1-5b)
->>>>>>> origin/fix/char-abilities-general
+Generated: 2026-08-05 08:27Z by QuestScenarioTierTests (M1-5b)
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
 ## Headline
 
-<<<<<<< HEAD
-- **T1 golden zone (Solzreed)**: 88 PASS / 9 FAIL / 0 SKIP
-- **T2 families (kill-accept/guard/item-group)**: 22 PASS / 7 FAIL / 6 SKIP
-=======
-- **T1 golden zone (Solzreed)**: 87 PASS / 10 FAIL / 0 SKIP
-- **T2 families (kill-accept/guard/item-group)**: 24 PASS / 5 FAIL / 6 SKIP
->>>>>>> origin/fix/char-abilities-general
+- **T1 golden zone (Solzreed)**: 89 PASS / 8 FAIL / 0 SKIP
+- **T2 families (kill-accept/guard/item-group)**: 25 PASS / 4 FAIL / 6 SKIP
 
 ## T1 — per-quest verdicts
 

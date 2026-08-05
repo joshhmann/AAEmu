@@ -2,6 +2,7 @@ using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Units.Static;
 
 using Microsoft.Data.Sqlite;
 
@@ -268,6 +269,122 @@ public static class QuestSanityVerifier
                 "quest_act_obj_aliases is DORMANT (0 use_alias=1 rows across all quest_act_xxx tables) — M1-1 verdict confirmed, no alias resolution needed"));
 
         return findings;
+    }
+
+    /// <summary>
+    /// UNIT_REQS layer check (audit: scorecard-explorations/unit-reqs-layer.md, t_c87c5deb).
+    /// QuestComponent-owned unit_reqs rows with a POSITIVE quest-context kind
+    /// (CompleteQuestContext / ProgressQuestContext / ReadyQuestContext / PreCompleteQuestContext)
+    /// must resolve value1 against quest_contexts.id only. Skipped by design:
+    ///   - kind 1 (Level): value1 is a LEVEL, not a quest id (the 45 rows with value1=14
+    ///     are level gates, not quest deps)
+    ///   - kind 36 (ExceptCompleteQuestContext) + kind 72/73 (ExceptProgress/ExceptReady):
+    ///     negative gates — "must NOT have completed/started X" against a missing quest is
+    ///     vacuously true, no player impact.
+    /// Missing contexts are classified (same discriminator as the audit):
+    ///   - surviving quest body (quest_components rows with quest_context_id = value1)
+    ///     => orphaned template => WARN (gate can never pass; chain already ruled drop)
+    ///   - NO body but value1 owned by another entity table (spheres/npcs/doodad_almighties/
+    ///     ai_events/items) => id-space collision => INFO (number reused, not a quest dep)
+    ///   - no body, no other-table ownership => genuinely missing context => WARN.
+    /// Emits per-row findings plus a UNIT_REQS_SUMMARY rollup (count → missing contexts,
+    /// gated quests list, collisions list).
+    /// </summary>
+    public static IReadOnlyList<Finding> VerifyUnitReqs(SqliteConnection connection)
+    {
+        var findings = new List<Finding>();
+
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = """
+                SELECT r.id, r.owner_id, r.kind_id, r.value1, qc.quest_context_id,
+                       EXISTS(SELECT 1 FROM quest_components b WHERE b.quest_context_id = r.value1) AS has_body
+                FROM unit_reqs r
+                LEFT JOIN quest_components qc ON qc.id = r.owner_id
+                WHERE r.owner_type = 'QuestComponent'
+                  AND r.kind_id IN (31, 32, 33, 37)
+                  AND r.value1 NOT IN (SELECT id FROM quest_contexts)
+                ORDER BY r.value1, r.id
+                """;
+            using var reader = command.ExecuteReader();
+
+            var missingContexts = new SortedSet<uint>();
+            var collisions = new SortedSet<uint>();
+            var gatedQuests = new SortedSet<uint>();
+            var orphanCount = 0;
+            var collisionCount = 0;
+
+            while (reader.Read())
+            {
+                var rowId = (uint)reader.GetInt64(0);
+                var ownerId = (uint)reader.GetInt64(1);
+                var kindId = (uint)reader.GetInt64(2);
+                var value1 = (uint)reader.GetInt64(3);
+                var gatedQuest = reader.IsDBNull(4) ? 0u : (uint)reader.GetInt64(4);
+                var hasBody = reader.GetInt64(5) > 0;
+
+                missingContexts.Add(value1);
+                if (gatedQuest != 0)
+                    gatedQuests.Add(gatedQuest);
+
+                if (hasBody)
+                {
+                    // Orphaned template: the quest body survives, the context row is gone.
+                    orphanCount++;
+                    findings.Add(new Finding(Severity.Warn, "UNIT_REQS_MISSING_CONTEXT",
+                        $"unit_reqs {rowId} (QuestComponent {ownerId} of quest {gatedQuest}): kind {(UnitReqsKindType)kindId} " +
+                        $"references missing quest context {value1} (quest body survives, context row gone) — gate can never pass"));
+                }
+                else
+                {
+                    var collisionTables = CollisionTablesOwn(connection, value1);
+                    if (collisionTables.Count > 0)
+                    {
+                        // Id-space collision: no quest body at all, the number is a live entity of another type.
+                        collisionCount++;
+                        collisions.Add(value1);
+                        findings.Add(new Finding(Severity.Info, "UNIT_REQS_COLLISION",
+                            $"unit_reqs {rowId} (QuestComponent {ownerId} of quest {gatedQuest}): kind {(UnitReqsKindType)kindId} value1 {value1} " +
+                            $"is an id-space collision — id owned by {string.Join("/", collisionTables)}, not a quest context"));
+                    }
+                    else
+                    {
+                        orphanCount++;
+                        findings.Add(new Finding(Severity.Warn, "UNIT_REQS_MISSING_CONTEXT",
+                            $"unit_reqs {rowId} (QuestComponent {ownerId} of quest {gatedQuest}): kind {(UnitReqsKindType)kindId} " +
+                            $"references missing quest context {value1} — gate can never pass"));
+                    }
+                }
+            }
+
+            var gatedList = gatedQuests.Count > 0 ? string.Join(",", gatedQuests) : "(none)";
+            var collisionList = collisions.Count > 0 ? string.Join(",", collisions) : "(none)";
+            findings.Add(new Finding(Severity.Info, "UNIT_REQS_SUMMARY",
+                $"unit_reqs: {missingContexts.Count} missing contexts from {orphanCount + collisionCount} QuestComponent-owned rows " +
+                $"({orphanCount} orphans WARN / {collisionCount} collisions INFO); gated quests: {gatedList}; collisions: {collisionList}"));
+        }
+
+        return findings;
+    }
+
+    /// <summary>Entity tables whose ids share the same number space as quest contexts (collision evidence).</summary>
+    private static readonly string[] s_unitReqsCollisionTables =
+        ["spheres", "npcs", "doodad_almighties", "ai_events", "items"];
+
+    /// <summary>Which entity tables own the given id (id-space collision evidence).</summary>
+    private static List<string> CollisionTablesOwn(SqliteConnection connection, uint id)
+    {
+        var tables = new List<string>();
+        foreach (var table in s_unitReqsCollisionTables)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = $"SELECT COUNT(*) FROM {table} WHERE id = @id";
+            command.Parameters.AddWithValue("@id", id);
+            if ((long)command.ExecuteScalar() > 0)
+                tables.Add(table);
+        }
+
+        return tables;
     }
 
     /// <summary>
