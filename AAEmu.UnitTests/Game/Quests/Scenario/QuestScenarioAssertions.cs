@@ -134,7 +134,8 @@ public static class QuestScenarioAssertions
                 // Strong round-trip: re-serialized state must be byte-identical to the snapshot.
                 var roundTripped = persistFreshQuest.WriteData();
                 if (!roundTripped.SequenceEqual(persistSnapshotData))
-                    failures.Add("WriteData -> ReadData round-trip changed quest state (byte mismatch)");
+                    failures.Add("WriteData -> ReadData round-trip changed quest state (byte mismatch): "
+                        + DescribePersistDiff(persistSnapshotData, roundTripped));
 
                 // Readable equality checks against the captured snapshot state (the live
                 // quest may have been dropped by the REWARD stage by now).
@@ -169,11 +170,79 @@ public static class QuestScenarioAssertions
         }
 
         if (failures.Count > 0)
-            return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Fail, Reason = string.Join("; ", failures) };
+        {
+            // Diagnostics: capture the engine state the stage actually observed so
+            // FAIL reasons carry per-quest evidence (which step/status/objectives).
+            var observed = $"observed step={quest.Step}, status={quest.Status}, objectives=[{string.Join(",", quest.Objectives)}]";
+            return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Fail, Reason = string.Join("; ", failures) + $" [{observed}]" };
+        }
 
         if (!expect.HasAnyExpectation)
             return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Skip, Reason = "no expectations defined - stage ran without error" };
 
         return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Pass };
+    }
+
+    /// <summary>
+    /// Decodes the first differing byte between a WriteData snapshot and the
+    /// round-tripped WriteData output into the field that changed. Byte layout
+    /// mirrors Quest.WriteData/ReadData: 5x int32 objectives, byte step,
+    /// byte acceptor type, uint componentId, uint acceptorId, long unix-time.
+    /// </summary>
+    private static string DescribePersistDiff(byte[] before, byte[] after)
+    {
+        if (before.Length != after.Length)
+            return $"length {before.Length} -> {after.Length} bytes";
+
+        var first = -1;
+        for (var i = 0; i < before.Length; i++)
+        {
+            if (before[i] != after[i])
+            {
+                first = i;
+                break;
+            }
+        }
+        if (first < 0)
+            return "no byte difference";
+
+        string field;
+        var bVal = "";
+        var aVal = "";
+        switch (first)
+        {
+            case < 20:
+                field = $"objective[{first / 4}]";
+                bVal = BitConverter.ToInt32(before, first / 4 * 4).ToString();
+                aVal = BitConverter.ToInt32(after, first / 4 * 4).ToString();
+                break;
+            case 20:
+                field = "step";
+                bVal = before[20].ToString();
+                aVal = after[20].ToString();
+                break;
+            case 21:
+                field = "acceptorType";
+                bVal = before[21].ToString();
+                aVal = after[21].ToString();
+                break;
+            case <= 25:
+                field = "componentId";
+                bVal = BitConverter.ToUInt32(before, 22).ToString();
+                aVal = BitConverter.ToUInt32(after, 22).ToString();
+                break;
+            case <= 29:
+                field = "acceptorId";
+                bVal = BitConverter.ToUInt32(before, 26).ToString();
+                aVal = BitConverter.ToUInt32(after, 26).ToString();
+                break;
+            default:
+                field = "time";
+                bVal = $"{BitConverter.ToInt64(before, 30)}s";
+                aVal = $"{BitConverter.ToInt64(after, 30)}s";
+                break;
+        }
+
+        return $"first diff at byte {first} (field {field}: snapshot={bVal}, round-trip={aVal})";
     }
 }
