@@ -17,6 +17,7 @@ using AAEmu.Game.Models.Game.Skills.SkillControllers;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.Units.Movements;
 using AAEmu.Game.Models.Game.Units.Static;
+using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
 
@@ -1177,6 +1178,68 @@ public partial class Npc : Unit
         {
             Logger.Warn($"MoveTowards: no terrain height data at cell {cellX:000}_{cellY:000} (x={x:0.#}, y={y:0.#}) — skipping slope gate, using fallback height (legacy behavior)");
         }
+    }
+
+    /// <summary>
+    /// Line-of-sight check against terrain for aggro acquisition (fix/npc-aggro-los,
+    /// <paramref name="from"/> and <paramref name="to"/> and reports whether any
+    /// terrain rises above the sight line (occlusion). Mobs no longer aggro through
+    /// hills, ridges, or cliffs that sit between them and their target.
+    ///
+    /// Uses the O(1) heightmap path (<see cref="WorldTemplate.GetHeight"/> — bilinear
+    /// sample of the 2m terrain grid). Deliberately NOT
+    /// <see cref="WorldManager.GetHeight(uint,float,float,float)"/>: under GeoDataMode
+    /// that call iterates every navmesh node per sample, which is far too expensive
+    /// for per-tick per-candidate sampling.
+    ///
+    /// Fallback semantics match the slope/step gate (<see cref="IsStepBlocked"/>):
+    /// missing terrain data (heightmap cell not loaded / out of bounds → 0) never
+    /// blocks — the legacy distance+FOV acquisition behavior is kept. A config knob
+    /// (<see cref="WorldConfig.NpcLineOfSightCheck"/>) can disable the gate entirely.
+    /// </summary>
+    /// <param name="worldTemplate">Terrain source for the owner's world; null → no data → visible.</param>
+    /// <param name="from">Owner world position.</param>
+    /// <param name="to">Target world position.</param>
+    /// <param name="clearance">Terrain may rise this many meters above the sight line
+    /// before counting as occlusion (approximates eye height / unit height).</param>
+    /// <returns>True when no terrain blocks the sight line (or no data is available).</returns>
+    internal static bool HasLineOfSight(WorldTemplate worldTemplate, Vector3 from, Vector3 to, float clearance = 2f)
+    {
+        if (worldTemplate == null)
+            return true; // no terrain source — keep legacy behavior
+
+        var dx = to.X - from.X;
+        var dy = to.Y - from.Y;
+        var distance = MathF.Sqrt(dx * dx + dy * dy);
+        if (distance <= 2f)
+            return true; // effectively adjacent — no meaningful occlusion possible
+
+        // Heightmap samples sit on a 2m grid; step at grid resolution (capped so a
+        // pathological long line cannot cause an unbounded loop).
+        var sampleCount = Math.Min((int)(distance / 2f), 64);
+        for (var i = 1; i < sampleCount; i++)
+        {
+            var t = i / (float)sampleCount;
+
+            float terrainZ;
+            try
+            {
+                terrainZ = worldTemplate.GetHeight(from.X + dx * t, from.Y + dy * t);
+            }
+            catch
+            {
+                continue; // sample outside the loaded cell grid — no data, don't block (legacy fallback)
+            }
+
+            if (terrainZ == 0f)
+                continue; // no heightmap data at this sample — don't block (legacy fallback)
+
+            var sightLineZ = from.Z + (to.Z - from.Z) * t;
+            if (terrainZ > sightLineZ + clearance)
+                return false; // terrain pokes above the sight line — occluded
+        }
+
+        return true;
     }
 
     /// <summary>

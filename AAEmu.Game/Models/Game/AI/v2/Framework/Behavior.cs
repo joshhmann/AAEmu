@@ -1,6 +1,7 @@
 ﻿using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
@@ -212,6 +213,25 @@ public abstract class Behavior
         Ai.GoToCombat();
     }
 
+    /// <summary>
+    /// Terrain line-of-sight gate for aggro acquisition (fix/npc-aggro-los, recon
+    /// t_52ebb23f T1). When <see cref="WorldConfig.NpcLineOfSightCheck"/> is enabled
+    /// (default), requires that no terrain (hill, ridge, cliff) rises above the sight
+    /// line between the AI owner and the target — mobs no longer aggro through
+    /// terrain/walls. When the knob is disabled, or when no terrain data exists for
+    /// the owner's world (heightmap not loaded), returns true so the legacy
+    /// distance+FOV acquisition behavior is preserved.
+    /// </summary>
+    /// <param name="target">The unit being considered for aggro acquisition.</param>
+    private bool HasAggroLineOfSight(Unit target)
+    {
+        if (AppConfiguration.Instance.World?.NpcLineOfSightCheck == false)
+            return true;
+
+        var owner = Ai.Owner;
+        return Npc.HasLineOfSight(owner.ParentWorld?.Template, owner.Transform.World.Position, target.Transform.World.Position);
+    }
+
     public bool CheckAggression()
     {
         if (!Ai.Owner.Template.Aggression)
@@ -243,7 +263,7 @@ public abstract class Behavior
             if (MathUtil.IsFront(Ai.Owner, unit, Ai.Owner.Template.SightFovScale) &&
                 Math.Abs(Ai.Owner.Transform.World.Position.Z - unit.Transform.World.Position.Z) < maxHeightGap)
             {
-                if (Ai.Owner.CanAttack(unit) && (rangeOfUnit < 1f || Ai.Owner.CanSeeTarget(unit)))
+                if (Ai.Owner.CanAttack(unit) && (rangeOfUnit < 1f || (Ai.Owner.CanSeeTarget(unit) && HasAggroLineOfSight(unit))))
                 {
                     OnEnemySeen(unit);
                     res = true;
@@ -255,7 +275,7 @@ public abstract class Behavior
                 // If you're breathing down their neck, they will also start attacking you if they can
                 if (rangeOfUnit < 1.5f * Ai.Owner.Template.SightRangeScale)
                 {
-                    if (Ai.Owner.CanAttack(unit) && (rangeOfUnit < 0.5f || Ai.Owner.CanSeeTarget(unit)))
+                    if (Ai.Owner.CanAttack(unit) && (rangeOfUnit < 0.5f || (Ai.Owner.CanSeeTarget(unit) && HasAggroLineOfSight(unit))))
                     {
                         OnEnemySeen(unit);
                         res = true;
@@ -318,7 +338,7 @@ public abstract class Behavior
             if (MathUtil.IsFront(Ai.Owner, unit, Ai.Owner.Template.SightFovScale) &&
                 Math.Abs(Ai.Owner.Transform.World.Position.Z - unit.Transform.World.Position.Z) < maxHeightGap)
             {
-                if (Ai.Owner.CanAttack(unit) && (rangeOfUnit < 1f || Ai.Owner.CanSeeTarget(unit)))
+                if (Ai.Owner.CanAttack(unit) && (rangeOfUnit < 1f || (Ai.Owner.CanSeeTarget(unit) && HasAggroLineOfSight(unit))))
                 {
                     OnEnemyAlert(unit);
                     res = true;
@@ -331,7 +351,7 @@ public abstract class Behavior
                 // Not sure if this is retail behavior
                 if (rangeOfUnit < 2f * Ai.Owner.Template.SightRangeScale)
                 {
-                    if (Ai.Owner.CanAttack(unit) && (rangeOfUnit < 0.5f || Ai.Owner.CanSeeTarget(unit)))
+                    if (Ai.Owner.CanAttack(unit) && (rangeOfUnit < 0.5f || (Ai.Owner.CanSeeTarget(unit) && HasAggroLineOfSight(unit))))
                     {
                         OnEnemyAlert(unit);
                         res = true;
