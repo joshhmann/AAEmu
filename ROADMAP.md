@@ -71,6 +71,8 @@
   **Living Village launches with ZERO LLM dependency** — canned + procedural
   chatter must feel good first; the API is an enhancement, not a requirement.
 
+---
+
 ## Upstream alignment rules (Josh, locked 2026-08-04 — every milestone)
 
 These keep the fork community-shaped so upstream PRs stay an option and

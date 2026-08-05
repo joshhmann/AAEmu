@@ -5,17 +5,6 @@
 > Everything stays in our own lane on joshhmann/AAEmu. This rule applies to
 > every template in this directory and every task that uses one.
 
-> 📐 **UPSTREAM ALIGNMENT (locked 2026-08-04 — applies to every card):** target
-> `develop` + .NET 10; Aspire for local dev, prod stays Docker Compose;
-> `compact.sqlite3` read-only; config precedence `Config.json` →
-> `Configurations/*.json` → `Config.Local.json`; `GameServers` config, not
-> legacy `game_servers`; explicit constructor deps where supported;
-> parallel-safe startup loading; AAEmu-native terminology
-> (Doodad/Mate/Slave/Transfer/Expedition/Dominion/Ability/ActAbility);
-> PlayerBots compose around ordinary `Character` records; additive layer only
-> (composition/adapters/extension points, narrow reviewed core hooks). Full
-> text + verification: `Docs/wiki/Development-Conventions.md`.
-
 > Fill every section. Delete nothing. This is the contract for the task.
 > Explorations produce KNOWLEDGE, not code. Output = a report committed to
 > `scorecard-explorations/<domain>.md`. No code changes unless the report

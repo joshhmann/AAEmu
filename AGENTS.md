@@ -10,31 +10,6 @@ Target client: **ArcheAge 1.2** (`r208022`).
 
 Human docs live under `Docs/wiki/` (synced to GitHub wiki). Prefer those over inventing setup steps.
 
-## Upstream alignment (locked 2026-08-04 — applies to every change)
-
-The fork stays community-shaped. Full text + per-rule verification notes:
-[`Docs/wiki/Development-Conventions.md`](Docs/wiki/Development-Conventions.md). In short:
-
-1. Target `develop` + .NET 10 (`global.json`).
-2. Aspire AppHost for local contributor debugging; prod stays Docker Compose.
-3. `compact.sqlite3` is read-only reference data — mutable state goes to MySQL
-   or an additive bot metadata schema.
-4. Config precedence: `Config.json` → `Configurations/*.json` →
-   `Config.Local.json`; never put machine-specific hosts/secrets/paths in
-   shared config.
-5. Server listings via `GameServers` config — never legacy `game_servers`.
-6. New managers/services: explicit constructor dependencies where supported;
-   no hidden singleton lookup or undocumented startup order.
-7. Startup loading can be parallel — shared mutable collections and init
-   logic must be concurrency-safe.
-8. AAEmu-native terminology in code, logs, cards, searches
-   (Doodad/Mate/Slave/Transfer/Expedition/Dominion/Ability/ActAbility).
-9. PlayerBots compose around ordinary `Character` records + normal gameplay
-   services — never a parallel character/inventory/quest/property/economy
-   implementation.
-10. Additive layer: composition/adapters/extension points first; narrow,
-    reviewed core hooks only; never a parallel gameplay path.
-
 ## Getting the stack running (players and contributors)
 
 Use the in-repo skill — **not developer-only**:

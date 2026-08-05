@@ -4,17 +4,6 @@
 > **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
 > Everything stays in our own lane on joshhmann/AAEmu.
 
-> 📐 **UPSTREAM ALIGNMENT (locked 2026-08-04 — applies to every card):** target
-> `develop` + .NET 10; Aspire for local dev, prod stays Docker Compose;
-> `compact.sqlite3` read-only; config precedence `Config.json` →
-> `Configurations/*.json` → `Config.Local.json`; `GameServers` config, not
-> legacy `game_servers`; explicit constructor deps where supported;
-> parallel-safe startup loading; AAEmu-native terminology
-> (Doodad/Mate/Slave/Transfer/Expedition/Dominion/Ability/ActAbility);
-> PlayerBots compose around ordinary `Character` records; additive layer only
-> (composition/adapters/extension points, narrow reviewed core hooks). Full
-> text + verification: `Docs/wiki/Development-Conventions.md`.
-
 This is Nei's lane (tracks): the "always updated on what's going on" guarantee.
 The convention is **event-driven and low-overhead** — updates happen when work
 happens, not on a timer.

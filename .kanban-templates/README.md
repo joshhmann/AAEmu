@@ -18,6 +18,14 @@
 > reviewed core hooks only. Full text + verification: ROADMAP.md,
 > WORKFLOW.md, Docs/wiki/Development-Conventions.md.
 
+> ✂️ **CARD SIZING (Josh, locked 2026-08-04 — break steps down):** one card =
+> one step that fits in the turn budget (~30-45 turns). Defect chain template:
+> 1) test rig + fail-before → 2) implementation + pass-after → 3) census +
+> docs + push, each parent-gated on the previous. Every card ends pushed or
+> as a deliverable file with an explicit path — never end holding un-pushed
+> commits. If a step exceeds ~2/3 budget: push what exists, split the rest
+> into a child card.
+
 ## What this is
 
 The canonical task template set for the ArcheAge Slums fork. Every kanban card
@@ -51,11 +59,16 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 ## First 10 minutes (every task, every sister, in order)
 
-1. `cat /root/aaemu-dev/VISION.md` — two lanes + division routing
-2. `cat /root/aaemu-dev/WORKFLOW.md` — process + lane gate
-3. `grep -n "<domain>" /root/aaemu-dev/SCORECARD.md` — domain status
-4. `ls /root/aaemu-dev/scorecard-explorations/` — read the domain report if present
-5. `cd /root/aaemu-dev && graphify explain "<Type>" --graph graphify-out/graph.json`
+> **WORKSPACE:** never work in `/root/aaemu-dev` (Tai's shared tree). Use YOUR
+> card workspace: `git clone --shared /root/aaemu-dev <workspace>/repo` and
+> `cp -r /root/aaemu-dev/graphify-out <workspace>/repo/` (read-only copy of the
+> graph; or run `graphify update .` in your clone). Commit + push from there.
+
+1. `cat <repo>/VISION.md` — two lanes + division routing
+2. `cat <repo>/WORKFLOW.md` — process + lane gate
+3. `grep -n "<domain>" <repo>/SCORECARD.md` — domain status
+4. `ls <repo>/scorecard-explorations/` — read the domain report if present
+5. `cd <repo> && graphify explain "<Type>" --graph graphify-out/graph.json`
    and `graphify affected "<Type>" --depth 2` — map the neighborhood
 
 Never skip 5 — the graph is how we find blast radius before touching code.
