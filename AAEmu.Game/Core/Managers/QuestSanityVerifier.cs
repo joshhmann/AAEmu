@@ -64,7 +64,10 @@ public static class QuestSanityVerifier
     /// Quest ids intentionally allowed to report at INFO instead of WARN/ERROR. Populated
     /// from the M1 data-defect classification (scorecard-explorations/data-defects.md,
     /// t_7416ea48) — every id verified against prod compact.sqlite3 (md5
-    /// 78b3bdbf0383db3b927056106efdf91af). The census stays green without deleting data rows.
+    /// 78b3bdbf038db3b927056106efdf91af). The census stays green without deleting data rows.
+    /// DROPPED ids are REMOVED from this list (dropped-content-register.md): the QUEST_NO_START
+    /// cluster 1533–1548 was dropped 2026-08-05 (data-defects.md §5, t_5140fb35) — if the rows
+    /// ever come back, QUEST_NO_START re-reports at WARN instead of being masked.
     /// </summary>
     private static readonly HashSet<uint> s_allowlistedQuestIds = BuildAllowlist();
 
@@ -81,11 +84,6 @@ public static class QuestSanityVerifier
     {
         var ids = new HashSet<uint>
         {
-            // QUEST_NO_START — legacy 1.0-era tutorial shells (data-defects.md §5): single
-            // Reward comp (SupplyCopper+SupplyExp) or empty, no accept path, no live deps.
-            // 21 are cat-28 zone-1 Gweonid "튜토리얼" steps; 1830/1831 are 미사용 "UNUSED".
-            1533, 1640, 1830, 1831,
-
             // QUEST_NO_COMPONENTS — reserve/dummy/cutscene shells (data-defects.md §6):
             // 315/1728 carry a "do not delete" label (client-side skill/doodad link hooks),
             // 1391/1576/2046 are dummies, 2148–2229 are the "하다보니(reserve)" block,
@@ -100,8 +98,6 @@ public static class QuestSanityVerifier
         };
 
         // Ranges (inclusive), each with the group it belongs to.
-        ids.UnionWith(Enumerable.Range(1535, 1549 - 1535 + 1).Select(i => (uint)i)); // 1535–1549  tutorial shells
-        ids.UnionWith(Enumerable.Range(1551, 1554 - 1551 + 1).Select(i => (uint)i)); // 1551–1554  tutorial shells
         ids.UnionWith(Enumerable.Range(2148, 2229 - 2148 + 1).Select(i => (uint)i)); // 2148–2229  reserve block
         ids.UnionWith(Enumerable.Range(3750, 3757 - 3750 + 1).Select(i => (uint)i)); // 3750–3757  Hadir cutscenes
         ids.UnionWith(Enumerable.Range(1954, 1958 - 1954 + 1).Select(i => (uint)i)); // 1954–1958  cat-34 chain
