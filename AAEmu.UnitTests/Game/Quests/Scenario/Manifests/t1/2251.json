@@ -1,0 +1,91 @@
+{
+ "questId": 2251,
+ "name": "허풍쟁이",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7664
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10391,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14600,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1961,
+      "npcId": 7664
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10392,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14601,
+      "type": "QuestActConReportNpc",
+      "detailId": 2173,
+      "npcId": 3527
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10393,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3527,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 2263,
+ "name": "살인마에게 자비를",
+ "zoneId": 124,
+ "categoryId": 3,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6984
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9977,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14411,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1913,
+      "npcId": 6984
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9978,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24956,
+      "type": "QuestActObjItemGather",
+      "detailId": 2046,
+      "itemId": 24126,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9980,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40849,
+      "type": "QuestActSupplyItem",
+      "detailId": 4816,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17270,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22821,
+      "type": "QuestActConReportNpc",
+      "detailId": 3507,
+      "npcId": 10583
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24126,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10583,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24126,
+   "count": 1
+  }
+ ]
+}

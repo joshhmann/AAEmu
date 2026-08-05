@@ -1,0 +1,150 @@
+{
+ "questId": 273,
+ "name": "르네의 반지",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3527
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1023,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 933,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 191,
+      "npcId": 3527
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1028,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 941,
+      "type": "QuestActObjItemGather",
+      "detailId": 66,
+      "itemId": 3903,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1029,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36904,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2417,
+      "itemId": 32487,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 36906,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2419,
+      "itemId": 32494,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 36907,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2420,
+      "itemId": 32499,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1030,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2518,
+      "type": "QuestActConReportNpc",
+      "detailId": 336,
+      "npcId": 3527
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3903,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3527,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 3903,
+   "count": 1
+  }
+ ]
+}

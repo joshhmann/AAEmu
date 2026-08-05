@@ -1,0 +1,91 @@
+{
+ "questId": 290,
+ "name": "발릴리의 고민",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3534
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1154,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1100,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 217,
+      "npcId": 3534
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1159,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10099,
+      "type": "QuestActConReportNpc",
+      "detailId": 1458,
+      "npcId": 3535
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1161,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3535,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

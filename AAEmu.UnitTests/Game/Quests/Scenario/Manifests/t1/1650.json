@@ -1,0 +1,124 @@
+{
+ "questId": 1650,
+ "name": "누구 것일까?",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Item",
+  "id": 14786
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7762,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10917,
+      "type": "QuestActConAcceptItem",
+      "detailId": 77,
+      "itemId": 14786
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10918,
+      "type": "QuestActObjItemGather",
+      "detailId": 649,
+      "itemId": 14786,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7764,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10920,
+      "type": "QuestActObjSphere",
+      "detailId": 467,
+      "sphereId": 650
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7765,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10921,
+      "type": "QuestActConAutoComplete",
+      "detailId": 284
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14786,
+     "count": 1
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 7764
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14786,
+   "count": 1
+  },
+  {
+   "itemId": 14786,
+   "count": 1
+  }
+ ]
+}

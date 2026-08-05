@@ -1,0 +1,134 @@
+{
+ "questId": 271,
+ "name": "거대 토끼 처치",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3525
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10039,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1283,
+      "npcId": 3525
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10040,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 383,
+      "npcId": 3491,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7265,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10041,
+      "type": "QuestActConReportNpc",
+      "detailId": 1448,
+      "npcId": 3525
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36917,
+      "type": "QuestActSupplyItem",
+      "detailId": 4080,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3491,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3525,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

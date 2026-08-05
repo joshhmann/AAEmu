@@ -1,0 +1,163 @@
+{
+ "questId": 325,
+ "name": "로나의 약",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3596
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1363,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2210,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 257,
+      "npcId": 3596
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 1364,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2212,
+      "type": "QuestActSupplyItem",
+      "detailId": 123,
+      "itemId": 4043,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4452,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6817,
+      "type": "QuestActConReportNpc",
+      "detailId": 858,
+      "npcId": 3515
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4453,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38560,
+      "type": "QuestActSupplyItem",
+      "detailId": 4309,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7067,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9752,
+      "type": "QuestActObjItemGather",
+      "detailId": 555,
+      "itemId": 4043,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4043,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3515,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4043,
+   "count": 1
+  }
+ ]
+}

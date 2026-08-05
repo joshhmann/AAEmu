@@ -1,0 +1,164 @@
+{
+ "questId": 260,
+ "name": "정체 모를 빛",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3593
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4495,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12115,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1545,
+      "npcId": 3593
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4496,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6902,
+      "type": "QuestActObjItemGather",
+      "detailId": 346,
+      "itemId": 8128,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4497,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6912,
+      "type": "QuestActConReportNpc",
+      "detailId": 867,
+      "npcId": 3593
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38850,
+      "type": "QuestActSupplyItem",
+      "detailId": 4516,
+      "itemId": 32481,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38851,
+      "type": "QuestActSupplyItem",
+      "detailId": 4517,
+      "itemId": 32482,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38852,
+      "type": "QuestActSupplyItem",
+      "detailId": 4518,
+      "itemId": 32483,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8128,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3593,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32481,
+      "count": 1
+     },
+     {
+      "itemId": 32482,
+      "count": 1
+     },
+     {
+      "itemId": 32483,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8128,
+   "count": 3
+  }
+ ]
+}

@@ -1,0 +1,149 @@
+{
+ "questId": 4292,
+ "name": "망아지 운반",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3636
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18735,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24692,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3540,
+      "npcId": 3636
+     },
+     {
+      "actId": 24694,
+      "type": "QuestActCheckTimer",
+      "detailId": 117,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18736,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24693,
+      "type": "QuestActConReportNpc",
+      "detailId": 3802,
+      "npcId": 10666
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 18737,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 18738,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24695,
+      "type": "QuestActSupplyItem",
+      "detailId": 2444,
+      "itemId": 23608,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Drop",
+    "id": 18740,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 18741,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25718,
+      "type": "QuestActSupplyItem",
+      "detailId": 2702,
+      "itemId": 23635,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10666,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23635,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

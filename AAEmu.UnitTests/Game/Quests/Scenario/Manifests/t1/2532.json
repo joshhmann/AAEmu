@@ -1,0 +1,106 @@
+{
+ "questId": 2532,
+ "name": "낯선 소녀의 연락",
+ "zoneId": 9,
+ "categoryId": 3,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11542
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10965,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15464,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2098,
+      "npcId": 11542
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10966,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15465,
+      "type": "QuestActConReportNpc",
+      "detailId": 2301,
+      "npcId": 10581
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10967,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40845,
+      "type": "QuestActSupplyItem",
+      "detailId": 4812,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10581,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

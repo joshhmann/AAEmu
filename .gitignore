@@ -22,3 +22,5 @@ publish/
 .server_files
 .client_files
 .env
+graphify-out/
+graphify-out/

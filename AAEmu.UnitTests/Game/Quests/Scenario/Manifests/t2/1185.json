@@ -1,0 +1,147 @@
+{
+ "questId": 1185,
+ "name": "마리아노플 정원을 위협하는 무리",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 542
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6035,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15576,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 191,
+      "npcId": 542
+     },
+     {
+      "actId": 15577,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 192,
+      "npcId": 543
+     },
+     {
+      "actId": 15578,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 193,
+      "npcId": 544
+     },
+     {
+      "actId": 15579,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 194,
+      "npcId": 545
+     },
+     {
+      "actId": 15580,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 195,
+      "npcId": 636
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6036,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15585,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 178,
+      "monsterGroupId": 19,
+      "count": 48
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6037,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15586,
+      "type": "QuestActConReportJournal",
+      "detailId": 41
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11037,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15587,
+      "type": "QuestActSupplyCopper",
+      "detailId": 131,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 19,
+     "count": 48
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

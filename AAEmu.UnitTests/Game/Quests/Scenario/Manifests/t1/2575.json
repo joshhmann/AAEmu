@@ -1,0 +1,159 @@
+{
+ "questId": 2575,
+ "name": "폐허의 망령 퇴치",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3453
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11168,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15950,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 305,
+      "npcId": 3453
+     },
+     {
+      "actId": 15951,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 306,
+      "npcId": 3454
+     },
+     {
+      "actId": 15953,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 307,
+      "npcId": 3455
+     },
+     {
+      "actId": 15955,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 308,
+      "npcId": 3456
+     },
+     {
+      "actId": 15956,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 309,
+      "npcId": 3457
+     },
+     {
+      "actId": 15957,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 310,
+      "npcId": 3458
+     },
+     {
+      "actId": 15958,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 311,
+      "npcId": 3459
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11169,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15969,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 207,
+      "monsterGroupId": 229,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11170,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16127,
+      "type": "QuestActSupplyCopper",
+      "detailId": 174,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11209,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16128,
+      "type": "QuestActConReportJournal",
+      "detailId": 79
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 229,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

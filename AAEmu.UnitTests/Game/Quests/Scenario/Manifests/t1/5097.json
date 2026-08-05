@@ -1,0 +1,125 @@
+{
+ "questId": 5097,
+ "name": "장기연체자 로이스터 경",
+ "zoneId": 9,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12651
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22100,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31249,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3991,
+      "npcId": 12651
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22101,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31287,
+      "type": "QuestActObjItemGather",
+      "detailId": 2486,
+      "itemId": 26663,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22102,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31252,
+      "type": "QuestActConReportNpc",
+      "detailId": 4275,
+      "npcId": 3615
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22191,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26663,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3615,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26663,
+   "count": 1
+  }
+ ]
+}

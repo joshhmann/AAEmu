@@ -1,0 +1,91 @@
+{
+ "questId": 354,
+ "name": "미안한 이야기",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3523
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1641,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2841,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 307,
+      "npcId": 3523
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1643,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2843,
+      "type": "QuestActConReportNpc",
+      "detailId": 359,
+      "npcId": 3605
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1644,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3605,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,91 @@
+{
+ "questId": 5095,
+ "name": "초승달 왕좌의 도서관",
+ "zoneId": 9,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2194
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22094,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32223,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 661,
+      "sphereId": 2194
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22096,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31244,
+      "type": "QuestActConReportNpc",
+      "detailId": 4272,
+      "npcId": 12650
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22189,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12650,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

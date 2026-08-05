@@ -1,0 +1,106 @@
+{
+ "questId": 2266,
+ "name": "범인을 찾아서",
+ "zoneId": 9,
+ "categoryId": 3,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 1086
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9992,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28388,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 159,
+      "doodadId": 1086
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9994,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14184,
+      "type": "QuestActConReportNpc",
+      "detailId": 2098,
+      "npcId": 10986
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9995,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40853,
+      "type": "QuestActSupplyItem",
+      "detailId": 4820,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10986,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

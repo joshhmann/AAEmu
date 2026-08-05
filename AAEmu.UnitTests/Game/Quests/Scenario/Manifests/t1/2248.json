@@ -1,0 +1,136 @@
+{
+ "questId": 2248,
+ "name": "피 묻은 손을 물리쳐라",
+ "zoneId": 124,
+ "categoryId": 4,
+ "level": 7,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7662
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10193,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14384,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1912,
+      "npcId": 7662
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10194,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14385,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 152,
+      "monsterGroupId": 154,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10195,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14386,
+      "type": "QuestActConReportNpc",
+      "detailId": 2132,
+      "npcId": 7663
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10196,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36901,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2415,
+      "itemId": 31991,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 36902,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2416,
+      "itemId": 32017,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 154,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7663,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

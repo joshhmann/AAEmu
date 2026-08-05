@@ -1,0 +1,77 @@
+{
+ "questId": 5167,
+ "name": "낯익은 얼굴",
+ "zoneId": 124,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12650
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22391,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32021,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4045,
+      "npcId": 12650
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22393,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31638,
+      "type": "QuestActConReportNpc",
+      "detailId": 4343,
+      "npcId": 3611
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3611,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

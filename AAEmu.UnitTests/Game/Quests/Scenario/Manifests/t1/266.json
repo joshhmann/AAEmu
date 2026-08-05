@@ -1,0 +1,159 @@
+{
+ "questId": 266,
+ "name": "양치기의 부탁",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3520
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 799,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1476,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 242,
+      "npcId": 3520
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4504,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6914,
+      "type": "QuestActConReportNpc",
+      "detailId": 868,
+      "npcId": 3520
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4505,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38557,
+      "type": "QuestActSupplyItem",
+      "detailId": 4306,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7252,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26549,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 480,
+      "monsterGroupId": 435,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21183,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29238,
+      "type": "QuestActObjItemGather",
+      "detailId": 2353,
+      "itemId": 8130,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 435,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8130,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3520,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8130,
+   "count": 10
+  }
+ ]
+}

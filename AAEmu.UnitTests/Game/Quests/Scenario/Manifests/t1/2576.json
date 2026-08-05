@@ -1,0 +1,119 @@
+{
+ "questId": 2576,
+ "name": "대담한 도둑질",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3028
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15985,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 81,
+      "doodadId": 3028
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11173,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15991,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 609,
+      "npcId": 8145,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15992,
+      "type": "QuestActConAutoComplete",
+      "detailId": 538
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 11175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15994,
+      "type": "QuestActSupplyCopper",
+      "detailId": 161,
+      "amount": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8145,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

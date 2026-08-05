@@ -1,0 +1,124 @@
+{
+ "questId": 2249,
+ "name": "트럼프의 부탁",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7665
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10402,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14643,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1965,
+      "npcId": 7665
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10412,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14644,
+      "type": "QuestActConReportNpc",
+      "detailId": 2181,
+      "npcId": 11197
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10413,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36908,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2421,
+      "itemId": 32500,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 36909,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2422,
+      "itemId": 32501,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 36910,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2423,
+      "itemId": 32502,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000147,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 8000001,
+      "itemId": 35824,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11197,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

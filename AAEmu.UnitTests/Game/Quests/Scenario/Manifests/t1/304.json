@@ -1,0 +1,142 @@
+{
+ "questId": 304,
+ "name": "승천하지 못한 디켄트라",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8141
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1215,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10566,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1347,
+      "npcId": 8141
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15823,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 605,
+      "npcId": 3487,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1219,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1169,
+      "type": "QuestActConReportNpc",
+      "detailId": 232,
+      "npcId": 8141
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1220,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 11118,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15821,
+      "type": "QuestActSupplyItem",
+      "detailId": 1498,
+      "itemId": 17633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3487,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8141,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

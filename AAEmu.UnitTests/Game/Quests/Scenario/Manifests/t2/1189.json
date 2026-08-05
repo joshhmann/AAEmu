@@ -1,0 +1,129 @@
+{
+ "questId": 1189,
+ "name": "죽음의 기운 물리치기",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 7907
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15719,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 250,
+      "npcId": 7907
+     },
+     {
+      "actId": 15721,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 251,
+      "npcId": 2230
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15722,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 193,
+      "monsterGroupId": 187,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6056,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15723,
+      "type": "QuestActConReportJournal",
+      "detailId": 60
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6057,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15724,
+      "type": "QuestActSupplyCopper",
+      "detailId": 149,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 187,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

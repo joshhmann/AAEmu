@@ -1,0 +1,117 @@
+{
+ "questId": 5166,
+ "name": "문제 많은 저택",
+ "zoneId": 9,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12651
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22387,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31567,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4028,
+      "npcId": 12651
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22388,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31568,
+      "type": "QuestActObjTalk",
+      "detailId": 1013,
+      "npcId": 12732
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22389,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31569,
+      "type": "QuestActConReportNpc",
+      "detailId": 4328,
+      "npcId": 12651
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22390,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 12732
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12651,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,151 @@
+{
+ "questId": 270,
+ "name": "좋은 생각",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3526
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 917,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 746,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 162,
+      "npcId": 3526
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 986,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 877,
+      "type": "QuestActSupplyItem",
+      "detailId": 82,
+      "itemId": 3899,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 878,
+      "type": "QuestActSupplyItem",
+      "detailId": 83,
+      "itemId": 3900,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 987,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 879,
+      "type": "QuestActObjInteraction",
+      "detailId": 12,
+      "doodadId": 687,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1003,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 896,
+      "type": "QuestActConReportNpc",
+      "detailId": 189,
+      "npcId": 3526
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1004,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 687
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3526,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

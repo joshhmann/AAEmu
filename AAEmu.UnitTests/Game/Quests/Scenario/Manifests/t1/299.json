@@ -1,0 +1,140 @@
+{
+ "questId": 299,
+ "name": "네손가락 도적단의 위협",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3542
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1190,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1905,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 244,
+      "npcId": 3542
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1191,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1136,
+      "type": "QuestActObjItemGather",
+      "detailId": 85,
+      "itemId": 3917,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1192,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2505,
+      "type": "QuestActConReportNpc",
+      "detailId": 335,
+      "npcId": 3542
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1193,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36918,
+      "type": "QuestActSupplyItem",
+      "detailId": 4081,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3917,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3542,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3917,
+   "count": 8
+  }
+ ]
+}

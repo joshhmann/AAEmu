@@ -1,0 +1,127 @@
+{
+ "questId": 5267,
+ "name": "이니스테르의 속사정",
+ "zoneId": 124,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3611
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22721,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32022,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4046,
+      "npcId": 3611
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32092,
+      "type": "QuestActObjItemUse",
+      "detailId": 721,
+      "itemId": 27214,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22723,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32023,
+      "type": "QuestActConReportNpc",
+      "detailId": 4355,
+      "npcId": 1479
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32084,
+      "type": "QuestActSupplyItem",
+      "detailId": 3646,
+      "itemId": 27214,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 27214
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1479,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

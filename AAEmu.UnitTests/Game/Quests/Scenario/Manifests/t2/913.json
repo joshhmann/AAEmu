@@ -1,0 +1,91 @@
+{
+ "questId": 913,
+ "name": "큰 금니 트로쉬",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2904
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3889,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16779,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 424,
+      "npcId": 2904
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3895,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5521,
+      "type": "QuestActConReportNpc",
+      "detailId": 728,
+      "npcId": 3061
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3896,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3061,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,119 @@
+{
+ "questId": 294,
+ "name": "타락한 요정의 이름, 밴시",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 35,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3538
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4617,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7154,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 766,
+      "npcId": 3538
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7155,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 286,
+      "npcId": 3495,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4619,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7156,
+      "type": "QuestActConReportNpc",
+      "detailId": 899,
+      "npcId": 3538
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4620,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3495,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3538,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

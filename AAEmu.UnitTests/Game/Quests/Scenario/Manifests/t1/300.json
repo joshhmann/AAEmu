@@ -1,0 +1,136 @@
+{
+ "questId": 300,
+ "name": "웃는 얼굴 만크스 처치",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3542
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1194,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1138,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 222,
+      "npcId": 3542
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1195,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1139,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 63,
+      "npcId": 3486,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1196,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1140,
+      "type": "QuestActConReportNpc",
+      "detailId": 228,
+      "npcId": 3542
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1197,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36850,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2410,
+      "itemId": 31999,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 36851,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2411,
+      "itemId": 32013,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3486,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3542,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

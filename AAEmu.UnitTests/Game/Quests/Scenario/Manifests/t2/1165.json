@@ -1,0 +1,129 @@
+{
+ "questId": 1165,
+ "name": "마른 들판의 날카로운 발톱을 가진 무리",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 5719
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5935,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15684,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 235,
+      "npcId": 5719
+     },
+     {
+      "actId": 15685,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 236,
+      "npcId": 2211
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5939,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15686,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 187,
+      "monsterGroupId": 36,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5940,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15688,
+      "type": "QuestActConReportJournal",
+      "detailId": 54
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11083,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15689,
+      "type": "QuestActSupplyCopper",
+      "detailId": 143,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 36,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

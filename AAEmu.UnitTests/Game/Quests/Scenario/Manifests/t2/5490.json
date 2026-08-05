@@ -1,0 +1,173 @@
+{
+ "questId": 5490,
+ "name": "신기루 섬을 깨끗하게",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13472
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33406,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4210,
+      "npcId": 13472
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34399,
+      "type": "QuestActObjItemGroupGather",
+      "detailId": 20,
+      "itemGroupId": 9,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33409,
+      "type": "QuestActConReportNpc",
+      "detailId": 4529,
+      "npcId": 13472
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23730,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33410,
+      "type": "QuestActSupplyItem",
+      "detailId": 3786,
+      "itemId": 29195,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33794,
+      "type": "QuestActSupplyItem",
+      "detailId": 3851,
+      "itemId": 29112,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGroupGather",
+     "itemId": 28557,
+     "itemGroupId": 9,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13472,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29195,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28557,
+   "count": 10
+  }
+ ],
+ "groups": {
+  "itemGroups": {
+   "9": [
+    28557,
+    28558,
+    29288
+   ]
+  }
+ }
+}

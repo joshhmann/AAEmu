@@ -1,0 +1,129 @@
+{
+ "questId": 2578,
+ "name": "평원 거미 퇴치",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8152
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11183,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16054,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 312,
+      "npcId": 8152
+     },
+     {
+      "actId": 16056,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 313,
+      "npcId": 8153
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11184,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16057,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 209,
+      "monsterGroupId": 204,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11185,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16129,
+      "type": "QuestActSupplyCopper",
+      "detailId": 175,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11210,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16130,
+      "type": "QuestActConReportJournal",
+      "detailId": 80
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 204,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

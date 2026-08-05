@@ -1,0 +1,110 @@
+{
+ "questId": 250,
+ "name": "솔즈리드 여우 처치",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5047
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 271,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26340,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 143,
+      "doodadId": 5047
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 737,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26341,
+      "type": "QuestActConAutoComplete",
+      "detailId": 782
+     },
+     {
+      "actId": 26342,
+      "type": "QuestActSupplyExp",
+      "detailId": 76,
+      "exp": 110
+     },
+     {
+      "actId": 36960,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1372,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7069,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10467,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 404,
+      "npcId": 3492,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3492,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

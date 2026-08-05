@@ -1,0 +1,134 @@
+{
+ "questId": 252,
+ "name": "숲 되살리기",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7653
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 651,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 478,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 110,
+      "npcId": 7653
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 658,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6400,
+      "type": "QuestActSupplyItem",
+      "detailId": 391,
+      "itemId": 7738,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1314,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1600,
+      "type": "QuestActObjItemUse",
+      "detailId": 43,
+      "itemId": 7738,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4449,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17817,
+      "type": "QuestActConAutoComplete",
+      "detailId": 585
+     },
+     {
+      "actId": 38555,
+      "type": "QuestActSupplyItem",
+      "detailId": 4304,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 7738
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

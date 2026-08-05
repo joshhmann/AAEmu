@@ -1,0 +1,125 @@
+{
+ "questId": 345,
+ "name": "무엇에 쓰는 약인고",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3530
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2773,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 301,
+      "npcId": 3530
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1608,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2774,
+      "type": "QuestActObjItemGather",
+      "detailId": 147,
+      "itemId": 3811,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1609,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2775,
+      "type": "QuestActConReportNpc",
+      "detailId": 352,
+      "npcId": 3530
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1610,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3811,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3530,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3811,
+   "count": 1
+  }
+ ]
+}

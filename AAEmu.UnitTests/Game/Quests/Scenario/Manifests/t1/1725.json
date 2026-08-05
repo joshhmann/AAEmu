@@ -1,0 +1,106 @@
+{
+ "questId": 1725,
+ "name": "겁먹은 정찰대원",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3529
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8367,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12112,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1544,
+      "npcId": 3529
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8368,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12113,
+      "type": "QuestActConReportNpc",
+      "detailId": 1739,
+      "npcId": 3593
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8369,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36912,
+      "type": "QuestActSupplyItem",
+      "detailId": 4076,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3593,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

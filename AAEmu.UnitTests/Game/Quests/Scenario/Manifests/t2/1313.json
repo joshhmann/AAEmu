@@ -1,0 +1,142 @@
+{
+ "questId": 1313,
+ "name": "말동무",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3138
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6547,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9273,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1135,
+      "npcId": 3138
+     },
+     {
+      "actId": 12289,
+      "type": "QuestActCheckGuard",
+      "detailId": 95,
+      "npcId": 3138
+     },
+     {
+      "actId": 12290,
+      "type": "QuestActCheckTimer",
+      "detailId": 57,
+      "limitTime": 180000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6548,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9274,
+      "type": "QuestActObjSphere",
+      "detailId": 385,
+      "sphereId": 461,
+      "npcId": 3138
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9275,
+      "type": "QuestActConReportNpc",
+      "detailId": 1298,
+      "npcId": 3137
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6550,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Fail",
+    "id": 8499,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 6548
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3137,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "guard": {
+  "npcId": 3138,
+  "alive": true
+ }
+}

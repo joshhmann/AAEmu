@@ -1,0 +1,134 @@
+{
+ "questId": 5168,
+ "name": "특사의 자격",
+ "zoneId": 124,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3611
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22394,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31640,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4038,
+      "npcId": 3611
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32048,
+      "type": "QuestActObjItemGather",
+      "detailId": 2527,
+      "itemId": 27144,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22396,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31573,
+      "type": "QuestActConReportNpc",
+      "detailId": 4329,
+      "npcId": 3611
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22732,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32049,
+      "type": "QuestActSupplyItem",
+      "detailId": 3642,
+      "itemId": 27143,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27144,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3611,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27144,
+   "count": 1
+  }
+ ]
+}

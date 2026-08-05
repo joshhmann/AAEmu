@@ -1,0 +1,172 @@
+{
+ "questId": 350,
+ "name": "일손 부족",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3602
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10466,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1337,
+      "npcId": 3602
+     },
+     {
+      "actId": 29071,
+      "type": "QuestActCheckTimer",
+      "detailId": 120,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1626,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2794,
+      "type": "QuestActObjInteraction",
+      "detailId": 59,
+      "doodadId": 2880,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1628,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2795,
+      "type": "QuestActConReportNpc",
+      "detailId": 355,
+      "npcId": 3602
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1629,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36914,
+      "type": "QuestActSupplyItem",
+      "detailId": 4078,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21077,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28910,
+      "type": "QuestActSupplyItem",
+      "detailId": 3274,
+      "itemId": 25223,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 21112,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2880
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3602,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

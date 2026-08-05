@@ -1,0 +1,168 @@
+{
+ "questId": 4294,
+ "name": "망아지의 먹이",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10666
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18750,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24707,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3543,
+      "npcId": 10666
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18751,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29514,
+      "type": "QuestActObjItemUse",
+      "detailId": 679,
+      "itemId": 23635,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18752,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24709,
+      "type": "QuestActConReportNpc",
+      "detailId": 3804,
+      "npcId": 10666
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18753,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25719,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1923,
+      "itemId": 23680,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 25720,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1924,
+      "itemId": 23681,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 25721,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1925,
+      "itemId": 23682,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29513,
+      "type": "QuestActObjItemGather",
+      "detailId": 2381,
+      "itemId": 21850,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 23635
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 21850,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10666,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 21850,
+   "count": 1
+  }
+ ]
+}

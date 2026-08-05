@@ -1,0 +1,103 @@
+{
+ "questId": 2239,
+ "name": "지붕 위로 날아간 닭",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7653
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9939,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38276,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4738,
+      "npcId": 7653
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9940,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38277,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1717
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27210,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38274,
+      "type": "QuestActObjItemGather",
+      "detailId": 2941,
+      "itemId": 33381,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 33381,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33381,
+   "count": 1
+  }
+ ]
+}

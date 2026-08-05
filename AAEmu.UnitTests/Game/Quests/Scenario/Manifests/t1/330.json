@@ -1,0 +1,91 @@
+{
+ "questId": 330,
+ "name": "나를 찾는 사람",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3597
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1520,
+    "nextComponent": 3543,
+    "acts": [
+     {
+      "actId": 9874,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1250,
+      "npcId": 3597
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1521,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2438,
+      "type": "QuestActConReportNpc",
+      "detailId": 329,
+      "npcId": 3511
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1522,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3511,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

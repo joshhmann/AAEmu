@@ -1,0 +1,123 @@
+{
+ "questId": 2579,
+ "name": "쥐는 잡아야 제맛!",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3452
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11193,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16065,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 314,
+      "npcId": 3452
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11194,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16066,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 611,
+      "npcId": 3452,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11195,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16131,
+      "type": "QuestActSupplyCopper",
+      "detailId": 176,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11211,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16132,
+      "type": "QuestActConReportJournal",
+      "detailId": 81
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3452,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

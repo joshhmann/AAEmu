@@ -1,0 +1,104 @@
+{
+ "questId": 329,
+ "name": "불곰을 조심해!",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5048
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1487,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26346,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 144,
+      "doodadId": 5048
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14220,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 150,
+      "monsterGroupId": 153,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14222,
+      "type": "QuestActConAutoComplete",
+      "detailId": 463
+     },
+     {
+      "actId": 36961,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1373,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 153,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,148 @@
+{
+ "questId": 347,
+ "name": "오빠의 마음",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3530
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1615,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15039,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2065,
+      "npcId": 3530
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 1616,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2786,
+      "type": "QuestActSupplyItem",
+      "detailId": 161,
+      "itemId": 15544,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7078,
+      "type": "QuestActConReportNpc",
+      "detailId": 888,
+      "npcId": 3528
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4577,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 7294,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10081,
+      "type": "QuestActObjItemGather",
+      "detailId": 590,
+      "itemId": 15544,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15544,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3528,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15544,
+   "count": 1
+  }
+ ]
+}

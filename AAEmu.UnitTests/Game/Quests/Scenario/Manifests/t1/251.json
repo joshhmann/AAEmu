@@ -1,0 +1,140 @@
+{
+ "questId": 251,
+ "name": "화난 멧돼지들",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 2,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3512
+ },
+ "template": {
+  "level": 2,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 383,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 333,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 77,
+      "npcId": 3512
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 633,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10473,
+      "type": "QuestActObjItemGather",
+      "detailId": 616,
+      "itemId": 4058,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 638,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 457,
+      "type": "QuestActConReportNpc",
+      "detailId": 104,
+      "npcId": 3512
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 639,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36911,
+      "type": "QuestActSupplyItem",
+      "detailId": 4075,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4058,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3512,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4058,
+   "count": 3
+  }
+ ]
+}

@@ -1,0 +1,153 @@
+{
+ "questId": 1082,
+ "name": "하피 둥지의 하피들 처치",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 536
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5412,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22329,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 904,
+      "npcId": 536
+     },
+     {
+      "actId": 22330,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 905,
+      "npcId": 5151
+     },
+     {
+      "actId": 22331,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 906,
+      "npcId": 5124
+     },
+     {
+      "actId": 22332,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 907,
+      "npcId": 5128
+     },
+     {
+      "actId": 22333,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 908,
+      "npcId": 4943
+     },
+     {
+      "actId": 22334,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 909,
+      "npcId": 548
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5414,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22335,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 420,
+      "monsterGroupId": 32,
+      "count": 32
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5415,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22336,
+      "type": "QuestActConReportJournal",
+      "detailId": 272
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5416,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22337,
+      "type": "QuestActSupplyCopper",
+      "detailId": 384,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 32,
+     "count": 32
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

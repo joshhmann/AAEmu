@@ -1,0 +1,81 @@
+{
+ "questId": 4903,
+ "name": "아이들의 비밀장소",
+ "zoneId": 9,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2023
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21306,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29651,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 551,
+      "sphereId": 2023
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29652,
+      "type": "QuestActSupplyCopper",
+      "detailId": 816,
+      "amount": 0
+     },
+     {
+      "actId": 29655,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1137
+     },
+     {
+      "actId": 31124,
+      "type": "QuestActSupplyExp",
+      "detailId": 588,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

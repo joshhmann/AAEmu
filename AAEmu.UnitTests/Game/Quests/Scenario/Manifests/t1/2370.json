@@ -1,0 +1,141 @@
+{
+ "questId": 2370,
+ "name": "백월만의 피 묻은 손 처치",
+ "zoneId": 124,
+ "categoryId": 4,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3489
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10197,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14388,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 142,
+      "npcId": 3489
+     },
+     {
+      "actId": 14389,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 143,
+      "npcId": 3490
+     },
+     {
+      "actId": 15694,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 239,
+      "npcId": 3470
+     },
+     {
+      "actId": 15713,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 248,
+      "npcId": 3473
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14390,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 153,
+      "monsterGroupId": 154,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10199,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16133,
+      "type": "QuestActSupplyCopper",
+      "detailId": 177,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11199,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16107,
+      "type": "QuestActConReportJournal",
+      "detailId": 69
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 154,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

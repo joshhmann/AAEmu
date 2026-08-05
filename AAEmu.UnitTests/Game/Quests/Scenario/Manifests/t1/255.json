@@ -1,0 +1,125 @@
+{
+ "questId": 255,
+ "name": "제니의 부탁",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3516
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 695,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9879,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1252,
+      "npcId": 3516
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4454,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7321,
+      "type": "QuestActObjItemGather",
+      "detailId": 373,
+      "itemId": 13713,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4455,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6823,
+      "type": "QuestActConReportNpc",
+      "detailId": 860,
+      "npcId": 3516
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4456,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13713,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3516,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13713,
+   "count": 1
+  }
+ ]
+}

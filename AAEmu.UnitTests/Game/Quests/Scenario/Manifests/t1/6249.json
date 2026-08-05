@@ -1,0 +1,104 @@
+{
+ "questId": 6249,
+ "name": "가라앉은 만의 공포",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5849
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26779,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37300,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 311,
+      "doodadId": 5849
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26780,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37301,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 629,
+      "monsterGroupId": 507,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37302,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1711
+     },
+     {
+      "actId": 37303,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1458,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 507,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

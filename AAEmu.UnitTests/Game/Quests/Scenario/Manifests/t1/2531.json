@@ -1,0 +1,106 @@
+{
+ "questId": 2531,
+ "name": "시골에 도착한 예언자",
+ "zoneId": 9,
+ "categoryId": 3,
+ "level": 2,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11541
+ },
+ "template": {
+  "level": 2,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10962,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15458,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2097,
+      "npcId": 11541
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10963,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15459,
+      "type": "QuestActConReportNpc",
+      "detailId": 2300,
+      "npcId": 10580
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10964,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40844,
+      "type": "QuestActSupplyItem",
+      "detailId": 4811,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10580,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

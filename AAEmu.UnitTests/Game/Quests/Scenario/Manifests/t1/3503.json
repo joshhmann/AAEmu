@@ -1,0 +1,106 @@
+{
+ "questId": 3503,
+ "name": "희생자를 줄일 기회",
+ "zoneId": 124,
+ "categoryId": 3,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10583
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18812,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25053,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3561,
+      "npcId": 10583
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18813,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25052,
+      "type": "QuestActConReportNpc",
+      "detailId": 3825,
+      "npcId": 10585
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18814,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40850,
+      "type": "QuestActSupplyItem",
+      "detailId": 4817,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10585,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

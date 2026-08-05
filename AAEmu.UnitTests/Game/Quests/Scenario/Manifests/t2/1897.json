@@ -1,0 +1,167 @@
+{
+ "questId": 1897,
+ "name": "(구 불볕황야)사라진 가우타마(월드작업후 퀘스트 대상 배치 예정)",
+ "zoneId": 22,
+ "categoryId": 1,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8799,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 8800,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13424,
+      "type": "QuestActObjItemUse",
+      "detailId": 391,
+      "itemId": 16019,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8801,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13425,
+      "type": "QuestActObjTalk",
+      "detailId": 816,
+      "npcId": 7548
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8802,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13427,
+      "type": "QuestActObjSphere",
+      "detailId": 521,
+      "sphereId": 1007,
+      "npcId": 7548
+     },
+     {
+      "actId": 13428,
+      "type": "QuestActCheckTimer",
+      "detailId": 66,
+      "limitTime": 180000,
+      "nextComponent": 0
+     },
+     {
+      "actId": 13429,
+      "type": "QuestActCheckGuard",
+      "detailId": 102,
+      "npcId": 7548
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8803,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13430,
+      "type": "QuestActConAutoComplete",
+      "detailId": 396
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9645,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13423,
+      "type": "QuestActSupplyItem",
+      "detailId": 1296,
+      "itemId": 16019,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 9647,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 16019
+    },
+    {
+     "type": "Talk",
+     "npcId": 7548
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 8802
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

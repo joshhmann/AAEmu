@@ -1,0 +1,81 @@
+{
+ "questId": 4902,
+ "name": "선돌 연구자의 집 방문",
+ "zoneId": 9,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2022
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21303,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29646,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 550,
+      "sphereId": 2022
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21304,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29647,
+      "type": "QuestActSupplyCopper",
+      "detailId": 815,
+      "amount": 0
+     },
+     {
+      "actId": 29650,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1136
+     },
+     {
+      "actId": 31125,
+      "type": "QuestActSupplyExp",
+      "detailId": 589,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

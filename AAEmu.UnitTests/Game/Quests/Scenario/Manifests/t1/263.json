@@ -1,0 +1,148 @@
+{
+ "questId": 263,
+ "name": "부러진 곡괭이",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7657
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 780,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1385,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 241,
+      "npcId": 7657
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 786,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2123,
+      "type": "QuestActConReportNpc",
+      "detailId": 283,
+      "npcId": 11189
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 790,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 10523,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14751,
+      "type": "QuestActSupplyItem",
+      "detailId": 1402,
+      "itemId": 16490,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14752,
+      "type": "QuestActObjItemGather",
+      "detailId": 989,
+      "itemId": 16490,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16490,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11189,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16490,
+   "count": 1
+  }
+ ]
+}

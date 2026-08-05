@@ -1,0 +1,155 @@
+{
+ "questId": 5106,
+ "name": "세상에서 가장 위대했던 도서관 이야기",
+ "zoneId": 9,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 680
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22127,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31300,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4002,
+      "npcId": 680
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22129,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31302,
+      "type": "QuestActObjItemGather",
+      "detailId": 2487,
+      "itemId": 26665,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22205,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31303,
+      "type": "QuestActConReportNpc",
+      "detailId": 4292,
+      "npcId": 12650
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22206,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32241,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 112,
+      "appellationId": 98
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31301,
+      "type": "QuestActSupplyItem",
+      "detailId": 3587,
+      "itemId": 26665,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26665,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12650,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26665,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,147 @@
+{
+ "questId": 1181,
+ "name": "북 데비 강 상류의 야생동물 처치",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3366
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6018,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13930,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 133,
+      "npcId": 3366
+     },
+     {
+      "actId": 13931,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 134,
+      "npcId": 3367
+     },
+     {
+      "actId": 13932,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 135,
+      "npcId": 3368
+     },
+     {
+      "actId": 13987,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 139,
+      "npcId": 3365
+     },
+     {
+      "actId": 13988,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 140,
+      "npcId": 3364
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6019,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13933,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 146,
+      "monsterGroupId": 152,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6020,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13935,
+      "type": "QuestActSupplyCopper",
+      "detailId": 94,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11015,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15529,
+      "type": "QuestActConReportJournal",
+      "detailId": 36
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 152,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

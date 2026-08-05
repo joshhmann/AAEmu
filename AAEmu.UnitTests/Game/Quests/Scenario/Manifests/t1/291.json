@@ -1,0 +1,117 @@
+{
+ "questId": 291,
+ "name": "브리짓 구출",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3535
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1162,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1106,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 218,
+      "npcId": 3535
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4600,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7117,
+      "type": "QuestActObjTalk",
+      "detailId": 538,
+      "npcId": 3536
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4601,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7125,
+      "type": "QuestActConReportNpc",
+      "detailId": 893,
+      "npcId": 3535
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4602,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 3536
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3535,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

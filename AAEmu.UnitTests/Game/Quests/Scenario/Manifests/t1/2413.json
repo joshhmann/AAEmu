@@ -1,0 +1,134 @@
+{
+ "questId": 2413,
+ "name": "피 묻은 손 돌격대장 처치!",
+ "zoneId": 124,
+ "categoryId": 4,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3463
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10394,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14603,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 152,
+      "npcId": 3463
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14606,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 566,
+      "npcId": 7669,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10396,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14607,
+      "type": "QuestActConReportNpc",
+      "detailId": 2174,
+      "npcId": 7662
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10397,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36903,
+      "type": "QuestActSupplyItem",
+      "detailId": 4074,
+      "itemId": 23092,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 7669,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7662,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23092,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 303,
+ "name": "영혼을 가르는 무기",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11197
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4629,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7173,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 769,
+      "npcId": 11197
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4630,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15768,
+      "type": "QuestActObjItemGather",
+      "detailId": 1036,
+      "itemId": 17627,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4632,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7176,
+      "type": "QuestActConReportNpc",
+      "detailId": 902,
+      "npcId": 8141
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4633,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36920,
+      "type": "QuestActSupplyItem",
+      "detailId": 4083,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17627,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8141,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17627,
+   "count": 12
+  }
+ ]
+}

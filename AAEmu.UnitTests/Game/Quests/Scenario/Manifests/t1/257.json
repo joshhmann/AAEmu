@@ -1,0 +1,106 @@
+{
+ "questId": 257,
+ "name": "선돌 연구자의 행방",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7651
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 738,
+    "nextComponent": null,
+    "acts": [
+     {
+      "actId": 582,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 130,
+      "npcId": 7651
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 740,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 584,
+      "type": "QuestActConReportNpc",
+      "detailId": 137,
+      "npcId": 3517
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 741,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38556,
+      "type": "QuestActSupplyItem",
+      "detailId": 4305,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3517,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

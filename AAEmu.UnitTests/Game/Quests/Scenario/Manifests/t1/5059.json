@@ -1,0 +1,178 @@
+{
+ "questId": 5059,
+ "name": "배심원 자격, 놓치지 않을 거예요",
+ "zoneId": 125,
+ "categoryId": 5,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 100,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21905,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30817,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3951,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21906,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31192,
+      "type": "QuestActObjItemGather",
+      "detailId": 2475,
+      "itemId": 26586,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21907,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30818,
+      "type": "QuestActConReportNpc",
+      "detailId": 4227,
+      "npcId": 12530
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21911,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30819,
+      "type": "QuestActSupplyJuryPoint",
+      "detailId": 3,
+      "point": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22062,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31187,
+      "type": "QuestActObjItemGather",
+      "detailId": 2473,
+      "itemId": 26585,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22063,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31043,
+      "type": "QuestActObjItemGather",
+      "detailId": 2468,
+      "itemId": 26528,
+      "count": 12
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26586,
+     "count": 3
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26585,
+     "count": 8
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26528,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12530,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26586,
+   "count": 3
+  },
+  {
+   "itemId": 26585,
+   "count": 8
+  },
+  {
+   "itemId": 26528,
+   "count": 12
+  }
+ ]
+}

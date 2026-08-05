@@ -1,0 +1,165 @@
+{
+ "questId": 1178,
+ "name": "오염의 주범들 처치",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3356
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6004,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13908,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 120,
+      "npcId": 3356
+     },
+     {
+      "actId": 13909,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 121,
+      "npcId": 3357
+     },
+     {
+      "actId": 13910,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 122,
+      "npcId": 3358
+     },
+     {
+      "actId": 13911,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 123,
+      "npcId": 3359
+     },
+     {
+      "actId": 13912,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 124,
+      "npcId": 3360
+     },
+     {
+      "actId": 13913,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 125,
+      "npcId": 3361
+     },
+     {
+      "actId": 13914,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 126,
+      "npcId": 5777
+     },
+     {
+      "actId": 13984,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 138,
+      "npcId": 3362
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13915,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 143,
+      "monsterGroupId": 149,
+      "count": 36
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6007,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13916,
+      "type": "QuestActSupplyCopper",
+      "detailId": 91,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11016,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15530,
+      "type": "QuestActConReportJournal",
+      "detailId": 37
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 149,
+     "count": 36
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

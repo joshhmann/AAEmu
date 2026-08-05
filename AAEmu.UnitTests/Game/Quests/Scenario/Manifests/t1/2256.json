@@ -1,0 +1,91 @@
+{
+ "questId": 2256,
+ "name": "루키우스의 흔적",
+ "zoneId": 125,
+ "categoryId": 3,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10581
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10362,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14579,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1954,
+      "npcId": 10581
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10364,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27029,
+      "type": "QuestActConReportNpc",
+      "detailId": 4005,
+      "npcId": 10646
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10366,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10646,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

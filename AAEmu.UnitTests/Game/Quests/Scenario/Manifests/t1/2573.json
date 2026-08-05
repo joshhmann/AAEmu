@@ -1,0 +1,213 @@
+{
+ "questId": 2573,
+ "name": "네손가락 도적단 퇴치",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3476
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11162,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15919,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 284,
+      "npcId": 3476
+     },
+     {
+      "actId": 15920,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 285,
+      "npcId": 3477
+     },
+     {
+      "actId": 15921,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 286,
+      "npcId": 3478
+     },
+     {
+      "actId": 15922,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 287,
+      "npcId": 3479
+     },
+     {
+      "actId": 15923,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 288,
+      "npcId": 7691
+     },
+     {
+      "actId": 15924,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 289,
+      "npcId": 7692
+     },
+     {
+      "actId": 15925,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 290,
+      "npcId": 7693
+     },
+     {
+      "actId": 15926,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 291,
+      "npcId": 7694
+     },
+     {
+      "actId": 15927,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 292,
+      "npcId": 7695
+     },
+     {
+      "actId": 15928,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 293,
+      "npcId": 7696
+     },
+     {
+      "actId": 15929,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 294,
+      "npcId": 7697
+     },
+     {
+      "actId": 15930,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 295,
+      "npcId": 7698
+     },
+     {
+      "actId": 15931,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 296,
+      "npcId": 7699
+     },
+     {
+      "actId": 15932,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 297,
+      "npcId": 7700
+     },
+     {
+      "actId": 15933,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 298,
+      "npcId": 7701
+     },
+     {
+      "actId": 15934,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 299,
+      "npcId": 7702
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11163,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15939,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 206,
+      "monsterGroupId": 201,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11164,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16123,
+      "type": "QuestActSupplyCopper",
+      "detailId": 172,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16124,
+      "type": "QuestActConReportJournal",
+      "detailId": 77
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 201,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

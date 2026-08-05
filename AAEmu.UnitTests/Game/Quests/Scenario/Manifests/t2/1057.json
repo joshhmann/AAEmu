@@ -1,0 +1,135 @@
+{
+ "questId": 1057,
+ "name": "황금 실타래 벌판의 위협 몰아내기",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 10444
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22312,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 897,
+      "npcId": 10444
+     },
+     {
+      "actId": 22314,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 899,
+      "npcId": 10446
+     },
+     {
+      "actId": 22315,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 900,
+      "npcId": 532
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5560,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22321,
+      "type": "QuestActConReportJournal",
+      "detailId": 270
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5561,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22323,
+      "type": "QuestActSupplyCopper",
+      "detailId": 382,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8129,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22316,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 418,
+      "monsterGroupId": 3,
+      "count": 64
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 3,
+     "count": 64
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

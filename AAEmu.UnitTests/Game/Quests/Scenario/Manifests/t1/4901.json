@@ -1,0 +1,81 @@
+{
+ "questId": 4901,
+ "name": "마일즈가 연구 중인 선돌",
+ "zoneId": 9,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2021
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21300,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29645,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 549,
+      "sphereId": 2021
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21301,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29641,
+      "type": "QuestActSupplyCopper",
+      "detailId": 814,
+      "amount": 0
+     },
+     {
+      "actId": 29644,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1135
+     },
+     {
+      "actId": 31126,
+      "type": "QuestActSupplyExp",
+      "detailId": 590,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

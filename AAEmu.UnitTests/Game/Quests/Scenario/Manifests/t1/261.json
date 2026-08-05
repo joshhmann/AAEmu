@@ -1,0 +1,192 @@
+{
+ "questId": 261,
+ "name": "원혼 달래기",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3593
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6906,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 740,
+      "npcId": 3593
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 4500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6907,
+      "type": "QuestActSupplyItem",
+      "detailId": 412,
+      "itemId": 8129,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6908,
+      "type": "QuestActObjItemUse",
+      "detailId": 145,
+      "itemId": 8129,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4502,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38853,
+      "type": "QuestActSupplyItem",
+      "detailId": 4519,
+      "itemId": 32484,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38854,
+      "type": "QuestActSupplyItem",
+      "detailId": 4520,
+      "itemId": 32485,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38855,
+      "type": "QuestActSupplyItem",
+      "detailId": 4521,
+      "itemId": 32486,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000146,
+      "type": "QuestActSupplyItem",
+      "detailId": 8000126,
+      "itemId": 35823,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8370,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12116,
+      "type": "QuestActConReportNpc",
+      "detailId": 1740,
+      "npcId": 3593
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 8129
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3593,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32484,
+      "count": 1
+     },
+     {
+      "itemId": 32485,
+      "count": 1
+     },
+     {
+      "itemId": 32486,
+      "count": 1
+     },
+     {
+      "itemId": 35823,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

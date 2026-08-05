@@ -1,0 +1,106 @@
+{
+ "questId": 2262,
+ "name": "스콧을 찾아서",
+ "zoneId": 9,
+ "categoryId": 3,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10585
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9972,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14167,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1859,
+      "npcId": 10585
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10006,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40851,
+      "type": "QuestActSupplyItem",
+      "detailId": 4818,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21182,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29202,
+      "type": "QuestActConReportNpc",
+      "detailId": 4171,
+      "npcId": 10644
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10644,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

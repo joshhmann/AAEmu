@@ -1,0 +1,104 @@
+{
+ "questId": 1652,
+ "name": "난폭한 선돌 수호자 퇴치",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 8055
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7861,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38236,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 314,
+      "doodadId": 8055
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7862,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11021,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 451,
+      "npcId": 7673,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7863,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16403,
+      "type": "QuestActSupplyCopper",
+      "detailId": 188,
+      "amount": 0
+     },
+     {
+      "actId": 38237,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1716
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 7673,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,189 @@
+{
+ "questId": 1186,
+ "name": "벌거숭이 언덕의 파수꾼들 몰아내기",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 454
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6038,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15588,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 200,
+      "npcId": 454
+     },
+     {
+      "actId": 15589,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 201,
+      "npcId": 453
+     },
+     {
+      "actId": 15590,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 202,
+      "npcId": 538
+     },
+     {
+      "actId": 15591,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 203,
+      "npcId": 539
+     },
+     {
+      "actId": 15592,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 204,
+      "npcId": 540
+     },
+     {
+      "actId": 15593,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 205,
+      "npcId": 541
+     },
+     {
+      "actId": 15594,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 206,
+      "npcId": 546
+     },
+     {
+      "actId": 15595,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 207,
+      "npcId": 547
+     },
+     {
+      "actId": 15596,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 208,
+      "npcId": 549
+     },
+     {
+      "actId": 15597,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 209,
+      "npcId": 550
+     },
+     {
+      "actId": 15598,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 210,
+      "npcId": 551
+     },
+     {
+      "actId": 15599,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 211,
+      "npcId": 552
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6039,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15600,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 179,
+      "monsterGroupId": 44,
+      "count": 64
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6040,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15601,
+      "type": "QuestActConReportJournal",
+      "detailId": 42
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6041,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15602,
+      "type": "QuestActSupplyCopper",
+      "detailId": 132,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 44,
+     "count": 64
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

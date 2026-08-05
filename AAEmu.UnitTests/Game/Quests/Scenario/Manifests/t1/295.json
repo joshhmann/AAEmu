@@ -1,0 +1,141 @@
+{
+ "questId": 295,
+ "name": "밴시 정화",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3537
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4621,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7159,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 767,
+      "npcId": 3537
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 4622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7160,
+      "type": "QuestActSupplyItem",
+      "detailId": 424,
+      "itemId": 8244,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7161,
+      "type": "QuestActObjItemUse",
+      "detailId": 150,
+      "itemId": 8244,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7164,
+      "type": "QuestActConReportNpc",
+      "detailId": 900,
+      "npcId": 3537
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4625,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 8244
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3537,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

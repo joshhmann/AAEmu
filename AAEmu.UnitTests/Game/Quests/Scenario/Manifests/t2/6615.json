@@ -1,0 +1,168 @@
+{
+ "questId": 6615,
+ "name": "신의 방패 정식 대원이 되다!",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14935
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28196,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40354,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5054,
+      "npcId": 14935
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28197,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40355,
+      "type": "QuestActObjItemGroupGather",
+      "detailId": 26,
+      "itemGroupId": 16,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40356,
+      "type": "QuestActConReportNpc",
+      "detailId": 5065,
+      "npcId": 14925
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28230,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40464,
+      "type": "QuestActSupplyExp",
+      "detailId": 1543,
+      "exp": 65480
+     },
+     {
+      "actId": 40465,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1885,
+      "amount": 45000
+     },
+     {
+      "actId": 40520,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 295,
+      "appellationId": 446
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGroupGather",
+     "itemId": 34636,
+     "itemGroupId": 16,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14925,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34636,
+   "count": 1
+  }
+ ],
+ "groups": {
+  "itemGroups": {
+   "16": [
+    34636,
+    34637,
+    34638,
+    34639,
+    34640,
+    34641,
+    34642,
+    34643,
+    34644,
+    34645,
+    34646,
+    34647,
+    34648,
+    34649,
+    34650,
+    34651,
+    34652
+   ]
+  }
+ }
+}

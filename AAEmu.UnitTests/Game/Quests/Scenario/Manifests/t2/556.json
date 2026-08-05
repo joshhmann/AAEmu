@@ -1,0 +1,177 @@
+{
+ "questId": 556,
+ "name": "시차일드 부두로 찾아온 수상한 인어들 퇴치",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2350
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2238,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17863,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 552,
+      "npcId": 2350
+     },
+     {
+      "actId": 17864,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 553,
+      "npcId": 2351
+     },
+     {
+      "actId": 17865,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 554,
+      "npcId": 2352
+     },
+     {
+      "actId": 17866,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 555,
+      "npcId": 2353
+     },
+     {
+      "actId": 17867,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 556,
+      "npcId": 2354
+     },
+     {
+      "actId": 17868,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 557,
+      "npcId": 2355
+     },
+     {
+      "actId": 17869,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 558,
+      "npcId": 2356
+     },
+     {
+      "actId": 17870,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 559,
+      "npcId": 2357
+     },
+     {
+      "actId": 17871,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 560,
+      "npcId": 2358
+     },
+     {
+      "actId": 17872,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 561,
+      "npcId": 2359
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2240,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17873,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 283,
+      "monsterGroupId": 254,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2241,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17875,
+      "type": "QuestActConReportJournal",
+      "detailId": 173
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12241,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17874,
+      "type": "QuestActSupplyCopper",
+      "detailId": 255,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 254,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

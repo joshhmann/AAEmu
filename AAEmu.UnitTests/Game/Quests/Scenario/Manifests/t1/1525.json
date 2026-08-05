@@ -1,0 +1,96 @@
+{
+ "questId": 1525,
+ "name": "널린 희생자들",
+ "zoneId": 124,
+ "categoryId": 3,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10583
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7347,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10177,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1301,
+      "npcId": 10583
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7349,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23217,
+      "type": "QuestActObjSphere",
+      "detailId": 622,
+      "sphereId": 1415
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9971,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22813,
+      "type": "QuestActConAutoComplete",
+      "detailId": 733
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 7349
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

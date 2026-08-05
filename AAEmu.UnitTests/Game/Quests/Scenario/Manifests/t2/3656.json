@@ -1,0 +1,163 @@
+{
+ "questId": 3656,
+ "name": "뜨거운 물이 좋아",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2979
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15272,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20949,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2894,
+      "npcId": 2979
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20950,
+      "type": "QuestActObjTalk",
+      "detailId": 920,
+      "npcId": 9846
+     },
+     {
+      "actId": 20951,
+      "type": "QuestActCheckGuard",
+      "detailId": 116,
+      "npcId": 9846
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21290,
+      "type": "QuestActObjSphere",
+      "detailId": 591,
+      "sphereId": 1266,
+      "npcId": 9846
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 15275,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 15276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20952,
+      "type": "QuestActConReportNpc",
+      "detailId": 3128,
+      "npcId": 2979
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15277,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38628,
+      "type": "QuestActSupplyItem",
+      "detailId": 4377,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 9846
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 15274
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2979,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

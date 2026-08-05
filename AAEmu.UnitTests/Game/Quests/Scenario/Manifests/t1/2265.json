@@ -1,0 +1,129 @@
+{
+ "questId": 2265,
+ "name": "꽃의 처녀 플로라",
+ "zoneId": 9,
+ "categoryId": 3,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10585
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9987,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14178,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1862,
+      "npcId": 10585
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9988,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14179,
+      "type": "QuestActSupplyItem",
+      "detailId": 1336,
+      "itemId": 21604,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9989,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36361,
+      "type": "QuestActConReportNpc",
+      "detailId": 4868,
+      "npcId": 12022
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9991,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40852,
+      "type": "QuestActSupplyItem",
+      "detailId": 4819,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12022,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

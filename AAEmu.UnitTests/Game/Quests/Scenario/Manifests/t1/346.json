@@ -1,0 +1,104 @@
+{
+ "questId": 346,
+ "name": "마엘와스가 남긴 것",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5375
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1611,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28528,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 162,
+      "doodadId": 5375
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1612,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28526,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 491,
+      "monsterGroupId": 448,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1614,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28527,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1072
+     },
+     {
+      "actId": 36963,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1375,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 448,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

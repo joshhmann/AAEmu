@@ -1,0 +1,103 @@
+{
+ "questId": 2393,
+ "name": "솔즈리드 나룻배",
+ "zoneId": 124,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7661
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10286,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14500,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1937,
+      "npcId": 7661
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10292,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14503,
+      "type": "QuestActObjItemGather",
+      "detailId": 966,
+      "itemId": 17863,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10295,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15941,
+      "type": "QuestActConAutoComplete",
+      "detailId": 535
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17863,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17863,
+   "count": 1
+  }
+ ]
+}

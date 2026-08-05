@@ -1,0 +1,153 @@
+{
+ "questId": 1089,
+ "name": "마리아노플 정원의 습격자들",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 5127
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22338,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 910,
+      "npcId": 5127
+     },
+     {
+      "actId": 22339,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 911,
+      "npcId": 477
+     },
+     {
+      "actId": 22340,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 912,
+      "npcId": 531
+     },
+     {
+      "actId": 22341,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 913,
+      "npcId": 5152
+     },
+     {
+      "actId": 22342,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 914,
+      "npcId": 8171
+     },
+     {
+      "actId": 22670,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 923,
+      "npcId": 10447
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5456,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22343,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 421,
+      "monsterGroupId": 33,
+      "count": 66
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5457,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22344,
+      "type": "QuestActConReportJournal",
+      "detailId": 273
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5458,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22345,
+      "type": "QuestActSupplyCopper",
+      "detailId": 385,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 33,
+     "count": 66
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

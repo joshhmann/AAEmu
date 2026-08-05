@@ -1,0 +1,171 @@
+{
+ "questId": 259,
+ "name": "위대한 유산",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3517
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 743,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 600,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 133,
+      "npcId": 3517
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 744,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 601,
+      "type": "QuestActSupplyItem",
+      "detailId": 46,
+      "itemId": 2744,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 602,
+      "type": "QuestActSupplyItem",
+      "detailId": 47,
+      "itemId": 2745,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 745,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6893,
+      "type": "QuestActObjItemGather",
+      "detailId": 345,
+      "itemId": 24786,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1358,
+      "type": "QuestActConReportNpc",
+      "detailId": 258,
+      "npcId": 5329
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38561,
+      "type": "QuestActSupplyItem",
+      "detailId": 4310,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24786,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5329,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24786,
+   "count": 1
+  }
+ ]
+}

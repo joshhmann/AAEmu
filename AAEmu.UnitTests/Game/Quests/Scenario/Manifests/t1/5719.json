@@ -1,0 +1,91 @@
+{
+ "questId": 5719,
+ "name": "비틀린 역사의 진실",
+ "zoneId": 9,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3629
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24594,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34192,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4375,
+      "npcId": 3629
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24595,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24596,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34196,
+      "type": "QuestActConReportNpc",
+      "detailId": 4673,
+      "npcId": 13740
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13740,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

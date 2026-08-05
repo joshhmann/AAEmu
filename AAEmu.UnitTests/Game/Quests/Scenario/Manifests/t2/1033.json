@@ -1,0 +1,168 @@
+{
+ "questId": 1033,
+ "name": "기억과 쇠 골렘",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4795
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5062,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7967,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 859,
+      "npcId": 4795
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5064,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12778,
+      "type": "QuestActObjTalk",
+      "detailId": 807,
+      "npcId": 4617
+     },
+     {
+      "actId": 12779,
+      "type": "QuestActCheckGuard",
+      "detailId": 96,
+      "npcId": 4617
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5065,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12780,
+      "type": "QuestActCheckSphere",
+      "detailId": 45,
+      "sphereId": 945
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 9114,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 9115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12782,
+      "type": "QuestActConReportNpc",
+      "detailId": 1888,
+      "npcId": 4618
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16696,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1016,
+      "itemId": 17516,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16697,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1017,
+      "itemId": 17520,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16698,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1018,
+      "itemId": 17524,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 4617
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4618,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 265,
+ "name": "솔즈리언의 문을 위하여",
+ "zoneId": 125,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7657
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4514,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6936,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 743,
+      "npcId": 7657
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4515,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6937,
+      "type": "QuestActObjItemGather",
+      "detailId": 351,
+      "itemId": 16247,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4516,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6938,
+      "type": "QuestActConReportNpc",
+      "detailId": 871,
+      "npcId": 7657
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4517,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36913,
+      "type": "QuestActSupplyItem",
+      "detailId": 4077,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16247,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7657,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16247,
+   "count": 3
+  }
+ ]
+}

@@ -1,0 +1,186 @@
+{
+ "questId": 4295,
+ "name": "여행의 동반자를 얻다!",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 6,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10666
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24710,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3544,
+      "npcId": 10666
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18755,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24711,
+      "type": "QuestActObjItemGather",
+      "detailId": 2029,
+      "itemId": 8159,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24714,
+      "type": "QuestActObjItemGather",
+      "detailId": 2030,
+      "itemId": 8160,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24715,
+      "type": "QuestActObjItemGather",
+      "detailId": 2031,
+      "itemId": 8161,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18758,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24716,
+      "type": "QuestActConReportNpc",
+      "detailId": 3805,
+      "npcId": 10666
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18759,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24717,
+      "type": "QuestActSupplyItem",
+      "detailId": 2447,
+      "itemId": 18649,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8159,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8160,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8161,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10666,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18649,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8159,
+   "count": 1
+  },
+  {
+   "itemId": 8160,
+   "count": 1
+  },
+  {
+   "itemId": 8161,
+   "count": 1
+  }
+ ]
+}

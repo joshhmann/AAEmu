@@ -1,0 +1,140 @@
+{
+ "questId": 298,
+ "name": "릴리엇 구릉지로",
+ "zoneId": 9,
+ "categoryId": 4,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3542
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7322,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10131,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1295,
+      "npcId": 3542
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 7323,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10132,
+      "type": "QuestActSupplyItem",
+      "detailId": 821,
+      "itemId": 14483,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7324,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38238,
+      "type": "QuestActObjTalk",
+      "detailId": 1055,
+      "npcId": 3532
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7325,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10440,
+      "type": "QuestActConReportNpc",
+      "detailId": 1511,
+      "npcId": 6504
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7326,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 3532
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6504,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

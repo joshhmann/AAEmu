@@ -1,0 +1,141 @@
+{
+ "questId": 1079,
+ "name": "마리아노플의 소매치기들",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 553
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5397,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22324,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 902,
+      "npcId": 553
+     },
+     {
+      "actId": 22325,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 903,
+      "npcId": 554
+     },
+     {
+      "actId": 22649,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 921,
+      "npcId": 462
+     },
+     {
+      "actId": 22650,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 922,
+      "npcId": 499
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5398,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22326,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 419,
+      "monsterGroupId": 66,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5400,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22327,
+      "type": "QuestActConReportJournal",
+      "detailId": 271
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5401,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22328,
+      "type": "QuestActSupplyCopper",
+      "detailId": 383,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 66,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

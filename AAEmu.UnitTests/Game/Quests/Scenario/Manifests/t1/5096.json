@@ -1,0 +1,117 @@
+{
+ "questId": 5096,
+ "name": "실종된 책",
+ "zoneId": 9,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "golden-zone",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12650
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22097,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31245,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3990,
+      "npcId": 12650
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22098,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31414,
+      "type": "QuestActObjSphere",
+      "detailId": 649,
+      "sphereId": 2163
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22099,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31248,
+      "type": "QuestActConReportNpc",
+      "detailId": 4274,
+      "npcId": 12651
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22190,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 22098
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12651,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

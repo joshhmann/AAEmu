@@ -1,0 +1,171 @@
+{
+ "questId": 182,
+ "name": "황금 실타래 마을의 약탈자들",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "mixed-families",
+ "acceptor": {
+  "type": "Kill",
+  "id": 527
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2383,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15519,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 177,
+      "npcId": 527
+     },
+     {
+      "actId": 15520,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 178,
+      "npcId": 528
+     },
+     {
+      "actId": 15521,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 179,
+      "npcId": 529
+     },
+     {
+      "actId": 15522,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 180,
+      "npcId": 530
+     },
+     {
+      "actId": 15523,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 181,
+      "npcId": 4941
+     },
+     {
+      "actId": 15524,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 182,
+      "npcId": 4942
+     },
+     {
+      "actId": 22319,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 901,
+      "npcId": 655
+     },
+     {
+      "actId": 22647,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 919,
+      "npcId": 4945
+     },
+     {
+      "actId": 22648,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 920,
+      "npcId": 4946
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2384,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15525,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 175,
+      "monsterGroupId": 22,
+      "count": 42
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2385,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15526,
+      "type": "QuestActConReportJournal",
+      "detailId": 34
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2402,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15527,
+      "type": "QuestActSupplyCopper",
+      "detailId": 129,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 22,
+     "count": 42
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}
