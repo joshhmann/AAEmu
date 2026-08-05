@@ -1,13 +1,13 @@
 # Quest Runnability — M1-5 scenario harness census
 
-Generated: 2026-08-05 02:49Z by QuestScenarioTierTests (M1-5b)
+Generated: 2026-08-05 02:57Z by QuestScenarioTierTests (M1-5b)
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
 ## Headline
 
-- **T1 golden zone (Solzreed)**: 96 PASS / 1 FAIL / 0 SKIP
-- **T2 families (kill-accept/guard/item-group)**: 28 PASS / 1 FAIL / 6 SKIP
+- **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
+- **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
 
 ## T1 — per-quest verdicts
 
@@ -72,7 +72,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 291 | 브리짓 구출 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 293 | 요정의 정수 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 294 | 타락한 요정의 이름, 밴시 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 295 | 밴시 정화 | golden-zone | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 295 | 밴시 정화 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 298 | 릴리엇 구릉지로 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 299 | 네손가락 도적단의 위협 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 300 | 웃는 얼굴 만크스 처치 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -142,7 +142,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 205 | 토리니 정원의 야생동물들 사냥 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2140 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 3656 | 뜨거운 물이 좋아 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 5489 | test_time | mixed-families | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 5489 | test_time | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5490 | 신기루 섬을 깨끗하게 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 556 | 시차일드 부두로 찾아온 수상한 인어들 퇴치 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6578 | 이이제이 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -153,6 +153,4 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 ## FAIL rollup (by stage reason)
 
-- **START:Pass; SUPPLY:Pass; PROGRESS:Fail** — 1 quests: 295
-- **START:Pass; PROGRESS:Fail** — 1 quests: 5489
 

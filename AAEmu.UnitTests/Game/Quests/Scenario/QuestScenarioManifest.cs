@@ -59,7 +59,8 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// RemoveItem/SelectiveItem.
 ///
 /// SUPPORTED EVENT TYPES (stage "events"): MonsterHunt, MonsterGroupHunt,
-/// ItemGather, ItemGroupGather, ItemUse, ItemGroupUse, Talk, TalkNpcGroup,
+/// ItemGather, ItemGroupGather, ItemUse (fired once per "count", default 1 -
+/// item-use acts credit +1 per event), ItemGroupUse, Talk, TalkNpcGroup,
 /// Interaction, EnterSphere, Craft, ReportNpc, ReportDoodad, ReportJournal,
 /// ExpressFire, LevelUp, Aggro, ZoneKill.
 ///

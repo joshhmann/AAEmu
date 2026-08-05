@@ -116,7 +116,8 @@
    "events": [
     {
      "type": "ItemUse",
-     "itemId": 23635
+     "itemId": 23635,
+     "count": 1
     },
     {
      "type": "ItemGather",

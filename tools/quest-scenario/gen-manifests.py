@@ -96,14 +96,24 @@ def event_shape(act_type, params, component_id, group_members):
     if act_type == "QuestActObjItemGather":
         return {"type": "ItemGather", "itemId": params.get("itemId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjItemUse":
-        return {"type": "ItemUse", "itemId": params.get("itemId", 0)}
+        # RC-4: QuestActObjItemUse.OnItemUse credits +1 per event and ignores any
+        # count (QuestActObjItemUse.cs:46; OnItemUseArgs carries only ItemId) -
+        # the driver must fire the event 'count' times, so carry the count.
+        return {"type": "ItemUse", "itemId": params.get("itemId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjItemGroupGather":
         members = group_members.get(params.get("itemGroupId", 0), [])
         if not members:
             return None
         return {"type": "ItemGroupGather", "itemId": members[0], "itemGroupId": params.get("itemGroupId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjItemGroupUse":
-        return {"type": "ItemGroupUse", "itemGroupId": params.get("itemGroupId", 0), "count": params.get("count", 1)}
+        # RC-4: QuestActObjItemGroupUse subscribes OnItemUse (not OnItemGroupUse -
+        # UnusedActs/QuestActObjItemGroupUse.cs:39) and credits +1 per use of any
+        # group member (CheckGroupItem). The driver's ItemGroupUse event has no
+        # subscriber; emit ItemUse with a group member itemId instead.
+        members = group_members.get(params.get("itemGroupId", 0), [])
+        if not members:
+            return None
+        return {"type": "ItemUse", "itemId": members[0], "itemGroupId": params.get("itemGroupId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjTalk":
         return {"type": "Talk", "npcId": params.get("npcId", 0)}
     if act_type == "QuestActObjTalkNpcGroup":

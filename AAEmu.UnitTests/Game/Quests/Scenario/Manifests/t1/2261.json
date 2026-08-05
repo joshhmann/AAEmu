@@ -100,7 +100,8 @@
    "events": [
     {
      "type": "ItemUse",
-     "itemId": 16293
+     "itemId": 16293,
+     "count": 1
     }
    ],
    "expect": {

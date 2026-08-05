@@ -573,7 +573,11 @@ public class QuestScenarioDriver
                 owner.Events.OnItemGroupGather(owner, new OnItemGroupGatherArgs { ItemId = GetUInt(rawEvent, "itemId"), Count = GetInt(rawEvent, "count", 1), ItemGroupId = GetUInt(rawEvent, "itemGroupId") });
                 break;
             case "ItemUse":
-                owner.Events.OnItemUse(owner, new OnItemUseArgs { ItemId = GetUInt(rawEvent, "itemId") });
+                // RC-4: item-use acts credit +1 per event (QuestActObjItemUse.cs:46,
+                // QuestActObjItemGroupUse.cs:58) - OnItemUseArgs carries no Count, so
+                // one use = one event. Fire 'count' times (default 1).
+                for (var i = 0; i < GetInt(rawEvent, "count", 1); i++)
+                    owner.Events.OnItemUse(owner, new OnItemUseArgs { ItemId = GetUInt(rawEvent, "itemId") });
                 break;
             case "ItemGroupUse":
                 owner.Events.OnItemGroupUse(owner, new OnItemGroupUseArgs { ItemGroupId = GetUInt(rawEvent, "itemGroupId"), Count = GetInt(rawEvent, "count", 1) });

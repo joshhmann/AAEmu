@@ -132,7 +132,8 @@
    "events": [
     {
      "type": "ItemUse",
-     "itemId": 16019
+     "itemId": 16019,
+     "count": 1
     },
     {
      "type": "Talk",
