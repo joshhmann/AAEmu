@@ -1,7 +1,7 @@
 {
   "environment": "aaemu-.165",
-  "git_sha": "4ea699d661a45e6c604fccd3e34d61aaa27ea1f4",
-  "deployed_at": "2026-08-05T01:54:57-07:00",
+  "git_sha": "f5e5aa98738cfd233e5f514bb90dc07628e170c1",
+  "deployed_at": "2026-08-05T04:11:32-07:00",
   "milestone": "Round-2 NPC fixes batch (slope gate t_cf647533 + spawn-Z t_7abdc0ae + aggro LOS t_9f2fc551 + sit-pose t_0a079463)",
   "database_backup": "none_required_no_schema_change",
   "services": {
