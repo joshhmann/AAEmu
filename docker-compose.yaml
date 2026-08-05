@@ -49,6 +49,11 @@ services:
                 - DB_PASSWORD=${DB_PASSWORD}
         image: aaemu-login:${PROJECT_VERSION_PREFIX}-${PROJECT_VERSION_SUFFIX}
         restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "50m"
+                max-file: "3"
         volumes:
           - "./.server_files/AAEmu.Login/Config.json:/app/Config.json:ro"
         environment:
@@ -88,6 +93,11 @@ services:
                 - LOGIN_PORT=1234
         image: aaemu-game:${PROJECT_VERSION_PREFIX}-${PROJECT_VERSION_SUFFIX}
         restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "50m"
+                max-file: "3"
         volumes:
           - "./.server_files/AAEmu.Game/ClientData:/app/ClientData:ro"
           - "./.server_files/AAEmu.Game/Data:/app/Data:ro"
