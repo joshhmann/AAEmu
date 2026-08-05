@@ -1,14 +1,14 @@
 {
   "environment": "aaemu-.165",
-  "git_sha": "9dca3087fe105b3bfca3698772a5d0276b915b7e",
-  "deployed_at": "2026-08-05T01:20:30-07:00",
+  "git_sha": "4ea699d661a45e6c604fccd3e34d61aaa27ea1f4",
+  "deployed_at": "2026-08-05T01:54:57-07:00",
   "milestone": "Round-2 NPC fixes batch (slope gate t_cf647533 + spawn-Z t_7abdc0ae + aggro LOS t_9f2fc551 + sit-pose t_0a079463)",
-  "database_backup": "none_required_no_schema_change (compact.sqlite3 data patch 2026-08-04-fix-quest-data-defects.sql applied in-image)",
+  "database_backup": "none_required_no_schema_change",
   "services": {
-    "db": "healthy",
-    "login": "healthy",
-    "game": "healthy (boot: QuestSanity SUMMARY OK, 0 fatal)",
-    "adminer": "healthy"
+    "db": "Up 2 days (healthy)",
+    "login": "Up (healthy)",
+    "game": "Up (healthy) — 0 FATAL in boot log",
+    "adminer": "Up 2 days"
   },
-  "notes": "Josh pre-GO 2026-08-04 ('just go when its ready'); no upstream PRs (lane gate). QuestSanity SUMMARY: OK — 0 errors, 3 warnings, 125 info across 4775 quests / 17720 components / 19047 acts. CAUTION: origin/develop advanced to 6ee219d4 (fix/prune-unit-reqs-gates c0dfc502) during deploy — NOT part of this batch, NOT deployed; flag for next deploy. Deployed per WORKFLOW.md exact-SHA procedure (git merge --ff-only fork/develop)."
+  "notes": "Census: [QuestSanity] SUMMARY OK — 0 errors, 14 warnings, 136 info across 4775 quests / 17720 components / 19047 acts; UNIT_REQS: 17 missing contexts from 21 QuestComponent-owned rows (11 orphans WARN / 10 collisions INFO); gated quests: 1836,1883,1922,1956-1959,2054,2056,2140-2144,3234,3236,6587,6589,6592,6594,6597; collisions: 1832,1848,1882,1921,2053,6586. Josh pre-GO 2026-08-04; no upstream PRs (lane gate)."
 }
