@@ -10,7 +10,7 @@
 # quest_contexts row) whose quest_context_id has no quest_contexts row, so the
 # target quest template is never created and the self-start target can never
 # be found. On the prod reference (compact.sqlite3 md5
-# 78b3bdbf0383db3b927056106efdf91af) exactly 2 rows fail:
+# 78b3bdbf038db3b927056106efdf91af) exactly 2 rows fail:
 #   1960  comp 9794 accept-act 75 -> 1961   (sibling — same dead cat-34 chain)
 #   2145  comp 9927 accept-act 89 -> 2146   (THIS card)
 #

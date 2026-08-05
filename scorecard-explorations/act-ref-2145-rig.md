@@ -31,7 +31,7 @@ case QuestActConAcceptComponent acceptComponent
 
 ## 2. Ground truth (reference data)
 
-`compact.sqlite3` md5 **78b3bdbf0383db3b927056106efdf91af** (same reference verified
+`compact.sqlite3` md5 **78b3bdbf038db3b927056106efdf91af** (same reference verified
 in `scorecard-explorations/data-defects.md` §4). The dangling rows:
 
 | quest | quest name | component | kind | accept-act | `quest_act_con_accept_components` row | target | target has `quest_contexts` row? |
@@ -90,7 +90,7 @@ The two rig tests (`QuestActRefMissingQuestRigTests`, both included in the 1210)
 (script copies the DB before applying the fix — source stays read-only):
 
 ```
-== census on: /tmp/compact.sqlite3  (md5 78b3bdbf0383db3b927056106efdf91af)
+== census on: /tmp/compact.sqlite3  (md5 78b3bdbf038db3b927056106efdf91af)
 FULL PREDICATE (all loaded quests):
 quest  quest_name             component  act_row  accept_act_id  missing_target
 -----  ---------------------  ---------  -------  -------------  --------------
@@ -181,7 +181,7 @@ mirrors exactly this patch.
 **Pass-after evidence (all re-run on this branch, 2026-08-05):**
 
 1. **SQL census `--apply-fix`** against the canonical DB (md5
-   78b3bdbf0383db3b927056106efdf91af): fail-before exactly 2 rows
+   78b3bdbf038db3b927056106efdf91af): fail-before exactly 2 rows
    (1960→1961, 2145→2146, exit 1 on both `--scope 2145` and `--scope 0`) →
    after the fix on the copied DB **0 rows, PASS, exit 0** (full predicate).
 
