@@ -1,7 +1,7 @@
 # Development Conventions
 
 - Audience: Contributors, reviewers, automation
-- Last verified against: `develop` on 2026-08-05 (lock: Josh 2026-08-04)
+- Last verified against: `develop` on 2026-08-04 (lock: Josh 2026-08-04)
 - Scope: upstream-alignment rules for all fork work — every fix, feature, and task template
 
 ## The rules (locked)
@@ -19,7 +19,12 @@ pulls stay clean, and nothing drifts into parallel gameplay implementations.
 3. **`compact.sqlite3` is read-only reference data.** Mutable bot, character,
    economy, schedule, memory, and runtime state must live in MySQL or an
    additive bot metadata schema. The harness/tests read reference copies
-   (e.g. `/tmp/compact.sqlite3`) — never write to game data.
+   (e.g. `/tmp/compact.sqlite3`) — never write to game data. Known exception
+   (verified 2026-08-04): `AAEmu.Game/Utils/DB/HoldablesSchemaCheck.cs`
+   best-effort `ALTER TABLE holdables` only when the 6 auto-attack anim
+   columns are MISSING from a stripped/custom SQLite (shipped DB already has
+   them; ReadWrite open never happens in the normal path). Migrate this to an
+   additive schema when touched.
 4. **Config precedence:** `Config.json` → `Configurations/*.json` →
    `Config.Local.json`. Machine-specific hosts, secrets, API endpoints,
    paths, and credentials stay OUT of shared config (`Config.Local.json` is
@@ -64,14 +69,28 @@ pulls stay clean, and nothing drifts into parallel gameplay implementations.
 
 - `ROADMAP.md` — "Upstream alignment rules" (standing rules, every milestone)
 - `WORKFLOW.md` — the operational playbook (rules + the no-upstream-PR rule)
+- `AGENTS.md` — in-repo agent guidance (compact 10-rule section)
 - `.kanban-templates/README.md` — every future task card inherits the block
+- `.kanban-templates/{fix,feature,explorer,tracking}.md` — alignment
+  blockquote next to THE RULE on each template
 - This page — canonical text + verification notes
 - Shared division skill (`aaemu-fork-workflow`) — fleet-side copy
 
 ## Verification history
 
-- 2026-08-04: all rules checked against current code/wiki before locking.
-  Corrected/confirmed: prod is Docker Compose (manifest), .NET 10 (global.json),
-  GameServers config live, legacy `game_servers` dormant (M1-1), terminology
-  table added (Code-Terminology lacked Transfer/Expedition/Dominion/Ability/
-  ActAbility mappings).
+- 2026-08-04 (a54fe4f1 + gap-fix): all rules checked against current
+  code/wiki before locking. Confirmed current: prod is Docker Compose
+  (deployments/production.json: db/login/game/adminer, mysql:8.0.36), .NET 10
+  (global.json 10.0.0; `dotnet --version` 10.0.110 on openclaw),
+  `GameServers` config live in AAEmu.Login/Config.json, legacy
+  `aaemu_login.game_servers` dormant (dropped 2026-01-31 update; FAQ page
+  already corrected), config precedence verified in AAEmu.Game/Program.cs
+  (Config.json → Configurations/*.json → Config.Local.json), sqlite opened
+  `Mode=ReadOnly` in SQLite.cs. Terminology verified complete in
+  Code-Terminology.md (all 8 terms present — Doodad/Mate/Slave/Transfer/
+  Expedition/Dominion/Ability/ActAbility); this page adds the consolidated
+  card-level table + old/informal mappings. PlayerBots not yet in code —
+  rule 9 pins the roadmap M6.0 design (headless accounts + ordinary
+  Character records + additive PlayerBotController) as a standing
+  constraint. Known write-path exception to rule 3 documented above
+  (HoldablesSchemaCheck).
