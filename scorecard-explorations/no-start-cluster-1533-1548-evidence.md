@@ -2,7 +2,7 @@
 
 **Card:** t_d5e088ed · **Mechanic:** QUEST-01 · **Zone:** global (cluster is zone 1 `w_gweonid_forest_1` + 22/1 stragglers) · **Status:** fail-before (no fix applied — this document pins the *current* never-acceptable state)
 
-**Data provenance:** canonical 1.2 reference `compact.sqlite3`, md5 `78b3bdbf0383db3b927056106efdf91af` (same hash the verifier's allowlist is verified against). Read-only; the rig never writes to it.
+**Data provenance:** canonical 1.2 reference `compact.sqlite3`, md5 `78b3bdbf038db3b927056106efdf91af` (same hash unit-reqs-layer.md cites as canonical 1.2; the `78b3bdbf0383db3b927056106efdf91af` variant in the verifier/data-defects docs is a transcription typo — no file with that hash exists on the box). Read-only; the rig never writes to it.
 
 ## Verdict
 
@@ -92,7 +92,7 @@ dotnet test --project AAEmu.UnitTests --treenode-filter "/*/*/QuestNoStartCluste
 - Without a reference DB the tests **skip with a reason** (CI-friendly) — they never fabricate evidence.
 - If the data ever changes so a cluster quest gains a Start component or an accept path, the tests **fail** — the classification is stale and this document must be regenerated. That is the regression contract for the follow-up fix card (data-defects.md §5 verdict: **(c) drop**).
 
-## Appendix — reproducible queries (canonical DB, md5 78b3bdbf0383db3b927056106efdf91af)
+## Appendix — reproducible queries (canonical DB, md5 78b3bdbf038db3b927056106efdf91af)
 
 ```sql
 -- cluster component shape

@@ -29,7 +29,9 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// id gaps (no quest_contexts row — nothing is ever loaded for them).
 ///
 /// The rig asserts these facts against the READ-ONLY reference compact.sqlite3 (canonical
-/// md5 78b3bdbf0383db3b927056106efdf91af — the verifier's documented prod data). It also
+/// md5 78b3bdbf038db3b927056106efdf91af — the box's canonical 1.2 reference, same hash
+/// unit-reqs-layer.md cites; the 0383d variant in the verifier/data-defects docs is a
+/// transcription typo that never matched a file on disk). It also
 /// runs the real QuestSanityVerifier.VerifyLoadedState over a loader-faithful template load
 /// and asserts QUEST_NO_START fires for every cluster quest (allowlist masks the severity to
 /// Info, so the census stays green — this rig documents that green ≠ runnable).
