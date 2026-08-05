@@ -123,8 +123,8 @@
    "name": "SUPPLY",
    "events": [],
    "expect": {
-    "step": "Reward",
-    "status": "Completed"
+    "step": "Progress",
+    "status": "Progress"
    }
   },
   {
@@ -144,7 +144,8 @@
     }
    ],
    "expect": {
-    "completed": true
+    "step": "Reward",
+    "status": "Completed"
    }
   },
   {

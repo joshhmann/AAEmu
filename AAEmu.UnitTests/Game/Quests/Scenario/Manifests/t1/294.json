@@ -82,7 +82,7 @@
     }
    ],
    "expect": {
-    "step": "Ready",
+    "step": "Progress",
     "status": "Ready"
    }
   },
