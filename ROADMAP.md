@@ -127,25 +127,35 @@ Trimmed, not exhaustive. Fix shared engine defects + the selected golden
 route. Individual peripheral quest bugs → Lane B (maintenance).
 
 **Work:**
-- ✅ BUG-006 kill-acceptor (380 quests, 1082/1082 tests) merged to fork
-  develop; prod deploy pending Josh (2026-08-04)
+- ✅ BUG-006 kill-acceptor (380 quests, 1082/1082 tests) — merged to fork
+  develop; LIVE in the M1 engine-health release @ 94f498fc (2026-08-04)
 - ~~Load + validate quest_act_obj_aliases (2,746 dangling rows)~~ — ✅ VERDICT 2026-08-04: dormant id→name dict, zero live refs in 1.2 data (no use_alias=1 rows, no QuestActObjAlias act type) — no-op
 - ✅ Stub-act audit — 2026-08-04: 3 real stubs (CheckGuard silent-pass,
   ItemGroup gather/use stall), 274-ctx watch item, 7,607 orphaned act rows;
-  fixes gated on develop (BUG-008/009, 30c2b689)
-- ✅ Quest sanity verifier (startup cross-check) — BUG-007, 14 tests, gated
-- 🔶 Fix common doodad phase/interaction objectives (quests 922/3889/3447) — remaining
+  fixes LIVE @ 94f498fc (BUG-008/009, 30c2b689)
+- ✅ Quest sanity verifier (startup cross-check) — BUG-007, 14 tests, LIVE
+  @ 94f498fc (first live census 5 ERR / 128 WARN / 4 INFO over 4775 quests)
+- ✅ Doodad phase/interaction objectives (quests 922/3889/3447) — resolved;
+  T1 Solzreed 97/97 (2026-08-04)
 - ✅ Solzreed golden route selected; curated Nuian opening chain +
   intentionally excluded quests documented — Docs/wiki/Golden-Route-Solzreed.md (99e7c4ec)
 
-**M1 status (2026-08-04):** 5 of 6 items done. Scenario-harness census
-(QuestScenarioTierTests): T1 Solzreed golden zone 88 PASS / 9 FAIL / 0 SKIP;
-T2 fix families 22 PASS / 7 FAIL / 6 SKIP. BUG-010 (UnixTime clamp) fixed
-(581f0f17) with CheckSphere + Ability-seeds fixes in the Rei gate queue
-(t_59a623c4) — merge to develop pending. Census FAILs are harness-gap
-(step-suppression "expected Ready, got Progress" + reward-stage
-KeyNotFoundException 'General' families) — tracked via t_71ac7013;
-runnability line NOT green until the harness cards land.
+**M1 status (2026-08-04):** ✅ delivered — Josh playtest in progress
+(milestone decision pending, NOT closed). All work items done: shared
+engine defects fixed, golden route curated, doodad phase/interaction family
+resolved. Automated exit test GREEN — scenario-harness census
+(QuestScenarioTierTests) headline **153/153 runnable / 0 FAIL / 33 SKIP
+over 186 quests** (T1 Solzreed 97/97; T2 29/29 + 6 SKIP; T3 27/27 + 27
+SKIP); full gate 1148/1148 — runnability line GREEN. PROD DEPLOYED @
+94f498fc (2026-08-04 20:30, M1 engine-health release — BUG-007/008/009/
+010/011/012 live); verifier first live census 5 ERR / 128 WARN / 4 INFO
+over 4775 quests — data-fix backlog seeded, 3 WARNs are verifier
+stale-registry false positives (fix card t_913c1d4a). Deploy incident:
+39GB container json.log (100% disk) pre-deploy — truncated; rotation fix
+shipped (t_264e1984 ✅). Remaining census SKIPs: 8 orphaned quest_contexts
+(data) + 25 harness gaps (14 unsupported act families — ObjZoneKill,
+ObjAggro, ObjCompleteQuest, EtcItemObtain, …) — queued in
+scorecard-explorations/runnability.md.
 
 **Priority order:** shared engine defects → golden-route blockers → silent
 corruption → peripheral quests.
