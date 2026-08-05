@@ -1,0 +1,93 @@
+{
+ "questId": 1408,
+ "name": "시치미 왕 자바바",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6081,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28852,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 167,
+      "questContextId": 1408
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6133,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28853,
+      "type": "QuestActObjAggro",
+      "detailId": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6134,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28854,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1092
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjAggro; unsynthesizable event shape for QuestActObjAggro (comp 6133)"
+ }
+}

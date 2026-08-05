@@ -1,0 +1,137 @@
+{
+ "questId": 2717,
+ "name": "자유도!",
+ "zoneId": 1,
+ "categoryId": 44,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 17828
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11411,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16971,
+      "type": "QuestActConAcceptItem",
+      "detailId": 99,
+      "itemId": 17828
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11614,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16972,
+      "type": "QuestActObjItemGather",
+      "detailId": 1084,
+      "itemId": 17828,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11615,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16973,
+      "type": "QuestActObjSphere",
+      "detailId": 556,
+      "sphereId": 1138
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11616,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16974,
+      "type": "QuestActConAutoComplete",
+      "detailId": 548
+     },
+     {
+      "actId": 16975,
+      "type": "QuestActSupplyExp",
+      "detailId": 46,
+      "exp": 2009
+     },
+     {
+      "actId": 16976,
+      "type": "QuestActSupplyCopper",
+      "detailId": 240,
+      "amount": 1231
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17828,
+     "count": 1
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 11615
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17828,
+   "count": 1
+  },
+  {
+   "itemId": 17828,
+   "count": 1
+  }
+ ]
+}

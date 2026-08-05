@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text.Json;
@@ -19,6 +20,7 @@ using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.UnitTests.Utils.Mocks;
@@ -212,18 +214,36 @@ public class QuestScenarioDriver
 
         var actId = FirstSyntheticActId;
         var selectiveIndex = 0; // mirrors the loader: 1-based, cumulative across components
-        foreach (var componentShape in manifest.Template.Components)
+        byte objectiveIndex = 0;
+        var lastKind = QuestComponentKind.None;
+        // RC-7 fidelity: mirrors QuestManager.LoadQuestComponents, which reads
+        // quest_components ORDER BY quest_context_id, component_kind_id, id -
+        // components iterate KIND-GROUPED (all Start, then Supply, then Progress,
+        // ...), and UpdateQuestComponentActs (QuestManager.cs:207-211) resets the
+        // objective counter on every kind change. Iterating + inserting in the
+        // same order means multi-component steps (266/1033/3656/1897) land each
+        // objective act in the exact Objectives slot the real loader assigns.
+        foreach (var componentShape in manifest.Template.Components
+                     .Select(c => (Shape: c, Kind: Enum.Parse<QuestComponentKind>(c.Kind, ignoreCase: true)))
+                     .OrderBy(t => t.Kind).ThenBy(t => t.Shape.Id))
         {
-            var kind = Enum.Parse<QuestComponentKind>(componentShape.Kind, ignoreCase: true);
-            var component = new QuestComponentTemplate(template) { Id = componentShape.Id, KindId = kind };
+            var kind = componentShape.Kind;
+            if (kind != lastKind)
+            {
+                objectiveIndex = 0;
+                lastKind = kind;
+            }
 
-            byte objectiveIndex = 0;
-            foreach (var actElement in componentShape.Acts)
+            var component = new QuestComponentTemplate(template) { Id = componentShape.Shape.Id, KindId = kind };
+
+            foreach (var actElement in componentShape.Shape.Acts)
             {
                 var act = BuildAct(component, actElement);
                 act.ActId = actId++;
-                if (act.CountsAsAnObjective)
-                    act.ThisComponentObjectiveIndex = objectiveIndex++;
+                // Mirrors the loader (QuestManager.cs:220): objective acts take the
+                // running per-kind index, every other act gets 0xFF (never an
+                // Objectives slot - QuestAct.RunAct guards the read).
+                act.ThisComponentObjectiveIndex = act.CountsAsAnObjective ? objectiveIndex++ : (byte)0xFF;
                 if (act is QuestActSupplySelectiveItem selective)
                     selective.ThisSelectiveIndex = ++selectiveIndex;
                 component.ActTemplates.Add(act);
@@ -321,6 +341,15 @@ public class QuestScenarioDriver
         };
         character.Appellations = new CharacterAppellations(character);
         character.Abilities = new CharacterAbilities(character);
+        // RC-6 (t_2d482bc3): rig real abilities. Ability1..3 auto-properties
+        // default to AbilityType.General (0), which the CharacterAbilities ctor
+        // never seeds (it seeds Fight(1)..Love(10)) - without this, a
+        // QuestActSupplyExp reward (Character.AddExp -> AddActiveExp) hits the
+        // unseeded General key and the exp is silently dropped. Three distinct
+        // seeded abilities mirror a real character so reward exp actually lands.
+        character.Ability1 = AbilityType.Fight;
+        character.Ability2 = AbilityType.Magic;
+        character.Ability3 = AbilityType.Will;
         character.Quests = new CharacterQuests(character);
 
         // Seed item-group / npc-group membership for group acts (BUG-009 read path).
@@ -371,16 +400,73 @@ public class QuestScenarioDriver
         var parentWorldField = typeof(GameObject).GetField("_parentWorld", BindingFlags.NonPublic | BindingFlags.Instance);
         parentWorldField?.SetValue(character, world);
 
-        if (manifest.Guard != null)
+        // Spawn a guard NPC for every QuestActCheckGuard act in ANY component
+        // (RC-3): QuestActCheckGuard.RunAct resolves the NPC via
+        // ParentWorld.GetNpcByTemplateId and returns false when it is missing
+        // (CheckGuard.cs:26-33), so a CheckGuard in a non-Start component could
+        // never pass without its rig. Dedupe by NpcId - one world NPC per guard
+        // template id (manifest guard blocks are overrides on top of the acts).
+        var guardIds = new List<uint>();
+        void AddGuard(uint npcId)
         {
+            if (npcId != 0 && !guardIds.Contains(npcId))
+                guardIds.Add(npcId);
+        }
+        foreach (var component in template.Components.Values)
+            foreach (var act in component.ActTemplates)
+                if (act is QuestActCheckGuard checkGuard)
+                    AddGuard(checkGuard.NpcId);
+        if (manifest.Guard != null)
+            AddGuard(manifest.Guard.NpcId);
+        foreach (var guardShape in manifest.Guards ?? [])
+            AddGuard(guardShape.NpcId);
+
+        var guardObjId = 100u;
+        foreach (var guardNpcId in guardIds)
+        {
+            var alive = true;
+            if (manifest.Guard?.NpcId == guardNpcId)
+                alive = manifest.Guard.Alive;
+            foreach (var guardShape in manifest.Guards ?? [])
+                if (guardShape.NpcId == guardNpcId)
+                    alive = guardShape.Alive;
             var guard = new Npc
             {
-                ObjId = 100,
-                TemplateId = manifest.Guard.NpcId,
-                Hp = manifest.Guard.Alive ? 100 : 0,
+                ObjId = guardObjId++,
+                TemplateId = guardNpcId,
+                Hp = alive ? 100 : 0,
                 MaxHp = 100
             };
             world.AddObject(guard);
+        }
+
+        // CheckSphere rig (quest 1033): since BUG-011, QuestActCheckSphere.RunAct
+        // evaluates the owner's LIVE position against the component's quest
+        // spheres (SphereQuestManager.GetQuestSpheres) - without a world server
+        // those never load, so the check could never pass. Register one
+        // origin-centered sphere per CheckSphere component; the rigged character
+        // has no transform, so its position reads Vector3.Zero and the check
+        // resolves. Same harness-only class of rig as the guard spawn above.
+        foreach (var component in template.Components.Values)
+        {
+            foreach (var act in component.ActTemplates)
+            {
+                if (act is not QuestActCheckSphere)
+                    continue;
+                var checkSphereField = typeof(SphereQuestManager).GetField("_sphereQuests", BindingFlags.NonPublic | BindingFlags.Static);
+                var sphereQuests = (Dictionary<uint, List<SphereQuest>>)checkSphereField?.GetValue(null);
+                if (sphereQuests != null && !sphereQuests.ContainsKey(component.Id))
+                    sphereQuests[component.Id] =
+                    [
+                        new SphereQuest
+                        {
+                            QuestId = template.Id,
+                            ComponentId = component.Id,
+                            Xyz = Vector3.Zero,
+                            Radius = 100f
+                        }
+                    ];
+            }
         }
 
         var mockTickManager = Mock.Of<ITickManager>();
@@ -497,7 +583,11 @@ public class QuestScenarioDriver
                 owner.Events.OnItemGroupGather(owner, new OnItemGroupGatherArgs { ItemId = GetUInt(rawEvent, "itemId"), Count = GetInt(rawEvent, "count", 1), ItemGroupId = GetUInt(rawEvent, "itemGroupId") });
                 break;
             case "ItemUse":
-                owner.Events.OnItemUse(owner, new OnItemUseArgs { ItemId = GetUInt(rawEvent, "itemId") });
+                // RC-4: item-use acts credit +1 per event (QuestActObjItemUse.cs:46,
+                // QuestActObjItemGroupUse.cs:58) - OnItemUseArgs carries no Count, so
+                // one use = one event. Fire 'count' times (default 1).
+                for (var i = 0; i < GetInt(rawEvent, "count", 1); i++)
+                    owner.Events.OnItemUse(owner, new OnItemUseArgs { ItemId = GetUInt(rawEvent, "itemId") });
                 break;
             case "ItemGroupUse":
                 owner.Events.OnItemGroupUse(owner, new OnItemGroupUseArgs { ItemGroupId = GetUInt(rawEvent, "itemGroupId"), Count = GetInt(rawEvent, "count", 1) });
@@ -538,6 +628,19 @@ public class QuestScenarioDriver
                 owner.Events.OnExpressFire(owner, new OnExpressFireArgs { NpcId = GetUInt(rawEvent, "npcId"), EmotionId = GetUInt(rawEvent, "emotionId") });
                 break;
             case "LevelUp":
+                // ObjLevel objectives check Owner.Level >= Level (QuestActObjLevel.cs:23/46)
+                // and OnLevelUpArgs carries no level - raise the owner to the quest's
+                // highest ObjLevel requirement so the objective becomes reachable
+                // mid-quest (harness-only calibration; quest 6250 template level is 0
+                // while its Progress act demands level 30).
+                var requiredLevel = quest.Template.Components.Values
+                    .SelectMany(c => c.ActTemplates)
+                    .OfType<QuestActObjLevel>()
+                    .Select(a => a.Level)
+                    .DefaultIfEmpty((byte)0)
+                    .Max();
+                if (requiredLevel > owner.Level)
+                    owner.Level = requiredLevel;
                 owner.Events.OnLevelUp(owner, new OnLevelUpArgs());
                 break;
             case "Aggro":

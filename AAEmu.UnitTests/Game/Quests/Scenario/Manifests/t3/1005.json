@@ -1,0 +1,175 @@
+{
+ "questId": 1005,
+ "name": "주정뱅이는 피곤해",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4779
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4931,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7847,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 832,
+      "npcId": 4779
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4932,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7848,
+      "type": "QuestActObjTalk",
+      "detailId": 573,
+      "npcId": 4592
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4933,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7849,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 296,
+      "npcId": 4592,
+      "count": 1
+     },
+     {
+      "actId": 7850,
+      "type": "QuestActCheckCompleteComponent",
+      "detailId": 702
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4934,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7851,
+      "type": "QuestActConReportNpc",
+      "detailId": 968,
+      "npcId": 4779
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4935,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16675,
+      "type": "QuestActSupplyItem",
+      "detailId": 1656,
+      "itemId": 17399,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16676,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1009,
+      "itemId": 17403,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16677,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1010,
+      "itemId": 17407,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 4592
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 4592,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4779,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17399,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "skip": {
+  "reason": "unsupported act type QuestActCheckCompleteComponent; unsynthesizable event shape for QuestActCheckCompleteComponent (comp 4933)"
+ }
+}

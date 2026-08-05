@@ -10,6 +10,12 @@ Tiers:
   T1 = all Solzreed golden-zone quests (zone_id IN (9, 124, 125)) - 97 quests
   T2 = 20-quest sample of the kill-accept family + live CheckGuard + live
        ItemGroup contexts
+  T3 = M1-5c stratified act-family census: greedy quota fill across the
+       act_detail_type distribution (every family present in prod data gets
+       >=2 example quests where available, more for the common families:
+       ConReportNpc, AcceptNpc, SupplyItem, ObjItemGather, ObjTalk,
+       ObjMonsterHunt). Quests already sampled in T1/T2 are excluded first so
+       T3 widens coverage instead of repeating it.
 
 Quests whose shapes the harness cannot synthesize are emitted with a "skip"
 block (broken refs, unsupported act types) - reported, never faked.
@@ -96,14 +102,24 @@ def event_shape(act_type, params, component_id, group_members):
     if act_type == "QuestActObjItemGather":
         return {"type": "ItemGather", "itemId": params.get("itemId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjItemUse":
-        return {"type": "ItemUse", "itemId": params.get("itemId", 0)}
+        # RC-4: QuestActObjItemUse.OnItemUse credits +1 per event and ignores any
+        # count (QuestActObjItemUse.cs:46; OnItemUseArgs carries only ItemId) -
+        # the driver must fire the event 'count' times, so carry the count.
+        return {"type": "ItemUse", "itemId": params.get("itemId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjItemGroupGather":
         members = group_members.get(params.get("itemGroupId", 0), [])
         if not members:
             return None
         return {"type": "ItemGroupGather", "itemId": members[0], "itemGroupId": params.get("itemGroupId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjItemGroupUse":
-        return {"type": "ItemGroupUse", "itemGroupId": params.get("itemGroupId", 0), "count": params.get("count", 1)}
+        # RC-4: QuestActObjItemGroupUse subscribes OnItemUse (not OnItemGroupUse -
+        # UnusedActs/QuestActObjItemGroupUse.cs:39) and credits +1 per use of any
+        # group member (CheckGroupItem). The driver's ItemGroupUse event has no
+        # subscriber; emit ItemUse with a group member itemId instead.
+        members = group_members.get(params.get("itemGroupId", 0), [])
+        if not members:
+            return None
+        return {"type": "ItemUse", "itemId": members[0], "itemGroupId": params.get("itemGroupId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjTalk":
         return {"type": "Talk", "npcId": params.get("npcId", 0)}
     if act_type == "QuestActObjTalkNpcGroup":
@@ -177,6 +193,11 @@ def build_manifest(c, quest_id, family, item_groups):
         return {"questId": quest_id, "name": "", "family": family,
                 "skip": {"reason": "orphaned context (no quest_contexts row)"}}
     qid, name, category_id, level, zone_id, let_it_done, selective, score = ctx
+    # Stage-model v4 (RC-1): the raw sqlite cells are 't'/'f' strings - bool('f')
+    # is True in Python. Parse once here so EVERY use (kind_is_auto included) sees
+    # the real value; the manifest fields were already parse_bool'd (14c78c94).
+    let_it_done = parse_bool(let_it_done)
+    selective = parse_bool(selective)
 
     comps = c.execute("SELECT id, component_kind_id, next_component FROM quest_components WHERE quest_context_id = ? ORDER BY id",
                       (quest_id,)).fetchall()
@@ -192,7 +213,7 @@ def build_manifest(c, quest_id, family, item_groups):
     components = []
     skip_reasons = []
     has_timer_or_fail = False
-    guard_npc_id = None
+    guard_npc_ids = []  # RC-3: from ALL components' QuestActCheckGuard acts, deduped
 
     for cid, kind, nxt in comps:
         comp_acts = acts.get(cid, [])
@@ -206,10 +227,15 @@ def build_manifest(c, quest_id, family, item_groups):
             has_timer_or_fail = True
         if act_type_in(comp_acts, "QuestActCheckTimer"):
             has_timer_or_fail = True
-        if kind_name == "Start":
-            for act in comp_acts:
-                if act["type"] == "QuestActCheckGuard":
-                    guard_npc_id = act.get("npcId")
+        # RC-3: a QuestActCheckGuard in ANY component needs its NPC spawned -
+        # QuestActCheckGuard.RunAct returns false when the guard is unresolvable
+        # (CheckGuard.cs:26-33), so a guard in a non-Start component could never
+        # pass. Collect every distinct guard npc id (first-seen order).
+        for act in comp_acts:
+            if act["type"] == "QuestActCheckGuard":
+                npc_id = act.get("npcId")
+                if npc_id and npc_id not in guard_npc_ids:
+                    guard_npc_ids.append(npc_id)
 
         # Drop-only act shapes: any act whose event shape is None and is not a
         # NO_EVENT type means this quest cannot be driven -> skip.
@@ -269,9 +295,20 @@ def build_manifest(c, quest_id, family, item_groups):
         "QuestActSupplySelectiveItem",
     }
 
-    # Acts that pass without events because the generator pre-stocks the inventory
+    # Act types that pass without events because the generator pre-stocks the inventory
     # (gather acts hydrate their objective from actual inventory contents).
     HYDRATED_TYPES = {"QuestActObjItemGather", "QuestActObjItemGroupGather"}
+
+    # Acts the engine counts as objectives (CountsAsAnObjective => true in the act
+    # classes; CheckGuard/CheckTimer/CheckSphere/report acts do NOT count). Used for
+    # the let-it-done status model (mirrors Quest.GetQuestObjectiveStatus).
+    OBJECTIVE_TYPES = {
+        "QuestActObjMonsterHunt", "QuestActObjMonsterGroupHunt", "QuestActObjItemGather",
+        "QuestActObjItemUse", "QuestActObjItemGroupGather", "QuestActObjItemGroupUse",
+        "QuestActObjTalk", "QuestActObjTalkNpcGroup", "QuestActObjInteraction",
+        "QuestActObjSphere", "QuestActObjCraft", "QuestActObjLevel",
+        "QuestActObjZoneMonsterHunt", "QuestActObjExpressFire",
+    }
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
 
@@ -294,7 +331,18 @@ def build_manifest(c, quest_id, family, item_groups):
                 if act["type"] == "QuestActSupplyItem" and not act.get("_unsupported"):
                     reward_items.append({"itemId": act["itemId"], "count": act.get("count", 1)})
 
+    # RC-2: the engine forces Progress res=false for let-it-done quests
+    # (QuestStep.RunComponents, "LetItBeDone type of quests are always forced
+    # forward using the Report Acts"), so RunCurrentStep NEVER advances a
+    # let-it-done Progress step - completion only happens via the report
+    # force-advance (QuestActConReportNpc.OnReportNpc sets Step=Ready).
+    # Exception: the RunCurrentStep HackFix advances when Score > 0 AND the
+    # template has no Ready step (NewQuestCode.RunCurrentStep).
+    progress_forced_stuck = let_it_done and not (score > 0 and "Ready" not in present)
+
     def kind_is_auto(kind_name):
+        if progress_forced_stuck and kind_name == "Progress":
+            return False  # let-it-done Progress never auto-advances
         acts = [a for comp in components if comp["kind"] == kind_name for a in comp["acts"]]
         if not acts:
             return True  # empty components pass vacuously
@@ -302,6 +350,49 @@ def build_manifest(c, quest_id, family, item_groups):
             # Selective quests pass the Progress step when ANY active component passes
             return any(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
         return all(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
+
+    def progress_status_ready(events_credited):
+        """Mimics Quest.GetQuestObjectiveStatus() >= QuestComplete for the
+        Progress step: per-act objective counts are credited either by the
+        stage events (events_credited) or hydrated from the pre-stocked
+        inventory (gather acts credit at accept time)."""
+        acts = [a for comp in components if comp["kind"] == "Progress" for a in comp["acts"]]
+        obj_acts = [a for a in acts if a["type"] in OBJECTIVE_TYPES]
+        if not obj_acts:
+            return True  # no objectives -> QuestComplete
+        if score > 0:
+            # Score handler: score = sum(Count * Objectives[index])
+            s = sum(a.get("count", 1) * (a.get("count", 1)
+                                         if (events_credited or a["type"] in HYDRATED_TYPES) else 0)
+                    for a in obj_acts)
+            return s >= score
+        # Per-act counts: min over acts (max when selective)
+        per_act = []
+        for a in obj_acts:
+            cnt = a.get("count", 1)
+            obj = cnt if (events_credited or a["type"] in HYDRATED_TYPES) else 0
+            if let_it_done and obj >= cnt * 3 // 2:
+                st = 4  # Overachieved
+            elif let_it_done and obj > cnt:
+                st = 3  # ExtraProgress
+            elif obj >= cnt:
+                st = 2  # QuestComplete
+            elif let_it_done and obj >= cnt // 2:
+                st = 1  # CanEarlyComplete
+            else:
+                st = 0  # NotReady
+            per_act.append(st)
+        best = max(per_act) if selective else min(per_act)
+        return best >= 2
+
+    def expect_for_rest(pos, stage_kind):
+        """Expectation for a resting position; let-it-done quests stuck at
+        Progress get the engine's actual status (Ready once objectives are
+        credited, else Progress) instead of the fixed Progress->'Progress' map."""
+        expect = dict(expect_for(pos))
+        if progress_forced_stuck and pos == "Progress":
+            expect["status"] = "Ready" if progress_status_ready(stage_kind == "Progress") else "Progress"
+        return expect
 
     def advance(pos):
         """One GoToNextStep walk: the first present kind after pos, or None = completed."""
@@ -333,7 +424,7 @@ def build_manifest(c, quest_id, family, item_groups):
         # ONLY if that kind's components pass without events (auto-pass).
         first = advance("Start")
         pos = advance(first) if (first is not None and kind_is_auto(first)) else first
-        stages.append({"name": "START", "events": [], "expect": expect_for(pos)})
+        stages.append({"name": "START", "events": [], "expect": expect_for_rest(pos, "Start")})
 
         # ---- one stage per present kind (Supply/Progress/Ready) ----
         for kind in kind_order:
@@ -345,14 +436,21 @@ def build_manifest(c, quest_id, family, item_groups):
                                "events": events_by_kind.get(kind, []), "expect": {"completed": True}})
                 continue
             if pos == kind:
-                # resting at this stage's kind: events make its comps pass -> advance
-                pos = advance(pos)
+                # resting at this stage's kind: events make its comps pass -> advance.
+                # RC-2: let-it-done Progress never advances (engine forces res=false).
+                if not (progress_forced_stuck and kind == "Progress"):
+                    pos = advance(pos)
             elif kind_is_auto(pos):
                 # resting ahead at an auto-pass kind (selective/hydrated advance) -> advance
                 pos = advance(pos)
+            elif progress_forced_stuck and kind == "Ready" and pos == "Progress":
+                # RC-2: the READY stage's report event force-advances the stuck
+                # let-it-done quest Progress -> Ready (QuestActConReportNpc.cs:59-60),
+                # then the Ready step passes and RunCurrentStep moves it onward.
+                pos = advance("Ready")
             # else: resting ahead at a non-auto kind - its events come later -> stays
             stages.append({"name": {"Supply": "SUPPLY", "Progress": "PROGRESS", "Ready": "READY"}[kind],
-                           "events": events_by_kind.get(kind, []), "expect": expect_for(pos)})
+                           "events": events_by_kind.get(kind, []), "expect": expect_for_rest(pos, kind)})
 
         if "Reward" in present:
             expect = {"completed": True}
@@ -397,8 +495,9 @@ def build_manifest(c, quest_id, family, item_groups):
                     inventory.append({"itemId": item_groups[gid][0], "count": a.get("count", 1)})
     if inventory:
         manifest["inventory"] = inventory
-    if guard_npc_id:
-        manifest["guard"] = {"npcId": guard_npc_id, "alive": True}
+    if guard_npc_ids:
+        manifest["guard"] = {"npcId": guard_npc_ids[0], "alive": True}
+        manifest["guards"] = [{"npcId": npc_id, "alive": True} for npc_id in guard_npc_ids]
 
     groups = {}
     for comp in components:
@@ -418,6 +517,85 @@ def build_manifest(c, quest_id, family, item_groups):
 
 def act_type_in(comp_acts, act_type):
     return any(a["type"] == act_type for a in comp_acts)
+
+
+# ---- T3 (M1-5c): stratified act-family census quotas ----
+# Quota = how many example quests the sample must contain that carry this act
+# family. Common families (card-named) get the most; rare families get 2 where
+# available (1 or 0 when the data has fewer). Derived from the 2026-08-04
+# act_detail_type distribution on prod compact.sqlite3 (r208022).
+T3_QUOTAS = {
+    # common (card-named): 8 each
+    "QuestActConReportNpc": 8, "QuestActConAcceptNpc": 8, "QuestActSupplyItem": 8,
+    "QuestActObjItemGather": 8, "QuestActObjTalk": 8, "QuestActObjMonsterHunt": 8,
+    # large (>=500 quests): 5 each
+    "QuestActSupplyCopper": 5, "QuestActSupplyExp": 5, "QuestActConAutoComplete": 5,
+    "QuestActObjMonsterGroupHunt": 5, "QuestActConReportJournal": 5,
+    # medium (100-499): 3 each
+    "QuestActConAcceptSphere": 3, "QuestActConAcceptNpcKill": 3, "QuestActConAcceptItem": 3,
+    "QuestActObjInteraction": 3, "QuestActConAcceptComponent": 3, "QuestActObjItemUse": 3,
+    "QuestActSupplyAppellation": 3, "QuestActConAcceptDoodad": 3,
+    "QuestActSupplySelectiveItem": 3, "QuestActObjSphere": 3,
+    "QuestActObjZoneKill": 3, "QuestActObjCraft": 3,
+    # small (10-99): 2 each
+    "QuestActEtcItemObtain": 2, "QuestActSupplyHonorPoint": 2, "QuestActCheckTimer": 2,
+    "QuestActObjExpressFire": 2, "QuestActObjAggro": 2, "QuestActConAcceptItemGain": 2,
+    "QuestActSupplyLp": 2, "QuestActConReportDoodad": 2, "QuestActSupplyLivingPoint": 2,
+    "QuestActObjCinema": 2, "QuestActSupplyRemoveItem": 2, "QuestActObjCompleteQuest": 2,
+    "QuestActObjAbilityLevel": 2, "QuestActCheckCompleteComponent": 2,
+    # tiny (<10): 2 each (whatever exists)
+    "QuestActSupplyCrimePoint": 2, "QuestActObjMateLevel": 2, "QuestActObjItemGroupGather": 2,
+    "QuestActCheckGuard": 2, "QuestActSupplyJuryPoint": 2, "QuestActConAcceptLevelUp": 2,
+    "QuestActObjTalkNpcGroup": 2, "QuestActObjItemGroupUse": 2, "QuestActObjLevel": 2,
+    "QuestActCheckSphere": 2, "QuestActCheckDistance": 2,
+}
+T3_MAX_QUESTS = 90
+
+
+def select_t3_quests(c, existing_ids):
+    """Greedy stratified sample: repeatedly pick the quest covering the most
+    still-under-quota families (ties: fewest unsupported act types, then lowest
+    quest id for determinism). Stops when every quota is met or no quest can
+    help. Deterministic: pool iteration is sorted."""
+    rows = c.execute("""SELECT cmp.quest_context_id, a.act_detail_type
+                        FROM quest_acts a
+                        JOIN quest_components cmp ON a.quest_component_id = cmp.id""").fetchall()
+    act_sets = {}
+    for qid, act_type in rows:
+        act_sets.setdefault(qid, set()).add(act_type)
+
+    pool = {qid: acts for qid, acts in sorted(act_sets.items()) if qid not in existing_ids}
+    remaining = dict(T3_QUOTAS)
+    selected = []
+
+    while len(selected) < T3_MAX_QUESTS and pool:
+        def key(item):
+            qid, acts = item
+            return (sum(1 for f in acts if remaining.get(f, 0) > 0),
+                    -sum(1 for f in acts if f not in ACT_TABLES),
+                    -qid)  # -qid: lowest id wins ties
+        best_id, best_acts = max(pool.items(), key=key)
+        score = sum(1 for f in best_acts if remaining.get(f, 0) > 0)
+        if score == 0:
+            break  # no quest left can fill a quota
+        selected.append(best_id)
+        for f in best_acts:
+            if remaining.get(f, 0) > 0:
+                remaining[f] -= 1
+        del pool[best_id]
+
+    return selected, remaining
+
+
+def primary_family(acts):
+    """Quest family label for the report: most frequent act type, preferring
+    supported (generator-known) types so common families label drivable quests."""
+    counts = {}
+    for a in acts:
+        counts[a] = counts.get(a, 0) + 1
+    supported = sorted([a for a in counts if a in ACT_TABLES], key=lambda a: (-counts[a], a))
+    unsupported = sorted([a for a in counts if a not in ACT_TABLES], key=lambda a: (-counts[a], a))
+    return (supported or unsupported)[0]
 
 
 def main():
@@ -448,7 +626,7 @@ def main():
         "AND quest_context_id IN (5489,5490,6578,6600,6615,1955,1957,1958,2140)").fetchall()]
     t2_ids = sorted(set(t2_ids))
 
-    counts = {"t1": 0, "t2": 0}
+    counts = {"t1": 0, "t2": 0, "t3": 0}
     for tier, ids in (("t1", t1_ids), ("t2", t2_ids)):
         out_dir = os.path.join(OUT_ROOT, tier)
         os.makedirs(out_dir, exist_ok=True)
@@ -461,8 +639,33 @@ def main():
                 json.dump(manifest, f, ensure_ascii=False, indent=1)
             counts[tier] += 1
 
+    # ---- T3 (M1-5c): stratified act-family census ----
+    existing_ids = set()
+    for tier in ("t1", "t2"):
+        tier_dir = os.path.join(OUT_ROOT, tier)
+        if os.path.isdir(tier_dir):
+            existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(tier_dir) if f.endswith(".json")}
+    t3_ids, remaining = select_t3_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t3")
+    os.makedirs(out_dir, exist_ok=True)
+    t3_coverage = {f: T3_QUOTAS[f] - remaining.get(f, 0) for f in T3_QUOTAS}
+    for qid in t3_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+               JOIN quest_components cmp ON a.quest_component_id = cmp.id
+               WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t3"] += 1
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
-                      "t1_total": len(t1_ids), "t2_total": len(t2_ids)}, indent=1))
+                      "t1_total": len(t1_ids), "t2_total": len(t2_ids),
+                      "t3_selected": len(t3_ids),
+                      "t3_quota_unmet": sorted(f for f, q in remaining.items() if q > 0),
+                      "t3_coverage": t3_coverage}, indent=1))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,155 @@
+{
+ "questId": 5430,
+ "name": "폭풍을 넘어 천둥을 내 손에",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23456,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32993,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4175,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23457,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32998,
+      "type": "QuestActObjItemGather",
+      "detailId": 2666,
+      "itemId": 28219,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23458,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33000,
+      "type": "QuestActObjMateLevel",
+      "detailId": 2
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23459,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32991,
+      "type": "QuestActConReportNpc",
+      "detailId": 4486,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23460,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32992,
+      "type": "QuestActSupplyItem",
+      "detailId": 3733,
+      "itemId": 28240,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28219,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7054,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28240,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28219,
+   "count": 1
+  }
+ ],
+ "skip": {
+  "reason": "unsupported act type QuestActObjMateLevel; unsynthesizable event shape for QuestActObjMateLevel (comp 23458)"
+ }
+}

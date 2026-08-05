@@ -1,0 +1,155 @@
+{
+ "questId": 5464,
+ "name": "잘 자란 칠흑의 릴리엇 말 납품",
+ "zoneId": 1,
+ "categoryId": 87,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13453
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23634,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33263,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4205,
+      "npcId": 13453
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23635,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33266,
+      "type": "QuestActObjItemGather",
+      "detailId": 2702,
+      "itemId": 28449,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23636,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33276,
+      "type": "QuestActConReportNpc",
+      "detailId": 4522,
+      "npcId": 13453
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23643,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33270,
+      "type": "QuestActObjMateLevel",
+      "detailId": 6
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23644,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33273,
+      "type": "QuestActSupplyItem",
+      "detailId": 3778,
+      "itemId": 28458,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28449,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13453,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28458,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28449,
+   "count": 1
+  }
+ ],
+ "skip": {
+  "reason": "unsupported act type QuestActObjMateLevel; unsynthesizable event shape for QuestActObjMateLevel (comp 23643)"
+ }
+}

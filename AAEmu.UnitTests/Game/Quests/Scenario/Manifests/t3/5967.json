@@ -1,0 +1,322 @@
+{
+ "questId": 5967,
+ "name": "신과 영웅의 발자취",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 879
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35193,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4517,
+      "npcId": 879
+     },
+     {
+      "actId": 35194,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4518,
+      "npcId": 880
+     },
+     {
+      "actId": 35195,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4519,
+      "npcId": 1506
+     },
+     {
+      "actId": 35196,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4520,
+      "npcId": 2586
+     },
+     {
+      "actId": 35197,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4521,
+      "npcId": 3577
+     },
+     {
+      "actId": 35198,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4522,
+      "npcId": 5109
+     },
+     {
+      "actId": 35199,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4523,
+      "npcId": 5111
+     },
+     {
+      "actId": 35200,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4524,
+      "npcId": 5392
+     },
+     {
+      "actId": 35201,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4525,
+      "npcId": 8630
+     },
+     {
+      "actId": 35202,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4526,
+      "npcId": 9073
+     },
+     {
+      "actId": 35203,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4527,
+      "npcId": 9657
+     },
+     {
+      "actId": 35512,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4586,
+      "npcId": 8705
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25707,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35103,
+      "type": "QuestActObjAbilityLevel",
+      "detailId": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25708,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35105,
+      "type": "QuestActConReportNpc",
+      "detailId": 4752,
+      "npcId": 879
+     },
+     {
+      "actId": 35106,
+      "type": "QuestActConReportNpc",
+      "detailId": 4753,
+      "npcId": 880
+     },
+     {
+      "actId": 35107,
+      "type": "QuestActConReportNpc",
+      "detailId": 4754,
+      "npcId": 1506
+     },
+     {
+      "actId": 35108,
+      "type": "QuestActConReportNpc",
+      "detailId": 4755,
+      "npcId": 2586
+     },
+     {
+      "actId": 35109,
+      "type": "QuestActConReportNpc",
+      "detailId": 4756,
+      "npcId": 3577
+     },
+     {
+      "actId": 35110,
+      "type": "QuestActConReportNpc",
+      "detailId": 4757,
+      "npcId": 5109
+     },
+     {
+      "actId": 35111,
+      "type": "QuestActConReportNpc",
+      "detailId": 4758,
+      "npcId": 5111
+     },
+     {
+      "actId": 35112,
+      "type": "QuestActConReportNpc",
+      "detailId": 4759,
+      "npcId": 5392
+     },
+     {
+      "actId": 35113,
+      "type": "QuestActConReportNpc",
+      "detailId": 4760,
+      "npcId": 8630
+     },
+     {
+      "actId": 35114,
+      "type": "QuestActConReportNpc",
+      "detailId": 4761,
+      "npcId": 9073
+     },
+     {
+      "actId": 35115,
+      "type": "QuestActConReportNpc",
+      "detailId": 4762,
+      "npcId": 9657
+     },
+     {
+      "actId": 35513,
+      "type": "QuestActConReportNpc",
+      "detailId": 4815,
+      "npcId": 8705
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25709,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35123,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 245,
+      "appellationId": 191
+     },
+     {
+      "actId": 35192,
+      "type": "QuestActSupplyItem",
+      "detailId": 3958,
+      "itemId": 30012,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 879,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 880,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 1506,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 2586,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 3577,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 5109,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 5111,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 5392,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 8630,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 9073,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 9657,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 8705,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30012,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjAbilityLevel; unsynthesizable event shape for QuestActObjAbilityLevel (comp 25707)"
+ }
+}

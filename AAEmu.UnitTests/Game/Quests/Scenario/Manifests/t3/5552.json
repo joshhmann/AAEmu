@@ -1,0 +1,100 @@
+{
+ "questId": 5552,
+ "name": "나지막한 속삭임",
+ "zoneId": 1,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28988
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23971,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33673,
+      "type": "QuestActConAcceptItem",
+      "detailId": 334,
+      "itemId": 28988
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23972,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33729,
+      "type": "QuestActObjTalkNpcGroup",
+      "detailId": 14,
+      "npcGroupId": 527
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23973,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33730,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1433
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28988,
+   "count": 1
+  }
+ ],
+ "skip": {
+  "reason": "unsynthesizable event shape for QuestActObjTalkNpcGroup; unsynthesizable event shape for QuestActObjTalkNpcGroup (comp 23972)"
+ }
+}

@@ -1,0 +1,117 @@
+{
+ "questId": 117,
+ "name": "사소한 오해",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2074
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2223,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 259,
+      "npcId": 2074
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1379,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2229,
+      "type": "QuestActObjTalk",
+      "detailId": 171,
+      "npcId": 2076
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1380,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2231,
+      "type": "QuestActConReportNpc",
+      "detailId": 295,
+      "npcId": 2074
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1381,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 2076
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2074,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

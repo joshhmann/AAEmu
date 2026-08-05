@@ -1,0 +1,93 @@
+{
+ "questId": 1443,
+ "name": "저거너트 점령지의 대장",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6400,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28848,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 166,
+      "questContextId": 1443
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6401,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28849,
+      "type": "QuestActObjAggro",
+      "detailId": 7
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6404,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28850,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1091
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjAggro; unsynthesizable event shape for QuestActObjAggro (comp 6401)"
+ }
+}

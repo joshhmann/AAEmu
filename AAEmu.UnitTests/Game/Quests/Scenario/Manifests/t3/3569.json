@@ -1,0 +1,170 @@
+{
+ "questId": 3569,
+ "name": "키프로사의 빛",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12219
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21240,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29487,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3891,
+      "npcId": 12219
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21241,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29483,
+      "type": "QuestActObjItemGather",
+      "detailId": 2377,
+      "itemId": 25813,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21242,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29488,
+      "type": "QuestActConReportNpc",
+      "detailId": 4183,
+      "npcId": 12219
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21243,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29484,
+      "type": "QuestActSupplyExp",
+      "detailId": 384,
+      "exp": 0
+     },
+     {
+      "actId": 29485,
+      "type": "QuestActSupplyCopper",
+      "detailId": 810,
+      "amount": 0
+     },
+     {
+      "actId": 29486,
+      "type": "QuestActSupplyItem",
+      "detailId": 3375,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21244,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29511,
+      "type": "QuestActObjExpressFire",
+      "detailId": 26,
+      "expressKeyId": 308,
+      "npcGroupId": 461,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25813,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12219,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25813,
+   "count": 1
+  }
+ ],
+ "skip": {
+  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 21244)"
+ }
+}

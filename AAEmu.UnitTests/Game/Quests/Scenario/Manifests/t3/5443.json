@@ -1,0 +1,240 @@
+{
+ "questId": 5443,
+ "name": "[도전] 어둠의 경주",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13392
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23532,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33124,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4191,
+      "npcId": 13392
+     },
+     {
+      "actId": 33151,
+      "type": "QuestActCheckTimer",
+      "detailId": 137,
+      "limitTime": 90000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23533,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33109,
+      "type": "QuestActObjItemGather",
+      "detailId": 2692,
+      "itemId": 28369,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23534,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33257,
+      "type": "QuestActConReportNpc",
+      "detailId": 4521,
+      "npcId": 13395
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23535,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33110,
+      "type": "QuestActObjSphere",
+      "detailId": 663,
+      "sphereId": 2213
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23559,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33112,
+      "type": "QuestActObjSphere",
+      "detailId": 664,
+      "sphereId": 2214
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23560,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33113,
+      "type": "QuestActObjSphere",
+      "detailId": 665,
+      "sphereId": 2215
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23561,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33114,
+      "type": "QuestActObjSphere",
+      "detailId": 666,
+      "sphereId": 2216
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 23562,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 23563,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33121,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 201,
+      "questContextId": 5452
+     },
+     {
+      "actId": 33170,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 198,
+      "appellationId": 143
+     },
+     {
+      "actId": 33183,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1155,
+      "amount": 10000
+     },
+     {
+      "actId": 33261,
+      "type": "QuestActSupplyItem",
+      "detailId": 3776,
+      "itemId": 26548,
+      "gradeId": 0,
+      "count": 12
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28369,
+     "count": 1
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 23535
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 23559
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 23560
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 23561
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13395,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26548,
+      "count": 12
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28369,
+   "count": 1
+  }
+ ]
+}

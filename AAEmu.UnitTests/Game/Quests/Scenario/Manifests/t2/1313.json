@@ -138,5 +138,11 @@
  "guard": {
   "npcId": 3138,
   "alive": true
- }
+ },
+ "guards": [
+  {
+   "npcId": 3138,
+   "alive": true
+  }
+ ]
 }

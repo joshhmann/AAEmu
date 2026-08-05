@@ -1,0 +1,105 @@
+{
+ "questId": 6040,
+ "name": "프롤로그04",
+ "zoneId": 1,
+ "categoryId": 108,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26002,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35895,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 375,
+      "questContextId": 6040
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26056,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35623,
+      "type": "QuestActSupplyExp",
+      "detailId": 823,
+      "exp": 0
+     },
+     {
+      "actId": 35624,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1269,
+      "amount": 0
+     },
+     {
+      "actId": 35660,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1583
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26187,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35828,
+      "type": "QuestActObjCinema",
+      "detailId": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjCinema; unsynthesizable event shape for QuestActObjCinema (comp 26187)"
+ }
+}

@@ -1,0 +1,206 @@
+{
+ "questId": 650,
+ "name": "무덤에서 대체 무슨 일이?",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7899
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2843,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4171,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 476,
+      "npcId": 7899
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2844,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14730,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 160,
+      "monsterGroupId": 161,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2847,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4175,
+      "type": "QuestActConReportNpc",
+      "detailId": 554,
+      "npcId": 7801
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2848,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38495,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2734,
+      "itemId": 33809,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38496,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2735,
+      "itemId": 33810,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38497,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2736,
+      "itemId": 33811,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21200,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29406,
+      "type": "QuestActObjInteraction",
+      "detailId": 627,
+      "doodadId": 2934,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21201,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29404,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1024,
+      "npcId": 1587,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21204,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29411,
+      "type": "QuestActSupplyItem",
+      "detailId": 3369,
+      "itemId": 17258,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 161,
+     "count": 10
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 2934
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 1587,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7801,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

@@ -60,6 +60,10 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
+> Quest-runnability (M1-5, 2026-08-04): **153/153 driven quests runnable** across the 186-quest
+> scenario-harness census (T1 97/97, T2 29/29, T3 27/27 PASS; 33 SKIP = 8 orphaned
+> quest_contexts + 25 harness gaps). See scorecard-explorations/runnability.md + the M1-5 entry below.
+
 ## Zero-data-wired domains (data exists, server ignores it)
 
 - **fx-visuals** (15 tables): fx_cam_fovs, fx_cgas, fx_cgfs, fx_chrs, fx_decals, fx_group_fx_items...
@@ -116,8 +120,8 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   8 new `HelpersTests` incl. 2026-timestamp round-trip; census regen flipped 350/4292/1313
   PERSIST:Fail → PERSIST:Pass with zero other verdict changes. Gate 1129/1129. Catalog: bugs/010-unix-time-maxvalue.md.
   **Census headline after closeout: T1 88/97 PASS (9 FAIL / 0 SKIP), T2 22/35 PASS (7 FAIL / 6 SKIP).**
-  Remaining FAILs are harness-gap (1897 SUPPLY/PROGRESS/REWARD etc.) tracked under t_71ac7013 —
-  runnability line NOT green until the harness cards land.
+  Remaining FAILs were harness-gap (1897 SUPPLY/PROGRESS/REWARD etc., tracked under t_71ac7013) and
+  have since been calibrated away — runnability line is GREEN (M1-5 entry below).
 
 - **BUG-007 — quest data defects fail silently (FIXED on `feat/quest-sanity-verifier`, 2026-08-04).**
   New `QuestSanityVerifier` (startup cross-check at end of `QuestManager.Load`): collects
@@ -145,6 +149,16 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   intact (granted before the call), no bogus General row persisted. 6 new
   `CharacterAbilitiesTests` (3 General-slot no-throw + None + seeded-ability controls).
   Full gate 1127/1127. Catalog: bugs/012-abilities-general-key.md.
+
+- **M1-5 — quest scenario harness census COMPLETE (feat/quest-scenario-harness, 2026-08-04).**
+  Harness (driver + manifest loader + tier runner) drives every manifest quest through
+  START→PROGRESS→READY→REWARD→PERSIST with per-stage verdicts. Census over 3 tiers: T1 Solzreed
+  97/97 PASS, T2 families 29/29 PASS (+6 SKIP orphaned contexts), T3 stratified act-family census
+  27/27 PASS (+27 SKIP: unsupported act families + orphaned data). **Headline: 153/153 quests
+  runnable** across 186 sampled quests (0 FAIL — every driven quest completes its lifecycle).
+  Remaining SKIPs: 8 orphaned quest_contexts (data) + 25 harness gaps (14 unsupported act
+  families — ObjZoneKill, ObjAggro, ObjCompleteQuest, EtcItemObtain, …; queue in
+  scorecard-explorations/runnability.md). Gate 1148/1148.
 
 ### System-level bugs (non-quest)
 

@@ -1,0 +1,112 @@
+{
+ "questId": 1353,
+ "name": "수중 동굴의 지배자 고르곤",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 478
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6761,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9461,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 136,
+      "sphereId": 478
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6762,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9462,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 367,
+      "npcId": 3111,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9463,
+      "type": "QuestActConAutoComplete",
+      "detailId": 228
+     },
+     {
+      "actId": 38713,
+      "type": "QuestActSupplyItem",
+      "detailId": 4462,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3111,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}
