@@ -1,0 +1,127 @@
+{
+ "questId": 6250,
+ "name": "새로운 당신을 위한 선물",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 0,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 33027
+ },
+ "template": {
+  "level": 0,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26782,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37306,
+      "type": "QuestActConAcceptItem",
+      "detailId": 442,
+      "itemId": 33027
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26783,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37307,
+      "type": "QuestActObjLevel",
+      "detailId": 14,
+      "level": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26785,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37309,
+      "type": "QuestActSupplyItem",
+      "detailId": 4158,
+      "itemId": 33028,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 37500,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1712
+     },
+     {
+      "actId": 37502,
+      "type": "QuestActSupplyItem",
+      "detailId": 4161,
+      "itemId": 33029,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "LevelUp"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33028,
+      "count": 5
+     },
+     {
+      "itemId": 33029,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33027,
+   "count": 1
+  }
+ ]
+}

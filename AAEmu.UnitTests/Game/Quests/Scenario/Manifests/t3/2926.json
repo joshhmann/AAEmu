@@ -1,0 +1,141 @@
+{
+ "questId": 2926,
+ "name": "마리아노플 정원 관리",
+ "zoneId": 2,
+ "categoryId": 49,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8823
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12552,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18328,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2359,
+      "npcId": 8823
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12553,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18345,
+      "type": "QuestActObjInteraction",
+      "detailId": 439,
+      "doodadId": 3449,
+      "count": 15,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12554,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18329,
+      "type": "QuestActConReportNpc",
+      "detailId": 2580,
+      "npcId": 8823
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12555,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18346,
+      "type": "QuestActSupplyExp",
+      "detailId": 53,
+      "exp": 0
+     },
+     {
+      "actId": 18347,
+      "type": "QuestActSupplyCopper",
+      "detailId": 277,
+      "amount": 10
+     },
+     {
+      "actId": 18348,
+      "type": "QuestActSupplyCrimePoint",
+      "detailId": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3449
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8823,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActSupplyCrimePoint; unsynthesizable event shape for QuestActSupplyCrimePoint (comp 12555)"
+ }
+}

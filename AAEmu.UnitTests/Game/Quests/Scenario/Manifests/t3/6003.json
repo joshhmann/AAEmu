@@ -1,0 +1,143 @@
+{
+ "questId": 6003,
+ "name": "전장의 노예 퇴치",
+ "zoneId": 144,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 13335
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25851,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35389,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1197,
+      "npcId": 13335
+     },
+     {
+      "actId": 35390,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1198,
+      "npcId": 13280
+     },
+     {
+      "actId": 35391,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1199,
+      "npcId": 13319
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25852,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35392,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 562,
+      "monsterGroupId": 553,
+      "count": 50
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25853,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35395,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 326,
+      "questContextId": 6004
+     },
+     {
+      "actId": 35481,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 112
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25864,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35405,
+      "type": "QuestActConReportJournal",
+      "detailId": 401
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 553,
+     "count": 50
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActSupplyHonorPoint; unsynthesizable event shape for QuestActSupplyHonorPoint (comp 25853)"
+ }
+}

@@ -1,0 +1,230 @@
+{
+ "questId": 3026,
+ "name": "거대 바이암의 횡포",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1291
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13591,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19053,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2491,
+      "npcId": 1291
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13592,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21744,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 396,
+      "monsterGroupId": 362,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13593,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19055,
+      "type": "QuestActConReportNpc",
+      "detailId": 2724,
+      "npcId": 1299
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13594,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38471,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2710,
+      "itemId": 33947,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38472,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2711,
+      "itemId": 33948,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38473,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2712,
+      "itemId": 33949,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21766,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30481,
+      "type": "QuestActObjItemGather",
+      "detailId": 2413,
+      "itemId": 18997,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21767,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30615,
+      "type": "QuestActObjItemUse",
+      "detailId": 691,
+      "itemId": 26095,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21768,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30483,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1085,
+      "npcId": 1296,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21784,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30517,
+      "type": "QuestActSupplyItem",
+      "detailId": 3510,
+      "itemId": 26095,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 362,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 18997,
+     "count": 3
+    },
+    {
+     "type": "ItemUse",
+     "itemId": 26095,
+     "count": 5
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 1296,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1299,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 18997,
+   "count": 3
+  }
+ ]
+}

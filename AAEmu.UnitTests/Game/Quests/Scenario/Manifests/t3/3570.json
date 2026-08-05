@@ -1,0 +1,170 @@
+{
+ "questId": 3570,
+ "name": "에안나의 눈물",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12227
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21245,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29490,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3892,
+      "npcId": 12227
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21246,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29489,
+      "type": "QuestActObjItemGather",
+      "detailId": 2378,
+      "itemId": 25814,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21247,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29510,
+      "type": "QuestActObjExpressFire",
+      "detailId": 25,
+      "expressKeyId": 309,
+      "npcGroupId": 462,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21248,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29491,
+      "type": "QuestActConReportNpc",
+      "detailId": 4184,
+      "npcId": 12227
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21249,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29492,
+      "type": "QuestActSupplyExp",
+      "detailId": 385,
+      "exp": 0
+     },
+     {
+      "actId": 29493,
+      "type": "QuestActSupplyCopper",
+      "detailId": 811,
+      "amount": 0
+     },
+     {
+      "actId": 29494,
+      "type": "QuestActSupplyItem",
+      "detailId": 3376,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25814,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12227,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25814,
+   "count": 1
+  }
+ ],
+ "skip": {
+  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 21247)"
+ }
+}

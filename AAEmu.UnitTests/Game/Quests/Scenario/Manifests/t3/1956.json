@@ -1,0 +1,8 @@
+{
+ "questId": 1956,
+ "name": "",
+ "family": "QuestActConAcceptComponent",
+ "skip": {
+  "reason": "orphaned context (no quest_contexts row)"
+ }
+}

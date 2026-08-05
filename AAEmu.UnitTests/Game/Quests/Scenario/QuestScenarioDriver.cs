@@ -628,6 +628,19 @@ public class QuestScenarioDriver
                 owner.Events.OnExpressFire(owner, new OnExpressFireArgs { NpcId = GetUInt(rawEvent, "npcId"), EmotionId = GetUInt(rawEvent, "emotionId") });
                 break;
             case "LevelUp":
+                // ObjLevel objectives check Owner.Level >= Level (QuestActObjLevel.cs:23/46)
+                // and OnLevelUpArgs carries no level - raise the owner to the quest's
+                // highest ObjLevel requirement so the objective becomes reachable
+                // mid-quest (harness-only calibration; quest 6250 template level is 0
+                // while its Progress act demands level 30).
+                var requiredLevel = quest.Template.Components.Values
+                    .SelectMany(c => c.ActTemplates)
+                    .OfType<QuestActObjLevel>()
+                    .Select(a => a.Level)
+                    .DefaultIfEmpty((byte)0)
+                    .Max();
+                if (requiredLevel > owner.Level)
+                    owner.Level = requiredLevel;
                 owner.Events.OnLevelUp(owner, new OnLevelUpArgs());
                 break;
             case "Aggro":

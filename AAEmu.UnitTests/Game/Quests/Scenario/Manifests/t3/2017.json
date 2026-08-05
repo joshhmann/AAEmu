@@ -1,0 +1,150 @@
+{
+ "questId": 2017,
+ "name": "덫에 들어가 기다리기",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 6264
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9268,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31611,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 239,
+      "doodadId": 6264
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20622,
+      "type": "QuestActSupplyItem",
+      "detailId": 2062,
+      "itemId": 19836,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20623,
+      "type": "QuestActObjInteraction",
+      "detailId": 496,
+      "doodadId": 3645,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15055,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20630,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 182,
+      "itemId": 19836,
+      "count": 1
+     },
+     {
+      "actId": 31612,
+      "type": "QuestActConReportDoodad",
+      "detailId": 49,
+      "doodadId": 6265
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15056,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3645
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 6265,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

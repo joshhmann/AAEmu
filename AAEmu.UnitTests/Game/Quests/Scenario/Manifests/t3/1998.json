@@ -1,0 +1,91 @@
+{
+ "questId": 1998,
+ "name": "낯선 손님의 방문",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8990
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9184,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13226,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1778,
+      "npcId": 8990
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9185,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20678,
+      "type": "QuestActConReportDoodad",
+      "detailId": 39,
+      "doodadId": 3962
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9534,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 3962,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

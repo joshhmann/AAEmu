@@ -10,6 +10,12 @@ Tiers:
   T1 = all Solzreed golden-zone quests (zone_id IN (9, 124, 125)) - 97 quests
   T2 = 20-quest sample of the kill-accept family + live CheckGuard + live
        ItemGroup contexts
+  T3 = M1-5c stratified act-family census: greedy quota fill across the
+       act_detail_type distribution (every family present in prod data gets
+       >=2 example quests where available, more for the common families:
+       ConReportNpc, AcceptNpc, SupplyItem, ObjItemGather, ObjTalk,
+       ObjMonsterHunt). Quests already sampled in T1/T2 are excluded first so
+       T3 widens coverage instead of repeating it.
 
 Quests whose shapes the harness cannot synthesize are emitted with a "skip"
 block (broken refs, unsupported act types) - reported, never faked.
@@ -513,6 +519,85 @@ def act_type_in(comp_acts, act_type):
     return any(a["type"] == act_type for a in comp_acts)
 
 
+# ---- T3 (M1-5c): stratified act-family census quotas ----
+# Quota = how many example quests the sample must contain that carry this act
+# family. Common families (card-named) get the most; rare families get 2 where
+# available (1 or 0 when the data has fewer). Derived from the 2026-08-04
+# act_detail_type distribution on prod compact.sqlite3 (r208022).
+T3_QUOTAS = {
+    # common (card-named): 8 each
+    "QuestActConReportNpc": 8, "QuestActConAcceptNpc": 8, "QuestActSupplyItem": 8,
+    "QuestActObjItemGather": 8, "QuestActObjTalk": 8, "QuestActObjMonsterHunt": 8,
+    # large (>=500 quests): 5 each
+    "QuestActSupplyCopper": 5, "QuestActSupplyExp": 5, "QuestActConAutoComplete": 5,
+    "QuestActObjMonsterGroupHunt": 5, "QuestActConReportJournal": 5,
+    # medium (100-499): 3 each
+    "QuestActConAcceptSphere": 3, "QuestActConAcceptNpcKill": 3, "QuestActConAcceptItem": 3,
+    "QuestActObjInteraction": 3, "QuestActConAcceptComponent": 3, "QuestActObjItemUse": 3,
+    "QuestActSupplyAppellation": 3, "QuestActConAcceptDoodad": 3,
+    "QuestActSupplySelectiveItem": 3, "QuestActObjSphere": 3,
+    "QuestActObjZoneKill": 3, "QuestActObjCraft": 3,
+    # small (10-99): 2 each
+    "QuestActEtcItemObtain": 2, "QuestActSupplyHonorPoint": 2, "QuestActCheckTimer": 2,
+    "QuestActObjExpressFire": 2, "QuestActObjAggro": 2, "QuestActConAcceptItemGain": 2,
+    "QuestActSupplyLp": 2, "QuestActConReportDoodad": 2, "QuestActSupplyLivingPoint": 2,
+    "QuestActObjCinema": 2, "QuestActSupplyRemoveItem": 2, "QuestActObjCompleteQuest": 2,
+    "QuestActObjAbilityLevel": 2, "QuestActCheckCompleteComponent": 2,
+    # tiny (<10): 2 each (whatever exists)
+    "QuestActSupplyCrimePoint": 2, "QuestActObjMateLevel": 2, "QuestActObjItemGroupGather": 2,
+    "QuestActCheckGuard": 2, "QuestActSupplyJuryPoint": 2, "QuestActConAcceptLevelUp": 2,
+    "QuestActObjTalkNpcGroup": 2, "QuestActObjItemGroupUse": 2, "QuestActObjLevel": 2,
+    "QuestActCheckSphere": 2, "QuestActCheckDistance": 2,
+}
+T3_MAX_QUESTS = 90
+
+
+def select_t3_quests(c, existing_ids):
+    """Greedy stratified sample: repeatedly pick the quest covering the most
+    still-under-quota families (ties: fewest unsupported act types, then lowest
+    quest id for determinism). Stops when every quota is met or no quest can
+    help. Deterministic: pool iteration is sorted."""
+    rows = c.execute("""SELECT cmp.quest_context_id, a.act_detail_type
+                        FROM quest_acts a
+                        JOIN quest_components cmp ON a.quest_component_id = cmp.id""").fetchall()
+    act_sets = {}
+    for qid, act_type in rows:
+        act_sets.setdefault(qid, set()).add(act_type)
+
+    pool = {qid: acts for qid, acts in sorted(act_sets.items()) if qid not in existing_ids}
+    remaining = dict(T3_QUOTAS)
+    selected = []
+
+    while len(selected) < T3_MAX_QUESTS and pool:
+        def key(item):
+            qid, acts = item
+            return (sum(1 for f in acts if remaining.get(f, 0) > 0),
+                    -sum(1 for f in acts if f not in ACT_TABLES),
+                    -qid)  # -qid: lowest id wins ties
+        best_id, best_acts = max(pool.items(), key=key)
+        score = sum(1 for f in best_acts if remaining.get(f, 0) > 0)
+        if score == 0:
+            break  # no quest left can fill a quota
+        selected.append(best_id)
+        for f in best_acts:
+            if remaining.get(f, 0) > 0:
+                remaining[f] -= 1
+        del pool[best_id]
+
+    return selected, remaining
+
+
+def primary_family(acts):
+    """Quest family label for the report: most frequent act type, preferring
+    supported (generator-known) types so common families label drivable quests."""
+    counts = {}
+    for a in acts:
+        counts[a] = counts.get(a, 0) + 1
+    supported = sorted([a for a in counts if a in ACT_TABLES], key=lambda a: (-counts[a], a))
+    unsupported = sorted([a for a in counts if a not in ACT_TABLES], key=lambda a: (-counts[a], a))
+    return (supported or unsupported)[0]
+
+
 def main():
     c = sqlite3.connect(DB)
     c.row_factory = sqlite3.Row
@@ -541,7 +626,7 @@ def main():
         "AND quest_context_id IN (5489,5490,6578,6600,6615,1955,1957,1958,2140)").fetchall()]
     t2_ids = sorted(set(t2_ids))
 
-    counts = {"t1": 0, "t2": 0}
+    counts = {"t1": 0, "t2": 0, "t3": 0}
     for tier, ids in (("t1", t1_ids), ("t2", t2_ids)):
         out_dir = os.path.join(OUT_ROOT, tier)
         os.makedirs(out_dir, exist_ok=True)
@@ -554,8 +639,33 @@ def main():
                 json.dump(manifest, f, ensure_ascii=False, indent=1)
             counts[tier] += 1
 
+    # ---- T3 (M1-5c): stratified act-family census ----
+    existing_ids = set()
+    for tier in ("t1", "t2"):
+        tier_dir = os.path.join(OUT_ROOT, tier)
+        if os.path.isdir(tier_dir):
+            existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(tier_dir) if f.endswith(".json")}
+    t3_ids, remaining = select_t3_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t3")
+    os.makedirs(out_dir, exist_ok=True)
+    t3_coverage = {f: T3_QUOTAS[f] - remaining.get(f, 0) for f in T3_QUOTAS}
+    for qid in t3_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+               JOIN quest_components cmp ON a.quest_component_id = cmp.id
+               WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t3"] += 1
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
-                      "t1_total": len(t1_ids), "t2_total": len(t2_ids)}, indent=1))
+                      "t1_total": len(t1_ids), "t2_total": len(t2_ids),
+                      "t3_selected": len(t3_ids),
+                      "t3_quota_unmet": sorted(f for f, q in remaining.items() if q > 0),
+                      "t3_coverage": t3_coverage}, indent=1))
 
 
 if __name__ == "__main__":

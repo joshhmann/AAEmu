@@ -1,0 +1,155 @@
+{
+ "questId": 4788,
+ "name": "배심원자격4단계:선처를 호소",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6401
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20689,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28969,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3877,
+      "npcId": 6401
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20690,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28982,
+      "type": "QuestActObjItemGather",
+      "detailId": 2332,
+      "itemId": 25296,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20691,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28970,
+      "type": "QuestActConReportNpc",
+      "detailId": 4152,
+      "npcId": 10895
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21100,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29132,
+      "type": "QuestActSupplyJuryPoint",
+      "detailId": 2,
+      "point": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21101,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28981,
+      "type": "QuestActSupplyItem",
+      "detailId": 3287,
+      "itemId": 25437,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25296,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10895,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25296,
+   "count": 3
+  }
+ ]
+}

@@ -1,0 +1,126 @@
+{
+ "questId": 4419,
+ "name": "말린 감자 수프 만들기",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19299,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 19300,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26204,
+      "type": "QuestActObjCraft",
+      "detailId": 126,
+      "craftId": 2641,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19301,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26279,
+      "type": "QuestActConReportNpc",
+      "detailId": 3951,
+      "npcId": 9789
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19366,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26205,
+      "type": "QuestActSupplyItem",
+      "detailId": 2828,
+      "itemId": 8505,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 2641
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9789,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 8505,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

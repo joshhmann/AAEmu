@@ -1,0 +1,141 @@
+{
+ "questId": 2916,
+ "name": "마리아노플 하수도 청소",
+ "zoneId": 2,
+ "categoryId": 49,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8822
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12366,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18327,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2358,
+      "npcId": 8822
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12367,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18344,
+      "type": "QuestActObjInteraction",
+      "detailId": 438,
+      "doodadId": 3407,
+      "count": 15,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12368,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18206,
+      "type": "QuestActConReportNpc",
+      "detailId": 2552,
+      "npcId": 8822
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12369,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18207,
+      "type": "QuestActSupplyCrimePoint",
+      "detailId": 1
+     },
+     {
+      "actId": 18208,
+      "type": "QuestActSupplyCopper",
+      "detailId": 273,
+      "amount": 10
+     },
+     {
+      "actId": 18209,
+      "type": "QuestActSupplyExp",
+      "detailId": 51,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3407
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8822,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActSupplyCrimePoint; unsynthesizable event shape for QuestActSupplyCrimePoint (comp 12369)"
+ }
+}

@@ -1,0 +1,123 @@
+{
+ "questId": 2102,
+ "name": "찬바람 동굴에 평안을",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4609
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9693,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16617,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 423,
+      "npcId": 4609
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9694,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16618,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 622,
+      "npcId": 4609,
+      "count": 9
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9695,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14848,
+      "type": "QuestActConReportJournal",
+      "detailId": 17
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10636,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14849,
+      "type": "QuestActSupplyCopper",
+      "detailId": 117,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4609,
+     "count": 9
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

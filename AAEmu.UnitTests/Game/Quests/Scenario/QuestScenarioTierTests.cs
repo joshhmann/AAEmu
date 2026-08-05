@@ -1,12 +1,16 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AAEmu.UnitTests.Game.Quests.Scenario;
 
 /// <summary>
-/// M1-5b: tier runner - drives every manifest in Manifests/t1 (Solzreed golden
-/// zone) and Manifests/t2 (kill-accept sample + CheckGuard + ItemGroup families)
-/// through the scenario harness and writes scorecard-explorations/runnability.md.
+/// M1-5c: tier runner - drives every manifest in Manifests/t1 (Solzreed golden
+/// zone), Manifests/t2 (kill-accept sample + CheckGuard + ItemGroup families)
+/// and Manifests/t3 (M1-5c stratified act-family census, >=50 quests across the
+/// act_detail_type distribution) through the scenario harness and writes
+/// scorecard-explorations/runnability.md (per-tier tables, headline number,
+/// FAIL rollup by act family, SKIP rollup, recommended fix-card queue).
 ///
 /// A quest verdict is evidence, not a test outcome: PASS/FAIL/SKIP per quest
 /// lands in the report. The test itself only asserts that every manifest ran
@@ -15,6 +19,13 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 [NotInParallel]
 public class QuestScenarioTierTests
 {
+    private static readonly (string Tier, string Label)[] Tiers =
+    [
+        ("t1", "T1 golden zone (Solzreed)"),
+        ("t2", "T2 families (kill-accept/guard/item-group)"),
+        ("t3", "T3 stratified act-family census")
+    ];
+
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
@@ -32,6 +43,28 @@ public class QuestScenarioTierTests
         return Directory.GetFiles(dir, "*.json").OrderBy(f => f).ToList();
     }
 
+    /// <summary>First engine frame in an exception reason ("Foo.cs:line N"),
+    /// preferring AAEmu.Game frames; falls back to the harness assertion.</summary>
+    private static string ExtractFileLine(string reason)
+    {
+        var matches = Regex.Matches(reason, @"([A-Za-z0-9_./\\-]+\.cs):line (\d+)");
+        Match best = null;
+        foreach (Match m in matches)
+        {
+            if (best == null)
+                best = m;
+            if (m.Groups[1].Value.Contains("AAEmu.Game"))
+            {
+                best = m;
+                break;
+            }
+        }
+        if (best == null)
+            return "harness assertion";
+        var leaf = best.Groups[1].Value.Split('\\', '/').Last();
+        return $"{leaf}:{best.Groups[2].Value}";
+    }
+
     [Test]
     public async Task TierManifests_DriveAndWriteRunnabilityReport()
     {
@@ -42,8 +75,9 @@ public class QuestScenarioTierTests
 
         var rows = new List<(string Tier, uint QuestId, string Name, string Family, string Verdict, string Detail)>();
         var totals = new Dictionary<string, (int Pass, int Fail, int Skip)>();
+        var manifestsByQuest = new Dictionary<uint, QuestScenarioManifest>();
 
-        foreach (var tier in new[] { "t1", "t2" })
+        foreach (var (tier, _) in Tiers)
         {
             var files = DiscoverManifests(tier);
             await Assert.That(files.Count > 0).IsTrue();
@@ -52,6 +86,7 @@ public class QuestScenarioTierTests
             foreach (var file in files)
             {
                 var manifest = QuestScenarioManifest.LoadFromFile(file);
+                manifestsByQuest[manifest.QuestId] = manifest;
                 QuestScenarioDriver.RegisterManifestItems(manifest);
                 var verdict = new QuestScenarioDriver().Run(manifest);
 
@@ -72,11 +107,30 @@ public class QuestScenarioTierTests
             Console.WriteLine($"{tier}: {files.Count} quests in {stopwatch.Elapsed.TotalSeconds:F1}s");
         }
 
+        var all = totals.Values.Aggregate((Pass: 0, Fail: 0, Skip: 0),
+            (acc, t) => (acc.Pass + t.Pass, acc.Fail + t.Fail, acc.Skip + t.Skip));
+        var driven = all.Pass + all.Fail;
+
+        // ---- FAIL rollup by act family: tally every act type carried by the
+        // failing quests' manifests (a quest with several act families counts
+        // for each) - the top blockers are the families most often implicated.
+        var failingActTally = new Dictionary<string, int>();
+        foreach (var (tier, qid, _, _, verdict, _) in rows.Where(r => r.Verdict == "Fail"))
+        {
+            if (!manifestsByQuest.TryGetValue(qid, out var manifest))
+                continue;
+            foreach (var act in manifest.Template.Components.SelectMany(c => c.Acts))
+            {
+                if (act.TryGetProperty("type", out var typeElement) && typeElement.GetString() is { } actType)
+                    failingActTally[actType] = failingActTally.GetValueOrDefault(actType) + 1;
+            }
+        }
+
         // ---- write the report ----
         var sb = new StringBuilder();
         sb.AppendLine("# Quest Runnability — M1-5 scenario harness census");
         sb.AppendLine();
-        sb.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm}Z by QuestScenarioTierTests (M1-5b)");
+        sb.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm}Z by QuestScenarioTierTests (M1-5c)");
         sb.AppendLine();
         sb.AppendLine("Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); " +
                       "**FAIL** = a stage assertion or engine exception (name the stage + reason); " +
@@ -84,15 +138,17 @@ public class QuestScenarioTierTests
         sb.AppendLine();
         sb.AppendLine("## Headline");
         sb.AppendLine();
-        foreach (var tier in new[] { "t1", "t2" })
+        foreach (var (tier, label) in Tiers)
         {
             var t = totals.GetValueOrDefault(tier);
-            var label = tier == "t1" ? "T1 golden zone (Solzreed)" : "T2 families (kill-accept/guard/item-group)";
             sb.AppendLine($"- **{label}**: {t.Pass} PASS / {t.Fail} FAIL / {t.Skip} SKIP");
         }
+        sb.AppendLine($"- **ALL TIERS (M1-5 census)**: {all.Pass} PASS / {all.Fail} FAIL / {all.Skip} SKIP over " +
+                      $"{all.Pass + all.Fail + all.Skip} quests — **{all.Pass}/{driven} quests runnable** " +
+                      $"({all.Skip} SKIP not driven, reasons below)");
         sb.AppendLine();
 
-        foreach (var tier in new[] { "t1", "t2" })
+        foreach (var (tier, _) in Tiers)
         {
             sb.AppendLine($"## {tier.ToUpperInvariant()} — per-quest verdicts");
             sb.AppendLine();
@@ -106,6 +162,19 @@ public class QuestScenarioTierTests
             sb.AppendLine();
         }
 
+        sb.AppendLine("## FAIL rollup (by act family — top blockers)");
+        sb.AppendLine();
+        if (failingActTally.Count == 0)
+        {
+            sb.AppendLine("_none — every driven quest passed._");
+        }
+        else
+        {
+            foreach (var (actType, count) in failingActTally.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key))
+                sb.AppendLine($"- **{actType}** — {count} failing quest occurrence(s)");
+        }
+        sb.AppendLine();
+
         sb.AppendLine("## FAIL rollup (by stage reason)");
         sb.AppendLine();
         foreach (var group in rows.Where(r => r.Verdict == "Fail")
@@ -116,11 +185,88 @@ public class QuestScenarioTierTests
         }
         sb.AppendLine();
 
+        sb.AppendLine("## SKIP rollup (by reason)");
+        sb.AppendLine();
+        foreach (var group in rows.Where(r => r.Verdict == "Skip")
+                     .GroupBy(r =>
+                     {
+                         var s = r.Detail.Split(';').First().Replace("SKIP:Skip (", "").Trim();
+                         return s.EndsWith(")") ? s[..^1] : s;
+                     })
+                     .OrderByDescending(g => g.Count()))
+        {
+            sb.AppendLine($"- **{group.Key}** — {group.Count()} quests: {string.Join(", ", group.Select(g => g.QuestId))}");
+        }
+        sb.AppendLine();
+
+        sb.AppendLine("## Recommended fix-card queue");
+        sb.AppendLine();
+        sb.AppendLine("Each row = one FAILed quest with the first engine frame from its failure reason " +
+                      "(file:line) for the fix card. SKIP rows are harness/data gaps, not engine defects.");
+        sb.AppendLine();
+        sb.AppendLine("| quest | name | family | failing stage | act families | file:line | reason |");
+        sb.AppendLine("|---|---|---|---|---|---|---|");
+        foreach (var (tier, qid, name, family, _, detail) in rows.Where(r => r.Verdict == "Fail").OrderBy(r => r.QuestId))
+        {
+            var actTypes = manifestsByQuest.TryGetValue(qid, out var manifest)
+                ? manifest.Template.Components.SelectMany(c => c.Acts)
+                    .Where(a => a.TryGetProperty("type", out var t) && t.GetString() is not null)
+                    .Select(a => a.GetProperty("type").GetString())
+                    .Distinct().Take(4)
+                : [];
+            var stageParts = detail.Split(';').Select(p => p.Trim()).Where(p => p.Contains("Fail")).ToArray();
+            var failingStage = stageParts.Length > 0 ? stageParts[0].Split(':').First() : "?";
+            var reason = stageParts.Length > 0 ? stageParts[0] : detail;
+            var fileLine = ExtractFileLine(reason);
+            var cleanReason = reason.Replace("|", "\\|").Replace("\n", " ").Trim();
+            if (cleanReason.Length > 160)
+                cleanReason = cleanReason[..160] + "…";
+            sb.AppendLine($"| {qid} | {name.Replace("|", "\\|")} | {family} | {failingStage} | " +
+                          $"{string.Join("+", actTypes)} | {fileLine} | {cleanReason} |");
+        }
+        sb.AppendLine();
+
+        // SKIP-driven harness gaps: act families the generator cannot yet shape
+        // (unsupported act types / unsynthesizable events) are the next harness
+        // extension cards - they need a generator shape + driver event, not an
+        // engine fix. Orphaned-context SKIPs are data gaps (no quest_contexts row).
+        var gapByAct = new Dictionary<string, (string Kind, List<uint> Quests)>();
+        foreach (var (_, qid, _, _, _, detail) in rows.Where(r => r.Verdict == "Skip"))
+        {
+            foreach (Match m in Regex.Matches(detail,
+                         @"unsupported act type (QuestAct\w+)|unsynthesizable event shape for (QuestAct\w+)"))
+            {
+                var actType = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
+                var kind = m.Groups[1].Success ? "unsupported act type" : "unsynthesizable event shape";
+                if (!gapByAct.TryGetValue(actType, out var entry))
+                {
+                    entry = (kind, []);
+                    gapByAct[actType] = entry;
+                }
+                if (!entry.Quests.Contains(qid))
+                    entry.Quests.Add(qid);
+            }
+        }
+        if (gapByAct.Count > 0)
+        {
+            sb.AppendLine("### Harness-gap queue (SKIP-driven — extend the harness, not the engine)");
+            sb.AppendLine();
+            sb.AppendLine("| act family | gap kind | example quests | fix target |");
+            sb.AppendLine("|---|---|---|---|");
+            foreach (var (actType, (kind, quests)) in gapByAct
+                         .OrderByDescending(kv => kv.Value.Quests.Count).ThenBy(kv => kv.Key))
+            {
+                var examples = string.Join(", ", quests.OrderBy(q => q).Take(4)) + (quests.Count > 4 ? " …" : "");
+                sb.AppendLine($"| {actType} | {kind} | {examples} | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |");
+            }
+            sb.AppendLine();
+        }
+
         Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
         await File.WriteAllTextAsync(reportPath, sb.ToString());
 
         // Every manifest must have been driven (no silent drops).
-        var expected = DiscoverManifests("t1").Count + DiscoverManifests("t2").Count;
+        var expected = Tiers.Sum(t => DiscoverManifests(t.Tier).Count);
         await Assert.That(rows.Count).IsEqualTo(expected);
         await Assert.That(File.Exists(reportPath)).IsTrue();
     }

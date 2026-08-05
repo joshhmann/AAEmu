@@ -1,0 +1,142 @@
+{
+ "questId": 5814,
+ "name": "[갈대무리 땅 더미] 일주일 그룹",
+ "zoneId": 200,
+ "categoryId": 99,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjCompleteQuest",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25129,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 25130,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34556,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 9
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25131,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34557,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25291,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34558,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 11
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25292,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34559,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 12
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25293,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34560,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 13
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25294,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 25295,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjCompleteQuest; unsynthesizable event shape for QuestActObjCompleteQuest (comp 25130); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25131); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25291); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25292); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25293)"
+ }
+}

@@ -1,0 +1,201 @@
+{
+ "questId": 5650,
+ "name": "밤의 이야기꾼",
+ "zoneId": 1,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1313
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33731,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4268,
+      "npcId": 1313
+     },
+     {
+      "actId": 33732,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4269,
+      "npcId": 2435
+     },
+     {
+      "actId": 33733,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4270,
+      "npcId": 2955
+     },
+     {
+      "actId": 33734,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4271,
+      "npcId": 3062
+     },
+     {
+      "actId": 33735,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4272,
+      "npcId": 3151
+     },
+     {
+      "actId": 33736,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4273,
+      "npcId": 10088
+     },
+     {
+      "actId": 33737,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4274,
+      "npcId": 10305
+     },
+     {
+      "actId": 33738,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4275,
+      "npcId": 13289
+     },
+     {
+      "actId": 33739,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4276,
+      "npcId": 13290
+     },
+     {
+      "actId": 33740,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4277,
+      "npcId": 13291
+     },
+     {
+      "actId": 33741,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4278,
+      "npcId": 13334
+     },
+     {
+      "actId": 33742,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4279,
+      "npcId": 13494
+     },
+     {
+      "actId": 33743,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4280,
+      "npcId": 13495
+     },
+     {
+      "actId": 33744,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4281,
+      "npcId": 13562
+     },
+     {
+      "actId": 33918,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4320,
+      "npcId": 10105
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33747,
+      "type": "QuestActSupplyItem",
+      "detailId": 3847,
+      "itemId": 29054,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24283,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33756,
+      "type": "QuestActObjTalkNpcGroup",
+      "detailId": 15,
+      "npcGroupId": 528
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24284,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33748,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1434
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsynthesizable event shape for QuestActObjTalkNpcGroup; unsynthesizable event shape for QuestActObjTalkNpcGroup (comp 24283)"
+ }
+}

@@ -1,0 +1,123 @@
+{
+ "questId": 2108,
+ "name": "수호자의 숲을 떠도는 도깨비불 처지",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3150
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9719,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13635,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 89,
+      "npcId": 3150
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13636,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 536,
+      "npcId": 3150,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9721,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13638,
+      "type": "QuestActSupplyCopper",
+      "detailId": 65,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11325,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16404,
+      "type": "QuestActConReportJournal",
+      "detailId": 92
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3150,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

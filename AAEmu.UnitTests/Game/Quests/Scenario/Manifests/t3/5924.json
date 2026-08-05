@@ -1,0 +1,98 @@
+{
+ "questId": 5924,
+ "name": "@EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 1000",
+ "zoneId": 1,
+ "categoryId": 73,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7261
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25565,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34930,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 281,
+      "doodadId": 7261
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25566,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34935,
+      "type": "QuestActObjZoneKill",
+      "detailId": 64
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25567,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34936,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1522
+     },
+     {
+      "actId": 34937,
+      "type": "QuestActSupplyLivingPoint",
+      "detailId": 49
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjZoneKill; unsupported act type QuestActSupplyLivingPoint; unsynthesizable event shape for QuestActObjZoneKill (comp 25566); unsynthesizable event shape for QuestActSupplyLivingPoint (comp 25567)"
+ }
+}

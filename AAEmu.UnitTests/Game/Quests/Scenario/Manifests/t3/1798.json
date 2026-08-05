@@ -1,0 +1,153 @@
+{
+ "questId": 1798,
+ "name": "피고름 해적단 항해일지",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 18742
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18438,
+      "type": "QuestActConAcceptItem",
+      "detailId": 102,
+      "itemId": 18742
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12755,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19303,
+      "type": "QuestActObjTalk",
+      "detailId": 891,
+      "npcId": 2800
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19304,
+      "type": "QuestActObjTalk",
+      "detailId": 892,
+      "npcId": 2801
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19305,
+      "type": "QuestActObjTalk",
+      "detailId": 893,
+      "npcId": 2823
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13707,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19307,
+      "type": "QuestActObjTalk",
+      "detailId": 894,
+      "npcId": 2756
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13709,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19306,
+      "type": "QuestActConAutoComplete",
+      "detailId": 648
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 2800
+    },
+    {
+     "type": "Talk",
+     "npcId": 2801
+    },
+    {
+     "type": "Talk",
+     "npcId": 2823
+    },
+    {
+     "type": "Talk",
+     "npcId": 2756
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18742,
+   "count": 1
+  }
+ ]
+}
