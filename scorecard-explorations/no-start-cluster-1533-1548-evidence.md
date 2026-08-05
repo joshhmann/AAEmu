@@ -1,6 +1,6 @@
-# QUEST_NO_START cluster 1533–1548 — fail-before evidence (M1 rig)
+# QUEST_NO_START cluster 1533–1548 — fail-before + pass-after evidence (M1 rig)
 
-**Card:** t_d5e088ed · **Mechanic:** QUEST-01 · **Zone:** global (cluster is zone 1 `w_gweonid_forest_1` + 22/1 stragglers) · **Status:** fail-before (no fix applied — this document pins the *current* never-acceptable state)
+**Card:** t_d5e088ed (rig, fail-before) → t_5140fb35 (fix, pass-after) · **Mechanic:** QUEST-01 · **Zone:** global (cluster is zone 1 `w_gweonid_forest_1` + 22/1 stragglers) · **Status:** DROPPED 2026-08-05 (Josh decision — data-level drop, not code)
 
 **Data provenance:** canonical 1.2 reference `compact.sqlite3`, md5 `78b3bdbf038db3b927056106efdf91af` (same hash unit-reqs-layer.md cites as canonical 1.2; the `78b3bdbf0383db3b927056106efdf91af` variant in the verifier/data-defects docs is a transcription typo — no file with that hash exists on the box). Read-only; the rig never writes to it.
 
@@ -91,6 +91,57 @@ dotnet test --project AAEmu.UnitTests --treenode-filter "/*/*/QuestNoStartCluste
 
 - Without a reference DB the tests **skip with a reason** (CI-friendly) — they never fabricate evidence.
 - If the data ever changes so a cluster quest gains a Start component or an accept path, the tests **fail** — the classification is stale and this document must be regenerated. That is the regression contract for the follow-up fix card (data-defects.md §5 verdict: **(c) drop**).
+
+## Fix branch — pass-after evidence (t_5140fb35, DROP 2026-08-05)
+
+**Decision (Josh, 2026-08-05 chat):** *"Unblock granted, if they're orphans we prob don't need to code em in."*
+Drop = data-level deletion, not code. Registered in `scorecard-explorations/dropped-content-register.md §2`
+(restore pointer: these shells are the skeleton to reuse if a 1.2-era tutorial is ever rebuilt).
+
+**Mechanism (guarded DELETE, no code):** `SQL/patches/compact/2026-08-05-drop-no-start-cluster.sql`
+deletes exactly the cluster rows on a copy of the canonical DB (reference stays read-only —
+upstream alignment rule 3):
+
+- `quest_contexts` 4876 → **4853** (−23: 1533, 1535–1549, 1551–1554, 1640, 1830, 1831)
+- `quest_components` 17851 → **17826** (−25: comps 7738–7758, 8492, 8494–8496)
+- `quest_acts` 26886 → **26844** (−42: acts 10867–10911 subset — SupplyCopper/SupplyExp wiring rows)
+
+The shared act DETAIL rows (`quest_act_supply_coppers` / `quest_act_supply_exps`, small shared
+ids like 6/7/8) are referenced by many other quests and are **NOT** deleted — only the cluster's
+42 `quest_acts` wiring rows are unwired. The 9 `unit_reqs` rows with `value1` in the cluster are
+Skill/AiEvent-owned id collisions (kinds 30/23/35 — buff-tag/sphere refs, NOT quest deps) and
+are left untouched. 1534/1550 remain pure id gaps (nothing to delete).
+
+**Allowlist removal (regression re-report):** the 23 cluster ids are REMOVED from the verifier
+allowlist (`QuestSanityVerifier.cs` BuildAllowlist — previously lines 84–87 + the 1535–1549 /
+1551–1554 ranges). If the rows ever come back, `QUEST_NO_START` now reports at **WARN** instead
+of being masked to Info — the census can no longer be green while the defect is real.
+
+**Pass-after evidence (all re-run on this branch, 2026-08-05):**
+
+1. **SQL census `--apply-fix`** (`Scripts/quest_no_start_census.sh`) against the canonical DB
+   (md5 78b3bdbf038db3b927056106efdf91af): fail-before exactly **23 quests** (exit 1) → after
+   the drop patch on the copied DB **0 quests, PASS** (exit 0).
+
+2. **Patch drift verification** — patch applied to a pristine copy: `quest_contexts`
+   4876 → 4853, `quest_components` 17851 → 17826, `quest_acts` 26886 → 26844 (drift exactly
+   −23/−25/−42 as documented in the patch header); 0 cluster remnants, 0 orphaned acts,
+   shared detail tables byte-identical, all 9 unit_reqs collision rows intact.
+
+3. **Rig flip** — `QuestNoStartClusterTests` rewritten to the post-drop contract (8 tests):
+   data-state-aware — a cluster quest is either fully ABSENT (dropped: 0 contexts/0 comps/0
+   acts) or, on a pre-drop reference, provably never-acceptable (zero Start comps, zero accept
+   surfaces, real `Quest.StartQuest()` returns false); the allowlist no longer contains any
+   cluster id; and `DropPatch_WhenAppliedToReferenceCopy_RemovesClusterEntirely` executes the
+   shipped patch against a copy of the canonical DB and asserts complete removal with no
+   orphans. 8/8 pass on the canonical reference.
+
+4. **Verifier unit tests** — `QuestSanityVerifierTests` 28/28 pass: 1533-shaped QUEST_NO_START
+   now reports WARN (allowlist mask gone), allowlist count 132 → 109, dropped ids asserted
+   absent from the allowlist.
+
+5. **Full gate** — `./scripts/gate.sh` green: Release build OK, compiler-check clean, full
+   suite green including the flipped rig + verifier tests.
 
 ## Appendix — reproducible queries (canonical DB, md5 78b3bdbf038db3b927056106efdf91af)
 
