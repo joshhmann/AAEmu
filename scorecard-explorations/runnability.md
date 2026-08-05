@@ -1,6 +1,6 @@
 # Quest Runnability — M1-5 scenario harness census
 
-Generated: 2026-08-05 03:20Z by QuestScenarioTierTests (M1-5c)
+Generated: 2026-08-05 21:32Z by QuestScenarioTierTests (M1-5c)
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
@@ -242,6 +242,12 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 
 | quest | name | family | failing stage | act families | file:line | reason |
 |---|---|---|---|---|---|---|
+
+> No FAIL rows this census. The engine-run quests are all runnable; the remaining
+> blockers are data-defect backlog (never-loaded / never-acceptable shells) — see
+> `data-defects.md` and the fail-before rig evidence
+> [`no-start-cluster-1533-1548-evidence.md`](no-start-cluster-1533-1548-evidence.md)
+> (QUEST_NO_START cluster 1533–1548, t_d5e088ed).
 
 ### Harness-gap queue (SKIP-driven — extend the harness, not the engine)
 
