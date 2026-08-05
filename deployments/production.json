@@ -1,14 +1,14 @@
 {
-  "environment": "aaemu-.165",
-  "git_sha": "3040508a3b62ee8d90e6ce4ab01c978353bd8500",
-  "deployed_at": "2026-08-03T21:35:00-07:00",
-  "milestone": "M1.0 (BUG-006 kill-acceptor)",
-  "database_backup": "none_required_no_schema_change",
-  "services": {
-    "db": "healthy",
-    "login": "healthy",
-    "game": "healthy (0 errors in boot log)",
-    "adminer": "healthy"
-  },
-  "notes": "380 kill-starter quests unstuck. Deployed per WORKFLOW.md exact-SHA procedure (git merge --ff-only fork/develop). No upstream PR (lane gate)."
+ "environment": "aaemu-.165",
+ "git_sha": "94f498fc8ed5d3d07224a85e62023b4465835f44",
+ "deployed_at": "2026-08-04T20:30:00-07:00",
+ "milestone": "M1 engine-health release (BUG-007 verifier + BUG-008/009/010/011/012)",
+ "database_backup": "none_required_no_schema_change",
+ "services": {
+  "db": "healthy",
+  "login": "healthy",
+  "game": "healthy (boot 0 fatal; verifier census live)",
+  "adminer": "healthy"
+ },
+ "notes": "Deployed per WORKFLOW.md exact-SHA (ff-only fork/develop @ 94f498fc). Incident: container json.log hit 39GB (100% disk) pre-deploy - truncated, rotation fix card t_264e1984. Verifier first live census: 5 ERR / 128 WARN / 4 INFO over 4775 quests (structural data defects logged loudly; 3 WARNs are stale-registry false positives from pre-BUG-008/009 audit - fix card filed). No upstream PRs (lane gate)."
 }
