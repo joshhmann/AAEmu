@@ -20,6 +20,7 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-009 | Item-group gather/use objectives stall (9 act rows; 4 live quests 5490/6578/6600/6615 + test 5489) — QuestActObjItemGroupGather/Use RunAct fell through to base stub | FIXED — branch fix/quest-item-group-objectives (2026-08-04) |
 | BUG-010 | Helpers.UnixTime(long) clamps every timestamp > 59s to DateTime.MaxValue (DateTime.MaxValue.Second == 59) — all CheckTimer quests restore with Time=MaxValue, timer never expires | FIXED — branch fix/bug-010-unix-time (2026-08-04) |
 | BUG-007 | Quest data defects fail silently — startup sanity verifier missing (M1-3) | FIXED — branch feat/quest-sanity-verifier (2026-08-04) |
+| BUG-011 | QuestActCheckSphere can never pass + sphere entry crashes — Objectives[0xFF] write (quest 1033 Progress component 5065) | FIXED — branch fix/quest-check-sphere (2026-08-04) |
 
 ## Production state (2026-08-02)
 
