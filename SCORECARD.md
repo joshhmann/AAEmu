@@ -106,7 +106,7 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   group-expanded via `QuestManager.GetGroupItems`/`CheckGroupItem` (any group item
   counts). Gather also mirrors cleanup/destroy-on-drop item removal. 14 new unit tests.
 
-- **BUG-010 — Helpers.UnixTime(long) clamps every timestamp > 59s to DateTime.MaxValue (FIXED on `fix/bug-010-unix-time`, 2026-08-04).**
+- **BUG-010 — Helpers.UnixTime(long) clamps every timestamp > 59s to DateTime.MaxValue (FIXED/CLOSED on `fix/bug-010-unix-time`, 2026-08-04 — Rei attestation comment 2532, PASS).**
   The range check compared `time > DateTime.MaxValue.Second` — and `DateTime.MaxValue.Second == 59` —
   so any unix-seconds value > 59 decoded to `DateTime.MaxValue`. Every CheckTimer quest restored
   via `Quest.ReadData` got `Time = DateTime.MaxValue` (byte-diff proof: time field 1785894127s →
@@ -115,6 +115,9 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   253402300799; `(long)TotalSeconds` double-rounds to 253402300800 which AddSeconds can't hold).
   8 new `HelpersTests` incl. 2026-timestamp round-trip; census regen flipped 350/4292/1313
   PERSIST:Fail → PERSIST:Pass with zero other verdict changes. Gate 1129/1129. Catalog: bugs/010-unix-time-maxvalue.md.
+  **Census headline after closeout: T1 88/97 PASS (9 FAIL / 0 SKIP), T2 22/35 PASS (7 FAIL / 6 SKIP).**
+  Remaining FAILs are harness-gap (1897 SUPPLY/PROGRESS/REWARD etc.) tracked under t_71ac7013 —
+  runnability line NOT green until the harness cards land.
 
 - **BUG-007 — quest data defects fail silently (FIXED on `feat/quest-sanity-verifier`, 2026-08-04).**
   New `QuestSanityVerifier` (startup cross-check at end of `QuestManager.Load`): collects
