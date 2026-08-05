@@ -1,6 +1,6 @@
 # Quest Runnability — M1-5 scenario harness census
 
-Generated: 2026-08-05 00:46Z by QuestScenarioTierTests (M1-5b)
+Generated: 2026-08-05 00:51Z by QuestScenarioTierTests (M1-5b)
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
@@ -85,10 +85,10 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 345 | 무엇에 쓰는 약인고 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 346 | 마엘와스가 남긴 것 | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 347 | 오빠의 마음 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 350 | 일손 부족 | golden-zone | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch): first diff at byte 30 (field time: snapshot=1785894399s, round-trip=253402300800s) [observed step=Drop, status=Dropped, objectives=[0,0,0,0,0]]) |
+| 350 | 일손 부족 | golden-zone | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch): first diff at byte 30 (field time: snapshot=1785894663s, round-trip=253402300800s) [observed step=Drop, status=Dropped, objectives=[0,0,0,0,0]]) |
 | 3503 | 희생자를 줄일 기회 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 354 | 미안한 이야기 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 4292 | 망아지 운반 | golden-zone | Fail | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch): first diff at byte 30 (field time: snapshot=1785894399s, round-trip=253402300800s) [observed step=Drop, status=Dropped, objectives=[0,0,0,0,0]]) |
+| 4292 | 망아지 운반 | golden-zone | Fail | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch): first diff at byte 30 (field time: snapshot=1785894663s, round-trip=253402300800s) [observed step=Drop, status=Dropped, objectives=[0,0,0,0,0]]) |
 | 4294 | 망아지의 먹이 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4295 | 여행의 동반자를 얻다! | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4901 | 마일즈가 연구 중인 선돌 | golden-zone | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
@@ -132,10 +132,10 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1188 | 독을 품은 동물들 사냥 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1189 | 죽음의 기운 물리치기 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1190 | 황야의 무법자들과 대결 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1313 | 말동무 | mixed-families | Fail | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch): first diff at byte 30 (field time: snapshot=1785890979s, round-trip=253402300800s) [observed step=Drop, status=Dropped, objectives=[0,0,0,0,0]]) |
+| 1313 | 말동무 | mixed-families | Fail | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch): first diff at byte 30 (field time: snapshot=1785891243s, round-trip=253402300800s) [observed step=Drop, status=Dropped, objectives=[0,0,0,0,0]]) |
 | 1421 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 182 | 황금 실타래 마을의 약탈자들 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1897 | (구 불볕황야)사라진 가우타마(월드작업후 퀘스트 대상 배치 예정) | mixed-families | Fail | START:Pass; SUPPLY:Fail (expected step Reward, got Progress; expected status Completed, got Progress [observed step=Progress, status=Progress, objectives=[0,0,0,0,0]]); PROGRESS:Fail (expected completed-quest flag set, found not completed [observed step=Progress, status=Progress, objectives=[1,0,0,0,0]]); REWARD:Fail (expected completed-quest flag set, found not completed [observed step=Progress, status=Progress, objectives=[1,0,0,0,0]]); PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch): first diff at byte 30 (field time: snapshot=1785890979s, round-trip=253402300800s) [observed step=Progress, status=Progress, objectives=[1,0,0,0,0]]) |
+| 1897 | (구 불볕황야)사라진 가우타마(월드작업후 퀘스트 대상 배치 예정) | mixed-families | Fail | START:Pass; SUPPLY:Fail (expected step Reward, got Progress; expected status Completed, got Progress [observed step=Progress, status=Progress, objectives=[0,0,0,0,0]]); PROGRESS:Fail (expected completed-quest flag set, found not completed [observed step=Progress, status=Progress, objectives=[1,0,0,0,0]]); REWARD:Fail (expected completed-quest flag set, found not completed [observed step=Progress, status=Progress, objectives=[1,0,0,0,0]]); PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch): first diff at byte 30 (field time: snapshot=1785891243s, round-trip=253402300800s) [observed step=Progress, status=Progress, objectives=[1,0,0,0,0]]) |
 | 1955 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 1957 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 1958 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
