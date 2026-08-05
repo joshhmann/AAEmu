@@ -127,8 +127,8 @@ ORDER BY q.id, a.id;
 ```
 
 Default scope is the card's quest (2145); `--scope 0` verdicts the full
-predicate (both rows). The remaining 1960→1961 row is the sibling defect of
-the same chain — same classification, separate fix decision (no card yet).
+predicate (both rows). The 1960→1961 row is the sibling defect of the same
+chain — fixed together with 2145 by t_60a559ab (§7).
 
 ## 5. Why this matters (fail-before framing)
 
@@ -139,12 +139,13 @@ the same chain — same classification, separate fix decision (no card yet).
   returns null on every call, forever. The verifier's `ACT_REF_MISSING_QUEST`
   finding fires for 2145 on every census (currently downgraded to Info by the
   allowlist — the finding is real, the quest is just classified dead).
-- **After the fix** (child card t_60a559ab): deleting the dangling act
-  (`quest_act_con_accept_components` id 89 + `quest_acts` row 14121) removes
-  the impossible self-start target from the loaded state — the rig's pass-after
-  state is exactly the post-fix census. The alternative documented fix
-  (restore context 2146) also clears the finding; either way the rig's
-  pass-after assertion is the acceptance evidence.
+- **After the fix** (fix card t_60a559ab): deleting the two dangling acts
+  (`quest_act_con_accept_components` ids 89 + 75, with their `quest_acts` rows
+  14121 + 14072) removes the impossible self-start targets from the loaded
+  state — the rig's pass-after state is exactly the post-fix census. The
+  alternative documented fix (restore contexts 2146/1961) also clears the
+  finding; either way the rig's pass-after assertion is the acceptance
+  evidence. Full pass-after evidence: §7.
 
 ## 6. Provenance
 
@@ -154,3 +155,47 @@ the same chain — same classification, separate fix decision (no card yet).
 - Verifier: `AAEmu.Game/Core/Managers/QuestSanityVerifier.cs`
   (ACT_REF_MISSING_QUEST in `VerifyLoadedState`; allowlist @61bef4c0)
 - Sibling rig (same pattern, COMPONENT_NEXT_MISSING): t_07e6c255
+## 7. Fix branch — pass-after evidence (t_60a559ab)
+
+**Branch:** fix/act-ref-2145 (rig 7e119e7b + the prune fix).
+
+**Mechanism (PURE PRUNE — no restore, no overlay):** the fix is the documented
+minimal action from data-defects.md §4: delete the two dangling
+QuestActConAcceptComponent acts and their `quest_acts` rows —
+`SQL/patches/compact/2026-08-05-prune-act-ref-missing-2145.sql`:
+
+- `quest_act_con_accept_components` id **89** → quest_context_id **2146**
+  (quest 2145, Reward comp 9927) — THIS card's row
+- `quest_act_con_accept_components` id **75** → quest_context_id **1961**
+  (quest 1960, Reward comp 9794) — the sibling, same dead cat-34 chain
+- `quest_acts` rows **14121** (comp 9927, act 89) + **14072** (comp 9794, act 75)
+
+Contexts 2146/1961 are NOT restored — they stay dropped under data-defects.md
+§7 verdict (c) (orphan mid-chain links of the abandoned chain). The valid
+self-start acts (2145's Start comp 9925 act 88 → 2145, 1960's Start comp 9792
+act 74 → 1960) are untouched and still resolve. The reference `compact.sqlite3`
+is never edited (upstream alignment rule 3) — the patch is applied to a copy in
+every verification, and `Scripts/quest_act_ref_missing_census.sh --apply-fix`
+mirrors exactly this patch.
+
+**Pass-after evidence (all re-run on this branch, 2026-08-05):**
+
+1. **SQL census `--apply-fix`** against the canonical DB (md5
+   78b3bdbf0383db3b927056106efdf91af): fail-before exactly 2 rows
+   (1960→1961, 2145→2146, exit 1 on both `--scope 2145` and `--scope 0`) →
+   after the fix on the copied DB **0 rows, PASS, exit 0** (full predicate).
+
+2. **Patch drift verification** — the SQL patch applied to a pristine copy:
+   `quest_act_con_accept_components` 384 → **382**, `quest_acts`
+   26886 → **26884** (drift exactly −2 per table, as documented in the patch
+   header); only the 2 pinned rows deleted, nothing else touched.
+
+3. **Full gate** — `./scripts/gate.sh` green: Release build OK, compiler-check
+   clean, test suite green including both rig tests
+   (`VerifyLoadedState_Quest2145_RawData_FailActRefMissingQuest`,
+   `VerifyLoadedState_Quest2145_DanglingActRemoved_Pass`).
+
+4. **Rig tests** — `QuestActRefMissingQuestRigTests` both pass: the verifier
+   still fires `ACT_REF_MISSING_QUEST` for 2145 on the raw prod topology
+   (fail-before invariant preserved), and reports zero findings with the
+   dangling acts removed — the exact post-fix state.

@@ -19,9 +19,10 @@
 #     default DB: ./AAEmu.Game/Data/compact.sqlite3 (repo layout)
 #     --scope N: verdict only on quest N (default 2145 — the card's quest;
 #                pass 0 to verdict the full predicate, both rows)
-#     --apply-fix: copy the DB, delete the dangling act 89 + its quest_acts
-#                  row 14121 (data-defects.md §4 minimal action) in the copy,
-#                  re-run the census (pass-after), then clean up.
+#     --apply-fix: copy the DB, delete the two dangling acts + their quest_acts
+#                  rows (data-defects.md §4 minimal action: accept comps 89/75 +
+#                  quest_acts 14121/14072 — quests 2145 AND sibling 1960) in the
+#                  copy, re-run the census (pass-after), then clean up.
 #
 # Exit code: 1 when the scoped census finds ACT_REF_MISSING_QUEST rows (fail),
 #            0 when clean (pass). Read-only against the source DB.
@@ -86,13 +87,14 @@ if [ "$APPLY_FIX" = "1" ]; then
     trap 'rm -f "$TMP"' EXIT
     cp "$DB" "$TMP"
     sqlite3 "$TMP" <<'SQL'
--- data-defects.md §4 minimal action for quest 2145: delete the dangling
--- ConAcceptComponent act (accept-act 89 -> 2146) + its quest_acts row.
-DELETE FROM quest_acts WHERE id = 14121;                    -- quest 2145 comp 9927 act 89
-DELETE FROM quest_act_con_accept_components WHERE id = 89; -- dangling accept act -> 2146
+-- data-defects.md §4 minimal action: delete the two dangling ConAcceptComponent
+-- acts (quest 2145's accept-act 89 -> 2146 + its quest_acts row 14121, and
+-- sibling quest 1960's accept-act 75 -> 1961 + its quest_acts row 14072).
+DELETE FROM quest_acts WHERE id IN (14072, 14121);                   -- 1960 comp 9794 act 75 / 2145 comp 9927 act 89
+DELETE FROM quest_act_con_accept_components WHERE id IN (75, 89);    -- dangling accept acts -> 1961 / 2146
 SQL
     echo
-    echo ">> fix applied to copy (data-defects.md §4: delete dangling act 89 + quest_acts 14121)"
+    echo ">> fix applied to copy (data-defects.md §4: delete dangling acts 89/75 + quest_acts 14121/14072)"
     run_census "$TMP" || rc=1
 fi
 
