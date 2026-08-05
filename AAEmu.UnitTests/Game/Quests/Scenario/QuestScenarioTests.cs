@@ -184,4 +184,200 @@ public class QuestScenarioTests
         await Assert.That(template).IsNotNull();
         await Assert.That(template.MaxCount > 0).IsTrue();
     }
+
+    // ------------------------------------------------------------------
+    // RC-3: guard NPC rig for QuestActCheckGuard in ANY component
+    // (quest 1033 shape: guard lives in the Progress component, not Start)
+    // ------------------------------------------------------------------
+
+    private const string GuardInProgressManifestJson = """
+    {
+      "questId": 9033,
+      "name": "Guard-in-Progress fixture (RC-3)",
+      "acceptor": { "type": "Npc", "id": 4795 },
+      "template": {
+        "level": 20,
+        "components": [
+          { "kind": "Start", "id": 9001, "acts": [ { "type": "QuestActConAcceptNpc", "npcId": 4795 } ] },
+          { "kind": "Progress", "id": 9002, "acts": [ { "type": "QuestActObjTalk", "npcId": 4617 }, { "type": "QuestActCheckGuard", "npcId": 4617 } ] },
+          { "kind": "Ready", "id": 9003, "acts": [ { "type": "QuestActConReportNpc", "npcId": 4618 } ] },
+          { "kind": "Reward", "id": 9004, "acts": [ { "type": "QuestActSupplyCopper", "amount": 100 } ] }
+        ]
+      },
+      "stages": [
+        { "name": "START", "events": [], "expect": { "step": "Progress", "status": "Progress" } },
+        { "name": "PROGRESS", "events": [ { "type": "Talk", "npcId": 4617 } ], "expect": { "step": "Ready", "status": "Ready" } },
+        { "name": "READY", "events": [ { "type": "ReportNpc", "npcId": 4618, "selected": 0 } ], "expect": { "step": "Reward", "status": "Completed" } },
+        { "name": "REWARD", "events": [], "expect": { "completed": true } }
+      ]
+    }
+    """;
+
+    /// <summary>
+    /// RC-3: a QuestActCheckGuard act in a NON-Start component must pass - the
+    /// driver spawns a guard NPC for every CheckGuard act in the template (no
+    /// manifest guard block needed). Fail-before: CheckGuard.RunAct returned
+    /// false for an unresolvable NPC, so the Progress step could never advance
+    /// (quests 1033/3656/1897).
+    /// </summary>
+    [Test]
+    public async Task GuardInProgressComponent_SpawnedFromTemplateActs_PassesProgress()
+    {
+        var verdict = RunManifest(GuardInProgressManifestJson);
+
+        if (verdict.Overall != StageOutcome.Pass)
+            throw new Exception("DIAGNOSTIC VERDICT:\n" + verdict);
+
+        await Assert.That(verdict.Overall).IsEqualTo(StageOutcome.Pass);
+        var progressStage = verdict.Stages.FirstOrDefault(s => s.Stage == "PROGRESS");
+        await Assert.That(progressStage).IsNotNull();
+        await Assert.That(progressStage.Outcome).IsEqualTo(StageOutcome.Pass);
+    }
+
+    /// <summary>
+    /// RC-3 fail-before companion: when the manifest pins the same guard as
+    /// dead (alive:false), the check must NOT pass - the rig must not turn the
+    /// guard check into an always-pass. The Progress step stays stuck.
+    /// </summary>
+    [Test]
+    public async Task DeadGuardFromManifest_FailsProgress()
+    {
+        var deadGuardJson = GuardInProgressManifestJson.Replace(
+            "\"questId\": 9033",
+            "\"questId\": 9033,\n      \"guard\": { \"npcId\": 4617, \"alive\": false }");
+
+        var verdict = RunManifest(deadGuardJson);
+
+        await Assert.That(verdict.Overall).IsEqualTo(StageOutcome.Fail);
+        var progressStage = verdict.Stages.FirstOrDefault(s => s.Stage == "PROGRESS");
+        await Assert.That(progressStage).IsNotNull();
+        await Assert.That(progressStage.Outcome).IsEqualTo(StageOutcome.Fail);
+        await Assert.That(progressStage.Reason.Contains("expected step Ready")).IsTrue();
+    }
+
+    // ------------------------------------------------------------------
+    // RC-3 companion: QuestActCheckSphere rig (quest 1033 shape - BUG-011
+    // live-position RunAct needs the component's quest sphere in the world)
+    // ------------------------------------------------------------------
+
+    private const string CheckSphereInProgressManifestJson = """
+    {
+      "questId": 9035,
+      "name": "CheckSphere-in-Progress fixture (RC-3/1033)",
+      "acceptor": { "type": "Npc", "id": 4795 },
+      "template": {
+        "level": 20,
+        "components": [
+          { "kind": "Start", "id": 9201, "acts": [ { "type": "QuestActConAcceptNpc", "npcId": 4795 } ] },
+          { "kind": "Progress", "id": 9202, "acts": [ { "type": "QuestActObjTalk", "npcId": 4617 }, { "type": "QuestActCheckGuard", "npcId": 4617 } ] },
+          { "kind": "Progress", "id": 9203, "acts": [ { "type": "QuestActCheckSphere", "sphereId": 945 } ] },
+          { "kind": "Ready", "id": 9204, "acts": [ { "type": "QuestActConReportNpc", "npcId": 4618 } ] },
+          { "kind": "Reward", "id": 9205, "acts": [ { "type": "QuestActSupplyCopper", "amount": 100 } ] }
+        ]
+      },
+      "stages": [
+        { "name": "START", "events": [], "expect": { "step": "Progress", "status": "Progress" } },
+        { "name": "PROGRESS", "events": [ { "type": "Talk", "npcId": 4617 } ], "expect": { "step": "Ready", "status": "Ready" } },
+        { "name": "READY", "events": [ { "type": "ReportNpc", "npcId": 4618, "selected": 0 } ], "expect": { "step": "Reward", "status": "Completed" } },
+        { "name": "REWARD", "events": [], "expect": { "completed": true } }
+      ]
+    }
+    """;
+
+    /// <summary>
+    /// RC-3/quest 1033 exact shape: a second Progress component carries a
+    /// QuestActCheckSphere (no objective counter, ThisComponentObjectiveIndex =
+    /// 0xFF). Since BUG-011 its RunAct evaluates the owner's LIVE position
+    /// against the component's quest spheres - the harness must rig one
+    /// origin-centered sphere or the check can never pass. Fail-before: the
+    /// sphere rig was missing and 1033's Progress stayed stuck on the check.
+    /// </summary>
+    [Test]
+    public async Task CheckSphereInProgressComponent_RiggedSphere_PassesProgress()
+    {
+        var verdict = RunManifest(CheckSphereInProgressManifestJson);
+
+        if (verdict.Overall != StageOutcome.Pass)
+            throw new Exception("DIAGNOSTIC VERDICT:\n" + verdict);
+
+        await Assert.That(verdict.Overall).IsEqualTo(StageOutcome.Pass);
+        var progressStage = verdict.Stages.FirstOrDefault(s => s.Stage == "PROGRESS");
+        await Assert.That(progressStage).IsNotNull();
+        await Assert.That(progressStage.Outcome).IsEqualTo(StageOutcome.Pass);
+    }
+
+    // ------------------------------------------------------------------
+    // RC-7: objective index reset per KIND (mirror QuestManager.cs:207-211)
+    // ------------------------------------------------------------------
+
+    private const string MultiComponentProgressManifestJson = """
+    {
+      "questId": 9034,
+      "name": "Per-kind objective index fixture (RC-7)",
+      "acceptor": { "type": "Npc", "id": 1001 },
+      "template": {
+        "level": 10,
+        "components": [
+          { "kind": "Start", "id": 9101, "acts": [ { "type": "QuestActConAcceptNpc", "npcId": 1001 } ] },
+          { "kind": "Progress", "id": 9102, "acts": [ { "type": "QuestActObjTalk", "npcId": 2001 } ] },
+          { "kind": "Progress", "id": 9103, "acts": [ { "type": "QuestActObjSphere", "sphereId": 777 } ] },
+          { "kind": "Ready", "id": 9104, "acts": [ { "type": "QuestActConReportNpc", "npcId": 3001 } ] },
+          { "kind": "Reward", "id": 9105, "acts": [ { "type": "QuestActSupplyCopper", "amount": 100 } ] }
+        ]
+      },
+      "stages": [
+        { "name": "START", "events": [], "expect": { "step": "Progress", "status": "Progress", "objectives": [0, 0, 0, 0, 0] } },
+        { "name": "PROGRESS", "events": [ { "type": "Talk", "npcId": 2001 }, { "type": "EnterSphere", "componentId": 9103 } ], "expect": { "step": "Ready", "status": "Ready", "objectives": [1, 1, 0, 0, 0] } },
+        { "name": "READY", "events": [ { "type": "ReportNpc", "npcId": 3001, "selected": 0 } ], "expect": { "step": "Reward", "status": "Completed" } },
+        { "name": "REWARD", "events": [], "expect": { "completed": true } }
+      ]
+    }
+    """;
+
+    /// <summary>
+    /// RC-7: BuildTemplate must mirror the loader's per-KIND objective counter
+    /// (QuestManager.cs:207-211) - objective acts across two Progress components
+    /// land in distinct Objectives slots (0 and 1), and non-objective acts get
+    /// 0xFF exactly like the loader (QuestManager.cs:220).
+    /// </summary>
+    [Test]
+    public async Task BuildTemplate_ObjectiveIndices_MirrorLoaderPerKindReset()
+    {
+        QuestScenarioDriver.SeedSingletons();
+        var manifest = QuestScenarioManifest.Load(MultiComponentProgressManifestJson);
+        var template = QuestScenarioDriver.BuildTemplate(manifest);
+
+        var progressActs = template.Components[9102].ActTemplates
+            .Concat(template.Components[9103].ActTemplates)
+            .ToList();
+        await Assert.That(progressActs[0] is QuestActObjTalk).IsTrue();
+        await Assert.That(progressActs[0].ThisComponentObjectiveIndex).IsEqualTo((byte)0);
+        await Assert.That(progressActs[1] is QuestActObjSphere).IsTrue();
+        await Assert.That(progressActs[1].ThisComponentObjectiveIndex).IsEqualTo((byte)1);
+        // non-objective acts are 0xFF, never an Objectives slot
+        await Assert.That(template.Components[9101].ActTemplates[0].ThisComponentObjectiveIndex).IsEqualTo((byte)0xFF);
+    }
+
+    /// <summary>
+    /// RC-7 pass-after: two Progress components share the per-kind counter, so
+    /// the second component's objective event credits Objectives[1] - not slot 0
+    /// (which would collide with the first component's act and leave the census
+    /// objective columns wrong). The quest rests at Ready (quest alive, objectives
+    /// intact - completed quests get dropped and cleared, Quest.cs:441), so the
+    /// objective counters are observable. Fail-before: both acts took index 0 and
+    /// the sphere credit overwrote the talk credit.
+    /// </summary>
+    [Test]
+    public async Task MultiComponentProgress_ObjectivesInDistinctSlots_Passes()
+    {
+        var verdict = RunManifest(MultiComponentProgressManifestJson);
+
+        if (verdict.Overall != StageOutcome.Pass)
+            throw new Exception("DIAGNOSTIC VERDICT:\n" + verdict);
+
+        await Assert.That(verdict.Overall).IsEqualTo(StageOutcome.Pass);
+        var progressStage = verdict.Stages.FirstOrDefault(s => s.Stage == "PROGRESS");
+        await Assert.That(progressStage).IsNotNull();
+        await Assert.That(progressStage.Outcome).IsEqualTo(StageOutcome.Pass);
+    }
 }

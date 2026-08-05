@@ -197,7 +197,7 @@ def build_manifest(c, quest_id, family, item_groups):
     components = []
     skip_reasons = []
     has_timer_or_fail = False
-    guard_npc_id = None
+    guard_npc_ids = []  # RC-3: from ALL components' QuestActCheckGuard acts, deduped
 
     for cid, kind, nxt in comps:
         comp_acts = acts.get(cid, [])
@@ -211,10 +211,15 @@ def build_manifest(c, quest_id, family, item_groups):
             has_timer_or_fail = True
         if act_type_in(comp_acts, "QuestActCheckTimer"):
             has_timer_or_fail = True
-        if kind_name == "Start":
-            for act in comp_acts:
-                if act["type"] == "QuestActCheckGuard":
-                    guard_npc_id = act.get("npcId")
+        # RC-3: a QuestActCheckGuard in ANY component needs its NPC spawned -
+        # QuestActCheckGuard.RunAct returns false when the guard is unresolvable
+        # (CheckGuard.cs:26-33), so a guard in a non-Start component could never
+        # pass. Collect every distinct guard npc id (first-seen order).
+        for act in comp_acts:
+            if act["type"] == "QuestActCheckGuard":
+                npc_id = act.get("npcId")
+                if npc_id and npc_id not in guard_npc_ids:
+                    guard_npc_ids.append(npc_id)
 
         # Drop-only act shapes: any act whose event shape is None and is not a
         # NO_EVENT type means this quest cannot be driven -> skip.
@@ -474,8 +479,9 @@ def build_manifest(c, quest_id, family, item_groups):
                     inventory.append({"itemId": item_groups[gid][0], "count": a.get("count", 1)})
     if inventory:
         manifest["inventory"] = inventory
-    if guard_npc_id:
-        manifest["guard"] = {"npcId": guard_npc_id, "alive": True}
+    if guard_npc_ids:
+        manifest["guard"] = {"npcId": guard_npc_ids[0], "alive": True}
+        manifest["guards"] = [{"npcId": npc_id, "alive": True} for npc_id in guard_npc_ids]
 
     groups = {}
     for comp in components:

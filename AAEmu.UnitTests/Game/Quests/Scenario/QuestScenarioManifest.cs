@@ -28,7 +28,11 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 ///   },
 ///   "guard": { "npcId": 6059, "alive": true },// optional world rig: spawn this guard NPC
 ///                                             // (alive or dead) so QuestActCheckGuard acts
-///                                             // can resolve it without a world server
+///                                             // can resolve it without a world server.
+///                                             // "guards": [ { "npcId": ..., "alive": ... }, ... ]
+///                                             // lists ALL guards (one per distinct CheckGuard
+///                                             // npcId across every component); "guard" keeps
+///                                             // the first entry for backward compatibility.
 ///   "stages": [                               // ordered lifecycle stages; the driver runs
 ///     { "name": "START",                      // each stage's events, then evaluates the
 ///       "events": [                           // step machine, then checks "expect".
@@ -78,6 +82,11 @@ public class QuestScenarioManifest
     public QuestAcceptorShape Acceptor { get; set; } = new();
     public QuestTemplateShape Template { get; set; } = new();
     public QuestGuardShape Guard { get; set; }
+    /// <summary>All guard NPCs a quest needs (one per distinct QuestActCheckGuard
+    /// npcId across ALL components, deduped). Superset of <see cref="Guard"/>
+    /// (which keeps the first entry for backward compatibility); the driver spawns
+    /// every entry so a CheckGuard in any component resolves its NPC.</summary>
+    public List<QuestGuardShape> Guards { get; set; } = [];
     /// <summary>Items pre-placed in the rigged inventory before the quest starts (acceptor item, gather objectives).</summary>
     public List<QuestRewardItemShape> Inventory { get; set; } = [];
     /// <summary>Item groups to seed into QuestManager._groupItems (BUG-009 read path).</summary>

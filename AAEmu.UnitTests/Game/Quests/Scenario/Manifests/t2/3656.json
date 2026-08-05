@@ -159,5 +159,15 @@
    }
   }
  ],
- "selectedRewardIndex": 0
+ "selectedRewardIndex": 0,
+ "guard": {
+  "npcId": 9846,
+  "alive": true
+ },
+ "guards": [
+  {
+   "npcId": 9846,
+   "alive": true
+  }
+ ]
 }

@@ -1,20 +1,20 @@
 # Quest Runnability — M1-5 scenario harness census
 
-Generated: 2026-08-05 02:28Z by QuestScenarioTierTests (M1-5b)
+Generated: 2026-08-05 02:49Z by QuestScenarioTierTests (M1-5b)
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
 ## Headline
 
-- **T1 golden zone (Solzreed)**: 91 PASS / 6 FAIL / 0 SKIP
-- **T2 families (kill-accept/guard/item-group)**: 21 PASS / 8 FAIL / 6 SKIP
+- **T1 golden zone (Solzreed)**: 96 PASS / 1 FAIL / 0 SKIP
+- **T2 families (kill-accept/guard/item-group)**: 28 PASS / 1 FAIL / 6 SKIP
 
 ## T1 — per-quest verdicts
 
 | quest | name | family | verdict | detail |
 |---|---|---|---|---|
 | 1525 | 널린 희생자들 | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 1650 | 누구 것일까? | golden-zone | Fail | START:Fail (expected step Progress, got Reward; expected status Progress, got Completed); PROGRESS:Fail (expected step Reward, got Drop; expected status Completed, got Dropped); REWARD:Pass; PERSIST:Pass |
+| 1650 | 누구 것일까? | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1652 | 난폭한 선돌 수호자 퇴치 | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1725 | 겁먹은 정찰대원 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2239 | 지붕 위로 날아간 닭 | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
@@ -41,7 +41,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2400 | 중년 남성의 희망 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2404 | 누군가의 편지 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2413 | 피 묻은 손 돌격대장 처치! | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 250 | 솔즈리드 여우 처치 | golden-zone | Fail | START:Pass; PROGRESS:Pass; REWARD:Fail (KeyNotFoundException: The given key 'General' was not present in the dictionary.    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)    at AAEmu.Game.Models.Game.Char.CharacterAbilities.AddActiveExp(Int32 exp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/CharacterAbilities.cs:line 55    at AAEmu.Game.Models.Game.Char.Character.AddExp(Int32 expDelta, Boolean shouldAddAbilityExp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/Character.cs:line 1455    at AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActSupplyExp.cs:line 20    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 628); PERSIST:Pass |
+| 250 | 솔즈리드 여우 처치 | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 251 | 화난 멧돼지들 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 252 | 숲 되살리기 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 2531 | 시골에 도착한 예언자 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -85,11 +85,11 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 345 | 무엇에 쓰는 약인고 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 346 | 마엘와스가 남긴 것 | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 347 | 오빠의 마음 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 350 | 일손 부족 | golden-zone | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch)) |
+| 350 | 일손 부족 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3503 | 희생자를 줄일 기회 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 354 | 미안한 이야기 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 4292 | 망아지 운반 | golden-zone | Fail | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch)) |
-| 4294 | 망아지의 먹이 | golden-zone | Fail | START:Fail (expected step Progress, got Ready; expected status Progress, got Ready); PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4292 | 망아지 운반 | golden-zone | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4294 | 망아지의 먹이 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4295 | 여행의 동반자를 얻다! | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4901 | 마일즈가 연구 중인 선돌 | golden-zone | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
 | 4902 | 선돌 연구자의 집 방문 | golden-zone | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
@@ -115,7 +115,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 | quest | name | family | verdict | detail |
 |---|---|---|---|---|
-| 1033 | 기억과 쇠 골렘 | mixed-families | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1033 | 기억과 쇠 골렘 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1057 | 황금 실타래 벌판의 위협 몰아내기 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1079 | 마리아노플의 소매치기들 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1082 | 하피 둥지의 하피들 처치 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -132,34 +132,27 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1188 | 독을 품은 동물들 사냥 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1189 | 죽음의 기운 물리치기 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1190 | 황야의 무법자들과 대결 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1313 | 말동무 | mixed-families | Fail | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch)) |
+| 1313 | 말동무 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1421 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 182 | 황금 실타래 마을의 약탈자들 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1897 | (구 불볕황야)사라진 가우타마(월드작업후 퀘스트 대상 배치 예정) | mixed-families | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Fail (WriteData -> ReadData round-trip changed quest state (byte mismatch)) |
+| 1897 | (구 불볕황야)사라진 가우타마(월드작업후 퀘스트 대상 배치 예정) | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1955 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 1957 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 1958 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 205 | 토리니 정원의 야생동물들 사냥 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2140 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
-| 3656 | 뜨거운 물이 좋아 | mixed-families | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3656 | 뜨거운 물이 좋아 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5489 | test_time | mixed-families | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 5490 | 신기루 섬을 깨끗하게 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 556 | 시차일드 부두로 찾아온 수상한 인어들 퇴치 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 6578 | 이이제이 | mixed-families | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail (KeyNotFoundException: The given key 'General' was not present in the dictionary.    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)    at AAEmu.Game.Models.Game.Char.CharacterAbilities.AddActiveExp(Int32 exp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/CharacterAbilities.cs:line 55    at AAEmu.Game.Models.Game.Char.Character.AddExp(Int32 expDelta, Boolean shouldAddAbilityExp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/Character.cs:line 1455    at AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActSupplyExp.cs:line 20    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 628); PERSIST:Pass |
-| 6600 | 보다 더 강력한 힘 | mixed-families | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail (KeyNotFoundException: The given key 'General' was not present in the dictionary.    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)    at AAEmu.Game.Models.Game.Char.CharacterAbilities.AddActiveExp(Int32 exp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/CharacterAbilities.cs:line 55    at AAEmu.Game.Models.Game.Char.Character.AddExp(Int32 expDelta, Boolean shouldAddAbilityExp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/Character.cs:line 1455    at AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActSupplyExp.cs:line 20    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 628); PERSIST:Pass |
-| 6615 | 신의 방패 정식 대원이 되다! | mixed-families | Fail | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail (KeyNotFoundException: The given key 'General' was not present in the dictionary.    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)    at AAEmu.Game.Models.Game.Char.CharacterAbilities.AddActiveExp(Int32 exp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/CharacterAbilities.cs:line 55    at AAEmu.Game.Models.Game.Char.Character.AddExp(Int32 expDelta, Boolean shouldAddAbilityExp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/Character.cs:line 1455    at AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActSupplyExp.cs:line 20    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 628); PERSIST:Pass |
+| 6578 | 이이제이 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6600 | 보다 더 강력한 힘 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6615 | 신의 방패 정식 대원이 되다! | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 745 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 913 | 큰 금니 트로쉬 | mixed-families | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 
 ## FAIL rollup (by stage reason)
 
-- **START:Pass; PROGRESS:Fail** — 3 quests: 1033, 3656, 5489
-- **START:Fail** — 2 quests: 1650, 4294
-- **START:Pass; SUPPLY:Pass; PROGRESS:Fail** — 2 quests: 295, 1897
-- **START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail** — 2 quests: 6578, 6600
-- **START:Pass; PROGRESS:Pass; REWARD:Fail** — 1 quests: 250
-- **START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail** — 1 quests: 350
-- **START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail** — 1 quests: 4292
-- **START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Fail** — 1 quests: 1313
-- **START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail** — 1 quests: 6615
+- **START:Pass; SUPPLY:Pass; PROGRESS:Fail** — 1 quests: 295
+- **START:Pass; PROGRESS:Fail** — 1 quests: 5489
 
