@@ -47,17 +47,18 @@ public static class QuestSanityVerifier
     }
 
     /// <summary>
-    /// Known stub acts from the M1-2 audit (scorecard-explorations/stub-acts.md):
-    /// QuestActCheckGuard returns true unconditionally (silent auto-complete),
-    /// QuestActObjItemGroupGather/Use pass through to base.RunAct (stall).
+    /// Known stub acts from the M1-2 audit (scorecard-explorations/stub-acts.md).
+    /// Registry is currently EMPTY — every M1-2 entry was retired when the fix landed:
+    ///   - QuestActCheckGuard          retired 2026-08-04 (BUG-008, real guard-alive
+    ///     check since 5e8359d2)
+    ///   - QuestActObjItemGroupGather  retired 2026-08-04 (BUG-009, real objective
+    ///     logic since 6a3c0e20)
+    ///   - QuestActObjItemGroupUse     retired 2026-08-04 (BUG-009, same)
+    /// Keep the mechanism: if a future audit finds a NEW stub act, add it here and the
+    /// ACT_STUB_KNOWN finding fires again automatically.
     /// </summary>
     private static readonly Dictionary<string, string> s_knownStubActTypes =
-        new(StringComparer.Ordinal)
-        {
-            [nameof(QuestActCheckGuard)] = "returns true unconditionally — SILENT AUTO-COMPLETE (M1-2 stub)",
-            [nameof(QuestActObjItemGroupGather)] = "passes through to base.RunAct — STALLS (M1-2 stub)",
-            [nameof(QuestActObjItemGroupUse)] = "passes through to base.RunAct — STALLS (M1-2 stub)"
-        };
+        new(StringComparer.Ordinal);
 
     /// <summary>Watch item from the M1-2 audit — returns true, plausibly by design (self-start pattern).</summary>
     private const string WatchActType = nameof(QuestActConAcceptComponent);

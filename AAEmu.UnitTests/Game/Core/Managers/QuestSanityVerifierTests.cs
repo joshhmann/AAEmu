@@ -132,15 +132,28 @@ public class QuestSanityVerifierTests
     }
 
     [Test]
-    public async Task VerifyLoadedState_KnownStubAct_ReportsWarning()
+    public async Task VerifyLoadedState_FixedActs_AreNotFlaggedAsStubs()
     {
+        // BUG-008 (QuestActCheckGuard, real check since 5e8359d2) and BUG-009
+        // (QuestActObjItemGroupGather/Use, real objectives since 6a3c0e20) retired the
+        // M1-2 stub-registry entries on 2026-08-04 — these acts must NOT produce
+        // ACT_STUB_KNOWN anymore (they were the false positives on every boot).
         var state = BuildCleanState();
+
         var guard = new QuestActCheckGuard(state.Component) { DetailId = 501 };
         state.Component.ActTemplates.Add(guard);
 
-        var report = Run(state);
+        var gather = new QuestActObjItemGroupGather(state.Component) { DetailId = 507, ItemGroupId = 700 };
+        state.Component.ActTemplates.Add(gather);
+        state.ByType[nameof(QuestActObjItemGroupGather)] = new() { [507] = gather };
 
-        await Assert.That(report.Findings.Any(f => f.Code == "ACT_STUB_KNOWN" && f.Severity == QuestSanityVerifier.Severity.Warn)).IsTrue();
+        var use = new QuestActObjItemGroupUse(state.Component) { DetailId = 508, ItemGroupId = 701 };
+        state.Component.ActTemplates.Add(use);
+        state.ByType[nameof(QuestActObjItemGroupUse)] = new() { [508] = use };
+
+        var report = Run(state, new Dictionary<uint, List<uint>> { [700] = [], [701] = [] });
+
+        await Assert.That(report.Findings.Any(f => f.Code == "ACT_STUB_KNOWN")).IsFalse();
     }
 
     [Test]
