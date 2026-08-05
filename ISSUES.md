@@ -22,6 +22,7 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-007 | Quest data defects fail silently — startup sanity verifier missing (M1-3) | FIXED — branch feat/quest-sanity-verifier (2026-08-04) |
 | BUG-011 | QuestActCheckSphere can never pass + sphere entry crashes — Objectives[0xFF] write (quest 1033 Progress component 5065) | FIXED — branch fix/quest-check-sphere (2026-08-04) |
 | BUG-012 | CharacterAbilities KeyNotFoundException 'General' on quest exp rewards (Ability1==General; ctor seeds Fight..Love only, ability1 DB column has no default, no client validation) — quests 250/6578/6600/6615 REWARD crash | FIXED — branch fix/char-abilities-general (2026-08-04) |
+| BUG-013 | NPC sit poses render "knees in" — server sends sit anim ids the 1.2 client cannot play for the NPC's race/gender (missing .caf assets; ids 70/160 have none at all) | FIXED — branch fix/npc-sit-pose (2026-08-05) |
 
 ## Production state (2026-08-02)
 

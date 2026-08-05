@@ -1042,6 +1042,12 @@ public class Unit : BaseUnit, IUnit
                 break;
             case ModelPostureType.ActorModelState: // npc
                 // Logger.Debug($"Using AnimActionId={animActionId} for NPC TemplateId: {npc?.TemplateId}, ObjId:{npc?.ObjId}");
+                // The 1.2 client cannot play some sit-pose anims for certain race/gender models (missing .caf
+                // assets in the client pak). Sending such an id verbatim makes the client fall back to its
+                // default crouched pose ("knees in"). Remap unplayable sit-range ids to the closest playable
+                // sit anim; stand/walk poses pass through untouched (see SitPoseFallback).
+                if (npc is { Template: not null })
+                    animActionId = SitPoseFallback.Resolve(animActionId, npc.Template.Race, npc.Template.Gender);
                 stream.Write(animActionId); // Animation override
                 stream.Write(activateAnimation); // activate
                 break;
