@@ -130,6 +130,15 @@ Verdict: **(c) drop** — dead legacy content. Delete the 23 contexts + their co
 (safe: nothing references them). If a 1.2-era tutorial is ever rebuilt, these shells are the
 skeleton to reuse.
 
+**EXECUTED 2026-08-05 (t_5140fb35, Josh decision):** dropped as data via
+`SQL/patches/compact/2026-08-05-drop-no-start-cluster.sql` (guarded DELETEs: −23 contexts /
+−25 components / −42 acts, verified drift on compact.sqlite3 md5 78b3bdbf…) and the cluster ids
+REMOVED from the verifier allowlist — a regression that re-adds the rows re-reports
+`QUEST_NO_START` at WARN instead of the old Info mask. Registered in
+`scorecard-explorations/dropped-content-register.md §2` (restore pointer: reuse the shells if a
+1.2-era tutorial is ever rebuilt). Evidence: `no-start-cluster-1533-1548-evidence.md` pass-after
+section; census `Scripts/quest_no_start_census.sh` fail-before 23 → pass-after 0.
+
 ## 6. QUEST_NO_COMPONENTS — 96 quests
 
 | Group | Ids | Data / intent | Verdict |

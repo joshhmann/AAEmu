@@ -243,6 +243,12 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 | quest | name | family | failing stage | act families | file:line | reason |
 |---|---|---|---|---|---|---|
 
+> No FAIL rows this census. The engine-run quests are all runnable; the remaining
+> blockers are data-defect backlog — the QUEST_NO_START cluster 1533–1548 was
+> **DROPPED 2026-08-05** (data-defects.md §5, t_5140fb35; Josh decision) — see
+> [no-start-cluster-1533-1548-evidence.md](no-start-cluster-1533-1548-evidence.md)
+> for fail-before + pass-after evidence.
+
 ### Harness-gap queue (SKIP-driven — extend the harness, not the engine)
 
 | act family | gap kind | example quests | fix target |

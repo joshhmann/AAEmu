@@ -251,7 +251,7 @@ public class QuestSanityVerifierTests
     public async Task VerifyLoadedState_AllowlistedQuestWithoutStart_ReportsInfo()
     {
         var state = BuildCleanState();
-        state.Quest.Id = 1533; // legacy tutorial shell (data-defects.md §5)
+        state.Quest.Id = 2148; // "하다보니(reserve)" block shell (data-defects.md §6)
         state.Component.KindId = QuestComponentKind.Progress;
 
         var report = Run(state);
@@ -280,10 +280,7 @@ public class QuestSanityVerifierTests
     [Test]
     public async Task Allowlist_ContainsClassifiedShells()
     {
-        // Spot-check every allowlist group from data-defects.md (132 ids total).
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1533u)).IsTrue(); // tutorial shell
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1640u)).IsTrue(); // tutorial shell
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1830u)).IsTrue(); // tutorial "UNUSED"
+        // Spot-check every allowlist group from data-defects.md (109 ids total).
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(315u)).IsTrue();  // do-not-delete shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1728u)).IsTrue(); // do-not-delete shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1391u)).IsTrue(); // dummy shell
@@ -297,12 +294,23 @@ public class QuestSanityVerifierTests
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1960u)).IsTrue(); // cat-34 dangling accept
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2145u)).IsTrue(); // cat-34 dangling accept
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2146u)).IsTrue(); // cat-34 orphan context
+
+        // The QUEST_NO_START cluster 1533–1548 (data-defects.md §5) was DROPPED
+        // 2026-08-05 (dropped-content-register.md §2) — its ids are REMOVED from the
+        // allowlist so a regression re-reports at WARN instead of being masked.
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1533u)).IsFalse(); // dropped tutorial shell
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1535u)).IsFalse(); // dropped tutorial shell
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1548u)).IsFalse(); // dropped tutorial shell
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1640u)).IsFalse(); // dropped tutorial shell
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1830u)).IsFalse(); // dropped tutorial "UNUSED"
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1831u)).IsFalse(); // dropped tutorial "UNUSED"
+
         // Non-shell quests stay Warn/Error — 330/776/777 keep COMPONENT_NEXT_MISSING Warn
         // pending the 3-row data overlay (data-defects.md §3).
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(330u)).IsFalse();
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(776u)).IsFalse();
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(777u)).IsFalse();
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Count == 132).IsTrue();
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Count == 109).IsTrue();
     }
 
     // -- Zone/kind rollup (scope add: which zones/kinds are quest-broken). --
@@ -311,7 +319,7 @@ public class QuestSanityVerifierTests
     public async Task VerifyLoadedState_ZoneAndKindRollup_CountsFailedAndWarned()
     {
         // zone 125: quest 1 clean + quest 2 failed (Error); zone 8: quest 3 warned (Warn)
-        // + quest 1533 allowlisted (no-start downgraded to Info → NOT counted as warned).
+        // + quest 2148 allowlisted (no-start downgraded to Info → NOT counted as warned).
         var q1 = new QuestTemplate { Id = 1, ZoneId = 125, CategoryId = 4 };
         var c1 = new QuestComponentTemplate(q1) { Id = 100, KindId = QuestComponentKind.Start };
         q1.Components[100] = c1;
@@ -326,11 +334,11 @@ public class QuestSanityVerifierTests
         q3.Components[300] = c3;
         c3.ActTemplates.Add(new QuestActObjTalk(c3) { DetailId = 700 });
 
-        var q4 = new QuestTemplate { Id = 1533, ZoneId = 8, CategoryId = 28 };
+        var q4 = new QuestTemplate { Id = 2148, ZoneId = 8, CategoryId = 28 };
         var c4 = new QuestComponentTemplate(q4) { Id = 400, KindId = QuestComponentKind.Progress };
         q4.Components[400] = c4;
 
-        var quests = new Dictionary<uint, QuestTemplate> { [1] = q1, [2] = q2, [3] = q3, [1533] = q4 };
+        var quests = new Dictionary<uint, QuestTemplate> { [1] = q1, [2] = q2, [3] = q3, [2148] = q4 };
         var components = new Dictionary<uint, QuestComponentTemplate> { [100] = c1, [200] = c2, [300] = c3, [400] = c4 };
 
         var report = QuestSanityVerifier.VerifyLoadedState(quests, components,
@@ -347,6 +355,26 @@ public class QuestSanityVerifierTests
         await Assert.That(kind4.QuestCount == 2 && kind4.FailedQuestCount == 1 && kind4.WarnedQuestCount == 0).IsTrue();
         // Allowlisted quest's no-start finding is Info → kind 28 is not "warned".
         await Assert.That(kind28.QuestCount == 1 && kind28.WarnedQuestCount == 0).IsTrue();
+    }
+
+    /// <summary>
+    /// The QUEST_NO_START cluster 1533–1548 was DROPPED from the data layer 2026-08-05
+    /// (data-defects.md §5 verdict (c) drop; dropped-content-register.md §2; t_5140fb35).
+    /// Its ids are REMOVED from the allowlist, so if the rows ever return (regression),
+    /// the verifier re-reports QUEST_NO_START at WARN — the mask is gone.
+    /// </summary>
+    [Test]
+    public async Task VerifyLoadedState_DroppedClusterQuestWithoutStart_ReportsWarn()
+    {
+        var state = BuildCleanState();
+        state.Quest.Id = 1533; // dropped tutorial shell — must NOT be masked anymore
+        state.Component.KindId = QuestComponentKind.Progress;
+
+        var report = Run(state);
+
+        await Assert.That(report.Findings.Any(f => f.Code == "QUEST_NO_START" && f.Severity == QuestSanityVerifier.Severity.Warn)).IsTrue();
+        await Assert.That(report.Findings.Any(f => f.Code == "QUEST_NO_START" && f.Severity == QuestSanityVerifier.Severity.Info)).IsFalse();
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1533u)).IsFalse();
     }
 
     // -- SQL-level orphan listing (data-defects.md §7: census must name the orphans). --

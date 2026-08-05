@@ -38,8 +38,9 @@ needed, never by editing the reference file.
 | Origin | legacy 1.0-era numbered tutorial step list (튜토리얼… 메인퀘저널), zone 1 `w_gweonid_forest_1` (old Nuian starter), cat 28 — superseded by the Solzreed opening (golden route) |
 | Verdict | data-defects.md §5 (c) drop |
 | Drop action | delete 23 quest_contexts + their quest_components/quest_acts rows via SQL patch; remove cluster ids from verifier allowlist (QuestSanityVerifier.cs:84-109) |
-| Execution card | t_5140fb35 (impl, ready) → Rei gate t_f884383f → census t_d5e7d11f |
-| Rig | fix/no-start-1533-rig @ 9370e985 — flip to assert absence |
+| Execution card | t_5140fb35 (impl, running) → Rei gate t_f884383f → census t_d5e7d11f |
+| Rig | fix/no-start-1533-rig @ 9370e985 — flipped to post-drop contract (dropped-or-never-acceptable + allowlist-removed + patch-on-copy pass-after) on fix/no-start-1533 |
+| Patch | `SQL/patches/compact/2026-08-05-drop-no-start-cluster.sql` — guarded DELETEs: −23 quest_contexts / −25 quest_components / −42 quest_acts (drift 4876→4853, 17851→17826, 26886→26844; shared act-detail + unit_reqs collision rows untouched); census `Scripts/quest_no_start_census.sh --apply-fix` fail-before 23 → pass-after 0 |
 | Restore pointer | **These shells are the skeleton to reuse if a 1.2-era tutorial is ever rebuilt** (data-defects.md §5). |
 
 ## 3. Orphaned quest_contexts — 8 (of 28 audited)
