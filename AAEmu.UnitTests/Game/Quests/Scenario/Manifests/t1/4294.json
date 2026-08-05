@@ -107,8 +107,8 @@
    "name": "START",
    "events": [],
    "expect": {
-    "step": "Ready",
-    "status": "Ready"
+    "step": "Progress",
+    "status": "Progress"
    }
   },
   {

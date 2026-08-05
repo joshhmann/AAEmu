@@ -177,6 +177,11 @@ def build_manifest(c, quest_id, family, item_groups):
         return {"questId": quest_id, "name": "", "family": family,
                 "skip": {"reason": "orphaned context (no quest_contexts row)"}}
     qid, name, category_id, level, zone_id, let_it_done, selective, score = ctx
+    # Stage-model v4 (RC-1): the raw sqlite cells are 't'/'f' strings - bool('f')
+    # is True in Python. Parse once here so EVERY use (kind_is_auto included) sees
+    # the real value; the manifest fields were already parse_bool'd (14c78c94).
+    let_it_done = parse_bool(let_it_done)
+    selective = parse_bool(selective)
 
     comps = c.execute("SELECT id, component_kind_id, next_component FROM quest_components WHERE quest_context_id = ? ORDER BY id",
                       (quest_id,)).fetchall()
@@ -269,9 +274,20 @@ def build_manifest(c, quest_id, family, item_groups):
         "QuestActSupplySelectiveItem",
     }
 
-    # Acts that pass without events because the generator pre-stocks the inventory
+    # Act types that pass without events because the generator pre-stocks the inventory
     # (gather acts hydrate their objective from actual inventory contents).
     HYDRATED_TYPES = {"QuestActObjItemGather", "QuestActObjItemGroupGather"}
+
+    # Acts the engine counts as objectives (CountsAsAnObjective => true in the act
+    # classes; CheckGuard/CheckTimer/CheckSphere/report acts do NOT count). Used for
+    # the let-it-done status model (mirrors Quest.GetQuestObjectiveStatus).
+    OBJECTIVE_TYPES = {
+        "QuestActObjMonsterHunt", "QuestActObjMonsterGroupHunt", "QuestActObjItemGather",
+        "QuestActObjItemUse", "QuestActObjItemGroupGather", "QuestActObjItemGroupUse",
+        "QuestActObjTalk", "QuestActObjTalkNpcGroup", "QuestActObjInteraction",
+        "QuestActObjSphere", "QuestActObjCraft", "QuestActObjLevel",
+        "QuestActObjZoneMonsterHunt", "QuestActObjExpressFire",
+    }
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
 
@@ -294,7 +310,18 @@ def build_manifest(c, quest_id, family, item_groups):
                 if act["type"] == "QuestActSupplyItem" and not act.get("_unsupported"):
                     reward_items.append({"itemId": act["itemId"], "count": act.get("count", 1)})
 
+    # RC-2: the engine forces Progress res=false for let-it-done quests
+    # (QuestStep.RunComponents, "LetItBeDone type of quests are always forced
+    # forward using the Report Acts"), so RunCurrentStep NEVER advances a
+    # let-it-done Progress step - completion only happens via the report
+    # force-advance (QuestActConReportNpc.OnReportNpc sets Step=Ready).
+    # Exception: the RunCurrentStep HackFix advances when Score > 0 AND the
+    # template has no Ready step (NewQuestCode.RunCurrentStep).
+    progress_forced_stuck = let_it_done and not (score > 0 and "Ready" not in present)
+
     def kind_is_auto(kind_name):
+        if progress_forced_stuck and kind_name == "Progress":
+            return False  # let-it-done Progress never auto-advances
         acts = [a for comp in components if comp["kind"] == kind_name for a in comp["acts"]]
         if not acts:
             return True  # empty components pass vacuously
@@ -302,6 +329,49 @@ def build_manifest(c, quest_id, family, item_groups):
             # Selective quests pass the Progress step when ANY active component passes
             return any(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
         return all(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
+
+    def progress_status_ready(events_credited):
+        """Mimics Quest.GetQuestObjectiveStatus() >= QuestComplete for the
+        Progress step: per-act objective counts are credited either by the
+        stage events (events_credited) or hydrated from the pre-stocked
+        inventory (gather acts credit at accept time)."""
+        acts = [a for comp in components if comp["kind"] == "Progress" for a in comp["acts"]]
+        obj_acts = [a for a in acts if a["type"] in OBJECTIVE_TYPES]
+        if not obj_acts:
+            return True  # no objectives -> QuestComplete
+        if score > 0:
+            # Score handler: score = sum(Count * Objectives[index])
+            s = sum(a.get("count", 1) * (a.get("count", 1)
+                                         if (events_credited or a["type"] in HYDRATED_TYPES) else 0)
+                    for a in obj_acts)
+            return s >= score
+        # Per-act counts: min over acts (max when selective)
+        per_act = []
+        for a in obj_acts:
+            cnt = a.get("count", 1)
+            obj = cnt if (events_credited or a["type"] in HYDRATED_TYPES) else 0
+            if let_it_done and obj >= cnt * 3 // 2:
+                st = 4  # Overachieved
+            elif let_it_done and obj > cnt:
+                st = 3  # ExtraProgress
+            elif obj >= cnt:
+                st = 2  # QuestComplete
+            elif let_it_done and obj >= cnt // 2:
+                st = 1  # CanEarlyComplete
+            else:
+                st = 0  # NotReady
+            per_act.append(st)
+        best = max(per_act) if selective else min(per_act)
+        return best >= 2
+
+    def expect_for_rest(pos, stage_kind):
+        """Expectation for a resting position; let-it-done quests stuck at
+        Progress get the engine's actual status (Ready once objectives are
+        credited, else Progress) instead of the fixed Progress->'Progress' map."""
+        expect = dict(expect_for(pos))
+        if progress_forced_stuck and pos == "Progress":
+            expect["status"] = "Ready" if progress_status_ready(stage_kind == "Progress") else "Progress"
+        return expect
 
     def advance(pos):
         """One GoToNextStep walk: the first present kind after pos, or None = completed."""
@@ -333,7 +403,7 @@ def build_manifest(c, quest_id, family, item_groups):
         # ONLY if that kind's components pass without events (auto-pass).
         first = advance("Start")
         pos = advance(first) if (first is not None and kind_is_auto(first)) else first
-        stages.append({"name": "START", "events": [], "expect": expect_for(pos)})
+        stages.append({"name": "START", "events": [], "expect": expect_for_rest(pos, "Start")})
 
         # ---- one stage per present kind (Supply/Progress/Ready) ----
         for kind in kind_order:
@@ -345,14 +415,21 @@ def build_manifest(c, quest_id, family, item_groups):
                                "events": events_by_kind.get(kind, []), "expect": {"completed": True}})
                 continue
             if pos == kind:
-                # resting at this stage's kind: events make its comps pass -> advance
-                pos = advance(pos)
+                # resting at this stage's kind: events make its comps pass -> advance.
+                # RC-2: let-it-done Progress never advances (engine forces res=false).
+                if not (progress_forced_stuck and kind == "Progress"):
+                    pos = advance(pos)
             elif kind_is_auto(pos):
                 # resting ahead at an auto-pass kind (selective/hydrated advance) -> advance
                 pos = advance(pos)
+            elif progress_forced_stuck and kind == "Ready" and pos == "Progress":
+                # RC-2: the READY stage's report event force-advances the stuck
+                # let-it-done quest Progress -> Ready (QuestActConReportNpc.cs:59-60),
+                # then the Ready step passes and RunCurrentStep moves it onward.
+                pos = advance("Ready")
             # else: resting ahead at a non-auto kind - its events come later -> stays
             stages.append({"name": {"Supply": "SUPPLY", "Progress": "PROGRESS", "Ready": "READY"}[kind],
-                           "events": events_by_kind.get(kind, []), "expect": expect_for(pos)})
+                           "events": events_by_kind.get(kind, []), "expect": expect_for_rest(pos, kind)})
 
         if "Reward" in present:
             expect = {"completed": True}
