@@ -113,6 +113,17 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   (Error/Warn/Info), never throws (matches loader behavior). 14 unit tests cover every
   finding class. Full defect catalog: bugs/007-quest-sanity-verifier.md.
 
+- **BUG-012 — CharacterAbilities KeyNotFoundException 'General' on quest exp rewards (FIXED on `fix/char-abilities-general`, 2026-08-04).**
+  `CharacterAbilities` ctor seeds `Fight(1)`..`Love(10)` only, but `AbilityType.General == 0`
+  (Ability.cs:5) is never seeded and ability1/2/3 come from the client create packet / DB
+  with no server-side validation — `AddActiveExp` indexed `Abilities[Ability1]` and threw
+  `KeyNotFoundException 'General'` (census REWARD:Fail 250/6578/6600/6615 via
+  QuestActSupplyExp → Character.AddExp). Both exp paths (`AddActiveExp`, `AddExp`) now
+  guard with `Abilities.TryGetValue` — unseeded abilities are skipped, character exp
+  intact (granted before the call), no bogus General row persisted. 6 new
+  `CharacterAbilitiesTests` (3 General-slot no-throw + None + seeded-ability controls).
+  Full gate 1127/1127. Catalog: bugs/012-abilities-general-key.md.
+
 ### System-level bugs (non-quest)
 
 - #696 [skill] [BUG] Tree thinning of old trees doesn't work as intended

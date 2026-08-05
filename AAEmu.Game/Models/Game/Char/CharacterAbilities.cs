@@ -43,20 +43,26 @@ public class CharacterAbilities
     public void AddExp(AbilityType type, int exp)
     {
         // TODO SCAbilityExpChangedPacket
-        if (type != AbilityType.None)
-            Abilities[type].Exp += exp;
+        // AbilityType.General (0) is never seeded by the ctor — skip any unseeded value
+        // instead of throwing KeyNotFoundException
+        if (type != AbilityType.None && Abilities.TryGetValue(type, out var ability))
+            ability.Exp += exp;
     }
 
     public void AddActiveExp(int exp)
     {
         // TODO SCExpChangedPacket
         var maxLevelExp = ExperienceManager.Instance.GetExpForLevel(ExperienceManager.Instance.MaxPlayerLevel);
-        if (Owner.Ability1 != AbilityType.None)
-            Abilities[Owner.Ability1].Exp = Math.Min(Abilities[Owner.Ability1].Exp + exp, maxLevelExp);
-        if (Owner.Ability2 != AbilityType.None)
-            Abilities[Owner.Ability2].Exp = Math.Min(Abilities[Owner.Ability2].Exp + exp, maxLevelExp);
-        if (Owner.Ability3 != AbilityType.None)
-            Abilities[Owner.Ability3].Exp = Math.Min(Abilities[Owner.Ability3].Exp + exp, maxLevelExp);
+        // Ability1..3 come from the client create packet / DB with no server-side
+        // validation; AbilityType.General (0) is never seeded by the ctor — skip any
+        // unseeded value instead of throwing KeyNotFoundException (character exp is
+        // already granted by the caller before this runs)
+        if (Owner.Ability1 != AbilityType.None && Abilities.TryGetValue(Owner.Ability1, out var ability1))
+            ability1.Exp = Math.Min(ability1.Exp + exp, maxLevelExp);
+        if (Owner.Ability2 != AbilityType.None && Abilities.TryGetValue(Owner.Ability2, out var ability2))
+            ability2.Exp = Math.Min(ability2.Exp + exp, maxLevelExp);
+        if (Owner.Ability3 != AbilityType.None && Abilities.TryGetValue(Owner.Ability3, out var ability3))
+            ability3.Exp = Math.Min(ability3.Exp + exp, maxLevelExp);
     }
 
     public void Swap(AbilityType oldAbilityId, AbilityType abilityId)

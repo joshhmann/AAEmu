@@ -19,6 +19,7 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-008 | QuestActCheckGuard silently auto-completes escort/protect objectives (6 quests) — RunAct returned true unconditionally | FIXED — branch fix/quest-check-guard (2026-08-04) |
 | BUG-009 | Item-group gather/use objectives stall (9 act rows; 4 live quests 5490/6578/6600/6615 + test 5489) — QuestActObjItemGroupGather/Use RunAct fell through to base stub | FIXED — branch fix/quest-item-group-objectives (2026-08-04) |
 | BUG-007 | Quest data defects fail silently — startup sanity verifier missing (M1-3) | FIXED — branch feat/quest-sanity-verifier (2026-08-04) |
+| BUG-012 | CharacterAbilities KeyNotFoundException 'General' on quest exp rewards (Ability1==General; ctor seeds Fight..Love only, ability1 DB column has no default, no client validation) — quests 250/6578/6600/6615 REWARD crash | FIXED — branch fix/char-abilities-general (2026-08-04) |
 
 ## Production state (2026-08-02)
 
