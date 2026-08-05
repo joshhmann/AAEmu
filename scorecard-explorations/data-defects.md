@@ -132,6 +132,15 @@ skeleton to reuse.
 | Dummy shells | 1391 마을을 지켜라 (cat 27, zone 0, lvl 0), 1576 "dummy" (cat 1), 2046 "Unit Req Dummy" (cat 37) | no refs (1391's kind-35 ref is sphere 1391, which exists) | **(c)** drop |
 | Hadir farm cutscene | 3748, 3750–3757 (10) | 하디르의 농장 인던연출 3–10, zone 169 `instance_hadir_farm`, cat 63, repeatable, zero components, zero refs | **(c)** drop (instance content, unreachable in M1; cutscene quests are driven by dungeon scripts we don't run) |
 
+**Loader boundary (why the census sees only 96, not 184):** `quest_contexts` rows with
+category 45 (`QuestCategoryTutorial`) are skipped entirely at load
+(`QuestManager.cs:568-570`) — 101 contexts total (named 튜토리얼 1..100, the 1.2 client
+tutorial set), of which **88 are zero-component shells** (ids ~2584–2683). They never reach
+`_questTemplates`, so the verifier cannot flag them; the 4775-loaded vs 4876-total quest
+count is exactly these 101. By design, not a defect class — but any fix card working from
+census output alone will never see the 88. If the tutorial set is ever wanted, the loader
+skip is the thing to revisit (engine change, separate card).
+
 ## 7. Orphaned quest_contexts — 28 ids (116 orphan `quest_components` rows)
 
 All orphans: no `quest_contexts` row AND no `quest_context_texts` row (names deleted with
