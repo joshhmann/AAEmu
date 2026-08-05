@@ -184,8 +184,10 @@ DELETE FROM unit_reqs WHERE id = 16000;
 ```
 Caution: `compact.sqlite3` is a READ-ONLY reference (upstream alignment rule 3) — these
 fixes land as an **additive overlay**, never by editing the reference file. Mechanism
-decision (t_25744130): sqlite-sourced data (quest templates) → startup sanitizer
-(`QuestDataOverlay`, see §3); MySQL-hosted data → `SQL/updates` file.
+decisions: value corrections → startup sanitizer (`QuestDataOverlay`, §3, t_25744130);
+row prunes → `SQL/patches/compact/` patch files — the dangling-act prune shipped as
+`2026-08-05-prune-act-ref-missing-2145.sql` (t_60a559ab), the unit_reqs-gate prune as
+`2026-08-05-prune-unit-reqs-gates.sql` (t_127ac354).
 
 ## 8. Verifier (BUG-007) follow-up suggestions — engine-side, not this card
 
