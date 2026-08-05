@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-04 18:50 PDT · by Nei
-Branch of record: develop @ 99e7c4ec · last upstream pull: 2026-08-03
+Updated: 2026-08-04 20:35 PDT · by Nei
+Branch of record: develop @ a901a719 · last upstream pull: 2026-08-03
 
 ## Milestone state
 
@@ -12,37 +12,37 @@ nodes), shared skill aaemu-fork-workflow enabled on all 4 profiles,
 LIVING-WORLD.md canon, ROADMAP.md locked-shape 2026-08-03 (version labels
 retired 2026-08-04 — v1/v4/v6/v7 drift, the date is canonical).
 
-**M1 — Quest and progression spine** (trimmed: shared engine fixes + golden
-route). 5 of 6 work items done (see ROADMAP.md). Scenario-harness census
-live: **T1 Solzreed golden zone 88 PASS / 9 FAIL / 0 SKIP; T2 fix families
-22 PASS / 7 FAIL / 6 SKIP** (FAILs = harness-gap: step-suppression
-sequencing + reward-stage KeyNotFoundException 'General'; tracked under
-t_71ac7013 — runnability line NOT green until harness cards land).
-BUG-006 kill-acceptor live on fork develop (prod deploy pending Josh);
-BUG-007/008/009 gated (30c2b689); BUG-010 fix committed (581f0f17) + 3
-defect fixes in the Rei gate queue (t_59a623c4: UnixTime, CheckSphere,
-Ability seeds). Remaining: doodad phase/interaction objectives (quests
-922/3889/3447) + census-FAIL triage. NOTE: tracked runnability.md still
-shows the pre-BUG-010 run (86/11) — regenerates with the T3 census card
-(t_cb64d872).
+**M1 — Quest and progression spine: ✅ delivered — Josh playtest in progress**
+Items 1-8 delivered: shared engine defects fixed, golden route curated
+(route doc live on wiki — Docs/wiki/Golden-Route-Solzreed.md), doodad
+phase/interaction family resolved (T1 Solzreed 97/97). Automated exit test
+GREEN — census headline **153/153 runnable / 0 FAIL / 33 SKIP over 186
+quests** (T1 Solzreed 97/97; T2 29/29 + 6 SKIP; T3 27/27 + 27 SKIP); full
+gate 1148/1148. Human playtest = Josh in progress (milestone decision
+pending). PROD DEPLOYED @ 94f498fc (2026-08-04 20:30, M1 engine-health
+release — BUG-007/008/009/010/011/012 live); verifier first live census
+5 ERR / 128 WARN / 4 INFO over 4775 quests — data-fix backlog seeded, 3
+WARNs are verifier stale-registry false positives → fix card t_913c1d4a.
+Deploy incident: 39GB container json.log (100% disk) pre-deploy —
+truncated; rotation fix shipped (t_264e1984 ✅).
 
 ## Per-lane
 
 | Lane | Sister | Current work | Status |
 |------|--------|--------------|--------|
-| Builds | Tai | M1 batch merged (BUG-007/008/009, harness, Solzreed doc); defect fixes into Rei gate | ✅ merged — gate queue next |
-| Verifies | Rei | gate queue t_59a623c4: BUG-010 UnixTime + CheckSphere + Ability seeds merge evidence | ⏳ todo — 3 branches |
-| Dispatches | Mai | BUG-006 prod deploy coordination (aaemu box) | ⏳ waiting on Josh go-ahead |
-| Tracks | Nei | STATUS.md + ROADMAP.md reconcile + M1 state refresh | ✅ done |
+| Builds | Tai | M1 engine-health release deployed @ 94f498fc; 5c census (6e367585) on feat/quest-scenario-harness | ✅ deployed — 5c branch merge to develop next |
+| Verifies | Rei | gate queue t_59a623c4 closed — BUG-010/011/012 merged to develop | ✅ done |
+| Dispatches | Mai | deploy t_034305b3 done @ 94f498fc; log-rotation fix t_264e1984 done | ✅ done |
+| Tracks | Nei | STATUS.md M1-5c closeout refresh | ✅ done |
 
 ## Open tasks (kanban, AAEmu lane)
 
 | ID | Title | Lane | Status |
 |----|-------|------|--------|
-| t_59a623c4 | Rei gate: quest-defect fixes (BUG-010 + CheckSphere + Ability seeds) | Rei | ⏳ todo — merge to develop pending |
-| t_bc9f131a | fix: QuestActCheckSphere 0xFF objective index (quest 1033) | hx-coder | 🏃 running |
-| t_71ac7013 | harness: generator stage model v4 (selective parse + LetItDone) — gates runnability line | Tai → Rei | ⏳ ready |
-| t_71e48494 | fix/quest-kill-acceptor — unstick kill-starter quests (BUG-006) | Tai → Rei | blocked — needs Josh: merge OK + prod deploy |
+| t_f198bb0e | M1-5d: harness extension — 14 unsupported act families (T3 SKIPs) | hx-coder | ⏳ ready |
+| t_913c1d4a | verifier stale stub-registry false positives (CheckGuard/ItemGroup — the 3 WARNs) | hx-coder | ⏳ ready |
+| t_bcf976ad | Wiki M0/M1 update — implement wiki-audit.md proposals | hx-researcher | blocked |
+| — | feat/quest-scenario-harness (6e367585: T3 census + runnability.md + SCORECARD M1-5 entry) merge to develop | Tai | ⏳ no card yet |
 
 ## Pending upstream PRs
 
@@ -50,11 +50,11 @@ shows the pre-BUG-010 run (86/11) — regenerates with the T3 census card
 
 ## Last scorecard update
 
-- 2026-08-04 — BUG-010 closeout committed on fix/bug-010-unix-time (79b884c2):
-  SCORECARD.md note FIXED/CLOSED (Rei attestation 2532) + census headline
-  T1 88/97 / T2 22/35 — lands on develop via the Rei gate merge.
-- 2026-08-04 — tracking reconcile: STATUS.md + ROADMAP.md M1 refresh + version
-  labels retired (this commit).
+- 2026-08-04 — M1-5c closeout (t_cb64d872, 6e367585 on feat/quest-scenario-harness):
+  SCORECARD.md quests-row runnability note 153/153 + M1-5 entry; BUG-010
+  census line GREEN — lands on develop with the harness branch merge.
+- 2026-08-04 — this commit: STATUS.md M1-5c headline + engine-health deploy
+  state refresh (94f498fc live, verifier first census, deploy incident).
 
 ## Rules
 
