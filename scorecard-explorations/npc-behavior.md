@@ -1,161 +1,239 @@
-# NPC Behavior Recon — float, odd targeting, sit poses, cloth, pathing (M1 playtest findings)
+# NPC Visual Behavior — float / sit-pose / cloth / targeting (Recon B)
 
-**Author:** Tai (recon) · **Date:** 2026-08-04 · **Branch:** `npc-behavior-recon` (fork only, no upstream PR)
-**Data provenance:**
-- Spawns: `AAEmu.Game/Data/Worlds/main_world/npc_spawns.json` (25,118 entries, JSONC) — client-derived, loaded by `SpawnManager`
-- Heightmaps: `game_pak` @ `root@192.168.0.165:/root/AAEmu/.server_files/AAEmu.Game/ClientData/game_pak` — `worlds/main_world/cells/*/client/terrain/heightmap.dat` (CryEngine `Hmap` format, parsed per `Models/ClientData/Hmap.cs` + `NodeCell.cs`)
-- Static data: prod `compact.sqlite3` (`npcs`, `npc_postures`, `npc_aggro_links`, `npc_ai_params`, `npc_groups`, `zones`)
-- Ground truth: live MySQL `characters` (2 active Solzreed characters), live container logs (`aaemu-game-1`), `Configurations/World.json` (GeoDataMode=true, PreLoadTerrain=false, HeightMapsEnable=true)
-- Code: `/root/aaemu-dev` @ `develop` 94fb2f15
+**Author:** Tai (evidence: hx-researcher, t_52ebb23f) · **Date:** 2026-08-04
+**Scope:** NO code changes — data + hypotheses for the playtest findings (Josh 2026-08-04:
+NPCs floating, sit poses "knees in", cloth physics freakouts, odd targeting; Solzreed +
+"Bluemist Forest" (= Gweonid Forest, 1.0 name) and the Solzreed→Gweonid route).
+**Companion:** `scorecard-explorations/npc-pathing.md` (Recon A — walking-into-hills, server-side movement).
 
-**Verdict up front:** the float symptom and the walk-into-hills symptom share one likely root cause — **server-side terrain heights in Solzreed are wrong by tens of meters** (measured +28 m and +149 m at two live character positions vs. the client's own ground truth). The odd-targeting symptom is consistent with **no LOS check existing anywhere in the codebase** plus target checks that depend on those same wrong heights. Sit poses/cloth are a separate, lower-confidence track.
+## Evidence sources
+
+| Source | Location | Notes |
+|---|---|---|
+| game_pak (24.8 GB, 218,069 entries) | aaemu box `/root/AAEmu/.server_files/AAEmu.Game/ClientData/game_pak` | header+FAT AES-128-CBC (XLGames key); file data raw. Heightmap + navmesh extracted with a scratch reader (python/pycryptodome, run on the box; script: workspace `recon_b_extract.py`/`recon_b_bai.py`) |
+| `game/worlds/main_world/cells/NNN_NNN/client/terrain/heightmap.dat` | in game_pak | per-cell terrain grid (512×512 @ 2 m/unit; Hmap format incl. 33×33 node upscale; 85 empty cell-bbox placeholder nodes per file MUST be filtered before sector indexing — mirrors `WorldCell.LoadCellHeightMapFromClientData`) |
+| `game/worlds/main_world/world.xml` | in game_pak | zone→cell/sector rects; zone ids here are **zone_key** (Solzreed=142/178/179, Gweonid=129/181/182) ≠ sqlite `zones.Id` (9/124/125, 1/127/128) |
+| `game/worlds/main_world/paths/NNN_NNN/{net,verts}mission*.bai` | in game_pak | navmesh nodes (world-space after +path origin ×256); per-cell 4×4 path folders; **no zone-level .bai in the pak** (zone/ folders hold only xml) |
+| `compact.sqlite3` (119 MB) | box `.server_files/AAEmu.Game/Data/` | npcs / npc_postures / npc_posture_sets / system_factions / system_faction_relations; **no `npc_models`/`npc_aggros`/`npc_factions` tables** in this build |
+| `npc_spawns.json` (main_world, 25,118 rows) | box Data/Worlds (md5-identical to repo copy) | **JSONC** — inline `//` comments + trailing commas; stdlib JSON fails, server's JsonHelper tolerates |
+| Runtime config | box `Configurations/World.json` | `GeoDataMode=true`, `PreLoadTerrain=false` (heightmaps load on demand per cell) |
+
+Validation of the heightmap reader: spawn Z vs terrain Z agrees within 1 m for **93–97 % of spawns**
+(zone 142: 1024/1098; zone 129: 1058/1085) — the data pipeline is sound; only the listed rows are anomalous.
+
+Zone coverage: spawns exist in cells of zones 142 (w_solzreed_1) and 129 (w_gweonid_forest_1) only;
+zones 178/179/181/182 share cells with those two (cell-level first-match used; their spawn counts
+therefore fall under 142/129). 2,183 target-zone spawn rows analyzed across 18 heightmap cells.
 
 ---
 
-## 1. FLOATING — spawn Z vs terrain
+## 1. FLOATING
 
-### 1.1 Solzreed spawn dataset
-Zone rects for the three Solzreed zones (computed from client `worlds/main_world/world.xml` ZoneList, zone keys 142/178/179 = zone ids 9/124/125):
+### 1.1 What the server does with spawn Z
 
-| zone key | zone id | name | world rect (X, Y) | cells |
-|---|---|---|---|---|
-| 142 | 9 | w_solzreed_1 | 13056–14976 × 13440–15872 | 12 |
-| 178 | 124 | w_solzreed_2 | 14592–16256 × 13440–14144 | 2 |
-| 179 | 125 | w_solzreed_3 | 14464–16256 × 14144–15936 | 6 |
-
-- 1,356 spawns inside the rect. Z range **93.2 … 260.9**, median **131.7** (ocean level = 100; Solzreed is coastal — data Z values are plausible).
-- No Z=0 and no missing-Z rows in Solzreed. World-wide, **327 spawns have no `Z` field at all** (Newtonsoft default ⇒ 0 ⇒ underground/water) — mostly outside Solzreed; worth a census pass of its own.
-- Data-internal float candidates: 60 spawns sit **>15 m above the median Z of all spawns within 150 m** (n≥4 neighbors). Top offenders — prime spots for Josh to eyeball:
-
-| ΔZ vs neighbors | UnitId | NPC (from npcs table) | Position | zone |
-|---|---|---|---|---|
-| +44.0 | 7673 | 난폭한 선돌 수호자 (Rampant Dolmen Guardian, aggro, scale 1.0) | (14697, 14976) Z 145.8 | 142 |
-| +43.0 / +42.8 | 7987 / 502 | 자애로운 누이 여신 (Nui statue) / 누이 신전 신관 (Nui priest, scale 1.1) | (15137, 15123) Z ~145 | 179 |
-| +41.1 | 3550 | 케로라라 (Kelorara, merchant) | (15358, 13949) Z 195.0 | 178 |
-| +38.9 | 3648 | 머를린 (Merlinn) | (14461, 14916) Z 163.2 | 142 |
-| +36.6 | 8156 | 사신 (Reaper, **scale 4.0**, sight 1.8) | (13858, 14924) Z 171.5 | 142 |
-| +34.3 | 3454/3457/3459 | 망가진 시체 / 성채 병사 원혼 / 성채 궁수 원혼 (castle ghosts, scale 1.5–2.5) | (14067, 15340) Z 177.1 | 142 |
-| +23.2 | 6994/7052/1852/1871 | 초원 여우 / 릴리엇 곰 / 독수리 / 잊혀진 전사 (Lilyut Hills animals) | (13179, 15779) Z ~213 | 142 |
-
-Caveat: elevated clusters can be legitimate cliff/vista placements (e.g. 3 NPCs together at +34 m are likely all on one ledge). That is exactly what the in-game checklist settles.
-
-### 1.2 How spawn Z is applied (code mechanism — the ±1 m guard)
-`NpcSpawnerNpc.SpawnNpc` (AAEmu.Game/Models/Game/NPChar/NpcSpawnerNpc.cs:97-104):
+`NpcSpawnerNpc.SpawnNpc` (`AAEmu.Game/Models/Game/NPChar/NpcSpawnerNpc.cs:97-104`):
 
 ```csharp
 if (!npc.CanFly) {
-    var newZ = npcSpawner.ParentWorld.Template.GeoData.GetHeight(npcSpawner.Position.AsPositionVector());
-    if (Math.Abs(npcSpawner.Position.Z - newZ) < 1f)
-        npcSpawner.Position.Z = newZ;      // snap ONLY if within 1 m
+    var newZ = ParentWorld.Template.GeoData.GetHeight(spawnerPos);   // nearest .bai navmesh node Z (or heightmap fallback)
+    if (Math.Abs(spawnerPos.Z - newZ) < 1f) spawnerPos.Z = newZ;     // snap ONLY if within 1 m
 }
 ```
 
-- If the JSON Z is more than 1 m away from the server's terrain height, **the data Z stands as-is** — the NPC spawns exactly where the client data says, and any float/sink is pure data-vs-terrain mismatch.
-- If the server's terrain height is itself wrong, the snap *pushes* the NPC to the wrong height (and the 1 m guard decides which NPCs get moved at all — a near-random-looking split of the population).
+- `GetHeight` (`AiGeodataManager.cs:259-333`) = Z of the **nearest .bai navmesh node** (netmission/vertsmission
+  nodes across the cell's 16 path folders), falling back to the raw heightmap (`WorldTemplate.GetRawHeightMapHeight`).
+- `CanFly` NPCs skip the check entirely — **all flying spawns keep their JSON Z unconditionally**.
+- Consequence: a spawn whose JSON Z deviates ≥ 1 m from the geodata floor is **never corrected** — it keeps
+  the data Z for life (idle, aggro, return). The float you see in-game IS the data Z minus the client's rendered terrain.
 
-### 1.3 Terrain height quality — MEASURED WRONG in Solzreed (the big finding)
-Reproduced the server's exact terrain sampling (`WorldCell.LoadCellHeightMapFromClientData`: filter `pHMData.Length > 0` → sort by AABB Min.X/Min.Y → index `sectorX*16+sectorY` → `NodeCell.GetHeight`, 2 m resolution) against the client `.dat` files and compared with ground truth:
+### 1.2 Census results (spawn Z vs heightmap terrain, |diff| buckets)
 
-| point | ground truth Z | server-algorithm terrain | error |
+| Zone | Spawns | float ≥1 m | ≥2 m | sink ≤−1 m | mean \|diff\| | Z=0 rows |
+|---|---|---|---|---|---|---|
+| 142 w_solzreed_1 | 1,098 | 63 (5.7 %) | 58 | 11 (1.0 %) | ~2.0 m | 0 |
+| 129 w_gweonid_forest_1 | 1,085 | 26 (2.4 %) | 20 | 1 | ~1.3 m | 0 |
+
+99 rows (35 distinct NPCs) exceed ±1.5 m. They fall into four explainable classes:
+
+**(a) Structure-floor offsets (NOT visible floats) — the castle cluster.** ~20 rows at
+(12720, 16250) — 정예 근위병 10320 (8 rows), 공작 성 하인 엠마 10636, 콜린 12037, 방탕한 음유시인 12038,
+거리의 장미 12039, 밤의 요정 12040, 그라일렌트 5925, 집사 이언스 5926, 공작 부인 에스텔 6990, 조이스 6992 —
+all a very consistent **+4.5…+4.8 m**; and at (15560,13780): 론반 공작 3615 +4.1, 엘렌 공주 3616 +3.5,
+헤라온 3617 +3.9; guards (경비병 3560 +10.4, 감시병 8176 +10.3, 왕좌 근위병 8771 +9.8) at (15500,13760).
+The terrain heightmap is bare ground; it cannot see castle floors/ramparts. The constant offsets look like
+floor heights, not data errors. **Confirm in-game: these NPCs stand on the castle floor, not in the air.**
+
+**(b) Flyers (expected — CanFly skips the snap).** 독수리 1852 (22 rows, +40 m), 큰 바다 벌레 8563 (+69 m,
+sight 4.0 — a sea creature), 먼바다 가시부리새 8616 (+100 m), 육식성 말벌 3451 (+12.5 m), 아로라라 1904 (+44.9 m).
+
+**(c) Cave/underground mobs (expected — surface heightmap).** 동굴 거미 1900 (−148 m), 거미 군주 5922 (−117 m),
+미쳐버린 광부 1881 (−120 m), 마법사 에르딜 6973 (−120 m), 다후타 교단 신관 1880 (−187 m). All in the
+mountain block x 11800–13400, y 16300+ — cave interiors are below the terrain surface.
+
+**(d) True data-defect floaters (the report's "sometimes float").** The strongest candidates are **non-flying,
+open-ground NPCs**:
+- 에노이르 569 (+91 m @ 10571,14718) and 에오카드 3672 (+89.8 m @ 10572,14719, 13 rows) — elf-faction
+  (103) NPCs in Gweonid/Bluemist, model 16, NOT flyers. These hover ~90 m up. Prime "floating NPC" evidence.
+- The +1.7…+1.8 m cluster at (10505,14860): 네서틴 576, 알리아 3688, 헤이스 6541, 티티라라 7733 — small
+  consistent offset (porch or true float; needs in-game check).
+
+### 1.3 Hypotheses (evidence→confirm)
+
+| # | Hypothesis | Evidence now | Evidence to confirm |
 |---|---|---|---|
-| Nuian spawn (CharTemplates.json) (15578, 15382) | 126.5 | 220.7 | **+94 m** |
-| char "Assholes" (live, standing) (15597.6, 15224.0) | 122.4 | 150.4 | **+28 m** |
-| char "Dingus" (live, standing, zone 179) (14947.1, 14232.6) | 123.3 | 272.0 | **+149 m** |
-
-All 1,356 Solzreed spawns come out 5.7–197.6 m *below* the sampled terrain (median −106.7) — a systematic offset, not noise. Two independent explanations, both pointing at the same code:
-
-1. **Per-cell `.dat` content does not match its file name.** Node AABB bands (cell-local expected 0–1024; observed, in cell-local terms after subtracting the cell origin):
-   - `013_014` → band 1024–2048 (i.e. content describes a *neighboring* 1024 m tile, +1 cell both axes)
-   - `014_014` → 1024–2048 (same band as 013_014 — two different files, same frame)
-   - `014_013` (Dingus's cell) → 6144–7168 × 2048–3072 (~6 cells away)
-   - `015_015` → 2048–3072; `020_020` → 4096–3072; `033_037` → 4096–6144
-   No single modulus/offset maps name → content. `WorldCell.cs` never consults the AABB — it indexes the sorted node list blindly — so whatever tile the file really holds is treated as the named cell's terrain.
-2. **`GetBaiByPos` returns the FIRST zone's `.bai` for every position** (WorldTemplate.cs:238: `return ZoneBaiLoader.Values.First(); // TODO: Pick the actually correct zone`) — active because prod `GeoDataMode=true`. The geodata height used by the spawn snap is the first-loaded zone's navmesh nodes for *all* of Solzreed, not the local zone's.
-
-Consequence: the heights feeding (a) the spawn Z snap, (b) the physics terrain collider (`PhysicsManager.cs:103,127` builds the Jitter terrain shape from the same `HeightMap` arrays), and (c) AI height-gap checks are all unreliable. The client, meanwhile, renders its own terrain correctly — so NPCs visually float or sink relative to what Josh sees.
-
-### 1.4 Float hypotheses, ranked
-
-| # | Hypothesis | Evidence now | What confirms it |
-|---|---|---|---|
-| F1 | Server terrain height wrong (per-cell .dat frame mismatch) → snap + physics + height-gap all off | §1.3 measured +28/+149 m at live positions; band table | In-game `/height` at Dingus/Assholes coords vs 123; dump `HeightMap` via debug command; map .dat bands to world rects with a converter tool |
-| F2 | Geodata height from wrong zone (GetBaiByPos first-zone TODO) | WorldTemplate.cs:238, GeoDataMode=true in prod | Enable one-zone-at-a-time test; log which zone key's bai is used per position |
-| F3 | Data Z itself wrong for specific rows (absolute-Y from a different world origin) | 327 missing-Z spawns world-wide; Solzreed rows all *plausible* (93–261) | Josh: check specific outlier NPCs (§1.1 table) — if they float exactly at data Z, it's data |
-| F4 | Model anchor / scale offset (tall models rendered from feet vs center) | 8156 사신 scale 4.0, 3457 scale 2.0 among outliers | Float height proportional to model height on same NPC type; client-side check |
-| F5 | Mount/sub-model or client anim | no positive evidence | Floats only on mounts/vehicles |
+| F1 | Spawn Z is a data defect on specific rows (not a systematic heightmap problem) | 93–97 % of rows sit on terrain; anomalies cluster per-NPC (e.g., 3672 ×13 rows all ≈ +90 m) | In-game: are the floaters exactly 569/3672-class NPCs, standing in mid-air at a fixed spot? |
+| F2 | Floating NPCs are the same ones with bad Z in `npc_spawns.json` — the 1 m snap threshold never corrects them | NpcSpawnerNpc.cs:97-104; floaters' JSON Z vs navmesh Z also ≥1 m | /save or DB dump of a floater's runtime Z = JSON Z (never snapped) |
+| F3 | Model anchor offset — ruled OUT as primary cause | offsets are per-NPC-consistent but vary 1.7…90 m; anchor offsets are per-model, not per-spawn-row | If anchor were the cause, ALL NPCs of one model would float equally |
+| F4 | Navmesh-vs-heightmap disagreement shifts the snap | 74–81 % of spots agree within 1 m; 73–82 % of spawns within 1 m of a navmesh node | None needed — mechanism documented; real fix would snap to client terrain, not navmesh |
 
 ---
 
-## 2. TARGETING — aggro/odd targeting
+## 2. SIT POSES ("knees in")
 
-### 2.1 Code survey (AI v2, `Models/Game/AI/v2/Framework/Behavior.cs` + `BaseUnit.cs`)
+### 2.1 What the server sends
 
-- **No line-of-sight check exists anywhere in AAEmu.Game** (grep for LOS/line-of-sight: 0 hits). `CanSeeTarget` (BaseUnit.cs:133) is a distance/height gate, not geometry. The client-side "targeting behind walls" hypothesis is therefore *structurally plausible* — the server never rejects a wall-hugging target.
-- Sight/aggro trigger (`Behavior.cs:256, 298, 332`): scan radius = `SightRangeScale * 15f` (15 m default), trigger when `IsFront(owner, unit, SightFovScale)` (FOV cone — NPCs ignore targets behind them) AND `|ΔZ| < ModelSize*Scale*1.5–1.75` AND `CanAttack` AND (`range < 1 m` OR `CanSeeTarget`); "breathing down your neck" fallback at 1.5–2 × SightRangeScale.
-- **The ΔZ gate uses the same broken terrain context**: a player standing 20 m up a cliff on correct client terrain can be invisible to a mob whose server-side Z context says the mob is 150 m lower/higher — and vice versa. This couples the targeting symptom directly to §1.3.
-- `CanAttack` (BaseUnit.cs:53-112): faction relations + zone-faction protection; the NPC-vs-NPC safe-zone branch is commented out with `// TODO: fix npc safety` (lines 109-111) — zone faction can't shield NPCs from each other, so "neutrals hostile in towns" is a live possibility wherever faction relations misresolve.
-- Aggro assist: `UpdateAggroHelp` (Behavior.cs:347-360) scans `AttackStartRangeScale * 200` m and links NPCs within `AggroLinkHelpDist` (6.0 m default in data) when `AcceptAggroLink`.
+- Per-NPC `npc_posture_set_id` → rows in `npc_postures` (anim_action_id, talk_anim, start_tod_time).
+  689/1,050 target-zone NPCs have a posture set; **34 sets used in these zones contain sit animations**.
+- `Npc.AnimActionId` (`Npc.cs:40-56`) picks the row whose `start_tod_time <=` current game time.
+- Sent to clients two ways:
+  1. `SCUnitStatePacket` on visibility (`Npc.AddVisibleObject`, `Npc.cs:1058-1063`) — includes
+     `Unit.ModelPosture` → byte postureType + byte isLooted + **uint animActionId** + bool activate
+     (`Unit.cs:1022-1060`). **That id alone drives the client pose — no sub-pose/params.**
+  2. `SCUnitModelPostureChangedPacket` on time-of-day change (`TimeManager.cs:94-119`).
+- `talk_anim` (e.g. `fist_pos_sit_chair_talk`) is loaded but **never sent** — only the numeric id matters.
 
-### 2.2 Data for the Solzreed cast (npcs table, compact.sqlite3)
+### 2.2 The data (sit anim ids in use in Solzreed/Bluemist)
 
-| Field | Typical hostile (faction 115) | Typical civilian (faction 101) | Guards (167) / Nui (165) |
+| posture set | NPCs in zone | anim id | talk_anim (data label) |
 |---|---|---|---|
-| `sight_range_scale` | 0.7–1.8 (7673: 0.7, 8156: 1.8, 8176: **2.5**) | 1.0 | 8176: 2.5 / 7987: 1.0 |
-| `attack_start_range_scale` | 0.5–1.0 | 1.0 | 8176: 2.5 |
-| `aggression` | 't' (monsters), some 'f' (7648 배고픈 불곰 is 'f'!) | 'f' | 8176/7987 't' |
-| `aggro_link_help_dist` | 6.0 | 6.0 | 7987: 6.0, `aggro_link_sight_check`='t' |
-| `return_distance` / `absolute_return_distance` | 50 / 200 (7987, 8145: 5/5) | 50 / 200 | — |
-| `npc_ai_param_id` | 0 (default), 1058/660/1047/1122 (boss-ish), 2630 = `alertDuration = 0` (10666 와이어트) | 0, 2207, 2289… | — |
-| `base_skill_id` | 2 (melee) — 3459 궁수 원혼: **10431**, 8176: **20273** (ranged) | 2 | — |
+| 22 | 33 | 87 | fist_pos_sit_chair_nursery_dealer_talk |
+| 224 | 20 | 223 | fist_pos_sit_crouch_livestock_talk |
+| 225 | 19 | 224 | fist_pos_sit_crouch_furniturerepair_talk |
+| 41 | 15 | 160/105 | fist_pos_sit_chair_talk |
+| 3 | 12 | 92 | fist_pos_sit_chair_weaponshop_dealer_talk |
+| 27 | 13 | 223 | fist_pos_sit_crouch_livestock_talk |
+| 23 | 12 | 224 | fist_pos_sit_crouch_furniturerepair_talk |
+| 17 | 8 | 26 | fist_pos_sit_lean_talk |
+| 53 / 49 / 106 / 155 / 64 / 38 / 109 | 7/6/6/6/4/2/2 | 70, 75, 141, 183, 93, 155/65, 144 | investigation / gang / chair_rest / chair_crossleg / guitarist / sidesleep+drunken / chair_pure (엘렌 공주 3616, 에스텔 6990) |
 
-- Only 1 `npc_aggro_links` row for the whole cast: 3463 (피 묻은 손 돌격대원) → aggro link 37 (Bloody Fist strike squad — pack assist).
-- `npc_groups`: 7673 leads "솔즈리드 우두머리 늑대" group; 8176 in "누이안 경비병 세트". Formation offsets exist per member — pack cohesion is group-driven.
-- Faction mix at the same coordinates is normal for a hub (101 civilians + 115 monsters + 1/165/167 neutrals) — the odd-targeting reports most plausibly come from the missing LOS + broken ΔZ gate, not from faction data (with the `// TODO: fix npc safety` caveat for towns).
+### 2.3 Hypotheses
 
-### 2.3 Targeting hypotheses
-
-| # | Hypothesis | Evidence now | What confirms it |
+| # | Hypothesis | Evidence now | Evidence to confirm |
 |---|---|---|---|
-| T1 | No LOS → mobs aggro/attack through walls & terrain | 0 LOS hits in code; Behavior.cs distance-only gates | Packet trace: `SCAiAggroPacket` from a mob with a wall between; /target while behind cover |
-| T2 | ΔZ gate corrupted by wrong server terrain (§1.3) → targets "ignored" or "stolen" across elevation | §1.3 measurements; Behavior.cs:240,315 use ModelSize*Scale with world Z | Same mob, two players 10 m apart vertically — aggro differs from client expectation |
-| T3 | FOV-only targeting (IsFront) reads as "ignores me when I'm behind it" | Behavior.cs:243,318 `MathUtil.IsFront` | Flank test: stand behind a stationary mob — retail 1.2 does react to back-attacks |
-| T4 | Faction/zone-protection gap (`TODO: fix npc safety`) makes town NPCs attackable/hostile | BaseUnit.cs:109-111 commented | Attack a civilian in a guarded hub; check SCAiAggroPacket target |
-| T5 | Client-side target picking (behind walls) — no server evidence either way | — | Josh: does the reticle snap through walls without any aggro? If no aggro follows, it's client-only cosmetic |
+| S1 | **Anim-id table mismatch**: the ids (26…224) are KR-era values; the 1.2 client's anim table maps ids→animations differently (or lacks these ids) → client plays a fallback pose that reads as "knees in" | Server forwards the id verbatim; packet carries no pose params; ids come from the same dump lineage as the rest of the KR-era data | In-game: does EVERY sitter look wrong, or only some anim ids? (checklist below) |
+| S2 | _talk anims used as idle loop: ids are labelled `*_talk` (one-shot) yet used as the standing pose; looping a talk anim yields contorted holds | anim labels in npc_postures.talk_anim; server ignores talk_anim | Compare a knees-in NPC's pose vs its `talk_anim` label — same pose family? |
+| S3 | Missing sub-pose/state: official 1.2 sit uses a unit-state field the server never sets (posture packet is only postureType+animId) | SCUnitStatePacket shape (Unit.cs:1022-1060) | Packet trace vs 1.2 client expectations (would need a client-side capture) |
 
 ---
 
-## 3. Walk-into-hills (pathing ignores elevation) — comment-thread item
+## 3. CLOTH PHYSICS FREAKOUTS
 
-- **Code location:** the physics terrain collider that mobs collide with is built in `PhysicsManager.cs:103` ("Add terrain shape based on height map") from the *same* `WorldCell.HeightMap` arrays (PhysicsManager.cs:127 `cell.GetHeightMapDataInCell`); AI movement runs through `Simulation`/AI `MoveTo` toward targets, and geodata heights come from `AiGeodataManager.GetHeight` (nearest `.bai` node, fallback `GetRawHeightMapHeight` — WorldTemplate.cs:118).
-- **Terrain data:** heightmaps load at boot from the client pak (`WorldManager.LoadHeightmaps`, WorldManager.cs:646-663: "Loading heightmap of main_world") — files are `cells/*/client/terrain/heightmap.dat` (592 KB/cell, 512×512 @ 2 m, CryEngine Hmap v24). Boot line confirmed in code; container log buffer had rotated past boot, so the live "Loaded N/M heightmaps" line wasn't captured — that's a cheap log check for next session.
-- If §1.3 stands (per-cell .dat frame mismatch), the physics terrain shape is wrong in the same places → mobs path straight through hills exactly where the terrain shape is absent/too low. **Highest fix potential of the three comment items**, and it shares the root cause with floating.
+- **No server-side cloth data exists** (no `npc_models` table; `models` has no cloth flags) — cloth is a
+  client-side CryEngine property of the .cgr models. The server cannot flag it on/off.
+- Data proxies for "likely cloth-bearing NPCs": `npcs.equip_cloths_id` (equipped cloth/armor pack) and
+  female humanoid models (10/11/16/17/19/631/1342).
+- **Correlation with the pose/float clusters is strong on paper**: the castle cluster (a) is exactly the
+  NPC set that (1) has sit posture sets (엘렌 공주 set 109, 음유시인 set 64, 경비병 set 29…), (2) wears
+  cloth (equip_cloths 134/1199/1245/1316/1373…), and (3) sits 3.5–4.8 m above bare terrain. If the sit
+  anim id is wrong (S1/S2), the skeleton pose is wrong → the client cloth sim (driven by bone transforms)
+  jitters/explodes on exactly these NPCs.
+- Hypothesis: **cloth freakout is pose-driven, not position-driven** — same NPCs as the broken sit poses;
+  the float offsets themselves don't feed cloth sim (position is not a cloth input).
+- Confirm in-game: are the cloth-freakout NPCs the sitting ones (same spots/anim)? Do their skirts relax
+  when the NPC stands (combat or ToD switch)?
 
-## 4. Sit poses "knees in" + cloth jitter — comment-thread items
+---
 
-- **Mechanism chain:** `npc_posture_sets`/`npc_postures` (compact.sqlite3) → `NpcManager.cs:709-729` loads `AnimActionId` + `start_tod_time` per posture set → `TimeManager.cs:109-115` picks posture by time-of-day → `SCUnitStatePacket` (Core/Packets/G2C/SCUnitStatePacket.cs:40) sends `ModelPostureType.ActorModelState` when `AnimActionId > 0`. The client plays the anim named by that id; a wrong id or a wrong sub-param (e.g. sit variant) renders as the "knees in" pose.
-- **Live log evidence (aaemu-game-1):** `04:01:14 NpcControllEffect: CategoryId=RunCommandSet, ParamString=, ParamInt=155, caster=11548, target=11548` — the mount-stable keeper (11548 탈것 축사 관리인, aggression='t') was pushed through `AiGameData.GetAiCommands(155)` → `EnqueueAiCommands` (NpcControlEffect.cs:62-80) right around the playtest. Command-set-driven anim state is a plausible pose corruption path.
-- **Cloth:** skirts/cloth sim is client-side; jitter usually follows bad pose/movement state, so test correlation with the same NPCs before chasing it (checklist below).
-- Hypothesis: posture selection (`TimeManager` FirstOrDefault over an unordered list — TimeManager.cs:113-115) or the RunCommandSet anim state fights the sit pose; data-side `anim_action_id` values themselves are 1.2-native and most likely fine.
+## 4. TARGETING ("odd targeting")
 
-## 5. confirm in-game — checklist for Josh's next session
+### 4.1 Aggro acquisition (all in `AAEmu.Game/Models/Game/AI/v2/Framework/Behavior.cs`)
 
-Positions (use `/teleport <x> <y>` or run to them; `Height` GM command exists — `Scripts/Commands/Height.cs`, also `TestHeight.cs` — prints server terrain height at a position, which is THE way to confirm §1.3 without code changes):
+| Gate | Code | Radius | Notes |
+|---|---|---|---|
+| `CheckAggression` | :215 | `AttackStartRangeScale × 10 m` | requires `npcs.aggression` (`'t'`/`'f'` TEXT; parsed OK by `GetBoolean(col,true)` — not a bug) |
+| `CheckAlert` | :288 | `SightRangeScale × 15 m` | → Alert state |
+| spawn-effect pull | NpcSpawnerSpawnEffect.cs:48 | `SightRangeScale × 30 m` | only for NPCs with spawn effects |
+| visibility | `BaseUnit.CanSeeTarget` :133 | — | **stealth check only — NO line-of-sight / raycast anywhere in the aggro path** |
+| cone + height | Behavior.cs:243-244, 318-319 | `IsFront(SightFovScale)` + \|ΔZ\| < ModelSize×Scale×1.5 (flyers ×3.5-4) | "in front" gated; not-in-front fallback at 1.5-2 × SightRangeScale |
 
-1. **Are the floaters the ones in §1.1's table?** Check the 10 spots listed (start with (14697,14976) 7673, (15137,15123) 7987/502, (13858,14924) 8156, (13179,15779) animals). Note: floating, sunk, or correct. Do the same NPC types float at *every* spawn of theirs or only some?
-2. **Terrain probe:** run `/height` at (15597,15224) and (14947,14233) — if it prints ~270 at Dingus's old spot, §1.3's frame-mismatch is confirmed live. Also at the Nuian spawn (15578,15382): client says 126.
-3. **Floaters vs sitters:** are the NPCs sitting "knees in" the same NPCs that float? (test posture while idle vs after RunCommandSet commands — e.g. the stable keeper 11548 near the mount stable).
-4. **Walk-into-hills:** do mobs do it at the same spots every time (e.g. the hill between (13179,15779) and Solzreed village, or the castle ghosts' ridge (14067,15340))? Same spots → terrain-shape gap (§3); everywhere → generic physics issue. Also: idle patrolling vs combat-chase only?
-5. **Targeting:** attack a mob while standing behind a wall/cliff (same elevation) — does it aggro? Stand 10–15 m above a mob on a cliff — does it aggro (ΔZ gate)? Attack a civilian in a town — does a guard react (`SCAiAggroPacket`)?
-6. **Log capture:** save `docker logs aaemu-game-1` around the tests; the packet lines (`CSChangeTargetPacket`, `SCAiAggroPacket`, `StartSkill`) plus any `NpcControllEffect` lines are the evidence the T-table needs.
-7. Boot-line check: `docker logs aaemu-game-1 | grep -i heightmap` right after a restart → "Loaded N/M heightmaps".
+Census (target-zone NPCs, n=1,050): sight_range_scale median **1.0**, max **5.0**; fov median 1.0;
+attack_start_range_scale median 1.0, max 5.0. Hostile mobs (faction 115): 236, median sight 1.0
+(→ 10–15 m), max 5.0 — **바다 벌레 family 8563-8566: 40–50 m aggro radius**.
 
-## 6. Follow-ups suggested (do NOT do in this card)
+### 4.2 Hypotheses
 
-- **Terrain-frame mapping** — a small tool/pass over `heightmap.dat` AABB bands vs cell names (data available; parse script exists in the card workspace) to produce the definitive world→file mapping; then decide: fix indexing, or generate server-side heightmaps via `Tools/WorldConverter` (README documents exactly this "pre-generated heightmap data for use with AAEmu" flow — likely the intended path).
-- Census pass on the 327 missing-Z spawns.
-- LOS check design (cheap: heightmap raycast, data already loaded) for the T1 confirmation.
-- Posture state-machine review (TimeManager FirstOrDefault + RunCommandSet interplay) once Josh confirms which NPCs sit wrong.
+| # | Hypothesis | Evidence now | Evidence to confirm |
+|---|---|---|---|
+| T1 | **No LOS check → aggro through walls/hills** — a mob in range+cone attacks regardless of terrain/buildings between | CanSeeTarget = stealth only; aggro radius math is purely distance+FOV+height-gap | In-game: does the "odd targeting" happen when the mob is behind a ridge/wall (no direct sight line)? |
+| T2 | **Elf-village NPCs are genuinely hostile to Nuians** — faction 103 (꿈의 유배자들 = Elf player faction) is `state_id=3` hostile to 101 (초승달 왕좌) in system_faction_relations; 213 target-zone spawns are faction 103 (에노이르 569, 에오카드 3672, 알리아 3688, 네서틴 576, 헤이스 6541, 경매장 직원 658 …) with aggression 't' for some | relations table; faction census | In-game: is the "odd targeting" actually these elf NPCs (in the Bluemist/Gweonid villages) attacking on sight? If Josh plays Nuian, that is retail-correct hostility, not a bug |
+| T3 | **Floating mobs break the height-gap check** — a floater (class b/c) can't aggro a ground player (ΔZ too large), and a sunk cave mob aggroes nobody; conversely a player near a floater gets targeted from 10-40 m with no LOS | height-gap formula + floater census | Do floating mobs ignore the player, or attack from far away? |
+| T4 | Ranged-vs-melee confusion — skill selection respects skill Min/MaxRange (`BaseCombatBehavior.RefreshSkillQueue:421`) but chase range is `AttackStartRangeScale × weaponRange`; with UseRangeMod off, ranged mobs walk into melee | MoveInRange :132-142 | Do "oddly targeting" mobs use ranged skills from range or walk in? |
 
-## 7. Reproduction notes
+### 4.3 Latent code notes (no action)
 
-All analysis scripts live in the card workspace (`/root/.hermes/kanban/workspaces/t_350d36b1/repo/scratch/*.txt`): `analyze.txt` (zone rects + terrain sampling + deltas), `outliers.txt` (neighborhood float candidates), `paklist.txt` (AAPak FAT reader with AES-128 key from AAPak.cs), `hmbands*.txt` (AABB band survey), `npc8_aggro.txt`/`npc9_posture.txt` (sqlite pulls). Terrain sampling mirrors `WorldCell.LoadCellHeightMapFromClientData` + `NodeCell` exactly (filter → sort → index → `0.05*iOffset + (raw>>4)*iStep*0.05`).
+- `WorldTemplate.GetBaiByPos` TODO: "Pick the actually correct zone" returns the **first** zone loader —
+  currently inert because the pak has no zone-level .bai (path-based loaders are used).
+- `npc_spawns.json` is JSONC (comments + trailing commas) — stdlib parsers choke; the server's JsonHelper
+  handles it. Any tooling must strip comments/trailing commas (see recon scripts).
+
+---
+
+## 5. "Confirm in-game" checklist (Josh, next session)
+
+1. **Floaters**: teleport to (10571,14718) — is 에노이르 (elf NPC) hovering ~90 m up? Same for 에오카드
+   (13 spawn rows around (10572,14719)). Do they float at every one of their spawn points?
+2. **Castle cluster**: at (12720,16250) and (15560,13780) — do the 정예 근위병 / 론반 공작 / 엘렌 공주
+   stand ON the castle floor (fine) or visibly in the air (bug)? Guards at (15500,13760) — on a rampart?
+3. **Flyers/sea/cave**: confirm 독수리/바다 벌레/동굴 거미 float/sink is natural (they fly/swim/cave).
+4. **Sitters**: find the weaponshop dealer (set 3, anim 92), nursery dealer (set 22, anim 87), chair sitters
+   (set 41, anim 160), leaner (set 17, anim 26) — do ALL sit poses look broken ("knees in") or only some
+   anim ids? Note WHICH anim ids look wrong (count of affected NPCs).
+5. **Cloth**: are the cloth-freakout NPCs the same as the broken sitters (pose-driven)? Watch one during a
+   ToD change (posture re-broadcast) and during combat (posture cleared) — does the skirt settle?
+6. **Odd targeting**: when a mob "targets oddly", is there a wall/ridge between you and it (no LOS)? Is it
+   the elf-village NPCs attacking (faction 103 hostile to Nuians — retail-correct)? Do floating mobs ever
+   aggro you from the air?
+7. **Float↔target link**: do the floating elf NPCs (faction 103, aggression) attack from 90 m up, or not at all?
+
+## 6. Prior art reconciliation (branch history)
+
+This branch already carried `4744e2de` ("NPC behavior catalog", committed before this card ran).
+Its headline finding — **"server-side terrain heights in Solzreed are wrong by tens of meters"
+(F1, measured +28/+94/+149 m at live character positions)** — does **not** reproduce with a
+correct sampler, and is a measurement artifact of that commit's terrain reader:
+
+| Ground-truth point (live standing character / spawn) | Client-visible Z | Prior commit's terrain | This card's terrain |
+|---|---|---|---|
+| char "Assholes" (15597.6, 15224.0) | 122.4 | 150.4 (+28) | **122.7 (+0.3)** |
+| char "Dingus" (14947.1, 14232.6) | 123.3 | 272.0 (+149) | **123.2 (−0.1)** |
+| Nuian spawn (15578, 15382) | 126.5 | 220.7 (+94) | **126.2 (−0.3)** |
+
+- The prior census ("all 1,356 Solzreed spawns 5.7–197.6 m below terrain, median −106.7") also does
+  not reproduce: the same rect sampled with the server-exact algorithm (empty-node filter +
+  x-major sort + `sectorX*16+sectorY` index) gives **median diff 0.0 m, 97.1 % within ±1 m**.
+  The likely bug in the prior reader: the 85 empty cell-bbox placeholder nodes per .dat were not
+  filtered before sector indexing (they sort first by Min.X), plus band-space confusion from the
+  node AABB frames (node box origins are not the file's own cell — e.g. `012_013`'s nodes carry
+  frames of cell (4,2); the server only uses them for sort order, and relative order is
+  frame-invariant, so indexing is unaffected) being mistaken for content misalignment.
+- **Verified findings from the prior commit that stand** (folded in): 327 world-wide spawn rows with
+  no Z field at all (sample: 14562/14566/14568/14896, 8566 sea worms ×6) — Newtonsoft default ⇒ 0 ⇒
+  underwater; the live `NpcControllEffect RunCommandSet (ParamInt=155, stable keeper 11548)` log line
+  as a pose-corruption path; `aggro_link_help_dist` 6.0 m / `AcceptAggroLink` pack-assist data;
+  ranged `base_skill_id` examples (3459 → 10431, 8176 → 20273).
+- The prior commit's `GetBaiByPos` first-zone claim is **inert in practice**: the pak contains no
+  zone-level `.bai` (zone/ folders hold only xml), so `ZoneBaiLoader` stays empty and the path-based
+  branch always runs. Its walk-into-hills §3 belongs to `npc-pathing.md` (Recon A).
+
+Conclusion after reconciliation: **the heightmap data is sound; the float symptom is a per-row data
+defect** (§1.2/1.3), not a terrain-frame problem. This card's report supersedes 4744e2de's F1/F2
+as root-cause explanations while keeping its supporting data.
+
+## 7. Suggested next steps (out of scope here)
+
+- Fix class F1 if confirmed: correct the specific `npc_spawns.json` Z rows (or snap spawn Z to heightmap
+  unconditionally at load — engine change, needs Rei's gate + a card).
+- Sit class S1/S2: verify 1.2 anim-id semantics (client-side anim table) before touching data; candidate
+  card: "sit pose data audit" (evidence step).
+- Targeting T1 (LOS): if confirmed, add a raycast/LOS gate to CheckAggression/CheckAlert (engine change;
+  needs the Jitter physics heightmap — GeoDataMode already on).
