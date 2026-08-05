@@ -280,13 +280,14 @@ public class QuestSanityVerifierTests
     [Test]
     public async Task Allowlist_ContainsClassifiedShells()
     {
-        // Spot-check every allowlist group from data-defects.md (132 ids total).
+        // Spot-check every allowlist group from data-defects.md (131 ids total — was 132
+        // before 1391 was dropped on 2026-08-05, dropped-content-register.md §1).
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1533u)).IsTrue(); // tutorial shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1640u)).IsTrue(); // tutorial shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1830u)).IsTrue(); // tutorial "UNUSED"
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(315u)).IsTrue();  // do-not-delete shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1728u)).IsTrue(); // do-not-delete shell
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1391u)).IsTrue(); // dummy shell
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1391u)).IsFalse(); // dummy shell — DROPPED 2026-08-05 (dropped-content-register.md §1)
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1576u)).IsTrue(); // dummy shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2046u)).IsTrue(); // dummy shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2148u)).IsTrue(); // reserve block start
@@ -302,7 +303,7 @@ public class QuestSanityVerifierTests
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(330u)).IsFalse();
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(776u)).IsFalse();
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(777u)).IsFalse();
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Count == 132).IsTrue();
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Count == 131).IsTrue();
     }
 
     // -- Zone/kind rollup (scope add: which zones/kinds are quest-broken). --
