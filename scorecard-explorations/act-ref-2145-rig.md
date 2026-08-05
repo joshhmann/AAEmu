@@ -172,8 +172,8 @@ QuestActConAcceptComponent acts and their `quest_acts` rows —
 
 Contexts 2146/1961 are NOT restored — they stay dropped under data-defects.md
 §7 verdict (c) (orphan mid-chain links of the abandoned chain). The valid
-self-start acts (2145's Start comp 9925 act 88 → 2145, 1960's Start comp 9792
-act 74 → 1960) are untouched and still resolve. The reference `compact.sqlite3`
+self-start acts (2145's Start comp 9925 accept-act 88 → 2145, 1960's Start comp 9792
+accept-act 66 → 1960) are untouched and still resolve. The reference `compact.sqlite3`
 is never edited (upstream alignment rule 3) — the patch is applied to a copy in
 every verification, and `Scripts/quest_act_ref_missing_census.sh --apply-fix`
 mirrors exactly this patch.

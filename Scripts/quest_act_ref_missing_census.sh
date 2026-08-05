@@ -32,12 +32,16 @@ set -u
 DB="${1:-./AAEmu.Game/Data/compact.sqlite3}"
 APPLY_FIX=0
 SCOPE=2145
-for arg in "${@:2}"; do
+args=("${@:2}")
+i=0
+while [ "$i" -lt "${#args[@]}" ]; do
+    arg="${args[$i]}"
     case "$arg" in
         --apply-fix) APPLY_FIX=1 ;;
-        --scope) echo "error: --scope needs a quest id (0 = all)" >&2; exit 2 ;;
+        --scope) i=$((i + 1)); SCOPE="${args[$i]:-}" ;;
         --scope=*) SCOPE="${arg#--scope=}" ;;
     esac
+    i=$((i + 1))
 done
 
 CENSUS_SQL='SELECT q.id AS quest, q.name AS quest_name, c.id AS component,

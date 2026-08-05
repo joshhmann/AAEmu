@@ -17,8 +17,8 @@
 -- two dangling acts + their quest_acts rows. The orphan contexts (1961, 2146, and
 -- the rest of the chain) are NOT touched — they stay in place under the drop
 -- verdict, keeping the block recoverable if the crafting chain is ever wanted.
--- The valid self-start acts (2145's Start comp 9925 act 88 -> 2145, 1960's
--- Start comp 9792 act 74 -> 1960) are untouched and still resolve.
+-- The valid self-start acts (2145's Start comp 9925 accept-act 88 -> 2145, 1960's
+-- Start comp 9792 accept-act 66 -> 1960) are untouched and still resolve.
 --
 -- Guards: each row is pinned to its full verified shape (id + every relevant
 -- column) — verified 2026-08-05 on compact.sqlite3 (md5
