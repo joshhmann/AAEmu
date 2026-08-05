@@ -139,9 +139,23 @@ route. Individual peripheral quest bugs → Lane B (maintenance).
   T1 Solzreed 97/97 (2026-08-04)
 - ✅ Solzreed golden route selected; curated Nuian opening chain +
   intentionally excluded quests documented — Docs/wiki/Golden-Route-Solzreed.md (99e7c4ec)
+- 🔶 **WIDENED 2026-08-04 (Josh): verifier data-defect backlog folds into M1**
+  — real structural defects from the live census (5 ERR / 128 WARN over 4775
+  quests), priority after golden-route blockers:
+  - COMPONENT_NEXT_MISSING quests 776/777 (next_component refs to nowhere)
+  - ACT_REF_MISSING_QUEST 2145→2146 (self-start target can never be found)
+  - QUEST_NO_START cluster 1533–1548 (components but no Start — can never be
+    accepted)
+  - QUEST_NO_COMPONENTS 1391 (template has no components at all)
+  - 8 orphaned quest_contexts (745, 1421, 1954–1958, 2140) — fix vs drop
+    decision per row
+- 🔶 Harness extension (M1-5d, t_f198bb0e): 14 unsupported act families →
+  census coverage grows past 153 (currently 25 harness-gap SKIPs)
 
-**M1 status (2026-08-04):** ✅ delivered — Josh playtest in progress
-(milestone decision pending, NOT closed). All work items done: shared
+**M1 status (2026-08-04):** ✅ core delivered — Josh playtest in progress
+(milestone decision pending, NOT closed). M1 WIDENED 2026-08-04 (Josh):
+the verifier data-defect backlog + harness extension now ride in M1;
+M2 remains the world-broadening release gate. All work items done: shared
 engine defects fixed, golden route curated, doodad phase/interaction family
 resolved. Automated exit test GREEN — scenario-harness census
 (QuestScenarioTierTests) headline **153/153 runnable / 0 FAIL / 33 SKIP
