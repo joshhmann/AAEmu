@@ -1,4 +1,7 @@
-﻿using AAEmu.Game.Models.Game.Quests.Templates;
+﻿using System.Numerics;
+
+using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 
@@ -25,7 +28,11 @@ public class QuestActCheckSphere(QuestComponentTemplate parentComponent) : Quest
     }
 
     /// <summary>
-    /// Checks if you are inside a specific Quest Sphere
+    /// Checks if the owner is currently inside one of the quest spheres of this component.
+    /// This is a "check" act (like QuestActCheckGuard), not an objective act: the loader
+    /// keeps ThisComponentObjectiveIndex = 0xFF, so RunAct evaluates the owner's LIVE
+    /// position against the component's quest spheres instead of an objective counter
+    /// (which would always read 0 for this act).
     /// </summary>
     /// <param name="quest"></param>
     /// <param name="questAct"></param>
@@ -34,22 +41,34 @@ public class QuestActCheckSphere(QuestComponentTemplate parentComponent) : Quest
     public override bool RunAct(Quest quest, QuestAct questAct, int currentObjectiveCount)
     {
         Logger.Debug($"{QuestActTemplateName}({DetailId}).RunAct: Quest {quest.TemplateId}, Owner {quest.Owner.Name} ({quest.Owner.Id}), SphereId {SphereId}");
-        return currentObjectiveCount > 0;
+
+        if (quest.Owner is not Character character)
+            return false;
+
+        var spheres = character.ParentWorld?.SphereQuestManager.GetQuestSpheres(ParentComponent.Id);
+        if (spheres == null || spheres.Count <= 0)
+            return false;
+
+        var position = character.Transform?.World?.Position ?? Vector3.Zero;
+        return spheres.Any(sphere => sphere.Contains(position));
     }
 
     public override void OnEnterSphere(QuestAct questAct, object sender, OnEnterSphereArgs args)
     {
-        if (questAct.Id == ActId && args.SphereQuest.QuestId != ParentQuestTemplate.Id)
+        if (questAct.Id != ActId || args.SphereQuest.QuestId != ParentQuestTemplate.Id || args.SphereQuest.ComponentId != ParentComponent.Id)
             return;
         Logger.Debug($"{QuestActTemplateName}({DetailId}).OnEnterSphere: Quest {questAct.QuestComponent.Parent.Parent.TemplateId}, Owner {questAct.QuestComponent.Parent.Parent.Owner.Name} ({questAct.QuestComponent.Parent.Parent.Owner.Id}), SphereId {SphereId}");
-        SetObjective(questAct, 1);
+        // Check act: there is no objective counter for this act (ThisComponentObjectiveIndex
+        // is 0xFF, so SetObjective would write past the Objectives array), sphere entry only
+        // requests a re-evaluation — RunAct checks the owner's live position against the sphere.
+        questAct.RequestEvaluation();
     }
 
     public override void OnExitSphere(QuestAct questAct, object sender, OnExitSphereArgs args)
     {
-        if (questAct.Id != ActId || args.SphereQuest.QuestId != ParentQuestTemplate.Id)
+        if (questAct.Id != ActId || args.SphereQuest.QuestId != ParentQuestTemplate.Id || args.SphereQuest.ComponentId != ParentComponent.Id)
             return;
         Logger.Debug($"{QuestActTemplateName}({DetailId}).OnExitSphere: Quest {questAct.QuestComponent.Parent.Parent.TemplateId}, Owner {questAct.QuestComponent.Parent.Parent.Owner.Name} ({questAct.QuestComponent.Parent.Parent.Owner.Id}), SphereId {SphereId}");
-        SetObjective(questAct, 0);
+        questAct.RequestEvaluation();
     }
 }

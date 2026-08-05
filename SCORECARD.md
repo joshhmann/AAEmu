@@ -113,6 +113,16 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   (Error/Warn/Info), never throws (matches loader behavior). 14 unit tests cover every
   finding class. Full defect catalog: bugs/007-quest-sanity-verifier.md.
 
+- **BUG-011 — QuestActCheckSphere can never pass + sphere entry crashes (FIXED on `fix/quest-check-sphere`, 2026-08-04).**
+  CheckSphere is a check act (no objective counter — loader assigns
+  `ThisComponentObjectiveIndex = 0xFF`), but `RunAct` read the counter (always 0 →
+  never passes) and `OnEnterSphere`/`OnExitSphere` wrote it (Objectives[0xFF] →
+  IndexOutOfRangeException). Now `RunAct` evaluates the owner's LIVE position against
+  the component's quest spheres (mirrors QuestActCheckGuard), and sphere events only
+  request re-evaluation. Live data: exactly 1 quest_context (1033, Progress component
+  5065 → sphere 945); the other 10 act rows are orphans. 8 new `QuestActCheckSphereTests`
+  (fail-before: 1 assertion + 3 IndexOutOfRangeException). Catalog: bugs/011-check-sphere-0xff.md.
+
 ### System-level bugs (non-quest)
 
 - #696 [skill] [BUG] Tree thinning of old trees doesn't work as intended

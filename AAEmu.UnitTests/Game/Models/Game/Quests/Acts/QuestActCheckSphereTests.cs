@@ -23,6 +23,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.Quests.Acts;
 /// evaluation — writing the Objectives array at index 0xFF crashed with
 /// IndexOutOfRangeException (Objectives has MaxObjectiveCount = 5 entries).
 /// </summary>
+[NotInParallel] // touches shared statics (SphereQuestManager._sphereQuests + QuestManager singleton) — same convention as QuestScenarioTests
 public class QuestActCheckSphereTests
 {
     // Canonical 1.2 data: quest 1033 (기억과 쇠 골렘) is the ONLY quest_context whose
