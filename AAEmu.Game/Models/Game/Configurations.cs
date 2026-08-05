@@ -131,6 +131,16 @@ public class WorldConfig
     public bool TagShareEnabled { get; set; } = false;
 
     /// <summary>
+    /// When true (default), NPC aggro acquisition (<c>Behavior.CheckAggression</c> /
+    /// <c>CheckAlert</c>) requires a line of sight to the target: terrain heights are
+    /// sampled along the sight line and the mob will not aggro through hills, ridges,
+    /// or cliffs. Set to false to restore the legacy distance+FOV-only acquisition
+    /// (mobs aggro through terrain again). Configure in
+    /// <c>AAEmu.Game/Configurations/World.json</c> under <c>World.NpcLineOfSightCheck</c>.
+    /// </summary>
+    public bool NpcLineOfSightCheck { get; set; } = true;
+
+    /// <summary>
     /// When true, housing bound doodads (doors, windows, planters, drills, animals) are saved to the
     /// database and their state (open/closed, fill level, growth phase) is restored on server restart.
     /// When false (default), bound doodads are re-created fresh from template data on every restart,
