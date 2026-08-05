@@ -48,7 +48,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | ID | Mechanic / scoped scenario | First gate | C | W | H | A | R | S | Evidence / next audit |
 |---|---|---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
 | PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline |
-| QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 1 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; `next-missing-776-777.md` (330/776/777 COMPONENT_NEXT_MISSING → 0 via QuestDataOverlay, Rei gate PASS t_d8a8c798); `act-ref-2145-rig.md` (2145→2146 + sibling 1960→1961 ACT_REF_MISSING_QUEST → 0 via `2026-08-05-prune-act-ref-missing-2145.sql`, Rei gate PASS t_53baa876); real restart still required |
+| QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 1 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; `next-missing-776-777.md` (330/776/777 COMPONENT_NEXT_MISSING → 0 via QuestDataOverlay, Rei gate PASS t_d8a8c798); `act-ref-2145-rig.md` (2145→2146 + sibling 1960→1961 ACT_REF_MISSING_QUEST → 0 via `2026-08-05-prune-act-ref-missing-2145.sql`, Rei gate PASS t_53baa876); `no-start-cluster-1533-1548-evidence.md` (QUEST_NO_START cluster 1533–1548 → 0 via `2026-08-05-drop-no-start-cluster.sql` — 23 contexts/25 components/42 acts dropped, Rei gate PASS t_f884383f); real restart still required |
 | CTRL-01 | Movement, targeting, interaction, control-state recovery | M2/M5 | U | U | U | U | U | U | Actor-contract spike |
 | COMBAT-01 | PvE combat, death, resurrection, loot | M2/M5 | U | 1 | U | U | U | U | `SkillManager`; combat audit |
 | ABILITY-01 | Ability selection, skill use, progression | M2 | U | 1 | U | U | U | N/A | `SkillManager`; ability audit |
@@ -159,6 +159,9 @@ zones required by a milestone or an observed defect.
 > scenario FAIL). Regen same day post-fix/act-ref-2145 (census 22:15Z): verdicts byte-stable
 > again — the 2 pruned dangling self-start acts (2145→2146, sibling 1960→1961) sit on quests
 > outside the 186-quest sample (dead cat-34 crafting chain), so census FAIL/SKIP deltas: none.
+> Regen same day post-fix/no-start-1533 (census 23:42Z): verdicts byte-stable — the DROPPED
+> QUEST_NO_START cluster 1533–1548 (23 quests, never acceptable: no Start step, no accept
+> surface) was outside the census sample too, so FAIL/SKIP deltas remain none.
 > See scorecard-explorations/runnability.md + the M1-5 entry below.
 
 ## Zero-data-wired domains (data exists, server ignores it)
@@ -269,6 +272,16 @@ zones required by a milestone or an observed defect.
   ACT_REF_MISSING_QUEST real-data census: fail-before 2 rows → pass-after 0 (drift accept_comps
   384→382, quest_acts 26886→26884, −2/−2 exactly). Gate 1216/0/0 (incl. rig class 2/2).
   Evidence: scorecard-explorations/act-ref-2145-rig.md.
+  **Post-fix census regen (2026-08-05, fix/no-start-1533 @ 74fb7762 merged, Rei gate PASS
+  t_f884383f):** verdicts byte-stable — 153/153 runnable, 0 FAIL, 33 SKIP (census FAIL/SKIP
+  deltas: none; the DROPPED QUEST_NO_START cluster 1533–1548 — 23 legacy tutorial shells, zero
+  Start components + zero accept surfaces, provably never acceptable — sat outside the 186-quest
+  census sample). QUEST_NO_START real-data census: fail-before 23 quests/exit 1 → pass-after 0
+  (drift quest_contexts 4876→4853, quest_components 17851→17826, quest_acts 26886→26844 —
+  −23/−25/−42 exactly; 9/9 unit_reqs collision rows untouched). Gate 1223/0/0 (fast +
+  CI-parity coverage, Login.IntegrationTests 6/6; 1 pre-existing %db_port% env artifact).
+  Evidence: scorecard-explorations/no-start-cluster-1533-1548-evidence.md +
+  fix-no-start-1533-passafter.md.
 
 ### System-level bugs (non-quest)
 
