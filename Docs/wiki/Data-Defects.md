@@ -5,7 +5,7 @@
 # M1 Data-Defect Backlog — classification of verifier census findings (fix vs drop)
 
 **Author:** Tai (evidence: hx-researcher, t_7416ea48) · **Date:** 2026-08-04
-**Data:** prod `compact.sqlite3` (md5 `78b3bdbf0383db3b927056106efdf91af`, identical on
+**Data:** prod `compact.sqlite3` (md5 `78b3bdbf038db3b927056106efdf91af`, identical on
 192.168.0.165 and /tmp copies) · **Census source:** prod boot 2026-08-04 03:22:41
 `[QuestSanity] SUMMARY: 5 ERRORS, 128 warnings, 4 info across 4775 quests / 17720
 components / 19047 acts` (BUG-007 verifier, `AAEmu.Game/Core/Managers/QuestSanityVerifier.cs`).

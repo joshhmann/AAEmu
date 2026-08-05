@@ -19,8 +19,14 @@
 #                  SQL/patches/compact/2026-08-04-fix-quest-data-defects.sql
 #                  to the copy, re-run the census (pass-after), then clean up.
 #
-# Exit code: 1 when the census finds COMPONENT_NEXT_MISSING rows (fail),
-#            0 when clean (pass). Read-only against the source DB.
+# Exit codes:
+#   plain mode:        1 = raw source has COMPONENT_NEXT_MISSING rows (fail-before),
+#                      0 = clean. Use this for fail-before evidence.
+#   --apply-fix mode:  the pass-after phase is authoritative — 0 = the fixed
+#                      copy is clean (fix works), 1 = the fixed copy STILL has
+#                      rows (fix incomplete). The raw-source phase still prints
+#                      its fail-before result on stdout but does not set the
+#                      final exit code. Read-only against the source DB.
 # ============================================================================
 set -u
 
@@ -67,6 +73,9 @@ UPDATE quest_components SET next_component = 11591 WHERE id = 3488;  -- quest 77
 SQL
     echo
     echo ">> fix applied to copy (3 UPDATEs from SQL/patches/compact/2026-08-04-fix-quest-data-defects.sql)"
+    # --apply-fix contract: pass-after phase decides the exit code (raw phase
+    # above already reported fail-before on stdout; its rc must not stick).
+    rc=0
     run_census "$TMP" || rc=1
 fi
 
