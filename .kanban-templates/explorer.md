@@ -1,8 +1,8 @@
 # EXPLORER TEMPLATE — deep-dive / recon (feeds the scorecard)
 
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
-> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
-> Everything stays in our own lane on joshhmann/AAEmu. This rule applies to
+> **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.** Upstream is
+> intake-only; everything stays on joshhmann/AAEmu. This rule applies to
 > every template in this directory and every task that uses one.
 
 > 📐 **UPSTREAM ALIGNMENT (locked 2026-08-04 — applies to every card):** target
@@ -38,11 +38,11 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 ## Get up to speed (first 10 minutes, in order)
 
-1. `cat /root/aaemu-dev/VISION.md` — two lanes + division routing
-2. `cat /root/aaemu-dev/WORKFLOW.md` — process + lane gate
-3. `grep -n "<domain>" /root/aaemu-dev/SCORECARD.md` — domain status
-4. `ls /root/aaemu-dev/scorecard-explorations/` — read prior reports for the domain
-5. `cd /root/aaemu-dev && graphify explain "<Type>" --graph graphify-out/graph.json`
+1. `cat <repo>/VISION.md` — two lanes + division routing
+2. `cat <repo>/WORKFLOW.md` — process + one-way upstream gate
+3. `grep -n "<domain>" <repo>/SCORECARD.md` — domain status
+4. `ls <repo>/scorecard-explorations/` — read prior reports for the domain
+5. `cd <repo> && graphify explain "<Type>" --graph graphify-out/graph.json`
    and `graphify affected "<Type>" --depth 2` — map the neighborhood
 
 ## Canonical 1.2 grounding (NEVER invent mechanics)

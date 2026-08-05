@@ -1,8 +1,8 @@
 # FIX TEMPLATE — Track 1 canonical fix (strict workflow, lane gate: NO upstream PR)
 
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
-> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
-> Everything stays in our own lane on joshhmann/AAEmu. This rule applies to
+> **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.** Upstream is
+> intake-only; everything stays on joshhmann/AAEmu. This rule applies to
 > every template in this directory and every task that uses one.
 
 > 📐 **UPSTREAM ALIGNMENT (locked 2026-08-04 — applies to every card):** target
@@ -30,17 +30,18 @@
 **Verification handoff contract (non-negotiable):**
 - Tai **cannot** mark this task complete without Rei's evidence gate.
 - Rei signs off with: file:line of the change + test results (fail-before/pass-after output pasted into the task).
-- Prod deployment is Mai's coordination AFTER Rei's signoff + Josh's go-ahead (lane gate).
+- Prod deployment is Mai's coordination after Rei's signoff and the explicit
+  deployment decision; this never authorizes an upstream push or PR.
 
 Collaboration context: `sister-council` skill (how we convene), `affinity-system` skill (how we collaborate).
 
 ## Get up to speed (first 10 minutes, in order)
 
-1. `cat /root/aaemu-dev/VISION.md` — two lanes + division routing
-2. `cat /root/aaemu-dev/WORKFLOW.md` — process + lane gate
-3. `grep -n "<domain>" /root/aaemu-dev/SCORECARD.md` — domain status
-4. `ls /root/aaemu-dev/scorecard-explorations/` — read the domain report if present
-5. `cd /root/aaemu-dev && graphify explain "<Type>" --graph graphify-out/graph.json`
+1. `cat <repo>/VISION.md` — two lanes + division routing
+2. `cat <repo>/WORKFLOW.md` — process + one-way upstream gate
+3. `grep -n "<domain>" <repo>/SCORECARD.md` — domain status
+4. `ls <repo>/scorecard-explorations/` — read the domain report if present
+5. `cd <repo> && graphify explain "<Type>" --graph graphify-out/graph.json`
    and `graphify affected "<Type>" --depth 2` — map the neighborhood
 
 ## Canonical 1.2 grounding (NEVER invent mechanics)
@@ -54,6 +55,7 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 ## Bug
 
 - **Source:** upstream issue #___ / quest ID ___ / exploration report: scorecard-explorations/___.md
+- **Mechanic IDs / zone keys:** (SCORECARD.md ledgers; use `global` if no zone)
 - **Symptom (user-visible):**
 - **Root cause (code, file:line):**
 
@@ -68,8 +70,8 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 ## Tools (use these, in this order)
 
-- graphify: `cd /root/aaemu-dev && graphify explain "X" --graph graphify-out/graph.json`
-- editor: read_file / patch / write_file in /root/aaemu-dev
+- graphify: `cd <repo> && graphify explain "X" --graph graphify-out/graph.json`
+- editor: read/patch files in the card's `<repo>` workspace
 - build: `dotnet build --configuration Release AAEmu.slnx`
 - compiler-check: `dotnet run --configuration Release --no-build --project AAEmu.Game/AAEmu.Game.csproj compiler-check`
 - tests (full): `./scripts/gate.sh`
@@ -79,10 +81,12 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 - [ ] Release build: 0 errors
 - [ ] compiler-check: "Compilation successful"
-- [ ] Full test suite: 0 failed (currently 1082 baseline)
+- [ ] Fast local gate: 0 failed (do not hard-code a stale test-count baseline)
+- [ ] CI-parity coverage + Login integration gates: 0 failed before merge
 - [ ] New test(s) fail without the fix, pass with it (prove it — save the output)
 - [ ] `graphify update .` (graph fresh)
-- [ ] SCORECARD.md row updated IN THIS BRANCH (domain coverage changed?)
+- [ ] SCORECARD.md mechanic/zone evidence updated in this branch if the fix
+      changes a grade or claim (no artificial percentage change)
 - [ ] Fix log: ISSUES.md / bugs/ entry (bug id, root cause, files, tests)
 
 ## Rei verification gate (evidence required — this task is NOT done without it)
@@ -95,10 +99,11 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 - One-line "what changed" in the kanban comment: files + behavior + scorecard row + fix log id
 - Nei updates STATUS.md (per-lane row + open tasks) from that line — that is the input contract
-- Deploy needed? → Mai coordinates (after Josh's go-ahead). Upstream-PR candidate? → Josh decides.
+- Deploy needed? → Mai coordinates after the deployment decision. There are no
+  upstream-PR candidates; upstream is intake-only.
 
 ## Deliverables
 
 - Commits: one logical commit (or small series), present tense, conventional prefix, <72 chars title
-- Push: branch to fork origin ONLY. **NO upstream PR** unless Josh explicitly approves (lane gate)
+- Push: branch to fork origin ONLY. **No upstream branch push or PR.**
 - Report: summary + test evidence (fail-before/pass-after) + scorecard diff + STATUS.md one-liner

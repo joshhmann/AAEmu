@@ -13,7 +13,7 @@ lives in the repo: ROADMAP.md; this page is the short public status.
 |---|-----------|-------|
 | M0 | Foundation — workflow lane gate, kanban templates, gate.sh, scorecards, graphify graph, shared division skill, BUG-006 fix merged | ✅ COMPLETE (2026-08-03) |
 | M1 | Quest & progression spine — shared engine fixes + curated golden route (Solzreed) | 🔶 IN FLIGHT |
-| M2 | Golden-path release gate — first repeatable playable loop (Solzreed locked as golden zone) | ⏳ next |
+| M2 | Golden-path specification + reproducible baseline (Solzreed locked as golden zone) | ⏳ next |
 | M3a/b | Homestead shell, then property persistence & recovery | ⏳ |
 | M4 | Trade, crafting, transport integrity | ⏳ |
 | M5 | Gameplay Actor Contract (normalize, not invent) | ⏳ |
@@ -23,7 +23,7 @@ lives in the repo: ROADMAP.md; this page is the short public status.
 
 ## M0 — Foundation (done, 2026-08-03)
 
-Workflow v3 with the lane gate (no upstream PRs without owner approval),
+Workflow v4 with the one-way upstream gate (pull updates in; never push or PR out),
 kanban task templates, `scripts/gate.sh` (Release build + compiler-check +
 full test suite), the 679-table technical scorecard (SCORECARD.md) +
 exploration reports, the graphify semantic code graph (~17.5k nodes), and
@@ -74,7 +74,8 @@ expands outward: create character → starter progression (Solzreed) → unlock
 mount → acquire farm → plant & harvest → build house → craft trade pack →
 transport → sell → return home. All work is judged against that path
 ("the golden path is the product"). Bots will later master the same slice
-(M5-M8); M2 is the first human-playable release gate.
+(M5-M8). M2 defines and baselines it; M3 repairs homestead integrity, and M4
+is the first integrated human-playable release gate.
 
 ## Related
 

@@ -1,4 +1,9 @@
-# COMMUNITY-GUIDELINES.md — AAEmu Upstream PR Compliance Layer
+# COMMUNITY-GUIDELINES.md — Historical Upstream-Awareness Reference
+
+> **Fork policy overrides the historical material below:** AAEmu/AAEmu is
+> intake-only. Never push a branch or open a PR upstream. This file records
+> compatibility lessons and the legacy #1494 experience; it is not a
+> publishing workflow or authorization path.
 
 Compliance layer for every PR we open against upstream **AAEmu/AAEmu**.
 Sits on top of `WORKFLOW.md` (Tai's fork playbook). Source of truth for
@@ -131,7 +136,7 @@ BUT the de facto upstream style is already CC-shaped:
 - PR title = commit title (upstream merges squash-style; the title is what
   lands on `develop`)
 
-## 7. PR-READY CHECKLIST (every upstream PR)
+## 7. Historical PR checklist (reference only; do not publish upstream)
 
 **Before pushing:**
 - [ ] Branch is `fix/<slug>` cut from a fresh `develop` (synced with upstream)

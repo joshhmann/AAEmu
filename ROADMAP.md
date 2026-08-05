@@ -1,7 +1,8 @@
 # ArcheAge Slums — Roadmap & Milestones (locked-shape 2026-08-03; version number retired 2026-08-04 — v1/v4/v6/v7 label drift, the date is canonical)
 
-> **🚫 THE RULE (Josh, permanent): NEVER push a PR to upstream AAEmu/AAEmu
-> unless Josh explicitly approves it.** Everything stays in our own lane.
+> **🚫 THE RULE (Josh, permanent): NEVER push a branch or open a PR to
+> upstream AAEmu/AAEmu.** Upstream is intake-only: fetch and integrate its
+> updates into the fork; never send fork changes back.
 >
 > **THE CORE SHIFT (Codex review, endorsed):** Do not finish AAEmu before
 > building playerbots. Build ONE dependable classic-ArcheAge life loop, make
@@ -75,8 +76,8 @@
 
 ## Upstream alignment rules (Josh, locked 2026-08-04 — every milestone)
 
-These keep the fork community-shaped so upstream PRs stay an option and
-upstream pulls stay clean. Verify against the wiki/code before applying; the
+These keep upstream pulls into the fork clean and reviewable. They do not make
+outbound PRs an option. Verify against the wiki/code before applying; the
 current-state check is recorded in `Docs/wiki/Development-Conventions.md`.
 
 1. Target AAEmu `develop` and .NET 10 (global.json pins 10.0.0).
@@ -113,7 +114,8 @@ current-state check is recorded in `Docs/wiki/Development-Conventions.md`.
 
 ## M0 — Foundation ✅ COMPLETE
 
-Workflow v3 (lane gate), community guidelines, kanban templates, gate.sh
+Workflow v3 foundation (now superseded by v4 one-way-upstream policy),
+community guidelines, kanban templates, gate.sh
 verified, scorecard + 3 exploration reports, graphify graph (17.6k nodes),
 shared division skill enabled on all 4 profiles.
 BUG-006 (kill-acceptor, 380 quests, 1082/1082 tests) parked awaiting Josh's
@@ -188,11 +190,12 @@ corruption → peripheral quests.
 
 ---
 
-## M2 — Golden-path release gate
+## M2 — Golden-path specification and baseline gate
 
-The repeatable playable journey — the first real definition of "playable."
-**Classified lightweight + parallelizable**: M3 investigation may begin while
-M2 documentation and test tooling are finalized.
+Define the repeatable playable journey and establish an evidence-backed
+baseline before repairing its housing and trade segments. **M2 is a planning
+and discovery gate, not a claim that the entire loop already works.** M3
+investigation may begin while M2 documentation and test tooling are finalized.
 
 **Golden path:** create character → starter progression → unlock mount →
 acquire farm → plant & harvest → build house → craft trade pack → transport
@@ -200,7 +203,8 @@ pack → sell → return home.
 
 **Primary outputs:** curated route · human playtest checklist · scenario
 manifest · restart checkpoints · known-blocker registry · structured logging
-expectations · clean database snapshot. (Selected race/faction, zones,
+expectations · reproducible database reset/seed procedure. Do not commit a raw
+database snapshot containing accounts, secrets, or production state. (Selected race/faction, zones,
 quest chain, skill builds, mount, housing zone, crop chain, crafting chain,
 trade-pack recipe, land route, cart/hauler, short sea route if viable.)
 
@@ -209,12 +213,19 @@ coastal starter zone: starter quests, nearby farms, trade pack routes, safe
 waters. Route selection starts from Solzreed outward (Solzreed → adjacent
 zones as the loop expands).
 
-**Exit tests (two tiers — don't let scheduling block readiness):**
-- **Required correctness run:** two players complete the full loop twice,
-  including a server restart, without GM repair.
-- **Release validation:** four players complete one integrated session
-  before the milestone is marked production-validated.
-**This is the first real playable release.**
+**Exit tests:**
+- **Human baseline:** two players attempt the entire route from the
+  reproducible reset state; every blocker is captured with stage, repro,
+  evidence, and its owning M3/M4 card. GM repair may be used only after the
+  original failure is recorded so later segments can still be surveyed.
+- **Automated baseline:** the manifest and reset procedure reproduce the
+  selected character, item, property, recipe, pack, and vehicle prerequisites.
+- **Restart baseline:** restart checkpoints identify exactly which state is
+  retained, lost, duplicated, or requires repair.
+
+M2 closes when the route and backlog are reproducible. The first integrated
+playable release gate occurs at M4, after M3 and M4 have repaired the systems
+the route depends on.
 
 ---
 
@@ -243,8 +254,10 @@ prevention · administrative repair tooling.
 restart, crash-recovery, and re-entry tests WITHOUT state loss or
 duplication.
 
-**Scorecard targets:** housing ~75-85% usable for curated loop, farming
-~70-80%, property persistence green for tested items.
+**Scorecard targets:** `HOUSING-01` and `FARM-01` reach `C/W/H/A = 2` for the
+curated homestead at M3a; `PROPERTY-01` and the same curated objects reach
+`R = 2` with recovery/load evidence at M3b. No percentage substitutes for a
+missing scenario dimension.
 
 ---
 
@@ -262,7 +275,10 @@ recovery.
 
 **Exit test:** group harvests real materials → crafts pack → loads vehicle →
 travels defined route → unloads + sells → correct reward → repeats after
-restart. **The server becomes recognizably classic ArcheAge here.**
+restart. Then run the M2 release validation: four players complete one
+integrated session from a clean reset state without GM repair. **This is the
+first integrated playable release; the server becomes recognizably classic
+ArcheAge here.**
 
 ---
 
@@ -270,7 +286,9 @@ restart. **The server becomes recognizably classic ArcheAge here.**
 
 **NOT autonomous bots — the contract first.** This is normalization, not
 invention: wrap existing capabilities behind ONE additive, inspectable
-contract. Estimated 2-4 focused sessions (existing primitives are reusable).
+contract. Size this milestone after a short architecture spike proves the
+execution/threading boundary and one vertical action; existing primitives are
+reusable, but their packet/session coupling is the main uncertainty.
 
 **Existing primitives to wrap:**
 - NPC AI movement (NpcAi)
@@ -278,7 +296,8 @@ contract. Estimated 2-4 focused sessions (existing primitives are reusable).
 - skill execution
 - interaction
 - inventory/game services
-- administrator commands (where useful for development)
+- administrator commands for diagnostics and test setup only; never as a
+  production gameplay-action implementation
 - normal player and unit state
 
 **New work:**
@@ -291,6 +310,10 @@ contract. Estimated 2-4 focused sessions (existing primitives are reusable).
 - diagnostics + trace IDs
 - policy forbidding database shortcuts
 - adapter implementations over existing systems
+- a single execution boundary for world/character mutation; controllers may
+  enqueue requests but may not mutate a Character concurrently
+- idempotency/correlation rules so retries and timeouts cannot duplicate
+  items, currency, labor consumption, quest credit, or interactions
 
 **Explicit NON-GOALS:** no autonomous planning · no LLM integration · no
 generalized navigation rewrite · no core gameplay interface replacement ·
@@ -298,7 +321,7 @@ no bot-only inventory or combat behavior.
 
 **Action surface tiers (contract defines the FULL vocabulary; implementations land in slices):**
 - **M5 required actions:** Observe · Move · Stop · Target · Cast · Interact ·
-  Loot · UseItem · Mount/Dismount
+  Loot · UseItem · Mount/Dismount · AcceptQuest · TurnInQuest
 - **M5.1 economic extension:** Plant · Harvest · Craft · PackPickup/PutDown ·
   BoardVehicle · Buy/Sell · Deposit/Withdraw
 
@@ -313,10 +336,15 @@ DB manipulation, no bot-only resource creation.
 completed_at, result, state_changes}` — supporting both debugging and the
 M8 economic audit.
 
-**Exit test:** a scripted actor completes the curated golden-path primitives
-and produces a machine-readable trace showing every request, transition,
-result, and failure. Actor contract tests (server executes/observes a
-command correctly) pass independent of any controller.
+**Exit tests:**
+- **M5 core:** a scripted actor completes the curated quest/combat/mount
+  segment and produces a machine-readable trace showing every request,
+  transition, result, and failure.
+- **M5.1 economy:** a scripted actor completes the curated farm/craft/pack/
+  vehicle/trade segment through the economic actions.
+- Actor contract tests (server executes/observes a command correctly) pass
+  independent of any controller; retry tests prove non-idempotent actions do
+  not execute twice.
 
 ---
 
@@ -384,6 +412,11 @@ Playerbot behavior tests (controller chooses the right command sequence)
 run against the M5 actor contract — a failed bot harvest must resolve to
 one of: wrong choice / navigation / action rejected / state transition /
 persistence.
+
+Before the six-hour soak, record a no-bot baseline and approve numeric budgets
+for p95/p99 world-tick time, memory, database writes, action-queue backlog, and
+recovery rate. Gate in stages: one bot for 30 minutes → 10 bots for one hour →
+10 bots for six hours. A qualitative "no overrun" is not sufficient evidence.
 
 ---
 
@@ -494,6 +527,12 @@ AAEmu
 New modules (a fishing fleet, a festival coordinator) slot in WITHOUT
 touching combat AI or the bot framework — that modularity is the point.
 
+Treat the `AAEmu.Bot.*` names as capability boundaries first, not a mandate to
+create many assemblies immediately. Begin inside the existing Game project
+where access to normal gameplay services is required; split projects only
+when a stable API, independent test boundary, or deployment boundary justifies
+the dependency cost.
+
 ---
 
 ## M8.5 — Social services & grounded guide (post-village, pre-activities)
@@ -507,7 +546,7 @@ touching combat AI or the bot framework — that modularity is the point.
 
 ---
 
-## M9.5 — Emergent world systems (the "world simulator" layer)
+## M9 — Emergent world systems (the "world simulator" layer)
 
 ArcheAge was memorable because SYSTEMS COLLIDED — emergent stories, not
 scripted quests. These make the world generate stories whether players are
@@ -538,7 +577,7 @@ TELL the story, never what happens.
 
 ---
 
-## M9 — Activities and world events
+## M9.5 — Activities and world events
 
 Contests fit here — they now have actual residents to participate.
 
@@ -563,9 +602,9 @@ generates something worth controlling.
 ## Work lanes (permanent, parallel)
 
 - **Lane A — Vision-critical milestones:** the roadmap above (M1-M10)
-- **Lane B — Upstream & correctness maintenance:** new regressions, upstream
-  merges, security/duplication bugs, persistence corruption, broad engine
-  defects, PR preparation ONLY with Josh's approval
+- **Lane B — Upstream intake & correctness maintenance:** upstream syncs into
+  the fork, new regressions, security/duplication bugs, persistence corruption,
+  and broad engine defects. No outbound upstream PR preparation or push.
 - **Lane C — Quick wins:** music wiring, premium labor data, FX groups,
   small packet completions, low-risk data imports. Completed between larger
   tasks; never delays the golden path.
@@ -596,42 +635,51 @@ generates something worth controlling.
 | Competitive warfare | 40% | Deferred |
 
 Technical wiring (SCORECARD.md) and experience coverage are related but
-separate measurements — update both.
+separate measurements — update both. Experience percentages remain
+directional until each row links to a versioned checklist with a defined
+denominator; milestone gates are scenario evidence, not subjective percentage
+movement.
 
 ## Timeline (directional, 3-5 sessions/week)
 
 | Period | Target |
 |--------|--------|
 | Weeks 1-2 | M1 quest and progression spine |
-| Week 3 | M2 golden-path release gate |
+| Week 3 | M2 golden-path specification + baseline |
 | Week 4 | M3a homestead shell |
 | Weeks 5-6 | M3b persistence and recovery |
-| Weeks 7-8 | M4 trade and transport |
-| Weeks 9-10 | M5 gameplay actor contract |
-| Weeks 11-13 | M6 deterministic bot framework |
-| Weeks 14-16 | M7 adventurer and party bots |
-| Weeks 17-20 | M8 Living Village |
-| Later | M9 activities, M10 territory/siege |
+| Weeks 7-8 | M4 trade and transport + integrated playable release gate |
+| After M4 spike | M5 gameplay actor contract (re-estimate after one vertical action) |
+| After M5 | M6 deterministic bot framework (staged soak gates) |
+| After M6 | M7 adventurer and party bots |
+| After M7 | M8 Living Village |
+| Later | M9 emergent systems, M9.5 activities, M10 territory/siege |
 
 M3b and M4 are the highest-variance items — persistence bugs have
 nonlinear scope (object identity, save ordering, parent/child restoration,
 phase-state serialization, duplicate loading, schema deficiencies).
 
-Dates are directional — quest data or vehicle attachment may reveal deeper
-work.
+Dates are directional through M4 only. Reforecast M5+ from measured discovery,
+not the original calendar; packet/session coupling, persistence, navigation,
+and vehicle attachment may reveal deeper work.
 
 ## Definition of done per milestone
 
 - [ ] Human scenario, automated scenario, AND restart-persistence scenario
       defined and passing
-- [ ] Every task: branch, commits, tests (fail-before/pass-after), Rei signoff
-- [ ] Full local gate green: Release build + compiler-check + all tests
+- [ ] Behavioral changes: branch, commits, proportionate tests,
+      fail-before/pass-after evidence where a regression can be reproduced,
+      and Rei signoff
+- [ ] Fast local gate green: Release build + compiler-check + unit tests
+- [ ] CI-parity gate green before merge: coverage-enabled unit tests + Login
+      integration tests; run the Game integration suite when the affected
+      subsystem or milestone scenario requires it
 - [ ] Both scorecards updated in-branch (technical wiring + experience)
 - [ ] STATUS.md reflects the milestone (Nei)
 - [ ] Milestone release candidate deployed to the AAEmu box by Mai and
       sanity-checked in-game (individual tasks pass the local gate first —
       production churn only at milestone / release-candidate boundaries)
-- [ ] No upstream PR without Josh's explicit approval
+- [ ] No branch push or PR to upstream; upstream flow is intake-only
 
 ## Deployment discipline (exact-SHA, auditable)
 
@@ -648,7 +696,10 @@ work.
   milestone, database backup name, service health (db/login/game/adminer).
 - **DB-changing milestones (M3b, M4+):** record pre-deploy database backup,
   schema/update revision, and Docker image IDs alongside the SHA.
-- **Rollback:** `git reset --hard <previous SHA>` + rebuild. For
-  DB-changing releases, roll back per the manifest's backup.
+- **Rollback:** preserve branch history: `git switch --detach <previous-sha>`
+  and rebuild the affected services. Return to `develop` only for a later
+  forward deployment. DB-changing releases follow the migration-specific
+  restore/rollback plan recorded before deployment; a code rollback alone is
+  not assumed to reverse schema or data changes.
 - **Bot audit trail** (M5+): structured trace records support debugging AND
   economic auditing — see M5.

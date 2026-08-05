@@ -7,7 +7,7 @@
 # FIX TEMPLATE — Track 1 canonical fix (strict workflow, lane gate: NO upstream PR)
 
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
-> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
+> **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.**
 > Everything stays in our own lane on joshhmann/AAEmu. This rule applies to
 > every template in this directory and every task that uses one.
 
@@ -25,7 +25,7 @@
 **Verification handoff contract (non-negotiable):**
 - Tai **cannot** mark this task complete without Rei's evidence gate.
 - Rei signs off with: file:line of the change + test results (fail-before/pass-after output pasted into the task).
-- Prod deployment is Mai's coordination AFTER Rei's signoff + Josh's go-ahead (lane gate).
+- Prod deployment is Mai's coordination after Rei's signoff and the deployment decision.
 
 Collaboration context: `sister-council` skill (how we convene), `affinity-system` skill (how we collaborate).
 
@@ -89,11 +89,11 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 ## Status / awareness (close the loop — every task ends with "what changed")
 
-- One-line: "BUG-006: added QuestAcceptorType.Kill + kill-accept quest start wiring; 380 quests unstartable → startable on kill; 3 commits (fix/test/docs) on fix/quest-kill-acceptor; merged to fork develop @05428e0; 1082/1082 tests; scorecard quests row + ISSUES.md/bugs/006 updated; prod deploy pending Josh's go-ahead (lane gate)."
+- One-line: "BUG-006: added QuestAcceptorType.Kill + kill-accept quest start wiring; 380 quests unstartable → startable on kill; 3 commits (fix/test/docs) on fix/quest-kill-acceptor; merged to fork develop @05428e0; 1082/1082 tests; scorecard quests row + ISSUES.md/bugs/006 updated; prod deploy pending deployment decision."
 - Nei: STATUS.md updated from this line (per-lane: Tai done / Rei evidence in / Mai deploy pending / Nei tracking).
 
 ## Deliverables
 
 - Commits: b28ee5a `fix(quest): add Kill acceptor type and start kill-accept quests on NPC death` · 03f88e7 `test(quest): cover QuestActConAcceptNpcKill acceptor matching` · d385583 `docs: log BUG-006 kill-acceptor fix, update quests scorecard row`
-- Push: branch to fork origin ONLY. **NO upstream PR** (lane gate — Josh's go-ahead required for merge-to-develop deploy and any upstream step)
+- Push: branch to fork origin ONLY. **No upstream branch push or PR.**
 - Report: summary + test evidence (fail-before/pass-after) + scorecard diff + STATUS.md one-liner — all on the kanban task comment

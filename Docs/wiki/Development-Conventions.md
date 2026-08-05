@@ -6,8 +6,9 @@
 
 ## The rules (locked)
 
-These keep the fork community-shaped: upstream PRs stay an option, upstream
-pulls stay clean, and nothing drifts into parallel gameplay implementations.
+These keep upstream pulls into the fork clean and prevent parallel gameplay
+implementations. The relationship is one-way: never push a branch or open a
+PR to AAEmu/AAEmu.
 
 1. **Target AAEmu `develop` and .NET 10.** `global.json` pins SDK 10.0.0
    (rollForward latestMajor). Verified current.

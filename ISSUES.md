@@ -10,7 +10,7 @@ Bug entries: see `bugs/` folder (one file per issue)
 
 | ID | Title | Status |
 |----|-------|--------|
-| BUG-001 | Game container SIGSEGV (exit 139) during AiGameData load — musl/glibc NLua mismatch | FIXED + UPSTREAM PR #1494 (Greptile 5/5, awaiting maintainer) |
+| BUG-001 | Game container SIGSEGV (exit 139) during AiGameData load — musl/glibc NLua mismatch | FIXED; legacy upstream PR #1494 predates permanent one-way policy |
 | BUG-002 | compact.sqlite3 schema too old for develop (missing item_socket_chances) | FIXED |
 | BUG-003 | Missing game data files (compact.sqlite3 + game_pak) | RESOLVED |
 | BUG-004 | Login advertises game server as 127.0.0.1 (LAN unreachable) | FIXED |

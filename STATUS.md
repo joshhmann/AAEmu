@@ -6,7 +6,8 @@ Branch of record: develop @ d1899128 · last upstream pull: 2026-08-03
 ## Milestone state
 
 **M0 — Foundation: ✅ CLOSED (2026-08-03, Josh signoff)**
-Workflow v3 (lane gate), community guidelines, kanban template set (Nei),
+Workflow v4 (permanent one-way upstream gate), community guidelines,
+kanban template set (Nei),
 gate.sh verified, scorecard + 3 exploration reports, graphify graph (17.6k
 nodes), shared skill aaemu-fork-workflow enabled on all 4 profiles,
 LIVING-WORLD.md canon, ROADMAP.md locked-shape 2026-08-03 (version labels
@@ -44,9 +45,10 @@ truncated; rotation fix shipped (t_264e1984 ✅).
 | t_bcf976ad | Wiki M0/M1 update — implement wiki-audit.md proposals | hx-researcher | blocked |
 | — | feat/quest-scenario-harness (6e367585: T3 census + runnability.md + SCORECARD M1-5 entry) merge to develop | Tai | ⏳ no card yet |
 
-## Pending upstream PRs
+## Legacy upstream item (predates one-way policy)
 
 - #1494 — glibc Dockerfile fix (BUG-001) — awaiting maintainer (Greptile 5/5)
+- No new upstream branches or PRs are permitted; upstream is intake-only.
 
 ## Last scorecard update
 

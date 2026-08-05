@@ -1,19 +1,20 @@
-# AAEmu Fork — Fix/Feature Workflow (Tai's playbook, v3)
+# AAEmu Fork — Fix/Feature Workflow (Tai's playbook, v4)
 
-Goal: safe, reviewable changes to joshhmann/AAEmu that keep the running
-server stable AND follow community standards — WITHOUT pushing upstream
-unless Josh explicitly approves it.
+Goal: safe, reviewable changes to joshhmann/AAEmu that keep the running server
+stable and remain easy to reconcile with upstream updates. Upstream is
+strictly intake-only.
 
 > **🚫 THE RULE (Josh, 2026-08-03 — at the top, permanent):** **NEVER push a
-> PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.** Every fix
+> branch or open a PR to upstream AAEmu/AAEmu.** Every fix
 > and every feature follows the full workflow — branch, separate commits,
-> tests, scorecard update, all tracked. We stay in OUR OWN LANE. When we
-> feel ready after testing, we decide together and push then.
+> tests, evidence, and tracking—and stays in our fork. Upstream updates may be
+> fetched into a dedicated sync branch and integrated after verification.
 
-v3 changes: added the lane gate — upstream PRs are OFF by default; the
-community-standard process is followed regardless, so PRs stay possible.
-v2 added the upstream merge bar (CI gates, Greptile, PR checklist) — that
-knowledge is still the standard we hold ourselves to internally.
+v4 changes: made the upstream relationship permanently one-way; separated the
+fast developer gate from CI parity; made deployment/rollback service-aware;
+and clarified scorecard/state ownership. The
+community-standard quality bar remains useful internally, but outbound
+branches and PRs are prohibited.
 
 ## Repository topology (canonical)
 
@@ -22,7 +23,7 @@ OPENCLAW (dev box)               GITHUB (fork)                  AAEMU BOX .165 (
 /root/aaemu-dev                  joshhmann/AAEmu                /root/AAEmu
 origin = joshhmann/AAEmu  ─────►  develop ◄───────────────────  fork = joshhmann/AAEmu
 (branch/work/test here)          (source of truth)              (docker compose runs here)
-                                                                origin = AAEmu/AAEmu (upstream pulls)
+upstream = AAEmu/AAEmu (fetch-only intake; never used from production)
 ```
 
 - **Host roles:** openclaw = development only. aaemu box = production only.
@@ -30,9 +31,14 @@ origin = joshhmann/AAEmu  ─────►  develop ◄───────�
   them. Never copy source directly openclaw→prod; never develop in
   /root/AAEmu on prod; production never receives unreviewed working-tree
   changes.
-- **Remote mapping (intentional asymmetry):** openclaw's `origin` is the
-  fork (dev default). Prod's `origin` is upstream AAEmu/AAEmu (for `git pull
-  upstream`); prod's `fork` is joshhmann/AAEmu (deployable).
+- **Remote mapping:** openclaw's `origin` is the fork (dev default) and an
+  `upstream` remote is read-only intake. Prod deploys only from its `fork`
+  remote (`joshhmann/AAEmu`); even if another remote exists there, production
+  never pulls or integrates upstream directly.
+- **Push guard:** every development clone configures upstream with a disabled
+  push URL while preserving its fetch URL:
+  `git remote set-url --push upstream DISABLED`. Verify with `git remote -v`
+  during workspace setup. `origin` is the only normal push target.
 - **Deploy procedure** (Mai coordinates; exact-SHA, see ROADMAP §Deployment
   discipline):
 
@@ -45,19 +51,41 @@ git switch develop
 git merge --ff-only fork/develop   # production never generates merge commits
 DEPLOY_SHA="$(git rev-parse HEAD)"
 docker compose config --quiet
-docker compose up -d --build game
+docker compose up -d --build <affected-services>
 docker compose ps
 echo "Deployed ${DEPLOY_SHA}"      # record in deployments/production.json
 ```
 
-- **Rollback:** `git reset --hard <previous-sha>` + `docker compose up -d
-  --build game`. For DB-changing releases, restore per the deployment
-  manifest's pre-deploy backup.
+- **Rollback:** preserve branch history: `git switch --detach <previous-sha>`
+  and rebuild the affected services. Return to `develop` only for a later
+  forward deployment. For DB-changing releases, use the migration-specific
+  rollback/restore plan recorded before deployment; never assume a code
+  rollback can reverse a schema or data migration.
 - **Milestone releases:** tag on the fork (`git tag living-village-m1-rc1
   <sha>`), prod deploys the exact tag/SHA.
 - **Deployment manifest:** `deployments/production.json` (env, git SHA,
   deployed_at, milestone, DB backup, service health) — written by the
   deploy script, never hand-maintained.
+
+### One-way upstream sync
+
+Integrate upstream on development, never on production and never directly on
+the fork's `develop` branch:
+
+```bash
+git fetch upstream
+git fetch origin
+git switch -c sync/upstream-YYYY-MM-DD origin/develop
+git merge --no-ff upstream/develop
+./scripts/gate.sh
+dotnet test --project AAEmu.Login.IntegrationTests --configuration Release --no-build
+git push origin sync/upstream-YYYY-MM-DD
+```
+
+Review upstream commits, migration/config changes, and conflicts on the sync
+branch; run affected integration and golden-route scenarios; then merge only
+into the fork. Refresh Graphify after the sync. Never push the sync branch to
+`upstream`, and never use production as the merge workspace.
 
 ## Upstream alignment rules (Josh, locked 2026-08-04)
 
@@ -102,7 +130,7 @@ These sit with THE RULE — they keep the fork community-shaped. Full text in
 4. `graphify query "how does X work"` — BFS question traversal
 5. After changes: `graphify update .` — refresh (no LLM cost)
 
-## THE UPSTREAM MERGE BAR (what CI + Greptile check)
+## Fork merge quality bar
 
 ### CI gates (.github/workflows/dotnetcore.yml) — ALL must pass:
 1. `dotnet restore`
@@ -113,14 +141,9 @@ These sit with THE RULE — they keep the fork community-shaped. Full text in
    measured + uploaded to Coveralls. New behavior WITHOUT new tests drops coverage.
 5. `dotnet test --project AAEmu.Login.IntegrationTests` ← Testcontainers MySQL
 
-Sonar + CodeQL run on push to develop/master (quality gates, no PR block).
-
-### Greptile AI review (auto-runs on PRs):
-- Scores confidence 0-5 and flags concrete regressions. Pre-empt it:
-  - Every change must have a clear "what/why" in the PR body
-  - Native libs / runtime / package changes: show the `ldd`/build evidence
-  - Don't leave dead code, unused vars, or obvious perf traps (it reads the diff)
-- It reviewed #1494 at 5/5 with the evidence-first writeup. That's the template.
+Sonar + CodeQL run on push to develop/master. Regardless of which checks run on
+the private fork, reviews require a clear what/why, risk notes, verification
+evidence, and no dead code or obvious performance traps.
 
 ## Fix/feature loop (per repo AGENTS.md + graph + CI)
 
@@ -137,19 +160,28 @@ Sonar + CodeQL run on push to develop/master (quality gates, no PR block).
 5. **SQL** — schema change: add SQL/updates/… AND update base SQL/aaemu_*.sql
 6. **Test** — add/extend AAEmu.UnitTests (MethodName_Scenario_ExpectedResult),
    reuse TestBase/SqliteTestBase/IntegrationTestBase + mocks.
-7. **Verify — the FULL local gate** (mirrors CI):
+7. **Verify — two explicit gates:**
+
+   Fast developer gate (`scripts/gate.sh`; build + compiler-check + unit tests):
    ```bash
-   dotnet build --configuration Release
-   dotnet run --configuration Release --no-build --project AAEmu.Game/AAEmu.Game.csproj compiler-check
-   dotnet test --project AAEmu.UnitTests --configuration Release --no-build
+   ./scripts/gate.sh
    ```
-   All green before anything else.
+
+   CI-parity gate before merge/push (coverage-enabled unit tests plus Login
+   integration tests; requires its Testcontainers runtime):
+   ```bash
+   dotnet test --project AAEmu.UnitTests --configuration Release --no-build --coverage
+   dotnet test --project AAEmu.Login.IntegrationTests --configuration Release --no-build
+   ```
+
+   Also run `AAEmu.IntegrationTests` when the touched subsystem or milestone
+   scenario is covered there. If Docker/Testcontainers is unavailable, the
+   task is locally verified but not merge-ready; record the missing gate and
+   run it in CI or an equipped verification workspace.
 8. **Graph refresh** — `graphify update .`
-9. **PR** — push branch to fork. Upstream PR **ONLY with Josh's explicit
-   go-ahead** (lane gate). When approved: single squashed commit, present
-   tense ("fix(docker): …"), PR body: Problem / Root cause (with evidence) /
-   Fix / Verification / Notes. Until then the branch lives on our fork —
-   the process is identical either way, so a future PR is just a push + form.
+9. **Fork review** — push the branch only to the fork. Use a fork PR or the
+   Rei gate with: Problem / Root cause (evidence) / Fix / Verification / Notes.
+   Never push the branch or open a PR to AAEmu/AAEmu.
 
 ## Deploy to prod (exact-SHA — see §Repository topology for full procedure)
 
@@ -161,14 +193,20 @@ git fetch fork
 git switch develop
 git merge --ff-only fork/develop
 DEPLOY_SHA="$(git rev-parse HEAD)"
-docker compose up -d --build game
+docker compose up -d --build <affected-services>
 docker compose ps
 echo "Deployed ${DEPLOY_SHA}"   # record in deployments/production.json
 ```
 
-Rollback: `git reset --hard <previous-sha>` + `docker compose up -d
---build game`. DB-changing releases restore per the manifest's pre-deploy
-backup.
+Choose affected services from the diff: Game changes rebuild `game`; Login or
+authentication changes rebuild `login`; shared/Commons changes rebuild both.
+SQL/config/orchestration changes require an explicit deployment card rather
+than defaulting to `game`. After startup, verify ports, container health, and
+GameServer registration before recording success.
+
+Rollback: `git switch --detach <previous-sha>` + rebuild the same affected
+services. DB-changing releases follow the manifest's pre-approved migration
+rollback/restore procedure.
 
 ## Tracking discipline (every change, no exceptions)
 
@@ -177,22 +215,36 @@ backup.
   domain's status.
 - **Every feature** → one branch (`feat/<slug>`), commits per logical step,
   tests per step, scorecard row added with the new coverage.
-- **Scorecard updates** happen IN THE SAME PR/branch as the work — never
-  separately. `SCORECARD.md` + `scorecard-explorations/` are living docs.
+- **Scorecard updates** happen in the same PR/branch when the work materially
+  changes a measured row or evidence claim. Do not manufacture a scorecard
+  diff for documentation-only, tooling-only, or behavior-neutral work.
 - Commit messages: present tense, conventional prefix, <72 chars title.
-- Commit identity — OPERATORS author the work, never `root@openclaw`:
+- Commit identity — the actual contributor authors the work, never a shared
+  machine identity such as `root@openclaw`:
   - default: the sister who did it (`git -c user.name="Tai" -c
     user.email="tai@asslorde.com" commit ...`) — Tai/Rei/Nei/Mai @ asslorde.com
   - fallback for collective changes: `Hyraxknot Division
     <division@asslorde.com>`
-  - upstream PRs are fronted by Josh's identity (`--author="Josh Anderson
-    <joshhmann@users.noreply.github.com>"`), only with his approval.
-- Branch merged to fork `develop` only after: full local gate green +
-  graphify update + scorecard row updated.
+  - Review or deployment approval does not change authorship. Preserve the
+    real author/co-author metadata; never rewrite a commit to impersonate an
+    approver or merge operator.
+- Branch merged to fork `develop` only after: CI-parity gate green; relevant
+  subsystem integration tests green; Graphify refreshed when structural code
+  changed; and scorecard evidence updated when materially affected.
 - Fix log: add a line to `ISSUES.md`/`bugs/` when fixing a known bug
   (reference the bug id, root cause, files changed, tests added).
 
-## PR-READY CHECKLIST (pre-push)
+### State ownership and freshness
+
+- Kanban is the source of truth for live task ownership/status.
+- GitHub fork `develop` SHA is the source of truth for merged code.
+- `deployments/production.json` is the source of truth for production state.
+- `STATUS.md` is a human-readable cache, not a second task database. Nei
+  updates it after merge/deploy events, and verifies its recorded `develop`
+  SHA before publishing. Feature branches should provide a one-line handoff;
+  they should not all edit `STATUS.md` and create avoidable merge conflicts.
+
+## FORK-REVIEW CHECKLIST (pre-merge)
 
 - [ ] Branch from develop, single logical change
 - [ ] Commit message: present tense, conventional prefix, <72 chars title
@@ -201,7 +253,8 @@ backup.
 - [ ] compiler-check passes (scripts compile!)
 - [ ] Unit tests pass, new behavior has new tests
 - [ ] No drive-by refactors / unrelated formatting
-- [ ] Greptile pre-empted: no dead code, no obvious traps
+- [ ] No dead code or obvious performance traps
+- [ ] Push target verified as the fork, never AAEmu/AAEmu
 - [ ] SQL updates if schema touched
 
 ## Pitfalls
@@ -213,4 +266,5 @@ backup.
   drop the % and can fail the gate.
 - Graph tied to commit — refresh with `graphify update .` after pulls.
 - Don't touch SQL/aaemu_login.sql casually — it seeds the login DB.
-- Follow Nei's COMMUNITY-GUIDELINES.md for anything that differs from this doc.
+- `COMMUNITY-GUIDELINES.md` is upstream-awareness reference material only; it
+  never authorizes an outbound branch or PR.

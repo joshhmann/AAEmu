@@ -44,9 +44,8 @@ with the repo's own GITHUB_TOKEN. Consequences:
    should still use a docs-only branch merged to develop for reviewability.
 2. **The action publishes to the wiki of the repo the workflow runs in.** On the fork
    that is `joshhmann/AAEmu`'s wiki — NOT the upstream `AAEmu/AAEmu` wiki. Getting M0/M1
-   content onto the UPSTREAM wiki would mean touching upstream's develop → that is an
-   upstream-facing change → **lane gate: needs Josh's explicit approval.** Default
-   proposal below targets the fork wiki (consistent with the lane gate).
+   content onto the UPSTREAM wiki would mean touching upstream's develop and is
+   permanently prohibited. The proposal below targets the fork wiki only.
 3. **Operational check for the edit card:** whether `joshhmann/AAEmu` has wiki enabled
    (the action creates it if not, but verify with Josh/Mai first).
 
@@ -158,7 +157,7 @@ lives in the repo: ROADMAP.md; this page is the short public status.
 
 ## M0 — Foundation (done, 2026-08-03)
 
-Workflow v3 with the lane gate (no upstream PRs without owner approval),
+Workflow v4 with the permanent one-way gate (pull upstream updates in; never push or PR out),
 kanban task templates, `scripts/gate.sh` (Release build + compiler-check +
 full test suite), the 679-table technical scorecard (SCORECARD.md) +
 exploration reports, the graphify semantic code graph (~17.6k nodes), and
@@ -344,8 +343,8 @@ Documentation-Maintenance, Developer-Notes, Tutorial, Classes.
 3. **Merge path:** merge to fork `develop` so wiki-sync.yml fires. Verify the fork
    wiki page list after publish.
 4. **Decisions needed before the card runs:**
-   - Where should the M0/M1 pages be visible — fork wiki only (default, lane-gate
-     clean) or also upstream AAEmu/AAEmu wiki (needs Josh's explicit approval)?
+   - M0/M1 pages publish to the fork wiki only; upstream wiki publication is
+     not an option under the permanent one-way policy.
    - Is the fork's wiki enabled (or should Mai enable it)?
    - Recover vs regenerate Golden-Route-Solzreed.md (check t_e1e6a99b run log).
 5. **Non-goals for the card:** Classes.md full re-verify (Lane B), STATUS.md

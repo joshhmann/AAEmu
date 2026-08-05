@@ -16,9 +16,8 @@ Pushing changes to the `develop` branch triggers
 wiki of the repo the workflow runs in:
 
 - Fork `develop` → `joshhmann/AAEmu`'s wiki (the normal lane).
-- The upstream `AAEmu/AAEmu` wiki is only reachable through upstream
-  `develop` — an upstream-facing change, so it requires owner approval
-  (lane gate).
+- The upstream `AAEmu/AAEmu` wiki is out of scope. The fork never pushes a
+  branch, PR, or wiki change upstream.
 
 So the workflow is: edit files under `Docs/wiki/` → commit on a docs branch →
 merge to fork `develop` → the wiki updates on push. There is no separate wiki

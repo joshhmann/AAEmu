@@ -1,9 +1,15 @@
-# ArcheAge Slums — Feature Completeness Scorecard (enriched)
+# ArcheAge Slums — Data-Wiring and Evidence Scorecard (enriched)
 
 Layers: (1) canonical 1.2 data surface (679 sqlite tables), (2) code wiring,
 (3) upstream issue tracker (AAEmu/AAEmu open issues, 2026-08-03).
 
-# ArcheAge 1.2 Feature Completeness Scorecard
+The table-wiring percentage is a discovery signal, not a feature-completeness
+percentage. A referenced table can back broken behavior, while a complete
+mechanic may not require every related table. Milestone readiness is decided
+by the human, automated, restart-persistence, and soak evidence in ROADMAP.md;
+never raise priority merely to improve a wiring percentage.
+
+# ArcheAge 1.2 Data-Wiring Scorecard
 
 Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 managers).
 
@@ -11,6 +17,92 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
 - **Tables**: canonical sqlite tables in the domain
 - **Data-wired**: tables referenced by any .cs (server reads this data)
 - **Managers**: game systems present in code
+
+## Mechanic completion model
+
+Track player-facing mechanics separately from table wiring and separately from
+zone content. Each mechanic gets six evidence dimensions:
+
+| Dimension | What it proves |
+|---|---|
+| **C — Canonical** | The intended ArcheAge 1.2 behavior and required compact/MySQL/client data are identified. |
+| **W — Wired** | Normal runtime code paths exist end-to-end; a manager or referenced table alone is not enough. |
+| **H — Human** | A player completes the curated scenario from a reproducible reset state without GM repair. |
+| **A — Automated** | Behavior assertions exercise the mechanic, including negative/error paths. |
+| **R — Restart** | Logout/restart/crash recovery preserves state without loss or duplication. |
+| **S — Soak** | The mechanic survives its milestone load/duration and meets explicit performance/recovery budgets. |
+
+Grades are `U` unassessed, `0` absent/broken, `1` partial or proxy evidence,
+`2` verified for the named curated scope, and `N/A` only with a written reason.
+Never average the grades. A mechanic is ready for a milestone only when every
+dimension required by that milestone is `2`; the weakest required dimension
+wins. Every non-`U` grade must link to a query/report, code path, test, human
+run, restart run, or soak artifact.
+
+### Global mechanic ledger
+
+This is the prioritized inventory, not a claim that manager presence means the
+feature works. The initial `W1` entries only record code surfaces found by
+Graphify and must be promoted by an end-to-end exploration.
+
+| ID | Mechanic / scoped scenario | First gate | C | W | H | A | R | S | Evidence / next audit |
+|---|---|---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
+| PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline |
+| QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 1 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; real restart still required |
+| CTRL-01 | Movement, targeting, interaction, control-state recovery | M2/M5 | U | U | U | U | U | U | Actor-contract spike |
+| COMBAT-01 | PvE combat, death, resurrection, loot | M2/M5 | U | 1 | U | U | U | U | `SkillManager`; combat audit |
+| ABILITY-01 | Ability selection, skill use, progression | M2 | U | 1 | U | U | U | N/A | `SkillManager`; ability audit |
+| ITEM-01 | Inventory, equipment, stacking, split/move, full-inventory errors | M2 | U | 1 | U | U | U | U | `ItemManager`; inventory conservation audit |
+| LABOR-01 | Labor consume/regenerate/cap/persist | M3/M4 | U | U | U | U | U | U | Labor/ActAbility audit |
+| MATE-01 | Obtain, summon, mount, dismount, persist a mount | M2 | U | 1 | U | U | U | N/A | `MateManager`; golden-route mount scenario |
+| HOUSING-01 | Claim land, construct, own, permit, demolish | M3 | U | 1 | U | U | U | N/A | `HousingManager`; homestead audit |
+| FARM-01 | Place, grow, harvest, and recover curated crops/livestock | M3 | U | 1 | U | U | U | U | `PublicFarmManager` + Doodad paths; farming audit |
+| PROPERTY-01 | Furniture/storage/phase/attachment persistence | M3b | U | 1 | U | U | U | U | Housing/Doodad persistence audit |
+| CRAFT-01 | Recipe prerequisites, labor/material consume, output | M4 | U | 1 | U | U | U | N/A | `CraftManager`; selected pack recipe |
+| PACK-01 | Craft, carry, place, load, unload, sell trade pack | M4 | U | 1 | U | U | U | U | `SpecialtyManager`; pack audit |
+| SLAVE-01 | Cart/ship summon, seats/cargo, cleanup, recovery | M4 | U | 1 | U | U | U | U | `SlaveManager`; vehicle/ship audit |
+| TRADE-01 | Direct player-to-player item/currency trade | Later | U | 1 | U | U | U | N/A | `TradeManager`; separate from trade packs |
+| MERCHANT-01 | NPC vendor buy/sell, price, stock, refund/error paths | M2/M4 | U | U | U | U | U | N/A | Merchant audit |
+| AUCTION-01 | List, search, bid/buy, settle, cancel, expire | M8 | U | 1 | U | U | U | U | `AuctionManager`; market audit |
+| ECON-01 | Currency/item/labor conservation across economy | M4/M8 | U | U | U | U | U | U | Cross-mechanic invariant audit |
+| MAIL-01 | Send, receive, attach, return, expire, persist | Later | U | 1 | U | U | U | U | `MailManager`; mail audit |
+| TRANSFER-01 | Fixed-route transport board/ride/disembark/recover | M4 | U | 1 | U | U | U | U | `TransferManager`; route audit |
+| INDUN-01 | Instance entry, limits, party, completion, exit/recovery | M7+ | U | 1 | U | U | U | U | `IndunManager`; selected dungeon audit |
+| FISH-01 | Fishing interaction, loot, labor, contest integration | M9.5 | U | U | U | U | U | U | Fishing audit |
+| PVP-01 | Flagging, factions, damage, honor, death/recovery | Later | U | U | U | U | U | U | PvP audit |
+| DUEL-01 | Invite, accept, bounds, result, cleanup | Later | U | 1 | U | U | U | N/A | `DuelManager`; duel audit |
+| CRIME-01 | Crime evidence/points, reporting, persistence | M9 | U | 1 | U | U | U | U | `CrimeManager`; justice audit |
+| TRIAL-01 | Arrest, jury selection, testimony, verdict, sentence | M9 | U | 1 | U | U | U | U | `TrialManager`; justice audit |
+| PRISON-01 | Imprisonment, sentence time, labor/escape/release | M9 | U | U | U | U | U | U | No `PrisonManager` found; trace model/packet paths before scoping |
+| PARTY-01 | Invite/join/leave, leader, follow/assist, recovery | M7 | U | U | U | U | U | U | Party audit |
+| EXPEDITION-01 | Expedition membership, roles, persistence | M9/M10 | U | 1 | U | U | U | U | `ExpeditionManager`; organization audit |
+| CHAT-01 | Local/zone/party/expedition chat, moderation, bot identity | M7/M8 | U | 1 | U | U | N/A | U | `ChatManager`; social audit |
+| ZONE-01 | Peace/conflict/war state transitions and PvP rules | Later | U | 1 | U | U | U | U | `ZoneManager`; conflict-state audit |
+| ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; architecture spike first |
+| BOT-01 | Headless account/session/Character lifecycle | M6 | U | 0 | U | 0 | 0 | U | New fork capability |
+| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Staged 30m/1h/6h soak |
+
+Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
+bugs, cards, tests, and zone reports can refer to the same scope.
+
+## Zone and instance content coverage
+
+Global mechanics and local content are orthogonal. A zone report references
+the global mechanic IDs it exercises, then grades its own content surfaces:
+quest chains; NPC spawns; Doodad spawns/interactions; merchants/services;
+spheres/triggers; transfers/portals; terrain/navigation/spawn-Z; human route;
+and restart behavior. Main-world coverage uses the canonical zone-group ID when
+known plus every member zone key; instances use the exact
+`Data/Worlds/instance_*` key. Do not use a free-form zone name as the only
+identifier.
+
+| Zone key | Scope | Quests | NPCs | Doodads | Services | Triggers/transfers | Nav/terrain | Human | Restart | Evidence |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
+| Solzreed / zone keys `9,124,125` (group ID to verify) | M1-M4 golden route | 1 | U | U | U | U | 1 | U | U | `Golden-Route-Solzreed.md`; `runnability.md`; `spawn-z-fix.md` |
+
+Create one row/report per audited zone or instance. Do not expand every map
+area up front: prioritize the golden route, adjacent travel/trade zones, then
+zones required by a milestone or an observed defect.
 
 ## Domain scorecard
 

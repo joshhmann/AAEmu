@@ -1,8 +1,10 @@
 # ArcheAge Slums — Fork Vision & Lane Strategy
 
 > **🚫 THE TOP LINE (Josh, 2026-08-03 — permanent, non-negotiable):**
-> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
-> Everything below happens in our own lane on joshhmann/AAEmu. This rule
+> **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.**
+> Upstream is intake-only: we may fetch and integrate its `develop` updates
+> into our fork, but changes never flow back. Everything below happens in our
+> own lane on joshhmann/AAEmu. This rule
 > sits above every other process rule in this repo.
 
 ## The vision
@@ -47,27 +49,29 @@ Rules:
 
 ## The two lanes
 
-### Lane 1 — upstream (community)
-- Clean bug fixes, following AAEmu community guidelines exactly
-- PR'd to AAEmu/AAEmu (their CI gates + Greptile review — see WORKFLOW.md)
-- Small, focused, present-tense, evidence-first
-- Example: glibc Dockerfile fix (#1494) — merged-able shape
-- KEEP THIS LANE CLEAN. It's our reputation + our upstream sync path.
+### Lane 1 — upstream intake and fork correctness
+- Pull and inspect AAEmu/AAEmu `develop` updates; never push to it
+- Resolve drift on a dedicated sync branch, then run the fork's full gates
+- Keep correctness fixes small, focused, present-tense, and evidence-first so
+  future upstream pulls remain reviewable
+- The historical glibc PR (#1494) predates the permanent one-way policy; it is
+  not a precedent for another upstream PR
 
 ### Lane 2 — our fork (product)
 - Everything in the vision above: bots, LLM, economy sim, simulated PvP
 - Lives on feature branches off `develop`, merged into our fork develop
-- NEVER pushed upstream unless the community explicitly wants it
+- NEVER pushed upstream
 - Infrastructure: bots need resources (LLM calls, tick budget, DB) — this is
   where we invest the real engineering
 
 ## Branch / workflow rules
 
-- `develop` = our product line (fork). Upstream merges land here via
-  `git pull upstream develop`, resolved, committed.
-- `fix/*` branches = upstream lane candidates (small, PR-able)
+- `develop` = our product line (fork). Upstream changes enter through the
+  dedicated `sync/upstream-YYYY-MM-DD` flow in WORKFLOW.md, never a direct
+  pull on `develop` or production.
+- `fix/*` branches = fork correctness fixes (small and reviewable)
 - `feat/*` branches = our lane (bots, LLM, economy, sieges)
-- Every PR to upstream: single squash commit, CI gates green locally first.
+- Fork PRs/merges: focused commits and all applicable gates green first.
 - Our lane changes: still need tests + build green (don't rot the fork).
 - Refresh the graphify graph after upstream pulls (`graphify update .`).
 

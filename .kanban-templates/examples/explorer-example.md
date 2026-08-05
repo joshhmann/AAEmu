@@ -7,7 +7,7 @@
 # EXPLORER TEMPLATE — deep-dive / recon (feeds the scorecard)
 
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
-> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
+> **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.**
 > Everything stays in our own lane on joshhmann/AAEmu. This rule applies to
 > every template in this directory and every task that uses one.
 

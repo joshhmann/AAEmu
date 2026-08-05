@@ -1,8 +1,8 @@
 # FEATURE TEMPLATE — Track 2 / our-lane feature (strict workflow, fork-only)
 
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
-> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
-> Everything stays in our own lane on joshhmann/AAEmu. This rule applies to
+> **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.** Upstream is
+> intake-only; everything stays on joshhmann/AAEmu. This rule applies to
 > every template in this directory and every task that uses one.
 
 > 📐 **UPSTREAM ALIGNMENT (locked 2026-08-04 — applies to every card):** target
@@ -30,17 +30,18 @@
 **Verification handoff contract (non-negotiable):**
 - Tai **cannot** mark this task complete without Rei's evidence gate.
 - Rei signs off with: file:line of the change + test results (fail-before/pass-after output pasted into the task).
-- Prod deployment is Mai's coordination AFTER Rei's signoff + Josh's go-ahead (lane gate).
+- Prod deployment is Mai's coordination after Rei's signoff and the explicit
+  deployment decision; this never authorizes an upstream push or PR.
 
 Collaboration context: `sister-council` skill (how we convene), `affinity-system` skill (how we collaborate).
 
 ## Get up to speed (first 10 minutes, in order)
 
-1. `cat /root/aaemu-dev/VISION.md` — two lanes + division routing
-2. `cat /root/aaemu-dev/WORKFLOW.md` — process + lane gate
-3. `grep -n "<domain>" /root/aaemu-dev/SCORECARD.md` — domain status
-4. `ls /root/aaemu-dev/scorecard-explorations/` — read the domain report if present
-5. `cd /root/aaemu-dev && graphify explain "<Type>" --graph graphify-out/graph.json`
+1. `cat <repo>/VISION.md` — two lanes + division routing
+2. `cat <repo>/WORKFLOW.md` — process + one-way upstream gate
+3. `grep -n "<domain>" <repo>/SCORECARD.md` — domain status
+4. `ls <repo>/scorecard-explorations/` — read the domain report if present
+5. `cd <repo> && graphify explain "<Type>" --graph graphify-out/graph.json`
    and `graphify affected "<Type>" --depth 2` — map the neighborhood
 
 ## Canonical 1.2 grounding (NEVER invent mechanics)
@@ -56,6 +57,8 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 - **Vision link:** VISION.md (lane: Track 2 bots / other)
 - **What players experience (user story):**
 - **Domain touched:** (scorecard domain, e.g. siege/ranks/premium)
+- **Mechanic IDs touched:** (SCORECARD.md global ledger; add a stable ID if new)
+- **Zone keys touched:** (`zone_group_id` + name or `instance_*`; `global` if none)
 - **Canonical data:** tables in compact.sqlite3 that define it (from /tmp/tables.txt or SCORECARD.md)
 
 ## Plan (order matters)
@@ -70,8 +73,9 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 ## Tools (use these, in this order)
 
-- graphify: `cd /root/aaemu-dev && graphify explain "X" --graph graphify-out/graph.json`
-- scorecard: `python3 /tmp/scorecard2.py` (regenerate) — but update SCORECARD.md in THIS branch
+- graphify: `cd <repo> && graphify explain "X" --graph graphify-out/graph.json`
+- scorecard: update mechanic/zone evidence rows from reproducible queries and
+  artifacts; do not depend on an untracked `/tmp` generator
 - build: `dotnet build --configuration Release AAEmu.slnx`
 - compiler-check: `dotnet run --configuration Release --no-build --project AAEmu.Game/AAEmu.Game.csproj compiler-check`
 - tests (full): `./scripts/gate.sh`
@@ -82,10 +86,12 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 - [ ] Release build: 0 errors
 - [ ] compiler-check: "Compilation successful"
-- [ ] Full test suite: 0 failed (currently 1082 baseline)
+- [ ] Fast local gate: 0 failed (do not hard-code a stale test-count baseline)
+- [ ] CI-parity coverage + Login integration gates: 0 failed before merge
 - [ ] New tests cover each implemented step
 - [ ] `graphify update .` (graph fresh)
-- [ ] SCORECARD.md updated IN THIS BRANCH (domain row + coverage %)
+- [ ] SCORECARD.md evidence grades/links updated in this branch when changed;
+      table-wiring percentage is not treated as feature completion
 - [ ] Exploration report updated if the feature changes the domain picture
 - [ ] Lane separation respected: no changes that would make upstream sync painful
 
@@ -99,7 +105,8 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 - One-line "what changed" in the kanban comment: files + behavior + scorecard row + exploration diff
 - Nei updates STATUS.md (per-lane row + open tasks) from that line — that is the input contract
-- Deploy needed? → Mai coordinates (after Josh's go-ahead). Upstream-PR candidate? → Josh decides.
+- Deploy needed? → Mai coordinates after the deployment decision. There are no
+  upstream-PR candidates; upstream is intake-only.
 
 ## Deliverables
 

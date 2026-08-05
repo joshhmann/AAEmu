@@ -1,8 +1,8 @@
 # TRACKING / STATUS CONVENTION — how the fork stays always-current
 
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
-> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
-> Everything stays in our own lane on joshhmann/AAEmu.
+> **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.** Upstream is
+> intake-only; everything stays on joshhmann/AAEmu.
 
 > 📐 **UPSTREAM ALIGNMENT (locked 2026-08-04 — applies to every card):** target
 > `develop` + .NET 10; Aspire for local dev, prod stays Docker Compose;
@@ -21,9 +21,9 @@ happens, not on a timer.
 
 ## The five rules
 
-1. **STATUS.md at repo root** — the one-line "current state" per-lane view.
+1. **STATUS.md at repo root** — the one-line cached state per-lane view.
    Nei updates it whenever something changes: a task completes, a branch merges,
-   a deploy happens, an upstream PR status changes. If nothing changed, it doesn't
+   a deploy happens, or the legacy #1494 status changes. If nothing changed, it doesn't
    move. Format below.
 2. **Scorecard rows are touched in the same branch as the work** — never as a
    separate commit/branch. `SCORECARD.md` + `scorecard-explorations/` are living
@@ -57,8 +57,8 @@ Branch of record: develop @ <short-sha> · last upstream pull: <date>
 | ID | Title | Lane | Status |
 |----|-------|------|--------|
 
-## Pending upstream PRs
-- <#NNN> — <title> — <state>
+## Legacy upstream item (pre-policy; no new PRs)
+- #1494 — <state>
 
 ## Last scorecard update
 - <date> — <domain> row: <what changed>
@@ -77,6 +77,11 @@ Branch of record: develop @ <short-sha> · last upstream pull: <date>
   reconstruct state from memory (stale guesses corrupt the board).
 - The kanban board stays the live task list; STATUS.md is the *summarized* view —
   don't duplicate card bodies into it.
+- State hierarchy: kanban = live work; fork `develop` SHA = merged code;
+  `deployments/production.json` = production; STATUS.md = summary cache.
+- Before publishing STATUS.md, compare its branch-of-record SHA with the fork
+  `develop` SHA. Update STATUS after merge/deploy, not from every parallel
+  feature branch; workers supply the one-line handoff to Nei instead.
 
 ## Division context
 

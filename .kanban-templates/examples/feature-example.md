@@ -8,7 +8,7 @@
 # FEATURE TEMPLATE — Track 2 / our-lane feature (strict workflow, fork-only)
 
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
-> **NEVER push a PR to upstream AAEmu/AAEmu unless Josh explicitly approves it.**
+> **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.**
 > Everything stays in our own lane on joshhmann/AAEmu. This rule applies to
 > every template in this directory and every task that uses one.
 
@@ -26,7 +26,7 @@
 **Verification handoff contract (non-negotiable):**
 - Tai **cannot** mark this task complete without Rei's evidence gate.
 - Rei signs off with: file:line of the change + test results (fail-before/pass-after output pasted into the task).
-- Prod deployment is Mai's coordination AFTER Rei's signoff + Josh's go-ahead (lane gate).
+- Prod deployment is Mai's coordination after Rei's signoff and the deployment decision.
 
 Collaboration context: `sister-council` skill (how we convene), `affinity-system` skill (how we collaborate).
 

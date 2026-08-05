@@ -6,6 +6,12 @@ Guidance for coding agents working in this repository.
 
 Open-source **ArcheAge** server emulator in **.NET** (`AAEmu.Login`, `AAEmu.Game`, shared `AAEmu.Commons`). Preferred local orchestration is **.NET Aspire** (`AAEmu.Aspire.AppHost`). Branch of record for active work: **`develop`**.
 
+> **Fork boundary (permanent): NEVER push a branch or open a PR to
+> AAEmu/AAEmu.** Upstream is intake-only: fetch its updates into a dedicated
+> `sync/upstream-YYYY-MM-DD` branch, verify them, and merge only into
+> joshhmann/AAEmu. Configure the upstream push URL as `DISABLED`; `origin` is
+> the writable fork.
+
 Target client: **ArcheAge 1.2** (`r208022`).
 
 Human docs live under `Docs/wiki/` (synced to GitHub wiki). Prefer those over inventing setup steps.
