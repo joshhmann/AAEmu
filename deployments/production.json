@@ -1,14 +1,14 @@
 {
  "environment": "aaemu-.165",
- "git_sha": "94f498fc8ed5d3d07224a85e62023b4465835f44",
- "deployed_at": "2026-08-04T20:30:00-07:00",
- "milestone": "M1 engine-health release (BUG-007 verifier + BUG-008/009/010/011/012)",
+ "git_sha": "8abe99d9cb7019a1251b40aec234fee95086dea5",
+ "deployed_at": "2026-08-04T21:05:00-07:00",
+ "milestone": "M1 follow-up batch (verifier stub-registry cleanup + compose log rotation + docs)",
  "database_backup": "none_required_no_schema_change",
  "services": {
   "db": "healthy",
   "login": "healthy",
-  "game": "healthy (boot 0 fatal; verifier census live)",
+  "game": "healthy (boot 0 fatal)",
   "adminer": "healthy"
  },
- "notes": "Deployed per WORKFLOW.md exact-SHA (ff-only fork/develop @ 94f498fc). Incident: container json.log hit 39GB (100% disk) pre-deploy - truncated, rotation fix card t_264e1984. Verifier first live census: 5 ERR / 128 WARN / 4 INFO over 4775 quests (structural data defects logged loudly; 3 WARNs are stale-registry false positives from pre-BUG-008/009 audit - fix card filed). No upstream PRs (lane gate)."
+ "notes": "Josh: 'deploy that fix actually' (2026-08-04). Verifier census delta: 128->119 WARN (9 ACT_STUB_KNOWN false positives eliminated by stub-registry cleanup 073dc7d9; 5 ERR unchanged = real data defects, backlog t_abf740ee/t_a6a55c26). Log rotation (max-size 50m x3) active on fresh container. Slope-gate NPC fix NOT in this batch (still in build queue t_cf647533 - rides next deploy). No upstream PRs."
 }
