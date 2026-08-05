@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
 Updated: 2026-08-04 20:35 PDT · by Nei
-Branch of record: develop @ a901a719 · last upstream pull: 2026-08-03
+Branch of record: develop @ d1899128 · last upstream pull: 2026-08-03
 
 ## Milestone state
 
