@@ -33,17 +33,79 @@ public static class QuestSanityVerifier
         Error
     }
 
-    public sealed record Finding(Severity Severity, string Code, string Message);
+    /// <summary>
+    /// A single defect finding. <see cref="QuestId"/> is the quest template the finding
+    /// belongs to (null for SQL-level findings with no quest scope) — used by the
+    /// allowlist downgrade and the zone/kind rollup.
+    /// </summary>
+    public sealed record Finding(Severity Severity, string Code, string Message, uint? QuestId = null);
+
+    /// <summary>Per-zone census rollup (zone = quest_contexts.zone_id → zone_groups.id).</summary>
+    public sealed record ZoneRollup(uint ZoneId, int QuestCount, int FailedQuestCount, int WarnedQuestCount);
+
+    /// <summary>Per-kind census rollup (kind = quest_contexts.category_id).</summary>
+    public sealed record KindRollup(uint KindId, int QuestCount, int FailedQuestCount, int WarnedQuestCount);
 
     public sealed record SanityReport(
         IReadOnlyList<Finding> Findings,
         int QuestCount,
         int ComponentCount,
-        int ActCount)
+        int ActCount,
+        IReadOnlyList<ZoneRollup> ZoneRollups,
+        IReadOnlyList<KindRollup> KindRollups)
     {
         public int ErrorCount => Findings.Count(f => f.Severity == Severity.Error);
         public int WarnCount => Findings.Count(f => f.Severity == Severity.Warn);
         public int InfoCount => Findings.Count(f => f.Severity == Severity.Info);
+    }
+
+    /// <summary>
+    /// Quest ids intentionally allowed to report at INFO instead of WARN/ERROR. Populated
+    /// from the M1 data-defect classification (scorecard-explorations/data-defects.md,
+    /// t_7416ea48) — every id verified against prod compact.sqlite3 (md5
+    /// 78b3bdbf0383db3b927056106efdf91af). The census stays green without deleting data rows.
+    /// </summary>
+    private static readonly HashSet<uint> s_allowlistedQuestIds = BuildAllowlist();
+
+    /// <summary>
+    /// Max ids printed in an orphan-id list before eliding with "… and N more" (the
+    /// prod orphan quest_acts set is ~7.6k rows — a full listing would flood the log).
+    /// </summary>
+    private const int MaxListedIds = 50;
+
+    /// <summary>Read-only view of the allowlist (tests assert the classified shells are present).</summary>
+    public static IReadOnlySet<uint> AllowlistedQuestIds => s_allowlistedQuestIds;
+
+    private static HashSet<uint> BuildAllowlist()
+    {
+        var ids = new HashSet<uint>
+        {
+            // QUEST_NO_START — legacy 1.0-era tutorial shells (data-defects.md §5): single
+            // Reward comp (SupplyCopper+SupplyExp) or empty, no accept path, no live deps.
+            // 21 are cat-28 zone-1 Gweonid "튜토리얼" steps; 1830/1831 are 미사용 "UNUSED".
+            1533, 1640, 1830, 1831,
+
+            // QUEST_NO_COMPONENTS — reserve/dummy/cutscene shells (data-defects.md §6):
+            // 315/1728 carry a "do not delete" label (client-side skill/doodad link hooks),
+            // 1391/1576/2046 are dummies, 2148–2229 are the "하다보니(reserve)" block,
+            // 3748/3750–3757 are the Hadir-farm instance cutscenes (unreachable in M1).
+            315, 1391, 1576, 1728, 2046, 3748,
+
+            // Dead cat-34 crafting chain (data-defects.md §4): the orphan mid-chain contexts
+            // (1954–1958, 1961, 2140–2143, 2146 — no quest_contexts row, never loaded) and the
+            // two live quests whose Reward comps carry dangling ConAcceptComponent acts
+            // (1960→1961, 2145→2146). Whole chain is unreachable (roots gated on orphans).
+            1960, 1961, 2145, 2146
+        };
+
+        // Ranges (inclusive), each with the group it belongs to.
+        ids.UnionWith(Enumerable.Range(1535, 1549 - 1535 + 1).Select(i => (uint)i)); // 1535–1549  tutorial shells
+        ids.UnionWith(Enumerable.Range(1551, 1554 - 1551 + 1).Select(i => (uint)i)); // 1551–1554  tutorial shells
+        ids.UnionWith(Enumerable.Range(2148, 2229 - 2148 + 1).Select(i => (uint)i)); // 2148–2229  reserve block
+        ids.UnionWith(Enumerable.Range(3750, 3757 - 3750 + 1).Select(i => (uint)i)); // 3750–3757  Hadir cutscenes
+        ids.UnionWith(Enumerable.Range(1954, 1958 - 1954 + 1).Select(i => (uint)i)); // 1954–1958  cat-34 chain
+        ids.UnionWith(Enumerable.Range(2140, 2143 - 2140 + 1).Select(i => (uint)i)); // 2140–2143  cat-34 chain
+        return ids;
     }
 
     /// <summary>
@@ -87,7 +149,8 @@ public static class QuestSanityVerifier
             {
                 findings.Add(new Finding(Severity.Error, "ACT_UNKNOWN_TYPE",
                     $"Quest {baseAct.ParentQuestTemplate.Id} component {baseAct.ParentComponent.Id} act {baseAct.ActId}: " +
-                    $"act_detail_type '{type}' has no handler class — act can never run"));
+                    $"act_detail_type '{type}' has no handler class — act can never run",
+                    baseAct.ParentQuestTemplate.Id));
                 continue;
             }
 
@@ -96,7 +159,8 @@ public static class QuestSanityVerifier
             {
                 findings.Add(new Finding(Severity.Error, "ACT_UNINSTANTIATED",
                     $"Quest {baseAct.ParentQuestTemplate.Id} component {baseAct.ParentComponent.Id} act {baseAct.ActId}: " +
-                    $"{type} detail id {baseAct.DetailId} has no quest_act_xxx row — act never instantiated, objective silently missing"));
+                    $"{type} detail id {baseAct.DetailId} has no quest_act_xxx row — act never instantiated, objective silently missing",
+                    baseAct.ParentQuestTemplate.Id));
                 continue;
             }
 
@@ -105,7 +169,8 @@ public static class QuestSanityVerifier
                 findings.Add(new Finding(Severity.Error, "ACT_DETACHED",
                     $"Quest {baseAct.ParentQuestTemplate.Id} component {baseAct.ParentComponent.Id} act {baseAct.ActId}: " +
                     $"{type} detail id {baseAct.DetailId} is shared with component {instance.ParentComponent.Id} — " +
-                    "instance is only wired to the first component, act is missing here"));
+                    "instance is only wired to the first component, act is missing here",
+                    baseAct.ParentQuestTemplate.Id));
             }
         }
 
@@ -115,22 +180,29 @@ public static class QuestSanityVerifier
             if (quest.Components.Count <= 0)
             {
                 findings.Add(new Finding(Severity.Warn, "QUEST_NO_COMPONENTS",
-                    $"Quest {quest.Id}: template has no components — can never be accepted or run"));
+                    $"Quest {quest.Id}: template has no components — can never be accepted or run",
+                    quest.Id));
                 continue;
             }
 
             if (!quest.Components.Values.Any(c => c.KindId == QuestComponentKind.Start))
             {
                 findings.Add(new Finding(Severity.Warn, "QUEST_NO_START",
-                    $"Quest {quest.Id}: has components but no Start component — cannot be accepted via the normal flow"));
+                    $"Quest {quest.Id}: has components but no Start component — cannot be accepted via the normal flow",
+                    quest.Id));
             }
 
             foreach (var component in quest.Components.Values)
             {
+                // next_component is a deprecated 1.0 field the engine never reads for
+                // progression (QuestStep organizes by component kind); a dangling reference
+                // is a cosmetic data quirk, so this is a warning, not a runtime defect
+                // (data-defects.md §3).
                 if (component.NextComponent != 0 && !quest.Components.ContainsKey(component.NextComponent))
                 {
-                    findings.Add(new Finding(Severity.Error, "COMPONENT_NEXT_MISSING",
-                        $"Quest {quest.Id} component {component.Id}: next_component {component.NextComponent} does not exist in this quest"));
+                    findings.Add(new Finding(Severity.Warn, "COMPONENT_NEXT_MISSING",
+                        $"Quest {quest.Id} component {component.Id}: next_component {component.NextComponent} does not exist in this quest",
+                        quest.Id));
                 }
 
                 if (component.ActTemplates.Count <= 0)
@@ -145,25 +217,29 @@ public static class QuestSanityVerifier
                             when !componentTemplates.ContainsKey(checkComplete.CompleteComponent):
                             findings.Add(new Finding(Severity.Error, "ACT_REF_MISSING_COMPONENT",
                                 $"Quest {quest.Id} component {component.Id} act {checkComplete.DetailId}: " +
-                                $"QuestActCheckCompleteComponent references missing component {checkComplete.CompleteComponent} — check can never pass"));
+                                $"QuestActCheckCompleteComponent references missing component {checkComplete.CompleteComponent} — check can never pass",
+                                quest.Id));
                             break;
                         case QuestActConAcceptComponent acceptComponent
                             when !questTemplates.ContainsKey(acceptComponent.QuestContextId):
                             findings.Add(new Finding(Severity.Error, "ACT_REF_MISSING_QUEST",
                                 $"Quest {quest.Id} component {component.Id} act {acceptComponent.DetailId}: " +
-                                $"QuestActConAcceptComponent references missing quest context {acceptComponent.QuestContextId} — self-start target can never be found"));
+                                $"QuestActConAcceptComponent references missing quest context {acceptComponent.QuestContextId} — self-start target can never be found",
+                                quest.Id));
                             break;
                         case QuestActObjCompleteQuest completeQuest
                             when !questTemplates.ContainsKey(completeQuest.QuestId):
                             findings.Add(new Finding(Severity.Error, "ACT_REF_MISSING_COMPLETE_QUEST",
                                 $"Quest {quest.Id} component {component.Id} act {completeQuest.DetailId}: " +
-                                $"QuestActObjCompleteQuest references missing quest {completeQuest.QuestId}"));
+                                $"QuestActObjCompleteQuest references missing quest {completeQuest.QuestId}",
+                                quest.Id));
                             break;
                         case QuestActCheckTimer timer
                             when timer.NextComponent != 0 && !quest.Components.ContainsKey(timer.NextComponent):
                             findings.Add(new Finding(Severity.Error, "ACT_NEXT_MISSING",
                                 $"Quest {quest.Id} component {component.Id} act {timer.DetailId}: " +
-                                $"QuestActCheckTimer next_component {timer.NextComponent} does not exist in this quest"));
+                                $"QuestActCheckTimer next_component {timer.NextComponent} does not exist in this quest",
+                                quest.Id));
                             break;
                     }
 
@@ -171,7 +247,8 @@ public static class QuestSanityVerifier
                     if (s_knownStubActTypes.TryGetValue(act.GetType().Name, out var stubNote))
                     {
                         findings.Add(new Finding(Severity.Warn, "ACT_STUB_KNOWN",
-                            $"Quest {quest.Id} component {component.Id} act {act.DetailId}: {act.GetType().Name} is a known stub ({stubNote})"));
+                            $"Quest {quest.Id} component {component.Id} act {act.DetailId}: {act.GetType().Name} is a known stub ({stubNote})",
+                            quest.Id));
                     }
                 }
             }
@@ -185,12 +262,14 @@ public static class QuestSanityVerifier
                 case QuestActObjItemGroupGather gather when !groupItems.ContainsKey(gather.ItemGroupId):
                     findings.Add(new Finding(Severity.Error, "ACT_GROUP_MISSING",
                         $"Quest {gather.ParentQuestTemplate.Id} component {gather.ParentComponent.Id} act {gather.DetailId}: " +
-                        $"QuestActObjItemGroupGather references missing item group {gather.ItemGroupId}"));
+                        $"QuestActObjItemGroupGather references missing item group {gather.ItemGroupId}",
+                        gather.ParentQuestTemplate.Id));
                     break;
                 case QuestActObjItemGroupUse use when !groupItems.ContainsKey(use.ItemGroupId):
                     findings.Add(new Finding(Severity.Error, "ACT_GROUP_MISSING",
                         $"Quest {use.ParentQuestTemplate.Id} component {use.ParentComponent.Id} act {use.DetailId}: " +
-                        $"QuestActObjItemGroupUse references missing item group {use.ItemGroupId}"));
+                        $"QuestActObjItemGroupUse references missing item group {use.ItemGroupId}",
+                        use.ParentQuestTemplate.Id));
                     break;
             }
         }
@@ -203,7 +282,75 @@ public static class QuestSanityVerifier
                 "(self-referencing starter pattern, returns true by design — spot-check per M1-2)"));
         }
 
-        return new SanityReport(findings, questTemplates.Count, componentTemplates.Count, actsBaseByActId.Count);
+        // -- Allowlist (data-defects.md classification): quest ids that are intentionally
+        //    dead shells / cosmetic defects report at INFO, keeping the census green
+        //    without deleting data rows. --
+        for (var i = 0; i < findings.Count; i++)
+        {
+            var finding = findings[i];
+            if (finding.QuestId is uint questId && s_allowlistedQuestIds.Contains(questId))
+                findings[i] = finding with { Severity = Severity.Info };
+        }
+
+        // -- Zone/kind rollup (post-allowlist severities): which zones/kinds are quest-broken. --
+        var rollups = BuildRollups(questTemplates, findings);
+
+        return new SanityReport(findings, questTemplates.Count, componentTemplates.Count, actsBaseByActId.Count,
+            rollups.Zones, rollups.Kinds);
+    }
+
+    /// <summary>
+    /// Aggregates post-allowlist findings per zone (quest_contexts.zone_id) and per kind
+    /// (quest_contexts.category_id): total quests, quests with ≥1 Error finding, quests with
+    /// ≥1 Warn finding. Feeds the per-zone census lines (M2 world-broadening planning).
+    /// </summary>
+    private static (List<ZoneRollup> Zones, List<KindRollup> Kinds) BuildRollups(
+        IReadOnlyDictionary<uint, QuestTemplate> questTemplates,
+        IReadOnlyList<Finding> findings)
+    {
+        var failed = new Dictionary<uint, bool>();
+        var warned = new Dictionary<uint, bool>();
+        foreach (var finding in findings)
+        {
+            if (finding.QuestId is not uint questId)
+                continue;
+            if (finding.Severity == Severity.Error)
+                failed[questId] = true;
+            else if (finding.Severity == Severity.Warn)
+                warned[questId] = true;
+        }
+
+        var questCountByZone = new Dictionary<uint, int>();
+        var failedByZone = new Dictionary<uint, int>();
+        var warnedByZone = new Dictionary<uint, int>();
+        var questCountByKind = new Dictionary<uint, int>();
+        var failedByKind = new Dictionary<uint, int>();
+        var warnedByKind = new Dictionary<uint, int>();
+
+        foreach (var quest in questTemplates.Values)
+        {
+            var isFailed = failed.GetValueOrDefault(quest.Id);
+            var isWarned = warned.GetValueOrDefault(quest.Id);
+
+            questCountByZone[quest.ZoneId] = questCountByZone.GetValueOrDefault(quest.ZoneId) + 1;
+            if (isFailed) failedByZone[quest.ZoneId] = failedByZone.GetValueOrDefault(quest.ZoneId) + 1;
+            if (isWarned) warnedByZone[quest.ZoneId] = warnedByZone.GetValueOrDefault(quest.ZoneId) + 1;
+
+            questCountByKind[quest.CategoryId] = questCountByKind.GetValueOrDefault(quest.CategoryId) + 1;
+            if (isFailed) failedByKind[quest.CategoryId] = failedByKind.GetValueOrDefault(quest.CategoryId) + 1;
+            if (isWarned) warnedByKind[quest.CategoryId] = warnedByKind.GetValueOrDefault(quest.CategoryId) + 1;
+        }
+
+        var zones = questCountByZone.Keys.OrderBy(z => z)
+            .Select(z => new ZoneRollup(z, questCountByZone[z],
+                failedByZone.GetValueOrDefault(z), warnedByZone.GetValueOrDefault(z)))
+            .ToList();
+        var kinds = questCountByKind.Keys.OrderBy(k => k)
+            .Select(k => new KindRollup(k, questCountByKind[k],
+                failedByKind.GetValueOrDefault(k), warnedByKind.GetValueOrDefault(k)))
+            .ToList();
+
+        return (zones, kinds);
     }
 
     /// <summary>
@@ -215,17 +362,42 @@ public static class QuestSanityVerifier
     {
         var findings = new List<Finding>();
 
-        // quest_acts rows referencing a missing quest_component — never instantiated (dead data, no crash)
-        var orphanActs = ScalarCount(connection,
-            "SELECT COUNT(*) FROM quest_acts a LEFT JOIN quest_components qc ON qc.id = a.quest_component_id WHERE qc.id IS NULL");
-        findings.Add(new Finding(Severity.Info, "DATA_ORPHAN_ACTS",
-            $"{orphanActs} quest_acts rows reference a missing quest_component — never instantiated (dead data, no crash)"));
+        // quest_acts rows referencing a missing quest_component — never instantiated (dead data, no crash).
+        // List the orphan act ids (capped — prod has ~7.6k of them) so the census is self-documenting.
+        var orphanActIds = new List<long>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT a.id FROM quest_acts a LEFT JOIN quest_components qc ON qc.id = a.quest_component_id " +
+                                  "WHERE qc.id IS NULL ORDER BY a.id";
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                orphanActIds.Add(reader.GetInt64(0));
+        }
 
-        // quest_components rows referencing a missing quest_context — silently skipped by LoadQuestComponents
-        var orphanComponents = ScalarCount(connection,
-            "SELECT COUNT(*) FROM quest_components qc LEFT JOIN quest_contexts q ON q.id = qc.quest_context_id WHERE q.id IS NULL");
+        findings.Add(new Finding(Severity.Info, "DATA_ORPHAN_ACTS",
+            $"{orphanActIds.Count} quest_acts rows reference a missing quest_component — never instantiated (dead data, no crash)" +
+            $"(orphan quest_act ids: {FormatIdList(orphanActIds)})"));
+
+        // quest_components rows referencing a missing quest_context — silently skipped by
+        // LoadQuestComponents. List the orphan quest_context ids (data-defects.md §7: 28 ids).
+        long orphanComponentRows = 0;
+        var orphanContextIds = new List<long>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT qc.quest_context_id, COUNT(*) FROM quest_components qc " +
+                                  "LEFT JOIN quest_contexts q ON q.id = qc.quest_context_id " +
+                                  "WHERE q.id IS NULL GROUP BY qc.quest_context_id ORDER BY qc.quest_context_id";
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                orphanContextIds.Add(reader.GetInt64(0));
+                orphanComponentRows += reader.GetInt64(1);
+            }
+        }
+
         findings.Add(new Finding(Severity.Info, "DATA_ORPHAN_COMPONENTS",
-            $"{orphanComponents} quest_components rows reference a missing quest_context — never loaded"));
+            $"{orphanComponentRows} quest_components rows reference a missing quest_context — never loaded" +
+            $"(orphan quest_context ids: {FormatIdList(orphanContextIds)})"));
 
         // act_detail_type values with no handler class — every row of such a type stalls
         using (var command = connection.CreateCommand())
@@ -306,6 +478,40 @@ public static class QuestSanityVerifier
                 $"[QuestSanity] SUMMARY: OK — {report.ErrorCount} errors, {report.WarnCount} warnings, {report.InfoCount} info " +
                 $"across {report.QuestCount} quests / {report.ComponentCount} components / {report.ActCount} acts");
         }
+
+        // Zone/kind rollup — one glance answers "which zones are quest-broken" (M2
+        // world-broadening planning). Only zones/kinds with failed or warned quests print;
+        // a fully green census emits the "none" line.
+        var brokenZones = report.ZoneRollups.Where(z => z.FailedQuestCount > 0 || z.WarnedQuestCount > 0).ToList();
+        if (brokenZones.Count > 0)
+        {
+            foreach (var zone in brokenZones)
+                logger.Info($"[QuestSanity] ZONE {zone.ZoneId}: {zone.QuestCount} quests, {zone.FailedQuestCount} failed, {zone.WarnedQuestCount} warned");
+        }
+        else
+        {
+            logger.Info("[QuestSanity] ZONES: no quests with errors or warnings");
+        }
+
+        var brokenKinds = report.KindRollups.Where(k => k.FailedQuestCount > 0 || k.WarnedQuestCount > 0).ToList();
+        if (brokenKinds.Count > 0)
+        {
+            foreach (var kind in brokenKinds)
+                logger.Info($"[QuestSanity] KIND {kind.KindId}: {kind.QuestCount} quests, {kind.FailedQuestCount} failed, {kind.WarnedQuestCount} warned");
+        }
+        else
+        {
+            logger.Info("[QuestSanity] KINDS: no quests with errors or warnings");
+        }
+    }
+
+    /// <summary>Joins an id list for a census message, eliding past <see cref="MaxListedIds"/> entries.</summary>
+    private static string FormatIdList(IReadOnlyList<long> ids)
+    {
+        if (ids.Count == 0)
+            return "none";
+        var shown = string.Join(", ", ids.Take(MaxListedIds));
+        return ids.Count > MaxListedIds ? $"{shown} … and {ids.Count - MaxListedIds} more" : shown;
     }
 
     private static long ScalarCount(SqliteConnection connection, string sql)
