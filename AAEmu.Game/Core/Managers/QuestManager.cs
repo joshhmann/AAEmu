@@ -253,6 +253,19 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
 
             LoadQuestContexts(connection);
             LoadQuestComponents(connection);
+
+            // Additive data overlay (upstream alignment rule 3): compact.sqlite3 is a
+            // READ-ONLY reference, so the 3 cosmetic next_component corrections
+            // (data-defects.md §3: quests 330/776/777) land here, never in the file.
+            var overlay = QuestDataOverlay.Apply(_componentTemplates);
+            if (overlay.MissingComponentIds.Count > 0)
+            {
+                Logger.Warn(
+                    $"[QuestDataOverlay] {overlay.MissingComponentIds.Count} overlay rows missing from quest_components " +
+                    $"(data drift?) — applied {overlay.Applied}/{QuestDataOverlay.NextComponentFixes.Count}, missing: " +
+                    string.Join(", ", overlay.MissingComponentIds));
+            }
+
             LoadBaseQuestActs(connection);
 
             LoadDetailQuestActTemplates(connection);
