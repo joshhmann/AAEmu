@@ -1,7 +1,7 @@
 # FAQ
 
 - Audience: Contributors, testers, and players
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: None
 
 ## Project basics

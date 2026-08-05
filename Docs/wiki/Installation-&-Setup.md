@@ -1,7 +1,7 @@
 # Installation & Setup
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: `.NET 10 SDK`, required AAEmu dependencies/downloads, and
   MySQL for manual track
 

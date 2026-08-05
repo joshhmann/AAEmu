@@ -1,7 +1,7 @@
 # Dependencies and Downloads
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: None
 
 Use this page as the single source of truth for required downloads before setup.

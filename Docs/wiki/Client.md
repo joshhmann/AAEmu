@@ -1,7 +1,7 @@
 # Client Downloads
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: Internet access and enough disk space for client files
 
 Our current `develop` branch requires client version 1.2 (revision `208022`).

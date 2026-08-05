@@ -1,7 +1,7 @@
 # Working with Config Files and Server Listings
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: Basic JSON editing and AAEmu project structure familiarity
 
 ## Overview
