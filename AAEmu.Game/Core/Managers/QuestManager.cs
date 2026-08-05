@@ -270,7 +270,8 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
                 _questTemplates, _componentTemplates, _actsBaseByActId, _actTemplatesByDetailType, _groupItems);
             LastSanityReport = new QuestSanityVerifier.SanityReport(
                 [.. dataFindings, .. loadedReport.Findings],
-                loadedReport.QuestCount, loadedReport.ComponentCount, loadedReport.ActCount);
+                loadedReport.QuestCount, loadedReport.ComponentCount, loadedReport.ActCount,
+                loadedReport.ZoneRollups, loadedReport.KindRollups);
             QuestSanityVerifier.LogReport(LastSanityReport);
         }
         Logger.Info($"Loaded {_questTemplates.Count} quests");
