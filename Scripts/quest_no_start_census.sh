@@ -20,8 +20,14 @@
 #                  2026-08-05-drop-no-start-cluster.sql (the 23-context drop)
 #                  in the copy, re-run the census (pass-after), then clean up.
 #
-# Exit code: 1 when the census finds QUEST_NO_START rows (fail), 0 when clean
-#            (pass). Read-only against the source DB.
+# Exit codes:
+#   plain mode:        1 = raw source has QUEST_NO_START quests (fail-before),
+#                      0 = clean. Use this for fail-before evidence.
+#   --apply-fix mode:  the pass-after phase is authoritative — 0 = the fixed
+#                      copy is clean (fix works), 1 = the fixed copy STILL has
+#                      quests (fix incomplete). The raw-source phase still prints
+#                      its fail-before result on stdout but does not set the
+#                      final exit code. Read-only against the source DB.
 # ============================================================================
 set -u
 
@@ -74,6 +80,9 @@ if [ "$APPLY_FIX" = "1" ]; then
     sqlite3 "$TMP" < "$PATCH"
     echo
     echo ">> fix applied to copy: $PATCH (23 contexts / 25 components / 42 acts)"
+    # --apply-fix contract: pass-after phase decides the exit code (raw phase
+    # above already reported fail-before on stdout; its rc must not stick).
+    rc=0
     run_census "$TMP" || rc=1
 fi
 
