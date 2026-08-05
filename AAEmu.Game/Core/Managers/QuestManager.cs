@@ -266,10 +266,11 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
             // Collects defects (unresolvable act references, known stubs, missing objective
             // targets) and logs them; never throws (matches sibling loader behavior).
             var dataFindings = QuestSanityVerifier.VerifyData(connection, _actTemplatesByDetailType.Keys.ToHashSet());
+            var unitReqsFindings = QuestSanityVerifier.VerifyUnitReqs(connection);
             var loadedReport = QuestSanityVerifier.VerifyLoadedState(
                 _questTemplates, _componentTemplates, _actsBaseByActId, _actTemplatesByDetailType, _groupItems);
             LastSanityReport = new QuestSanityVerifier.SanityReport(
-                [.. dataFindings, .. loadedReport.Findings],
+                [.. dataFindings, .. unitReqsFindings, .. loadedReport.Findings],
                 loadedReport.QuestCount, loadedReport.ComponentCount, loadedReport.ActCount,
                 loadedReport.ZoneRollups, loadedReport.KindRollups);
             QuestSanityVerifier.LogReport(LastSanityReport);
