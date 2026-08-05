@@ -1,6 +1,6 @@
 # Quest Runnability — M1-5 scenario harness census
 
-Generated: 2026-08-05 22:10Z by QuestScenarioTierTests (M1-5c)
+Generated: 2026-08-05 22:15Z by QuestScenarioTierTests (M1-5c)
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
