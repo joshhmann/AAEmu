@@ -1,13 +1,22 @@
 # Quest Runnability — M1-5 scenario harness census
 
+<<<<<<< HEAD
 Generated: 2026-08-05 00:53Z by QuestScenarioTierTests (M1-5b)
+=======
+Generated: 2026-08-05 02:13Z by QuestScenarioTierTests (M1-5b)
+>>>>>>> origin/fix/char-abilities-general
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
 ## Headline
 
+<<<<<<< HEAD
 - **T1 golden zone (Solzreed)**: 88 PASS / 9 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 22 PASS / 7 FAIL / 6 SKIP
+=======
+- **T1 golden zone (Solzreed)**: 87 PASS / 10 FAIL / 0 SKIP
+- **T2 families (kill-accept/guard/item-group)**: 24 PASS / 5 FAIL / 6 SKIP
+>>>>>>> origin/fix/char-abilities-general
 
 ## T1 — per-quest verdicts
 
@@ -41,7 +50,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2400 | 중년 남성의 희망 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2404 | 누군가의 편지 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2413 | 피 묻은 손 돌격대장 처치! | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 250 | 솔즈리드 여우 처치 | golden-zone | Fail | START:Pass; PROGRESS:Pass; REWARD:Fail (KeyNotFoundException: The given key 'General' was not present in the dictionary.    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)    at AAEmu.Game.Models.Game.Char.CharacterAbilities.AddActiveExp(Int32 exp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/CharacterAbilities.cs:line 55    at AAEmu.Game.Models.Game.Char.Character.AddExp(Int32 expDelta, Boolean shouldAddAbilityExp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/Character.cs:line 1455    at AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActSupplyExp.cs:line 20    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 628); PERSIST:Pass |
+| 250 | 솔즈리드 여우 처치 | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 251 | 화난 멧돼지들 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 252 | 숲 되살리기 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 2531 | 시골에 도착한 예언자 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -145,9 +154,9 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5489 | test_time | mixed-families | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 5490 | 신기루 섬을 깨끗하게 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 556 | 시차일드 부두로 찾아온 수상한 인어들 퇴치 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 6578 | 이이제이 | mixed-families | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail (KeyNotFoundException: The given key 'General' was not present in the dictionary.    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)    at AAEmu.Game.Models.Game.Char.CharacterAbilities.AddActiveExp(Int32 exp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/CharacterAbilities.cs:line 55    at AAEmu.Game.Models.Game.Char.Character.AddExp(Int32 expDelta, Boolean shouldAddAbilityExp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/Character.cs:line 1455    at AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActSupplyExp.cs:line 20    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 628); PERSIST:Pass |
-| 6600 | 보다 더 강력한 힘 | mixed-families | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail (KeyNotFoundException: The given key 'General' was not present in the dictionary.    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)    at AAEmu.Game.Models.Game.Char.CharacterAbilities.AddActiveExp(Int32 exp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/CharacterAbilities.cs:line 55    at AAEmu.Game.Models.Game.Char.Character.AddExp(Int32 expDelta, Boolean shouldAddAbilityExp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/Character.cs:line 1455    at AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActSupplyExp.cs:line 20    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 628); PERSIST:Pass |
-| 6615 | 신의 방패 정식 대원이 되다! | mixed-families | Fail | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail (KeyNotFoundException: The given key 'General' was not present in the dictionary.    at System.Collections.Generic.Dictionary`2.get_Item(TKey key)    at AAEmu.Game.Models.Game.Char.CharacterAbilities.AddActiveExp(Int32 exp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/CharacterAbilities.cs:line 55    at AAEmu.Game.Models.Game.Char.Character.AddExp(Int32 expDelta, Boolean shouldAddAbilityExp) in /root/aaemu-dev/AAEmu.Game/Models/Game/Char/Character.cs:line 1455    at AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActSupplyExp.cs:line 20    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 628); PERSIST:Pass |
+| 6578 | 이이제이 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6600 | 보다 더 강력한 힘 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6615 | 신의 방패 정식 대원이 되다! | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 745 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 913 | 큰 금니 트로쉬 | mixed-families | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 
@@ -155,9 +164,6 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 - **START:Fail** — 6 quests: 265, 266, 299, 303, 1033, 3656
 - **START:Pass; PROGRESS:Fail** — 4 quests: 2248, 269, 294, 5489
-- **START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail** — 2 quests: 6578, 6600
-- **START:Pass; PROGRESS:Pass; REWARD:Fail** — 1 quests: 250
 - **START:Pass; SUPPLY:Pass; PROGRESS:Fail** — 1 quests: 295
 - **START:Pass; SUPPLY:Fail** — 1 quests: 1897
-- **START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Fail** — 1 quests: 6615
 
