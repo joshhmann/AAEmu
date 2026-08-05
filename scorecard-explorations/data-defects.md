@@ -70,6 +70,13 @@ Fix (a): `UPDATE quest_components SET next_component=1521 WHERE id=1520;`
 Recommended: yes — 3 rows, silences 3 boot Errors. Verifier follow-up (BUG-007, not this
 card): downgrade COMPONENT_NEXT_MISSING to Warn; the field is deprecated.
 
+**Mechanism decision (Tai, 2026-08-04, t_25744130):** quest template data is loaded from
+compact.sqlite3 at startup (QuestManager.Load, `SQLite.CreateConnection`), so a MySQL
+`SQL/updates` file cannot correct the census. The 3 fixes landed as a **startup sanitizer**
+— `AAEmu.Game/Core/Managers/QuestDataOverlay.cs` (additive in-memory overlay applied by
+QuestManager.Load right after `LoadQuestComponents`; drift rows Warn, never throw) —
+branch `fix/verifier-data-overlay`. SQL/updates stays the mechanism for MySQL-hosted data.
+
 ## 4. ACT_REF_MISSING_QUEST — 1960 → 1961, 2145 → 2146
 
 | Quest | Name | Zone / Lvl / Cat | Accept path | Reward comp's ConAcceptComponent |
@@ -176,8 +183,9 @@ DELETE FROM unit_reqs WHERE id = 16000;
 -- DELETE FROM quest_contexts WHERE id IN (...);
 ```
 Caution: `compact.sqlite3` is a READ-ONLY reference (upstream alignment rule 3) — these
-fixes land as an **additive overlay** (SQL/updates or a startup sanitizer), never by editing
-the reference file. The exact mechanism is a follow-up decision for Tai/Rei.
+fixes land as an **additive overlay**, never by editing the reference file. Mechanism
+decision (t_25744130): sqlite-sourced data (quest templates) → startup sanitizer
+(`QuestDataOverlay`, see §3); MySQL-hosted data → `SQL/updates` file.
 
 ## 8. Verifier (BUG-007) follow-up suggestions — engine-side, not this card
 
