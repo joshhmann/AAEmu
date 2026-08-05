@@ -20,6 +20,7 @@ using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.UnitTests.Utils.Mocks;
@@ -340,6 +341,15 @@ public class QuestScenarioDriver
         };
         character.Appellations = new CharacterAppellations(character);
         character.Abilities = new CharacterAbilities(character);
+        // RC-6 (t_2d482bc3): rig real abilities. Ability1..3 auto-properties
+        // default to AbilityType.General (0), which the CharacterAbilities ctor
+        // never seeds (it seeds Fight(1)..Love(10)) - without this, a
+        // QuestActSupplyExp reward (Character.AddExp -> AddActiveExp) hits the
+        // unseeded General key and the exp is silently dropped. Three distinct
+        // seeded abilities mirror a real character so reward exp actually lands.
+        character.Ability1 = AbilityType.Fight;
+        character.Ability2 = AbilityType.Magic;
+        character.Ability3 = AbilityType.Will;
         character.Quests = new CharacterQuests(character);
 
         // Seed item-group / npc-group membership for group acts (BUG-009 read path).

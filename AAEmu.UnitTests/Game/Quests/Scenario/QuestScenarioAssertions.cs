@@ -119,6 +119,33 @@ public static class QuestScenarioAssertions
         if (expect.Completed == true && !character.Quests.IsQuestComplete(manifest.QuestId))
             failures.Add("expected completed-quest flag set, found not completed");
 
+        // RC-6 harness fidelity (t_2d482bc3): when the reward path grants ability
+        // exp (QuestActSupplyExp with a positive amount), the rigged owner must
+        // actually receive it. BuildQuest rigs Ability1..3 to seeded ability keys
+        // (Fight..Love); without that rig the abilities default to
+        // AbilityType.General (0), which the CharacterAbilities ctor never seeds,
+        // and AddActiveExp silently drops the reward - this check surfaces that
+        // instead of masking it. Zero-exp supply acts (canonical 1.2 data for
+        // 4901/4902/4903/6280) grant nothing by design and are skipped.
+        var supplyExpTotal = expect.Completed == true
+            ? quest.Template.Components.Values
+                .SelectMany(c => c.ActTemplates)
+                .OfType<AAEmu.Game.Models.Game.Quests.Acts.QuestActSupplyExp>()
+                .Sum(a => a.Exp)
+            : 0;
+        if (supplyExpTotal > 0)
+        {
+            var abilityExpGained = 0;
+            foreach (var ability in new[] { character.Ability1, character.Ability2, character.Ability3 })
+            {
+                if (character.Abilities.Abilities.TryGetValue(ability, out var abilityState))
+                    abilityExpGained += abilityState.Exp;
+            }
+
+            if (abilityExpGained <= 0)
+                failures.Add("expected ability exp granted by QuestActSupplyExp reward, found none");
+        }
+
         if (expect.PersistRoundTrip == true)
         {
             if (persistSnapshotData == null)
