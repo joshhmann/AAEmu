@@ -171,6 +171,33 @@ public class NpcMoveTowardsTests
     }
 
     [Test]
+    public async Task MoveTowards_TeleportScaleReturn_SkipsGateAndSnapsHome()
+    {
+        // t_26de2672 repro: mob de-aggros in the valley (Z=90) while its spawn sits on
+        // a cliff top (Z=110). The per-tick walk back is blocked by the gate (rise
+        // 20m >> NpcMaxStepHeight 0.5) — the mob halts at the base — but the
+        // leash-timeout teleport (MoveTowards(idle, 1e6)) must NOT be gated: it has to
+        // snap the mob home or the mob stays stranded at the cliff base forever.
+        SetTerrainHeight(20f, 10f, GroundHeight + 10f);
+        var npc = CreateNpc(10f, 10f, GroundHeight - 10f);
+        var idle = new Vector3(20f, 10f, GroundHeight + 10f);
+
+        // 1. Per-tick walk step toward the cliff top: gate still blocks it (halts at base)
+        npc.MoveTowards(idle, 5f);
+        await Assert.That(npc.Transform.Local.Position.X).IsEqualTo(10f);
+        await Assert.That(npc.Transform.Local.Position.Y).IsEqualTo(10f);
+        await Assert.That(npc.Transform.Local.Position.Z).IsEqualTo(GroundHeight - 10f);
+
+        // 2. Teleport-scale return (distance 1e6, as issued by
+        //    ReturnStateBehavior.OnCompletedReturn after the 20s leash timeout):
+        //    gate exempt, mob snaps home despite the 20m cliff
+        npc.MoveTowards(idle, 1000000.0f);
+        await Assert.That(npc.Transform.Local.Position.X).IsEqualTo(20f);
+        await Assert.That(npc.Transform.Local.Position.Y).IsEqualTo(10f);
+        await Assert.That(MathF.Abs(npc.Transform.Local.Position.Z - (GroundHeight + 10f)) < 0.001f).IsTrue();
+    }
+
+    [Test]
     [Arguments(0f, 0.3f, 0.5f)]
     [Arguments(100f, 100.5f, 0.5f)]
     public async Task IsStepBlocked_RiseWithinWalkableStep_NotBlocked(float currentZ, float destinationZ, float maxStep)

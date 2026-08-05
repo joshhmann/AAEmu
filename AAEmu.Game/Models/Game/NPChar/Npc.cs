@@ -1153,6 +1153,16 @@ public partial class Npc : Unit
     private static readonly ConcurrentDictionary<(int CellX, int CellY), byte> s_missingHeightmapCells = [];
 
     /// <summary>
+    /// A single <see cref="MoveTowards"/> call requesting at least this many meters
+    /// of travel is teleport-scale, not a per-tick walk step: per-tick steps are the
+    /// product of move speed and the ~100ms tick (single-digit meters at most), while
+    /// the leash-timeout return teleport passes 1e6. Teleport-scale steps are exempt
+    /// from the slope/step gate so mobs that de-aggro below cliff-top spawns still
+    /// snap home instead of being stranded at the cliff base (t_26de2672).
+    /// </summary>
+    private const float NpcTeleportStepThreshold = 100f;
+
+    /// <summary>
     /// Slope/step gate decision for <see cref="MoveTowards"/>: a tick's XY step is
     /// rejected when the terrain at the destination is more than
     /// <paramref name="maxStepHeight"/> above the current position (steep uphill
@@ -1251,8 +1261,13 @@ public partial class Npc : Unit
         // Downward steps are never blocked (NPCs may walk off ledges). Where no terrain
         // data exists (missing heightmap cell / navmesh) the gate is skipped and the
         // legacy fallback behavior is kept, with a one-time warning per cell.
+        // Teleport-scale requests (distance >= NpcTeleportStepThreshold, e.g. the
+        // leash-timeout return teleport's 1e6) are exempt: a single step covering that
+        // distance can never be a per-tick walk, and gating it would strand mobs whose
+        // spawn terrain sits more than NpcMaxStepHeight above their de-aggro position
+        // (t_26de2672).
         var maxStepHeight = AppConfiguration.Instance.World.NpcMaxStepHeight;
-        if (maxStepHeight > 0f)
+        if (maxStepHeight > 0f && distance < NpcTeleportStepThreshold)
         {
             var terrainHeight = WorldManager.Instance.GetHeight(Transform.ZoneId, newX, newY, newZ);
             if (terrainHeight == 0f)
