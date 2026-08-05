@@ -48,7 +48,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | ID | Mechanic / scoped scenario | First gate | C | W | H | A | R | S | Evidence / next audit |
 |---|---|---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
 | PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline |
-| QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 1 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; real restart still required |
+| QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 1 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; `next-missing-776-777.md` (330/776/777 COMPONENT_NEXT_MISSING → 0 via QuestDataOverlay, Rei gate PASS t_d8a8c798); real restart still required |
 | CTRL-01 | Movement, targeting, interaction, control-state recovery | M2/M5 | U | U | U | U | U | U | Actor-contract spike |
 | COMBAT-01 | PvE combat, death, resurrection, loot | M2/M5 | U | 1 | U | U | U | U | `SkillManager`; combat audit |
 | ABILITY-01 | Ability selection, skill use, progression | M2 | U | 1 | U | U | U | N/A | `SkillManager`; ability audit |
@@ -152,9 +152,11 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M1-5, 2026-08-04): **153/153 driven quests runnable** across the 186-quest
-> scenario-harness census (T1 97/97, T2 29/29, T3 27/27 PASS; 33 SKIP = 8 orphaned
-> quest_contexts + 25 harness gaps). See scorecard-explorations/runnability.md + the M1-5 entry below.
+> Quest-runnability (M1-5, census regen 2026-08-05 post-fix/next-missing-776-777): **153/153 driven quests runnable** across the 186-quest
+> scenario-harness census (T1 97/97, T2 29/29, T3 27/27 PASS; 0 FAIL; 33 SKIP = 8 orphaned
+> quest_contexts + 25 harness gaps — **no verdict deltas vs pre-fix**). 330/776/777
+> COMPONENT_NEXT_MISSING cleared at load via QuestDataOverlay (was a verifier finding, never a
+> scenario FAIL). See scorecard-explorations/runnability.md + the M1-5 entry below.
 
 ## Zero-data-wired domains (data exists, server ignores it)
 
@@ -251,6 +253,12 @@ zones required by a milestone or an observed defect.
   Remaining SKIPs: 8 orphaned quest_contexts (data) + 25 harness gaps (14 unsupported act
   families — ObjZoneKill, ObjAggro, ObjCompleteQuest, EtcItemObtain, …; queue in
   scorecard-explorations/runnability.md). Gate 1148/1148.
+  **Post-fix census regen (2026-08-05, fix/next-missing-776-777 @ aa35a503 merged, Rei gate PASS
+  t_d8a8c798):** verdicts byte-stable — 153/153 runnable, 0 FAIL, 33 SKIP (census FAIL/SKIP deltas:
+  none; the defect was a load-time verifier finding, never a scenario stage). 330/776/777
+  COMPONENT_NEXT_MISSING → 0 via QuestDataOverlay (1520→1521, 3480→3482, 3488→11591): real-load
+  census 0 ERR / 0 COMPONENT_NEXT_MISSING over 4775 quests. Gate 1216/0/0. Evidence:
+  scorecard-explorations/next-missing-776-777.md.
 
 ### System-level bugs (non-quest)
 
