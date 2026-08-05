@@ -18,6 +18,7 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-006 | Kill-acceptor quests can never start (380 quests, e.g. 182/205/556/913/1208) — QuestActConAcceptNpcKill checked Npc acceptor, no code path set Kill | FIXED — branch fix/quest-kill-acceptor (2026-08-03) |
 | BUG-008 | QuestActCheckGuard silently auto-completes escort/protect objectives (6 quests) — RunAct returned true unconditionally | FIXED — branch fix/quest-check-guard (2026-08-04) |
 | BUG-009 | Item-group gather/use objectives stall (9 act rows; 4 live quests 5490/6578/6600/6615 + test 5489) — QuestActObjItemGroupGather/Use RunAct fell through to base stub | FIXED — branch fix/quest-item-group-objectives (2026-08-04) |
+| BUG-010 | Helpers.UnixTime(long) clamps every timestamp > 59s to DateTime.MaxValue (DateTime.MaxValue.Second == 59) — all CheckTimer quests restore with Time=MaxValue, timer never expires | FIXED — branch fix/bug-010-unix-time (2026-08-04) |
 | BUG-007 | Quest data defects fail silently — startup sanity verifier missing (M1-3) | FIXED — branch feat/quest-sanity-verifier (2026-08-04) |
 
 ## Production state (2026-08-02)

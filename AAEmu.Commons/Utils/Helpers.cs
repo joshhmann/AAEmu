@@ -49,12 +49,17 @@ public static class Helpers
         return (long)timeSpan.TotalSeconds;
     }
 
+    // Exact max unix-seconds value representable by DateTime (ticks math — (long)TotalSeconds
+    // would round up to 253402300800, which AddSeconds cannot represent)
+    private static readonly long MaxUnixTimeSeconds =
+        (DateTime.MaxValue.Ticks - DateTime.UnixEpoch.Ticks) / TimeSpan.TicksPerSecond;
+
     public static DateTime UnixTime(long time)
     {
-        if (time > DateTime.MaxValue.Second)
+        if (time > MaxUnixTimeSeconds)
             return DateTime.MaxValue;
 
-        if (time < DateTime.MinValue.Second)
+        if (time < 0)
             return DateTime.MinValue;
 
         return DateTime.UnixEpoch.AddSeconds(time);
