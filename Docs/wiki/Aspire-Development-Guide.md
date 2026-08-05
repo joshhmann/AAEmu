@@ -1,7 +1,7 @@
 # Aspire Development Guide
 
 - Audience: Contributors
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: `.NET 10 SDK`, OCI runtime, and required downloaded
   dependencies
 

@@ -1,7 +1,7 @@
 # Docker Installation Guide
 
 - Audience: Operators and contributors
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: Docker runtime, Git, required AAEmu data files
 
 ## When to use this guide

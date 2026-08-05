@@ -1,7 +1,7 @@
 # Understanding AAEmu Components
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: None
 
 Understanding the project components makes setup and debugging much easier.

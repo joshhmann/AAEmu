@@ -1,8 +1,12 @@
 # Classes Status
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: None
+
+> **⚠️ Staleness notice (August 2026):** this page's content predates current
+> `develop` and is under re-verification (Lane B) — see the upstream issue
+> tracker for current skill status. M0/M1 milestone work does not touch it.
 
 This page lists the state of classes and how active and passive skills currently
 behave.

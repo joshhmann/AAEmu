@@ -5,7 +5,7 @@ Open source server software for ArcheAge written in `.NET`.
 ## Start Here
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on February 28, 2026
+- Last verified against: `develop` on August 5, 2026
 - Prerequisites: None
 - Preferred local development: [Aspire Development Guide](Aspire-Development-Guide)
 - Manual setup fallback: [Installation & Setup](Installation-&-Setup)
@@ -14,6 +14,12 @@ Open source server software for ArcheAge written in `.NET`.
 - Need help: [Getting Help](Getting-Help)
 
 ## Documentation Map
+
+### Project Status
+
+- [Project Status](Project-Status) — fork milestone plan, M0/M1 progress
+- [Golden Route — Solzreed](Golden-Route-Solzreed) — the curated M1 opening progression
+- [Quest Test Harness](Quest-Test-Harness) — scenario harness, game-data graphs, quality gate
 
 ### Getting Started
 
@@ -56,7 +62,7 @@ Open source server software for ArcheAge written in `.NET`.
 
 - [Documentation Maintenance](Documentation-Maintenance)
 
-## Recent Platform Changes
+## Platform Changes (February 2026)
 
 - `.NET Aspire` AppHost is available and is now the preferred contributor workflow.
 - Login server public network uses ASP.NET Core Kestrel.
