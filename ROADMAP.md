@@ -144,13 +144,20 @@ route. Individual peripheral quest bugs → Lane B (maintenance).
 - 🔶 **WIDENED 2026-08-04 (Josh): verifier data-defect backlog folds into M1**
   — real structural defects from the live census (5 ERR / 128 WARN over 4775
   quests), priority after golden-route blockers:
-  - COMPONENT_NEXT_MISSING quests 776/777 (next_component refs to nowhere)
-  - ACT_REF_MISSING_QUEST 2145→2146 (self-start target can never be found)
+  - COMPONENT_NEXT_MISSING quests 776/777 (next_component refs to nowhere) —
+    ✅ FIX (in-memory overlay, branch fix/next-missing-776-777, Rei gate
+    t_d8a8c798)
+  - ACT_REF_MISSING_QUEST 2145→2146 (self-start target can never be found) —
+    ✅ PRUNE (dangling accept-acts, t_60a559ab)
   - QUEST_NO_START cluster 1533–1548 (components but no Start — can never be
-    accepted)
-  - QUEST_NO_COMPONENTS 1391 (template has no components at all)
-  - 8 orphaned quest_contexts (745, 1421, 1954–1958, 2140) — fix vs drop
-    decision per row
+    accepted) — ✅ DROP 2026-08-05 (Josh): 23 legacy tutorial shells,
+    t_5140fb35
+  - QUEST_NO_COMPONENTS 1391 (template has no components at all) — ✅ DROP
+    2026-08-05 (Josh): dummy shell, t_5a61cee3
+  - 8 orphaned quest_contexts (745, 1421, 1954–1958, 2140) — ✅ DROP
+    2026-08-05 (Josh): t_0ac25620
+  - Register of every dropped id + restore pointers:
+    scorecard-explorations/dropped-content-register.md
 - 🔶 Harness extension (M1-5d, t_f198bb0e): 14 unsupported act families →
   census coverage grows past 153 (currently 25 harness-gap SKIPs)
 
