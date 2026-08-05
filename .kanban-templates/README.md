@@ -24,7 +24,12 @@
 > docs + push, each parent-gated on the previous. Every card ends pushed or
 > as a deliverable file with an explicit path — never end holding un-pushed
 > commits. If a step exceeds ~2/3 budget: push what exists, split the rest
-> into a child card.
+> into a child card. **HARD LAW (2026-08-04, iteration exhaustion = design
+> failure): deliverable must fit in ONE sentence (no "and then / also /
+> plus" — split FIRST, in the SAME batch as the parent); total card ≤ ~60
+> turns; TWO timeouts ⇒ mandatory split on the third retry; worker at ~100
+> turns ⇒ STOP, push what works, comment what's left. Violating this is a
+> card-design bug, not a worker problem.**
 
 ## What this is
 
