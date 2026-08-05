@@ -1,22 +1,13 @@
 # Quest Runnability — M1-5 scenario harness census
 
-<<<<<<< HEAD
-Generated: 2026-08-05 00:53Z by QuestScenarioTierTests (M1-5b)
-=======
-Generated: 2026-08-05 02:13Z by QuestScenarioTierTests (M1-5b)
->>>>>>> origin/fix/char-abilities-general
+Generated: 2026-08-05 02:57Z by QuestScenarioTierTests (M1-5b)
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
 ## Headline
 
-<<<<<<< HEAD
-- **T1 golden zone (Solzreed)**: 88 PASS / 9 FAIL / 0 SKIP
-- **T2 families (kill-accept/guard/item-group)**: 22 PASS / 7 FAIL / 6 SKIP
-=======
-- **T1 golden zone (Solzreed)**: 87 PASS / 10 FAIL / 0 SKIP
-- **T2 families (kill-accept/guard/item-group)**: 24 PASS / 5 FAIL / 6 SKIP
->>>>>>> origin/fix/char-abilities-general
+- **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
+- **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
 
 ## T1 — per-quest verdicts
 
@@ -29,7 +20,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2239 | 지붕 위로 날아간 닭 | golden-zone | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 2245 | 피 묻은 손의 약탈 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2246 | 칼의 행방 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2248 | 피 묻은 손을 물리쳐라 | golden-zone | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2248 | 피 묻은 손을 물리쳐라 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2249 | 트럼프의 부탁 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2251 | 허풍쟁이 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2255 | 금빛 표지 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -70,9 +61,9 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 260 | 정체 모를 빛 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 261 | 원혼 달래기 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 263 | 부러진 곡괭이 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 265 | 솔즈리언의 문을 위하여 | golden-zone | Fail | START:Fail (expected step Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 266 | 양치기의 부탁 | golden-zone | Fail | START:Fail (expected step Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 269 | 두들링을 두들겨라 | golden-zone | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 265 | 솔즈리언의 문을 위하여 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 266 | 양치기의 부탁 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 269 | 두들링을 두들겨라 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 270 | 좋은 생각 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 271 | 거대 토끼 처치 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 273 | 르네의 반지 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -80,12 +71,12 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 290 | 발릴리의 고민 | golden-zone | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 291 | 브리짓 구출 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 293 | 요정의 정수 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 294 | 타락한 요정의 이름, 밴시 | golden-zone | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 295 | 밴시 정화 | golden-zone | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 294 | 타락한 요정의 이름, 밴시 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 295 | 밴시 정화 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 298 | 릴리엇 구릉지로 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 299 | 네손가락 도적단의 위협 | golden-zone | Fail | START:Fail (expected step Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 299 | 네손가락 도적단의 위협 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 300 | 웃는 얼굴 만크스 처치 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 303 | 영혼을 가르는 무기 | golden-zone | Fail | START:Fail (expected step Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 303 | 영혼을 가르는 무기 | golden-zone | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 304 | 승천하지 못한 디켄트라 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 324 | 앨런의 도움 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 325 | 로나의 약 | golden-zone | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -124,7 +115,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 | quest | name | family | verdict | detail |
 |---|---|---|---|---|
-| 1033 | 기억과 쇠 골렘 | mixed-families | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1033 | 기억과 쇠 골렘 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1057 | 황금 실타래 벌판의 위협 몰아내기 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1079 | 마리아노플의 소매치기들 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1082 | 하피 둥지의 하피들 처치 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -144,14 +135,14 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1313 | 말동무 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1421 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 182 | 황금 실타래 마을의 약탈자들 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1897 | (구 불볕황야)사라진 가우타마(월드작업후 퀘스트 대상 배치 예정) | mixed-families | Fail | START:Pass; SUPPLY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); PROGRESS:Fail (expected completed-quest flag set, found not completed); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 1897 | (구 불볕황야)사라진 가우타마(월드작업후 퀘스트 대상 배치 예정) | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1955 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 1957 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 1958 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
 | 205 | 토리니 정원의 야생동물들 사냥 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2140 |  | mixed-families | Skip | SKIP:Skip (orphaned context (no quest_contexts row)) |
-| 3656 | 뜨거운 물이 좋아 | mixed-families | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 5489 | test_time | mixed-families | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 3656 | 뜨거운 물이 좋아 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5489 | test_time | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5490 | 신기루 섬을 깨끗하게 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 556 | 시차일드 부두로 찾아온 수상한 인어들 퇴치 | mixed-families | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6578 | 이이제이 | mixed-families | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -162,8 +153,4 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 ## FAIL rollup (by stage reason)
 
-- **START:Fail** — 6 quests: 265, 266, 299, 303, 1033, 3656
-- **START:Pass; PROGRESS:Fail** — 4 quests: 2248, 269, 294, 5489
-- **START:Pass; SUPPLY:Pass; PROGRESS:Fail** — 1 quests: 295
-- **START:Pass; SUPPLY:Fail** — 1 quests: 1897
 

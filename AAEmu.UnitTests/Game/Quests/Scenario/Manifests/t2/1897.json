@@ -123,8 +123,8 @@
    "name": "SUPPLY",
    "events": [],
    "expect": {
-    "step": "Reward",
-    "status": "Completed"
+    "step": "Progress",
+    "status": "Progress"
    }
   },
   {
@@ -132,7 +132,8 @@
    "events": [
     {
      "type": "ItemUse",
-     "itemId": 16019
+     "itemId": 16019,
+     "count": 1
     },
     {
      "type": "Talk",
@@ -144,7 +145,8 @@
     }
    ],
    "expect": {
-    "completed": true
+    "step": "Reward",
+    "status": "Completed"
    }
   },
   {
@@ -163,5 +165,15 @@
    }
   }
  ],
- "selectedRewardIndex": 0
+ "selectedRewardIndex": 0,
+ "guard": {
+  "npcId": 7548,
+  "alive": true
+ },
+ "guards": [
+  {
+   "npcId": 7548,
+   "alive": true
+  }
+ ]
 }

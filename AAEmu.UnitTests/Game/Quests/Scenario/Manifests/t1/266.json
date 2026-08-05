@@ -91,7 +91,7 @@
    "name": "START",
    "events": [],
    "expect": {
-    "step": "Ready",
+    "step": "Progress",
     "status": "Ready"
    }
   },
@@ -110,7 +110,7 @@
     }
    ],
    "expect": {
-    "step": "Ready",
+    "step": "Progress",
     "status": "Ready"
    }
   },

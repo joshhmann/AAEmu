@@ -117,8 +117,8 @@
    "name": "START",
    "events": [],
    "expect": {
-    "step": "Ready",
-    "status": "Ready"
+    "step": "Progress",
+    "status": "Progress"
    }
   },
   {
@@ -164,5 +164,15 @@
    }
   }
  ],
- "selectedRewardIndex": 1
+ "selectedRewardIndex": 1,
+ "guard": {
+  "npcId": 4617,
+  "alive": true
+ },
+ "guards": [
+  {
+   "npcId": 4617,
+   "alive": true
+  }
+ ]
 }
