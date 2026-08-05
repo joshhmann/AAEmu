@@ -106,6 +106,16 @@ Generated from: compact.sqlite3 r208022 (679 tables) vs AAEmu develop (95 manage
   group-expanded via `QuestManager.GetGroupItems`/`CheckGroupItem` (any group item
   counts). Gather also mirrors cleanup/destroy-on-drop item removal. 14 new unit tests.
 
+- **BUG-010 — Helpers.UnixTime(long) clamps every timestamp > 59s to DateTime.MaxValue (FIXED on `fix/bug-010-unix-time`, 2026-08-04).**
+  The range check compared `time > DateTime.MaxValue.Second` — and `DateTime.MaxValue.Second == 59` —
+  so any unix-seconds value > 59 decoded to `DateTime.MaxValue`. Every CheckTimer quest restored
+  via `Quest.ReadData` got `Time = DateTime.MaxValue` (byte-diff proof: time field 1785894127s →
+  253402300800s for census quests 350/4292/1313), `LeftTime` int-overflowed, timer never expired.
+  Now clamps against the exact max representable unix-seconds value (integer ticks math,
+  253402300799; `(long)TotalSeconds` double-rounds to 253402300800 which AddSeconds can't hold).
+  8 new `HelpersTests` incl. 2026-timestamp round-trip; census regen flipped 350/4292/1313
+  PERSIST:Fail → PERSIST:Pass with zero other verdict changes. Gate 1129/1129. Catalog: bugs/010-unix-time-maxvalue.md.
+
 - **BUG-007 — quest data defects fail silently (FIXED on `feat/quest-sanity-verifier`, 2026-08-04).**
   New `QuestSanityVerifier` (startup cross-check at end of `QuestManager.Load`): collects
   unknown/uninstantiated/detached act types, broken component/quest/item-group refs,
