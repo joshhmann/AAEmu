@@ -28,7 +28,8 @@ public class QuestScenarioTierTests
         ("t1", "T1 golden zone (Solzreed)"),
         ("t2", "T2 families (kill-accept/guard/item-group)"),
         ("t3", "T3 stratified act-family census (frozen M1-5c sample)"),
-        ("t4", "T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)")
+        ("t4", "T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)"),
+        ("t5", "T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)")
     ];
 
     private static string RepoRoot()

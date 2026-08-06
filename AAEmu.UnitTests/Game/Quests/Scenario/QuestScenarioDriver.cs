@@ -306,6 +306,26 @@ public class QuestScenarioDriver
             nameof(QuestActObjLevel) => new QuestActObjLevel(component) { Level = GetByte(raw, "level"), Count = count },
             nameof(QuestActObjZoneMonsterHunt) => new QuestActObjZoneMonsterHunt(component) { ZoneId = GetUInt(raw, "zoneId"), Count = count },
             nameof(QuestActObjExpressFire) => new QuestActObjExpressFire(component) { ExpressKeyId = GetUInt(raw, "expressKeyId"), NpcGroupId = GetUInt(raw, "npcGroupId"), Count = count },
+            nameof(QuestActObjAggro) => new QuestActObjAggro(component)
+            {
+                Range = GetInt(raw, "range"),
+                Rank1 = GetInt(raw, "rank1"),
+                Rank2 = GetInt(raw, "rank2"),
+                Rank3 = GetInt(raw, "rank3"),
+                Rank1Ratio = GetInt(raw, "rank1Ratio"),
+                Rank2Ratio = GetInt(raw, "rank2Ratio"),
+                Rank3Ratio = GetInt(raw, "rank3Ratio"),
+                Rank1Item = GetBool(raw, "rank1Item"),
+                Rank2Item = GetBool(raw, "rank2Item"),
+                Rank3Item = GetBool(raw, "rank3Item"),
+                UseAlias = GetBool(raw, "useAlias"),
+                QuestActObjAliasId = GetUInt(raw, "questActObjAliasId")
+            },
+            nameof(QuestActCheckCompleteComponent) => new QuestActCheckCompleteComponent(component)
+            {
+                CompleteComponent = GetUInt(raw, "completeComponent")
+            },
+            nameof(QuestActSupplyHonorPoint) => new QuestActSupplyHonorPoint(component) { Point = GetInt(raw, "point") },
             nameof(QuestActCheckGuard) => new QuestActCheckGuard(component) { NpcId = GetUInt(raw, "npcId") },
             nameof(QuestActCheckSphere) => new QuestActCheckSphere(component) { SphereId = GetUInt(raw, "sphereId") },
             nameof(QuestActCheckTimer) => new QuestActCheckTimer(component) { LimitTime = GetInt(raw, "limitTime"), NextComponent = GetUInt(raw, "nextComponent") },
@@ -643,7 +663,12 @@ public class QuestScenarioDriver
                 owner.Events.OnReportJournal(owner, new OnReportJournalArgs());
                 break;
             case "ExpressFire":
-                owner.Events.OnExpressFire(owner, new OnExpressFireArgs { NpcId = GetUInt(rawEvent, "npcId"), EmotionId = GetUInt(rawEvent, "emotionId") });
+                // M2a wave-2 (t_41a14bab): OnExpressFire credits +1 per event
+                // (QuestActObjExpressFire.OnExpressFire -> AddObjective(questAct, 1))
+                // and RunAct checks currentObjectiveCount >= Count, so fire 'count'
+                // times (mirrors the ItemUse loop).
+                for (var i = 0; i < GetInt(rawEvent, "count", 1); i++)
+                    owner.Events.OnExpressFire(owner, new OnExpressFireArgs { NpcId = GetUInt(rawEvent, "npcId"), EmotionId = GetUInt(rawEvent, "emotionId") });
                 break;
             case "LevelUp":
                 // ObjLevel objectives check Owner.Level >= Level (QuestActObjLevel.cs:23/46)
@@ -662,7 +687,25 @@ public class QuestScenarioDriver
                 owner.Events.OnLevelUp(owner, new OnLevelUpArgs());
                 break;
             case "Aggro":
-                owner.Events.OnAggro(owner, new OnAggroArgs { NpcId = GetUInt(rawEvent, "npcId") });
+                // M2a wave-2 (t_41a14bab): QuestActObjAggro subscribes OnKill
+                // (NOT OnAggro - InitializeAction: Events.OnKill += questAct.OnKill).
+                // OnKill credits only when the killed npc's TemplateId equals the
+                // quest acceptor npc id AND the owner holds aggro on it
+                // (QuestActObjAggro.cs:66-71; GetAggroRatingInPercent 0 = most aggro
+                // -> rank 1). Rig: spawn an acceptor-id Npc with the owner as its
+                // only aggro source (rating 0), then kill it.
+                var aggroNpcId = GetUInt(rawEvent, "npcId");
+                var aggroNpc = new Npc
+                {
+                    ObjId = 7000u + aggroNpcId,
+                    TemplateId = aggroNpcId,
+                    Hp = 100,
+                    MaxHp = 100
+                };
+                var aggro = new Aggro(aggroNpc);
+                aggro.AddAggro(AggroKind.Damage, 100);
+                aggroNpc.AggroTable[owner.ObjId] = aggro;
+                owner.Events.OnKill(owner, new OnKillArgs { Target = aggroNpc, Killer = (Unit)owner, Victim = aggroNpc });
                 break;
             case "ZoneKill":
                 owner.Events.OnZoneKill(owner, new OnZoneKillArgs { ZoneGroupId = GetUInt(rawEvent, "zoneGroupId"), Killer = owner, Victim = (Unit)owner });
@@ -815,6 +858,20 @@ public class QuestScenarioDriver
     private static byte GetByte(JsonElement element, string name, byte defaultValue = 0)
     {
         return element.TryGetProperty(name, out var value) && value.TryGetByte(out var result) ? result : defaultValue;
+    }
+
+    private static bool GetBool(JsonElement element, string name, bool defaultValue = false)
+    {
+        // NOTE: this System.Text.Json build exposes GetBoolean but NOT
+        // TryGetBoolean - guard on ValueKind instead of catching.
+        if (!element.TryGetProperty(name, out var value))
+            return defaultValue;
+        return value.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => defaultValue
+        };
     }
 
     #endregion
