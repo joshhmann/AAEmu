@@ -1,14 +1,14 @@
 {
   "environment": "aaemu-.165",
-  "git_sha": "bddd426e69365851a8cc52c61f360fe8fd1637ad",
-  "deployed_at": "2026-08-05T04:46:15-07:00",
-  "milestone": "Round-2 NPC fixes batch (slope gate t_cf647533 + spawn-Z t_7abdc0ae + aggro LOS t_9f2fc551 + sit-pose t_0a079463)",
-  "database_backup": "none_required_no_schema_change",
+  "git_sha": "b1e2231c868511c0f17dbd4e6c5c2eceaf9dbb12",
+  "deployed_at": "2026-08-05T19:10:00-07:00",
+  "milestone": "M1 widened-backlog batch (overlay 776/777 + prune 2145/1960 + drops cluster/1391/orphans + register)",
+  "database_backup": "none_required_no_schema_change (box compact.sqlite3 pristine, md5 78b3bdbf - read-only reference rule 3)",
   "services": {
     "db": "Up 2 days (healthy)",
     "login": "Up (healthy)",
-    "game": "Up (healthy) — 0 FATAL in boot log",
-    "adminer": "Up 2 days"
+    "game": "Up (healthy) - 0 FATAL in boot log",
+    "adminer": "Up 3 days"
   },
-  "notes": "Census: [QuestSanity] SUMMARY OK — 0 errors, 14 warnings, 136 info across 4775 quests / 17720 components / 19047 acts; UNIT_REQS: 17 missing contexts from 21 QuestComponent-owned rows (11 orphans WARN / 10 collisions INFO); gated quests: 1836,1883,1922,1956-1959,2054,2056,2140-2144,3234,3236,6587,6589,6592,6594,6597; collisions: 1832,1848,1882,1921,2053,6586. Josh pre-GO 2026-08-04; no upstream PRs (lane gate)."
+  "notes": "Census: [QuestSanity] SUMMARY OK - 0 errors, 35 warnings, 112 info across 4775 quests / 17720 components / 19047 acts (was 14 WARN at Round-2; +21 = dead shells now honestly reported after allowlist removals, per drop register). Josh GO 2026-08-05 (msg 1534739409876942979); all changes Rei-gated; no upstream PRs (lane gate)."
 }
