@@ -77,6 +77,9 @@ ACT_TABLES = {
     "QuestActObjLevel": ("quest_act_obj_levels", {"level": "LEVEL"}),
     "QuestActObjZoneMonsterHunt": ("quest_act_obj_zone_monster_hunts", {"zoneId": "zone_id", "count": "count"}),
     "QuestActObjExpressFire": ("quest_act_obj_express_fires", {"expressKeyId": "express_key_id", "npcGroupId": "npc_group_id", "count": "count"}),
+    "QuestActObjAggro": ("quest_act_obj_aggros", {"range": "RANGE", "rank1": "rank1", "rank2": "rank2", "rank3": "rank3", "rank1Ratio": "rank1_ratio", "rank2Ratio": "rank2_ratio", "rank3Ratio": "rank3_ratio", "rank1Item": "rank1_item", "rank2Item": "rank2_item", "rank3Item": "rank3_item", "useAlias": "use_alias", "questActObjAliasId": "quest_act_obj_alias_id"}),
+    "QuestActCheckCompleteComponent": ("quest_act_check_complete_components", {"completeComponent": "complete_component"}),
+    "QuestActSupplyHonorPoint": ("quest_act_supply_honor_points", {"point": "point"}),
     "QuestActCheckGuard": ("quest_act_check_guards", {"npcId": "npc_id"}),
     "QuestActCheckSphere": ("quest_act_check_spheres", {"sphereId": "sphere_id"}),
     "QuestActCheckTimer": ("quest_act_check_timers", {"limitTime": "limit_time", "nextComponent": "next_component"}),
@@ -95,14 +98,15 @@ NO_EVENT_TYPES = {
     "QuestActConAcceptItem", "QuestActConAcceptSphere", "QuestActConAcceptLevelUp",
     "QuestActConAcceptComponent", "QuestActConAutoComplete", "QuestActCheckGuard",
     "QuestActCheckSphere", "QuestActCheckTimer",
+    "QuestActCheckCompleteComponent",
     "QuestActSupplyItem", "QuestActSupplyCopper", "QuestActSupplyExp",
     "QuestActSupplyJuryPoint", "QuestActSupplyAppellation", "QuestActSupplyRemoveItem",
-    "QuestActSupplySelectiveItem",
+    "QuestActSupplySelectiveItem", "QuestActSupplyHonorPoint",
 }
 
 # Act types -> synthetic event shape builder. Returns None when the shape is
 # not synthesizable (quest must be SKIPPED with reason).
-def event_shape(act_type, params, component_id, group_members):
+def event_shape(act_type, params, component_id, group_members, npc_groups=None, acceptor_npc_id=0):
     if act_type == "QuestActObjMonsterHunt":
         return {"type": "MonsterHunt", "npcId": params.get("npcId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjMonsterGroupHunt":
@@ -131,7 +135,13 @@ def event_shape(act_type, params, component_id, group_members):
     if act_type == "QuestActObjTalk":
         return {"type": "Talk", "npcId": params.get("npcId", 0)}
     if act_type == "QuestActObjTalkNpcGroup":
-        return None  # npc-group member mapping not synthesizable -> skip quest
+        # M2a wave-2 (t_41a14bab): npc-group member mapping now synthesizable -
+        # the driver seeds QuestManager._groupNpcs from manifest groups
+        # (quest_monster_npcs read path) and fires OnTalkNpcGroupMade.
+        members = (npc_groups or {}).get(params.get("npcGroupId", 0), [])
+        if not members:
+            return None
+        return {"type": "TalkNpcGroup", "npcGroupId": params.get("npcGroupId", 0), "npcId": members[0], "componentId": component_id}
     if act_type == "QuestActObjInteraction":
         return {"type": "Interaction", "doodadId": params.get("doodadId", 0)}
     if act_type == "QuestActObjSphere":
@@ -143,7 +153,20 @@ def event_shape(act_type, params, component_id, group_members):
     if act_type == "QuestActObjZoneMonsterHunt":
         return None  # zone->zone-group mapping unverified -> skip quest
     if act_type == "QuestActObjExpressFire":
-        return None  # npc-group member mapping unverified -> skip quest
+        # M2a wave-2 (t_41a14bab): ExpressFire credits when the owner expresses
+        # an emotion at a member of the act's npc group. Fire the group's first
+        # member with the act's express key (emotion id), 'count' times.
+        members = (npc_groups or {}).get(params.get("npcGroupId", 0), [])
+        if not members:
+            return None
+        return {"type": "ExpressFire", "npcId": members[0], "emotionId": params.get("expressKeyId", 0), "count": params.get("count", 1)}
+    if act_type == "QuestActObjAggro":
+        # M2a wave-2 (t_41a14bab): the act credits OnKill when the killed npc's
+        # template id equals the quest acceptor npc id AND the owner holds aggro
+        # on it (rating 0 = most aggro -> rank 1). Requires an Npc acceptor.
+        if not acceptor_npc_id:
+            return None
+        return {"type": "Aggro", "npcId": acceptor_npc_id}
     if act_type == "QuestActConReportNpc":
         return {"type": "ReportNpc", "npcId": params.get("npcId", 0), "selected": 0}
     if act_type == "QuestActConReportDoodad":
@@ -158,6 +181,22 @@ def load_item_groups(c):
     for row in c.execute("SELECT quest_item_group_id, item_id FROM quest_item_group_items").fetchall():
         groups.setdefault(row[0], []).append(row[1])
     return groups
+
+
+def load_npc_groups(c):
+    """quest_monster_npcs -> {quest_monster_group_id: [npc_ids]}. The engine's
+    QuestManager._groupNpcs is populated from this table (LoadQuestMonsterNpcs),
+    so ExpressFire's CheckGroupNpc / TalkNpcGroup membership resolve against it."""
+    groups = {}
+    for row in c.execute("SELECT quest_monster_group_id, npc_id FROM quest_monster_npcs").fetchall():
+        groups.setdefault(row[0], []).append(row[1])
+    return groups
+
+
+# Act types whose detail-table NUM columns hold 't'/'f' text (never bool() them).
+BOOL_COLUMNS = {
+    "QuestActObjAggro": {"rank1Item", "rank2Item", "rank3Item", "useAlias"},
+}
 
 
 def load_quest_acts(c, quest_id):
@@ -187,14 +226,15 @@ def load_quest_acts(c, quest_id):
         cols = [r[1] for r in c.execute(f"PRAGMA table_info({table})").fetchall()]
         values = dict(zip(cols, row))
         act = {"actId": act_id, "type": act_type, "detailId": detail_id}
+        bool_fields = BOOL_COLUMNS.get(act_type, set())
         for json_field, column in params_map.items():
             if column in values and values[column] is not None:
-                act[json_field] = values[column]
+                act[json_field] = parse_bool(values[column]) if json_field in bool_fields else values[column]
         acts.setdefault(comp_id, []).append(act)
     return acts
 
 
-def build_manifest(c, quest_id, family, item_groups):
+def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     ctx = c.execute("SELECT id, name, category_id, LEVEL, zone_id, let_it_done, selective, score FROM quest_contexts WHERE id = ?",
                     (quest_id,)).fetchone()
     if ctx is None:
@@ -212,6 +252,38 @@ def build_manifest(c, quest_id, family, item_groups):
     if not comps:
         return {"questId": qid, "name": name, "family": family, "skip": {"reason": "no components"}}
     acts = load_quest_acts(c, quest_id)
+
+    # ---- acceptor from the Start component ----
+    # Computed BEFORE the component loop so the skip-check / event shapes can
+    # resolve the Aggro event's target npc (M2a wave-2). ConAcceptComponent
+    # (self-start) quests accept via engage-combat: the npc whose
+    # engage_combat_give_quest_id == this quest id is the real acceptor.
+    acceptor = {"type": "Npc", "id": 0}
+    inventory = []
+    for cid, kind, _nxt in comps:
+        if kind != 2:  # Start
+            continue
+        for act in acts.get(cid, []):
+            t = act["type"]
+            if t == "QuestActConAcceptNpc":
+                acceptor = {"type": "Npc", "id": act.get("npcId", 0)}
+            elif t == "QuestActConAcceptNpcKill":
+                acceptor = {"type": "Kill", "id": act.get("npcId", 0)}
+            elif t == "QuestActConAcceptDoodad":
+                acceptor = {"type": "Doodad", "id": act.get("doodadId", 0)}
+            elif t == "QuestActConAcceptItem":
+                acceptor = {"type": "Item", "id": act.get("itemId", 0)}
+                inventory.append({"itemId": act.get("itemId", 0), "count": 1})
+            elif t == "QuestActConAcceptSphere":
+                acceptor = {"type": "Sphere", "id": act.get("sphereId", 0)}
+            elif t == "QuestActConAcceptComponent":
+                row = c.execute("SELECT id FROM npcs WHERE engage_combat_give_quest_id = ? LIMIT 1",
+                                (quest_id,)).fetchone()
+                if row:
+                    acceptor = {"type": "Npc", "id": row[0]}
+            break  # first accept act wins
+        break
+    acceptor_npc_id = acceptor["id"] if acceptor["type"] == "Npc" else 0
 
     comp_by_id = {cid: (kind, nxt) for cid, kind, nxt in comps}
     kind_names = {2: "Start", 3: "Supply", 4: "Progress", 5: "Fail", 6: "Ready", 7: "Drop", 8: "Reward"}
@@ -252,7 +324,7 @@ def build_manifest(c, quest_id, family, item_groups):
                 continue
             if act["type"] in NO_EVENT_TYPES or act["type"] in ("QuestActObjSphere", "QuestActObjMonsterGroupHunt", "QuestActObjItemGroupUse", "QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal", "QuestActObjMonsterHunt", "QuestActObjItemGather", "QuestActObjItemUse", "QuestActObjTalk", "QuestActObjInteraction", "QuestActObjCraft", "QuestActObjLevel", "QuestActObjItemGroupGather"):
                 continue
-            if event_shape(act["type"], act, cid, item_groups) is None:
+            if event_shape(act["type"], act, cid, item_groups, npc_groups, acceptor_npc_id) is None:
                 skip_reasons.append(f"unsynthesizable event shape for {act['type']}")
 
         components.append({
@@ -264,28 +336,6 @@ def build_manifest(c, quest_id, family, item_groups):
 
     if not any(comp["kind"] == "Start" for comp in components):
         skip_reasons.append("no Start component")
-
-    # ---- acceptor from the Start component ----
-    acceptor = {"type": "Npc", "id": 0}
-    inventory = []
-    for comp in components:
-        if comp["kind"] != "Start":
-            continue
-        for act in comp["acts"]:
-            t = act["type"]
-            if t == "QuestActConAcceptNpc":
-                acceptor = {"type": "Npc", "id": act.get("npcId", 0)}
-            elif t == "QuestActConAcceptNpcKill":
-                acceptor = {"type": "Kill", "id": act.get("npcId", 0)}
-            elif t == "QuestActConAcceptDoodad":
-                acceptor = {"type": "Doodad", "id": act.get("doodadId", 0)}
-            elif t == "QuestActConAcceptItem":
-                acceptor = {"type": "Item", "id": act.get("itemId", 0)}
-                inventory.append({"itemId": act.get("itemId", 0), "count": 1})
-            elif t == "QuestActConAcceptSphere":
-                acceptor = {"type": "Sphere", "id": act.get("sphereId", 0)}
-            break  # first accept act wins
-        break
 
     # ---- stage plan: the engine walks KINDS (GoToNextStep) and the driver calls
     # RunCurrentStep once at accept + once per stage. Each call advances past the
@@ -300,7 +350,7 @@ def build_manifest(c, quest_id, family, item_groups):
         "QuestActCheckTimer", "QuestActCheckGuard",
         "QuestActSupplyItem", "QuestActSupplyCopper", "QuestActSupplyExp",
         "QuestActSupplyJuryPoint", "QuestActSupplyAppellation", "QuestActSupplyRemoveItem",
-        "QuestActSupplySelectiveItem",
+        "QuestActSupplySelectiveItem", "QuestActSupplyHonorPoint",
     }
 
     # Act types that pass without events because the generator pre-stocks the inventory
@@ -315,7 +365,7 @@ def build_manifest(c, quest_id, family, item_groups):
         "QuestActObjItemUse", "QuestActObjItemGroupGather", "QuestActObjItemGroupUse",
         "QuestActObjTalk", "QuestActObjTalkNpcGroup", "QuestActObjInteraction",
         "QuestActObjSphere", "QuestActObjCraft", "QuestActObjLevel",
-        "QuestActObjZoneMonsterHunt", "QuestActObjExpressFire",
+        "QuestActObjZoneMonsterHunt", "QuestActObjExpressFire", "QuestActObjAggro",
     }
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
@@ -329,7 +379,7 @@ def build_manifest(c, quest_id, family, item_groups):
                 continue
             if act["type"] in NO_EVENT_TYPES:
                 continue
-            shape = event_shape(act["type"], act, comp["id"], item_groups)
+            shape = event_shape(act["type"], act, comp["id"], item_groups, npc_groups, acceptor_npc_id)
             if shape is not None:
                 events_by_kind.setdefault(kind, []).append(shape)
             else:
@@ -514,6 +564,10 @@ def build_manifest(c, quest_id, family, item_groups):
                 gid = a.get("itemGroupId", 0)
                 if gid and gid in item_groups:
                     groups.setdefault("itemGroups", {})[str(gid)] = item_groups[gid]
+            elif a["type"] in ("QuestActObjExpressFire", "QuestActObjTalkNpcGroup"):
+                gid = a.get("npcGroupId", 0)
+                if gid and npc_groups and gid in npc_groups:
+                    groups.setdefault("npcGroups", {})[str(gid)] = npc_groups[gid]
     if groups:
         manifest["groups"] = groups
 
@@ -610,6 +664,7 @@ def main():
     c = sqlite3.connect(DB)
     c.row_factory = sqlite3.Row
     item_groups = load_item_groups(c)
+    npc_groups = load_npc_groups(c)
 
     # ---- T1: Solzreed golden zone ----
     t1_ids = [r[0] for r in c.execute(
@@ -640,7 +695,7 @@ def main():
         os.makedirs(out_dir, exist_ok=True)
         family = "golden-zone" if tier == "t1" else "mixed-families"
         for qid in ids:
-            manifest = build_manifest(c, qid, family, item_groups)
+            manifest = build_manifest(c, qid, family, item_groups, npc_groups)
             if manifest is None:
                 continue
             with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
@@ -661,7 +716,7 @@ def main():
             """SELECT a.act_detail_type FROM quest_acts a
               JOIN quest_components cmp ON a.quest_component_id = cmp.id
               WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
-        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
         if manifest is None:
             continue
         with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
@@ -678,7 +733,7 @@ def main():
             """SELECT a.act_detail_type FROM quest_acts a
               JOIN quest_components cmp ON a.quest_component_id = cmp.id
               WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
-        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
         if manifest is None:
             continue
         with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
@@ -695,7 +750,7 @@ def main():
             """SELECT a.act_detail_type FROM quest_acts a
               JOIN quest_components cmp ON a.quest_component_id = cmp.id
               WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
-        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
         if manifest is None:
             continue
         with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:

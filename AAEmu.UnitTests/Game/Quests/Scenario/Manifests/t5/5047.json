@@ -109,6 +109,12 @@
     {
      "type": "Talk",
      "npcId": 9151
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 9151,
+     "emotionId": 124,
+     "count": 1
     }
    ],
    "expect": {
@@ -156,7 +162,11 @@
   }
  ],
  "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 27211)"
+ "groups": {
+  "npcGroups": {
+   "598": [
+    9151
+   ]
+  }
  }
 }

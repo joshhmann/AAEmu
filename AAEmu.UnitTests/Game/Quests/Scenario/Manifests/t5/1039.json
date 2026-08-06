@@ -7,7 +7,7 @@
  "letItDone": false,
  "selective": false,
  "score": 0,
- "family": "QuestActConAcceptNpc",
+ "family": "QuestActCheckCompleteComponent",
  "acceptor": {
   "type": "Npc",
   "id": 4624
@@ -71,7 +71,8 @@
      {
       "actId": 13129,
       "type": "QuestActCheckCompleteComponent",
-      "detailId": 963
+      "detailId": 963,
+      "completeComponent": 5093
      }
     ]
    },
@@ -166,8 +167,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActCheckCompleteComponent; unsynthesizable event shape for QuestActCheckCompleteComponent (comp 5094)"
- }
+ "selectedRewardIndex": 0
 }

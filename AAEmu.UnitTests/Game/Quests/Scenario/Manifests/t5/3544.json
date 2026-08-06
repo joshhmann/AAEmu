@@ -123,6 +123,12 @@
    "name": "PROGRESS",
    "events": [
     {
+     "type": "ExpressFire",
+     "npcId": 10196,
+     "emotionId": 216,
+     "count": 1
+    },
+    {
      "type": "ItemGather",
      "itemId": 21500,
      "count": 1
@@ -175,7 +181,11 @@
    "count": 1
   }
  ],
- "skip": {
-  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 16992)"
+ "groups": {
+  "npcGroups": {
+   "389": [
+    10196
+   ]
+  }
  }
 }

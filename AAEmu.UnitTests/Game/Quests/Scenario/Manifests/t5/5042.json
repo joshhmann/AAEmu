@@ -84,7 +84,14 @@
   },
   {
    "name": "PROGRESS",
-   "events": [],
+   "events": [
+    {
+     "type": "ExpressFire",
+     "npcId": 9153,
+     "emotionId": 124,
+     "count": 1
+    }
+   ],
    "expect": {
     "step": "Ready",
     "status": "Ready"
@@ -126,7 +133,11 @@
   }
  ],
  "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 21871)"
+ "groups": {
+  "npcGroups": {
+   "601": [
+    9153
+   ]
+  }
  }
 }

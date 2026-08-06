@@ -10,7 +10,7 @@
  "family": "QuestActConAcceptComponent",
  "acceptor": {
   "type": "Npc",
-  "id": 0
+  "id": 7914
  },
  "template": {
   "level": 6,
@@ -48,7 +48,19 @@
      {
       "actId": 28102,
       "type": "QuestActObjAggro",
-      "detailId": 4
+      "detailId": 4,
+      "range": 30,
+      "rank1": 10,
+      "rank2": 20,
+      "rank3": 30,
+      "rank1Ratio": 100,
+      "rank2Ratio": 50,
+      "rank3Ratio": 30,
+      "rank1Item": false,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 1965
      }
     ]
    }
@@ -65,7 +77,12 @@
   },
   {
    "name": "PROGRESS",
-   "events": [],
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 7914
+    }
+   ],
    "expect": {
     "step": "Reward",
     "status": "Completed"
@@ -86,8 +103,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActObjAggro; unsynthesizable event shape for QuestActObjAggro (comp 20523)"
- }
+ "selectedRewardIndex": 0
 }
