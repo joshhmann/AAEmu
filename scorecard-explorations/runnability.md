@@ -1,6 +1,6 @@
 # Quest Runnability — M1-5 scenario harness census
 
-Generated: 2026-08-05 23:42Z by QuestScenarioTierTests (M1-5c)
+Generated: 2026-08-06 05:33Z by QuestScenarioTierTests (M1-5c)
 
 Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→reward→persist); **FAIL** = a stage assertion or engine exception (name the stage + reason); **SKIP** = not driven (broken refs / unsynthesizable shapes), reason in the detail column.
 
@@ -247,7 +247,10 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 > blockers are data-defect backlog — the QUEST_NO_START cluster 1533–1548 was
 > **DROPPED 2026-08-05** (data-defects.md §5, t_5140fb35; Josh decision) — see
 > [no-start-cluster-1533-1548-evidence.md](no-start-cluster-1533-1548-evidence.md)
-> for fail-before + pass-after evidence.
+> for fail-before + pass-after evidence. Quest 1391 — empty template, no components
+> at all — was **DROPPED 2026-08-05** as well (data-defects.md §6, t_5a61cee3; Josh
+> decision) — see [no-components-1391-rig.md](no-components-1391-rig.md) §7 for
+> fail-before + pass-after evidence.
 
 ### Harness-gap queue (SKIP-driven — extend the harness, not the engine)
 
