@@ -1,0 +1,107 @@
+{
+ "questId": 5277,
+ "name": "상단을 호위하라!",
+ "zoneId": 1,
+ "categoryId": 12,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22759,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32074,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 198,
+      "questContextId": 5277
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22760,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32075,
+      "type": "QuestActObjAggro",
+      "detailId": 29
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22761,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32076,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1361
+     },
+     {
+      "actId": 32077,
+      "type": "QuestActSupplyItem",
+      "detailId": 3645,
+      "itemId": 27166,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 27166,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjAggro; unsynthesizable event shape for QuestActObjAggro (comp 22760)"
+ }
+}

@@ -569,6 +569,32 @@ def select_t4_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
+# ---- T5 (M2a wave-2): band 1-20 quests carrying the four wave-2 act families ----
+# Same deterministic selection as T4: quests whose acts include any wave-2 family
+# AND level 1-20, minus dropped content, minus quests already sampled in
+# T1/T2/T3/T4 (each quest driven exactly once across the census).
+WAVE2_ACT_TYPES = (
+    "QuestActObjExpressFire",
+    "QuestActObjAggro",
+    "QuestActCheckCompleteComponent",
+    "QuestActSupplyHonorPoint",
+)
+
+
+def select_t5_quests(c, existing_ids):
+    """Band 1-20 wave-2 act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE2_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        JOIN quest_contexts q ON q.id = cmp.quest_context_id
+        WHERE a.act_detail_type IN ({placeholders})
+          AND q.LEVEL BETWEEN 1 AND 20
+        ORDER BY cmp.quest_context_id""", WAVE2_ACT_TYPES).fetchall()
+    return [r[0] for r in rows if r[0] not in existing_ids]
+
+
 def primary_family(acts):
     """Quest family label for the report: most frequent act type, preferring
     supported (generator-known) types so common families label drivable quests."""
@@ -659,9 +685,27 @@ def main():
             json.dump(manifest, f, ensure_ascii=False, indent=1)
         counts["t4"] = counts.get("t4", 0) + 1
 
+    # ---- T5 (M2a wave-2): band 1-20 quests carrying the wave-2 act families ----
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t4")) if f.endswith(".json")}
+    t5_ids = select_t5_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t5")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t5_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t5"] = counts.get("t5", 0) + 1
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
                       "t1_total": len(t1_ids), "t2_total": len(t2_ids),
-                      "t3_selected": len(t3_ids), "t4_selected": len(t4_ids)}, indent=1))
+                      "t3_selected": len(t3_ids), "t4_selected": len(t4_ids),
+                      "t5_selected": len(t5_ids)}, indent=1))
 
 
 if __name__ == "__main__":

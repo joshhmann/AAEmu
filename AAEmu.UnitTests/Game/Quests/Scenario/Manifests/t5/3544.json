@@ -1,0 +1,181 @@
+{
+ "questId": 3544,
+ "name": "오스테라 술집의 리턴드",
+ "zoneId": 8,
+ "categoryId": 62,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10190
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16991,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22430,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3187,
+      "npcId": 10190
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16992,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22431,
+      "type": "QuestActObjExpressFire",
+      "detailId": 17,
+      "expressKeyId": 216,
+      "npcGroupId": 389,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16993,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22429,
+      "type": "QuestActConReportNpc",
+      "detailId": 3426,
+      "npcId": 10196
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16994,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40833,
+      "type": "QuestActSupplyItem",
+      "detailId": 4800,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 16995,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22432,
+      "type": "QuestActSupplyItem",
+      "detailId": 2220,
+      "itemId": 21500,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16996,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22433,
+      "type": "QuestActObjItemGather",
+      "detailId": 1685,
+      "itemId": 21500,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21500,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10196,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21500,
+   "count": 1
+  }
+ ],
+ "skip": {
+  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 16992)"
+ }
+}

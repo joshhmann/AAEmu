@@ -1,0 +1,162 @@
+{
+ "questId": 5047,
+ "name": "밝은 새해 즐거운 인사",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9154
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21846,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38125,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4729,
+      "npcId": 9154
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21848,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30776,
+      "type": "QuestActConReportNpc",
+      "detailId": 4226,
+      "npcId": 9151
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21874,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38281,
+      "type": "QuestActObjTalk",
+      "detailId": 1058,
+      "npcId": 9151
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21875,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38142,
+      "type": "QuestActSupplyItem",
+      "detailId": 4192,
+      "itemId": 33239,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 38151,
+      "type": "QuestActSupplyItem",
+      "detailId": 4193,
+      "itemId": 32550,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27211,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38282,
+      "type": "QuestActObjExpressFire",
+      "detailId": 48,
+      "expressKeyId": 124,
+      "npcGroupId": 598,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 9151
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9151,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33239,
+      "count": 1
+     },
+     {
+      "itemId": 32550,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 27211)"
+ }
+}

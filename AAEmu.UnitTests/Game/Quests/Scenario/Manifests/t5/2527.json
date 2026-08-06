@@ -1,0 +1,132 @@
+{
+ "questId": 2527,
+ "name": "거대한 돌들이 숨쉬는 곳",
+ "zoneId": 11,
+ "categoryId": 8,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3667
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10931,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15394,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2090,
+      "npcId": 3667
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10934,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15393,
+      "type": "QuestActConReportNpc",
+      "detailId": 2292,
+      "npcId": 674
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10935,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40889,
+      "type": "QuestActSupplyItem",
+      "detailId": 4856,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16457,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21732,
+      "type": "QuestActObjExpressFire",
+      "detailId": 14,
+      "expressKeyId": 121,
+      "npcGroupId": 203,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 674,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 16457)"
+ }
+}

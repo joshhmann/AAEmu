@@ -1,0 +1,93 @@
+{
+ "questId": 4863,
+ "name": "오나흐 저지",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21023,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28810,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 165,
+      "questContextId": 4863
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21024,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28808,
+      "type": "QuestActObjAggro",
+      "detailId": 6
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21025,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28809,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1088
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjAggro; unsynthesizable event shape for QuestActObjAggro (comp 21024)"
+ }
+}

@@ -1,0 +1,178 @@
+{
+ "questId": 6211,
+ "name": "기계의 소란",
+ "zoneId": 1,
+ "categoryId": 21,
+ "level": 15,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14596
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36481,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4682,
+      "npcId": 14596
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36483,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 621,
+      "monsterGroupId": 570,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36482,
+      "type": "QuestActConReportNpc",
+      "detailId": 4878,
+      "npcId": 14596
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26632,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37220,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 129
+     },
+     {
+      "actId": 38399,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2644,
+      "itemId": 32943,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38400,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2645,
+      "itemId": 32944,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38401,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2646,
+      "itemId": 32945,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38598,
+      "type": "QuestActSupplyItem",
+      "detailId": 4347,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 38599,
+      "type": "QuestActSupplyItem",
+      "detailId": 4348,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 570,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14596,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     },
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "skip": {
+  "reason": "unsupported act type QuestActSupplyHonorPoint; unsynthesizable event shape for QuestActSupplyHonorPoint (comp 26632)"
+ }
+}

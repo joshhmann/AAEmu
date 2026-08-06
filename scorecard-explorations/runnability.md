@@ -10,7 +10,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
 - **T3 stratified act-family census (frozen M1-5c sample)**: 27 PASS / 0 FAIL / 27 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 0 PASS / 0 FAIL / 32 SKIP
-- **ALL TIERS (census)**: 153 PASS / 0 FAIL / 65 SKIP over 218 quests — **153/153 quests runnable** (65 SKIP not driven, reasons below)
+- **T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)**: 0 PASS / 0 FAIL / 13 SKIP
+- **ALL TIERS (census)**: 153 PASS / 0 FAIL / 78 SKIP over 231 quests — **153/153 quests runnable** (78 SKIP not driven, reasons below)
 
 ## T1 — per-quest verdicts
 
@@ -250,6 +251,24 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 884 | 검은 모래회의 비밀 정보 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 3964)) |
 | 997 | 납치된 주술사를 되찾아라 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 5127)) |
 
+## T5 — per-quest verdicts
+
+| quest | name | family | verdict | detail |
+|---|---|---|---|---|
+| 1039 | 순록을 보호하라 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActCheckCompleteComponent; unsynthesizable event shape for QuestActCheckCompleteComponent (comp 5094)) |
+| 1392 | 열차를 지켜라 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActCheckCompleteComponent; unsynthesizable event shape for QuestActCheckCompleteComponent (comp 6859)) |
+| 2432 | 학살자 글라도쉬 | QuestActConAcceptComponent | Skip | SKIP:Skip (unsupported act type QuestActObjAggro; unsynthesizable event shape for QuestActObjAggro (comp 20523)) |
+| 2527 | 거대한 돌들이 숨쉬는 곳 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 16457)) |
+| 3456 | 그림자 매의 암호 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 16818)) |
+| 3526 | 정보 습득을 위한 예절 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 16409)) |
+| 3544 | 오스테라 술집의 리턴드 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 16992)) |
+| 4863 | 오나흐 저지 | QuestActConAcceptComponent | Skip | SKIP:Skip (unsupported act type QuestActObjAggro; unsynthesizable event shape for QuestActObjAggro (comp 21024)) |
+| 5042 | 감사하는 마음을 담아 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 21871)) |
+| 5047 | 밝은 새해 즐거운 인사 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 27211)) |
+| 5277 | 상단을 호위하라! | QuestActConAcceptComponent | Skip | SKIP:Skip (unsupported act type QuestActObjAggro; unsynthesizable event shape for QuestActObjAggro (comp 22760)) |
+| 6209 | 망각의 균열 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActSupplyHonorPoint; unsynthesizable event shape for QuestActSupplyHonorPoint (comp 26629)) |
+| 6211 | 기계의 소란 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActSupplyHonorPoint; unsynthesizable event shape for QuestActSupplyHonorPoint (comp 26632)) |
+
 ## FAIL rollup (by act family — top blockers)
 
 _none — every driven quest passed._
@@ -263,16 +282,16 @@ _none — every driven quest passed._
 - **unsupported act type QuestActObjCinema** — 12 quests: 6037, 6040, 6041, 6044, 6045, 6047, 6049, 6051, 6053, 6054, 6055, 6056
 - **unsupported act type QuestActEtcItemObtain** — 11 quests: 2301, 5052, 128, 134, 3537, 84, 869, 871, 882, 884, 997
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
-- **unsupported act type QuestActCheckCompleteComponent** — 3 quests: 1005, 2008, 1702
+- **unsynthesizable event shape for QuestActObjExpressFire** — 8 quests: 3569, 3570, 2527, 3456, 3526, 3544, 5042, 5047
+- **unsupported act type QuestActCheckCompleteComponent** — 5 quests: 1005, 2008, 1702, 1039, 1392
+- **unsupported act type QuestActObjAggro** — 5 quests: 1408, 1443, 2432, 4863, 5277
 - **unsupported act type QuestActObjZoneKill** — 3 quests: 5900, 5923, 5924
-- **unsupported act type QuestActObjAggro** — 2 quests: 1408, 1443
+- **unsupported act type QuestActSupplyHonorPoint** — 3 quests: 6003, 6209, 6211
 - **unsupported act type QuestActSupplyCrimePoint** — 2 quests: 2916, 2926
-- **unsynthesizable event shape for QuestActObjExpressFire** — 2 quests: 3569, 3570
 - **unsupported act type QuestActObjMateLevel** — 2 quests: 5430, 5464
 - **unsynthesizable event shape for QuestActObjTalkNpcGroup** — 2 quests: 5552, 5650
 - **unsupported act type QuestActObjCompleteQuest** — 2 quests: 5814, 5815
 - **unsupported act type QuestActObjAbilityLevel** — 2 quests: 5967, 6069
-- **unsupported act type QuestActSupplyHonorPoint** — 1 quests: 6003
 - **unsupported act type QuestActSupplyLp** — 1 quests: 1953
 
 ## Recommended fix-card queue
@@ -289,16 +308,16 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 | QuestActConAcceptItemGain | unsupported act type | 1959, 1960, 2144, 2145 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActEtcItemObtain | unsupported act type | 84, 128, 134, 869 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjCinema | unsupported act type | 6037, 6040, 6041, 6044 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
+| QuestActObjExpressFire | unsynthesizable event shape | 2527, 3456, 3526, 3544 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
+| QuestActCheckCompleteComponent | unsupported act type | 1005, 1039, 1392, 1702 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
+| QuestActObjAggro | unsupported act type | 1408, 1443, 2432, 4863 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActSupplyLp | unsupported act type | 1953, 1959, 1960, 2144 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
-| QuestActCheckCompleteComponent | unsupported act type | 1005, 1702, 2008 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
+| QuestActSupplyHonorPoint | unsupported act type | 5900, 6003, 6209, 6211 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjZoneKill | unsupported act type | 5900, 5923, 5924 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjAbilityLevel | unsupported act type | 5967, 6069 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
-| QuestActObjAggro | unsupported act type | 1408, 1443 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjCompleteQuest | unsupported act type | 5814, 5815 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
-| QuestActObjExpressFire | unsynthesizable event shape | 3569, 3570 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjMateLevel | unsupported act type | 5430, 5464 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjTalkNpcGroup | unsynthesizable event shape | 5552, 5650 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActSupplyCrimePoint | unsupported act type | 2916, 2926 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
-| QuestActSupplyHonorPoint | unsupported act type | 5900, 6003 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActSupplyLivingPoint | unsupported act type | 5923, 5924 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 
