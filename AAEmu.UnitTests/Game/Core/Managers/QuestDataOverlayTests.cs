@@ -14,7 +14,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// data-defects.md §3 land as an in-memory overlay applied by QuestManager.Load.
 ///
 /// Component ids below are the REAL ids from the canonical 1.2 compact.sqlite3
-/// (prod md5 78b3bdbf0383db3b927056106efdf91af), verified 2026-08-04:
+/// (prod md5 78b3bdbf038db3b927056106efdf91af), verified 2026-08-04:
 ///   quest 330 (zone 125, golden route): comp 1520 next 3543 -> 1521 (Ready)
 ///   quest 776 (zone 8):                  comp 3480 next 4370 -> 3482 (Progress)
 ///   quest 777 (zone 8):                  comp 3488 next 3487 -> 11591 (Ready)
