@@ -27,10 +27,10 @@
 #
 # Usage:
 #   unit_reqs_missing_context_census.sh [path-to-compact.sqlite3] [--apply-fix]
-#                                       [--scope 0]
+#                                       [--scope=N]
 #     default DB: ./AAEmu.Game/Data/compact.sqlite3 (repo layout)
 #     default scope: the card's 5 rows above (19197,19198,19201,19205,19207)
-#     --scope 0: verdict the FULL predicate (still fails pass-after — the
+#     --scope=0: verdict the FULL predicate (still fails pass-after — the
 #                remaining rows are the sibling drop inventory: 1961/2141-2143
 #                chain links, 3233/3235 orphans, 1832/1848/1882/1921/2053
 #                collisions, 6586×5 already covered by the 2026-08-04 overlay)
