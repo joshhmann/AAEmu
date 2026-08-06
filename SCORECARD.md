@@ -152,21 +152,15 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M1-5, census regen 2026-08-05 post-fix/next-missing-776-777): **153/153 driven quests runnable** across the 186-quest
-> scenario-harness census (T1 97/97, T2 29/29, T3 27/27 PASS; 0 FAIL; 33 SKIP = 8 orphaned
-> quest_contexts + 25 harness gaps — **no verdict deltas vs pre-fix**). 330/776/777
-> COMPONENT_NEXT_MISSING cleared at load via QuestDataOverlay (was a verifier finding, never a
-> scenario FAIL). Regen same day post-fix/act-ref-2145 (census 22:15Z): verdicts byte-stable
-> again — the 2 pruned dangling self-start acts (2145→2146, sibling 1960→1961) sit on quests
-> outside the 186-quest sample (dead cat-34 crafting chain), so census FAIL/SKIP deltas: none.
-> Regen same day post-fix/no-start-1533 (census 23:42Z): verdicts byte-stable — the DROPPED
-> QUEST_NO_START cluster 1533–1548 (23 quests, never acceptable: no Start step, no accept
-> surface) was outside the census sample too, so FAIL/SKIP deltas remain none.
-> Regen post-fix/no-components-1391 (census 05:33Z): verdicts byte-stable — quest 1391
-> (empty template: zero components, zero acts, provably never acceptable) was DROPPED
-> (data-defects.md §6 verdict (c) drop, Josh decision) and sat outside the census sample too,
-> so FAIL/SKIP deltas remain none.
-> See scorecard-explorations/runnability.md + the M1-5 entry below.
+> Quest-runnability (M2a wave-1, census 2026-08-06): **189/189 driven quests runnable** across the 218-quest
+> scenario-harness census (T1 97/97, T2 29/29, T3 32/32, T4 31/31 PASS; 0 FAIL; 29 SKIP = 8 orphaned
+> quest_contexts + 21 harness gaps — wave-1 closures flipped 36 SKIP→PASS: 12 cinema
+> (6037/6040/6041/6044/6045/6047/6049/6051/6053-6056 prologue), 11 EtcItemObtain (84/128/134/869/871/882/
+> 884/997/3537 + t3 2301/5052), 13 CAIG+SupplyLp (1953/1959/1960/2144/2145/4881-4888). 1702 stays
+> SKIP (multi-gap: also QuestActCheckCompleteComponent — wave-2 scope). Fail-before census (rig commit
+> 2283c0df): 153/153 runnable, 65 SKIP. Census header now deterministic (no wall-clock churn, M2a acceptance).
+> QuestActEtcItemObtain = engine no-op (watch §2.4); cinema domain zero-wired server-side (watch §2.4).
+> See scorecard-explorations/runnability.md + zero-wired-domains.md §8.
 
 ## Zero-data-wired domains (data exists, server ignores it)
 

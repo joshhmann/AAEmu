@@ -179,6 +179,17 @@ Instrument play: the client enforces per-instrument note ranges and note lengths
 
 ---
 
+## 8. quest reward/labor domains (M2a wave-1 watch list, 2026-08-06)
+
+M2_PLAN.md §2.4 watch items — census PASS ≠ live-complete for these. Rows
+added 2026-08-06 (t_af246c49) when the harness closures made the acts drivable.
+
+| Act | Census behavior | Live gap | Action |
+|---|---|---|---|
+| **QuestActEtcItemObtain** | PASS vacuously: `RunAct → true` always (EtcItemObtain.cs:24-29); `OnItemGather` is dead code (`return;`, :43-49) | **Engine no-op** — the live objective never credits; an obtain event adds nothing | Engine-fix card (live objective credit), NOT a harness issue. Exclude from "quest engine fully works" claims |
+| **QuestActObjCinema** | PASS via synthetic CinemaStarted→CinemaEnded events (harness drives `CurrentlyPlayingCinemaId` directly) | **Cinema domain zero-wired server-side** — no client-triggered cinema flow; live prologue playback not possible | Defer (M2 plan §2.4); not an M2 blocker |
+| **QuestActSupplyLp** | PASS; `ChangeLabor` write to MySQL fails closed in tests (no DB) | Labor persists via MySQL `accounts.labor`; premium always-on hardcodes the 5000 cap | Zero-wired reward domain tag; the act itself (labor change) is wired, the persistence path is the live gap |
+
 ## Cross-domain notes
 
 1. **ranks ↔ race-tracks are coupled**: racing contest rewards (30239-30248) and racing brackets (rank_scopes 31-40) depend on race results, so racing ranks need RaceManager output. Fishing ranks need a catch-metric hook that doesn't exist yet. Battlefield/arena ranks (32488-32498, weeks=4) depend on arena/instance infrastructure.
