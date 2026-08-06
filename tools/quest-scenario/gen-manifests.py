@@ -171,7 +171,11 @@ def event_shape(act_type, params, component_id, group_members, npc_groups=None, 
     if act_type == "QuestActObjSphere":
         return {"type": "EnterSphere", "componentId": component_id}
     if act_type == "QuestActObjCraft":
-        return {"type": "Craft", "craftId": params.get("craftId", 0)}
+        # RC-4 pattern (band-sweep finding, 2026-08-06): QuestActObjCraft.OnCraft
+        # credits +1 per event (Craft.cs:47) and RunAct requires
+        # currentObjectiveCount >= Count - the driver fires the event 'count'
+        # times, so carry the count on the shape.
+        return {"type": "Craft", "craftId": params.get("craftId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjLevel":
         return {"type": "LevelUp"}
     if act_type == "QuestActObjCinema":
@@ -284,7 +288,11 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     comps = c.execute("SELECT id, component_kind_id, next_component FROM quest_components WHERE quest_context_id = ? ORDER BY id",
                       (quest_id,)).fetchall()
     if not comps:
-        return {"questId": qid, "name": name, "family": family, "skip": {"reason": "no components"}}
+        # Act-less shell: still a band quest - carry level + zoneId so the
+        # band-census rollup and zone-coverage rows count the SKIP honestly.
+        return {"questId": qid, "name": name, "family": family,
+                "zoneId": zone_id, "template": {"level": level},
+                "skip": {"reason": "no components"}}
     acts = load_quest_acts(c, quest_id)
 
     # ---- acceptor from the Start component ----
@@ -456,12 +464,52 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     # template has no Ready step (NewQuestCode.RunCurrentStep).
     progress_forced_stuck = let_it_done and not (score > 0 and "Ready" not in present)
 
+    # ---- engine completion-path guards (band-sweep findings, 2026-08-06) ----
+    # (1) A let-it-done Progress is force-blocked; the ONLY exits are a report
+    #     act force-advance (OnReportNpc/OnReportDoodad/OnReportJournal) or the
+    #     HackFix. Quests with neither (old Sunny Wilderness cluster 1867/1898/
+    #     1904/1908/2054 + act-less 5575-5645) can NEVER leave Progress - the
+    #     template has no engine completion path. SKIP with reason, never fake-
+    #     pass a quest the engine cannot complete.
+    # (2) score>0 Progress evaluates score over OBJECTIVE acts; with no
+    #     objective acts the score can never be met (stuck at Progress).
+    has_report_act = any(
+        a["type"] in ("QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal")
+        for comp in components for a in comp["acts"])
+    progress_obj_acts = [a for comp in components if comp["kind"] == "Progress"
+                         for a in comp["acts"] if a["type"] in OBJECTIVE_TYPES]
+    if progress_forced_stuck and not has_report_act:
+        skip_reasons.append("let-it-done quest with no report act (engine has no completion path)")
+    if score > 0 and "Progress" in present and not progress_obj_acts:
+        skip_reasons.append("score quest with no Progress objectives (score can never be met)")
+
+    def progress_score_met(events_credited):
+        """Mimics the engine's Progress+Score>0 branch (QuestStep.RunComponents):
+        res = score >= Template.Score where score = sum(Count * Objective) over
+        objective acts; hydrated gather objectives carry their full count from
+        accept time."""
+        acts = [a for comp in components if comp["kind"] == "Progress" for a in comp["acts"]]
+        obj_acts = [a for a in acts if a["type"] in OBJECTIVE_TYPES]
+        s = sum(a.get("count", 1) * (a.get("count", 1)
+                                     if (events_credited or a["type"] in HYDRATED_TYPES) else 0)
+                for a in obj_acts)
+        return s >= score
+
     def kind_is_auto(kind_name):
         if progress_forced_stuck and kind_name == "Progress":
             return False  # let-it-done Progress never auto-advances
         acts = [a for comp in components if comp["kind"] == kind_name for a in comp["acts"]]
         if not acts:
-            return True  # empty components pass vacuously
+            # empty components pass vacuously - EXCEPT score Progress: the
+            # engine still evaluates score >= Template.Score (score = 0 with
+            # no acts -> never met -> stuck), so it never auto-advances.
+            if kind_name == "Progress" and score > 0:
+                return progress_score_met(False)
+            return True
+        if kind_name == "Progress" and score > 0:
+            # engine: Progress + Score>0 -> res = score >= Score; hydrated
+            # gather objectives credit at accept, event acts credit later
+            return progress_score_met(False)
         if selective:
             # Selective quests pass the Progress step when ANY active component passes
             return any(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
@@ -477,11 +525,7 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         if not obj_acts:
             return True  # no objectives -> QuestComplete
         if score > 0:
-            # Score handler: score = sum(Count * Objectives[index])
-            s = sum(a.get("count", 1) * (a.get("count", 1)
-                                         if (events_credited or a["type"] in HYDRATED_TYPES) else 0)
-                    for a in obj_acts)
-            return s >= score
+            return progress_score_met(events_credited)
         # Per-act counts: min over acts (max when selective)
         per_act = []
         for a in obj_acts:
@@ -504,10 +548,18 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     def expect_for_rest(pos, stage_kind):
         """Expectation for a resting position; let-it-done quests stuck at
         Progress get the engine's actual status (Ready once objectives are
-        credited, else Progress) instead of the fixed Progress->'Progress' map."""
-        expect = dict(expect_for(pos))
+        credited, else Progress) instead of the fixed Progress->'Progress' map.
+        The ltd status re-evaluation only happens when RunComponents executes
+        AT Progress (QuestStep.RunComponents ltd branch); the START stage's
+        call runs at the FIRST present kind (Supply when one precedes Progress),
+        so its rest carries the transition status (Progress)."""
+        expect: dict = dict(expect_for(pos))
         if progress_forced_stuck and pos == "Progress":
-            expect["status"] = "Ready" if progress_status_ready(stage_kind == "Progress") else "Progress"
+            ran_at_progress = stage_kind != "Start" or first == "Progress"
+            if progress_status_ready(stage_kind == "Progress") and ran_at_progress:
+                expect["status"] = "Ready"
+            else:
+                expect["status"] = "Progress"
         return expect
 
     def advance(pos):
@@ -881,6 +933,9 @@ def main():
         with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
             json.dump(manifest, f, ensure_ascii=False, indent=1)
         counts["t5"] = counts.get("t5", 0) + 1
+    # Fold t5 into the sampled set so the band sweeps exclude wave-2 carriers
+    # too (each quest driven exactly once across the census).
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t5")) if f.endswith(".json")}
 
     # ---- T6/T7 (M2a census): full band sweeps ----
     # The band denominators (incl. dropped ids per band) and the signature

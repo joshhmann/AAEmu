@@ -651,7 +651,11 @@ public class QuestScenarioDriver
                 });
                 break;
             case "Craft":
-                owner.Events.OnCraft(owner, new OnCraftArgs { CraftId = GetUInt(rawEvent, "craftId") });
+                // RC-4 pattern: QuestActObjCraft.OnCraft credits +1 per event
+                // (Craft.cs:47) and RunAct requires currentObjectiveCount >=
+                // Count - fire 'count' times (default 1).
+                for (var i = 0; i < GetInt(rawEvent, "count", 1); i++)
+                    owner.Events.OnCraft(owner, new OnCraftArgs { CraftId = GetUInt(rawEvent, "craftId") });
                 break;
             case "ReportNpc":
                 owner.Events.OnReportNpc(owner, new OnReportNpcArgs { QuestId = quest.TemplateId, NpcId = GetUInt(rawEvent, "npcId"), Selected = GetInt(rawEvent, "selected") });
