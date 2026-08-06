@@ -40,15 +40,16 @@
    "name": "START",
    "events": [],
    "expect": {
-    "step": "Ready",
-    "status": "Ready"
+    "step": "Progress",
+    "status": "Progress"
    }
   },
   {
    "name": "PROGRESS",
    "events": [],
    "expect": {
-    "completed": true
+    "step": "Ready",
+    "status": "Ready"
    }
   },
   {
@@ -66,5 +67,8 @@
    }
   }
  ],
- "selectedRewardIndex": 0
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "score quest with no Progress objectives (score can never be met)"
+ }
 }

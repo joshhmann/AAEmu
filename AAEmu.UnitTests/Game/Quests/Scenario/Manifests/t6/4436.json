@@ -79,7 +79,8 @@
    "events": [
     {
      "type": "Craft",
-     "craftId": 83
+     "craftId": 83,
+     "count": 5
     }
    ],
    "expect": {

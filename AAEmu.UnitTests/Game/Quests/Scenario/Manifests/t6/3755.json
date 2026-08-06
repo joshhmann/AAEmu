@@ -2,6 +2,10 @@
  "questId": 3755,
  "name": "하디르의 농장 인던연출8",
  "family": "no-acts",
+ "zoneId": 169,
+ "template": {
+  "level": 1
+ },
  "skip": {
   "reason": "no components"
  }

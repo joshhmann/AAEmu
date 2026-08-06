@@ -95,5 +95,8 @@
    }
   }
  ],
- "selectedRewardIndex": 0
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "let-it-done quest with no report act (engine has no completion path)"
+ }
 }

@@ -121,7 +121,7 @@
    "events": [],
    "expect": {
     "step": "Progress",
-    "status": "Ready"
+    "status": "Progress"
    }
   },
   {

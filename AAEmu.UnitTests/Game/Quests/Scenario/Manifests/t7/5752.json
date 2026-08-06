@@ -110,15 +110,18 @@
    "events": [
     {
      "type": "Craft",
-     "craftId": 5755
+     "craftId": 5755,
+     "count": 1
     },
     {
      "type": "Craft",
-     "craftId": 5783
+     "craftId": 5783,
+     "count": 1
     },
     {
      "type": "Craft",
-     "craftId": 5769
+     "craftId": 5769,
+     "count": 1
     }
    ],
    "expect": {

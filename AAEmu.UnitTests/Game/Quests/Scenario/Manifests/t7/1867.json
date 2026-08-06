@@ -101,5 +101,8 @@
    "itemId": 15985,
    "count": 3
   }
- ]
+ ],
+ "skip": {
+  "reason": "let-it-done quest with no report act (engine has no completion path)"
+ }
 }

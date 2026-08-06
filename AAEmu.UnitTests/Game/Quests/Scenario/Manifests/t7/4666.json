@@ -90,7 +90,8 @@
    "events": [
     {
      "type": "Craft",
-     "craftId": 6237
+     "craftId": 6237,
+     "count": 1
     },
     {
      "type": "EnterSphere",

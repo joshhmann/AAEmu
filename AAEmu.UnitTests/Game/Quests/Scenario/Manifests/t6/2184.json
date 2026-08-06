@@ -2,6 +2,10 @@
  "questId": 2184,
  "name": "하다보니(reserve)",
  "family": "no-acts",
+ "zoneId": 1,
+ "template": {
+  "level": 1
+ },
  "skip": {
   "reason": "no components"
  }
