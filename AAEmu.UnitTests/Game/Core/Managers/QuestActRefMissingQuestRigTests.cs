@@ -10,7 +10,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// M1 rig: ACT_REF_MISSING_QUEST fail-before evidence for quest 2145 → 2146.
 ///
 /// Models the REAL quest 2145 topology exactly as it ships in compact.sqlite3
-/// (md5 78b3bdbf0383db3b927056106efdf91af — the same reference verified in
+/// (md5 78b3bdbf038db3b927056106efdf91af — the same reference verified in
 /// scorecard-explorations/data-defects.md §4), then runs the REAL
 /// QuestSanityVerifier over it:
 ///

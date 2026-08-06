@@ -9,7 +9,7 @@ namespace AAEmu.Game.Core.Managers;
 ///
 /// Current rows: the 3 cosmetic COMPONENT_NEXT_MISSING corrections from
 /// data-defects.md §3 (verified against the canonical 1.2 compact.sqlite3,
-/// prod md5 78b3bdbf0383db3b927056106efdf91af):
+/// prod md5 78b3bdbf038db3b927056106efdf91af):
 ///   quest 330 (zone 125, golden route): comp 1520 next 3543 -> 1521 (Ready)
 ///   quest 776 (zone 8):                  comp 3480 next 4370 -> 3482 (Progress)
 ///   quest 777 (zone 8):                  comp 3488 next 3487 -> 11591 (Ready)

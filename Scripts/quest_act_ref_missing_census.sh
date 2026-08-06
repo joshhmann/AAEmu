@@ -10,15 +10,15 @@
 # quest_contexts row) whose quest_context_id has no quest_contexts row, so the
 # target quest template is never created and the self-start target can never
 # be found. On the prod reference (compact.sqlite3 md5
-# 78b3bdbf0383db3b927056106efdf91af) exactly 2 rows fail:
+# 78b3bdbf038db3b927056106efdf91af) exactly 2 rows fail:
 #   1960  comp 9794 accept-act 75 -> 1961   (sibling — same dead cat-34 chain)
 #   2145  comp 9927 accept-act 89 -> 2146   (THIS card)
 #
 # Usage:
-#   quest_act_ref_missing_census.sh [path-to-compact.sqlite3] [--apply-fix] [--scope N]
+#   quest_act_ref_missing_census.sh [path-to-compact.sqlite3] [--apply-fix] [--scope=N]
 #     default DB: ./AAEmu.Game/Data/compact.sqlite3 (repo layout)
-#     --scope N: verdict only on quest N (default 2145 — the card's quest;
-#                pass 0 to verdict the full predicate, both rows)
+#     --scope=N: verdict only on quest N (default 2145 — the card's quest;
+#                pass --scope=0 to verdict the full predicate, both rows)
 #     --apply-fix: copy the DB, delete the two dangling acts + their quest_acts
 #                  rows (data-defects.md §4 minimal action: accept comps 89/75 +
 #                  quest_acts 14121/14072 — quests 2145 AND sibling 1960) in the

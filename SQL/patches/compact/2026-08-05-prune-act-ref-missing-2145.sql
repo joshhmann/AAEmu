@@ -22,7 +22,7 @@
 --
 -- Guards: each row is pinned to its full verified shape (id + every relevant
 -- column) — verified 2026-08-05 on compact.sqlite3 (md5
--- 78b3bdbf0383db3b927056106efdf91af). Only these 2 quest_acts rows reference
+-- 78b3bdbf038db3b927056106efdf91af). Only these 2 quest_acts rows reference
 -- accept components 75/89 (checked: no other act rows point at them).
 --
 -- Drift: exactly -2 rows per table on compact.sqlite3 (md5 78b3bdbf...):
