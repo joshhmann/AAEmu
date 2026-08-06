@@ -1,0 +1,236 @@
+{
+ "questId": 128,
+ "name": "수호자에게 인정을 받는 방법",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2082
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 868,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2322,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 267,
+      "npcId": 2082
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 11704,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17180,
+      "type": "QuestActSupplyItem",
+      "detailId": 1727,
+      "itemId": 4028,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11705,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17181,
+      "type": "QuestActObjInteraction",
+      "detailId": 413,
+      "doodadId": 825,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17182,
+      "type": "QuestActObjInteraction",
+      "detailId": 414,
+      "doodadId": 827,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 17184,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 55
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11707,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17185,
+      "type": "QuestActObjInteraction",
+      "detailId": 415,
+      "doodadId": 828,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 31380,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 153
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11708,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17187,
+      "type": "QuestActObjInteraction",
+      "detailId": 416,
+      "doodadId": 829,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 17188,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 56
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11709,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17190,
+      "type": "QuestActConReportNpc",
+      "detailId": 2388,
+      "npcId": 2082
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11710,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38265,
+      "type": "QuestActSupplyItem",
+      "detailId": 4253,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 825
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 827
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 828
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 829
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2082,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 11706); unsynthesizable event shape for QuestActEtcItemObtain (comp 11707); unsynthesizable event shape for QuestActEtcItemObtain (comp 11708)"
+ }
+}

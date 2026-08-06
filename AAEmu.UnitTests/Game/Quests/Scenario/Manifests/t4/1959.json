@@ -1,0 +1,129 @@
+{
+ "questId": 1959,
+ "name": "장작을 모아보세요",
+ "zoneId": 1,
+ "categoryId": 34,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9789,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13794,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 64,
+      "questContextId": 1959
+     },
+     {
+      "actId": 14067,
+      "type": "QuestActConAcceptItemGain",
+      "detailId": 61
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9790,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14068,
+      "type": "QuestActObjItemGather",
+      "detailId": 925,
+      "itemId": 15589,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9791,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13796,
+      "type": "QuestActConAutoComplete",
+      "detailId": 440
+     },
+     {
+      "actId": 13799,
+      "type": "QuestActSupplyCopper",
+      "detailId": 87,
+      "amount": 0
+     },
+     {
+      "actId": 13945,
+      "type": "QuestActSupplyLp",
+      "detailId": 8
+     },
+     {
+      "actId": 14069,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 74,
+      "questContextId": 1960
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15589,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15589,
+   "count": 3
+  }
+ ],
+ "skip": {
+  "reason": "unsupported act type QuestActConAcceptItemGain; unsupported act type QuestActSupplyLp; unsynthesizable event shape for QuestActConAcceptItemGain (comp 9789); unsynthesizable event shape for QuestActSupplyLp (comp 9791)"
+ }
+}

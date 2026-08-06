@@ -1,0 +1,116 @@
+{
+ "questId": 4887,
+ "name": "터니비에게 특별한 당신",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21164,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29193,
+      "type": "QuestActConAcceptItemGain",
+      "detailId": 89
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21166,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29197,
+      "type": "QuestActConReportNpc",
+      "detailId": 4169,
+      "npcId": 11083
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21178,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29194,
+      "type": "QuestActSupplyItem",
+      "detailId": 3306,
+      "itemId": 25544,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21179,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11083,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActConAcceptItemGain; unsynthesizable event shape for QuestActConAcceptItemGain (comp 21164)"
+ }
+}

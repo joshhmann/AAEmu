@@ -1,0 +1,128 @@
+{
+ "questId": 997,
+ "name": "납치된 주술사를 되찾아라",
+ "zoneId": 1,
+ "categoryId": 20,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4619
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8028,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 870,
+      "npcId": 4619
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5127,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14226,
+      "type": "QuestActObjInteraction",
+      "detailId": 356,
+      "doodadId": 2770,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 16970,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 40
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5128,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12774,
+      "type": "QuestActConReportNpc",
+      "detailId": 1887,
+      "npcId": 4619
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9108,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2770
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4619,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 5127)"
+ }
+}

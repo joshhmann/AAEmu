@@ -1,0 +1,133 @@
+{
+ "questId": 882,
+ "name": "쓰레기 더미 속 보물",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 19,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5221
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5996,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 687,
+      "npcId": 5221
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4191,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6018,
+      "type": "QuestActObjItemGather",
+      "detailId": 309,
+      "itemId": 5198,
+      "count": 1
+     },
+     {
+      "actId": 15035,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 24
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4193,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6019,
+      "type": "QuestActConReportNpc",
+      "detailId": 786,
+      "npcId": 5221
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4194,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5198,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5221,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5198,
+   "count": 1
+  }
+ ],
+ "skip": {
+  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 4191)"
+ }
+}

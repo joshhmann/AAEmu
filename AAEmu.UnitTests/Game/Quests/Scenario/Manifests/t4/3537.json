@@ -1,0 +1,162 @@
+{
+ "questId": 3537,
+ "name": "탑의 도시를 지켜라",
+ "zoneId": 142,
+ "categoryId": 62,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10148
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16898,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22266,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3154,
+      "npcId": 10148
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16899,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30691,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1097,
+      "npcId": 10144,
+      "count": 2
+     },
+     {
+      "actId": 30693,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 144
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16901,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22270,
+      "type": "QuestActConReportNpc",
+      "detailId": 3387,
+      "npcId": 10148
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16902,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40831,
+      "type": "QuestActSupplyItem",
+      "detailId": 4798,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21812,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30690,
+      "type": "QuestActObjInteraction",
+      "detailId": 646,
+      "doodadId": 4271,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10144,
+     "count": 2
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 4271
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10148,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 16899)"
+ }
+}

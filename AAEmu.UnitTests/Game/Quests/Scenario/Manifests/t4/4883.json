@@ -1,0 +1,116 @@
+{
+ "questId": 4883,
+ "name": "라이네에게 특별한 당신",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29176,
+      "type": "QuestActConAcceptItemGain",
+      "detailId": 85
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21154,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29179,
+      "type": "QuestActConReportNpc",
+      "detailId": 4165,
+      "npcId": 11074
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21170,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29177,
+      "type": "QuestActSupplyItem",
+      "detailId": 3302,
+      "itemId": 25540,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21171,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11074,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActConAcceptItemGain; unsynthesizable event shape for QuestActConAcceptItemGain (comp 21152)"
+ }
+}

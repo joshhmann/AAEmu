@@ -1,0 +1,106 @@
+{
+ "questId": 1953,
+ "name": "하다보니(reserve)",
+ "zoneId": 1,
+ "categoryId": 34,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAutoComplete",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9042,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 9043,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14538,
+      "type": "QuestActObjInteraction",
+      "detailId": 366,
+      "doodadId": 2862,
+      "count": 1,
+      "wiId": 19,
+      "phase": 6414
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9044,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12718,
+      "type": "QuestActConAutoComplete",
+      "detailId": 350
+     },
+     {
+      "actId": 13769,
+      "type": "QuestActSupplyCopper",
+      "detailId": 81,
+      "amount": 0
+     },
+     {
+      "actId": 13938,
+      "type": "QuestActSupplyLp",
+      "detailId": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2862
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActSupplyLp; unsynthesizable event shape for QuestActSupplyLp (comp 9044)"
+ }
+}

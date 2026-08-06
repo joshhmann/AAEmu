@@ -1,0 +1,123 @@
+{
+ "questId": 1960,
+ "name": "여행자의 조잡한 공구상자를 설치해보세요",
+ "zoneId": 1,
+ "categoryId": 34,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9792,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13800,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 66,
+      "questContextId": 1960
+     },
+     {
+      "actId": 14070,
+      "type": "QuestActConAcceptItemGain",
+      "detailId": 62
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9793,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14071,
+      "type": "QuestActObjItemUse",
+      "detailId": 402,
+      "itemId": 16214,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9794,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13802,
+      "type": "QuestActConAutoComplete",
+      "detailId": 441
+     },
+     {
+      "actId": 13804,
+      "type": "QuestActSupplyCopper",
+      "detailId": 88,
+      "amount": 0
+     },
+     {
+      "actId": 13939,
+      "type": "QuestActSupplyLp",
+      "detailId": 2
+     },
+     {
+      "actId": 14072,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 75,
+      "questContextId": 1961
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 16214,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActConAcceptItemGain; unsupported act type QuestActSupplyLp; unsynthesizable event shape for QuestActConAcceptItemGain (comp 9792); unsynthesizable event shape for QuestActSupplyLp (comp 9794)"
+ }
+}

@@ -1,0 +1,175 @@
+{
+ "questId": 871,
+ "name": "이혼하고 싶은 여자",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5212
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4042,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5736,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 662,
+      "npcId": 5212
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4045,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5739,
+      "type": "QuestActConReportNpc",
+      "detailId": 756,
+      "npcId": 5212
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4046,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 11711,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17198,
+      "type": "QuestActSupplyItem",
+      "detailId": 1731,
+      "itemId": 5206,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21819,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30727,
+      "type": "QuestActObjItemUse",
+      "detailId": 697,
+      "itemId": 25737,
+      "count": 1
+     },
+     {
+      "actId": 30728,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 146
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21829,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30741,
+      "type": "QuestActObjItemGather",
+      "detailId": 2427,
+      "itemId": 25752,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 25737,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 25752,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5212,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25752,
+   "count": 1
+  }
+ ],
+ "skip": {
+  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 21819)"
+ }
+}

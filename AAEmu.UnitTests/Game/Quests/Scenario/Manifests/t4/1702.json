@@ -1,0 +1,129 @@
+{
+ "questId": 1702,
+ "name": "매혹된 영혼",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2116
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11794,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1516,
+      "npcId": 2116
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8232,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16347,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 26
+     },
+     {
+      "actId": 25691,
+      "type": "QuestActObjSphere",
+      "detailId": 632,
+      "sphereId": 763
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8233,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12097,
+      "type": "QuestActCheckCompleteComponent",
+      "detailId": 949
+     },
+     {
+      "actId": 12200,
+      "type": "QuestActObjInteraction",
+      "detailId": 287,
+      "doodadId": 2146,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8355,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12094,
+      "type": "QuestActConAutoComplete",
+      "detailId": 316
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 8232
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 2146
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActCheckCompleteComponent; unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActCheckCompleteComponent (comp 8233); unsynthesizable event shape for QuestActEtcItemObtain (comp 8232)"
+ }
+}
