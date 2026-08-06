@@ -1,0 +1,114 @@
+{
+ "questId": 2807,
+ "name": "고요한 바다를 지켜라 2단계",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1026
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17603,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2251,
+      "npcId": 1026
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12126,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17604,
+      "type": "QuestActObjZoneKill",
+      "detailId": 28
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12127,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17602,
+      "type": "QuestActConReportNpc",
+      "detailId": 2477,
+      "npcId": 1026
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12128,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1026,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12126)"
+ }
+}

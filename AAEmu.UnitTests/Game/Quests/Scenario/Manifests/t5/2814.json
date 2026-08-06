@@ -1,0 +1,121 @@
+{
+ "questId": 2814,
+ "name": "황금 바다를 지켜라 3단계",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1026
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12159,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17633,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2258,
+      "npcId": 1026
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12160,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17634,
+      "type": "QuestActObjZoneKill",
+      "detailId": 35
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12161,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17635,
+      "type": "QuestActConReportNpc",
+      "detailId": 2484,
+      "npcId": 1026
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12162,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28781,
+      "type": "QuestActSupplyExp",
+      "detailId": 372,
+      "exp": 4780
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1026,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12160)"
+ }
+}

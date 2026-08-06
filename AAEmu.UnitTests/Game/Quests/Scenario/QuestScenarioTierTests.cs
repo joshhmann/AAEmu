@@ -5,11 +5,12 @@ using System.Text.RegularExpressions;
 namespace AAEmu.UnitTests.Game.Quests.Scenario;
 
 /// <summary>
-/// M1-5c + M2a wave-1: tier runner - drives every manifest in Manifests/t1
-/// (Solzreed golden zone), Manifests/t2 (kill-accept sample + CheckGuard +
-/// ItemGroup families), Manifests/t3 (M1-5c stratified act-family census,
-/// frozen sample) and Manifests/t4 (M2a wave-1: band 1-20 quests carrying the
-/// closed act families cinema/etc-item-obtain/accept-item-gain/supply-LP)
+/// M1-5c + M2a wave-1 + M2c wave-3: tier runner - drives every manifest in
+/// Manifests/t1 (Solzreed golden zone), Manifests/t2 (kill-accept sample +
+/// CheckGuard + ItemGroup families), Manifests/t3 (M1-5c stratified act-family
+/// census, frozen sample), Manifests/t4 (M2a wave-1: band 1-20 quests carrying
+/// the closed act families cinema/etc-item-obtain/accept-item-gain/supply-LP)
+/// and Manifests/t5 (M2c wave-3: band 21-30 quests carrying QuestActObjZoneKill)
 /// through the scenario harness and writes scorecard-explorations/runnability.md
 /// (per-tier tables, headline number, FAIL rollup by act family, SKIP rollup,
 /// recommended fix-card queue).
@@ -28,7 +29,8 @@ public class QuestScenarioTierTests
         ("t1", "T1 golden zone (Solzreed)"),
         ("t2", "T2 families (kill-accept/guard/item-group)"),
         ("t3", "T3 stratified act-family census (frozen M1-5c sample)"),
-        ("t4", "T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)")
+        ("t4", "T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)"),
+        ("t5", "T5 M2c wave-3 (band 21-30: ZoneKill)")
     ];
 
     private static string RepoRoot()

@@ -607,6 +607,26 @@ def select_t4_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
+# ---- T5 (M2c wave-3): band 21-30 quests carrying QuestActObjZoneKill ----
+# Deterministic mirror of T4: the closed act family for wave-3 is ZoneKill
+# (band 21-30 quests, minus dropped content, minus already-sampled quests).
+WAVE3_ACT_TYPES = ("QuestActObjZoneKill",)
+
+
+def select_t5_quests(c, existing_ids):
+    """Band 21-30 ZoneKill carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE3_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        JOIN quest_contexts q ON q.id = cmp.quest_context_id
+        WHERE a.act_detail_type IN ({placeholders})
+          AND q.LEVEL BETWEEN 21 AND 30
+        ORDER BY cmp.quest_context_id""", WAVE3_ACT_TYPES).fetchall()
+    return [r[0] for r in rows if r[0] not in existing_ids]
+
+
 def primary_family(acts):
     """Quest family label for the report: most frequent act type, preferring
     supported (generator-known) types so common families label drivable quests."""
@@ -697,9 +717,27 @@ def main():
             json.dump(manifest, f, ensure_ascii=False, indent=1)
         counts["t4"] = counts.get("t4", 0) + 1
 
+    # ---- T5 (M2c wave-3): band 21-30 quests carrying QuestActObjZoneKill ----
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t4")) if f.endswith(".json")}
+    t5_ids = select_t5_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t5")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t5_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t5"] = counts.get("t5", 0) + 1
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
                       "t1_total": len(t1_ids), "t2_total": len(t2_ids),
-                      "t3_selected": len(t3_ids), "t4_selected": len(t4_ids)}, indent=1))
+                      "t3_selected": len(t3_ids), "t4_selected": len(t4_ids),
+                      "t5_selected": len(t5_ids)}, indent=1))
 
 
 if __name__ == "__main__":

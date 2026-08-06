@@ -10,7 +10,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
 - **T3 stratified act-family census (frozen M1-5c sample)**: 32 PASS / 0 FAIL / 22 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 31 PASS / 0 FAIL / 1 SKIP
-- **ALL TIERS (census)**: 189 PASS / 0 FAIL / 29 SKIP over 218 quests — **189/189 quests runnable** (29 SKIP not driven, reasons below)
+- **T5 M2c wave-3 (band 21-30: ZoneKill)**: 0 PASS / 0 FAIL / 20 SKIP
+- **ALL TIERS (census)**: 189 PASS / 0 FAIL / 49 SKIP over 238 quests — **189/189 quests runnable** (49 SKIP not driven, reasons below)
 
 ## T1 — per-quest verdicts
 
@@ -250,6 +251,31 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 884 | 검은 모래회의 비밀 정보 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 997 | 납치된 주술사를 되찾아라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 
+## T5 — per-quest verdicts
+
+| quest | name | family | verdict | detail |
+|---|---|---|---|---|
+| 2794 | 십자별 평원을 지켜라 1단계 | QuestActConAcceptSphere | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12074)) |
+| 2795 | 십자별 평원을 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12078)) |
+| 2796 | 십자별 평원을 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12082)) |
+| 2797 | 십자별 평원을 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12086)) |
+| 2800 | 길 잃은 바다를 지켜라 1단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12097)) |
+| 2801 | 길 잃은 바다를 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12105)) |
+| 2802 | 길 잃은 바다를 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12109)) |
+| 2803 | 길 잃은 바다를 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12113)) |
+| 2806 | 고요한 바다를 지켜라 1단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12122)) |
+| 2807 | 고요한 바다를 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12126)) |
+| 2808 | 고요한 바다를 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12131)) |
+| 2809 | 고요한 바다를 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12135)) |
+| 2812 | 황금 바다를 지켜라 1단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12148)) |
+| 2813 | 황금 바다를 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12152)) |
+| 2814 | 황금 바다를 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12160)) |
+| 2815 | 황금 바다를 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12168)) |
+| 2819 | 이니스테르를 지켜라 1단계 | QuestActConAcceptSphere | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12822)) |
+| 2820 | 이니스테르를 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12826)) |
+| 2821 | 이니스테르를 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12830)) |
+| 2822 | 이니스테르를 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12834)) |
+
 ## FAIL rollup (by act family — top blockers)
 
 _none — every driven quest passed._
@@ -259,9 +285,9 @@ _none — every driven quest passed._
 
 ## SKIP rollup (by reason)
 
+- **unsupported act type QuestActObjZoneKill** — 23 quests: 5900, 5923, 5924, 2794, 2795, 2796, 2797, 2800, 2801, 2802, 2803, 2806, 2807, 2808, 2809, 2812, 2813, 2814, 2815, 2819, 2820, 2821, 2822
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
 - **unsupported act type QuestActCheckCompleteComponent** — 3 quests: 1005, 2008, 1702
-- **unsupported act type QuestActObjZoneKill** — 3 quests: 5900, 5923, 5924
 - **unsupported act type QuestActObjAggro** — 2 quests: 1408, 1443
 - **unsupported act type QuestActSupplyCrimePoint** — 2 quests: 2916, 2926
 - **unsynthesizable event shape for QuestActObjExpressFire** — 2 quests: 3569, 3570
@@ -282,8 +308,8 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 
 | act family | gap kind | example quests | fix target |
 |---|---|---|---|
+| QuestActObjZoneKill | unsupported act type | 2794, 2795, 2796, 2797 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActCheckCompleteComponent | unsupported act type | 1005, 1702, 2008 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
-| QuestActObjZoneKill | unsupported act type | 5900, 5923, 5924 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjAbilityLevel | unsupported act type | 5967, 6069 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjAggro | unsupported act type | 1408, 1443 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjCompleteQuest | unsupported act type | 5814, 5815 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
