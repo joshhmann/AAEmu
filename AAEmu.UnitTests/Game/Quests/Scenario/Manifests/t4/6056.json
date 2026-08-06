@@ -36,7 +36,8 @@
      {
       "actId": 36816,
       "type": "QuestActObjCinema",
-      "detailId": 12
+      "detailId": 12,
+      "cinemaId": 155
      }
     ]
    },
@@ -77,7 +78,16 @@
   },
   {
    "name": "PROGRESS",
-   "events": [],
+   "events": [
+    {
+     "type": "CinemaStarted",
+     "cinemaId": 155
+    },
+    {
+     "type": "CinemaEnded",
+     "cinemaId": 155
+    }
+   ],
    "expect": {
     "step": "Reward",
     "status": "Completed"
@@ -98,8 +108,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActObjCinema; unsynthesizable event shape for QuestActObjCinema (comp 26051)"
- }
+ "selectedRewardIndex": 0
 }

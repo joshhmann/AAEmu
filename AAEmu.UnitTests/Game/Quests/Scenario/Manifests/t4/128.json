@@ -76,7 +76,9 @@
      {
       "actId": 17184,
       "type": "QuestActEtcItemObtain",
-      "detailId": 55
+      "detailId": 55,
+      "itemId": 3950,
+      "count": 1
      }
     ]
    },
@@ -97,7 +99,9 @@
      {
       "actId": 31380,
       "type": "QuestActEtcItemObtain",
-      "detailId": 153
+      "detailId": 153,
+      "itemId": 4031,
+      "count": 1
      }
     ]
    },
@@ -118,7 +122,9 @@
      {
       "actId": 17188,
       "type": "QuestActEtcItemObtain",
-      "detailId": 56
+      "detailId": 56,
+      "itemId": 3951,
+      "count": 1
      }
     ]
    },
@@ -174,19 +180,23 @@
    "events": [
     {
      "type": "Interaction",
-     "doodadId": 825
+     "doodadId": 825,
+     "count": 1
     },
     {
      "type": "Interaction",
-     "doodadId": 827
+     "doodadId": 827,
+     "count": 1
     },
     {
      "type": "Interaction",
-     "doodadId": 828
+     "doodadId": 828,
+     "count": 1
     },
     {
      "type": "Interaction",
-     "doodadId": 829
+     "doodadId": 829,
+     "count": 1
     }
    ],
    "expect": {
@@ -229,8 +239,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 11706); unsynthesizable event shape for QuestActEtcItemObtain (comp 11707); unsynthesizable event shape for QuestActEtcItemObtain (comp 11708)"
- }
+ "selectedRewardIndex": 0
 }

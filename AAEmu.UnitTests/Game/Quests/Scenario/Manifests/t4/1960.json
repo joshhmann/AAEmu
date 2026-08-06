@@ -9,8 +9,8 @@
  "score": 0,
  "family": "QuestActConAcceptComponent",
  "acceptor": {
-  "type": "Npc",
-  "id": 0
+  "type": "Item",
+  "id": 15589
  },
  "template": {
   "level": 1,
@@ -29,7 +29,9 @@
      {
       "actId": 14070,
       "type": "QuestActConAcceptItemGain",
-      "detailId": 62
+      "detailId": 62,
+      "itemId": 15589,
+      "count": 1
      }
     ]
    },
@@ -66,7 +68,8 @@
      {
       "actId": 13939,
       "type": "QuestActSupplyLp",
-      "detailId": 2
+      "detailId": 2,
+      "laborPower": 1
      },
      {
       "actId": 14072,
@@ -117,7 +120,10 @@
   }
  ],
  "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActConAcceptItemGain; unsupported act type QuestActSupplyLp; unsynthesizable event shape for QuestActConAcceptItemGain (comp 9792); unsynthesizable event shape for QuestActSupplyLp (comp 9794)"
- }
+ "inventory": [
+  {
+   "itemId": 15589,
+   "count": 1
+  }
+ ]
 }

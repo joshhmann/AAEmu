@@ -43,7 +43,9 @@
      {
       "actId": 17008,
       "type": "QuestActEtcItemObtain",
-      "detailId": 44
+      "detailId": 44,
+      "itemId": 15555,
+      "count": 1
      }
     ]
    },
@@ -73,8 +75,8 @@
    "name": "START",
    "events": [],
    "expect": {
-    "step": "Progress",
-    "status": "Progress"
+    "step": "Ready",
+    "status": "Ready"
    }
   },
   {
@@ -126,8 +128,5 @@
    "itemId": 24387,
    "count": 1
   }
- ],
- "skip": {
-  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 3964)"
- }
+ ]
 }

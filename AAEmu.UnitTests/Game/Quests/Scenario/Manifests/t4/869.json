@@ -43,17 +43,23 @@
      {
       "actId": 13872,
       "type": "QuestActEtcItemObtain",
-      "detailId": 12
+      "detailId": 12,
+      "itemId": 5189,
+      "count": 1
      },
      {
       "actId": 13873,
       "type": "QuestActEtcItemObtain",
-      "detailId": 13
+      "detailId": 13,
+      "itemId": 5251,
+      "count": 1
      },
      {
       "actId": 13874,
       "type": "QuestActEtcItemObtain",
-      "detailId": 14
+      "detailId": 14,
+      "itemId": 5252,
+      "count": 1
      }
     ]
    },
@@ -106,8 +112,8 @@
    "name": "SUPPLY",
    "events": [],
    "expect": {
-    "step": "Progress",
-    "status": "Progress"
+    "step": "Ready",
+    "status": "Ready"
    }
   },
   {
@@ -159,8 +165,5 @@
    "itemId": 5190,
    "count": 1
   }
- ],
- "skip": {
-  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 3958)"
- }
+ ]
 }

@@ -43,7 +43,9 @@
      {
       "actId": 16785,
       "type": "QuestActEtcItemObtain",
-      "detailId": 35
+      "detailId": 35,
+      "itemId": 1843,
+      "count": 1
      }
     ]
    },
@@ -120,8 +122,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 209)"
- }
+ "selectedRewardIndex": 0
 }

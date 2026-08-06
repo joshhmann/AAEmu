@@ -77,7 +77,9 @@
      {
       "actId": 30728,
       "type": "QuestActEtcItemObtain",
-      "detailId": 146
+      "detailId": 146,
+      "itemId": 25737,
+      "count": 1
      }
     ]
    },
@@ -168,8 +170,5 @@
    "itemId": 25752,
    "count": 1
   }
- ],
- "skip": {
-  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 21819)"
- }
+ ]
 }

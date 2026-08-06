@@ -36,7 +36,9 @@
      {
       "actId": 16347,
       "type": "QuestActEtcItemObtain",
-      "detailId": 26
+      "detailId": 26,
+      "itemId": 15284,
+      "count": 1
      },
      {
       "actId": 25691,
@@ -99,7 +101,8 @@
     },
     {
      "type": "Interaction",
-     "doodadId": 2146
+     "doodadId": 2146,
+     "count": 1
     }
    ],
    "expect": {
@@ -124,6 +127,6 @@
  ],
  "selectedRewardIndex": 0,
  "skip": {
-  "reason": "unsupported act type QuestActCheckCompleteComponent; unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActCheckCompleteComponent (comp 8233); unsynthesizable event shape for QuestActEtcItemObtain (comp 8232)"
+  "reason": "unsupported act type QuestActCheckCompleteComponent; unsynthesizable event shape for QuestActCheckCompleteComponent (comp 8233)"
  }
 }

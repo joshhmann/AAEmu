@@ -56,7 +56,8 @@
      {
       "actId": 13938,
       "type": "QuestActSupplyLp",
-      "detailId": 1
+      "detailId": 1,
+      "laborPower": 1
      }
     ]
    }
@@ -76,7 +77,8 @@
    "events": [
     {
      "type": "Interaction",
-     "doodadId": 2862
+     "doodadId": 2862,
+     "count": 1
     }
    ],
    "expect": {
@@ -99,8 +101,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActSupplyLp; unsynthesizable event shape for QuestActSupplyLp (comp 9044)"
- }
+ "selectedRewardIndex": 0
 }

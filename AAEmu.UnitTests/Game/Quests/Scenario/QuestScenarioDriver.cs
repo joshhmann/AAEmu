@@ -169,6 +169,14 @@ public class QuestScenarioDriver
         // AppConfiguration.World must be non-null: AddExp reads World.ExpRate.
         AppConfiguration.Instance.World ??= new WorldConfig();
 
+        // AccountManager: QuestActSupplyLp -> Character.ChangeLabor -> the
+        // LaborPower setter resolves Singleton<AccountManager>.Instance
+        // (Character.cs:72) - seed the DI-backed singleton with mocks so the
+        // supply act does not throw. UpdateLabor's MySQL write fails closed
+        // (no DB in tests; caught inside UpdateLabor) - the act itself passes.
+        SetSingleton(typeof(Singleton<AccountManager>),
+            new AccountManager(Mock.Of<ITickManager>().Object, Mock.Of<ITimedRewardsManager>().Object));
+
         // Debug chat messages must not fire in tests: SendDebugMessage routes through
         // CharacterManager.Instance (DI singleton, not available here). The test host's
         // DI may carry a config with DebugInfo=true, so force it off explicitly.
@@ -308,6 +316,12 @@ public class QuestScenarioDriver
             nameof(QuestActSupplyAppellation) => new QuestActSupplyAppellation(component) { AppellationId = GetUInt(raw, "appellationId") },
             nameof(QuestActSupplyRemoveItem) => new QuestActSupplyRemoveItem(component) { ItemId = GetUInt(raw, "itemId"), Count = count },
             nameof(QuestActSupplySelectiveItem) => new QuestActSupplySelectiveItem(component) { ItemId = GetUInt(raw, "itemId"), GradeId = GetByte(raw, "gradeId"), Count = count },
+            // M2a wave-1 closures: cinema objective, etc-item-obtain pass-through,
+            // accept-item-gain condition, supply-LP act.
+            nameof(QuestActObjCinema) => new QuestActObjCinema(component) { CinemaId = GetUInt(raw, "cinemaId") },
+            nameof(QuestActEtcItemObtain) => new QuestActEtcItemObtain(component) { ItemId = GetUInt(raw, "itemId"), Count = count },
+            nameof(QuestActConAcceptItemGain) => new QuestActConAcceptItemGain(component) { ItemId = GetUInt(raw, "itemId"), Count = count },
+            nameof(QuestActSupplyLp) => new QuestActSupplyLp(component) { LaborPower = GetInt(raw, "laborPower") },
             _ => throw new NotSupportedException(
                 $"Unsupported act type '{type}' in scenario manifest (quest {component.ParentQuestTemplate.Id}); " +
                 "add it to QuestScenarioDriver.BuildAct or fix the manifest")
@@ -599,7 +613,11 @@ public class QuestScenarioDriver
                 owner.Events.OnTalkNpcGroupMade(owner, new OnTalkNpcGroupMadeArgs { NpcGroupId = GetUInt(rawEvent, "npcGroupId"), NpcId = GetUInt(rawEvent, "npcId"), QuestComponentId = GetUInt(rawEvent, "componentId") });
                 break;
             case "Interaction":
-                owner.Events.OnInteraction(owner, new OnInteractionArgs { DoodadId = GetUInt(rawEvent, "doodadId"), SourcePlayer = owner });
+                // RC-4 pattern: QuestActObjInteraction.OnInteraction credits +1
+                // per event (Interaction.cs:54) and RunAct requires
+                // currentObjectiveCount >= Count - fire 'count' times (default 1).
+                for (var i = 0; i < GetInt(rawEvent, "count", 1); i++)
+                    owner.Events.OnInteraction(owner, new OnInteractionArgs { DoodadId = GetUInt(rawEvent, "doodadId"), SourcePlayer = owner });
                 break;
             case "EnterSphere":
                 owner.Events.OnEnterSphere(owner, new OnEnterSphereArgs
@@ -648,6 +666,16 @@ public class QuestScenarioDriver
                 break;
             case "ZoneKill":
                 owner.Events.OnZoneKill(owner, new OnZoneKillArgs { ZoneGroupId = GetUInt(rawEvent, "zoneGroupId"), Killer = owner, Victim = (Unit)owner });
+                break;
+            case "CinemaStarted":
+                // M2a wave-1: QuestActObjCinema.OnCinemaStarted sets
+                // player.CurrentlyPlayingCinemaId = CinemaId (Cinema.cs:48-57).
+                owner.Events.OnCinemaStarted(owner, new OnCinemaStartedArgs { CinemaId = GetUInt(rawEvent, "cinemaId") });
+                break;
+            case "CinemaEnded":
+                // OnCinemaEnded credits the objective only when
+                // CurrentlyPlayingCinemaId == CinemaId (Cinema.cs:65-78).
+                owner.Events.OnCinemaEnded(owner, new OnCinemaEndedArgs { CinemaId = GetUInt(rawEvent, "cinemaId") });
                 break;
             default:
                 throw new NotSupportedException($"Unsupported event type '{type}' in scenario manifest (quest {quest.TemplateId})");

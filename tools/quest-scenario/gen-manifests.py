@@ -87,6 +87,11 @@ ACT_TABLES = {
     "QuestActSupplyAppellation": ("quest_act_supply_appellations", {"appellationId": "appellation_id"}),
     "QuestActSupplyRemoveItem": ("quest_act_supply_remove_items", {"itemId": "item_id", "count": "count"}),
     "QuestActSupplySelectiveItem": ("quest_act_supply_selective_items", {"itemId": "item_id", "gradeId": "grade_id", "count": "count"}),
+    # ---- M2a wave-1 closures (2026-08-06) ----
+    "QuestActObjCinema": ("quest_act_obj_cinemas", {"cinemaId": "cinema_id"}),
+    "QuestActEtcItemObtain": ("quest_act_etc_item_obtains", {"itemId": "item_id", "count": "count"}),
+    "QuestActConAcceptItemGain": ("quest_act_con_accept_item_gains", {"itemId": "item_id", "count": "count"}),
+    "QuestActSupplyLp": ("quest_act_supply_lps", {"laborPower": "lp"}),
 }
 
 # Act types that need no synthetic event but whose RunAct is drivable by quest state.
@@ -98,6 +103,8 @@ NO_EVENT_TYPES = {
     "QuestActSupplyItem", "QuestActSupplyCopper", "QuestActSupplyExp",
     "QuestActSupplyJuryPoint", "QuestActSupplyAppellation", "QuestActSupplyRemoveItem",
     "QuestActSupplySelectiveItem",
+    # M2a wave-1: pass-through / state-check acts with no synthetic event.
+    "QuestActEtcItemObtain", "QuestActConAcceptItemGain", "QuestActSupplyLp",
 }
 
 # Act types -> synthetic event shape builder. Returns None when the shape is
@@ -133,13 +140,26 @@ def event_shape(act_type, params, component_id, group_members):
     if act_type == "QuestActObjTalkNpcGroup":
         return None  # npc-group member mapping not synthesizable -> skip quest
     if act_type == "QuestActObjInteraction":
-        return {"type": "Interaction", "doodadId": params.get("doodadId", 0)}
+        # RC-4 pattern: OnInteraction credits +1 per event (AddObjective(1),
+        # Interaction.cs:54) and RunAct requires currentObjectiveCount >= Count
+        # (Interaction.cs:30) - the driver must fire the event 'count' times.
+        return {"type": "Interaction", "doodadId": params.get("doodadId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjSphere":
         return {"type": "EnterSphere", "componentId": component_id}
     if act_type == "QuestActObjCraft":
         return {"type": "Craft", "craftId": params.get("craftId", 0)}
     if act_type == "QuestActObjLevel":
         return {"type": "LevelUp"}
+    if act_type == "QuestActObjCinema":
+        # M2a wave-1: two-event drive. QuestActObjCinema.OnCinemaStarted sets
+        # player.CurrentlyPlayingCinemaId = CinemaId; OnCinemaEnded credits the
+        # objective only when CurrentlyPlayingCinemaId == CinemaId
+        # (QuestActObjCinema.cs:48-78). Return BOTH events in order so the
+        # stage fires started -> ended.
+        return [
+            {"type": "CinemaStarted", "cinemaId": params.get("cinemaId", 0)},
+            {"type": "CinemaEnded", "cinemaId": params.get("cinemaId", 0)},
+        ]
     if act_type == "QuestActObjZoneMonsterHunt":
         return None  # zone->zone-group mapping unverified -> skip quest
     if act_type == "QuestActObjExpressFire":
@@ -275,16 +295,27 @@ def build_manifest(c, quest_id, family, item_groups):
             t = act["type"]
             if t == "QuestActConAcceptNpc":
                 acceptor = {"type": "Npc", "id": act.get("npcId", 0)}
+                break
             elif t == "QuestActConAcceptNpcKill":
                 acceptor = {"type": "Kill", "id": act.get("npcId", 0)}
+                break
             elif t == "QuestActConAcceptDoodad":
                 acceptor = {"type": "Doodad", "id": act.get("doodadId", 0)}
+                break
             elif t == "QuestActConAcceptItem":
                 acceptor = {"type": "Item", "id": act.get("itemId", 0)}
                 inventory.append({"itemId": act.get("itemId", 0), "count": 1})
+                break
+            elif t == "QuestActConAcceptItemGain":
+                # M2a wave-1: mirrors ConAcceptItem (acceptor Item + inventory
+                # preseed) but with the act's own Count - CAIG.RunAct checks
+                # CheckItems(ItemId, Count) (QuestActConAcceptItemGain.cs:24).
+                acceptor = {"type": "Item", "id": act.get("itemId", 0)}
+                inventory.append({"itemId": act.get("itemId", 0), "count": act.get("count", 1)})
+                break
             elif t == "QuestActConAcceptSphere":
                 acceptor = {"type": "Sphere", "id": act.get("sphereId", 0)}
-            break  # first accept act wins
+                break
         break
 
     # ---- stage plan: the engine walks KINDS (GoToNextStep) and the driver calls
@@ -301,6 +332,9 @@ def build_manifest(c, quest_id, family, item_groups):
         "QuestActSupplyItem", "QuestActSupplyCopper", "QuestActSupplyExp",
         "QuestActSupplyJuryPoint", "QuestActSupplyAppellation", "QuestActSupplyRemoveItem",
         "QuestActSupplySelectiveItem",
+        # M2a wave-1: pass-through / state-check acts (RunAct->true once the
+        # rig satisfies the condition; cinema needs events and is NOT here).
+        "QuestActEtcItemObtain", "QuestActConAcceptItemGain", "QuestActSupplyLp",
     }
 
     # Act types that pass without events because the generator pre-stocks the inventory
@@ -316,6 +350,8 @@ def build_manifest(c, quest_id, family, item_groups):
         "QuestActObjTalk", "QuestActObjTalkNpcGroup", "QuestActObjInteraction",
         "QuestActObjSphere", "QuestActObjCraft", "QuestActObjLevel",
         "QuestActObjZoneMonsterHunt", "QuestActObjExpressFire",
+        # M2a wave-1: QuestActObjCinema overrides CountsAsAnObjective => true.
+        "QuestActObjCinema",
     }
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
@@ -331,7 +367,9 @@ def build_manifest(c, quest_id, family, item_groups):
                 continue
             shape = event_shape(act["type"], act, comp["id"], item_groups)
             if shape is not None:
-                events_by_kind.setdefault(kind, []).append(shape)
+                # Multi-event shapes (e.g. cinema started->ended) come as lists.
+                shapes = shape if isinstance(shape, list) else [shape]
+                events_by_kind.setdefault(kind, []).extend(shapes)
             else:
                 skip_reasons.append(f"unsynthesizable event shape for {act['type']} (comp {comp['id']})")
         if kind == "Reward":
