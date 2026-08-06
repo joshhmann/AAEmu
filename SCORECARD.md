@@ -155,9 +155,11 @@ zones required by a milestone or an observed defect.
 > Quest-runnability (M2a, band 1-20 census 2026-08-06): **1233/1233 driven quests runnable, 0 FAIL** across the
 > 1369-quest scenario-harness census. **Band 1-10: 560 PASS / 100 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
 > 660 non-dropped (668 − 8 dropped). **Band 11-20: 609 PASS / 17 SKIP / 0 FAIL = 100.0%** of 626 non-dropped.
-> All SKIPs documented-SKIP with reason: 91 no-components reserve/cutscene shells (2148–2229, 3748, 3750–3757),
-> 25 let-it-done-without-report-act templates (old Sunny Wilderness 1867/1898/1904/1908/2054 + act-less
-> 5575–5645 — no engine completion path), 5 score-without-objectives, + frozen-sample skips. Wave-1+2 closures
+> All SKIPs documented-SKIP with reason (136): 91 no-components reserve/cutscene shells (2148–2229, 3748, 3750–3757),
+> 26 let-it-done-without-report-act (20 + 6 — old Sunny Wilderness 1867/1898/1904/1908/2054 + act-less
+> 5575–5645 cluster + 6069 — no engine completion path), 8 orphaned contexts (no quest_contexts row),
+> 10 unsupported-act-type (ZoneKill 3 / CrimePoint 2 / MateLevel 2 / CompleteQuest 2 / AbilityLevel 1),
+> 1 score-without-objectives (5641). Wave-1+2 closures
 > flipped 73 SKIP→PASS cumulative (36 wave-1 + 37 merged-line incl. 1702 multi-gap); zero PASS→SKIP regressions.
 > Census regen deterministic (byte-identical); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
 > Tiger Spine/Falcony/Sunny Wilderness) in runnability.md (census-meta.json-driven). Fail-before states on the
