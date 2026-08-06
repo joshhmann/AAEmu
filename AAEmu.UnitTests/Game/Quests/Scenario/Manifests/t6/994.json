@@ -1,0 +1,100 @@
+{
+ "questId": 994,
+ "name": "아스트라의 시체",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7477
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4885,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13193,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1773,
+      "npcId": 7477
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4886,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7808,
+      "type": "QuestActObjInteraction",
+      "detailId": 164,
+      "doodadId": 1360,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4887,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7809,
+      "type": "QuestActConAutoComplete",
+      "detailId": 196
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1360,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

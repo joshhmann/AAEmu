@@ -1,0 +1,120 @@
+{
+ "questId": 2755,
+ "name": "요정의 소원(OBT 미사용)",
+ "zoneId": 1,
+ "categoryId": 44,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8247
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11587,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16885,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2158,
+      "npcId": 8247
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11588,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 11589,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16886,
+      "type": "QuestActConReportNpc",
+      "detailId": 2369,
+      "npcId": 8247
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11590,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16887,
+      "type": "QuestActSupplyItem",
+      "detailId": 1689,
+      "itemId": 18058,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8247,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18058,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

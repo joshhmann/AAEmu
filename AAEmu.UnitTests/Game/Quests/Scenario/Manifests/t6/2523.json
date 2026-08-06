@@ -1,0 +1,153 @@
+{
+ "questId": 2523,
+ "name": "밤의 눈 공포 물리치기",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 10040
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10908,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28866,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1089,
+      "npcId": 10040
+     },
+     {
+      "actId": 28867,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1090,
+      "npcId": 10041
+     },
+     {
+      "actId": 28868,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1091,
+      "npcId": 4198
+     },
+     {
+      "actId": 28869,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1092,
+      "npcId": 4197
+     },
+     {
+      "actId": 28870,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1093,
+      "npcId": 6603
+     },
+     {
+      "actId": 28871,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1094,
+      "npcId": 4227
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10909,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28872,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 498,
+      "monsterGroupId": 453,
+      "count": 26
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10911,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28874,
+      "type": "QuestActSupplyCopper",
+      "detailId": 808,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21071,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28873,
+      "type": "QuestActConReportJournal",
+      "detailId": 323
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 453,
+     "count": 26
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

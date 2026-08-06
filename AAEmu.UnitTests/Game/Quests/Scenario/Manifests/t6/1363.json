@@ -1,0 +1,136 @@
+{
+ "questId": 1363,
+ "name": "눈사자에 대한 예",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4286
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8484,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 964,
+      "npcId": 4286
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10385,
+      "type": "QuestActObjInteraction",
+      "detailId": 251,
+      "doodadId": 1702,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8485,
+      "type": "QuestActConReportNpc",
+      "detailId": 1105,
+      "npcId": 4286
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38582,
+      "type": "QuestActSupplyItem",
+      "detailId": 4331,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1702,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4286,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

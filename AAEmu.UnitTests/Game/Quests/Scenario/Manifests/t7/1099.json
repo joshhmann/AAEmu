@@ -1,0 +1,125 @@
+{
+ "questId": 1099,
+ "name": "질투와 패기의 증거",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3412
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23150,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3312,
+      "npcId": 3412
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23153,
+      "type": "QuestActObjItemGather",
+      "detailId": 1777,
+      "itemId": 14071,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23152,
+      "type": "QuestActConReportNpc",
+      "detailId": 3542,
+      "npcId": 3412
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5501,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14071,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3412,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14071,
+   "count": 1
+  }
+ ]
+}

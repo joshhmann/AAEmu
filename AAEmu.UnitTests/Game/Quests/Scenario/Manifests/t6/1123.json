@@ -1,0 +1,140 @@
+{
+ "questId": 1123,
+ "name": "손해를 줄이는 법",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5696
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5752,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8717,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1005,
+      "npcId": 5696
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5753,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12959,
+      "type": "QuestActObjItemGather",
+      "detailId": 824,
+      "itemId": 13972,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8720,
+      "type": "QuestActConReportNpc",
+      "detailId": 1153,
+      "npcId": 5702
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5755,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37204,
+      "type": "QuestActSupplyItem",
+      "detailId": 4138,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13972,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5702,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13972,
+   "count": 5
+  }
+ ]
+}

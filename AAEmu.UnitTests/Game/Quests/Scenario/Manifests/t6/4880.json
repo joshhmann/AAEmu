@@ -1,0 +1,91 @@
+{
+ "questId": 4880,
+ "name": "이렇게 된 이상 집문서를 건다",
+ "zoneId": 13,
+ "categoryId": 23,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11994
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21137,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29143,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3881,
+      "npcId": 11994
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21138,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 21139,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29144,
+      "type": "QuestActConReportNpc",
+      "detailId": 4162,
+      "npcId": 5715
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5715,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

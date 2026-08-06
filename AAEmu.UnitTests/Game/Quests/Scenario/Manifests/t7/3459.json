@@ -1,0 +1,140 @@
+{
+ "questId": 3459,
+ "name": "루브크라프스의 전령",
+ "zoneId": 142,
+ "categoryId": 61,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9895
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16827,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22690,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3254,
+      "npcId": 9895
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16828,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22185,
+      "type": "QuestActObjItemGather",
+      "detailId": 1664,
+      "itemId": 21312,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16829,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22186,
+      "type": "QuestActConReportNpc",
+      "detailId": 3361,
+      "npcId": 9898
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16830,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40800,
+      "type": "QuestActSupplyItem",
+      "detailId": 4767,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21312,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9898,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21312,
+   "count": 1
+  }
+ ]
+}

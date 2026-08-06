@@ -1,0 +1,129 @@
+{
+ "questId": 1607,
+ "name": "산적들의 배후",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 14784
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7735,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10862,
+      "type": "QuestActConAcceptItem",
+      "detailId": 76,
+      "itemId": 14784
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7736,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10863,
+      "type": "QuestActConReportNpc",
+      "detailId": 1597,
+      "npcId": 1910
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7737,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 18203,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23771,
+      "type": "QuestActObjItemGather",
+      "detailId": 1950,
+      "itemId": 14784,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14784,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1910,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14784,
+   "count": 1
+  },
+  {
+   "itemId": 14784,
+   "count": 1
+  }
+ ]
+}

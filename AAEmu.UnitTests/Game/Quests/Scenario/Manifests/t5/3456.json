@@ -1,0 +1,128 @@
+{
+ "questId": 3456,
+ "name": "그림자 매의 암호",
+ "zoneId": 142,
+ "categoryId": 61,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9892
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16817,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22176,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3129,
+      "npcId": 9892
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16818,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22179,
+      "type": "QuestActObjExpressFire",
+      "detailId": 16,
+      "expressKeyId": 221,
+      "npcGroupId": 383,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16819,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22177,
+      "type": "QuestActConReportNpc",
+      "detailId": 3358,
+      "npcId": 2660
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16820,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ExpressFire",
+     "npcId": 9891,
+     "emotionId": 221,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2660,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "groups": {
+  "npcGroups": {
+   "383": [
+    9891
+   ]
+  }
+ }
+}

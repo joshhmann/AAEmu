@@ -1,0 +1,163 @@
+{
+ "questId": 1075,
+ "name": "몸이 필요해",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 12,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6564
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5375,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13888,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1841,
+      "npcId": 6564
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5376,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8278,
+      "type": "QuestActSupplyItem",
+      "detailId": 658,
+      "itemId": 13943,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5377,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8279,
+      "type": "QuestActObjItemGather",
+      "detailId": 439,
+      "itemId": 13944,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5380,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8282,
+      "type": "QuestActConReportNpc",
+      "detailId": 1055,
+      "npcId": 3437
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5381,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38597,
+      "type": "QuestActSupplyItem",
+      "detailId": 4346,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13944,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3437,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13944,
+   "count": 3
+  }
+ ]
+}

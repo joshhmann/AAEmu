@@ -1,0 +1,104 @@
+{
+ "questId": 5567,
+ "name": "약탈 조심",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7027
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24030,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33782,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 251,
+      "doodadId": 7027
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24031,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33783,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1141,
+      "npcId": 4832,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24032,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33784,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1440
+     },
+     {
+      "actId": 37046,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1435,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4832,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

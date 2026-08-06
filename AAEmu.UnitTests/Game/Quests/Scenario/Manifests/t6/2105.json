@@ -1,0 +1,123 @@
+{
+ "questId": 2105,
+ "name": "폭주하는 쇠 골렘 처치하라",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4732
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9702,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13531,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 56,
+      "npcId": 4732
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9703,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13532,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 122,
+      "monsterGroupId": 126,
+      "count": 6
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9704,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16619,
+      "type": "QuestActConReportJournal",
+      "detailId": 135
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10639,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14853,
+      "type": "QuestActSupplyCopper",
+      "detailId": 120,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 126,
+     "count": 6
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

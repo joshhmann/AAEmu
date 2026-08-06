@@ -1,0 +1,91 @@
+{
+ "questId": 3758,
+ "name": "깜깜 무소식",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 680
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21354,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2997,
+      "npcId": 680
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21355,
+      "type": "QuestActConReportNpc",
+      "detailId": 3223,
+      "npcId": 10013
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15727,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10013,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

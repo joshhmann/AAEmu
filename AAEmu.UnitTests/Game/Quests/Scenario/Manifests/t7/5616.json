@@ -1,0 +1,89 @@
+{
+ "questId": 5616,
+ "name": "주의! 고물상 가는 길",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7029
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24177,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33787,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 253,
+      "doodadId": 7029
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24178,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 24179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33788,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1442
+     },
+     {
+      "actId": 37052,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1440,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

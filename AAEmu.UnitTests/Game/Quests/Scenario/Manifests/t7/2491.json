@@ -1,0 +1,140 @@
+{
+ "questId": 2491,
+ "name": "피 묻은 손의 준동",
+ "zoneId": 7,
+ "categoryId": 3,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10546
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10761,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14978,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2048,
+      "npcId": 10546
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10762,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14979,
+      "type": "QuestActConReportNpc",
+      "detailId": 2256,
+      "npcId": 10549
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40859,
+      "type": "QuestActSupplyItem",
+      "detailId": 4826,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25226,
+      "type": "QuestActObjItemGather",
+      "detailId": 2051,
+      "itemId": 24159,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24159,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10549,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24159,
+   "count": 1
+  }
+ ]
+}

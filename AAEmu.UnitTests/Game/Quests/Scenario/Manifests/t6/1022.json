@@ -1,0 +1,125 @@
+{
+ "questId": 1022,
+ "name": "태양초를 구하라",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4610
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7916,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 848,
+      "npcId": 4610
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5007,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7918,
+      "type": "QuestActObjItemGather",
+      "detailId": 399,
+      "itemId": 13911,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5008,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7919,
+      "type": "QuestActConReportNpc",
+      "detailId": 982,
+      "npcId": 4779
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5009,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13911,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4779,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13911,
+   "count": 5
+  }
+ ]
+}

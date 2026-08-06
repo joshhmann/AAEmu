@@ -1,0 +1,104 @@
+{
+ "questId": 6327,
+ "name": "시치미 약탈단 강도 소탕하기",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 8042
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27095,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37798,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 312,
+      "doodadId": 8042
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27096,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38244,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 670,
+      "monsterGroupId": 600,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27097,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37807,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1715
+     },
+     {
+      "actId": 37808,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1564,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 600,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

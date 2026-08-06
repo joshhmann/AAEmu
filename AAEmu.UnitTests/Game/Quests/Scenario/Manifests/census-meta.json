@@ -1,0 +1,72 @@
+{
+ "bands": {
+  "1-10": {
+   "label": "band 1-10",
+   "tier": "t6",
+   "total": 668,
+   "dropped": [
+    1533,
+    1535,
+    1536,
+    1537,
+    1538,
+    1539,
+    1540,
+    1541
+   ],
+   "nonDropped": 660
+  },
+  "11-20": {
+   "label": "band 11-20",
+   "tier": "t7",
+   "total": 626,
+   "dropped": [],
+   "nonDropped": 626
+  }
+ },
+ "signatureZones": [
+  {
+   "name": "Gweonid",
+   "zoneIds": [
+    127,
+    128
+   ]
+  },
+  {
+   "name": "Lilyut",
+   "zoneIds": [
+    11,
+    141
+   ]
+  },
+  {
+   "name": "Mahadevi",
+   "zoneIds": [
+    18,
+    142,
+    143
+   ]
+  },
+  {
+   "name": "Tiger Spine",
+   "zoneIds": [
+    23,
+    179
+   ]
+  },
+  {
+   "name": "Falcony",
+   "zoneIds": [
+    21,
+    130
+   ]
+  },
+  {
+   "name": "Sunny Wilderness",
+   "zoneIds": [
+    22,
+    136
+   ]
+  }
+ ]
+}

@@ -1,0 +1,105 @@
+{
+ "questId": 5697,
+ "name": "거대한 땅벌레",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2287
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33988,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4336,
+      "npcId": 2287
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24473,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33989,
+      "type": "QuestActConReportNpc",
+      "detailId": 4634,
+      "npcId": 2287
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24475,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2287,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

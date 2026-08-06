@@ -1,0 +1,99 @@
+{
+ "questId": 5136,
+ "name": "성장의 길",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22277,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 22279,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31427,
+      "type": "QuestActConReportNpc",
+      "detailId": 4307,
+      "npcId": 12702
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31428,
+      "type": "QuestActSupplyItem",
+      "detailId": 3601,
+      "itemId": 26792,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12702,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26792,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

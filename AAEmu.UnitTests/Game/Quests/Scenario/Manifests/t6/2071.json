@@ -1,0 +1,91 @@
+{
+ "questId": 2071,
+ "name": "풍요로운 지옥의 연인",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4589
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9510,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13337,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1796,
+      "npcId": 4589
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9513,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13201,
+      "type": "QuestActConReportNpc",
+      "detailId": 1997,
+      "npcId": 4588
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9514,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4588,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,104 @@
+{
+ "questId": 2133,
+ "name": "정글의 무법자",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5400
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28733,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 169,
+      "doodadId": 5400
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9837,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17770,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 634,
+      "npcId": 2489,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9838,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28734,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1078
+     },
+     {
+      "actId": 36988,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1396,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2489,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

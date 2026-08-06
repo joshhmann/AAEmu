@@ -1,0 +1,8 @@
+{
+ "questId": 3751,
+ "name": "하디르의 농장 인던연출4",
+ "family": "no-acts",
+ "skip": {
+  "reason": "no components"
+ }
+}

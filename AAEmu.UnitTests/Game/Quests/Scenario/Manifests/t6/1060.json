@@ -1,0 +1,165 @@
+{
+ "questId": 1060,
+ "name": "열띤 토론 끝의 멋진 결론",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 10,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3395
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5314,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8245,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 909,
+      "npcId": 3395
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8247,
+      "type": "QuestActSupplyItem",
+      "detailId": 654,
+      "itemId": 13963,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5316,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8523,
+      "type": "QuestActObjInteraction",
+      "detailId": 193,
+      "doodadId": 1410,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5317,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8522,
+      "type": "QuestActObjInteraction",
+      "detailId": 192,
+      "doodadId": 1342,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5318,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8524,
+      "type": "QuestActConReportNpc",
+      "detailId": 1113,
+      "npcId": 7616
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5660,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1410,
+     "count": 1
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 1342,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7616,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

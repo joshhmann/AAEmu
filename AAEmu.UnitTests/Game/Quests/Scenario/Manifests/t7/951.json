@@ -1,0 +1,104 @@
+{
+ "questId": 951,
+ "name": "굶주린 야수의 습격",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5419
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4591,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28803,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 178,
+      "doodadId": 5419
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4592,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7103,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 283,
+      "npcId": 2953,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4594,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28804,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1086
+     },
+     {
+      "actId": 36969,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1380,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2953,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 1516,
+ "name": "호랑이는 죽어서 가죽을 남긴다",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 19,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2644
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7164,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9997,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1277,
+      "npcId": 2644
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7240,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9998,
+      "type": "QuestActObjItemGather",
+      "detailId": 581,
+      "itemId": 14399,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7241,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9999,
+      "type": "QuestActConReportNpc",
+      "detailId": 1442,
+      "npcId": 2644
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7242,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14399,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2644,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14399,
+   "count": 12
+  }
+ ]
+}

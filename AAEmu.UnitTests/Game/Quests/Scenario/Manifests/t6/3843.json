@@ -1,0 +1,186 @@
+{
+ "questId": 3843,
+ "name": "숲을 달리는 엘크",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 6,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10846
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16150,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24681,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3538,
+      "npcId": 10846
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24727,
+      "type": "QuestActObjItemGather",
+      "detailId": 2033,
+      "itemId": 23632,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16153,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24682,
+      "type": "QuestActConReportNpc",
+      "detailId": 3800,
+      "npcId": 10846
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16154,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24655,
+      "type": "QuestActSupplyItem",
+      "detailId": 2427,
+      "itemId": 18649,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24728,
+      "type": "QuestActObjItemGather",
+      "detailId": 2034,
+      "itemId": 23661,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18749,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24729,
+      "type": "QuestActObjItemGather",
+      "detailId": 2035,
+      "itemId": 23662,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23632,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 23661,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 23662,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10846,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18649,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23632,
+   "count": 1
+  },
+  {
+   "itemId": 23661,
+   "count": 1
+  },
+  {
+   "itemId": 23662,
+   "count": 1
+  }
+ ]
+}

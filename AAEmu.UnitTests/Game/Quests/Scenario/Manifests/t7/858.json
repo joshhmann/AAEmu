@@ -1,0 +1,140 @@
+{
+ "questId": 858,
+ "name": "잃어버린 상단의 짐",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5200
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3874,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5502,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 635,
+      "npcId": 5200
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3876,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13826,
+      "type": "QuestActObjItemGather",
+      "detailId": 909,
+      "itemId": 16176,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3877,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38612,
+      "type": "QuestActSupplyItem",
+      "detailId": 4361,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9817,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13825,
+      "type": "QuestActConReportNpc",
+      "detailId": 2064,
+      "npcId": 5200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16176,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5200,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16176,
+   "count": 3
+  }
+ ]
+}

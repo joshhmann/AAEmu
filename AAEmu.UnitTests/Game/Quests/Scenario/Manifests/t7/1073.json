@@ -1,0 +1,91 @@
+{
+ "questId": 1073,
+ "name": "숨겨진 보물",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3423
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5369,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23417,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3350,
+      "npcId": 3423
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5373,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 8371,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12117,
+      "type": "QuestActConReportNpc",
+      "detailId": 1741,
+      "npcId": 3412
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3412,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

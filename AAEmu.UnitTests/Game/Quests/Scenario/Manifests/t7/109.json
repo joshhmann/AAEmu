@@ -1,0 +1,91 @@
+{
+ "questId": 109,
+ "name": "수호자들이여, 나에게 힘을!",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 19,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9993
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4435,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6791,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 733,
+      "npcId": 9993
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6792,
+      "type": "QuestActConReportNpc",
+      "detailId": 855,
+      "npcId": 2072
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4437,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2072,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

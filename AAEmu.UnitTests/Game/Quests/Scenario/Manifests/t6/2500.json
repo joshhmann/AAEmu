@@ -1,0 +1,129 @@
+{
+ "questId": 2500,
+ "name": "영혼의 안식처의 위협자들 처치하기",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 627
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10794,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15007,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 166,
+      "npcId": 627
+     },
+     {
+      "actId": 15008,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 167,
+      "npcId": 3675
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10795,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15009,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 169,
+      "monsterGroupId": 168,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10796,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15006,
+      "type": "QuestActConReportJournal",
+      "detailId": 21
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10797,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15011,
+      "type": "QuestActSupplyCopper",
+      "detailId": 123,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 168,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,150 @@
+{
+ "questId": 1043,
+ "name": "아스트라의 유물",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 375
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5114,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8015,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 112,
+      "sphereId": 375
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8016,
+      "type": "QuestActObjItemGather",
+      "detailId": 407,
+      "itemId": 13918,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8017,
+      "type": "QuestActConReportNpc",
+      "detailId": 1002,
+      "npcId": 4629
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16709,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1025,
+      "itemId": 17480,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16710,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1026,
+      "itemId": 17484,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16711,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1027,
+      "itemId": 17488,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13918,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4629,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 13918,
+   "count": 3
+  }
+ ]
+}

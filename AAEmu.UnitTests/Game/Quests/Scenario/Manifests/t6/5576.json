@@ -1,0 +1,104 @@
+{
+ "questId": 5576,
+ "name": "황야의 습격자 도마뱀",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7031
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24057,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33791,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 255,
+      "doodadId": 7031
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24058,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33793,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1142,
+      "npcId": 4835,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24059,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33792,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1444
+     },
+     {
+      "actId": 37047,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1436,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4835,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,193 @@
+{
+ "questId": 2509,
+ "name": "페피 숲의 평화는 내가 지킨다",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8078
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10825,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15069,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2068,
+      "npcId": 8078
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10826,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30685,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1094,
+      "npcId": 11962,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10827,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28251,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 996,
+      "npcId": 12010,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10828,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28252,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 997,
+      "npcId": 11959,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10829,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15070,
+      "type": "QuestActConReportNpc",
+      "detailId": 2272,
+      "npcId": 8078
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10830,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37161,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2463,
+      "itemId": 32203,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37162,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2464,
+      "itemId": 32204,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20648,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28242,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 995,
+      "npcId": 11961,
+      "count": 20
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 11962,
+     "count": 10
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 12010,
+     "count": 20
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 11959,
+     "count": 20
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 11961,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8078,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

@@ -1,0 +1,104 @@
+{
+ "questId": 1440,
+ "name": "오염의 또 한가지 원인",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5315
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6386,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28209,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 154,
+      "doodadId": 5315
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6387,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15534,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 595,
+      "npcId": 4198,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6389,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28210,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1036
+     },
+     {
+      "actId": 36982,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1390,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4198,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

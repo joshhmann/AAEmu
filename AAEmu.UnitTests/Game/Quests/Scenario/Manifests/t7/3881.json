@@ -1,0 +1,119 @@
+{
+ "questId": 3881,
+ "name": "다후타 교단이 꾸미는 일",
+ "zoneId": 7,
+ "categoryId": 8,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10762
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17084,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22551,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3218,
+      "npcId": 10762
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17085,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22553,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 427,
+      "monsterGroupId": 393,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17086,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22552,
+      "type": "QuestActConReportNpc",
+      "detailId": 3455,
+      "npcId": 10762
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17087,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 393,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10762,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,135 @@
+{
+ "questId": 4664,
+ "name": "거상의 꿈, 마리아노플로 가는 길",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11070
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20247,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27553,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3770,
+      "npcId": 11070
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20248,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27554,
+      "type": "QuestActObjCraft",
+      "detailId": 158,
+      "craftId": 6230,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20249,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27556,
+      "type": "QuestActConReportNpc",
+      "detailId": 4051,
+      "npcId": 11070
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20269,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27555,
+      "type": "QuestActObjSphere",
+      "detailId": 639,
+      "sphereId": 1712
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20270,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6230
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 20269
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11070,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,136 @@
+{
+ "questId": 1367,
+ "name": "시치미 방화범에게 천벌을!",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 8,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4288
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5650,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8512,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 969,
+      "npcId": 4288
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5651,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8514,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 331,
+      "npcId": 4210,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8516,
+      "type": "QuestActConReportNpc",
+      "detailId": 1110,
+      "npcId": 4288
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5653,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37159,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2461,
+      "itemId": 32463,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37160,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2462,
+      "itemId": 32464,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4210,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4288,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

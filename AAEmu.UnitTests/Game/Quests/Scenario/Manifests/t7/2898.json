@@ -1,0 +1,91 @@
+{
+ "questId": 2898,
+ "name": "의미를 알 수 없는 전언",
+ "zoneId": 142,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2586
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17735,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2264,
+      "npcId": 2586
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12189,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17736,
+      "type": "QuestActConReportNpc",
+      "detailId": 2490,
+      "npcId": 5223
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12190,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5223,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

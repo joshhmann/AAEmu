@@ -1,0 +1,159 @@
+{
+ "questId": 1135,
+ "name": "돌아갈 길",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2471
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5811,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8767,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1017,
+      "npcId": 2471
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5813,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8769,
+      "type": "QuestActConReportNpc",
+      "detailId": 1167,
+      "npcId": 2237
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5814,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37203,
+      "type": "QuestActSupplyItem",
+      "detailId": 4137,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10897,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27381,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 485,
+      "monsterGroupId": 439,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20374,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27764,
+      "type": "QuestActObjItemGather",
+      "detailId": 2194,
+      "itemId": 24844,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 439,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 24844,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2237,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24844,
+   "count": 10
+  }
+ ]
+}

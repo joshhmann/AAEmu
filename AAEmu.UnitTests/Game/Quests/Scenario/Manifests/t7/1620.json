@@ -1,0 +1,134 @@
+{
+ "questId": 1620,
+ "name": "빼앗긴 왕관",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12036
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7833,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10991,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1423,
+      "npcId": 12036
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7834,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10992,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 448,
+      "npcId": 12031,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7835,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10993,
+      "type": "QuestActConReportNpc",
+      "detailId": 1616,
+      "npcId": 1874
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38185,
+      "type": "QuestActSupplyItem",
+      "detailId": 4216,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12031,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1874,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

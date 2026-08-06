@@ -1,0 +1,148 @@
+{
+ "questId": 1077,
+ "name": "호수 밑바닥에서",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 1419
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5388,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16275,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 82,
+      "doodadId": 1419
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5389,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8288,
+      "type": "QuestActObjItemGather",
+      "detailId": 443,
+      "itemId": 13949,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5391,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8290,
+      "type": "QuestActConReportNpc",
+      "detailId": 1057,
+      "npcId": 7617
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5568,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 11244,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16276,
+      "type": "QuestActSupplyItem",
+      "detailId": 1599,
+      "itemId": 13949,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13949,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7617,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13949,
+   "count": 1
+  }
+ ]
+}

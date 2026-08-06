@@ -1,0 +1,91 @@
+{
+ "questId": 2425,
+ "name": "비쥬 부인의 저택",
+ "zoneId": 179,
+ "categoryId": 61,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9803
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21479,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3017,
+      "npcId": 9803
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14676,
+      "type": "QuestActConReportNpc",
+      "detailId": 2191,
+      "npcId": 3402
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10448,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3402,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

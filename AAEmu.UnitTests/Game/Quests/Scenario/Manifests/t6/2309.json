@@ -1,0 +1,106 @@
+{
+ "questId": 2309,
+ "name": "그렐에게로",
+ "zoneId": 130,
+ "categoryId": 61,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7736
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10030,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14243,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1871,
+      "npcId": 7736
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10033,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14244,
+      "type": "QuestActConReportNpc",
+      "detailId": 2105,
+      "npcId": 4248
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10034,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40787,
+      "type": "QuestActSupplyItem",
+      "detailId": 4754,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4248,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

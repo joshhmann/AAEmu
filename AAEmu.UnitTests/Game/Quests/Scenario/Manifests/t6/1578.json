@@ -1,0 +1,144 @@
+{
+ "questId": 1578,
+ "name": "흉흉한 바람 초원",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 10,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6537
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7545,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10624,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1359,
+      "npcId": 6537
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7547,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11239,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 85,
+      "monsterGroupId": 89,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10625,
+      "type": "QuestActConReportNpc",
+      "detailId": 1541,
+      "npcId": 6537
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7550,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37268,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2500,
+      "itemId": 33118,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37269,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2501,
+      "itemId": 33119,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37270,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2502,
+      "itemId": 33120,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 89,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6537,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

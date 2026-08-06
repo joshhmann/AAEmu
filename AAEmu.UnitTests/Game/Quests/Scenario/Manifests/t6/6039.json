@@ -1,0 +1,114 @@
+{
+ "questId": 6039,
+ "name": "여정의 시작",
+ "zoneId": 1,
+ "categoryId": 108,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14317
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25999,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35893,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4633,
+      "npcId": 14317
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26000,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35894,
+      "type": "QuestActObjSphere",
+      "detailId": 685,
+      "sphereId": 2262
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26055,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35621,
+      "type": "QuestActSupplyExp",
+      "detailId": 822,
+      "exp": 0
+     },
+     {
+      "actId": 35622,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1268,
+      "amount": 0
+     },
+     {
+      "actId": 35896,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1607
+     },
+     {
+      "actId": 35897,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 376,
+      "questContextId": 6040
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 26000
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

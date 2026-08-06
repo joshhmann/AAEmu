@@ -1,0 +1,159 @@
+{
+ "questId": 3307,
+ "name": "여왕의 명",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9193
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14285,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19663,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2626,
+      "npcId": 9193
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14286,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29425,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1026,
+      "npcId": 9201,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14287,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19665,
+      "type": "QuestActConReportNpc",
+      "detailId": 2858,
+      "npcId": 9193
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14288,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38228,
+      "type": "QuestActSupplyItem",
+      "detailId": 4235,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21209,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29424,
+      "type": "QuestActObjItemGather",
+      "detailId": 2370,
+      "itemId": 19565,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9201,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 19565,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9193,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19565,
+   "count": 10
+  }
+ ]
+}

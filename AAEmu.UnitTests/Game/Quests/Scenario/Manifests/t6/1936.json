@@ -1,0 +1,169 @@
+{
+ "questId": 1936,
+ "name": "절벽에서 바람을 타고",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7687
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8981,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12612,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1658,
+      "npcId": 7687
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8984,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12613,
+      "type": "QuestActSupplyItem",
+      "detailId": 1215,
+      "itemId": 15829,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8985,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12614,
+      "type": "QuestActObjItemUse",
+      "detailId": 346,
+      "itemId": 15829,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8986,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12615,
+      "type": "QuestActConReportNpc",
+      "detailId": 1866,
+      "npcId": 4763
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8987,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16661,
+      "type": "QuestActSupplyItem",
+      "detailId": 1642,
+      "itemId": 17330,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16662,
+      "type": "QuestActSupplyItem",
+      "detailId": 1643,
+      "itemId": 17334,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 15829,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4763,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17330,
+      "count": 1
+     },
+     {
+      "itemId": 17334,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

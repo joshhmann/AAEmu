@@ -1,0 +1,91 @@
+{
+ "questId": 1687,
+ "name": "지독한 음치의 정체",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2526
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8045,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11219,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1481,
+      "npcId": 2526
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8046,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11220,
+      "type": "QuestActConReportNpc",
+      "detailId": 1669,
+      "npcId": 5257
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8047,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5257,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

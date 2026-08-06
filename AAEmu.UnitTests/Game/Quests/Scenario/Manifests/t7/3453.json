@@ -1,0 +1,91 @@
+{
+ "questId": 3453,
+ "name": "카클라의 행방",
+ "zoneId": 18,
+ "categoryId": 61,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2584
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16807,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22164,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3124,
+      "npcId": 2584
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16808,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22165,
+      "type": "QuestActConReportNpc",
+      "detailId": 3353,
+      "npcId": 9889
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16809,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9889,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

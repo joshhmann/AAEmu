@@ -1,0 +1,106 @@
+{
+ "questId": 3440,
+ "name": "흰구름에 닿은 인연",
+ "zoneId": 130,
+ "categoryId": 61,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4248
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14861,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20213,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2743,
+      "npcId": 4248
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14862,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20214,
+      "type": "QuestActConReportNpc",
+      "detailId": 2972,
+      "npcId": 4287
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14863,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40789,
+      "type": "QuestActSupplyItem",
+      "detailId": 4756,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4287,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

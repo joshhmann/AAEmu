@@ -1,0 +1,110 @@
+{
+ "questId": 1942,
+ "name": "페레에게 가려움을 일으키는 하피 무리 처치",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4831
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8952,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12579,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 2,
+      "npcId": 4831
+     },
+     {
+      "actId": 12625,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 4,
+      "npcId": 4858
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12580,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 94,
+      "monsterGroupId": 97,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8954,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12578,
+      "type": "QuestActConAutoComplete",
+      "detailId": 336
+     },
+     {
+      "actId": 12626,
+      "type": "QuestActSupplyCopper",
+      "detailId": 35,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 97,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

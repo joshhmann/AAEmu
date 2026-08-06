@@ -1,0 +1,123 @@
+{
+ "questId": 2480,
+ "name": "나뭇잎 요정 처치",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 7625
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10719,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14929,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 162,
+      "npcId": 7625
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14930,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 574,
+      "npcId": 7625,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10721,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14931,
+      "type": "QuestActConReportJournal",
+      "detailId": 19
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14932,
+      "type": "QuestActSupplyCopper",
+      "detailId": 121,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 7625,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

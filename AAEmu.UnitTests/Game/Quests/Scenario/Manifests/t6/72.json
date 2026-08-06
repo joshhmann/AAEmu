@@ -1,0 +1,129 @@
+{
+ "questId": 72,
+ "name": "이오니온의 유품",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 1459
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 830,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 991,
+      "type": "QuestActConAcceptItem",
+      "detailId": 18,
+      "itemId": 1459
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1071,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2733,
+      "type": "QuestActConReportNpc",
+      "detailId": 346,
+      "npcId": 619
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1072,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 11220,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16217,
+      "type": "QuestActObjItemGather",
+      "detailId": 1060,
+      "itemId": 1459,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 1459,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 619,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 1459,
+   "count": 1
+  },
+  {
+   "itemId": 1459,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "questId": 3444,
+ "name": "비구름을 피해",
+ "zoneId": 21,
+ "categoryId": 61,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4265
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14875,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20219,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2745,
+      "npcId": 4265
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14876,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20220,
+      "type": "QuestActConReportNpc",
+      "detailId": 2976,
+      "npcId": 4260
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14877,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4260,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

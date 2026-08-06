@@ -1,0 +1,148 @@
+{
+ "questId": 1049,
+ "name": "주문서 접수",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3396
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5252,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8210,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 898,
+      "npcId": 3396
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5253,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8211,
+      "type": "QuestActSupplyItem",
+      "detailId": 650,
+      "itemId": 24357,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5255,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8212,
+      "type": "QuestActConReportNpc",
+      "detailId": 1035,
+      "npcId": 3441
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7716,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 8108,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13763,
+      "type": "QuestActObjItemGather",
+      "detailId": 904,
+      "itemId": 24357,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24357,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3441,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24357,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,106 @@
+{
+ "questId": 3455,
+ "name": "믿을 만한 사람",
+ "zoneId": 142,
+ "categoryId": 61,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9889
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16814,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22169,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3126,
+      "npcId": 9889
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16815,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22170,
+      "type": "QuestActConReportNpc",
+      "detailId": 3355,
+      "npcId": 9892
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16816,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40799,
+      "type": "QuestActSupplyItem",
+      "detailId": 4766,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9892,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

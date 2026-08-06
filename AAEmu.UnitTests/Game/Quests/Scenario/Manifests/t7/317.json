@@ -1,0 +1,134 @@
+{
+ "questId": 317,
+ "name": "골렘을 조종하는 마법",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 740
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1295,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6320,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 709,
+      "npcId": 740
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1296,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6321,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 253,
+      "npcId": 745,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1297,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1338,
+      "type": "QuestActConReportNpc",
+      "detailId": 254,
+      "npcId": 740
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1298,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38205,
+      "type": "QuestActSupplyItem",
+      "detailId": 4224,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 745,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 740,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

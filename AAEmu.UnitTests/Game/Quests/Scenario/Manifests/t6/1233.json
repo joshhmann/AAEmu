@@ -1,0 +1,159 @@
+{
+ "questId": 1233,
+ "name": "시치미 약탈단의 횡포",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4204
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5231,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8126,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 890,
+      "npcId": 4204
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5232,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24772,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 475,
+      "monsterGroupId": 69,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5233,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8128,
+      "type": "QuestActConReportNpc",
+      "detailId": 1023,
+      "npcId": 4204
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5234,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37147,
+      "type": "QuestActSupplyItem",
+      "detailId": 4131,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19839,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27070,
+      "type": "QuestActObjItemGather",
+      "detailId": 2155,
+      "itemId": 14055,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 69,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 14055,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4204,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14055,
+   "count": 10
+  }
+ ]
+}

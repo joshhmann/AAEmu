@@ -1,0 +1,105 @@
+{
+ "questId": 5658,
+ "name": "작업 중 음주 금지",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2290
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33994,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4339,
+      "npcId": 2290
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24314,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33995,
+      "type": "QuestActConReportNpc",
+      "detailId": 4637,
+      "npcId": 2291
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24479,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2291,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

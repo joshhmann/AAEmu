@@ -1,0 +1,125 @@
+{
+ "questId": 1599,
+ "name": "무너진 성채의 버섯",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 11,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1912
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7671,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10792,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1396,
+      "npcId": 1912
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7672,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10805,
+      "type": "QuestActObjItemGather",
+      "detailId": 640,
+      "itemId": 14740,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7673,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10793,
+      "type": "QuestActConReportNpc",
+      "detailId": 1582,
+      "npcId": 1912
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7674,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14740,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1912,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14740,
+   "count": 5
+  }
+ ]
+}

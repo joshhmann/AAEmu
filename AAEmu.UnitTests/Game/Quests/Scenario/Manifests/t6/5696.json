@@ -1,0 +1,91 @@
+{
+ "questId": 5696,
+ "name": "사라진 광부",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2286
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24469,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33986,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4335,
+      "npcId": 2286
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24470,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33987,
+      "type": "QuestActConReportNpc",
+      "detailId": 4633,
+      "npcId": 2287
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2287,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

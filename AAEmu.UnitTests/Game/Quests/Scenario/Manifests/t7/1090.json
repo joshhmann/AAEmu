@@ -1,0 +1,91 @@
+{
+ "questId": 1090,
+ "name": "푸른 전나무회 일원이 되다",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3435
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5459,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8339,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 933,
+      "npcId": 3435
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5461,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8341,
+      "type": "QuestActConReportNpc",
+      "detailId": 1070,
+      "npcId": 3431
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5462,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3431,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

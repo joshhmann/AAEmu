@@ -1,0 +1,148 @@
+{
+ "questId": 6029,
+ "name": "샘이 깊은 물",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14242
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35545,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4591,
+      "npcId": 14242
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25957,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35557,
+      "type": "QuestActObjInteraction",
+      "detailId": 730,
+      "doodadId": 7404,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25958,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35546,
+      "type": "QuestActConReportNpc",
+      "detailId": 4818,
+      "npcId": 14242
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25959,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35558,
+      "type": "QuestActSupplyItem",
+      "detailId": 3986,
+      "itemId": 30341,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35584,
+      "type": "QuestActSupplyItem",
+      "detailId": 3994,
+      "itemId": 30418,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7404,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14242,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30341,
+      "count": 1
+     },
+     {
+      "itemId": 30418,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

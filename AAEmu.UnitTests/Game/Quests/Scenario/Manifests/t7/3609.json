@@ -1,0 +1,134 @@
+{
+ "questId": 3609,
+ "name": "함바바의 슬픔",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 19,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9806
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14980,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20500,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2837,
+      "npcId": 9806
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14981,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20501,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 761,
+      "npcId": 2504,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14982,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20502,
+      "type": "QuestActConReportNpc",
+      "detailId": 3064,
+      "npcId": 9806
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14983,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38234,
+      "type": "QuestActSupplyItem",
+      "detailId": 4241,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2504,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9806,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

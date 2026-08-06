@@ -1,0 +1,157 @@
+{
+ "questId": 908,
+ "name": "현상범 라샤",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5204
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3843,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5463,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 629,
+      "npcId": 5204
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3846,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5467,
+      "type": "QuestActConReportNpc",
+      "detailId": 717,
+      "npcId": 5204
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3847,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38225,
+      "type": "QuestActSupplyItem",
+      "detailId": 4232,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 3848,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5465,
+      "type": "QuestActSupplyItem",
+      "detailId": 333,
+      "itemId": 5220,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4542,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7005,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 276,
+      "npcId": 5205,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 5205,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5204,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

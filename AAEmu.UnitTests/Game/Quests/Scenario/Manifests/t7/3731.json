@@ -1,0 +1,125 @@
+{
+ "questId": 3731,
+ "name": "꽁꽁 얼어있는 정령의 심장",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9982
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15577,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21207,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2976,
+      "npcId": 9982
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15578,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21253,
+      "type": "QuestActObjItemGather",
+      "detailId": 1554,
+      "itemId": 20036,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15579,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21208,
+      "type": "QuestActConReportNpc",
+      "detailId": 3207,
+      "npcId": 9982
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15580,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20036,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9982,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20036,
+   "count": 3
+  }
+ ]
+}

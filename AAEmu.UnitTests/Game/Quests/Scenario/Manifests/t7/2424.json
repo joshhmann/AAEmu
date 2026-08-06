@@ -1,0 +1,132 @@
+{
+ "questId": 2424,
+ "name": "호랑이의 눈 속으로",
+ "zoneId": 179,
+ "categoryId": 61,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9802
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10443,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21478,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3016,
+      "npcId": 9802
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21484,
+      "type": "QuestActObjTalk",
+      "detailId": 925,
+      "npcId": 7893
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10445,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40797,
+      "type": "QuestActSupplyItem",
+      "detailId": 4764,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21485,
+      "type": "QuestActConReportNpc",
+      "detailId": 3244,
+      "npcId": 9803
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 7893
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9803,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

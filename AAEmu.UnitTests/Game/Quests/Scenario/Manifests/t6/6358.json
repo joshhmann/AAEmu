@@ -1,0 +1,152 @@
+{
+ "questId": 6358,
+ "name": "어둡고 외로운 이웃을 위한 초콜릿",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14845
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27226,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38520,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4744,
+      "npcId": 14845
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27227,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38509,
+      "type": "QuestActObjItemGather",
+      "detailId": 2942,
+      "itemId": 33957,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27228,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38521,
+      "type": "QuestActConReportNpc",
+      "detailId": 4971,
+      "npcId": 14845
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27232,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38510,
+      "type": "QuestActSupplyItem",
+      "detailId": 4298,
+      "itemId": 33959,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38846,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1658,
+      "amount": 100
+     },
+     {
+      "actId": 38847,
+      "type": "QuestActSupplyExp",
+      "detailId": 1347,
+      "exp": 1004
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 33957,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14845,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33959,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33957,
+   "count": 1
+  }
+ ]
+}

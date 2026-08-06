@@ -1,0 +1,125 @@
+{
+ "questId": 942,
+ "name": "열쇠를 감춘 상자",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3062
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4439,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6797,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 734,
+      "npcId": 3062
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4440,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6798,
+      "type": "QuestActObjItemGather",
+      "detailId": 342,
+      "itemId": 8098,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4441,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6799,
+      "type": "QuestActConReportNpc",
+      "detailId": 856,
+      "npcId": 3062
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4442,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8098,
+     "count": 4
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3062,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8098,
+   "count": 4
+  }
+ ]
+}

@@ -1,0 +1,104 @@
+{
+ "questId": 5623,
+ "name": "벼룩의 간을 내먹는 자들",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7025
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33776,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 249,
+      "doodadId": 7025
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24199,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33777,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1140,
+      "npcId": 4861,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24200,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33778,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1437
+     },
+     {
+      "actId": 37053,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1441,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4861,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

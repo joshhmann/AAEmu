@@ -1,0 +1,169 @@
+{
+ "questId": 4301,
+ "name": "아아, 이것이 성장인가!",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10854
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24724,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3546,
+      "npcId": 10854
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18782,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29589,
+      "type": "QuestActObjItemUse",
+      "detailId": 681,
+      "itemId": 23635,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18783,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24942,
+      "type": "QuestActConReportNpc",
+      "detailId": 3820,
+      "npcId": 10854
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18838,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25726,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1926,
+      "itemId": 21847,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 25727,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1927,
+      "itemId": 23614,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 25728,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1928,
+      "itemId": 23615,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21292,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29588,
+      "type": "QuestActObjItemGather",
+      "detailId": 2386,
+      "itemId": 21850,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 23635,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 21850,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10854,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 21850,
+   "count": 1
+  }
+ ]
+}

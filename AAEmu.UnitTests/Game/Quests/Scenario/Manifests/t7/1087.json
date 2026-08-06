@@ -1,0 +1,125 @@
+{
+ "questId": 1087,
+ "name": "숨겨진 리토의 보물",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5774
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8328,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 930,
+      "npcId": 5774
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5437,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12028,
+      "type": "QuestActObjItemGather",
+      "detailId": 767,
+      "itemId": 14141,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5440,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8333,
+      "type": "QuestActConReportNpc",
+      "detailId": 1067,
+      "npcId": 5774
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5570,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14141,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5774,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14141,
+   "count": 1
+  }
+ ]
+}

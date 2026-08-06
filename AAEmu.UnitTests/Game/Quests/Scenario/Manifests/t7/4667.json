@@ -1,0 +1,168 @@
+{
+ "questId": 4667,
+ "name": "거상의 꿈, 너른 소매 마을로 가는 길",
+ "zoneId": 23,
+ "categoryId": 70,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11079
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20256,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27573,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3773,
+      "npcId": 11079
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20257,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27574,
+      "type": "QuestActObjCraft",
+      "detailId": 161,
+      "craftId": 6216,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20258,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27576,
+      "type": "QuestActConReportNpc",
+      "detailId": 4054,
+      "npcId": 11079
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20275,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27575,
+      "type": "QuestActObjSphere",
+      "detailId": 642,
+      "sphereId": 1715
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27578,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2026,
+      "itemId": 23840,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 27579,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2027,
+      "itemId": 24834,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 27580,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2028,
+      "itemId": 24835,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 27581,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2029,
+      "itemId": 24836,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6216
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 20275
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11079,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

@@ -1,0 +1,135 @@
+{
+ "questId": 2692,
+ "name": "요정의 은신처 정리하기",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1865
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11279,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16355,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 344,
+      "npcId": 1865
+     },
+     {
+      "actId": 16356,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 345,
+      "npcId": 1863
+     },
+     {
+      "actId": 16357,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 346,
+      "npcId": 1877
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16358,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 218,
+      "monsterGroupId": 211,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16359,
+      "type": "QuestActConReportJournal",
+      "detailId": 89
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16360,
+      "type": "QuestActSupplyCopper",
+      "detailId": 185,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 211,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

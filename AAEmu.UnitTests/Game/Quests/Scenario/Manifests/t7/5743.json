@@ -1,0 +1,115 @@
+{
+ "questId": 5743,
+ "name": "내 손으로 만드는 가슴 방어구: 재료",
+ "zoneId": 1,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24680,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34244,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 231,
+      "questContextId": 5743
+     },
+     {
+      "actId": 34391,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4405,
+      "npcId": 754
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24681,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34245,
+      "type": "QuestActObjItemGather",
+      "detailId": 2798,
+      "itemId": 29497,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24682,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34246,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 232,
+      "questContextId": 5744
+     },
+     {
+      "actId": 34247,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1481
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29497,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29497,
+   "count": 8
+  }
+ ]
+}

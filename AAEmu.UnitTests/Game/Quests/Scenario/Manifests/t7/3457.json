@@ -1,0 +1,91 @@
+{
+ "questId": 3457,
+ "name": "3층의 사람",
+ "zoneId": 142,
+ "categoryId": 61,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2660
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16821,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22181,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3131,
+      "npcId": 2660
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16822,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22182,
+      "type": "QuestActConReportNpc",
+      "detailId": 3359,
+      "npcId": 9895
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16823,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9895,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

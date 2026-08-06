@@ -1,0 +1,106 @@
+{
+ "questId": 1369,
+ "name": "타뮨이 들어야할 이야기",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 8,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4288
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5654,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14628,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1964,
+      "npcId": 4288
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5969,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14629,
+      "type": "QuestActConReportNpc",
+      "detailId": 2178,
+      "npcId": 4296
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5971,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38586,
+      "type": "QuestActSupplyItem",
+      "detailId": 4335,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4296,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

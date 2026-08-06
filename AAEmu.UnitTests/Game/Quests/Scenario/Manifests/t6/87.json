@@ -1,0 +1,140 @@
+{
+ "questId": 87,
+ "name": "가시덩굴 제거",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8092
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15087,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2073,
+      "npcId": 8092
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1100,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1025,
+      "type": "QuestActObjItemGather",
+      "detailId": 73,
+      "itemId": 1460,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1102,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1028,
+      "type": "QuestActConReportNpc",
+      "detailId": 210,
+      "npcId": 3990
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1103,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36948,
+      "type": "QuestActSupplyItem",
+      "detailId": 4093,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 1460,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3990,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 1460,
+   "count": 5
+  }
+ ]
+}

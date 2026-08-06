@@ -1,0 +1,125 @@
+{
+ "questId": 1172,
+ "name": "다리 아래 상자",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3440
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5964,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23143,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3311,
+      "npcId": 3440
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5968,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13886,
+      "type": "QuestActObjItemGather",
+      "detailId": 920,
+      "itemId": 13951,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5970,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13887,
+      "type": "QuestActConReportNpc",
+      "detailId": 2078,
+      "npcId": 6564
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9871,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13951,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6564,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13951,
+   "count": 1
+  }
+ ]
+}

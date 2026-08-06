@@ -1,0 +1,153 @@
+{
+ "questId": 2690,
+ "name": "베어 일당 소탕",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1858
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11271,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16337,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 334,
+      "npcId": 1858
+     },
+     {
+      "actId": 16338,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 335,
+      "npcId": 1866
+     },
+     {
+      "actId": 16339,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 336,
+      "npcId": 1867
+     },
+     {
+      "actId": 16340,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 337,
+      "npcId": 1868
+     },
+     {
+      "actId": 16342,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 338,
+      "npcId": 1916
+     },
+     {
+      "actId": 16343,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 339,
+      "npcId": 8103
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11272,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16344,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 216,
+      "monsterGroupId": 209,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16345,
+      "type": "QuestActConReportJournal",
+      "detailId": 87
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16346,
+      "type": "QuestActSupplyCopper",
+      "detailId": 183,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 209,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

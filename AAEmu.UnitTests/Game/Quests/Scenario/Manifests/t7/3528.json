@@ -1,0 +1,125 @@
+{
+ "questId": 3528,
+ "name": "용의 눈을 찾아서",
+ "zoneId": 179,
+ "categoryId": 62,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10133
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16357,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21611,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3039,
+      "npcId": 10133
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16416,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21610,
+      "type": "QuestActObjItemGather",
+      "detailId": 1606,
+      "itemId": 20164,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21609,
+      "type": "QuestActConReportNpc",
+      "detailId": 3265,
+      "npcId": 10133
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16418,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20164,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10133,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20164,
+   "count": 1
+  }
+ ]
+}

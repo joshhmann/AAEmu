@@ -1,0 +1,157 @@
+{
+ "questId": 26,
+ "name": "아이오느의 죽음",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 1712
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 770,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10476,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 39,
+      "doodadId": 1712
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 771,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10477,
+      "type": "QuestActSupplyItem",
+      "detailId": 861,
+      "itemId": 14633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 772,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10478,
+      "type": "QuestActObjItemUse",
+      "detailId": 283,
+      "itemId": 14633,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 774,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10480,
+      "type": "QuestActConReportNpc",
+      "detailId": 1514,
+      "npcId": 589
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7469,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36942,
+      "type": "QuestActSupplyItem",
+      "detailId": 4087,
+      "itemId": 23092,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14633,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 589,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23092,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

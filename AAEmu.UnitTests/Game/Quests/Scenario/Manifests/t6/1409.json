@@ -1,0 +1,147 @@
+{
+ "questId": 1409,
+ "name": "매바위 벌판의 야수들 정리",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4185
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6135,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28861,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1084,
+      "npcId": 4185
+     },
+     {
+      "actId": 28862,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1085,
+      "npcId": 4187
+     },
+     {
+      "actId": 28863,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1086,
+      "npcId": 7887
+     },
+     {
+      "actId": 28864,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1087,
+      "npcId": 4186
+     },
+     {
+      "actId": 28865,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1088,
+      "npcId": 6526
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6138,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28859,
+      "type": "QuestActConReportJournal",
+      "detailId": 322
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6139,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28875,
+      "type": "QuestActSupplyCopper",
+      "detailId": 809,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11215,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28860,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 497,
+      "monsterGroupId": 452,
+      "count": 20
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 452,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

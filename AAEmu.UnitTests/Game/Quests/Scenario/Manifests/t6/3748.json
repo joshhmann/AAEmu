@@ -1,0 +1,8 @@
+{
+ "questId": 3748,
+ "name": "수상한 농장",
+ "family": "no-acts",
+ "skip": {
+  "reason": "no components"
+ }
+}

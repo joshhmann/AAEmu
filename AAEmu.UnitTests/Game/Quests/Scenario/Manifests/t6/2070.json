@@ -1,0 +1,91 @@
+{
+ "questId": 2070,
+ "name": "순록머리가 장식된 집",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4580
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9508,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13199,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1774,
+      "npcId": 4580
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9509,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13200,
+      "type": "QuestActConReportNpc",
+      "detailId": 1996,
+      "npcId": 4588
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9512,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4588,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,121 @@
+{
+ "questId": 3306,
+ "name": "납치당한 메이샤",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9192
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19660,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2625,
+      "npcId": 9192
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19661,
+      "type": "QuestActObjInteraction",
+      "detailId": 468,
+      "doodadId": 3747,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14283,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19662,
+      "type": "QuestActConReportNpc",
+      "detailId": 2857,
+      "npcId": 9192
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14284,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3747,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9192,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

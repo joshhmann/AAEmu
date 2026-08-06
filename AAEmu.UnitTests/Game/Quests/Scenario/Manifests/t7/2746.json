@@ -1,0 +1,123 @@
+{
+ "questId": 2746,
+ "name": "굶주린 거대 일꾼 개미 처치",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 678
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11551,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16835,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 441,
+      "npcId": 678
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11552,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16836,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 627,
+      "npcId": 678,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11553,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16837,
+      "type": "QuestActConReportJournal",
+      "detailId": 146
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11554,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16838,
+      "type": "QuestActSupplyCopper",
+      "detailId": 227,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 678,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

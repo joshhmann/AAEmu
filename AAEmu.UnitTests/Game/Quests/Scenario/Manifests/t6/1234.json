@@ -1,0 +1,153 @@
+{
+ "questId": 1234,
+ "name": "시치미 약탈단의 지령서",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6586
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5235,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8129,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 891,
+      "npcId": 6586
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5236,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8130,
+      "type": "QuestActSupplyItem",
+      "detailId": 645,
+      "itemId": 14054,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5238,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8132,
+      "type": "QuestActConReportNpc",
+      "detailId": 1024,
+      "npcId": 4270
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5239,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38869,
+      "type": "QuestActSupplyItem",
+      "detailId": 4535,
+      "itemId": 32527,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38870,
+      "type": "QuestActSupplyItem",
+      "detailId": 4536,
+      "itemId": 32528,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38871,
+      "type": "QuestActSupplyItem",
+      "detailId": 4537,
+      "itemId": 32529,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4270,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32527,
+      "count": 1
+     },
+     {
+      "itemId": 32528,
+      "count": 1
+     },
+     {
+      "itemId": 32529,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

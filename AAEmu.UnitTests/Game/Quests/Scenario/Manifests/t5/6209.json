@@ -1,0 +1,176 @@
+{
+ "questId": 6209,
+ "name": "망각의 균열",
+ "zoneId": 1,
+ "categoryId": 24,
+ "level": 15,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14595
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26617,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36475,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4680,
+      "npcId": 14595
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36476,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 619,
+      "monsterGroupId": 564,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26619,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36477,
+      "type": "QuestActConReportNpc",
+      "detailId": 4876,
+      "npcId": 14595
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26629,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37219,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 128,
+      "point": 10
+     },
+     {
+      "actId": 38404,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2649,
+      "itemId": 32940,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38405,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2650,
+      "itemId": 32941,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38406,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2651,
+      "itemId": 32942,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38591,
+      "type": "QuestActSupplyItem",
+      "detailId": 4340,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 38592,
+      "type": "QuestActSupplyItem",
+      "detailId": 4341,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 564,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14595,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     },
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

@@ -1,0 +1,152 @@
+{
+ "questId": 5688,
+ "name": "귀여운 여자 여름옷을 위해",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13636
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24430,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33928,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4322,
+      "npcId": 13636
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24431,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33950,
+      "type": "QuestActObjItemGather",
+      "detailId": 2770,
+      "itemId": 29177,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24432,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33929,
+      "type": "QuestActConReportNpc",
+      "detailId": 4618,
+      "npcId": 13636
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24433,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33930,
+      "type": "QuestActSupplyItem",
+      "detailId": 3868,
+      "itemId": 28779,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33931,
+      "type": "QuestActSupplyItem",
+      "detailId": 3869,
+      "itemId": 28780,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29177,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13636,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28779,
+      "count": 1
+     },
+     {
+      "itemId": 28780,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29177,
+   "count": 12
+  }
+ ]
+}

@@ -1,0 +1,106 @@
+{
+ "questId": 2489,
+ "name": "맬컴을 데려온 사람",
+ "zoneId": 11,
+ "categoryId": 3,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10636
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14972,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2046,
+      "npcId": 10636
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11239,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40856,
+      "type": "QuestActSupplyItem",
+      "detailId": 4823,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18205,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23777,
+      "type": "QuestActConReportNpc",
+      "detailId": 3679,
+      "npcId": 10637
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10637,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

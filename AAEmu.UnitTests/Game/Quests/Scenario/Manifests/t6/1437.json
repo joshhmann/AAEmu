@@ -1,0 +1,112 @@
+{
+ "questId": 1437,
+ "name": "노예가 된 바이암",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5750
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6372,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15544,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2110,
+      "npcId": 5750
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6375,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15543,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 596,
+      "npcId": 8116,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6377,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28226,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1039
+     },
+     {
+      "actId": 38587,
+      "type": "QuestActSupplyItem",
+      "detailId": 4336,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8116,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

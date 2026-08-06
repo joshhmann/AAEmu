@@ -1,0 +1,91 @@
+{
+ "questId": 4780,
+ "name": "정착 생활을 위한 여정",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9789
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20645,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28248,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3789,
+      "npcId": 9789
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20647,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28249,
+      "type": "QuestActConReportNpc",
+      "detailId": 4073,
+      "npcId": 11079
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20651,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11079,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

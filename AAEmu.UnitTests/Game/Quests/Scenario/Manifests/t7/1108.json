@@ -1,0 +1,91 @@
+{
+ "questId": 1108,
+ "name": "숨바꼭질은 이제 그만",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3428
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5537,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8398,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 949,
+      "npcId": 3428
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5540,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8401,
+      "type": "QuestActConReportNpc",
+      "detailId": 1088,
+      "npcId": 3425
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5541,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3425,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

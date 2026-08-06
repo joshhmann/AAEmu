@@ -1,0 +1,100 @@
+{
+ "questId": 3709,
+ "name": "돌 골렘이 움트는 곳",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1324
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15489,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21521,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 219,
+      "sphereId": 1324
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15490,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21471,
+      "type": "QuestActObjInteraction",
+      "detailId": 528,
+      "doodadId": 4254,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15492,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21502,
+      "type": "QuestActConAutoComplete",
+      "detailId": 695
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4254,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

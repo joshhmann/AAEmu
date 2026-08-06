@@ -1,0 +1,91 @@
+{
+ "questId": 2350,
+ "name": "직접 만날 기회",
+ "zoneId": 134,
+ "categoryId": 62,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7752
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14318,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1889,
+      "npcId": 7752
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14319,
+      "type": "QuestActConReportNpc",
+      "detailId": 2125,
+      "npcId": 7753
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10117,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7753,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 1438,
+ "name": "저주받은 해골",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5742
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6378,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28826,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3857,
+      "npcId": 5742
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6379,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9122,
+      "type": "QuestActObjItemGather",
+      "detailId": 504,
+      "itemId": 14148,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6380,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9123,
+      "type": "QuestActConReportNpc",
+      "detailId": 1266,
+      "npcId": 5742
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6381,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38508,
+      "type": "QuestActSupplyItem",
+      "detailId": 4297,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14148,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5742,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14148,
+   "count": 8
+  }
+ ]
+}

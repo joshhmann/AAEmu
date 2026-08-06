@@ -1,0 +1,148 @@
+{
+ "questId": 1216,
+ "name": "바스이의 특제 벌꿀 음료",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4241
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5146,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28003,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3779,
+      "npcId": 4241
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5147,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10293,
+      "type": "QuestActSupplyItem",
+      "detailId": 845,
+      "itemId": 14571,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5148,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28005,
+      "type": "QuestActConReportNpc",
+      "detailId": 4060,
+      "npcId": 6519
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5150,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 20516,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28029,
+      "type": "QuestActObjItemGather",
+      "detailId": 2210,
+      "itemId": 14571,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14571,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6519,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14571,
+   "count": 1
+  }
+ ]
+}

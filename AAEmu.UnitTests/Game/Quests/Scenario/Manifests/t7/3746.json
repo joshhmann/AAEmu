@@ -1,0 +1,96 @@
+{
+ "questId": 3746,
+ "name": "가라앉은 쾌속정에는",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10012
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15660,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21301,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2987,
+      "npcId": 10012
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15661,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21344,
+      "type": "QuestActObjSphere",
+      "detailId": 593,
+      "sphereId": 1270
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21345,
+      "type": "QuestActConAutoComplete",
+      "detailId": 690
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 15661
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

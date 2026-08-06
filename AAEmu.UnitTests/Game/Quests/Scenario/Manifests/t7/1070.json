@@ -1,0 +1,144 @@
+{
+ "questId": 1070,
+ "name": "유일한 목격자로서의 예의",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 12,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5776
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5355,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28722,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3850,
+      "npcId": 5776
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5356,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8432,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 330,
+      "npcId": 3355,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5358,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37400,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2522,
+      "itemId": 33112,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37401,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2523,
+      "itemId": 33114,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37402,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2524,
+      "itemId": 33116,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21011,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28723,
+      "type": "QuestActConReportNpc",
+      "detailId": 4130,
+      "npcId": 5776
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3355,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5776,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

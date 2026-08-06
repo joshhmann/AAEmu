@@ -1,0 +1,89 @@
+{
+ "questId": 5592,
+ "name": "피부에 위험한 단백질",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7030
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24105,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33789,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 254,
+      "doodadId": 7030
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24106,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 24107,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33790,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1443
+     },
+     {
+      "actId": 37050,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1438,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

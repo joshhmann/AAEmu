@@ -1,0 +1,106 @@
+{
+ "questId": 1236,
+ "name": "습격당한 형제들",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4205
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5246,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8141,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 892,
+      "npcId": 4205
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5250,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38581,
+      "type": "QuestActSupplyItem",
+      "detailId": 4330,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18803,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24880,
+      "type": "QuestActConReportNpc",
+      "detailId": 3816,
+      "npcId": 10847
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10847,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

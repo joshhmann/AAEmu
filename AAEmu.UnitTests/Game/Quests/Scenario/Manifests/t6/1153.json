@@ -1,0 +1,171 @@
+{
+ "questId": 1153,
+ "name": "산 자의 입에 풀칠하기",
+ "zoneId": 135,
+ "categoryId": 23,
+ "level": 8,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5659
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5887,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8845,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1036,
+      "npcId": 5659
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5888,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13008,
+      "type": "QuestActSupplyItem",
+      "detailId": 1240,
+      "itemId": 13986,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 13009,
+      "type": "QuestActSupplyItem",
+      "detailId": 1241,
+      "itemId": 14009,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5890,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13011,
+      "type": "QuestActObjItemGather",
+      "detailId": 832,
+      "itemId": 14010,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9391,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13012,
+      "type": "QuestActConReportNpc",
+      "detailId": 1956,
+      "npcId": 5659
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9392,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38575,
+      "type": "QuestActSupplyItem",
+      "detailId": 4324,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14010,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5659,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14010,
+   "count": 3
+  }
+ ]
+}

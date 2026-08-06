@@ -1,0 +1,89 @@
+{
+ "questId": 5598,
+ "name": "삼거리의 불청객",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7026
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24123,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33780,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 250,
+      "doodadId": 7026
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24124,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 24125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33781,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1439
+     },
+     {
+      "actId": 37051,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1439,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

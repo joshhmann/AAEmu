@@ -1,0 +1,150 @@
+{
+ "questId": 96,
+ "name": "부관 윌리엄을 위해",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 766
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 269,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 284,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 68,
+      "npcId": 766
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4378,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6676,
+      "type": "QuestActObjItemGather",
+      "detailId": 333,
+      "itemId": 14973,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4379,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6678,
+      "type": "QuestActConReportNpc",
+      "detailId": 840,
+      "npcId": 806
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4380,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38197,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2549,
+      "itemId": 33272,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38198,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2550,
+      "itemId": 33273,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38199,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2551,
+      "itemId": 33274,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14973,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 806,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 14973,
+   "count": 5
+  }
+ ]
+}

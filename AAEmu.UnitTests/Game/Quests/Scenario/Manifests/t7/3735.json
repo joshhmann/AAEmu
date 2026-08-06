@@ -1,0 +1,125 @@
+{
+ "questId": 3735,
+ "name": "노인과 바다",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9985
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15593,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21150,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2947,
+      "npcId": 9985
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15594,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21388,
+      "type": "QuestActObjItemGather",
+      "detailId": 1583,
+      "itemId": 20068,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15595,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21151,
+      "type": "QuestActConReportNpc",
+      "detailId": 3182,
+      "npcId": 9985
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15596,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20068,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9985,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20068,
+   "count": 5
+  }
+ ]
+}

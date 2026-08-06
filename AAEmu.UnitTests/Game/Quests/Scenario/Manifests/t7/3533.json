@@ -1,0 +1,163 @@
+{
+ "questId": 3533,
+ "name": "그림자 매의 본거지",
+ "zoneId": 142,
+ "categoryId": 62,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9891
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16877,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22249,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3150,
+      "npcId": 9891
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16878,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22250,
+      "type": "QuestActConReportNpc",
+      "detailId": 3381,
+      "npcId": 2660
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16879,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40830,
+      "type": "QuestActSupplyItem",
+      "detailId": 4797,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 16880,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22251,
+      "type": "QuestActSupplyItem",
+      "detailId": 2208,
+      "itemId": 21323,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16881,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22252,
+      "type": "QuestActObjItemGather",
+      "detailId": 1667,
+      "itemId": 21323,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21323,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2660,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21323,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,121 @@
+{
+ "questId": 4035,
+ "name": "고장 난 정찰 로봇 알두디두",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10648
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17399,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22980,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3293,
+      "npcId": 10648
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17400,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22996,
+      "type": "QuestActObjInteraction",
+      "detailId": 560,
+      "doodadId": 4505,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17401,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22997,
+      "type": "QuestActConReportNpc",
+      "detailId": 3526,
+      "npcId": 10648
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17402,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4505,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10648,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

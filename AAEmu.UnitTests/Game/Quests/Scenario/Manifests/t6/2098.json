@@ -1,0 +1,129 @@
+{
+ "questId": 2098,
+ "name": "사나운 순록 무리를 처치하라",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4728
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9680,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13490,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 38,
+      "npcId": 4728
+     },
+     {
+      "actId": 13491,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 39,
+      "npcId": 4729
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9681,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13492,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 115,
+      "monsterGroupId": 119,
+      "count": 9
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9682,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14839,
+      "type": "QuestActConReportJournal",
+      "detailId": 13
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10631,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14840,
+      "type": "QuestActSupplyCopper",
+      "detailId": 114,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 119,
+     "count": 9
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

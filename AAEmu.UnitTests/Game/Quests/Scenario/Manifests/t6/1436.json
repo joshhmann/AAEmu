@@ -1,0 +1,104 @@
+{
+ "questId": 1436,
+ "name": "바이암이 들끓는 고원",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5317
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6366,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28215,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 155,
+      "doodadId": 5317
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6367,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15547,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 176,
+      "monsterGroupId": 75,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6371,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28216,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1037
+     },
+     {
+      "actId": 36981,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1389,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 75,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

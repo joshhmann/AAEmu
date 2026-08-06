@@ -1,0 +1,91 @@
+{
+ "questId": 1388,
+ "name": "안델프의 손길",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5805
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24517,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34040,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4357,
+      "npcId": 5805
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24518,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34039,
+      "type": "QuestActConReportNpc",
+      "detailId": 4657,
+      "npcId": 5807
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24519,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5807,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

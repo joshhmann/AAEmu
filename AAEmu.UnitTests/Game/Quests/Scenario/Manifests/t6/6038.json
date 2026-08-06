@@ -1,0 +1,88 @@
+{
+ "questId": 6038,
+ "name": "프롤로그02",
+ "zoneId": 1,
+ "categoryId": 108,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAutoComplete",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25996,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 25997,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 26054,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35619,
+      "type": "QuestActSupplyExp",
+      "detailId": 821,
+      "exp": 0
+     },
+     {
+      "actId": 35620,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1267,
+      "amount": 0
+     },
+     {
+      "actId": 36885,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1695
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

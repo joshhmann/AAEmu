@@ -1,0 +1,138 @@
+{
+ "questId": 5739,
+ "name": "내 손으로 만드는 다리 방어구: 재료",
+ "zoneId": 1,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24668,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34223,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 223,
+      "questContextId": 5739
+     },
+     {
+      "actId": 34387,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4401,
+      "npcId": 754
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24669,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34224,
+      "type": "QuestActObjItemGather",
+      "detailId": 2795,
+      "itemId": 29490,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24670,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34226,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 224,
+      "questContextId": 5740
+     },
+     {
+      "actId": 34227,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1477
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24742,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34225,
+      "type": "QuestActObjItemGather",
+      "detailId": 2796,
+      "itemId": 29492,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29490,
+     "count": 5
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29492,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29490,
+   "count": 5
+  },
+  {
+   "itemId": 29492,
+   "count": 5
+  }
+ ]
+}

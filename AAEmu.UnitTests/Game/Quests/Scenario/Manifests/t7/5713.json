@@ -1,0 +1,105 @@
+{
+ "questId": 5713,
+ "name": "정벌군 진출",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 14,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5824
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24568,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34102,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4361,
+      "npcId": 5824
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24569,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24570,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34103,
+      "type": "QuestActConReportNpc",
+      "detailId": 4662,
+      "npcId": 5824
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24571,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5824,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

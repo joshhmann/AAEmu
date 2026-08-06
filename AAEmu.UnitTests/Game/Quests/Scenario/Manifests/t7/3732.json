@@ -1,0 +1,125 @@
+{
+ "questId": 3732,
+ "name": "민병대원들이 벗어 던진 갑옷",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 756
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15581,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21144,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2944,
+      "npcId": 756
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21254,
+      "type": "QuestActObjItemGather",
+      "detailId": 1555,
+      "itemId": 20012,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21145,
+      "type": "QuestActConReportNpc",
+      "detailId": 3179,
+      "npcId": 756
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15584,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20012,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 756,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20012,
+   "count": 5
+  }
+ ]
+}

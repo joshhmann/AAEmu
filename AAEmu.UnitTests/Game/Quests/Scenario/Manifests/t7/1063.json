@@ -1,0 +1,121 @@
+{
+ "questId": 1063,
+ "name": "숲을 지키려는 노력",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3434
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5328,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8256,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 912,
+      "npcId": 3434
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5330,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8258,
+      "type": "QuestActConReportNpc",
+      "detailId": 1048,
+      "npcId": 3434
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5567,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 8130,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23144,
+      "type": "QuestActObjInteraction",
+      "detailId": 561,
+      "doodadId": 1421,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1421,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3434,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

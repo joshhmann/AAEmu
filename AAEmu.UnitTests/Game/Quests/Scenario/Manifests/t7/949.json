@@ -1,0 +1,256 @@
+{
+ "questId": 949,
+ "name": "봉인 해제",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3062
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7048,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 754,
+      "npcId": 3062
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4561,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7051,
+      "type": "QuestActConReportNpc",
+      "detailId": 884,
+      "npcId": 3062
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4562,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38324,
+      "type": "QuestActSupplyItem",
+      "detailId": 4276,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 4563,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7056,
+      "type": "QuestActSupplyItem",
+      "detailId": 416,
+      "itemId": 8477,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 7057,
+      "type": "QuestActSupplyItem",
+      "detailId": 417,
+      "itemId": 8478,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 7058,
+      "type": "QuestActSupplyItem",
+      "detailId": 418,
+      "itemId": 8479,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 7059,
+      "type": "QuestActSupplyItem",
+      "detailId": 419,
+      "itemId": 8480,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4643,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11984,
+      "type": "QuestActObjItemGather",
+      "detailId": 753,
+      "itemId": 8481,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4644,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11985,
+      "type": "QuestActObjItemGather",
+      "detailId": 754,
+      "itemId": 8482,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4646,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11986,
+      "type": "QuestActObjItemGather",
+      "detailId": 755,
+      "itemId": 8483,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4647,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11987,
+      "type": "QuestActObjItemGather",
+      "detailId": 756,
+      "itemId": 8484,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8481,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8482,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8483,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8484,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3062,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8481,
+   "count": 1
+  },
+  {
+   "itemId": 8482,
+   "count": 1
+  },
+  {
+   "itemId": 8483,
+   "count": 1
+  },
+  {
+   "itemId": 8484,
+   "count": 1
+  }
+ ]
+}

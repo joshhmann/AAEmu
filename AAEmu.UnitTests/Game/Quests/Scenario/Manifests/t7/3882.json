@@ -1,0 +1,140 @@
+{
+ "questId": 3882,
+ "name": "대신관 뤼산델",
+ "zoneId": 7,
+ "categoryId": 8,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10762
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17080,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22549,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3217,
+      "npcId": 10762
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17081,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29299,
+      "type": "QuestActObjItemGather",
+      "detailId": 2355,
+      "itemId": 25005,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17082,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22548,
+      "type": "QuestActConReportNpc",
+      "detailId": 3454,
+      "npcId": 570
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17083,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40891,
+      "type": "QuestActSupplyItem",
+      "detailId": 4858,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25005,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 570,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25005,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 5048,
+ "name": "복을 가득 담고 싶다면",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9155
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21849,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38108,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4728,
+      "npcId": 9155
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30753,
+      "type": "QuestActObjItemGather",
+      "detailId": 2429,
+      "itemId": 3712,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21851,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30755,
+      "type": "QuestActConReportNpc",
+      "detailId": 4221,
+      "npcId": 9155
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21881,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3712,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9155,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3712,
+   "count": 1
+  }
+ ]
+}

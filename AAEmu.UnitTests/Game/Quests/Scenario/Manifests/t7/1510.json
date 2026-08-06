@@ -1,0 +1,163 @@
+{
+ "questId": 1510,
+ "name": "아슈란의 해산물 특선",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 18,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2639
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7158,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9970,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1270,
+      "npcId": 2639
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9971,
+      "type": "QuestActObjItemGather",
+      "detailId": 573,
+      "itemId": 14381,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9972,
+      "type": "QuestActObjItemGather",
+      "detailId": 574,
+      "itemId": 14392,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7219,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9973,
+      "type": "QuestActConReportNpc",
+      "detailId": 1437,
+      "npcId": 2639
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7220,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10120,
+      "type": "QuestActSupplyItem",
+      "detailId": 818,
+      "itemId": 14482,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14381,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 14392,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2639,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 14482,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14381,
+   "count": 10
+  },
+  {
+   "itemId": 14392,
+   "count": 20
+  }
+ ]
+}

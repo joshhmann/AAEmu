@@ -1,0 +1,91 @@
+{
+ "questId": 3466,
+ "name": "신의 채찍 단원들",
+ "zoneId": 137,
+ "categoryId": 61,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9903
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17031,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22477,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3198,
+      "npcId": 9903
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17034,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 21111,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29059,
+      "type": "QuestActConReportNpc",
+      "detailId": 4154,
+      "npcId": 9894
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9894,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

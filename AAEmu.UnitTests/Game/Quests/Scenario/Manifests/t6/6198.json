@@ -1,0 +1,106 @@
+{
+ "questId": 6198,
+ "name": "바라기 마을로",
+ "zoneId": 1,
+ "categoryId": 4,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3511
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26567,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36379,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4674,
+      "npcId": 3511
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26568,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38559,
+      "type": "QuestActSupplyItem",
+      "detailId": 4308,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26569,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36378,
+      "type": "QuestActConReportNpc",
+      "detailId": 4872,
+      "npcId": 3512
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3512,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

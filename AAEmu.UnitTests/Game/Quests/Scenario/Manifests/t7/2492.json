@@ -1,0 +1,148 @@
+{
+ "questId": 2492,
+ "name": "반지는 어디로?",
+ "zoneId": 7,
+ "categoryId": 3,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10550
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10764,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14980,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2049,
+      "npcId": 10550
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10765,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29298,
+      "type": "QuestActObjItemGather",
+      "detailId": 2354,
+      "itemId": 24160,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10766,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 18255,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23867,
+      "type": "QuestActConReportNpc",
+      "detailId": 3693,
+      "npcId": 10550
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 20192,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27495,
+      "type": "QuestActSupplyItem",
+      "detailId": 3032,
+      "itemId": 24124,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24160,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10550,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24160,
+   "count": 1
+  }
+ ]
+}

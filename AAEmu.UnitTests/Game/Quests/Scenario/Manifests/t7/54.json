@@ -1,0 +1,97 @@
+{
+ "questId": 54,
+ "name": "제어 받은 흔적",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 1536
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 108,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 539,
+      "type": "QuestActConAcceptItem",
+      "detailId": 9,
+      "itemId": 1536
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 110,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 107,
+      "type": "QuestActConReportNpc",
+      "detailId": 28,
+      "npcId": 730
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 111,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 730,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 1536,
+   "count": 1
+  }
+ ]
+}

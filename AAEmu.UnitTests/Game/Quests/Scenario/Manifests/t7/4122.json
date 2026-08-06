@@ -1,0 +1,140 @@
+{
+ "questId": 4122,
+ "name": "날틀의 재료",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9768
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23447,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3356,
+      "npcId": 9768
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17837,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23449,
+      "type": "QuestActObjItemGather",
+      "detailId": 1846,
+      "itemId": 23331,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17838,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23448,
+      "type": "QuestActConReportNpc",
+      "detailId": 3610,
+      "npcId": 9768
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17839,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23452,
+      "type": "QuestActSupplyItem",
+      "detailId": 2286,
+      "itemId": 14677,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23331,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9768,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 14677,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23331,
+   "count": 5
+  }
+ ]
+}

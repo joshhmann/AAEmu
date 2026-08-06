@@ -24,6 +24,19 @@ Tiers:
        families (QuestActObjCinema, QuestActEtcItemObtain,
        QuestActConAcceptItemGain, QuestActSupplyLp), minus dropped content,
        minus quests already sampled in T1/T2/T3 (each quest driven once).
+  T5 = M2a wave-2: band 1-20 quests carrying any of the four wave-2 closed
+       act families (QuestActObjExpressFire, QuestActObjAggro,
+       QuestActCheckCompleteComponent, QuestActSupplyHonorPoint), minus
+       already-sampled.
+  T6 = M2a census: FULL band 1-10 sweep - every non-dropped quest with
+       LEVEL 1-10, minus quests already sampled in T1-T5 (each quest driven
+       exactly once across the census). Family = primary act family.
+  T7 = M2a census: FULL band 11-20 sweep - every non-dropped quest with
+       LEVEL 11-20, minus already-sampled (same rule).
+
+Also emits Manifests/census-meta.json (band denominators incl. dropped
+ids per band + signature-zone map) so the tier test can render the M2a
+band-census acceptance table and zone-coverage rows deterministically.
 
 Quests whose shapes the harness cannot synthesize are emitted with a "skip"
 block (broken refs, unsupported act types) - reported, never faked.
@@ -694,6 +707,71 @@ def select_t5_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
+# ---- T6/T7 (M2a census): full band sweeps ----
+# Every non-dropped quest in the band, minus quests already sampled in
+# T1-T5 (each quest driven exactly once across the census).
+BAND_TIERS = [
+    ("t6", "band 1-10", 1, 10),
+    ("t7", "band 11-20", 11, 20),
+]
+
+# Dropped content (scorecard-explorations/dropped-content-register.md):
+# dummy shell 1391 + 23 no-start tutorial shells + 8 orphaned contexts
+# (745/1421/1954-1958/2140 have no quest_contexts row - excluded by the
+# JOIN already; listed for the census denominator bookkeeping). The
+# level-1 tutorial shells (1533, 1535-1541) DO have rows and land in band
+# 1-10 - exclude explicitly so sweep denominators match the register.
+DROPPED_QUESTS = {
+    1391, 745, 1421, 1954, 1955, 1956, 1957, 1958, 2140,
+    1533, 1535, 1536, 1537, 1538, 1539, 1540, 1541, 1542, 1543,
+    1544, 1545, 1546, 1547, 1548, 1549, 1551, 1552, 1553, 1554,
+    1640, 1830, 1831,
+}
+
+# Signature zones for the M2a zone-coverage rows (M2_PLAN.md zone map):
+# REAL zone ids only - the catch-all w_gweonid_forest_1 (1) and the
+# old_/test_/machinima_ variants carry meaningless attribution.
+SIGNATURE_ZONES = {
+    "Gweonid": [127, 128],
+    "Lilyut": [11, 141],
+    "Mahadevi": [18, 142, 143],
+    "Tiger Spine": [23, 179],
+    "Falcony": [21, 130],
+    "Sunny Wilderness": [22, 136],
+}
+
+
+def select_band_quests(c, lo, hi, existing_ids):
+    """Full band sweep: non-dropped quest_contexts with LEVEL in [lo, hi],
+    minus quests already sampled in earlier tiers, ordered by id."""
+    rows = c.execute(
+        "SELECT id FROM quest_contexts WHERE LEVEL BETWEEN ? AND ? ORDER BY id",
+        (lo, hi)).fetchall()
+    return [r[0] for r in rows if r[0] not in DROPPED_QUESTS and r[0] not in existing_ids]
+
+
+def emit_census_meta(c, out_root):
+    """Band denominators (total / dropped-in-band / non-dropped) + signature
+    zone map -> Manifests/census-meta.json. The tier test reads this to
+    render the M2a band-census acceptance table and zone-coverage rows.
+    Deterministic: fixed key order, no wall-clock."""
+    meta = {"bands": {}, "signatureZones": []}
+    for tier, label, lo, hi in BAND_TIERS:
+        ids = [r[0] for r in c.execute(
+            "SELECT id FROM quest_contexts WHERE LEVEL BETWEEN ? AND ? ORDER BY id",
+            (lo, hi)).fetchall()]
+        dropped = sorted(q for q in ids if q in DROPPED_QUESTS)
+        meta["bands"][f"{lo}-{hi}"] = {
+            "label": label, "tier": tier, "total": len(ids),
+            "dropped": dropped, "nonDropped": len(ids) - len(dropped),
+        }
+    for name, zone_ids in SIGNATURE_ZONES.items():
+        meta["signatureZones"].append({"name": name, "zoneIds": zone_ids})
+    with open(os.path.join(out_root, "census-meta.json"), "w") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=1)
+    return meta
+
+
 def primary_family(acts):
     """Quest family label for the report: most frequent act type, preferring
     supported (generator-known) types so common families label drivable quests."""
@@ -702,6 +780,8 @@ def primary_family(acts):
         counts[a] = counts.get(a, 0) + 1
     supported = sorted([a for a in counts if a in ACT_TABLES], key=lambda a: (-counts[a], a))
     unsupported = sorted([a for a in counts if a not in ACT_TABLES], key=lambda a: (-counts[a], a))
+    if not (supported or unsupported):
+        return "no-acts"  # act-less shell (band sweep includes empty contexts)
     return (supported or unsupported)[0]
 
 
@@ -802,10 +882,35 @@ def main():
             json.dump(manifest, f, ensure_ascii=False, indent=1)
         counts["t5"] = counts.get("t5", 0) + 1
 
+    # ---- T6/T7 (M2a census): full band sweeps ----
+    # The band denominators (incl. dropped ids per band) and the signature
+    # zone map are emitted to Manifests/census-meta.json for the tier test's
+    # acceptance table + zone-coverage rows.
+    emit_census_meta(c, OUT_ROOT)
+    band_counts = {}
+    for tier, label, lo, hi in BAND_TIERS:
+        band_ids = select_band_quests(c, lo, hi, existing_ids)
+        out_dir = os.path.join(OUT_ROOT, tier)
+        os.makedirs(out_dir, exist_ok=True)
+        for qid in band_ids:
+            acts = set(r[0] for r in c.execute(
+                """SELECT a.act_detail_type FROM quest_acts a
+                  JOIN quest_components cmp ON a.quest_component_id = cmp.id
+                  WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+            manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+            if manifest is None:
+                continue
+            with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+                json.dump(manifest, f, ensure_ascii=False, indent=1)
+            counts[tier] = counts.get(tier, 0) + 1
+        band_counts[tier] = len(band_ids)
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
                       "t1_total": len(t1_ids), "t2_total": len(t2_ids),
                       "t3_selected": len(t3_ids), "t4_selected": len(t4_ids),
-                      "t5_selected": len(t5_ids)}, indent=1))
+                      "t5_selected": len(t5_ids),
+                      "t6_selected": band_counts.get("t6", 0),
+                      "t7_selected": band_counts.get("t7", 0)}, indent=1))
 
 
 if __name__ == "__main__":

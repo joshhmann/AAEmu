@@ -1,0 +1,112 @@
+{
+ "questId": 4661,
+ "name": "테스트_어그로 목표 퀘스트",
+ "zoneId": 1,
+ "categoryId": 12,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11936
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20237,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27532,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 157,
+      "questContextId": 4661
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20238,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36503,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1194,
+      "npcId": 11936,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20240,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27529,
+      "type": "QuestActSupplyItem",
+      "detailId": 3046,
+      "itemId": 24972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 27773,
+      "type": "QuestActConAutoComplete",
+      "detailId": 960
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 11936,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

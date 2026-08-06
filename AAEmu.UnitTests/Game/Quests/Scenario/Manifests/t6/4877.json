@@ -1,0 +1,125 @@
+{
+ "questId": 4877,
+ "name": "냄새가 나잖아",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5536
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21120,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29096,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 190,
+      "doodadId": 5536
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29097,
+      "type": "QuestActObjItemGather",
+      "detailId": 2339,
+      "itemId": 25345,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21122,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29098,
+      "type": "QuestActConReportNpc",
+      "detailId": 4159,
+      "npcId": 5669
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21123,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25345,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5669,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25345,
+   "count": 1
+  }
+ ]
+}

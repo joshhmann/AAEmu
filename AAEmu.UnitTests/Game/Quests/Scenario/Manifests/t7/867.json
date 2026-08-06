@@ -1,0 +1,99 @@
+{
+ "questId": 867,
+ "name": "검은 모래회 탈출",
+ "zoneId": 142,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5208
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3917,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5545,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 643,
+      "npcId": 5208
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3918,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5546,
+      "type": "QuestActObjInteraction",
+      "detailId": 123,
+      "doodadId": 1113,
+      "count": 1,
+      "wiId": 19
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3921,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5552,
+      "type": "QuestActConAutoComplete",
+      "detailId": 143
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1113,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,8 @@
+{
+ "questId": 2212,
+ "name": "하다보니(reserve)",
+ "family": "no-acts",
+ "skip": {
+  "reason": "no components"
+ }
+}

@@ -1,0 +1,110 @@
+{
+ "questId": 1941,
+ "name": "추격자의 벌판을 위협하는 사자 무리 처치",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4829
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8949,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12573,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1,
+      "npcId": 4829
+     },
+     {
+      "actId": 12583,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 3,
+      "npcId": 4830
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8950,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12575,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 93,
+      "monsterGroupId": 96,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8951,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12574,
+      "type": "QuestActConAutoComplete",
+      "detailId": 335
+     },
+     {
+      "actId": 12584,
+      "type": "QuestActSupplyCopper",
+      "detailId": 34,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 96,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

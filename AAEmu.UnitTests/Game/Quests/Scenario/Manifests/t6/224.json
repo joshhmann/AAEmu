@@ -1,0 +1,91 @@
+{
+ "questId": 224,
+ "name": "전령의 분노",
+ "zoneId": 128,
+ "categoryId": 8,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7826
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 390,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16210,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2129,
+      "npcId": 7826
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14512,
+      "type": "QuestActConReportNpc",
+      "detailId": 2153,
+      "npcId": 7828
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1198,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7828,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

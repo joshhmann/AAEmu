@@ -1,0 +1,132 @@
+{
+ "questId": 1113,
+ "name": "점치러 가는 길",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2473
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5710,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12217,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1555,
+      "npcId": 2473
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5711,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12952,
+      "type": "QuestActObjItemGather",
+      "detailId": 823,
+      "itemId": 13974,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5712,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12219,
+      "type": "QuestActConReportNpc",
+      "detailId": 1751,
+      "npcId": 2472
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5713,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38240,
+      "type": "QuestActSupplyExp",
+      "detailId": 1321,
+      "exp": 110
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13974,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2472,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13974,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 86,
+ "name": "타락한 경비병",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 19,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9993
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 227,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6745,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 728,
+      "npcId": 9993
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 238,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 261,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 17,
+      "npcId": 789,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 239,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2111,
+      "type": "QuestActConReportNpc",
+      "detailId": 279,
+      "npcId": 9993
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 240,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38610,
+      "type": "QuestActSupplyItem",
+      "detailId": 4359,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 789,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9993,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

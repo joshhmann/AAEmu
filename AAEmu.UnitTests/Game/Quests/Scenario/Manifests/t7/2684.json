@@ -1,0 +1,175 @@
+{
+ "questId": 2684,
+ "name": "당일 배송의 약속",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8217
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11245,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16279,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2134,
+      "npcId": 8217
+     },
+     {
+      "actId": 16977,
+      "type": "QuestActCheckTimer",
+      "detailId": 84,
+      "limitTime": 600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 11246,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16978,
+      "type": "QuestActSupplyItem",
+      "detailId": 1691,
+      "itemId": 17802,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11247,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16278,
+      "type": "QuestActObjSphere",
+      "detailId": 555,
+      "sphereId": 1122
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11249,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16284,
+      "type": "QuestActConReportNpc",
+      "detailId": 2340,
+      "npcId": 1911
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11250,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38588,
+      "type": "QuestActSupplyItem",
+      "detailId": 4337,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 11425,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Drop",
+    "id": 11550,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 11247
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1911,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

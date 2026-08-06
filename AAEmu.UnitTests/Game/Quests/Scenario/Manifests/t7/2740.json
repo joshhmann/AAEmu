@@ -1,0 +1,129 @@
+{
+ "questId": 2740,
+ "name": "검은수염 도적단 퇴치",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 671
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11523,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16792,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 425,
+      "npcId": 671
+     },
+     {
+      "actId": 16793,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 426,
+      "npcId": 672
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16789,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 247,
+      "monsterGroupId": 85,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11525,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16790,
+      "type": "QuestActConReportJournal",
+      "detailId": 139
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11526,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16791,
+      "type": "QuestActSupplyCopper",
+      "detailId": 220,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 85,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

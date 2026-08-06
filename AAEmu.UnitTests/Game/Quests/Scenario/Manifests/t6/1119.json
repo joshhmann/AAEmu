@@ -1,0 +1,106 @@
+{
+ "questId": 1119,
+ "name": "하토라에서 일어난 일",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2237
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5734,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8702,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1001,
+      "npcId": 2237
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5736,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8704,
+      "type": "QuestActConReportNpc",
+      "detailId": 1149,
+      "npcId": 5697
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5737,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38577,
+      "type": "QuestActSupplyItem",
+      "detailId": 4326,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5697,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

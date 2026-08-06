@@ -1,0 +1,158 @@
+{
+ "questId": 4421,
+ "name": "병아리 키워 닭고기 얻기",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19305,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 19306,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26210,
+      "type": "QuestActObjItemUse",
+      "detailId": 651,
+      "itemId": 16230,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26213,
+      "type": "QuestActConReportNpc",
+      "detailId": 3935,
+      "npcId": 9789
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19369,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26214,
+      "type": "QuestActSupplyCopper",
+      "detailId": 512,
+      "amount": 800
+     },
+     {
+      "actId": 26833,
+      "type": "QuestActSupplyItem",
+      "detailId": 2930,
+      "itemId": 784,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19690,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26830,
+      "type": "QuestActObjItemGather",
+      "detailId": 2124,
+      "itemId": 3507,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 16230,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 3507,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9789,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 784,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3507,
+   "count": 2
+  }
+ ]
+}

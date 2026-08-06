@@ -1,0 +1,140 @@
+{
+ "questId": 1059,
+ "name": "네오즈의 깊은 생각",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 10,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3395
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5302,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8241,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 908,
+      "npcId": 3395
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5303,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8242,
+      "type": "QuestActObjItemGather",
+      "detailId": 435,
+      "itemId": 13934,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5304,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8243,
+      "type": "QuestActConReportNpc",
+      "detailId": 1044,
+      "npcId": 3395
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5305,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38164,
+      "type": "QuestActSupplyItem",
+      "detailId": 4195,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13934,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3395,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13934,
+   "count": 3
+  }
+ ]
+}

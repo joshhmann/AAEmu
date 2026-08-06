@@ -1,24 +1,29 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace AAEmu.UnitTests.Game.Quests.Scenario;
 
 /// <summary>
-/// M1-5c + M2a wave-1: tier runner - drives every manifest in Manifests/t1
+/// M1-5c + M2a: tier runner - drives every manifest in Manifests/t1
 /// (Solzreed golden zone), Manifests/t2 (kill-accept sample + CheckGuard +
 /// ItemGroup families), Manifests/t3 (M1-5c stratified act-family census,
-/// frozen sample) and Manifests/t4 (M2a wave-1: band 1-20 quests carrying the
-/// closed act families cinema/etc-item-obtain/accept-item-gain/supply-LP)
-/// through the scenario harness and writes scorecard-explorations/runnability.md
-/// (per-tier tables, headline number, FAIL rollup by act family, SKIP rollup,
-/// recommended fix-card queue).
+/// frozen sample), Manifests/t4 (M2a wave-1: band 1-20 quests carrying the
+/// closed act families cinema/etc-item-obtain/accept-item-gain/supply-LP),
+/// Manifests/t5 (M2a wave-2: express-fire/aggro/CCC/honor) and the M2a
+/// full-band census tiers t6 (band 1-10) / t7 (band 11-20) through the
+/// scenario harness and writes scorecard-explorations/runnability.md
+/// (per-tier tables, headline number, FAIL rollup by act family, SKIP
+/// rollup, recommended fix-card queue, M2a band-census acceptance table,
+/// zone-coverage rows).
 ///
 /// A quest verdict is evidence, not a test outcome: PASS/FAIL/SKIP per quest
 /// lands in the report. The test itself only asserts that every manifest ran
 /// and the report was written (FAILs are findings for fix cards, by design).
 /// The report header is deterministic (no wall-clock) - census regen must not
-/// churn commits (M2a acceptance).
+/// churn commits (M2a acceptance). The band denominators + signature-zone map
+/// come from Manifests/census-meta.json (written by gen-manifests.py).
 /// </summary>
 [NotInParallel]
 public class QuestScenarioTierTests
@@ -29,7 +34,9 @@ public class QuestScenarioTierTests
         ("t2", "T2 families (kill-accept/guard/item-group)"),
         ("t3", "T3 stratified act-family census (frozen M1-5c sample)"),
         ("t4", "T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)"),
-        ("t5", "T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)")
+        ("t5", "T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)"),
+        ("t6", "T6 M2a census (band 1-10 full sweep)"),
+        ("t7", "T7 M2a census (band 11-20 full sweep)")
     ];
 
     private static string RepoRoot()
@@ -153,6 +160,67 @@ public class QuestScenarioTierTests
                       $"{all.Pass + all.Fail + all.Skip} quests — **{all.Pass}/{driven} quests runnable** " +
                       $"({all.Skip} SKIP not driven, reasons below)");
         sb.AppendLine();
+
+        // ---- M2a band census (acceptance): denominators from census-meta.json
+        // (written by gen-manifests.py), verdicts from every tier - each quest
+        // is driven exactly once, so band membership by manifest level is the
+        // full non-dropped band coverage. PASS-or-doc-SKIP % is the acceptance
+        // metric (M2_PLAN.md §4, bar >= 95%). ----
+        var metaPath = Path.Combine(repoRoot, "AAEmu.UnitTests", "Game", "Quests", "Scenario",
+            "Manifests", "census-meta.json");
+        if (File.Exists(metaPath))
+        {
+            using var metaDoc = JsonDocument.Parse(File.ReadAllText(metaPath));
+            var bands = metaDoc.RootElement.GetProperty("bands");
+            sb.AppendLine("## M2a band census (acceptance)");
+            sb.AppendLine();
+            sb.AppendLine("| band | tier | total | dropped | non-dropped | driven | PASS | FAIL | SKIP | PASS-or-doc-SKIP |");
+            sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|");
+            foreach (var bandProp in bands.EnumerateObject())
+            {
+                var band = bandProp.Value;
+                var bounds = bandProp.Name.Split('-').Select(int.Parse).ToArray();
+                var nonDropped = band.GetProperty("nonDropped").GetInt32();
+                var bandRows = rows.Where(r =>
+                    manifestsByQuest.TryGetValue(r.QuestId, out var m) &&
+                    m.Template.Level >= bounds[0] && m.Template.Level <= bounds[1]).ToList();
+                var bPass = bandRows.Count(r => r.Verdict == "Pass");
+                var bFail = bandRows.Count(r => r.Verdict == "Fail");
+                var bSkip = bandRows.Count(r => r.Verdict == "Skip");
+                var pct = nonDropped > 0 ? 100.0 * (bPass + bSkip) / nonDropped : 100.0;
+                sb.AppendLine($"| {bandProp.Name} | {band.GetProperty("tier").GetString()} | " +
+                              $"{band.GetProperty("total").GetInt32()} | {band.GetProperty("dropped").GetArrayLength()} | " +
+                              $"{nonDropped} | {bandRows.Count} | {bPass} | {bFail} | {bSkip} | {pct:F1}% |");
+            }
+            sb.AppendLine();
+
+            // ---- Zone coverage: signature zones (real ids only, from
+            // census-meta.json) x band - driven quests + verdict split. ----
+            sb.AppendLine("## Zone coverage (signature zones)");
+            sb.AppendLine();
+            sb.AppendLine("| zone | band | quests | PASS | FAIL | SKIP |");
+            sb.AppendLine("|---|---|---|---|---|---|");
+            foreach (var zone in metaDoc.RootElement.GetProperty("signatureZones").EnumerateArray())
+            {
+                var zoneName = zone.GetProperty("name").GetString();
+                var zoneIds = zone.GetProperty("zoneIds").EnumerateArray().Select(z => z.GetUInt32()).ToHashSet();
+                foreach (var bandProp in bands.EnumerateObject())
+                {
+                    var bounds = bandProp.Name.Split('-').Select(int.Parse).ToArray();
+                    var zoneRows = rows.Where(r =>
+                        manifestsByQuest.TryGetValue(r.QuestId, out var m) &&
+                        zoneIds.Contains(m.ZoneId) &&
+                        m.Template.Level >= bounds[0] && m.Template.Level <= bounds[1]).ToList();
+                    if (zoneRows.Count == 0)
+                        continue;
+                    sb.AppendLine($"| {zoneName} | {bandProp.Name} | {zoneRows.Count} | " +
+                                  $"{zoneRows.Count(r => r.Verdict == "Pass")} | " +
+                                  $"{zoneRows.Count(r => r.Verdict == "Fail")} | " +
+                                  $"{zoneRows.Count(r => r.Verdict == "Skip")} |");
+                }
+            }
+            sb.AppendLine();
+        }
 
         foreach (var (tier, _) in Tiers)
         {

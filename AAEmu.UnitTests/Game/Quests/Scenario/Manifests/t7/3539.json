@@ -1,0 +1,163 @@
+{
+ "questId": 3539,
+ "name": "쇳조각의 정체",
+ "zoneId": 142,
+ "categoryId": 62,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10148
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16915,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22285,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3159,
+      "npcId": 10148
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16916,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22286,
+      "type": "QuestActConReportNpc",
+      "detailId": 3392,
+      "npcId": 10148
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16917,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 16919,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22310,
+      "type": "QuestActSupplyItem",
+      "detailId": 2212,
+      "itemId": 21339,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 16920,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22309,
+      "type": "QuestActSupplyItem",
+      "detailId": 2211,
+      "itemId": 21337,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16921,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22311,
+      "type": "QuestActObjItemGather",
+      "detailId": 1674,
+      "itemId": 21338,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21338,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10148,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21338,
+   "count": 1
+  }
+ ]
+}

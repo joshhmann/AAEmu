@@ -1,0 +1,106 @@
+{
+ "questId": 4490,
+ "name": "해명의 가능성",
+ "zoneId": 11,
+ "categoryId": 8,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6988
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19595,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26691,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3706,
+      "npcId": 6988
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19597,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26692,
+      "type": "QuestActConReportNpc",
+      "detailId": 3986,
+      "npcId": 3667
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19598,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40888,
+      "type": "QuestActSupplyItem",
+      "detailId": 4855,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3667,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

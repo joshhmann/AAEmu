@@ -1,0 +1,129 @@
+{
+ "questId": 2099,
+ "name": "겨울의 포식자들",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4626
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9684,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13497,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 41,
+      "npcId": 4626
+     },
+     {
+      "actId": 13498,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 42,
+      "npcId": 4628
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9685,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13499,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 116,
+      "monsterGroupId": 120,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14841,
+      "type": "QuestActConReportJournal",
+      "detailId": 14
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10632,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14842,
+      "type": "QuestActSupplyCopper",
+      "detailId": 115,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 120,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,121 @@
+{
+ "questId": 4777,
+ "name": "습격한 범인을 찾으려면",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5669
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20634,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28227,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3786,
+      "npcId": 5669
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20635,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28229,
+      "type": "QuestActObjItemUse",
+      "detailId": 675,
+      "itemId": 25056,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 20637,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28228,
+      "type": "QuestActSupplyItem",
+      "detailId": 3175,
+      "itemId": 25056,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20638,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29111,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1105
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 25056,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

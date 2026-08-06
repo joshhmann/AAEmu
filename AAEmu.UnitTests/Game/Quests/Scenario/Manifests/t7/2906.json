@@ -1,0 +1,140 @@
+{
+ "questId": 2906,
+ "name": "코볼트 우두머리의 눈알",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 19,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10649
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12215,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17788,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2270,
+      "npcId": 10649
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12216,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17791,
+      "type": "QuestActObjItemGather",
+      "detailId": 1208,
+      "itemId": 18460,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17790,
+      "type": "QuestActConReportNpc",
+      "detailId": 2496,
+      "npcId": 10649
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38235,
+      "type": "QuestActSupplyItem",
+      "detailId": 4242,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18460,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10649,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18460,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,106 @@
+{
+ "questId": 3525,
+ "name": "호랑이 눈의 총독",
+ "zoneId": 179,
+ "categoryId": 62,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10131
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16354,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21601,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3036,
+      "npcId": 10131
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21603,
+      "type": "QuestActConReportNpc",
+      "detailId": 3262,
+      "npcId": 7893
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16408,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40827,
+      "type": "QuestActSupplyItem",
+      "detailId": 4794,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7893,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

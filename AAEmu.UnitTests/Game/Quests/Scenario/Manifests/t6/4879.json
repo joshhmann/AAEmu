@@ -1,0 +1,131 @@
+{
+ "questId": 4879,
+ "name": "서쪽에서 온 귀인",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11994
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21128,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29116,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3880,
+      "npcId": 11994
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21129,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29115,
+      "type": "QuestActObjItemGather",
+      "detailId": 2343,
+      "itemId": 25354,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21130,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29117,
+      "type": "QuestActConReportNpc",
+      "detailId": 4161,
+      "npcId": 11994
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21131,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Drop",
+    "id": 21135,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25354,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11994,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25354,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 3309,
+ "name": "바다를 무서워하는 어부",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 17,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9195
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14294,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19671,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2629,
+      "npcId": 9195
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14295,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19672,
+      "type": "QuestActObjItemGather",
+      "detailId": 1378,
+      "itemId": 19566,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14296,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19673,
+      "type": "QuestActConReportNpc",
+      "detailId": 2860,
+      "npcId": 9195
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14297,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38616,
+      "type": "QuestActSupplyItem",
+      "detailId": 4365,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19566,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9195,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19566,
+   "count": 5
+  }
+ ]
+}

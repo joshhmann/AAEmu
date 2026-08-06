@@ -1,0 +1,117 @@
+{
+ "questId": 2486,
+ "name": "안절부절한 모습",
+ "zoneId": 141,
+ "categoryId": 3,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8064
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10744,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14965,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2043,
+      "npcId": 8064
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10745,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26178,
+      "type": "QuestActObjTalk",
+      "detailId": 969,
+      "npcId": 10586
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10746,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 19104,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25869,
+      "type": "QuestActConReportNpc",
+      "detailId": 3841,
+      "npcId": 7595
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 10586
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7595,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

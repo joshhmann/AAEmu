@@ -1,0 +1,135 @@
+{
+ "questId": 2716,
+ "name": "여왕의 탑 채석장의 코볼트 퇴치",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2493
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11403,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16492,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 373,
+      "npcId": 2493
+     },
+     {
+      "actId": 16493,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 374,
+      "npcId": 2494
+     },
+     {
+      "actId": 16494,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 375,
+      "npcId": 2517
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11404,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16495,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 229,
+      "monsterGroupId": 220,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11405,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16496,
+      "type": "QuestActConReportJournal",
+      "detailId": 121
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16497,
+      "type": "QuestActSupplyCopper",
+      "detailId": 203,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 220,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

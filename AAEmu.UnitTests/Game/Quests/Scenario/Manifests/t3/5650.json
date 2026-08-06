@@ -173,7 +173,14 @@
   },
   {
    "name": "PROGRESS",
-   "events": [],
+   "events": [
+    {
+     "type": "TalkNpcGroup",
+     "npcGroupId": 528,
+     "npcId": 13041,
+     "componentId": 24283
+    }
+   ],
    "expect": {
     "step": "Reward",
     "status": "Completed"
@@ -195,7 +202,16 @@
   }
  ],
  "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsynthesizable event shape for QuestActObjTalkNpcGroup; unsynthesizable event shape for QuestActObjTalkNpcGroup (comp 24283)"
+ "groups": {
+  "npcGroups": {
+   "528": [
+    13041,
+    13064,
+    13125,
+    13126,
+    13127,
+    13128
+   ]
+  }
  }
 }

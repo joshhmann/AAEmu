@@ -1,0 +1,134 @@
+{
+ "questId": 3713,
+ "name": "스토칼롬 증후군",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9976
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15504,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21181,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2964,
+      "npcId": 9976
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15505,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21232,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 804,
+      "npcId": 9997,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15506,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21182,
+      "type": "QuestActConReportNpc",
+      "detailId": 3196,
+      "npcId": 9976
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15507,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38203,
+      "type": "QuestActSupplyItem",
+      "detailId": 4222,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9997,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9976,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

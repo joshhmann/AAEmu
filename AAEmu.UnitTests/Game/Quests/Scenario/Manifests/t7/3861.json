@@ -1,0 +1,159 @@
+{
+ "questId": 3861,
+ "name": "실비나 온천의 위협 제거",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2911
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16270,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21467,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 814,
+      "npcId": 2911
+     },
+     {
+      "actId": 21700,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 830,
+      "npcId": 10155
+     },
+     {
+      "actId": 21701,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 831,
+      "npcId": 10154
+     },
+     {
+      "actId": 21702,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 832,
+      "npcId": 10172
+     },
+     {
+      "actId": 21703,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 833,
+      "npcId": 10173
+     },
+     {
+      "actId": 21704,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 834,
+      "npcId": 10174
+     },
+     {
+      "actId": 21705,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 835,
+      "npcId": 10175
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16271,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21468,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 388,
+      "monsterGroupId": 351,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16272,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21469,
+      "type": "QuestActConReportJournal",
+      "detailId": 228
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21470,
+      "type": "QuestActSupplyCopper",
+      "detailId": 335,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 351,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

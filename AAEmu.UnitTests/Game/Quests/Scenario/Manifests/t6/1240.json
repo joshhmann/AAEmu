@@ -1,0 +1,140 @@
+{
+ "questId": 1240,
+ "name": "잃어버린 곡괭이",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4280
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24778,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3549,
+      "npcId": 4280
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5311,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8168,
+      "type": "QuestActConReportNpc",
+      "detailId": 1030,
+      "npcId": 4280
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5312,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38585,
+      "type": "QuestActSupplyItem",
+      "detailId": 4334,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18789,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24805,
+      "type": "QuestActObjItemGather",
+      "detailId": 2039,
+      "itemId": 14059,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14059,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4280,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14059,
+   "count": 1
+  }
+ ]
+}

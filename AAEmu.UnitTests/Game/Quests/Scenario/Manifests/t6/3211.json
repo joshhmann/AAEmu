@@ -1,0 +1,147 @@
+{
+ "questId": 3211,
+ "name": "창조자의 열쇠",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13501,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 13503,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18945,
+      "type": "QuestActConReportNpc",
+      "detailId": 2688,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13504,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18942,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1111,
+      "itemId": 19017,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 18943,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1112,
+      "itemId": 19018,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 18946,
+      "type": "QuestActSupplyCopper",
+      "detailId": 295,
+      "amount": 0
+     },
+     {
+      "actId": 18947,
+      "type": "QuestActSupplyExp",
+      "detailId": 57,
+      "exp": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13505,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18950,
+      "type": "QuestActObjItemGather",
+      "detailId": 1298,
+      "itemId": 19019,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19019,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7054,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 19019,
+   "count": 1
+  }
+ ]
+}

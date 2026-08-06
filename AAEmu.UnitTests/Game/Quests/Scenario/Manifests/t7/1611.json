@@ -1,0 +1,127 @@
+{
+ "questId": 1611,
+ "name": "광부들이 미친 원인",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 14793
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7795,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10960,
+      "type": "QuestActConAcceptItem",
+      "detailId": 79,
+      "itemId": 14793
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 7796,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10961,
+      "type": "QuestActSupplyItem",
+      "detailId": 925,
+      "itemId": 14792,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7797,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10962,
+      "type": "QuestActObjItemUse",
+      "detailId": 290,
+      "itemId": 14792,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7798,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10963,
+      "type": "QuestActConAutoComplete",
+      "detailId": 287
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14792,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14793,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,129 @@
+{
+ "questId": 2693,
+ "name": "론반 광산을 안정화시키기",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1903
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11283,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16361,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 347,
+      "npcId": 1903
+     },
+     {
+      "actId": 16362,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 348,
+      "npcId": 1881
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11284,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16363,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 219,
+      "monsterGroupId": 212,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11285,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16364,
+      "type": "QuestActConReportJournal",
+      "detailId": 90
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11286,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16365,
+      "type": "QuestActSupplyCopper",
+      "detailId": 186,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 212,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

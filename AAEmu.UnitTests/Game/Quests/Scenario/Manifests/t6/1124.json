@@ -1,0 +1,133 @@
+{
+ "questId": 1124,
+ "name": "실패한 과거는 잊고 새롭게",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 5,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5756,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 5758,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12960,
+      "type": "QuestActObjItemGather",
+      "detailId": 825,
+      "itemId": 13973,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5760,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8723,
+      "type": "QuestActConReportNpc",
+      "detailId": 1154,
+      "npcId": 5701
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5761,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38578,
+      "type": "QuestActSupplyItem",
+      "detailId": 4327,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13973,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5701,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13973,
+   "count": 3
+  }
+ ]
+}

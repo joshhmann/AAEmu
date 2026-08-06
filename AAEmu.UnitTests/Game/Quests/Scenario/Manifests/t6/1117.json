@@ -1,0 +1,136 @@
+{
+ "questId": 1117,
+ "name": "비굴한 자의 고개숙임",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 2,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2480
+ },
+ "template": {
+  "level": 2,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8697,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 999,
+      "npcId": 2480
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8698,
+      "type": "QuestActConReportNpc",
+      "detailId": 1147,
+      "npcId": 2476
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38576,
+      "type": "QuestActSupplyItem",
+      "detailId": 4325,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12228,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17820,
+      "type": "QuestActObjInteraction",
+      "detailId": 420,
+      "doodadId": 1451,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1451,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2476,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

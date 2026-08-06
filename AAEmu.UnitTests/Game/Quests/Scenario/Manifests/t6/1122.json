@@ -1,0 +1,142 @@
+{
+ "questId": 1122,
+ "name": "상단 습격의 주모자",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5697
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8714,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1004,
+      "npcId": 5697
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5750,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8715,
+      "type": "QuestActConReportNpc",
+      "detailId": 1152,
+      "npcId": 5696
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5751,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38866,
+      "type": "QuestActSupplyItem",
+      "detailId": 4532,
+      "itemId": 32518,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38867,
+      "type": "QuestActSupplyItem",
+      "detailId": 4533,
+      "itemId": 32519,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38868,
+      "type": "QuestActSupplyItem",
+      "detailId": 4534,
+      "itemId": 32520,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000150,
+      "type": "QuestActSupplyItem",
+      "detailId": 8000128,
+      "itemId": 35827,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5696,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32518,
+      "count": 1
+     },
+     {
+      "itemId": 32519,
+      "count": 1
+     },
+     {
+      "itemId": 32520,
+      "count": 1
+     },
+     {
+      "itemId": 35827,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

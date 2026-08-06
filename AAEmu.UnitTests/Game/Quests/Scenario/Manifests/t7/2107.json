@@ -1,0 +1,145 @@
+{
+ "questId": 2107,
+ "name": "(구 불볕황야)차가운 심장을 구해온 대가",
+ "zoneId": 22,
+ "categoryId": 18,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9713,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 9715,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13625,
+      "type": "QuestActObjItemGather",
+      "detailId": 899,
+      "itemId": 16036,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9716,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13623,
+      "type": "QuestActConReportNpc",
+      "detailId": 2052,
+      "npcId": 7579
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9717,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13624,
+      "type": "QuestActSupplyItem",
+      "detailId": 1308,
+      "itemId": 15975,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 13626,
+      "type": "QuestActSupplyExp",
+      "detailId": 34,
+      "exp": 0
+     },
+     {
+      "actId": 13627,
+      "type": "QuestActSupplyCopper",
+      "detailId": 64,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16036,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7579,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 15975,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16036,
+   "count": 1
+  }
+ ]
+}

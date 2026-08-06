@@ -1,0 +1,139 @@
+{
+ "questId": 1086,
+ "name": "푸른 전나무회의 노력",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 13,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3435
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5431,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8324,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 929,
+      "npcId": 3435
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5433,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10838,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 437,
+      "npcId": 3362,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5435,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37015,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1698
+     },
+     {
+      "actId": 37020,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 419,
+      "questContextId": 6216
+     },
+     {
+      "actId": 38170,
+      "type": "QuestActSupplyItem",
+      "detailId": 4201,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20847,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28581,
+      "type": "QuestActObjInteraction",
+      "detailId": 616,
+      "doodadId": 1449,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3362,
+     "count": 15
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 1449,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

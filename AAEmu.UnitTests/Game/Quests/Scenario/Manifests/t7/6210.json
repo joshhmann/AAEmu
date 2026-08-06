@@ -1,0 +1,152 @@
+{
+ "questId": 6210,
+ "name": "망각의 균열",
+ "zoneId": 1,
+ "categoryId": 24,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14595
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26620,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36478,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4681,
+      "npcId": 14595
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26621,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36480,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 620,
+      "monsterGroupId": 564,
+      "count": 25
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36479,
+      "type": "QuestActConReportNpc",
+      "detailId": 4877,
+      "npcId": 14595
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26630,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36565,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1359,
+      "amount": 0
+     },
+     {
+      "actId": 38407,
+      "type": "QuestActSupplyItem",
+      "detailId": 4290,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 38408,
+      "type": "QuestActSupplyItem",
+      "detailId": 4291,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 564,
+     "count": 25
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14595,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     },
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

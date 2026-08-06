@@ -1,0 +1,148 @@
+{
+ "questId": 17,
+ "name": "사랑을 담은 요리",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 624
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 522,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 367,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 87,
+      "npcId": 624
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 368,
+      "type": "QuestActSupplyItem",
+      "detailId": 23,
+      "itemId": 14404,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 527,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 371,
+      "type": "QuestActConReportNpc",
+      "detailId": 84,
+      "npcId": 5931
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 528,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 10243,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14465,
+      "type": "QuestActObjItemGather",
+      "detailId": 963,
+      "itemId": 14404,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14404,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5931,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14404,
+   "count": 1
+  }
+ ]
+}

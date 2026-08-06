@@ -1,0 +1,194 @@
+{
+ "questId": 2302,
+ "name": "진정한 탄생",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2273
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10027,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38297,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 679,
+      "sphereId": 2273
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10028,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14240,
+      "type": "QuestActConReportNpc",
+      "detailId": 2103,
+      "npcId": 9795
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10029,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 15648,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23155,
+      "type": "QuestActObjItemGather",
+      "detailId": 1778,
+      "itemId": 33568,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15649,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23158,
+      "type": "QuestActObjItemGather",
+      "detailId": 1781,
+      "itemId": 21794,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15650,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23157,
+      "type": "QuestActObjItemGather",
+      "detailId": 1780,
+      "itemId": 21797,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15651,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23156,
+      "type": "QuestActObjItemGather",
+      "detailId": 1779,
+      "itemId": 21795,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 33568,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 21794,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 21797,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 21795,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9795,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33568,
+   "count": 1
+  },
+  {
+   "itemId": 21794,
+   "count": 1
+  },
+  {
+   "itemId": 21797,
+   "count": 1
+  },
+  {
+   "itemId": 21795,
+   "count": 1
+  }
+ ]
+}

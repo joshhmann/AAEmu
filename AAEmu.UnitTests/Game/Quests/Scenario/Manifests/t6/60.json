@@ -1,0 +1,136 @@
+{
+ "questId": 60,
+ "name": "아노가 꾼 꿈의 결말",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6490
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 822,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7453,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 781,
+      "npcId": 6490
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 964,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 807,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 40,
+      "npcId": 611,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 965,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1214,
+      "type": "QuestActConReportNpc",
+      "detailId": 239,
+      "npcId": 6490
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 966,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36934,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2435,
+      "itemId": 32199,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 36935,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2436,
+      "itemId": 32200,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 611,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6490,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

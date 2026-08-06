@@ -1,0 +1,106 @@
+{
+ "questId": 4121,
+ "name": "돌아오지 않는 자들",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1912
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17833,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23445,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3355,
+      "npcId": 1912
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17834,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23446,
+      "type": "QuestActConReportNpc",
+      "detailId": 3609,
+      "npcId": 9768
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17835,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38589,
+      "type": "QuestActSupplyItem",
+      "detailId": 4338,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9768,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

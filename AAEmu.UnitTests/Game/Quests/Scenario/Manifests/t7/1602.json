@@ -1,0 +1,104 @@
+{
+ "questId": 1602,
+ "name": "괴이한 빛의 정체",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 1747
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7692,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10815,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 44,
+      "doodadId": 1747
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7694,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10817,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 434,
+      "npcId": 6625,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7697,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11378,
+      "type": "QuestActConAutoComplete",
+      "detailId": 297
+     },
+     {
+      "actId": 36827,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 411,
+      "questContextId": 6213
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 6625,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

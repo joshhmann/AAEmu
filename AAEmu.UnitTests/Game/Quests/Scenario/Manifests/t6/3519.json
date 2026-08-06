@@ -1,0 +1,121 @@
+{
+ "questId": 3519,
+ "name": "흔한 상인의 짐마차",
+ "zoneId": 23,
+ "categoryId": 62,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10123
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16345,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21571,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3028,
+      "npcId": 10123
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16373,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21572,
+      "type": "QuestActObjInteraction",
+      "detailId": 531,
+      "doodadId": 4260,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16374,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21573,
+      "type": "QuestActConReportNpc",
+      "detailId": 3253,
+      "npcId": 10123
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16375,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4260,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10123,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

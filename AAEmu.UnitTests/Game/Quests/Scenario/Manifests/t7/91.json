@@ -1,0 +1,152 @@
+{
+ "questId": 91,
+ "name": "내통자의 증거",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 19,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 1845
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 248,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1404,
+      "type": "QuestActConAcceptItem",
+      "detailId": 28,
+      "itemId": 1845
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4404,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11074,
+      "type": "QuestActConReportNpc",
+      "detailId": 1635,
+      "npcId": 774
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7947,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 8170,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11425,
+      "type": "QuestActSupplyItem",
+      "detailId": 981,
+      "itemId": 14974,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8171,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11426,
+      "type": "QuestActObjItemGather",
+      "detailId": 718,
+      "itemId": 14974,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14974,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 774,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 1845,
+   "count": 1
+  },
+  {
+   "itemId": 14974,
+   "count": 1
+  }
+ ]
+}

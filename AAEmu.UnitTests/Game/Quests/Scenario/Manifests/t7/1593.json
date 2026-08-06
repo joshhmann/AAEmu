@@ -1,0 +1,104 @@
+{
+ "questId": 1593,
+ "name": "동굴 거미 퇴치",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5538
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7627,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29101,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 191,
+      "doodadId": 5538
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7628,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29103,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 501,
+      "monsterGroupId": 454,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7630,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29104,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1104
+     },
+     {
+      "actId": 36984,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1392,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 454,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

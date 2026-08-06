@@ -68,7 +68,8 @@
      {
       "actId": 35481,
       "type": "QuestActSupplyHonorPoint",
-      "detailId": 112
+      "detailId": 112,
+      "point": 100
      }
     ]
    },
@@ -136,8 +137,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActSupplyHonorPoint; unsynthesizable event shape for QuestActSupplyHonorPoint (comp 25853)"
- }
+ "selectedRewardIndex": 0
 }

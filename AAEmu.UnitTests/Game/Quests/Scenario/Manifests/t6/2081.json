@@ -1,0 +1,91 @@
+{
+ "questId": 2081,
+ "name": "말벗을 찾습니다",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 2519
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9619,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13378,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 62,
+      "doodadId": 2519
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9620,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13379,
+      "type": "QuestActConReportNpc",
+      "detailId": 2034,
+      "npcId": 7458
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9621,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7458,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

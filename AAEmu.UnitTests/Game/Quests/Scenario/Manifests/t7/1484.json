@@ -1,0 +1,134 @@
+{
+ "questId": 1484,
+ "name": "긴급 전갈",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5810
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7049,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9706,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1220,
+      "npcId": 5810
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 7050,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9707,
+      "type": "QuestActSupplyItem",
+      "detailId": 770,
+      "itemId": 14206,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7051,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9708,
+      "type": "QuestActObjItemGather",
+      "detailId": 550,
+      "itemId": 14206,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7052,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 7053,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14206,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14206,
+   "count": 1
+  }
+ ]
+}

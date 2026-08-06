@@ -1,0 +1,162 @@
+{
+ "questId": 4669,
+ "name": "거상의 꿈, 초승달 왕좌로 가는 길",
+ "zoneId": 23,
+ "categoryId": 70,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11079
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20262,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27587,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3775,
+      "npcId": 11079
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27588,
+      "type": "QuestActObjCraft",
+      "detailId": 163,
+      "craftId": 6215,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27590,
+      "type": "QuestActConReportNpc",
+      "detailId": 4056,
+      "npcId": 11079
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20279,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27589,
+      "type": "QuestActObjSphere",
+      "detailId": 644,
+      "sphereId": 1717
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27592,
+      "type": "QuestActSupplyItem",
+      "detailId": 3058,
+      "itemId": 15566,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38284,
+      "type": "QuestActSupplyItem",
+      "detailId": 4264,
+      "itemId": 31892,
+      "gradeId": 0,
+      "count": 50
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6215
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 20279
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11079,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 15566,
+      "count": 1
+     },
+     {
+      "itemId": 31892,
+      "count": 50
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

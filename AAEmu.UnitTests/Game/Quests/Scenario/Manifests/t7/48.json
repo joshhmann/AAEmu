@@ -1,0 +1,134 @@
+{
+ "questId": 48,
+ "name": "도적떼 소탕",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 15,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 679
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 58,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 70,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 16,
+      "npcId": 679
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 59,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15780,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 202,
+      "monsterGroupId": 196,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4288,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6141,
+      "type": "QuestActConReportNpc",
+      "detailId": 807,
+      "npcId": 679
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4289,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38201,
+      "type": "QuestActSupplyItem",
+      "detailId": 4220,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 196,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 679,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

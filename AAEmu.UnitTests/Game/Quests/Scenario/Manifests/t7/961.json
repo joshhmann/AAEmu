@@ -1,0 +1,153 @@
+{
+ "questId": 961,
+ "name": "너에게 달렸다!",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 19,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9991
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7555,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 788,
+      "npcId": 9991
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4721,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7556,
+      "type": "QuestActConReportNpc",
+      "detailId": 927,
+      "npcId": 822
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38209,
+      "type": "QuestActSupplyItem",
+      "detailId": 4228,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7941,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11065,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 82,
+      "monsterGroupId": 9,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7942,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11066,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 83,
+      "monsterGroupId": 10,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 9,
+     "count": 5
+    },
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 10,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 822,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,106 @@
+{
+ "questId": 1160,
+ "name": "덤불 속의 남자",
+ "zoneId": 135,
+ "categoryId": 23,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5678
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5914,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8870,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1044,
+      "npcId": 5678
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5916,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8872,
+      "type": "QuestActConReportNpc",
+      "detailId": 1194,
+      "npcId": 5671
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5917,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38579,
+      "type": "QuestActSupplyItem",
+      "detailId": 4328,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5671,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

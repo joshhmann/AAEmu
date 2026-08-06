@@ -1,0 +1,122 @@
+{
+ "questId": 1945,
+ "name": "연구가를 괴롭히는 바이암 무리 처치",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4834
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12637,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 9,
+      "npcId": 4834
+     },
+     {
+      "actId": 12638,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 10,
+      "npcId": 4835
+     },
+     {
+      "actId": 12639,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 11,
+      "npcId": 4836
+     },
+     {
+      "actId": 12640,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 12,
+      "npcId": 4884
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9006,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12641,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 98,
+      "monsterGroupId": 102,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9007,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12642,
+      "type": "QuestActConAutoComplete",
+      "detailId": 341
+     },
+     {
+      "actId": 12643,
+      "type": "QuestActSupplyCopper",
+      "detailId": 38,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 102,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 1517,
+ "name": "아스트라의 꽃",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 19,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2645
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7165,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20499,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2836,
+      "npcId": 2645
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7246,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10006,
+      "type": "QuestActObjItemGather",
+      "detailId": 582,
+      "itemId": 14400,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7247,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10007,
+      "type": "QuestActConReportNpc",
+      "detailId": 1443,
+      "npcId": 2645
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7248,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14400,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2645,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14400,
+   "count": 1
+  }
+ ]
+}

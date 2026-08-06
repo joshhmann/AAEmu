@@ -1,0 +1,153 @@
+{
+ "questId": 943,
+ "name": "과거의 망령",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3064
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4443,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6802,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 735,
+      "npcId": 3064
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6803,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 265,
+      "npcId": 2907,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6805,
+      "type": "QuestActConReportNpc",
+      "detailId": 857,
+      "npcId": 3064
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38323,
+      "type": "QuestActSupplyItem",
+      "detailId": 4275,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4539,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6998,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 275,
+      "npcId": 2906,
+      "count": 8
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2907,
+     "count": 8
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 2906,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3064,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

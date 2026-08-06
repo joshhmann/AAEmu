@@ -1,0 +1,121 @@
+{
+ "questId": 79,
+ "name": "돌을 움직이게 하는 힘",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5850
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 195,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10787,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1394,
+      "npcId": 5850
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 201,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10788,
+      "type": "QuestActSupplyItem",
+      "detailId": 916,
+      "itemId": 14736,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7668,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21621,
+      "type": "QuestActObjItemUse",
+      "detailId": 547,
+      "itemId": 14736,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7670,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21549,
+      "type": "QuestActConAutoComplete",
+      "detailId": 700
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14736,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

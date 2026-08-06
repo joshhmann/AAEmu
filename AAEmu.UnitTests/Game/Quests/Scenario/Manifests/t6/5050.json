@@ -1,0 +1,118 @@
+{
+ "questId": 5050,
+ "name": "함께 만드는 새해 음식",
+ "zoneId": 1,
+ "categoryId": 1,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21855,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21856,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30770,
+      "type": "QuestActObjItemGather",
+      "detailId": 2430,
+      "itemId": 784,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30771,
+      "type": "QuestActConReportNpc",
+      "detailId": 4225,
+      "npcId": 9156
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21882,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 784,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9156,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 784,
+   "count": 10
+  }
+ ]
+}

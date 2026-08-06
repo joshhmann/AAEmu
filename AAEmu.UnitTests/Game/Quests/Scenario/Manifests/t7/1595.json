@@ -1,0 +1,201 @@
+{
+ "questId": 1595,
+ "name": "필요한 조치",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 11,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1887
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10767,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1390,
+      "npcId": 1887
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 7653,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10768,
+      "type": "QuestActSupplyItem",
+      "detailId": 912,
+      "itemId": 14714,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7654,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30686,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1095,
+      "npcId": 6563,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7655,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10770,
+      "type": "QuestActConReportNpc",
+      "detailId": 1575,
+      "npcId": 1887
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7656,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38181,
+      "type": "QuestActSupplyItem",
+      "detailId": 4212,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21018,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28736,
+      "type": "QuestActObjItemGather",
+      "detailId": 2307,
+      "itemId": 14706,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21019,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30687,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 539,
+      "monsterGroupId": 449,
+      "count": 20
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 6563,
+     "count": 30
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 14706,
+     "count": 10
+    },
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 449,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1887,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14706,
+   "count": 10
+  }
+ ]
+}

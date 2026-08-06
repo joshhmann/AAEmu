@@ -1,0 +1,125 @@
+{
+ "questId": 1170,
+ "name": "무지개 기체의 용도",
+ "zoneId": 135,
+ "categoryId": 23,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5671
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13294,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1790,
+      "npcId": 5671
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5957,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14831,
+      "type": "QuestActObjItemGather",
+      "detailId": 994,
+      "itemId": 14005,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5958,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8902,
+      "type": "QuestActConReportNpc",
+      "detailId": 1204,
+      "npcId": 12101
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5959,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14005,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12101,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14005,
+   "count": 1
+  }
+ ]
+}

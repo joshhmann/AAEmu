@@ -1,0 +1,106 @@
+{
+ "questId": 4439,
+ "name": "오래된 주화 한 닢",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10857
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19374,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26229,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3665,
+      "npcId": 10857
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19376,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26232,
+      "type": "QuestActConReportNpc",
+      "detailId": 3939,
+      "npcId": 9789
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19389,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26406,
+      "type": "QuestActSupplyItem",
+      "detailId": 2856,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9789,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

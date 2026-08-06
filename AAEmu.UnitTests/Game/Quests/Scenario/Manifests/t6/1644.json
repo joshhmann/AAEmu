@@ -1,0 +1,91 @@
+{
+ "questId": 1644,
+ "name": "원군이 필요해",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4204
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7701,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10819,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1399,
+      "npcId": 4204
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7702,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10820,
+      "type": "QuestActConReportNpc",
+      "detailId": 1587,
+      "npcId": 6586
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7703,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6586,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

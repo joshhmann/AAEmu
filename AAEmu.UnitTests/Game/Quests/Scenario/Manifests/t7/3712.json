@@ -1,0 +1,91 @@
+{
+ "questId": 3712,
+ "name": "아버지, 제발!",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9975
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21179,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2963,
+      "npcId": 9975
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15502,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21180,
+      "type": "QuestActConReportNpc",
+      "detailId": 3195,
+      "npcId": 9976
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15503,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9976,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

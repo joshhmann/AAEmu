@@ -1,0 +1,155 @@
+{
+ "questId": 1169,
+ "name": "바람 띠 상단의 정체",
+ "zoneId": 135,
+ "categoryId": 23,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12061
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13277,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1787,
+      "npcId": 12061
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5954,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28013,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 487,
+      "monsterGroupId": 441,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5955,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8899,
+      "type": "QuestActConReportNpc",
+      "detailId": 1203,
+      "npcId": 12061
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6304,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37210,
+      "type": "QuestActSupplyItem",
+      "detailId": 4144,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27990,
+      "type": "QuestActObjInteraction",
+      "detailId": 608,
+      "doodadId": 5297,
+      "count": 10,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 441,
+     "count": 20
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 5297,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12061,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

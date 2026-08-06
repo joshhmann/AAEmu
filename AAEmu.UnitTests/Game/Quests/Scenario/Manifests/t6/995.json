@@ -1,0 +1,91 @@
+{
+ "questId": 995,
+ "name": "여기는 청동바위산",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4579
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4891,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7814,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 823,
+      "npcId": 4579
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4893,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13217,
+      "type": "QuestActConReportNpc",
+      "detailId": 2001,
+      "npcId": 4580
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9028,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4580,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

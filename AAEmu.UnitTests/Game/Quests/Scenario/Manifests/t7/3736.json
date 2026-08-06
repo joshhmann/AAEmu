@@ -1,0 +1,117 @@
+{
+ "questId": 3736,
+ "name": "유서깊은 나룻배",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9987
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15597,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21152,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2948,
+      "npcId": 9987
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15598,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21326,
+      "type": "QuestActObjItemGather",
+      "detailId": 1572,
+      "itemId": 20054,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15600,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21328,
+      "type": "QuestActConAutoComplete",
+      "detailId": 688
+     },
+     {
+      "actId": 21431,
+      "type": "QuestActSupplyItem",
+      "detailId": 2140,
+      "itemId": 20054,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20054,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 20054,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20054,
+   "count": 1
+  }
+ ]
+}

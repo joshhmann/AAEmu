@@ -1,0 +1,125 @@
+{
+ "questId": 900,
+ "name": "가족을 먹여 살리는 길",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 19,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2578
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4124,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5949,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 677,
+      "npcId": 2578
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5950,
+      "type": "QuestActObjItemGather",
+      "detailId": 300,
+      "itemId": 5194,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4126,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5951,
+      "type": "QuestActConReportNpc",
+      "detailId": 774,
+      "npcId": 2578
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4127,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5194,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2578,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5194,
+   "count": 12
+  }
+ ]
+}

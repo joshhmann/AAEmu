@@ -1,0 +1,110 @@
+{
+ "questId": 1944,
+ "name": "메마른 가시밭의 거미 무리 처치",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4832
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9002,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12632,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 7,
+      "npcId": 4832
+     },
+     {
+      "actId": 12633,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 8,
+      "npcId": 4833
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9003,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12634,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 97,
+      "monsterGroupId": 101,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9004,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12635,
+      "type": "QuestActConAutoComplete",
+      "detailId": 340
+     },
+     {
+      "actId": 12636,
+      "type": "QuestActSupplyCopper",
+      "detailId": 37,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 101,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}
