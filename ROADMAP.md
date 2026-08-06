@@ -158,12 +158,15 @@ route. Individual peripheral quest bugs → Lane B (maintenance).
     2026-08-05 (Josh): t_0ac25620
   - Register of every dropped id + restore pointers:
     scorecard-explorations/dropped-content-register.md
-- 🔶 Harness extension (M1-5d, t_f198bb0e): 14 unsupported act families →
-  census coverage grows past 153 (currently 25 harness-gap SKIPs)
+- 🔶 Harness extension (M1-5d, t_f198bb0e / M1-5e, t_9fc77eb): 14 unsupported
+  act families → census coverage grows past 153 (currently 25 harness-gap
+  SKIPs) — **MOVED TO M2 (Josh 2026-08-05)**: enhancement track, not a
+  defect; M1 closes on the defect backlog + playtest.
 
-**M1 status (2026-08-04):** ✅ core delivered — Josh playtest in progress
-(milestone decision pending, NOT closed). M1 WIDENED 2026-08-04 (Josh):
-the verifier data-defect backlog + harness extension now ride in M1;
+**M1 status (2026-08-04 → 08-05):** ✅ core delivered — Josh playtest in
+progress (milestone decision pending, NOT closed). M1 WIDENED 2026-08-04
+(Josh): the verifier data-defect backlog rides in M1; **harness extension
+MOVED to M2 (Josh 2026-08-05)** — M1 closes on defects + playtest.
 M2 remains the world-broadening release gate. All work items done: shared
 engine defects fixed, golden route curated, doodad phase/interaction family
 resolved. Automated exit test GREEN — scenario-harness census
@@ -173,7 +176,11 @@ SKIP); full gate 1148/1148 — runnability line GREEN. PROD DEPLOYED @
 94f498fc (2026-08-04 20:30, M1 engine-health release — BUG-007/008/009/
 010/011/012 live); verifier first live census 5 ERR / 128 WARN / 4 INFO
 over 4775 quests — data-fix backlog seeded, 3 WARNs are verifier
-stale-registry false positives (fix card t_913c1d4a). Deploy incident:
+stale-registry false positives (fix card t_913c1d4a). **Widened backlog
+2026-08-05: 776/777 FIX, 2145→2146 PRUNE, cluster + 1391 + 8 orphans DROP —
+all decided (Josh), rigged, Rei-gated; 1391 last merge pending gate
+(t_70ae1bba); batch deploy awaiting Josh GO** (prod still @ bddd426e,
+Round-2). Deploy incident:
 39GB container json.log (100% disk) pre-deploy — truncated; rotation fix
 shipped (t_264e1984 ✅). Remaining census SKIPs: 8 orphaned quest_contexts
 (data) + 25 harness gaps (14 unsupported act families — ObjZoneKill,
@@ -219,6 +226,11 @@ trade-pack recipe, land route, cart/hauler, short sea route if viable.)
 coastal starter zone: starter quests, nearby farms, trade pack routes, safe
 waters. Route selection starts from Solzreed outward (Solzreed → adjacent
 zones as the loop expands).
+
+**Inherited from M1 (Josh 2026-08-05): harness expansion track** — M1-5d
+(14 unsupported act families, t_f198bb0e) + M1-5e (T4 full-corpus census,
+t_9fc77eb) ride in M2: census coverage grows past 153 (currently 25
+harness-gap SKIPs) as M2's scenario manifests expand along the golden path.
 
 **Exit tests:**
 - **Human baseline:** two players attempt the entire route from the
