@@ -190,6 +190,21 @@ added 2026-08-06 (t_af246c49) when the harness closures made the acts drivable.
 | **QuestActObjCinema** | PASS via synthetic CinemaStarted→CinemaEnded events (harness drives `CurrentlyPlayingCinemaId` directly) | **Cinema domain zero-wired server-side** — no client-triggered cinema flow; live prologue playback not possible | Defer (M2 plan §2.4); not an M2 blocker |
 | **QuestActSupplyLp** | PASS; `ChangeLabor` write to MySQL fails closed in tests (no DB) | Labor persists via MySQL `accounts.labor`; premium always-on hardcodes the 5000 cap | Zero-wired reward domain tag; the act itself (labor change) is wired, the persistence path is the live gap |
 
+## 9. QuestActObjZoneKill engine watch items (M2c wave-3, 2026-08-06)
+
+Rows added with the wave-3 harness closure (t_1324bc51). Census PASS/FAIL ≠ live
+correctness for these; both are REAL engine gaps found by the census, NOT
+harness gaps. The victim rig + dead-entry rename landed; these two stay open.
+
+| Item | Census behavior | Live gap | Action |
+|---|---|---|---|
+| **ZoneId unenforced** (§2.4) | PASS/FAIL driven without any zone check — `OnZoneKill` never reads `ZoneId` (QuestActObjZoneKill.cs:63, 67-68 only logs it) | Quest "kill N in zone X" constraints are not enforced live; any-zone kills credit | Engine watch item — do NOT fix in the harness card. Census drives the lifecycle; live zone enforcement is a separate engine-fix card |
+| **Faction-0 credit dead path** (NEW, census-proven 2026-08-06) | FAIL at PROGRESS: `valid` is only set inside `if (NpcFactionId > 0)` / `if (PcFactionId > 0)` (QuestActObjZoneKill.cs:83-93). 95/106 quests carry faction 0 (NULL/0) with count_pk=0 — no victim can ever credit; expedition dailies 5900/5923/5924 included | **Live objective never credits** for any faction-0 NPC-kill ZoneKill quest (upstream-identical code) | **REAL engine defect — the global #1 blocker** (95 quests incl. all 20 band-21-30). Engine-fix card: treat faction-0 as "no faction filter" (credit any victim matching level bounds). The wave-3 rig is the fail-before substrate for that card's pass-after |
+
+The 11 PK quests (5982-5991, 6627, pc_faction=115 exclusive) DO credit through
+the rig — proven by `QuestZoneKillVictimRigTests.PkShape_WithVictimRig` and the
+census's driven runs.
+
 ## Cross-domain notes
 
 1. **ranks ↔ race-tracks are coupled**: racing contest rewards (30239-30248) and racing brackets (rank_scopes 31-40) depend on race results, so racing ranks need RaceManager output. Fishing ranks need a catch-metric hook that doesn't exist yet. Battlefield/arena ranks (32488-32498, weeks=4) depend on arena/instance infrastructure.

@@ -54,9 +54,11 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// SUPPORTED ACT TYPES (driver factory): QuestActConAcceptNpc/Kill/Doodad,
 /// QuestActConReportNpc/Doodad/Journal, QuestActObjMonsterHunt/MonsterGroupHunt,
 /// QuestActObjItemGather/ItemGroupGather/ItemGroupUse/ItemUse(internal, skipped)/
-/// Talk/TalkNpcGroup/Interaction/Sphere/Craft/Level/ZoneMonsterHunt/ExpressFire,
+/// Talk/TalkNpcGroup/Interaction/Sphere/Craft/Level/ZoneKill/ExpressFire,
 /// QuestActCheckGuard/CheckSphere/CheckTimer, QuestActSupplyItem/Copper/Exp/
-/// RemoveItem/SelectiveItem.
+/// RemoveItem/SelectiveItem (M2a wave-1: Cinema/EtcItemObtain/ConAcceptItemGain/
+/// SupplyLp; M2c wave-3: ZoneKill via quest_act_obj_zone_kills, SupplyHonorPoint,
+/// SupplyLivingPoint).
 ///
 /// SUPPORTED EVENT TYPES (stage "events"): MonsterHunt, MonsterGroupHunt,
 /// ItemGather, ItemGroupGather, ItemUse (fired once per "count", default 1 -

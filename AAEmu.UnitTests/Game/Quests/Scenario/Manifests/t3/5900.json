@@ -36,7 +36,22 @@
      {
       "actId": 34923,
       "type": "QuestActObjZoneKill",
-      "detailId": 60
+      "detailId": 60,
+      "zoneId": 34,
+      "countNpc": 100,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 2649,
+      "lvMin": 50,
+      "lvMax": 50,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionId": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionId": 0,
+      "npcFactionExclusive": "f"
      }
     ]
    },
@@ -53,7 +68,8 @@
      {
       "actId": 34924,
       "type": "QuestActSupplyHonorPoint",
-      "detailId": 84
+      "detailId": 84,
+      "point": 200
      }
     ]
    }
@@ -70,7 +86,23 @@
   },
   {
    "name": "PROGRESS",
-   "events": [],
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 34,
+     "count": 100,
+     "countNpc": 100,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 50,
+     "lvMax": 50
+    }
+   ],
    "expect": {
     "step": "Reward",
     "status": "Completed"
@@ -91,8 +123,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActObjZoneKill; unsupported act type QuestActSupplyHonorPoint; unsynthesizable event shape for QuestActObjZoneKill (comp 25480); unsynthesizable event shape for QuestActSupplyHonorPoint (comp 25482)"
- }
+ "selectedRewardIndex": 0
 }
