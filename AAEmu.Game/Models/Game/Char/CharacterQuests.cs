@@ -638,7 +638,7 @@ public class CharacterQuests(Character owner)
     {
         ResetQuests(
             [
-                QuestDetail.Daily, QuestDetail.DailyGroup, QuestDetail.DailyHunt,
+                QuestDetail.Task, QuestDetail.Daily, QuestDetail.DailyGroup, QuestDetail.DailyHunt,
                 QuestDetail.DailyLivelihood
             ], sendPacketsIfChanged
         );
