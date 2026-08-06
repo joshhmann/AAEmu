@@ -7,10 +7,10 @@
  "letItDone": false,
  "selective": false,
  "score": 0,
- "family": "QuestActConReportNpc",
+ "family": "QuestActConAcceptItemGain",
  "acceptor": {
-  "type": "Npc",
-  "id": 0
+  "type": "Item",
+  "id": 8005
  },
  "template": {
   "level": 20,
@@ -23,7 +23,9 @@
      {
       "actId": 29165,
       "type": "QuestActConAcceptItemGain",
-      "detailId": 83
+      "detailId": 83,
+      "itemId": 8005,
+      "count": 100
      }
     ]
    },
@@ -110,7 +112,10 @@
   }
  ],
  "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActConAcceptItemGain; unsynthesizable event shape for QuestActConAcceptItemGain (comp 21141)"
- }
+ "inventory": [
+  {
+   "itemId": 8005,
+   "count": 100
+  }
+ ]
 }

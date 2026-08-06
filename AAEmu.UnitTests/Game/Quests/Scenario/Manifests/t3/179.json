@@ -135,7 +135,8 @@
     },
     {
      "type": "Interaction",
-     "doodadId": 997
+     "doodadId": 997,
+     "count": 5
     },
     {
      "type": "MonsterHunt",

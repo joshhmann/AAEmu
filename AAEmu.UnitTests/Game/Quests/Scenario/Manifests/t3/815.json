@@ -85,7 +85,8 @@
    "events": [
     {
      "type": "Interaction",
-     "doodadId": 1081
+     "doodadId": 1081,
+     "count": 1
     },
     {
      "type": "Talk",

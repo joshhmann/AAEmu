@@ -97,7 +97,8 @@
    "events": [
     {
      "type": "Interaction",
-     "doodadId": 3449
+     "doodadId": 3449,
+     "count": 15
     }
    ],
    "expect": {

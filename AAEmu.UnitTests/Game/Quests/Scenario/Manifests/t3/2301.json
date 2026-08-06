@@ -36,7 +36,9 @@
      {
       "actId": 18320,
       "type": "QuestActEtcItemObtain",
-      "detailId": 68
+      "detailId": 68,
+      "itemId": 18688,
+      "count": 1
      },
      {
       "actId": 29441,
@@ -125,8 +127,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActEtcItemObtain; unsynthesizable event shape for QuestActEtcItemObtain (comp 12293)"
- }
+ "selectedRewardIndex": 0
 }
