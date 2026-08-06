@@ -49,3 +49,22 @@
 | 3 | 8 | 16 | 16 | none |
 | 3 | 9 | 16 | 16 | none |
 | 3 | 10 | 16 | 16 | none |
+
+## Quest-cycle availability (post daily-reset fix)
+
+- **2026-08-06 correction** (parent card t_f62912a5, commit 5a98fc59 on
+  `fix/cat34-task-daily-reset`): cat-34 is no longer limited to
+  character-cycle. `QuestDetail.Task` (6) joined the daily-reset family
+  (Daily=7/DailyGroup=12/DailyHunt=10/DailyLivelihood=11 + Task=6), so the
+  87 cat-34 quests (all `detail_id=6`, `REPEATABLE='f'`, LEVEL=1) clear
+  their completed flag at the midnight reset and re-accept — quest-cycle
+  mode now covers them at a **daily cadence** (max 1 completion per
+  character per day, self-healing for already-completed characters).
+- The **88 REPEATABLE='t' quests are unchanged** (unlimited re-accept, no
+  reset involved; 5059 still proven 10/10).
+- **Metric implications:** cat-34 daily runs are a "daily" KPI, not a
+  throughput KPI. The character-cycle table above (3 bots × 10 cycles,
+  throughput) is unaffected; per-character volume beyond 1/day still needs
+  fresh characters (character-cycle fallback). Deterministic tests that
+  exercise the cat-34 reset path must invoke the reset explicitly — the
+  tests are wall-clock-free (no midnight waits).

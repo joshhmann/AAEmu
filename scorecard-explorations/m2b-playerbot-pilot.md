@@ -85,21 +85,41 @@ state):
 **Gate question:** does the engine re-accept a completed quest when
 REPEATABLE='f' (cat-34 daily board)?
 
-**Answer (code + runtime evidence): NO.**
+**Answer (code + runtime evidence, corrected 2026-08-06):** NO at accept
+time while the completed flag is set — but since the daily-reset fix
+(parent card t_f62912a5, commit 5a98fc59 on `fix/cat34-task-daily-reset`),
+the flag **clears at the midnight reset** for cat-34, so re-accept succeeds
+across days.
 - `CharacterQuests.AddQuest` refuses completed non-repeatable quests
-  (CharacterQuests.cs:107-120, QuestDailyLimit).
-- The daily-reset path (`ResetDailyQuests`) only clears QuestDetail
-  Daily/DailyGroup/DailyHunt/DailyLivelihood (7/9/10/11). cat-34 quests carry
-  `detail_id=6` (Task), so their completed flags are NEVER cleared — re-accept
-  is impossible even across days.
-- Test evidence: `ReacceptGate_NonRepeatableDaily_Cat34_RefusedEvenAfterDailyReset`
-  — 1959 completes, re-accept refused, flag survives a daily reset, re-accept
-  still refused.
+  (CharacterQuests.cs:107-120, QuestDailyLimit) — this gate is unchanged.
+- The daily-reset path (`ResetDailyQuests`) clears the Daily family:
+  QuestDetail **Daily=7, DailyGroup=12, DailyHunt=10, DailyLivelihood=11**
+  (7/10/11/12 — Group=9 is NOT in the family). cat-34 quests carry
+  `detail_id=6` (Task), which was NOT in that family, so pre-fix their
+  completed flags survived every reset and re-accept stayed impossible.
+  **Post-fix, Task=6 is in the family** (CharacterQuests.cs:641), so the
+  flag clears at midnight — online via SCQuestContextResetPacket, offline
+  caught up at login via LeaveTime — exactly like the Daily-family quests.
+  ResetQuests skips ACTIVE quests, so mid-quest midnight is safe. Data-side
+  collateral: zero — detail_id=6 is exactly cat-34's 87 quests
+  (CAT34_INVESTIGATION.md §3).
+- Evidence: pre-fix fail-before — 1959 completes, re-accept refused, flag
+  survives a daily reset, re-accept still refused. Post-fix 4/4 green —
+  Task(6) flag clears and re-accept succeeds, while Daily(7)/DailyGroup(12)/
+  DailyHunt(10)/DailyLivelihood(11) still reset, REPEATABLE='t' re-accepts
+  without reset (gate unchanged), and Normal(1) is NOT cleared (family not
+  broadened). Full gate 1231/1231 with canonical DB.
+- Test note: `ReacceptGate_NonRepeatableDaily_Cat34_RefusedEvenAfterDailyReset`
+  on this branch still asserts the PRE-fix behavior; it must be updated
+  (inverted to the clear-and-reaccept path) when m2b merges after the fix
+  (parent's merge flag).
 
-**Consequence:** quest-cycle mode is limited to the **88 REPEATABLE='t'
-quests**; cat-34 (REPEATABLE='f') falls back to character-cycle. Quest-cycle
-mode proven on 5059 (Solzreed's only repeatable quest): 10/10 cycles on the
-same character.
+**Consequence (corrected):** quest-cycle mode is **no longer limited to the
+88 REPEATABLE='t' quests** — those are unchanged (instant re-accept, flag
+ignored; 5059 proven 10/10 on the same character). cat-34's 87 dailies now
+cycle across the midnight reset at a **daily cadence** (max 1 cycle per
+character per day — a "daily" KPI, not a throughput KPI); volume still needs
+character-cycle. The pilot's character-cycle numbers are unaffected.
 
 ## Drift detection
 
