@@ -85,8 +85,17 @@ public class QuestActObjZoneKill(QuestComponentTemplate parentComponent) : Quest
                 if (!NpcFactionExclusive && victimNpc.Faction.Id == NpcFactionId)
                     valid = true;
             }
+            else
+            {
+                // No faction filter (npc_faction_id 0/NULL in the data, 95/106
+                // ZoneKill quests): any NPC victim within the level bounds
+                // qualifies.
+                valid = true;
+            }
 
-            if (victimNpc.Level < LvlMinNpc || victimNpc.Level > LvlMaxNpc)
+            // 0..0 level bounds = "any level" in the 1.2 data; only enforce the
+            // range when at least one bound is set.
+            if ((LvlMinNpc > 0 || LvlMaxNpc > 0) && (victimNpc.Level < LvlMinNpc || victimNpc.Level > LvlMaxNpc))
                 valid = false;
         }
 
@@ -100,8 +109,16 @@ public class QuestActObjZoneKill(QuestComponentTemplate parentComponent) : Quest
                 if (!PcFactionExclusive && victimPc.Faction.Id == PcFactionId)
                     valid = true;
             }
+            else
+            {
+                // No faction filter (pc_faction_id 0/NULL in the data): any
+                // player victim within the level bounds qualifies.
+                valid = true;
+            }
 
-            if (victimPc.Level < LvlMin || victimPc.Level > LvlMax)
+            // 0..0 level bounds = "any level" in the 1.2 data; only enforce the
+            // range when at least one bound is set.
+            if ((LvlMin > 0 || LvlMax > 0) && (victimPc.Level < LvlMin || victimPc.Level > LvlMax))
                 valid = false;
         }
 

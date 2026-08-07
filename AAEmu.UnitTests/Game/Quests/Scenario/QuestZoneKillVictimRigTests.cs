@@ -18,13 +18,13 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 ///      and the quest must PASS the full lifecycle: the victim!=killer guard
 ///      passes and the faction/level filters are satisfied.
 ///   2. Faction-0 NPC-kill act (the shape of 95/106 real quests incl. the
-///      expedition dailies 5900/5923/5924) - the engine's credit path is gated
-///      on `if (NpcFactionId > 0)` (QuestActObjZoneKill.cs:83-93), so the
-///      objective can NEVER credit. This is a REAL engine defect, upstream-
-///      identical, tagged as engine watch item (§2.4) - the census shows these
-///      quests FAIL at PROGRESS (expected step Ready, got Progress). This test
-///      pins that behavior as the fail-before evidence for the engine-fix card;
-///      when the engine is fixed, this assertion must flip to a PASS.
+///      expedition dailies 5900/5923/5924) - the engine's credit path used to
+///      be gated on `if (NpcFactionId > 0)` (QuestActObjZoneKill.cs:83-93), so
+///      the objective could NEVER credit (REAL engine defect, upstream-
+///      identical, tagged as engine watch item §2.4). Fixed by t_497b51d8:
+///      faction 0 = "no filter", 0..0 level bounds = "any level". The fail-
+///      before pin (stall at Progress) flipped to a full-lifecycle PASS -
+///      this test is now the regression pin for the fix.
 /// </summary>
 [NotInParallel]
 public class QuestZoneKillVictimRigTests
@@ -104,24 +104,23 @@ public class QuestZoneKillVictimRigTests
     }
 
     /// <summary>
-    /// FAIL-BEFORE pin (engine watch item, §2.4): the faction-0 NPC-kill shape
-    /// (95/106 real quests incl. expedition dailies 5900/5923/5924) can NEVER
-    /// credit - QuestActObjZoneKill.OnZoneKill only sets valid=true inside
-    /// `if (NpcFactionId > 0)` (QuestActObjZoneKill.cs:83-93). Even with a
-    /// compliant non-owner victim the objective stays 0 and the quest stalls at
-    /// Progress. This assertion documents the current engine behavior; the
-    /// engine-fix card flips it to a PASS.
+    /// PASS (flipped from fail-before pin, t_497b51d8): the faction-0 NPC-kill
+    /// shape (95/106 real quests incl. the 20 band-21-30 quests and expedition
+    /// dailies 5900/5923/5924) credits through the engine. The fix treats
+    /// faction 0 as "no faction filter" (QuestActObjZoneKill.cs:81-93) and
+    /// 0..0 level bounds as "any level" (lines 89-92) — a compliant non-owner
+    /// victim credits, the objective reaches its count, and the quest passes
+    /// the full lifecycle. This test is the regression pin for the fix.
     /// </summary>
     [Test]
-    public async Task ZoneKill_Faction0NpcShape_StallsAtProgress_EngineWatchItem()
+    public async Task ZoneKill_Faction0NpcShape_CreditsThroughEngine_PassesFullLifecycle()
     {
         var verdict = RunManifest(Faction0ShapeManifestJson);
 
-        // The objective must NOT credit (engine dead path): the quest rests at
-        // Progress with status Progress instead of advancing to Ready.
-        var progressStage = verdict.Stages.First(s => s.Stage == "PROGRESS");
-        await Assert.That(progressStage.Outcome).IsEqualTo(StageOutcome.Fail);
-        await Assert.That(progressStage.StepObserved).IsEqualTo(QuestComponentKind.Progress);
-        await Assert.That(progressStage.StatusObserved).IsEqualTo(QuestStatus.Progress);
+        if (verdict.Overall != StageOutcome.Pass)
+            throw new Exception("DIAGNOSTIC VERDICT:\n" + verdict);
+
+        await Assert.That(verdict.Overall).IsEqualTo(StageOutcome.Pass);
+        await Assert.That(verdict.Stages.All(s => s.Outcome == StageOutcome.Pass)).IsTrue();
     }
 }
