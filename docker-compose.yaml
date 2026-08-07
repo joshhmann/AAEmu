@@ -6,6 +6,11 @@ services:
     db:
         image: mysql:8.0.36
         restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "25m"
+                max-file: "3"
         # command: --default_authentication_plugin=mysql_native_password
         volumes:
             - ./SQL/aaemu_login.sql:/docker-entrypoint-initdb.d/aaemu_login.sql
@@ -25,6 +30,11 @@ services:
     adminer:
         image: adminer
         restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "25m"
+                max-file: "3"
         environment:
             ADMINER_DEFAULT_DB_DRIVER: mysql
             ADMINER_DEFAULT_DB_HOST: db
