@@ -18,5 +18,7 @@
     <PackageReference Include="Microsoft.Testing.Platform.MSBuild" />
     <PackageReference Include="TUnit" />
     <PackageReference Include="TUnit.Mocks" />
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Testcontainers.MySql" />
   </ItemGroup>
 </Project>
