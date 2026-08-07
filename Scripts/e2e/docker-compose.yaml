@@ -1,0 +1,24 @@
+# M2b-E2E dev stack — MySQL ONLY (Login + Game run as host processes so the
+# E2E runner can restart them at process level for restart-persistence tests).
+# Same image + SQL seeds as the repo-root compose (aaemu_login/aaemu_game).
+services:
+  db:
+    image: mysql:8.0.36
+    restart: unless-stopped
+    volumes:
+      - ../../SQL/aaemu_login.sql:/docker-entrypoint-initdb.d/aaemu_login.sql
+      - ../../SQL/aaemu_game.sql:/docker-entrypoint-initdb.d/aaemu_game.sql
+      - e2e_db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - 127.0.0.1:3306:3306
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u root -p${DB_PASSWORD} -N -e 'SELECT COUNT(*) FROM aaemu_login.users LIMIT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  e2e_db_data:
