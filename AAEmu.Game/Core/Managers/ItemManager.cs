@@ -1467,7 +1467,7 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
                     }
 
                     if (deleteCount != _removedItems.Count)
-                        Logger.Error($"Some items could not be deleted, only {deleteCount}/{_removedItems.Count} items removed !");
+                        LogDeleteMismatch(deleteCount, _removedItems.Count);
                     _removedItems.Clear();
                 }
             }
@@ -1624,6 +1624,19 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
         }
 
         return (updateCount, deleteCount, containerUpdateCount);
+    }
+
+    /// <summary>
+    /// Warns when a queued item id had no DB row to delete at save time. This is a
+    /// benign, expected case: Save() runs delete-before-insert, so an item created and
+    /// consumed within one autosave window is queued for deletion before its row ever
+    /// existed. The end state is consistent — the id-reuse guard in GetNewId removes a
+    /// reused id from the delete queue, so no live row is ever deleted by mistake.
+    /// Not an error. (RCA t_c8ffadb6 family 3)
+    /// </summary>
+    internal static void LogDeleteMismatch(int deleteCount, int queuedCount)
+    {
+        Logger.Warn($"Some items could not be deleted from the DB, only {deleteCount}/{queuedCount} queued id(s) had a row to remove (expected when items are created and consumed within one save window)");
     }
 
     public SlotType GetContainerSlotTypeByContainerId(ulong dbId)

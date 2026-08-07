@@ -459,11 +459,12 @@ public class CharacterManager(
             return;
         }
 
-        // NOTE: This is purely a warning to log potential cheaters
+        // NOTE: This is purely a notice to log potential cheaters — it does NOT reject
+        // the creation; the character is created with all three abilities either way.
         // If you have custom starting classes, make sure to comment or adjust this
         if (ability2 != AbilityType.None || ability3 != AbilityType.None)
         {
-            Logger.Error($"User tried to make a new character that has 2nd and/or 3rd ability already set. Account {connection.AccountId}, Name {name}, Class {ability1}, {ability2}, {ability3}");
+            LogAbilitySetNotice(connection.AccountId, name, ability1, ability2, ability3);
         }
 
         var accountDetails = accountManager.GetAccountDetails(connection.AccountId);
@@ -604,6 +605,18 @@ public class CharacterManager(
             // TODO release items...
             DeleteCharacterAssets(character, true);
         }
+    }
+
+    /// <summary>
+    /// Anti-cheat notice for a character created with a 2nd and/or 3rd ability pre-set
+    /// (custom starting classes). This is a NOTICE, not a rejection — creation succeeds
+    /// and the character keeps all three abilities. Logged at Warn so legitimate
+    /// custom-class flows (e.g. E2E bot provisioning) do not pollute the error log.
+    /// (RCA t_c8ffadb6 family 2)
+    /// </summary>
+    internal static void LogAbilitySetNotice(uint accountId, string name, AbilityType ability1, AbilityType ability2, AbilityType ability3)
+    {
+        Logger.Warn($"User tried to make a new character that has 2nd and/or 3rd ability already set (anti-cheat notice, creation is NOT rejected). Account {accountId}, Name {name}, Class {ability1}, {ability2}, {ability3}");
     }
 
     /// <summary>

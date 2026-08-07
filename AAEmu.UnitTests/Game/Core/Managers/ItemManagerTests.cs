@@ -8,10 +8,34 @@ using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
 
+using NLog;
+using NLog.Config;
+using NLog.Targets;
+
 namespace AAEmu.UnitTests.Game.Core.Managers;
 
+[NotInParallel] // reconfigures the process-global NLog LogManager for log-capture tests
 public class ItemManagerTests
 {
+    private LoggingConfiguration _previousLogConfig;
+    private MemoryTarget _logTarget;
+
+    [Before(Test)]
+    public void SetUpLogCapture()
+    {
+        _previousLogConfig = LogManager.Configuration;
+        _logTarget = new MemoryTarget("unit-test-memory") { Layout = "${level}|${message}" };
+        var config = new LoggingConfiguration();
+        config.AddRuleForAllLevels(_logTarget);
+        LogManager.Configuration = config;
+    }
+
+    [After(Test)]
+    public void TearDownLogCapture()
+    {
+        LogManager.Configuration = _previousLogConfig; // restore (null = default no-config)
+    }
+
     #region Constructor Tests
 
     [Test]
@@ -1056,6 +1080,51 @@ public class ItemManagerTests
 
     #endregion
 
+    #region Log-Severity Rigs (RCA t_c8ffadb6 family 3)
+
+    [Test]
+    public async Task LogDeleteMismatch_LogsWarn_NotError()
+    {
+        // Act — 0/1: an item created and consumed within one autosave window
+        // (Save's delete-before-insert ordering) — the benign false positive from the RCA
+        ItemManager.LogDeleteMismatch(0, 1);
+
+        // Assert — exactly one event, at Warn, with accurate wording
+        var events = _logTarget.Logs.Where(l => l.Contains("could not be deleted")).ToList();
+        await Assert.That(events.Count).IsEqualTo(1);
+        await Assert.That(events[0]).StartsWith("Warn|");
+        await Assert.That(events[0]).Contains("0/1");
+        await Assert.That(events[0]).Contains("save window");
+        await Assert.That(_logTarget.Logs.Any(l => l.StartsWith("Error|") && l.Contains("could not be deleted"))).IsFalse();
+    }
+
+    [Test]
+    public async Task ReleaseId_AndGetNewId_QueueGuard_NoLiveRowEverDeleted()
+    {
+        // Arrange — the id-reuse guard is WHY a 0-row delete is benign: a reused id is
+        // removed from the delete queue, so Save() can never delete a live row by
+        // mistake (ItemManager.cs GetNewId / ReleaseId).
+        var mockItemId = Mock.Of<IItemIdManager>();
+        var manager = CreateItemManager(mockItemId: mockItemId);
+        SetPrivateField(manager, "_removedItems", new List<ulong>());
+        SetPrivateField(manager, "_allItems", new Dictionary<ulong, Item>());
+
+        // Act — ReleaseId queues 7 for the next save's DELETE ...
+        manager.ReleaseId(7);
+        var queue = (List<ulong>)GetPrivateField(manager, "_removedItems");
+        await Assert.That(queue).Contains(7ul);
+
+        // ... and GetNewId (the next create re-using id 7) un-queues it
+        mockItemId.GetNextId().Returns(7u);
+        var getNewId = typeof(ItemManager).GetMethod("GetNewId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var newId = (ulong)getNewId.Invoke(manager, null);
+
+        await Assert.That(newId).IsEqualTo(7ul);
+        await Assert.That(queue.Contains(7ul)).IsFalse();
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static ItemManager CreateItemManager(
@@ -1079,6 +1148,12 @@ public class ItemManagerTests
     {
         var field = obj.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         field?.SetValue(obj, value);
+    }
+
+    private static object GetPrivateField(object obj, string fieldName)
+    {
+        var field = obj.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        return field?.GetValue(obj);
     }
 
     private static Item CreateTestItem(ulong id, uint templateId, int count)
