@@ -227,11 +227,19 @@ public sealed class BotDriveBridge
         // are drivable. The bridge never fabricates sessions. Character names
         // are matched case-insensitively (the server normalizes names on
         // create — "bot1c1" becomes "Bot1c1").
-        var connection = GameConnectionTable.Instance.GetConnections()
+        var connections = GameConnectionTable.Instance.GetConnections();
+        var connection = connections
             .FirstOrDefault(c => c.ActiveChar != null &&
                 string.Equals(c.ActiveChar.Name, botName, StringComparison.OrdinalIgnoreCase));
         if (connection?.ActiveChar == null)
-            return Err($"bot '{botName}' is not in the world (no active networked session)");
+        {
+            // Self-diagnosing miss: dump what the table actually holds so a
+            // mid-drive session loss (M2b-E2E restart266, run29) identifies
+            // itself — connection removed vs ActiveChar null vs name drift.
+            var table = string.Join("; ",
+                connections.Select(c => $"{c.Id}:{(c.ActiveChar == null ? "<no-char>" : c.ActiveChar.Name)}({c.State})"));
+            return Err($"bot '{botName}' is not in the world (no active networked session) — table [{table}]");
+        }
 
         var character = connection.ActiveChar;
         var controller = new PlayerBotController(character);
