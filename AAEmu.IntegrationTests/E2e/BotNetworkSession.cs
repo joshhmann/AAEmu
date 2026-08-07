@@ -162,7 +162,18 @@ public sealed class BotNetworkSession : IDisposable
         }
 
         session._game.SendGameFrame(CSOffsets.CSSpawnCharacterPacket, 1, body =>
-            body.Write((byte)0)); // VisualOptions flag 0
+        {
+            // Full visual-options payload — wire-conformant with the 1.2 client
+            // (flag 31 = stp + helmet + back_holdable + cosplay + cosplay_backpack;
+            // stp is a fixed 6-byte block). A flag-0 payload left Stp null and
+            // NRE'd the server's WriteOptions on every spawn (RCA t_c8ffadb6 F1).
+            body.Write((byte)31); // VisualOptions flag 31
+            body.Write(new byte[6]); // stp (6 bytes)
+            body.Write(false); // helmet
+            body.Write(false); // back_holdable
+            body.Write(false); // cosplay
+            body.Write(false); // cosplay_backpack
+        });
         _ = session._game.ReadFrameUntil(SCOffsets.SCUnitStatePacket, 20000);
 
         session._game.SendGameFrame(CSOffsets.CSNotifyInGamePacket, 1, _ => { });
