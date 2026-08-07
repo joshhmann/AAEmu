@@ -309,6 +309,10 @@ contract. Size this milestone after a short architecture spike proves the
 execution/threading boundary and one vertical action; existing primitives are
 reusable, but their packet/session coupling is the main uncertainty.
 
+**Execution boundary (locked 2026-08-07, review t_be295ecf):** the M5 actor
+contract runs exclusively through ICharacterLifecycleService; no controller
+may mutate a Character outside an active actor request (single-writer rule).
+
 **Existing primitives to wrap:**
 - NPC AI movement (NpcAi)
 - target selection
@@ -318,6 +322,9 @@ reusable, but their packet/session coupling is the main uncertainty.
 - administrator commands for diagnostics and test setup only; never as a
   production gameplay-action implementation
 - normal player and unit state
+- PlayerBotController (M2b pilot, Models/Game/Bots) as the first adapter
+  seed; BotSafetyMonitor + BotBehaviorStack as reference safety/state
+  layers (locked 2026-08-07, review t_be295ecf)
 
 **New work:**
 - one unified observation snapshot
@@ -388,6 +395,20 @@ M8 economic audit.
         PlayerBotController (additive, temporary)
   ```
 
+  **Embodiment entry (locked 2026-08-07, review t_be295ecf):** headless
+  activation reuses the CSSelectCharacterPacket lifecycle core (Load →
+  ObjId → WorldManager.TryAddCharacter → buffs/HP/MP restore) extracted
+  into ICharacterLifecycleService; packet initialization is human-only.
+  Production citizens = real managed accounts + ordinary character rows +
+  production HeadlessSession + PlayerBotController. **No fake client, no
+  network socket, no login-handshake emulation** — the null-safe packet
+  sink makes headless sends no-ops.
+
+  **Region activity rule (P0, locked):** bots are ordinary Characters but
+  DO NOT count toward Region player activity by default; only full-fidelity
+  bots (or humans) wake NPC AI, spawners, area triggers, and sphere quests
+  (H1 activity split — Region.cs:56-62 + explicit bot-activity opt-in).
+
   **Account model:** one managed bot account per bot character initially
   (`bot_managed_000001`…); strong random credentials; accounts flagged
   HeadlessBot and BLOCKED from public client login. (PlayerAltBot — humans
@@ -403,9 +424,43 @@ M8 economic audit.
   **Bot-specific persistence is limited to metadata with no normal
   character equivalent:** personality profile, schedule, profession, home
   assignment, behavior config, last planner state.
+
+  **M6.0 review decision record (t_be295ecf, 2026-08-07 — code-validated,
+  21/21 spec sections reviewed; 11 confirmed, 10 corrected):**
+  - **Embodiment: PlayerBotManager + real accounts** — bot citizen = real
+    aaemu_login account (account_type=HeadlessBot, blocked from client
+    login) + ordinary characters row + production HeadlessSession +
+    PlayerBotController via ICharacterLifecycleService.ActivateHeadless.
+    Reuses CSSelectCharacterPacket's lifecycle core verbatim.
+  - **Scheduler: dedicated PlayerBotScheduler** (NOT AIManager, NOT per-bot
+    TickManager) — due-time PriorityQueue<BotId, NextWakeTime> + event
+    queue + bounded worker pool (4-8 initial, configurable) + per-bot
+    execution lease. Exactly ONE async TickManager subscription for
+    wake-scan (or own thread) — never per-bot subscriptions.
+  - **Fidelity authority: PopulationDirector** owns Dormant↔Reduced↔Full
+    transitions with the no-downgrade guard list (combat/slave/pack/
+    trial/party/saving); density and pressure feedback (spec §14) live
+    here.
+  - **Perception:** direct server queries via M5 Observe (region lists,
+    WorldManager, game services) — no packet serialization for bots.
+  - **Visibility:** bots are ordinary Characters in the region graph →
+    BroadcastPacket/GetAround already reaches humans; SCOneUnitMovementPacket
+    broadcast makes them visibly move — satisfied by construction.
+  - **Persistence:** normal Character persistence + playerbot_* metadata
+    with dirty/batched writes (H4) — no third lifecycle.
+  - **NOT LOCKED (needs profiling):** per-fidelity bot counts (spec §15),
+    Abstract fidelity tier (deferred), M5 contract action vocabulary
+    finalization.
+  - Full record: docs/playerbot-scale-architecture-review.md.
 - **6.1 Core:** BotManager, PlayerBot entity, tick registration, spawn/
   despawn, persistent identity/inventory/position, controlled logout,
   per-bot diagnostics, tick budget accounting
+- **6.1 Scheduler (locked 2026-08-07):** dedicated IPlayerBotScheduler —
+  due-time priority queue + bounded 4-8 worker pool + per-bot lease.
+  Never add bots to AIManager; never one TickManager subscription per bot.
+- **6.1 Persistence (locked):** playerbot_* metadata tables, dirty-flag
+  flush, mandatory flush on deactivate/downgrade/shutdown. No writes from
+  the AI step loop.
 - **6.2 Safety FIRST (before "roam"):** stuck detection, navigation timeout,
   invalid-target recovery, death/resurrection, unreachable-object handling,
   inventory-full handling, mount-state repair, retry budgets, safe return
@@ -413,17 +468,23 @@ M8 economic audit.
   assist party target, loot, return home
 - **6.4 Config:** spawn count, zone density, tick rate, allowed activities,
   home position, class/equipment templates, debug overlay, admin pause
-- **6.5 Fidelity tiers (population scalability — do NOT simulate 1000 full
-  players; only nearby/relevant bots run expensive):**
-  - **Tier 1 — Full PlayerBot:** combat, navigation, parties
-  - **Tier 2 — Reduced simulation:** coarse movement, trade, farming
-  - **Tier 3 — Scheduled simulation:** harvest timers, crafting, travel
-    progress (DB-driven, tick-light)
-  - **Tier 4 — Dormant:** loaded only when needed
-  - The Population Director (M7+) assigns fidelity by proximity, relevance,
-    and activity; a player walking into town "upgrades" nearby citizens
-    from Tier 3/4 to Tier 1/2 without the world paying for 1000 full
-    simulations at once.
+- **6.5 Fidelity states (population scalability — do NOT simulate 1000 full
+  players; only nearby/relevant bots run expensive; Tier labels replaced
+  by spec fidelity names, locked 2026-08-07):**
+  - **Full:** combat, navigation, parties; wakes NPC AI/spawners via the
+    H1 bot-activity opt-in
+  - **Reduced:** coarse movement, trade, farming; scheduled/DB-driven
+    progress (harvest timers, crafting, travel — tick-light) is the
+    tick-light sub-state
+  - **Dormant:** loaded only when needed
+  - **PopulationDirector is the ONLY fidelity authority** (M6, not M7+):
+    assigns Dormant/Reduced/Full by proximity, relevance, activity, and
+    pressure (spec §14). A player walking into town "upgrades" nearby
+    citizens from Dormant/Reduced to Full without the world paying for
+    1000 full simulations at once.
+  - **No-downgrade guard (locked):** never downgrade fidelity mid-combat
+    or while bound to a slave/mate/pack/trial/party, or during a save
+    (PopulationDirector transition safety gate).
 
 **Exit test:** 10 bots run 6 hours with no unrecovered loops, no inventory
 duplication, no runaway combat, no DB corruption, no tick-budget overrun.
@@ -436,6 +497,18 @@ Before the six-hour soak, record a no-bot baseline and approve numeric budgets
 for p95/p99 world-tick time, memory, database writes, action-queue backlog, and
 recovery rate. Gate in stages: one bot for 30 minutes → 10 bots for one hour →
 10 bots for six hours. A qualitative "no overrun" is not sufficient evidence.
+
+**25-bot starvation gate (locked 2026-08-07, review t_be295ecf):** no soak
+above 25 concurrent embodied bots until ActiveRegionTick is
+async/time-budgeted (H2) and profiled — TickManager invoke duration,
+ActiveRegionTick pass, AI tick, scheduler wake latency, pathfinding, DB
+pressure. #1491-class starvation is unfixed upstream (TickManager/
+WorldManager byte-identical at upstream HEAD), so the gate stands.
+Density ladder (locked): 10 correctness → **25 FIRST STABILITY GATE
+(hard stop until H2)** → 50 soak ≥6h → 100 profiling → 250 mixed fidelity
+(≥60% dormant/reduced) → 500 broader region/event tests → 1000 final
+(≥80% dormant/reduced). 1,000 persistent citizens, not 1,000 thinking
+clients.
 
 ---
 
@@ -636,9 +709,11 @@ generates something worth controlling.
 | Playtest cadence? | Per-change (focused repro + tests) / per-milestone (golden-path segment) / weekly (integrated human session from clean snapshot); restart mid-play every second week |
 | Siege slice? | Deferred to M10; begins no-combat ownership + tax |
 | Track 1 capstone? | The complete homestead-to-trade loop (M2-M4), NOT siege |
-| Bot density? | Staged gates: 10 correctness → 25 village → 50 soak → 100 only after profiling |
+| Bot density? | Staged gates (locked 2026-08-07, t_be295ecf): 10 correctness → **25 FIRST STABILITY GATE (hard stop until H2)** → 50 soak ≥6h → 100 profiling → 250 mixed fidelity (≥60% dormant/reduced) → 500 → 1000 final (≥80% dormant/reduced); 1,000 persistent citizens, not 1,000 thinking clients |
 | Track 2 priority? | Action contract → recovery → deterministic combat → curated questing → party → farming → crafting/hauling → schedules → social → LLM → siege |
 | Economy sim? | NO abstraction — bots use real systems (Bot Economic Participation) |
+| Bot scheduler? | Dedicated IPlayerBotScheduler (due-time queue + bounded 4-8 pool + per-bot lease); AIManager and per-bot TickManager subscriptions rejected (t_be295ecf) |
+| M6 fidelity authority? | PopulationDirector — only authority for Dormant/Reduced/Full transitions; no-downgrade in combat/slave/pack/trial/party/saving |
 
 ## Experience scorecard (alongside the technical scorecard)
 

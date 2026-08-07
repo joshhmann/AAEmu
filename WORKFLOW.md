@@ -113,6 +113,40 @@ These sit with THE RULE — they keep the fork community-shaped. Full text in
 10. Additive layer: composition/adapters/extension points first; narrow
     reviewed core hooks only; never a parallel gameplay path.
 
+## PlayerBot scale architecture (locked 2026-08-07 — review t_be295ecf)
+
+Code-validated by the architecture review card t_be295ecf (21/21 spec
+sections reviewed; 11 confirmed, 10 corrected). Full record: `ROADMAP.md`
+§M5/M6 + `docs/playerbot-scale-architecture-review.md`. Locked invariants:
+
+- **Embodiment: real Characters, no fake client.** A bot citizen = real
+  managed `aaemu_login` account (account_type=HeadlessBot, blocked from
+  client login) + ordinary `characters` row + production `HeadlessSession`
+  + `PlayerBotController` via `ICharacterLifecycleService.ActivateHeadless`.
+  No fake client, no network socket, no login-handshake emulation — packets
+  no-op through the null-safe sink. The M2b pilot's DB-row-less
+  `HeadlessSession.Create` is an E2E fixture only, never the production path.
+- **Scheduler: dedicated `IPlayerBotScheduler`** — due-time priority queue +
+  bounded 4-8 worker pool + per-bot execution lease. NEVER add bots to
+  `AIManager` (single-lock, all-AI serial); NEVER one TickManager
+  subscription per bot (linear sync list); exactly one async wake-scan
+  subscription or a dedicated thread.
+- **Fidelity states: Dormant / Reduced / Full** (Tier labels retired).
+  `PopulationDirector` is the ONLY fidelity authority; no-downgrade guard in
+  combat/slave/pack/trial/party/saving.
+- **Density gates:** 10 correctness → **25 FIRST STABILITY GATE (hard stop
+  until H2)** → 50 soak ≥6h → 100 profiling → 250 mixed fidelity (≥60%
+  dormant/reduced) → 500 → 1000 (≥80% dormant/reduced). 1,000 persistent
+  citizens, not 1,000 thinking clients.
+- **P0 core hooks (the only core changes required):** H1 Region activity
+  split — bots don't count toward Region player activity by default, only
+  full-fidelity bots/humans wake NPC AI/spawners/area triggers/sphere quests
+  (explicit bot-activity opt-in); H2 ActiveRegionTick async/time-budgeted —
+  the #1491-class starvation fix, verified unfixed upstream, so the 25-bot
+  gate stands.
+- Fork-only lane unchanged: all bot work stays on the fork; docs branches
+  follow the normal fix/feat/docs flow.
+
 ## Environment
 
 - Repo (dev): /root/aaemu-dev — fork clone, branch `develop`, tracks joshhmann/AAEmu
