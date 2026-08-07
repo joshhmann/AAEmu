@@ -1,6 +1,6 @@
 # M2b-E2E — live-server bot harness
 
-> Status: **LIVE** (2026-08-06, branch `feat/m2b-e2e`). Bots roll against a
+> Status: **LIVE** (2026-08-07, branch `feat/m2b-e2e`, E2E-3 verified). Bots roll against a
 > REAL Login + Game + MySQL stack over the real network path — true
 > end-to-end quest testing on the live world, not a test rig.
 
@@ -56,7 +56,10 @@ Scripts/e2e/e2e-stack.sh db-up
 # 3. Run the harness (publishes Login+Game binaries, boots both servers,
 #    drives the golden route, writes the metrics dump):
 dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj \
-  --configuration Release --treenode-filter "/*/*/M2bE2eTests/*"
+  --configuration Release --filter-class AAEmu.IntegrationTests.M2bE2eTests
+# NOTE: this project's MTP runner does NOT accept --treenode-filter (it
+# discovers 0 tests and exits 8) — --filter-class is the only working
+# filter. Add `--output Detailed` for per-test results + durations.
 
 # 4. Inspect:
 Scripts/e2e/e2e-stack.sh status     # ports + processes + sqlite md5s
@@ -65,7 +68,8 @@ Scripts/e2e/e2e-stack.sh logs       # login.log / game.log tails
 ```
 
 Env overrides: `E2E_ROOT` (default `/root/aaemu-e2e`), `E2E_REBUILD=1` to
-force re-publish of the server binaries.
+force re-publish of the server binaries, `E2E_WIRE_DUMP=<path>` to log raw
+wire bytes (Trion auth -> world cookie -> enter world) from BotTcpLink.
 
 ## What each test proves
 
@@ -77,7 +81,7 @@ force re-publish of the server binaries.
 | `E2e_SeededDefect_FailBefore_PassAfter` | the rig catches real defects: a seeded data-level quest defect (quest 251 report NPC → non-existent template) FAILS the drive with a repro trace; reverting to the canonical copy (byte-identical) goes green |
 | `E2e_CrossCycleIsolation_BaselineByteIdentical` | fresh-bot state is identical across cycles (level/active/completed/inventory) and the runtime sqlite never drifts from canonical |
 
-## Metrics (observed 2026-08-06, first green run)
+## Metrics (observed 2026-08-07, E2E-3 verification)
 
 | Metric | Definition | Green bar | Observed |
 |---|---|---|---|
@@ -88,7 +92,9 @@ force re-publish of the server binaries.
 | Seeded-defect rig | fail-before (defect → E2E fails w/ repro trace) then pass-after (revert → green) | fail-before fails, pass-after green | **fail-before FAILED as designed, pass-after green** |
 
 Run evidence: `scorecard-explorations/m2b-e2e-metrics.md` (deterministic —
-no wall-clock), `Scripts/e2e/` logs under `$E2E_ROOT/logs/`.
+no wall-clock), `$E2E_ROOT/run26.log` (5/5 green, 9m27s) and
+`$E2E_ROOT/run28-detailed.log` (5/5 green, per-test durations) — full-suite
+reruns of the same harness, 2026-08-07 (E2E-3).
 
 ## How to add quests/zones to the route
 
@@ -143,3 +149,14 @@ no wall-clock), `Scripts/e2e/` logs under `$E2E_ROOT/logs/`.
   playtest concern (per the census contract).
 - Reward assertions cover declared SupplyItem items; XP/copper and
   level-based default rewards are not asserted (pilot scope).
+- **One stack, one suite at a time (concurrency hazard, 2026-08-07).** The
+  rig is single-stack: a concurrent E2E run (e.g. a kanban worker session
+  still alive after completing its card, re-driving the stack) races it —
+  the bridge's session registry is per-process (GameConnectionTable), so a
+  bot in game A is invisible to game B's bridge ("not in the world" on every
+  drive), and a concurrent `docker compose down -v` under a live game breaks
+  its DB pool (PacketMarshaler NREs at bot connect). Observed: run24 raced
+  t_718e1115's still-alive retry session and failed 4/5; run25 (theirs) and
+  run26/28 (clean) all green on the same code. Before a run: confirm no
+  foreign `dotnet test` / stray AAEmu server processes, and that no other
+  session owns the stack.
