@@ -297,6 +297,9 @@ e2e_log_guard() {
     done < <(find "$RUNTIME_DIR" "$LOG_DIR" -type f -name '*.log' -size +1G 2>/dev/null)
 }
 trap 'e2e_log_guard' EXIT
+# NOTE: sourcing this file installs the EXIT log-guard trap (bash keeps one
+# EXIT trap — the last one wins). Callers that need their own EXIT trap must
+# install it AFTER sourcing, or the log guard silently replaces it.
 
 e2e_kill_server() {
     local name="$1" pid
