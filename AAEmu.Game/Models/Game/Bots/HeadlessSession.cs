@@ -29,10 +29,35 @@ public class HeadlessSession
     public Character Character { get; }
     public WorldInstance World { get; }
 
+    /// <summary>
+    /// Real network connection backing this session. Null for pure-headless
+    /// pilot bots; set (via <see cref="FromNetworkCharacter"/>) when the
+    /// character entered the world through the REAL login/enter-world flow —
+    /// the M2b-E2E network-session bridge. The connection is the listener's
+    /// real GameConnection: no auth bypass, no direct session injection.
+    /// </summary>
+    public AAEmu.Game.Core.Network.Connections.GameConnection Connection { get; private set; }
+
     private HeadlessSession(Character character, WorldInstance world)
     {
         Character = character;
         World = world;
+    }
+
+    /// <summary>
+    /// M2b-E2E: wraps a character that entered the world through the real
+    /// network flow (real Login + Game + MySQL) as a bot session. The
+    /// character is an ordinary DB-loaded Character with a real
+    /// GameConnection; a PlayerBotController drives it through the real quest
+    /// engine exactly like the pilot's headless bots.
+    /// </summary>
+    public static HeadlessSession FromNetworkCharacter(Character character)
+    {
+        var world = character.ParentWorld as WorldInstance;
+        if (world == null)
+            throw new InvalidOperationException("Networked bot character has no parent WorldInstance");
+
+        return new HeadlessSession(character, world) { Connection = character.Connection };
     }
 
     /// <summary>
