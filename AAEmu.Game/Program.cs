@@ -227,6 +227,17 @@ public static class Program
                 services.AddSingleton<PlayerBotManager>();
                 services.AddSingleton<IPlayerBotManager>(sp => sp.GetRequiredService<PlayerBotManager>());
 
+                // Step executor seam: fail-closed warn-once no-op until the M5
+                // actor (IGameplayActor) lands and is wired here.
+                services.AddSingleton<UnwiredBotStepExecutor>();
+                services.AddSingleton<IBotStepExecutor>(sp => sp.GetRequiredService<UnwiredBotStepExecutor>());
+
+                // Due-time scheduler + bounded worker pool (4-8, spec §5). Not
+                // auto-started: the PopulationDirector slice (or admin command)
+                // calls Start(), so an unwired deployment stays inert.
+                services.AddSingleton<PlayerBotScheduler>();
+                services.AddSingleton<IPlayerBotScheduler>(sp => sp.GetRequiredService<PlayerBotScheduler>());
+
                 services.AddSingleton<PublicFarmManager>();
                 services.AddSingleton<IPublicFarmManager>(sp => sp.GetRequiredService<PublicFarmManager>());
 
