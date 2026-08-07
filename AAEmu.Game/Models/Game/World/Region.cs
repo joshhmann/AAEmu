@@ -18,6 +18,15 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
     private Region[] _neighbors;
     private int _playerCount;
 
+    /// <summary>
+    /// H1 (P0 gate): characters that explicitly requested region simulation (bot activity opt-in).
+    /// Bot characters do NOT count as native player activity — only humans do. A bot that must
+    /// wake the NPC ecosystem (NPC AI, area triggers, sphere quests, spawner radius) calls
+    /// <see cref="AddBotActivity"/> at Full fidelity; the grant is scoped to the bot's presence
+    /// in this region and auto-revoked by <see cref="RemoveObject"/> when it leaves.
+    /// </summary>
+    private readonly HashSet<Character> _botActivity = [];
+
     private int X { get; } = x;
     private int Y { get; } = y;
     public int Id => Y + 1024 * X;
@@ -53,12 +62,15 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
                 obj.Transform.ZoneId = zoneId;
         }
 
-        if (obj is Character)
+        if (obj is Character character)
         {
             _charactersSize++;
-            foreach (var region in GetNeighbors())
-                if (region != null)
-                    Interlocked.Increment(ref region._playerCount);
+            // H1: only non-bot characters count as native player activity — bots must
+            // explicitly opt in via AddBotActivity (spec §7 / review H1)
+            if (!character.IsPlayerBot)
+                foreach (var region in GetNeighbors())
+                    if (region != null)
+                        Interlocked.Increment(ref region._playerCount);
         }
         // Show debug info to subscribed players
         if (obj.Transform?._debugTrackers?.Count > 0)
@@ -99,12 +111,20 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
                 _objectsSize = 0;
             }
 
-            if (obj is Character)
+            if (obj is Character character)
             {
                 _charactersSize--;
-                foreach (var region in GetNeighbors())
-                    if (region != null)
-                        Interlocked.Decrement(ref region._playerCount);
+                // H1: mirror of the AddObject guard — bots never touched _playerCount natively
+                if (!character.IsPlayerBot)
+                    foreach (var region in GetNeighbors())
+                        if (region != null)
+                            Interlocked.Decrement(ref region._playerCount);
+                // H1: end explicit bot activity when the character leaves the region/world,
+                // so an opted-in grant can never outlive its owner
+                if (_botActivity.Remove(character))
+                    foreach (var region in GetNeighbors())
+                        if (region != null)
+                            Interlocked.Decrement(ref region._playerCount);
             }
         }
         // Show debug info to subscribed players
@@ -303,6 +323,55 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
     public bool HasPlayerActivity()
     {
         return _playerCount > 0;
+    }
+
+    /// <summary>
+    /// H1 (spec §7 / review H1): explicitly opt a bot character into region activity so it can
+    /// wake the NPC ecosystem (NPC AI, area triggers, sphere quests, spawner radius) the same way
+    /// a human does. Only Full-fidelity bots are accepted — Dormant/Reduced bots are rejected.
+    /// Idempotent: a character already opted in is a no-op. The grant is scoped to this region
+    /// and auto-revoked when the character leaves via <see cref="RemoveObject"/>.
+    /// </summary>
+    /// <param name="character">The bot character requesting region simulation.</param>
+    /// <returns>True when the activity grant was (already) active; false for Dormant/Reduced bots.</returns>
+    public bool AddBotActivity(Character character)
+    {
+        if (character == null || !character.IsPlayerBot || character.BotFidelity != BotFidelity.Full)
+            return false;
+
+        lock (_objectsLock)
+        {
+            if (!_botActivity.Add(character))
+                return false; // already opted in — no double count
+        }
+
+        foreach (var region in GetNeighbors())
+            if (region != null)
+                Interlocked.Increment(ref region._playerCount);
+        return true;
+    }
+
+    /// <summary>
+    /// H1: end a bot's explicit region activity grant. Idempotent — a character without a grant
+    /// is a no-op. The PopulationDirector calls this on fidelity downgrade or deactivation.
+    /// </summary>
+    /// <param name="character">The bot character whose grant should end.</param>
+    /// <returns>True when a grant was revoked; false when there was nothing to revoke.</returns>
+    public bool RemoveBotActivity(Character character)
+    {
+        if (character == null)
+            return false;
+
+        lock (_objectsLock)
+        {
+            if (!_botActivity.Remove(character))
+                return false;
+        }
+
+        foreach (var region in GetNeighbors())
+            if (region != null)
+                Interlocked.Decrement(ref region._playerCount);
+        return true;
     }
 
     public List<uint> GetObjectIdsList(List<uint> result, uint exclude)

@@ -470,6 +470,11 @@ public class NpcSpawner : Spawner<Npc>
         var players = WorldManager.Instance.GetAllCharacters();
         foreach (var player in players)
         {
+            // H1 (spec §7 / review H1 corollary): reduced-fidelity bots (Dormant/Reduced) must
+            // not wake spawners — only humans and Full-fidelity bots count toward the spawn radius
+            if (player.IsPlayerBot && player.BotFidelity != BotFidelity.Full)
+                continue;
+
             var distance = Vector3.DistanceSquared(player.Transform.World.Position, new Vector3(Position.X, Position.Y, Position.Z));
             if (distance <= testRadius)
             {

@@ -38,10 +38,38 @@ using Task = System.Threading.Tasks.Task;
 
 namespace AAEmu.Game.Models.Game.Char;
 
+/// <summary>
+/// Player-bot fidelity tier (1,000-citizen architecture, spec §7 / review H1).
+/// Controls how much of the simulated world a bot character may wake or interact with.
+/// </summary>
+public enum BotFidelity
+{
+    /// <summary>Not embodied — persistent record only. Never counts as region activity.</summary>
+    Dormant = 0,
+    /// <summary>Embodied with tick-light scheduled activity. Never counts as region activity.</summary>
+    Reduced = 1,
+    /// <summary>Fully active. May explicitly opt in to region activity (wake NPC AI/spawners).</summary>
+    Full = 2,
+}
+
 public partial class Character : Unit, ICharacter
 {
     public override UnitTypeFlag TypeFlag { get => UnitTypeFlag.Character; }
     public override BaseUnitType BaseUnitType => BaseUnitType.Character;
+
+    /// <summary>
+    /// True when this Character is driven by a player bot (headless citizen) instead of a human
+    /// client. Bot characters are REAL characters (full gameplay objects); this flag only changes
+    /// region-activity and fidelity semantics — bots do not wake the NPC world unless they
+    /// explicitly opt in (Region.AddBotActivity).
+    /// </summary>
+    public bool IsPlayerBot { get; set; }
+
+    /// <summary>
+    /// Fidelity tier for player-bot characters. Only <see cref="BotFidelity.Full"/> bots may
+    /// request region activity; Dormant/Reduced bots stay inert. Ignored for human characters.
+    /// </summary>
+    public BotFidelity BotFidelity { get; set; } = BotFidelity.Dormant;
 
     public static Dictionary<uint, uint> UsedCharacterObjIds { get; } = [];
 
