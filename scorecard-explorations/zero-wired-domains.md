@@ -193,13 +193,14 @@ added 2026-08-06 (t_af246c49) when the harness closures made the acts drivable.
 ## 9. QuestActObjZoneKill engine watch items (M2c wave-3, 2026-08-06)
 
 Rows added with the wave-3 harness closure (t_1324bc51). Census PASS/FAIL ≠ live
-correctness for these; both are REAL engine gaps found by the census, NOT
-harness gaps. The victim rig + dead-entry rename landed; these two stay open.
+correctness for these; both were REAL engine gaps found by the census, NOT
+harness gaps. The victim rig + dead-entry rename landed; the faction-0 dead
+path has since been FIXED (t_497b51d8) — ZoneId stays open.
 
 | Item | Census behavior | Live gap | Action |
 |---|---|---|---|
 | **ZoneId unenforced** (§2.4) | PASS/FAIL driven without any zone check — `OnZoneKill` never reads `ZoneId` (QuestActObjZoneKill.cs:63, 67-68 only logs it) | Quest "kill N in zone X" constraints are not enforced live; any-zone kills credit | Engine watch item — do NOT fix in the harness card. Census drives the lifecycle; live zone enforcement is a separate engine-fix card |
-| **Faction-0 credit dead path** (NEW, census-proven 2026-08-06) | FAIL at PROGRESS: `valid` is only set inside `if (NpcFactionId > 0)` / `if (PcFactionId > 0)` (QuestActObjZoneKill.cs:83-93). 95/106 quests carry faction 0 (NULL/0) with count_pk=0 — no victim can ever credit; expedition dailies 5900/5923/5924 included | **Live objective never credits** for any faction-0 NPC-kill ZoneKill quest (upstream-identical code) | **REAL engine defect — the global #1 blocker** (95 quests incl. all 20 band-21-30). Engine-fix card: treat faction-0 as "no faction filter" (credit any victim matching level bounds). The wave-3 rig is the fail-before substrate for that card's pass-after |
+| **Faction-0 credit dead path** — **FIXED (t_497b51d8, 2026-08-06)** | FAIL at PROGRESS before the fix: `valid` was only set inside `if (NpcFactionId > 0)` / `if (PcFactionId > 0)` (QuestActObjZoneKill.cs:83-93). 95/106 quests carry faction 0 (NULL/0) with count_pk=0 — no victim could ever credit; expedition dailies 5900/5923/5924 included | **Live objective never credited** for any faction-0 NPC-kill ZoneKill quest (upstream-identical code) | **FIXED** — OnZoneKill now treats faction 0 as "no faction filter" (any victim within level bounds) for both NPC and PK branches, and 0..0 level bounds as "any level". Pass-after: all 20 band-21-30 quests (2794-2822) + dailies 5900/5923/5924 flip FAIL→PASS (census 213 PASS / 0 FAIL / 25 SKIP); `QuestZoneKillVictimRigTests.ZoneKill_Faction0NpcShape_CreditsThroughEngine_PassesFullLifecycle` is the regression pin |
 
 The 11 PK quests (5982-5991, 6627, pc_faction=115 exclusive) DO credit through
 the rig — proven by `QuestZoneKillVictimRigTests.PkShape_WithVictimRig` and the

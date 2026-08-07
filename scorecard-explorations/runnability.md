@@ -8,10 +8,10 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 - **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
-- **T3 stratified act-family census (frozen M1-5c sample)**: 33 PASS / 3 FAIL / 18 SKIP
+- **T3 stratified act-family census (frozen M1-5c sample)**: 36 PASS / 0 FAIL / 18 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 31 PASS / 0 FAIL / 1 SKIP
-- **T5 M2c wave-3 (band 21-30: ZoneKill)**: 0 PASS / 20 FAIL / 0 SKIP
-- **ALL TIERS (census)**: 190 PASS / 23 FAIL / 25 SKIP over 238 quests — **190/213 quests runnable** (25 SKIP not driven, reasons below)
+- **T5 M2c wave-3 (band 21-30: ZoneKill)**: 20 PASS / 0 FAIL / 0 SKIP
+- **ALL TIERS (census)**: 213 PASS / 0 FAIL / 25 SKIP over 238 quests — **213/213 quests runnable** (25 SKIP not driven, reasons below)
 
 ## T1 — per-quest verdicts
 
@@ -199,9 +199,9 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5650 | 밤의 이야기꾼 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsynthesizable event shape for QuestActObjTalkNpcGroup; unsynthesizable event shape for QuestActObjTalkNpcGroup (comp 24283)) |
 | 5814 | [갈대무리 땅 더미] 일주일 그룹 | QuestActObjCompleteQuest | Skip | SKIP:Skip (unsupported act type QuestActObjCompleteQuest; unsynthesizable event shape for QuestActObjCompleteQuest (comp 25130); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25131); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25291); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25292); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25293)) |
 | 5815 | 월요일의 의뢰 | QuestActConAcceptDoodad | Skip | SKIP:Skip (unsupported act type QuestActObjCompleteQuest; unsynthesizable event shape for QuestActObjCompleteQuest (comp 25133); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25134); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25296); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25297); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25298)) |
-| 5900 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 200 | QuestActConAcceptDoodad | Fail | START:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 5923 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 400 | QuestActConAcceptDoodad | Fail | START:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 5924 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | Fail | START:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 5900 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 200 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5923 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 400 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5924 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5967 | 신과 영웅의 발자취 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjAbilityLevel; unsynthesizable event shape for QuestActObjAbilityLevel (comp 25707)) |
 | 6003 | 전장의 노예 퇴치 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6037 | 프롤로그01 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
@@ -255,42 +255,33 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 | quest | name | family | verdict | detail |
 |---|---|---|---|---|
-| 2794 | 십자별 평원을 지켜라 1단계 | QuestActConAcceptSphere | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2795 | 십자별 평원을 지켜라 2단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2796 | 십자별 평원을 지켜라 3단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2797 | 십자별 평원을 지켜라 4단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2800 | 길 잃은 바다를 지켜라 1단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2801 | 길 잃은 바다를 지켜라 2단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2802 | 길 잃은 바다를 지켜라 3단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2803 | 길 잃은 바다를 지켜라 4단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2806 | 고요한 바다를 지켜라 1단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2807 | 고요한 바다를 지켜라 2단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2808 | 고요한 바다를 지켜라 3단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2809 | 고요한 바다를 지켜라 4단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2812 | 황금 바다를 지켜라 1단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2813 | 황금 바다를 지켜라 2단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2814 | 황금 바다를 지켜라 3단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2815 | 황금 바다를 지켜라 4단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2819 | 이니스테르를 지켜라 1단계 | QuestActConAcceptSphere | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2820 | 이니스테르를 지켜라 2단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
-| 2821 | 이니스테르를 지켜라 3단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
-| 2822 | 이니스테르를 지켜라 4단계 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass |
+| 2794 | 십자별 평원을 지켜라 1단계 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2795 | 십자별 평원을 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2796 | 십자별 평원을 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2797 | 십자별 평원을 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2800 | 길 잃은 바다를 지켜라 1단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2801 | 길 잃은 바다를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2802 | 길 잃은 바다를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2803 | 길 잃은 바다를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2806 | 고요한 바다를 지켜라 1단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2807 | 고요한 바다를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2808 | 고요한 바다를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2809 | 고요한 바다를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2812 | 황금 바다를 지켜라 1단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2813 | 황금 바다를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2814 | 황금 바다를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2815 | 황금 바다를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2819 | 이니스테르를 지켜라 1단계 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2820 | 이니스테르를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2821 | 이니스테르를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2822 | 이니스테르를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 
 ## FAIL rollup (by act family — top blockers)
 
-- **QuestActObjZoneKill** — 23 failing quest occurrence(s)
-- **QuestActConReportNpc** — 20 failing quest occurrence(s)
-- **QuestActConAcceptNpc** — 18 failing quest occurrence(s)
-- **QuestActSupplyExp** — 10 failing quest occurrence(s)
-- **QuestActConAcceptDoodad** — 3 failing quest occurrence(s)
-- **QuestActConAutoComplete** — 3 failing quest occurrence(s)
-- **QuestActConAcceptSphere** — 2 failing quest occurrence(s)
-- **QuestActSupplyLivingPoint** — 2 failing quest occurrence(s)
-- **QuestActSupplyHonorPoint** — 1 failing quest occurrence(s)
+_none — every driven quest passed._
 
 ## FAIL rollup (by stage reason)
 
-- **START:Pass; PROGRESS:Fail** — 23 quests: 5900, 5923, 5924, 2794, 2795, 2796, 2797, 2800, 2801, 2802, 2803, 2806, 2807, 2808, 2809, 2812, 2813, 2814, 2815, 2819, 2820, 2821, 2822
 
 ## SKIP rollup (by reason)
 
@@ -310,29 +301,6 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 
 | quest | name | family | failing stage | act families | file:line | reason |
 |---|---|---|---|---|---|---|
-| 2794 | 십자별 평원을 지켜라 1단계 | QuestActConAcceptSphere | PROGRESS | QuestActConAcceptSphere+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2795 | 십자별 평원을 지켜라 2단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2796 | 십자별 평원을 지켜라 3단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2797 | 십자별 평원을 지켜라 4단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2800 | 길 잃은 바다를 지켜라 1단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2801 | 길 잃은 바다를 지켜라 2단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2802 | 길 잃은 바다를 지켜라 3단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2803 | 길 잃은 바다를 지켜라 4단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2806 | 고요한 바다를 지켜라 1단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2807 | 고요한 바다를 지켜라 2단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2808 | 고요한 바다를 지켜라 3단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2809 | 고요한 바다를 지켜라 4단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2812 | 황금 바다를 지켜라 1단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2813 | 황금 바다를 지켜라 2단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2814 | 황금 바다를 지켜라 3단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2815 | 황금 바다를 지켜라 4단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2819 | 이니스테르를 지켜라 1단계 | QuestActConAcceptSphere | PROGRESS | QuestActConAcceptSphere+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2820 | 이니스테르를 지켜라 2단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2821 | 이니스테르를 지켜라 3단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 2822 | 이니스테르를 지켜라 4단계 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjZoneKill+QuestActConReportNpc+QuestActSupplyExp | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
-| 5900 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 200 | QuestActConAcceptDoodad | PROGRESS | QuestActConAcceptDoodad+QuestActObjZoneKill+QuestActConAutoComplete+QuestActSupplyHonorPoint | harness assertion | PROGRESS:Fail (expected step Reward, got Progress |
-| 5923 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 400 | QuestActConAcceptDoodad | PROGRESS | QuestActConAcceptDoodad+QuestActObjZoneKill+QuestActConAutoComplete+QuestActSupplyLivingPoint | harness assertion | PROGRESS:Fail (expected step Reward, got Progress |
-| 5924 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | PROGRESS | QuestActConAcceptDoodad+QuestActObjZoneKill+QuestActConAutoComplete+QuestActSupplyLivingPoint | harness assertion | PROGRESS:Fail (expected step Reward, got Progress |
 
 ### Harness-gap queue (SKIP-driven — extend the harness, not the engine)
 
