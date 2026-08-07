@@ -2,6 +2,7 @@ using System.Reflection;
 using AAEmu.Commons.IO;
 using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.Stream;
 using AAEmu.Game.Core.Managers.UnitManagers;
@@ -216,6 +217,15 @@ public static class Program
 
                 services.AddSingleton<PortalManager>();
                 services.AddSingleton<IPortalManager>(sp => sp.GetRequiredService<PortalManager>());
+
+                // -- PlayerBot manager + lifecycle seam (AAEmu.Game.Core.Managers.Bots) --
+                // Lifecycle seam: fail-closed placeholder until slice #3
+                // (CharacterLifecycleService extraction) lands and is wired here.
+                services.AddSingleton<UnwiredPlayerBotLifecycleService>();
+                services.AddSingleton<IPlayerBotLifecycleService>(sp => sp.GetRequiredService<UnwiredPlayerBotLifecycleService>());
+
+                services.AddSingleton<PlayerBotManager>();
+                services.AddSingleton<IPlayerBotManager>(sp => sp.GetRequiredService<PlayerBotManager>());
 
                 services.AddSingleton<PublicFarmManager>();
                 services.AddSingleton<IPublicFarmManager>(sp => sp.GetRequiredService<PublicFarmManager>());
