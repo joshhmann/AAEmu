@@ -19,6 +19,9 @@ namespace AAEmu.IntegrationTests;
 ///
 /// The stack (MySQL compose + Login + Game binaries) boots once per run.
 /// </summary>
+[CollectionDefinition("e2e", DisableParallelization = true)]
+public class E2eCollectionDefinition;
+
 [Collection("e2e")]
 public class M2bE2eTests
 {

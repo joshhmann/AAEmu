@@ -57,8 +57,14 @@ public static class E2eStack
     {
         lock (Gate)
         {
-            if (_stackUp)
+            if (_stackUp && StackActuallyUp())
                 return;
+
+            // _stackUp may be stale: a previous suite ran with parallel
+            // collections and a sibling test's RestartGameServer killed the
+            // game mid-flight, or the stack crashed. Re-boot from scratch.
+            _stackUp = false;
+            StopAll();
 
             // A previous test run may have left Login/Game processes running
             // (crashed host, interrupted run). They hold the ports and would
@@ -100,6 +106,27 @@ public static class E2eStack
         // (Scripts/e2e -> "e2e"), same as every other invocation in this rig.
         Run("docker", $"compose -f {ComposeFile} --env-file {envFile} down -v", E2eRoot,
             timeoutMs: 120_000, check: false);
+    }
+
+    /// <summary>
+    /// True when the live ports are actually answering — guards against a
+    /// stale _stackUp flag (sibling test restarted/killed the game server).
+    /// </summary>
+    private static bool StackActuallyUp()
+    {
+        try
+        {
+            using var login = new TcpClient();
+            login.Connect("127.0.0.1", LoginPort);
+            using var game = new TcpClient();
+            game.Connect("127.0.0.1", GamePort);
+            using var bridge = new BotDriveClient(BridgePort);
+            return bridge.Call("{\"cmd\":\"ping\"}", 3000).GetProperty("pong").GetBoolean();
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>
