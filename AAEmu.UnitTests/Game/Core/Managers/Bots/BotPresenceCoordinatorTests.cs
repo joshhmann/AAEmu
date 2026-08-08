@@ -387,11 +387,15 @@ public class BotPresenceCoordinatorTests
             next = await executor.StepAsync(runtime, CancellationToken.None);
         }
 
-        // Full loop: ≥ 8 Move legs COMPLETED ("arrived"), and NO leg ever
-        // timed out (the wedge signature was a leg stuck until timeout).
-        var completedMoves = actor!.AuditTrace.Count(r =>
-            r.Action == ActorActionType.Move && r.Result == ActorLifecycleState.Completed);
-        await Assert.That(completedMoves).IsGreaterThanOrEqualTo(8);
+        // Full loop: ≥ 8 Move legs ended AT the waypoint — Completed (the
+        // actor's 3D arrival) or Interrupted (the executor's flat arrival —
+        // the clamp owns Z, so legs can also end via 2a's stop-at-waypoint),
+        // and NO leg ever timed out (the wedge signature was a leg stuck
+        // until timeout).
+        var arrivedMoves = actor!.AuditTrace.Count(r =>
+            r.Action == ActorActionType.Move
+            && r.Result is ActorLifecycleState.Completed or ActorLifecycleState.Interrupted);
+        await Assert.That(arrivedMoves).IsGreaterThanOrEqualTo(8);
         await Assert.That(actor.AuditTrace.Count(r =>
             r.Action == ActorActionType.Move && r.Result == ActorLifecycleState.TimedOut)).IsEqualTo(0);
 

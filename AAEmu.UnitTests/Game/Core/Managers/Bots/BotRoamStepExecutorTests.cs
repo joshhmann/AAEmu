@@ -26,7 +26,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 public class BotRoamStepExecutorTests
 {
     private static (BotRoamStepExecutor Executor, GameplayActor Actor, PlayerBotRuntime Runtime, FakeTimeProvider Clock) CreateRig(
-        string name = "roam-bot")
+        string name = "roam-bot", Func<Vector3, uint, float>? terrain = null)
     {
         // No config JSON is loaded in unit tests: AppConfiguration.Instance.World
         // is null by default, and GetHeight dereferences it (NpcMoveTowardsTests
@@ -41,6 +41,7 @@ public class BotRoamStepExecutorTests
 
         BotRoamStepExecutor executor = new()
         {
+            GroundHeightProvider = terrain, // null → mock WorldManager returns 0 (no clamp)
             ActorFactory = _ => actor,
             TimeProvider = clock,
             BroadcastInterval = TimeSpan.FromMilliseconds(200),
@@ -139,6 +140,51 @@ public class BotRoamStepExecutorTests
 
         // Once route finished → dormant (no more legs).
         await Assert.That(next).IsNull();
+    }
+
+    [Test]
+    public async Task Step_FlatRouteOverDeviantTerrain_CompletesFullLoop_NoWedge()
+    {
+        // The t_d7e45251 wedge signature at executor level: a FLAT-Z route
+        // (the old BuildRoamRoute output) walked over terrain 9m higher. The
+        // clamp owns the bot's Z (135) while the waypoint Z is 126 — the
+        // actor's 3D arrival check can never complete the leg, so flat
+        // arrival must own the leg: the bot patrols the FULL loop instead of
+        // freezing at the first waypoint (prod: bots stood at waypoint X/Y
+        // with clamped Z until the 60s timeout, forever).
+        var (executor, actor, runtime, clock) = CreateRig("roam-wedge", terrain: (_, _) => 135f);
+
+        var route = new BotPath(
+        [
+            new Vector3(10, 0, 126),
+            new Vector3(20, 0, 126),
+            new Vector3(20, 10, 126),
+            new Vector3(10, 10, 126)
+        ], BotPath.LoopMode.Loop);
+        executor.SetRoamRoute(runtime.Character, route);
+
+        // 4 legs of 10m at 2 m/s (0.2m/step, 100ms cadence) = 50 steps each;
+        // 300 steps = 1.5 loops.
+        TimeSpan? next = TimeSpan.Zero;
+        var guard = 0;
+        while (next is not null && guard++ < 300)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            next = await executor.StepAsync(runtime, CancellationToken.None);
+        }
+
+        // Full loop: the route issued legs for ALL 4 waypoints (4+ Move
+        // requests), and NO leg timed out (the wedge signature was a leg
+        // stuck until the 60s timeout, forever). Legs here end Interrupted
+        // (flat arrival) or Completed (3D arrival).
+        var moves = actor.AuditTrace.Where(r => r.Action == ActorActionType.Move).ToList();
+        await Assert.That(moves.Count(r => r.Result == ActorLifecycleState.TimedOut)).IsEqualTo(0);
+        await Assert.That(moves.Count(r => r.Result is ActorLifecycleState.Completed or ActorLifecycleState.Interrupted))
+            .IsGreaterThanOrEqualTo(4);
+
+        // The bot walks ON the terrain — the clamp owns Z (never the flat
+        // route Z, never wedged at a waypoint).
+        await Assert.That(actor.Character.Transform.World.Position.Z).IsEqualTo(135f);
     }
 
     [Test]

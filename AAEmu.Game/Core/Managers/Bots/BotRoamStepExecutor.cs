@@ -135,7 +135,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             {
                 Logger.Warn("Roam leg rejected for bot {CharacterId}: {State} ({Reason}) — advancing route",
                     bot.CharacterId, leg.State, leg.Detail);
-                _ = state.Path.Move(bot.Character.Transform.World.Position); // advance past the unreachable point
+                _ = state.Path.Move(bot.Character.Transform.World.Position, flatArrival: true); // advance past the unreachable point
                 state.PendingLeg = null; // already advanced here
             }
         }
@@ -150,16 +150,37 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
         actor.Tick(elapsed);
 
+        // 2a. Flat arrival owns the leg for ground-clamped walkers: step 3a
+        // clamps Z to the heightmap, so a leg whose waypoint Z disagrees
+        // with the terrain can never complete via the actor's 3D arrival
+        // check (GameplayActor.Tick requires |Z gap| <= 0.5) — the bot
+        // would stand at the waypoint X/Y until the 60s leg timeout, then
+        // re-issue the same leg forever (the t_d7e45251 wedge; prod: bot Z
+        // clamped to terrain while the waypoint Z comes from a different
+        // terrain source). When the bot is flat-within the current waypoint,
+        // interrupt the leg; 2b then advances the route and the clamp keeps
+        // the bot on the ground.
+        if (state.PendingLeg is { IsTerminal: false, Action: ActorActionType.Move }
+            && state.Path is { IsFinished: false })
+        {
+            var flat = MathUtil.CalculateDistance(
+                bot.Character.Transform.World.Position, state.Path.CurrentTarget, false);
+            if (flat <= state.Path.ArrivalRadius)
+                _ = actor.Stop();
+        }
+
         // 2b. Route advance on arrival: when the pending Move leg reached a
-        // terminal state (arrived / already-at-destination — immediately or
-        // during this tick), move the route to the next waypoint so the bot
-        // keeps walking (Loop wraps, Once finishes). Without this the
-        // executor would re-issue the SAME waypoint forever — the bot
-        // freezes after one leg.
+        // terminal state (arrived / interrupted-at-waypoint /
+        // already-at-destination — immediately or during this tick), move
+        // the route to the next waypoint so the bot keeps walking (Loop
+        // wraps, Once finishes). Without this the executor would re-issue
+        // the SAME waypoint forever — the bot freezes after one leg.
         if (state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move }
             && state.Path is { IsFinished: false })
         {
-            _ = state.Path.Move(bot.Character.Transform.World.Position);
+            // Flat arrival: the clamp owns Z, so the route advances on the
+            // waypoint's X/Y alone (never blocked by a Z mismatch).
+            _ = state.Path.Move(bot.Character.Transform.World.Position, flatArrival: true);
             state.PendingLeg = null;
         }
 

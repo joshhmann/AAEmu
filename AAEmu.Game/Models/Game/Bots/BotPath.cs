@@ -81,18 +81,27 @@ public class BotPath
     /// Z is interpolated proportionally (flat X/Y via the engine's
     /// AddDistanceToFront — the same facility Simulation.MoveTo uses).
     /// </summary>
-    public Vector3 Move(Vector3 position)
+    /// <param name="position">Current position.</param>
+    /// <param name="flatArrival">
+    /// When true, a waypoint counts as reached on FLAT distance alone (the
+    /// Simulation RangeToCheckPoint model) — for ground-clamped walkers
+    /// where an external clamp owns Z and the waypoint Z may differ from
+    /// the clamped Z (BotRoamStepExecutor; t_d7e45251). Default false keeps
+    /// the 3D arrival (flat AND Z within ArrivalRadius).
+    /// </param>
+    public Vector3 Move(Vector3 position, bool flatArrival = false)
     {
         if (IsFinished)
             return position;
 
         var target = CurrentTarget;
 
-        // 3D distance to the current waypoint (arrival model mirrors Simulation).
+        // Flat distance to the current waypoint (arrival model mirrors
+        // Simulation's RangeToCheckPoint; the Z gate is the 3D option).
         var flatDistance = MathUtil.CalculateDistance(position, target, false);
         var zDistance = Math.Abs(target.Z - position.Z);
 
-        if (flatDistance <= ArrivalRadius && zDistance <= ArrivalRadius)
+        if (flatDistance <= ArrivalRadius && (flatArrival || zDistance <= ArrivalRadius))
             return Arrive();
 
         var step = Math.Min(MaxStepPerTick, flatDistance);
@@ -109,7 +118,8 @@ public class BotPath
         }
         else
         {
-            // Pure vertical movement (waypoint directly above/below).
+            // Pure vertical movement (waypoint directly above/below; only
+            // reachable under the default 3D arrival).
             var zStep = Math.Min(MaxStepPerTick, zDistance);
             var dir = target.Z >= position.Z ? 1f : -1f;
             next = new Vector3(position.X, position.Y, position.Z + dir * zStep);
@@ -119,7 +129,7 @@ public class BotPath
         // the waypoint completes the leg in the SAME call (an exact step onto
         // a waypoint must not need a second tick to "arrive").
         if (MathUtil.CalculateDistance(next, target, false) <= ArrivalRadius &&
-            Math.Abs(target.Z - next.Z) <= ArrivalRadius)
+            (flatArrival || Math.Abs(target.Z - next.Z) <= ArrivalRadius))
             return Arrive();
 
         return next;
