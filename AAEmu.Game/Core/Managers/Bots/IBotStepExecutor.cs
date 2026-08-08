@@ -5,8 +5,10 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// <summary>
 /// Bot step executor seam — the unit of work the scheduler's bounded worker
 /// pool runs. The M5 actor contract (<c>IGameplayActor</c>) adapts into this
-/// seam; until that lands, DI wires <see cref="UnwiredBotStepExecutor"/> so
-/// the failure mode (no-op wake, warn-once) is explicit, not accidental.
+/// seam via <see cref="GameplayActorStepExecutor"/> (one actor Tick per
+/// wake; live requests keep the scan cadence, idle bots go dormant). The
+/// pre-M5 <see cref="UnwiredBotStepExecutor"/> placeholder remains only as
+/// a historical fail-closed default and is no longer DI-wired.
 ///
 /// Contract: the executor runs ONE AI step for the bot and MUST honor
 /// <paramref name="cancellationToken"/> (step timeout / scheduler shutdown).
