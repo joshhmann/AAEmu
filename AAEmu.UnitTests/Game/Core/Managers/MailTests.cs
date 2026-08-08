@@ -41,12 +41,16 @@ public sealed class MailTests
             new Lazy<IHousingManager>(() => Mock.Of<IHousingManager>().Object),
             Mock.Of<ILocalizationManager>().Object);
 
-        // Reset singleton caches so Instance properties resolve via ServiceProvider
+        // Reset singleton caches so Instance properties resolve via ServiceProvider.
+        // NOTE: the cache field is Singleton<T>.s_instance (not "_instance") — a
+        // wrong-name reset is a silent no-op that leaves a STALE MailManager/
+        // NameManager cached from whichever test ran earlier (full-suite
+        // ordering hazard, seen on t_302b67bf gate runs).
         typeof(Singleton<MailManager>)
-            .GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic)
+            .GetField("s_instance", BindingFlags.Static | BindingFlags.NonPublic)
             ?.SetValue(null, null);
         typeof(Singleton<NameManager>)
-            .GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic)
+            .GetField("s_instance", BindingFlags.Static | BindingFlags.NonPublic)
             ?.SetValue(null, null);
 
         var services = new ServiceCollection();
@@ -67,10 +71,10 @@ public sealed class MailTests
 
         SingletonContainer.ServiceProvider = null;
         typeof(Singleton<MailManager>)
-            .GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic)
+            .GetField("s_instance", BindingFlags.Static | BindingFlags.NonPublic)
             ?.SetValue(null, null);
         typeof(Singleton<NameManager>)
-            .GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic)
+            .GetField("s_instance", BindingFlags.Static | BindingFlags.NonPublic)
             ?.SetValue(null, null);
     }
 
