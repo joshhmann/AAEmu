@@ -252,6 +252,13 @@ public static class E2eStack
         Console.WriteLine("[e2e] publishing Login + Game servers (E2E_REBUILD=1 forces this)...");
         Run("dotnet", $"publish {Path.Combine(RepoRoot, "AAEmu.Login", "AAEmu.Login.csproj")} -c Release -o {RuntimeLoginDir} --nologo", RepoRoot);
         Run("dotnet", $"publish {Path.Combine(RepoRoot, "AAEmu.Game", "AAEmu.Game.csproj")} -c Release -o {RuntimeGameDir} --nologo", RepoRoot);
+
+        // Publish copies NLog.config from the repo tree — STILL the uncapped
+        // daily-rotation version until fix/thinpool-log-caps merges into local
+        // develop. Re-apply the runtime caps so E2E_REBUILD=1 can never
+        // clobber them (t_a54574e9; same guard as Scripts/e2e/e2e-common.sh).
+        // Idempotent no-op when already capped; throws on failure (check=true).
+        Run("bash", $"{Path.Combine(E2eRoot, "ensure-log-caps.sh")} {E2eRoot}", E2eRoot);
     }
 
     private static void EnsureRuntimeLayout()
