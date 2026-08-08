@@ -75,10 +75,15 @@ internal static class BotPresenceBootstrap
                     SingletonContainer.ServiceProvider.GetRequiredService<BotRoamStepExecutor>());
 
                 var count = BotPresenceCoordinator.ReadBotCount();
+                // Optional patrol-home relocation (t_118484a7 scope-add):
+                // AAEMU_PRESENCE_HOME_X/Y/Z moves the 8-waypoint loop to a
+                // specific position (Josh's spawn, zone 179) so a logging-in
+                // human sees the bots instantly. Unset → template spawn.
+                var home = BotPresenceCoordinator.ReadHomePosition();
                 coordinator.Start(new BotPresenceCoordinator.BotPresenceConfig(
                     BotCount: count,
                     ZoneId: WorldManager.DefaultWorldTemplateId,
-                    HomePosition: default,
+                    HomePosition: home,
                     RoamRadius: 30f,
                     RoamSpeed: 2.5f,
                     Level: 5,

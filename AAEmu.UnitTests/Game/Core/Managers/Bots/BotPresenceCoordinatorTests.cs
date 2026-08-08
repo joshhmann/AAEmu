@@ -317,6 +317,76 @@ public class BotPresenceCoordinatorTests
     }
 
     [Test]
+    public async Task DefaultHomeResolver_ExplicitHomePosition_WinsOverTemplateSpawn()
+    {
+        // FAIL-BEFORE / PASS-AFTER (t_118484a7 scope-add): DefaultHomeResolver
+        // used to IGNORE config.HomePosition whenever the Nuian template has a
+        // spawn — the demo patrol could never be relocated to a player's
+        // position. An explicit HomePosition (AAEMU_PRESENCE_HOME_X/Y/Z) must
+        // win over the template spawn. Hermetic: the override short-circuits
+        // BEFORE CharacterManager is touched (unseeded here — the pre-fix code
+        // NREs on the missing CharacterManager singleton).
+        var overrideHome = new Vector3(15572f, 15364f, 126.5f); // Josh's spawn, zone 179
+        var config = new BotPresenceCoordinator.BotPresenceConfig(
+            BotCount: 3, ZoneId: 179, HomePosition: overrideHome, RoamRadius: 30f,
+            RoamSpeed: 2.5f, Level: 5, NamePrefix: "Citizen", AccountPrefix: "presence");
+
+        var home = BotPresenceCoordinator.DefaultHomeResolver(config);
+
+        await Assert.That(home).IsEqualTo(overrideHome);
+    }
+
+    [Test]
+    public async Task Start_WithHomeOverride_EmBodiesBotsAtOverridePosition()
+    {
+        // FAIL-BEFORE / PASS-AFTER (t_118484a7 scope-add): with a home
+        // override, the coordinator must place each bot's Transform AT the
+        // override position before spawn — so a human logging in at that spot
+        // sees the bots instantly (region placement then happens at home).
+        // RED pre-fix: the bot embodied at the template spawn (or threw);
+        // GREEN with the override honored.
+        SeedFixtureSingletons();
+
+        var overrideHome = new Vector3(15572f, 15364f, 126.5f);
+        var characters = new List<Character>();
+        var provisioner = (string username, string name, Race race, Gender gender, byte level) =>
+        {
+            var session = HeadlessSession.Create((uint)(700 + characters.Count), name, level, race);
+            characters.Add(session.Character);
+            return session;
+        };
+
+        var executor = new BotRoamStepExecutor
+        {
+            // Flat terrain: 0 = "no heightmap data" → waypoints keep home.Z.
+            GroundHeightProvider = (_, _) => 0f
+        };
+
+        var coordinator = new BotPresenceCoordinator(
+            new RecordingManager(), new RecordingScheduler(), new RecordingDirector(),
+            executor,
+            homeResolver: _ => overrideHome,
+            provisioner,
+            groundHeightProvider: (_, _) => 0f);
+
+        var result = coordinator.Start(new BotPresenceCoordinator.BotPresenceConfig(
+            BotCount: 3, ZoneId: 179, HomePosition: overrideHome, RoamRadius: 30f,
+            RoamSpeed: 2.5f, Level: 5, NamePrefix: "Citizen", AccountPrefix: "presence"));
+
+        await Assert.That(result).IsTrue();
+        await Assert.That(characters.Count).IsEqualTo(3);
+
+        // Every bot embodies AT the override home (X/Y exact; Z within the
+        // clamp's tolerance — the transform is set before the route walks).
+        foreach (var character in characters)
+        {
+            var pos = character.Transform.World.Position;
+            await Assert.That(Math.Abs(pos.X - overrideHome.X)).IsLessThanOrEqualTo(0.5f);
+            await Assert.That(Math.Abs(pos.Y - overrideHome.Y)).IsLessThanOrEqualTo(0.5f);
+        }
+    }
+
+    [Test]
     public async Task Start_OnDeviantTerrain_BotCompletesFullPatrolLoop()
     {
         // FAIL-BEFORE / PASS-AFTER (t_d7e45251): BuildRoamRoute used to build

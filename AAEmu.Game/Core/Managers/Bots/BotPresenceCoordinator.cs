@@ -212,6 +212,16 @@ public sealed class BotPresenceCoordinator
                 }
 
                 var character = session.Character;
+                // Patrol-home relocation (t_118484a7 scope-add): when a home
+                // override is configured, embody the bot AT the override
+                // position (not the template spawn) so a logging-in human at
+                // that spot sees the bots instantly. The adapter's
+                // AddVisibleObject placement then registers the bot in the
+                // home's region graph. No-op when the override is unset
+                // (template spawn — the default demo layout).
+                if (config.HomePosition != default)
+                    character.Transform.Local.SetPosition(home.X, home.Y, home.Z);
+
                 if (!_manager.Spawn(character, "presence-demo"))
                 {
                     Logger.Warn("BotPresenceCoordinator: spawn refused for {Name} — already registered?", name);
@@ -308,14 +318,38 @@ public sealed class BotPresenceCoordinator
     /// Default home: the Nuian character template spawn (Solzreed — the
     /// known-good world; the same position a fresh player character appears
     /// at, so the bots are immediately visible to a logging-in human).
+    /// An EXPLICIT <see cref="BotPresenceConfig.HomePosition"/> (the
+    /// env-driven patrol-home override, AAEMU_PRESENCE_HOME_X/Y/Z) wins over
+    /// the template spawn — that is how the demo patrol is relocated to a
+    /// specific player's spawn (t_118484a7 scope-add: bots AT Josh's
+    /// position so the sighting is instant).
     /// </summary>
     internal static Vector3 DefaultHomeResolver(BotPresenceConfig config)
     {
+        if (config.HomePosition != default)
+            return config.HomePosition;
+
         var template = UnitManagers.CharacterManager.Instance.GetTemplate(Race.Nuian, Gender.Male);
         var spawn = template?.SpawnPosition;
         return spawn != null
             ? new Vector3(spawn.X, spawn.Y, spawn.Z)
             : config.HomePosition;
+    }
+
+    /// <summary>
+    /// Reads the optional patrol-home override from the environment
+    /// (AAEMU_PRESENCE_HOME_X/Y/Z — the demo-patrol relocation knob,
+    /// t_118484a7). Returns default (Vector3.Zero) when unset or partial —
+    /// the coordinator then falls back to the template spawn.
+    /// </summary>
+    public static Vector3 ReadHomePosition()
+    {
+        var x = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_HOME_X");
+        var y = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_HOME_Y");
+        var z = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_HOME_Z");
+        if (float.TryParse(x, out var fx) && float.TryParse(y, out var fy) && float.TryParse(z, out var fz))
+            return new Vector3(fx, fy, fz);
+        return default;
     }
 
     private static HeadlessSession DefaultProvisioner(string username, string name, Race race, Gender gender, byte level)
