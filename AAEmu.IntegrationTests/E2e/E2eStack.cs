@@ -253,11 +253,14 @@ public static class E2eStack
         Run("dotnet", $"publish {Path.Combine(RepoRoot, "AAEmu.Login", "AAEmu.Login.csproj")} -c Release -o {RuntimeLoginDir} --nologo", RepoRoot);
         Run("dotnet", $"publish {Path.Combine(RepoRoot, "AAEmu.Game", "AAEmu.Game.csproj")} -c Release -o {RuntimeGameDir} --nologo", RepoRoot);
 
-        // Publish copies NLog.config from the repo tree — STILL the uncapped
-        // daily-rotation version until fix/thinpool-log-caps merges into local
-        // develop. Re-apply the runtime caps so E2E_REBUILD=1 can never
-        // clobber them (t_a54574e9; same guard as Scripts/e2e/e2e-common.sh).
-        // Idempotent no-op when already capped; throws on failure (check=true).
+        // Publish copies NLog.config from the repo tree. Repo configs carry
+        // size caps (Sequence/25MB×20, d3de7202b) AND the Info-default file
+        // rule (env-renderer ${environment:AAEMU_E2E_LOG_LEVEL:whenEmpty=Info},
+        // fix/log-rule-info-default, t_aac423cd) — but ensure-log-caps.sh
+        // still re-runs after every publish: it idempotently re-applies caps
+        // AND the rule rewrite on ANY config shape, so E2E_REBUILD=1 can
+        // never clobber them (t_a54574e9; same guard as
+        // Scripts/e2e/e2e-common.sh). Throws on failure (check=true).
         Run("bash", $"{Path.Combine(E2eRoot, "ensure-log-caps.sh")} {E2eRoot}", E2eRoot);
     }
 
