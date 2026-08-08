@@ -728,7 +728,7 @@ public class QuestScenarioDriver
             // Accept the quest (mirror AddQuest): StartQuest + register + first evaluation.
             if (!quest.StartQuest())
                 throw new InvalidOperationException("StartQuest() returned false - quest has no Start component");
-            character.Quests.ActiveQuests.Add(quest.TemplateId, quest);
+            character.Quests.ActiveQuests.TryAdd(quest.TemplateId, quest);
             quest.RunCurrentStep();
         }
         catch (Exception ex)

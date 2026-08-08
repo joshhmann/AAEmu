@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Data;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Id;
@@ -19,10 +20,11 @@ public class CharacterQuests(Character owner)
 {
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     private readonly List<uint> _removed = [];
+    private readonly object _removedLock = new();
 
     private Character Owner { get; set; } = owner;
-    public Dictionary<uint, Quest> ActiveQuests { get; } = [];
-    private Dictionary<ushort, CompletedQuest> CompletedQuests { get; } = [];
+    public ConcurrentDictionary<uint, Quest> ActiveQuests { get; } = [];
+    private ConcurrentDictionary<ushort, CompletedQuest> CompletedQuests { get; } = [];
 
     public bool HasQuest(uint questId)
     {
@@ -148,7 +150,15 @@ public class CharacterQuests(Character owner)
         }
 
         // Add it to the Active Quests
-        ActiveQuests.Add(quest.TemplateId, quest);
+        if (!ActiveQuests.TryAdd(quest.TemplateId, quest))
+        {
+            // Concurrent duplicate (same quest added from another thread) — undo this instance
+            Logger.Warn($"Quest {questId} already active for {Owner.Name}, concurrent add rejected");
+            quest.SkipUpdatePackets();
+            quest.Cleanup();
+            QuestIdManager.Instance.ReleaseId((uint)quest.Id);
+            return false;
+        }
         quest.Owner.SendDebugMessage($"[Quest] {Owner.Name}, quest {questId} added.");
 
         // Execute the first Step
@@ -243,8 +253,11 @@ public class CharacterQuests(Character owner)
         quest.Cleanup();
         quest.Drop(update);
         quest.FinalizeQuestActs();
-        ActiveQuests.Remove(questId);
-        _removed.Add(questId);
+        ActiveQuests.TryRemove(questId, out _);
+        lock (_removedLock)
+        {
+            _removed.Add(questId);
+        }
 
         if (forcibly)
         {
@@ -387,12 +400,9 @@ public class CharacterQuests(Character owner)
         // Calculate block and index
         var completedQuestBlockId = (ushort)(questId / 64);
         var completedQuestBlockIndex = (ushort)(questId % 64);
-        // Grab or create block
-        if (!CompletedQuests.TryGetValue(completedQuestBlockId, out var completedBlock))
-        {
-            completedBlock = new CompletedQuest(completedQuestBlockId);
-            CompletedQuests.Add(completedQuestBlockId, completedBlock);
-        }
+        // Grab or create block (atomic — concurrent completions of the same quest
+        // must not race TryGetValue/Add on the same block)
+        var completedBlock = CompletedQuests.GetOrAdd(completedQuestBlockId, static id => new CompletedQuest(id));
         // Set quest flag to (not) completed
         completedBlock.Body.Set(completedQuestBlockIndex, isCompleted);
         return completedBlock;
@@ -512,7 +522,7 @@ public class CharacterQuests(Character owner)
                         Id = reader.GetUInt16("id"),
                         Body = new BitArray((byte[])reader.GetValue("data"))
                     };
-                    CompletedQuests.Add(quest.Id, quest);
+                    CompletedQuests.TryAdd(quest.Id, quest);
                 }
             }
         }
@@ -544,7 +554,7 @@ public class CharacterQuests(Character owner)
                     var oldStatus = quest.Status;
                     quest.ReadData((byte[])reader.GetValue("data"));
                     quest.Status = oldStatus;
-                    ActiveQuests.Add(quest.TemplateId, quest);
+                    ActiveQuests.TryAdd(quest.TemplateId, quest);
                     quest.QuestInitialized();
                     quest.RequestEvaluation();
                 }
@@ -566,14 +576,18 @@ public class CharacterQuests(Character owner)
                 command.Connection = connection;
                 command.Transaction = transaction;
 
-                var ids = string.Join(",", _removed);
-                command.CommandText = $"DELETE FROM quests WHERE owner = @owner AND template_id IN({ids})";
+                uint[] ids;
+                lock (_removedLock)
+                {
+                    ids = [.. _removed];
+                    _removed.Clear();
+                }
+
+                command.CommandText = $"DELETE FROM quests WHERE owner = @owner AND template_id IN({string.Join(",", ids)})";
                 command.Parameters.AddWithValue("@owner", Owner.Id);
                 command.Prepare();
                 command.ExecuteNonQuery();
             }
-
-            _removed.Clear();
         }
 
         using (var command = connection.CreateCommand())
