@@ -1,11 +1,17 @@
+using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Id;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Char.Templates;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.StaticValues;
 
 namespace AAEmu.Game.Models.Game.Bots;
 
@@ -19,6 +25,16 @@ namespace AAEmu.Game.Models.Game.Bots;
 /// `Connection?.SendPacket` sink, so no client is required and no parallel
 /// network stack exists.
 ///
+/// Two creation paths:
+///
+///  * <see cref="Create"/> — M2b-E2E fixture ONLY (DB-row-less, synthetic
+///    world). The ARCHITECTURE_REVIEW correction (b) forbids this as the
+///    production citizen path.
+///  * <see cref="Provision"/> — PRODUCTION path (review slice 4): real
+///    managed bot account row (aaemu_login.users, account_type=HeadlessBot,
+///    client login blocked) + real characters row, embodied through
+///    ICharacterLifecycleService.ActivateHeadless.
+///
 /// Composition rule (AGENTS.md #9/#10): bots compose around ordinary
 /// Character records + normal gameplay services. This class only *creates*
 /// the record and its world; a PlayerBotController drives it. No bot-only
@@ -28,6 +44,12 @@ public class HeadlessSession
 {
     public Character Character { get; }
     public WorldInstance World { get; }
+
+    /// <summary>
+    /// The managed account row backing this session (production
+    /// <see cref="Provision"/> path only; null for the E2E fixture).
+    /// </summary>
+    public BotProvisionedAccount ProvisionedAccount { get; private set; }
 
     /// <summary>
     /// Real network connection backing this session. Null for pure-headless
@@ -58,6 +80,134 @@ public class HeadlessSession
             throw new InvalidOperationException("Networked bot character has no parent WorldInstance");
 
         return new HeadlessSession(character, world) { Connection = character.Connection };
+    }
+
+    /// <summary>
+    /// PRODUCTION bot provisioning (ARCHITECTURE_REVIEW slice 4): real managed
+    /// account + real character rows, embodied through
+    /// <see cref="ICharacterLifecycleService.ActivateHeadless"/>. This is the
+    /// production citizen path — <see cref="Create"/> stays E2E-fixture only
+    /// (review correction (b)).
+    ///
+    /// Steps (all real rows, no synthetic state):
+    ///  1. <see cref="BotAccountProvisioningService.ProvisionBotAccount"/> —
+    ///     aaemu_login.users row with account_type=HeadlessBot + banned=1
+    ///     (client login blocked; the login server's existing auth path denies
+    ///     banned accounts — no login-server code change).
+    ///  2. Ordinary character creation shape (CharacterManager template spawn
+    ///     position + faction, NameManager reservation, CharacterIdManager id),
+    ///     persisted via <see cref="Character.SaveDirectlyToDatabase"/> — a
+    ///     real characters row owned by the managed account.
+    ///  3. <see cref="ICharacterLifecycleService.ActivateHeadless"/> — the
+    ///     shared entry core (Load → ObjId → TryAddCharacter → buffs/HP/MP),
+    ///     no client packets.
+    ///
+    /// The returned session carries the provisioned account
+    /// (<see cref="ProvisionedAccount"/>) so callers can record/verify the
+    /// managed credential. Normal persistence (SaveManager periodic save +
+    /// leave-save via Deactivate) rides the existing lifecycles — no third
+    /// save path (review deliverable 1-F / H4 stays additive for playerbot_*
+    /// metadata only).
+    /// </summary>
+    /// <param name="username">Managed bot account name — MUST be in the
+    /// bot_managed_* namespace (see <see cref="BotAccountProvisioningService.ManagedUsernamePrefix"/>).</param>
+    /// <param name="name">Character display name (also the characters.name row).</param>
+    /// <param name="race">Race; the character template's spawn position and
+    /// faction come from the booted CharacterManager (real world placement).</param>
+    /// <param name="gender">Gender.</param>
+    /// <param name="level">Starting level.</param>
+    /// <exception cref="ArgumentException">Invalid managed username or character name.</exception>
+    /// <exception cref="InvalidOperationException">Non-bot account collision, or the character row save failed.</exception>
+    public static HeadlessSession Provision(string username, string name, Race race = Race.Nuian,
+        Gender gender = Gender.Male, byte level = 1)
+    {
+        // Fail fast on bad input BEFORE any side effects: name rules mirror the
+        // human create path (NameManager regex + duplicate check). A bot
+        // character name lives in the same namespace as human names.
+        var nameError = NameManager.Instance.ValidateCharacterName(name);
+        if (nameError != CharacterCreateError.Ok)
+            throw new ArgumentException(
+                $"Provisioning failed: character name '{name}' rejected by NameManager ({nameError})", nameof(name));
+
+        // 1. Real managed account row (HeadlessBot flag + client-login block).
+        var account = BotAccountProvisioningService.Instance.ProvisionBotAccount(username);
+
+        // 2. Real character row — ordinary creation shape, persisted for real.
+        var template = CharacterManager.Instance.GetTemplate(race, gender)
+            ?? throw new InvalidOperationException($"Provisioning failed: no character template for race {race} / gender {gender} (server data not loaded?)");
+
+        var characterId = CharacterIdManager.Instance.GetNextId();
+        var character = BuildProvisionedCharacter(characterId, account.AccountId, name, race, gender, level, template);
+        if (!character.SaveDirectlyToDatabase())
+        {
+            NameManager.Instance.RemoveCharacterId(characterId);
+            CharacterIdManager.Instance.ReleaseId(characterId);
+            throw new InvalidOperationException($"Provisioning failed: characters row save failed for '{name}' (id {characterId})");
+        }
+
+        // 3. Embodiment through the shared lifecycle service (headless variant).
+        CharacterLifecycleService.Instance.ActivateHeadless(character, new BotContext
+        {
+            BotId = characterId,
+            Name = name
+        });
+
+        var world = character.ParentWorld as WorldInstance;
+        if (world == null)
+            throw new InvalidOperationException("Provisioning failed: activated bot character has no parent WorldInstance");
+
+        return new HeadlessSession(character, world) { ProvisionedAccount = account };
+    }
+
+    /// <summary>
+    /// Builds the in-memory Character for provisioning, mirroring the ordinary
+    /// creation path (CharacterManager.Create) where it matters for the row:
+    /// template spawn position (real world placement), template faction,
+    /// inventory/bank slot counts, action slots, ability spread, and the
+    /// DB-loadable sub-objects (Inventory/Appellations/Abilities/Quests).
+    /// The row is written by SaveDirectlyToDatabase; instance Load() inside
+    /// ActivateHeadless re-initializes the rest from the database exactly like
+    /// a human character.
+    /// </summary>
+    private static Character BuildProvisionedCharacter(uint characterId, uint accountId, string name,
+        Race race, Gender gender, byte level, CharacterTemplate template)
+    {
+        var character = new Character(new UnitCustomModelParams())
+        {
+            Id = characterId,
+            TemplateId = characterId,
+            AccountId = accountId,
+            Name = name,
+            Race = race,
+            Gender = gender,
+            Level = level,
+            AccessLevel = AppConfiguration.Instance.Account.AccessLevelDefault,
+            NumInventorySlots = template.NumInventorySlot,
+            NumBankSlots = template.NumBankSlot,
+            Faction = FactionManager.Instance.GetFaction(template.FactionId),
+            FactionName = string.Empty,
+            Ability1 = AbilityType.Fight,
+            Ability2 = AbilityType.Magic,
+            Ability3 = AbilityType.Will,
+            Created = DateTime.UtcNow,
+            ReturnDistrictId = template.ReturnDistrictId,
+            ResurrectionDistrictId = template.ResurrectionDistrictId
+        };
+
+        character.Transform.ApplyWorldSpawnPosition(template.SpawnPosition);
+
+        character.Slots = new ActionSlot[Character.MaxActionSlots];
+        for (var i = 0; i < character.Slots.Length; i++)
+            character.Slots[i] = new ActionSlot();
+
+        character.Inventory = new Inventory(character);
+        character.Appellations = new CharacterAppellations(character);
+        character.Abilities = new CharacterAbilities(character);
+        character.Quests = new CharacterQuests(character);
+
+        character.Hp = character.MaxHp;
+        character.Mp = character.MaxMp;
+        return character;
     }
 
     /// <summary>
