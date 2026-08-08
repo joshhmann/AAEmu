@@ -41,8 +41,13 @@ internal static class BotPresenceBootstrap
                 // BotProvisioningControlHost (run-8): EnterWorld iterates ALL
                 // worlds and NREs on any world whose MateManager is still null
                 // (assigned moments after world creation, WorldManager.cs:528).
+                // Window: 300s (3000 × 100ms). A cold boot took 55s+ on the
+                // E2E stack and 51s on prod (2026-08-08 t_118484a7 re-run:
+                // the old 60s window aborted 1s before world wiring completed,
+                // leaving 0/3 bots provisioned — a slow MySQL warm-up would
+                // silently kill the presence demo on prod too).
                 var worldReady = false;
-                for (var i = 0; i < 600 && !worldReady; i++)
+                for (var i = 0; i < 3000 && !worldReady; i++)
                 {
                     var worlds = WorldManager.Instance.GetWorlds();
                     // Non-logging probe: GetWorld(DefaultInstanceId) logs [FATAL]
