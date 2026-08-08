@@ -172,6 +172,49 @@ public class BotPresenceCoordinatorTests
     }
 
     [Test]
+    public async Task Start_SecondBoot_WithAdoptingProvisioner_EmbodiesAllBotsAgain()
+    {
+        // Restart semantics (t_db5b2be7): a game-container restart brings a
+        // FRESH coordinator (EmbodiedCount=0) back against character rows the
+        // first boot created. The provisioner simulates the production adopt
+        // path — same name → SAME character id (reloaded row), never a new
+        // id — and the coordinator must come up 3/3 again, exactly like the
+        // first boot, with no duplicate-row provisioning.
+        SeedFixtureSingletons();
+        var manager = new RecordingManager();
+        var scheduler = new RecordingScheduler();
+        var director = new RecordingDirector();
+        var stepExecutor = new BotRoamStepExecutor(); // real — SetRoamRoute is a plain recorder
+        var ids = new Dictionary<string, uint>();
+        var provisioned = new List<string>();
+        var provisioner = (string username, string name, Race race, Gender gender, byte level) =>
+        {
+            if (!ids.TryGetValue(name, out var id))
+                ids[name] = id = (uint)(500 + ids.Count + 1); // fresh rows on first boot only
+            provisioned.Add(name);
+            return HeadlessSession.Create(id, name, level, race);
+        };
+        var coordinator = new BotPresenceCoordinator(
+            manager, scheduler, director, stepExecutor,
+            _ => new Vector3(15578f, 15382f, 126f),
+            provisioner);
+
+        // First boot: fresh provision — 3 distinct character rows.
+        await Assert.That(coordinator.Start(Config(3))).IsTrue();
+        await Assert.That(ids.Count).IsEqualTo(3);
+
+        // Restart: fresh process state (Embodied=0), rows still exist → the
+        // provisioner adopts (same ids). The coordinator still embodies 3/3.
+        director.Embodied = 0;
+        await Assert.That(coordinator.Start(Config(3))).IsTrue();
+
+        await Assert.That(provisioned.Count).IsEqualTo(6); // 3 fresh + 3 adopted
+        await Assert.That(ids.Count).IsEqualTo(3);         // adoption never allocates new rows
+        await Assert.That(manager.SpawnCalls).IsEqualTo(6);
+        await Assert.That(manager.ActivateCalls).IsEqualTo(6);
+    }
+
+    [Test]
     public async Task Start_ActivationFailure_SkipsBot_ContinuesOthers()
     {
         var (coordinator, manager, _, _, provisioned) = CreateRig();
