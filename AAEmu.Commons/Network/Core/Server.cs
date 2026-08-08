@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Sockets;
 using NetCoreServer;
 using NLog;
@@ -9,7 +10,7 @@ public class Server(IPAddress address, int port, IBaseProtocolHandler protocolHa
     : TcpServer(address, port)
 {
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
-    private readonly HashSet<Session> _sessions = [];
+    private readonly ConcurrentDictionary<Guid, Session> _sessions = [];
 
     public IBaseProtocolHandler GetHandler() => protocolHandler;
 
@@ -29,13 +30,13 @@ public class Server(IPAddress address, int port, IBaseProtocolHandler protocolHa
     {
         Logger.Info(
             $"Connect from {session.Socket.RemoteEndPoint} established, session id: {session.Id}");
-        _sessions.Add((Session)session);
+        _sessions.TryAdd(session.Id, (Session)session);
     }
 
     protected override void OnDisconnected(TcpSession session)
     {
         Logger.Info($"Connect from session id: {session.Id} disconnected");
-        _sessions.Remove((Session)session);
+        _sessions.TryRemove(session.Id, out _);
     }
 
     protected override void OnError(SocketError error)
@@ -45,16 +46,16 @@ public class Server(IPAddress address, int port, IBaseProtocolHandler protocolHa
 
     public Session GetSession(Func<Session, bool> func)
     {
-        return _sessions.SingleOrDefault(func);
+        return _sessions.Values.SingleOrDefault(func);
     }
 
     public HashSet<Session> GetSessions()
     {
-        return _sessions;
+        return [.. _sessions.Values];
     }
 
     public IEnumerable<Session> GetSessions(Func<Session, bool> func)
     {
-        return _sessions.Where(func);
+        return _sessions.Values.Where(func).ToArray();
     }
 }

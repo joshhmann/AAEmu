@@ -1,4 +1,5 @@
-﻿using AAEmu.Commons.Utils;
+﻿using System.Collections.Concurrent;
+using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Core.Packets.S2C;
 using AAEmu.Game.Models.Game.DoodadObj;
@@ -7,7 +8,7 @@ namespace AAEmu.Game.Core.Managers.World;
 
 public class StreamManager : Singleton<StreamManager>, IStreamManager
 {
-    private readonly Dictionary<uint, uint> _accounts = [];
+    private readonly ConcurrentDictionary<uint, uint> _accounts = [];
 
     public static void Load()
     {
@@ -16,19 +17,19 @@ public class StreamManager : Singleton<StreamManager>, IStreamManager
 
     public void AddToken(uint accountId, uint connectionId)
     {
-        _accounts.Add(connectionId, accountId);
+        _accounts.TryAdd(connectionId, accountId);
     }
 
     public void RemoveToken(uint token)
     {
-        _accounts.Remove(token);
+        _accounts.TryRemove(token, out _);
     }
 
     public void Login(StreamConnection connection, uint accountId, uint token)
     {
-        if (_accounts.ContainsKey(token))
+        if (_accounts.TryGetValue(token, out var storedAccountId))
         {
-            if (accountId == _accounts[token])
+            if (accountId == storedAccountId)
             {
                 var gCon = GameConnectionTable.Instance.GetConnection(token);
                 connection.GameConnection = gCon;
@@ -36,7 +37,7 @@ public class StreamManager : Singleton<StreamManager>, IStreamManager
             }
             else
             {
-                _accounts.Remove(token);
+                _accounts.TryRemove(token, out _);
                 connection.SendPacket(new TCJoinResponsePacket(1));
             }
         }
