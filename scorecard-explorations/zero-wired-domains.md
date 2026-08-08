@@ -190,6 +190,17 @@ added 2026-08-06 (t_af246c49) when the harness closures made the acts drivable.
 | **QuestActObjCinema** | PASS via synthetic CinemaStarted→CinemaEnded events (harness drives `CurrentlyPlayingCinemaId` directly) | **Cinema domain zero-wired server-side** — no client-triggered cinema flow; live prologue playback not possible | Defer (M2 plan §2.4); not an M2 blocker |
 | **QuestActSupplyLp** | PASS; `ChangeLabor` write to MySQL fails closed in tests (no DB) | Labor persists via MySQL `accounts.labor`; premium always-on hardcodes the 5000 cap | Zero-wired reward domain tag; the act itself (labor change) is wired, the persistence path is the live gap |
 
+## 9. QuestActObjZoneKill engine watch items (M2c wave-3, 2026-08-08)
+
+Rows added with the wave-3 harness closure (t_64d13ee4, on top of t_1324bc51's
+victim rig). Census PASS/FAIL ≠ live correctness for these; both were REAL
+engine gaps found by the census, NOT harness gaps.
+
+| Item | Census behavior | Live gap | Action |
+|---|---|---|---|
+| **faction-0 credit dead path** | **FIXED** (t_497b51d8, accepted; rides on the closure branch — base predated its merge). 20 band-21-30 quests (2794-2822) + dailies 5900/5923/5924 flip SKIP→PASS. `OnZoneKill` now treats faction filter 0 as "no filter" and 0..0 level bounds as "any level" (QuestActObjZoneKill.cs:81-93) | Pre-fix: 95/106 ZoneKill quests carry npc_faction_id=0 and could never credit | Regression pin: `QuestZoneKillVictimRigTests.ZoneKill_Faction0NpcShape_CreditsThroughEngine_PassesFullLifecycle`; merged to develop separately |
+| **ZoneId unenforced** (§2.4) | PASS via syntactically-valid zoneGroupId — the act's `ZoneId` field is never checked against the event's `ZoneGroupId` | The kill credits regardless of which zone it happened in; live zone-restriction semantics absent | Watch item — NOT wired per card scope; needs an engine decision (enforce zone-group membership or drop the field) |
+
 ## Cross-domain notes
 
 1. **ranks ↔ race-tracks are coupled**: racing contest rewards (30239-30248) and racing brackets (rank_scopes 31-40) depend on race results, so racing ranks need RaceManager output. Fishing ranks need a catch-metric hook that doesn't exist yet. Battlefield/arena ranks (32488-32498, weeks=4) depend on arena/instance infrastructure.

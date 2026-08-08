@@ -36,7 +36,20 @@
      {
       "actId": 18521,
       "type": "QuestActObjZoneKill",
-      "detailId": 42
+      "detailId": 42,
+      "zoneId": 17,
+      "countNpc": 200,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 943,
+      "lvMin": 26,
+      "lvMax": 55,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
      }
     ]
    },
@@ -79,7 +92,23 @@
   },
   {
    "name": "PROGRESS",
-   "events": [],
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 17,
+     "count": 200,
+     "countNpc": 200,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 26,
+     "lvMax": 55
+    }
+   ],
    "expect": {
     "step": "Ready",
     "status": "Ready"
@@ -114,8 +143,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12834)"
- }
+ "selectedRewardIndex": 0
 }

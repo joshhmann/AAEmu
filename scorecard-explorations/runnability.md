@@ -8,13 +8,13 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 - **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
-- **T3 stratified act-family census (frozen M1-5c sample)**: 41 PASS / 0 FAIL / 13 SKIP
+- **T3 stratified act-family census (frozen M1-5c sample)**: 44 PASS / 0 FAIL / 10 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 32 PASS / 0 FAIL / 0 SKIP
 - **T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)**: 13 PASS / 0 FAIL / 0 SKIP
 - **T6 M2a census (band 1-10 full sweep)**: 445 PASS / 0 FAIL / 100 SKIP
 - **T7 M2a census (band 11-20 full sweep)**: 576 PASS / 0 FAIL / 17 SKIP
-- **T8 M2c census (band 21-30 full sweep)**: 806 PASS / 0 FAIL / 20 SKIP
-- **ALL TIERS (census)**: 2039 PASS / 0 FAIL / 156 SKIP over 2195 quests — **2039/2039 quests runnable** (156 SKIP not driven, reasons below)
+- **T8 M2c census (band 21-30 full sweep)**: 826 PASS / 0 FAIL / 0 SKIP
+- **ALL TIERS (census)**: 2062 PASS / 0 FAIL / 133 SKIP over 2195 quests — **2062/2062 quests runnable** (133 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
@@ -22,7 +22,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 |---|---|---|---|---|---|---|---|---|---|
 | 1-10 | t6 | 668 | 8 | 660 | 660 | 560 | 0 | 100 | 100.0% |
 | 11-20 | t7 | 626 | 0 | 626 | 626 | 609 | 0 | 17 | 100.0% |
-| 21-30 | t8 | 847 | 0 | 847 | 847 | 827 | 0 | 20 | 100.0% |
+| 21-30 | t8 | 847 | 0 | 847 | 847 | 847 | 0 | 0 | 100.0% |
 
 ## Zone coverage (signature zones)
 
@@ -235,9 +235,9 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5650 | 밤의 이야기꾼 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5814 | [갈대무리 땅 더미] 일주일 그룹 | QuestActObjCompleteQuest | Skip | SKIP:Skip (unsupported act type QuestActObjCompleteQuest; unsynthesizable event shape for QuestActObjCompleteQuest (comp 25130); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25131); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25291); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25292); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25293)) |
 | 5815 | 월요일의 의뢰 | QuestActConAcceptDoodad | Skip | SKIP:Skip (unsupported act type QuestActObjCompleteQuest; unsynthesizable event shape for QuestActObjCompleteQuest (comp 25133); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25134); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25296); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25297); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25298)) |
-| 5900 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 200 | QuestActConAcceptDoodad | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 25480)) |
-| 5923 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 400 | QuestActConAcceptDoodad | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsupported act type QuestActSupplyLivingPoint; unsynthesizable event shape for QuestActObjZoneKill (comp 25563); unsynthesizable event shape for QuestActSupplyLivingPoint (comp 25564)) |
-| 5924 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsupported act type QuestActSupplyLivingPoint; unsynthesizable event shape for QuestActObjZoneKill (comp 25566); unsynthesizable event shape for QuestActSupplyLivingPoint (comp 25567)) |
+| 5900 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 200 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5923 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 400 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5924 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5967 | 신과 영웅의 발자취 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjAbilityLevel; unsynthesizable event shape for QuestActObjAbilityLevel (comp 25707)) |
 | 6003 | 전장의 노예 퇴치 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6037 | 프롤로그01 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1780,28 +1780,28 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2776 | 샤프란 재배지 지키기 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2777 | 검은고리 부족 처치하기 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2778 | 검은돛 해적 처치하기 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2794 | 십자별 평원을 지켜라 1단계 | QuestActConAcceptSphere | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12074)) |
-| 2795 | 십자별 평원을 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12078)) |
-| 2796 | 십자별 평원을 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12082)) |
-| 2797 | 십자별 평원을 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12086)) |
+| 2794 | 십자별 평원을 지켜라 1단계 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2795 | 십자별 평원을 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2796 | 십자별 평원을 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2797 | 십자별 평원을 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 28 | 잃어버린 짐과 좀도둑 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2800 | 길 잃은 바다를 지켜라 1단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12097)) |
-| 2801 | 길 잃은 바다를 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12105)) |
-| 2802 | 길 잃은 바다를 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12109)) |
-| 2803 | 길 잃은 바다를 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12113)) |
-| 2806 | 고요한 바다를 지켜라 1단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12122)) |
-| 2807 | 고요한 바다를 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12126)) |
-| 2808 | 고요한 바다를 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12131)) |
-| 2809 | 고요한 바다를 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12135)) |
+| 2800 | 길 잃은 바다를 지켜라 1단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2801 | 길 잃은 바다를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2802 | 길 잃은 바다를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2803 | 길 잃은 바다를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2806 | 고요한 바다를 지켜라 1단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2807 | 고요한 바다를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2808 | 고요한 바다를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2809 | 고요한 바다를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 281 | 떠도는 소문 | QuestActConAcceptDoodad | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2812 | 황금 바다를 지켜라 1단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12148)) |
-| 2813 | 황금 바다를 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12152)) |
-| 2814 | 황금 바다를 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12160)) |
-| 2815 | 황금 바다를 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12168)) |
-| 2819 | 이니스테르를 지켜라 1단계 | QuestActConAcceptSphere | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12822)) |
-| 2820 | 이니스테르를 지켜라 2단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12826)) |
-| 2821 | 이니스테르를 지켜라 3단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12830)) |
-| 2822 | 이니스테르를 지켜라 4단계 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12834)) |
+| 2812 | 황금 바다를 지켜라 1단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2813 | 황금 바다를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2814 | 황금 바다를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2815 | 황금 바다를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2819 | 이니스테르를 지켜라 1단계 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2820 | 이니스테르를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2821 | 이니스테르를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2822 | 이니스테르를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 283 | 으스스한 밤 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 284 | 위대한 유산 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 285 | 분노가 필요해! | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2294,7 +2294,6 @@ _none — every driven quest passed._
 ## SKIP rollup (by reason)
 
 - **no components** — 91 quests: 2148, 2149, 2150, 2151, 2152, 2153, 2154, 2155, 2156, 2157, 2158, 2159, 2160, 2161, 2162, 2163, 2164, 2165, 2166, 2167, 2168, 2169, 2170, 2171, 2172, 2173, 2174, 2175, 2176, 2177, 2178, 2179, 2180, 2181, 2182, 2183, 2184, 2185, 2186, 2187, 2188, 2189, 2190, 2191, 2192, 2193, 2194, 2195, 2196, 2197, 2198, 2199, 2200, 2201, 2202, 2203, 2204, 2205, 2206, 2207, 2208, 2209, 2210, 2211, 2212, 2213, 2214, 2215, 2216, 2217, 2218, 2219, 2220, 2221, 2222, 2223, 2224, 2225, 2226, 2227, 2228, 2229, 3748, 3750, 3751, 3752, 3753, 3754, 3755, 3756, 3757
-- **unsupported act type QuestActObjZoneKill** — 23 quests: 5900, 5923, 5924, 2794, 2795, 2796, 2797, 2800, 2801, 2802, 2803, 2806, 2807, 2808, 2809, 2812, 2813, 2814, 2815, 2819, 2820, 2821, 2822
 - **let-it-done quest with no report act (engine has no completion path)** — 20 quests: 2054, 5575, 5578, 5579, 5589, 5596, 5597, 5601, 1867, 1898, 1904, 1908, 5604, 5608, 5619, 5630, 5636, 5637, 5643, 5644
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
 - **let-it-done quest with no report act (engine has no completion path** — 6 quests: 6069, 5584, 5603, 5632, 5640, 5645
@@ -2315,10 +2314,8 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 
 | act family | gap kind | example quests | fix target |
 |---|---|---|---|
-| QuestActObjZoneKill | unsupported act type | 2794, 2795, 2796, 2797 … | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjAbilityLevel | unsupported act type | 5967, 6069 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjCompleteQuest | unsupported act type | 5814, 5815 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjMateLevel | unsupported act type | 5430, 5464 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActSupplyCrimePoint | unsupported act type | 2916, 2926 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
-| QuestActSupplyLivingPoint | unsupported act type | 5923, 5924 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 

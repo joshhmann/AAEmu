@@ -90,7 +90,23 @@ ACT_TABLES = {
     "QuestActObjSphere": ("quest_act_obj_spheres", {"sphereId": "sphere_id", "npcId": "npc_id"}),
     "QuestActObjCraft": ("quest_act_obj_crafts", {"craftId": "craft_id", "count": "count"}),
     "QuestActObjLevel": ("quest_act_obj_levels", {"level": "LEVEL"}),
-    "QuestActObjZoneMonsterHunt": ("quest_act_obj_zone_monster_hunts", {"zoneId": "zone_id", "count": "count"}),
+    "QuestActObjZoneKill": ("quest_act_obj_zone_kills", {
+        "zoneId": "zone_id",
+        "countNpc": "count_npc",
+        "countPk": "count_pk",
+        "teamShare": "team_share",
+        "useAlias": "use_alias",
+        "questActObjAliasId": "quest_act_obj_alias_id",
+        "lvMin": "lv_min",
+        "lvMax": "lv_max",
+        "isParty": "is_party",
+        "lvMinNpc": "lv_min_npc",
+        "lvMaxNpc": "lv_max_npc",
+        "pcFactionId": "pc_faction_id",
+        "pcFactionExclusive": "pc_faction_exclusive",
+        "npcFactionId": "npc_faction_id",
+        "npcFactionExclusive": "npc_faction_exclusive",
+    }),
     "QuestActObjExpressFire": ("quest_act_obj_express_fires", {"expressKeyId": "express_key_id", "npcGroupId": "npc_group_id", "count": "count"}),
     "QuestActObjAggro": ("quest_act_obj_aggros", {"range": "RANGE", "rank1": "rank1", "rank2": "rank2", "rank3": "rank3", "rank1Ratio": "rank1_ratio", "rank2Ratio": "rank2_ratio", "rank3Ratio": "rank3_ratio", "rank1Item": "rank1_item", "rank2Item": "rank2_item", "rank3Item": "rank3_item", "useAlias": "use_alias", "questActObjAliasId": "quest_act_obj_alias_id"}),
     "QuestActCheckCompleteComponent": ("quest_act_check_complete_components", {"completeComponent": "complete_component"}),
@@ -110,6 +126,11 @@ ACT_TABLES = {
     "QuestActEtcItemObtain": ("quest_act_etc_item_obtains", {"itemId": "item_id", "count": "count"}),
     "QuestActConAcceptItemGain": ("quest_act_con_accept_item_gains", {"itemId": "item_id", "count": "count"}),
     "QuestActSupplyLp": ("quest_act_supply_lps", {"laborPower": "lp"}),
+    # M2c wave-3 (t_64d13ee4): TRIVIAL supply act the expedition dailies carry
+    # at Reward (5923/5924 LivingPoint; HonorPoint was already closed in
+    # wave-2) - without this entry the dailies stay SKIP after the ZoneKill
+    # closure.
+    "QuestActSupplyLivingPoint": ("quest_act_supply_living_points", {"point": "point"}),
 }
 
 # Act types that need no synthetic event but whose RunAct is drivable by quest state.
@@ -125,6 +146,8 @@ NO_EVENT_TYPES = {
     # M2a wave-1: pass-through / state-check acts with no synthetic event.
     "QuestActEtcItemObtain", "QuestActConAcceptItemGain", "QuestActSupplyLp",
     "QuestActSupplyHonorPoint",
+    # M2c wave-3: supply acts RunAct->true (ChangeGamePoints), zero-wired domain.
+    "QuestActSupplyLivingPoint",
 }
 
 # Act types -> synthetic event shape builder. Returns None when the shape is
@@ -190,8 +213,31 @@ def event_shape(act_type, params, component_id, group_members, npc_groups=None, 
             {"type": "CinemaStarted", "cinemaId": params.get("cinemaId", 0)},
             {"type": "CinemaEnded", "cinemaId": params.get("cinemaId", 0)},
         ]
-    if act_type == "QuestActObjZoneMonsterHunt":
-        return None  # zone->zone-group mapping unverified -> skip quest
+    if act_type == "QuestActObjZoneKill":
+        # M2c wave-3 (t_64d13ee4): the act's OnZoneKill only credits when
+        # victim != killer AND the victim satisfies the faction/level filters
+        # (QuestActObjZoneKill.cs:70-96). FireEvent must deliver a NON-OWNER
+        # victim built to satisfy the act's filter - carry the filter params
+        # so the driver can construct it. count = max(NPC, PK) quota.
+        # Engine state: faction-0 no-filter + 0..0 level bounds = "any level"
+        # was fixed in t_497b51d8 (accepted; rides on this branch since the
+        # base predates its merge). ZoneId itself is STILL unenforced (§2.4
+        # watch item) - the zoneGroupId is syntactically valid but unchecked.
+        return {
+            "type": "ZoneKill",
+            "zoneGroupId": params.get("zoneId", 0),
+            "count": max(params.get("countNpc", 0), params.get("countPk", 0)) or 1,
+            "countNpc": params.get("countNpc", 0),
+            "countPk": params.get("countPk", 0),
+            "npcFactionId": params.get("npcFactionId", 0),
+            "npcFactionExclusive": parse_bool(params.get("npcFactionExclusive", "f")),
+            "lvMinNpc": params.get("lvMinNpc", 0),
+            "lvMaxNpc": params.get("lvMaxNpc", 0),
+            "pcFactionId": params.get("pcFactionId", 0),
+            "pcFactionExclusive": parse_bool(params.get("pcFactionExclusive", "f")),
+            "lvMin": params.get("lvMin", 0),
+            "lvMax": params.get("lvMax", 0),
+        }
     if act_type == "QuestActObjExpressFire":
         # M2a wave-2 (t_41a14bab): ExpressFire credits when the owner expresses
         # an emotion at a member of the act's npc group. Fire the group's first
@@ -438,7 +484,7 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         "QuestActObjItemUse", "QuestActObjItemGroupGather", "QuestActObjItemGroupUse",
         "QuestActObjTalk", "QuestActObjTalkNpcGroup", "QuestActObjInteraction",
         "QuestActObjSphere", "QuestActObjCraft", "QuestActObjLevel",
-        "QuestActObjZoneMonsterHunt", "QuestActObjExpressFire",
+        "QuestActObjZoneKill", "QuestActObjExpressFire",
         # M2a wave-1: QuestActObjCinema overrides CountsAsAnObjective => true.
         "QuestActObjCinema", "QuestActObjAggro",
     }
