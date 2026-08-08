@@ -280,6 +280,29 @@ public class BotPresenceCoordinatorTests
     }
 
     [Test]
+    public async Task BuildRoamRoute_ProbesTerrainFromAboveHome()
+    {
+        var home = new Vector3(15578f, 15382f, 126f);
+        var probes = new List<Vector3>();
+
+        var route = BotPresenceCoordinator.BuildRoamRoute(home, 30f, seed: 1,
+            zoneId: 9, groundHeightProvider: (pos, _) =>
+            {
+                probes.Add(pos);
+                return 135f;
+            });
+
+        // The probe must start ABOVE the flat route Z (home.Z + margin):
+        // GetHeight's geodata raycast searches downward, so a probe starting
+        // at home.Z misses when the terrain floor sits above it (prod: floor
+        // 128–135 vs home 126.484 — reproduced 2026-08-08) and the waypoint
+        // silently falls back to flat home.Z, re-wedging the bot.
+        await Assert.That(probes.Count).IsEqualTo(8);
+        await Assert.That(probes.All(p => p.Z == home.Z + BotPresenceCoordinator.TerrainProbeMargin)).IsTrue();
+        await Assert.That(route.Waypoints.All(w => w.Z == 135f)).IsTrue();
+    }
+
+    [Test]
     public async Task BuildRoamRoute_NoHeightmapData_KeepsHomeZ()
     {
         var home = new Vector3(15578f, 15382f, 126f);

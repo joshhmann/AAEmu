@@ -125,6 +125,21 @@ public sealed class BotPresenceCoordinator
     public static void LogError(Exception ex, string message)
         => Logger.Error(ex, message);
 
+    /// <summary>
+    /// Height above home.Z the route builder probes terrain from. The
+    /// heightmap call (WorldManager.GetHeight → GeoData) raycasts DOWNWARD
+    /// from the given Z; probing from home.Z misses when the terrain floor
+    /// sits ABOVE the flat route height (prod: floor 128–135 vs home
+    /// 126.484), the heightmap fallback returns 0 for the same cells, and
+    /// the waypoint falls back to flat home.Z → the bot can never arrive
+    /// there (the t_d7e45251 wedge — reproduced on prod 2026-08-08: all 3
+    /// bots frozen at the 135° waypoint, clamped Z 127.98 vs route Z
+    /// 126.484). Probing from above the floor makes the raycast hit the
+    /// same surface the executor's live clamp hits. 50m covers any
+    /// plausible relief inside a 27m patrol circle.
+    /// </summary>
+    internal const float TerrainProbeMargin = 50f;
+
     /// <summary>Reads the bot count from env / config (clamped 1..10).</summary>
     public static int ReadBotCount(int fallback = 3)
     {
@@ -266,10 +281,14 @@ public sealed class BotPresenceCoordinator
             // waypoint built flat at home.Z can never be "arrived at" when
             // terrain deviates > ArrivalRadius from home.Z (prod: 8.68m gap
             // at the 315° waypoint → leg timeout → bot frozen at the
-            // waypoint). Probe the terrain at build time; 0 = no heightmap
-            // data → keep home.Z (the executor's 0 = skip-clamp convention,
-            // so a data-less zone is no worse than before).
-            var terrainZ = heightProvider(new Vector3(x, y, home.Z), zoneId);
+            // waypoint). Probe the terrain at build time, from ABOVE the
+            // terrain (home.Z + TerrainProbeMargin) — GetHeight's geodata
+            // raycast searches downward, so probing from the flat route Z
+            // misses when the floor sits above it and the heightmap
+            // fallback returns 0 for the same cells; 0 = still no data →
+            // keep home.Z (the executor's 0 = skip-clamp convention, so a
+            // data-less zone is no worse than before).
+            var terrainZ = heightProvider(new Vector3(x, y, home.Z + TerrainProbeMargin), zoneId);
             waypoints.Add(new Vector3(x, y, terrainZ != 0f ? terrainZ : home.Z));
         }
 
