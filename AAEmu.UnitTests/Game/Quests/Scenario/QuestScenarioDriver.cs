@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -110,7 +111,7 @@ public class QuestScenarioDriver
         // item id removed-queue + live item registry. Both are assigned in Load(),
         // which we do not run - seed empty collections so GetNewId()/Create() work.
         SetField(itemManager, "_removedItems", new List<ulong>());
-        SetField(itemManager, "_allItems", new Dictionary<ulong, Item>());
+        SetField(itemManager, "_allItems", new ConcurrentDictionary<ulong, Item>());
         SetSingleton(typeof(Singleton<ItemManager>), itemManager);
 
         // UnitRequirementsGameData: empty requirement sets -> every component is runnable.
