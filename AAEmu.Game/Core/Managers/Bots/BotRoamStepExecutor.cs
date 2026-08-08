@@ -54,6 +54,14 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Clock for elapsed accounting + broadcast throttle (tests inject FakeTimeProvider).</summary>
     public TimeProvider TimeProvider { get; init; } = TimeProvider.System;
 
+    /// <summary>
+    /// Ground-height seam for the step-3a clamp (tests inject a fake terrain
+    /// heightmap; null → the real one via
+    /// <see cref="WorldManager.GetReferenceHeight"/> — the Simulation.cs:394
+    /// pattern). Signature: (position, zoneId) → terrain Z, 0 = no data.
+    /// </summary>
+    public Func<Vector3, uint, float>? GroundHeightProvider { get; init; }
+
     /// <summary>Actor factory seam (tests inject a recording actor).</summary>
     public Func<Character, IGameplayActor> ActorFactory { get; init; } = c => new GameplayActor(c);
 
@@ -158,8 +166,10 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         // 3a. Ground clamp — the Simulation.cs:394 pattern: after movement,
         // snap Z to the heightmap so bots walk ON the terrain, never under it.
         var position = bot.Character.Transform.World.Position;
-        var clampedZ = WorldManager.Instance.GetReferenceHeight(
-            null, position.X, position.Y, position.Z, bot.Character.Transform.ZoneId);
+        var clampedZ = GroundHeightProvider != null
+            ? GroundHeightProvider(position, bot.Character.Transform.ZoneId)
+            : WorldManager.Instance.GetReferenceHeight(
+                null, position.X, position.Y, position.Z, bot.Character.Transform.ZoneId);
         if (clampedZ != 0f && Math.Abs(clampedZ - position.Z) > 0.05f)
         {
             bot.Character.Transform.Local.SetPosition(position.X, position.Y, clampedZ);

@@ -9,6 +9,9 @@ using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items.Containers;
+using AAEmu.Game.Utils;
+
+using Microsoft.Extensions.Time.Testing;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -131,7 +134,11 @@ public class BotPresenceCoordinatorTests
         var coordinator = new BotPresenceCoordinator(
             manager, scheduler, director, stepExecutor,
             _ => new Vector3(15578f, 15382f, 126f),
-            provisioner);
+            provisioner,
+            // Flat-route rig: 0 = "no heightmap data" → waypoints keep home.Z
+            // (exactly the pre-fix builder output). The terrain tests inject
+            // a real terrain function instead.
+            groundHeightProvider: (_, _) => 0f);
 
         return (coordinator, manager, scheduler, director, provisioned);
     }
@@ -197,7 +204,8 @@ public class BotPresenceCoordinatorTests
         var coordinator = new BotPresenceCoordinator(
             manager, scheduler, director, stepExecutor,
             _ => new Vector3(15578f, 15382f, 126f),
-            provisioner);
+            provisioner,
+            groundHeightProvider: (_, _) => 0f); // flat-route rig (see CreateRig)
 
         // First boot: fresh provision — 3 distinct character rows.
         await Assert.That(coordinator.Start(Config(3))).IsTrue();
@@ -236,7 +244,8 @@ public class BotPresenceCoordinatorTests
         var home = new Vector3(15578f, 15382f, 126f);
         var radius = 30f;
 
-        var route = BotPresenceCoordinator.BuildRoamRoute(home, radius, seed: 1);
+        var route = BotPresenceCoordinator.BuildRoamRoute(home, radius, seed: 1,
+            groundHeightProvider: (_, _) => 0f);
 
         await Assert.That(route.Waypoints.Count).IsEqualTo(8);
         await Assert.That(route.Mode).IsEqualTo(BotPath.LoopMode.Loop);
@@ -248,10 +257,126 @@ public class BotPresenceCoordinatorTests
     {
         var home = new Vector3(100f, 100f, 10f);
 
-        var routeA = BotPresenceCoordinator.BuildRoamRoute(home, 30f, seed: 0);
-        var routeB = BotPresenceCoordinator.BuildRoamRoute(home, 30f, seed: 1);
+        var routeA = BotPresenceCoordinator.BuildRoamRoute(home, 30f, seed: 0,
+            groundHeightProvider: (_, _) => 0f);
+        var routeB = BotPresenceCoordinator.BuildRoamRoute(home, 30f, seed: 1,
+            groundHeightProvider: (_, _) => 0f);
 
         await Assert.That(routeA.Waypoints[0]).IsNotEqualTo(routeB.Waypoints[0]);
+    }
+
+    [Test]
+    public async Task BuildRoamRoute_WithTerrainProvider_WaypointsSitOnTerrain()
+    {
+        var home = new Vector3(15578f, 15382f, 126f);
+
+        var route = BotPresenceCoordinator.BuildRoamRoute(home, 30f, seed: 1,
+            zoneId: 9, groundHeightProvider: (_, _) => 135f);
+
+        // The wedge fix (t_d7e45251): every waypoint must sit at the terrain
+        // height the executor clamp pins the bot to — otherwise the leg can
+        // never arrive (|clamped Z − waypoint Z| > ArrivalRadius 0.5).
+        await Assert.That(route.Waypoints.All(w => w.Z == 135f)).IsTrue();
+    }
+
+    [Test]
+    public async Task BuildRoamRoute_NoHeightmapData_KeepsHomeZ()
+    {
+        var home = new Vector3(15578f, 15382f, 126f);
+
+        var route = BotPresenceCoordinator.BuildRoamRoute(home, 30f, seed: 1,
+            zoneId: 9, groundHeightProvider: (_, _) => 0f);
+
+        // 0 = "no heightmap data" (the executor's skip-clamp convention) →
+        // fall back to the legacy flat route; a data-less zone is no worse
+        // than before the fix.
+        await Assert.That(route.Waypoints.All(w => w.Z == home.Z)).IsTrue();
+    }
+
+    [Test]
+    public async Task Start_OnDeviantTerrain_BotCompletesFullPatrolLoop()
+    {
+        // FAIL-BEFORE / PASS-AFTER (t_d7e45251): BuildRoamRoute used to build
+        // waypoints flat at home.Z while BotRoamStepExecutor ground-clamps Z
+        // to the heightmap every step. Terrain 135 vs home 126 = 9m relief
+        // (> ArrivalRadius 0.5) → the leg never "arrives" → 60s leg timeout
+        // → route advance fails the Z check → bot frozen at the waypoint with
+        // clamped Z (prod signature: all 3 bots at the 315° waypoint,
+        // 15597.1/15363/135.161). With terrain-aware waypoints the bot must
+        // complete a FULL 8-waypoint patrol loop on that terrain.
+        //
+        // RED against the pre-fix flat builder (0 completed legs — wedge);
+        // GREEN with the terrain-aware builder (≥ 8 completed Move legs).
+        SeedFixtureSingletons();
+
+        var home = new Vector3(15578f, 15382f, 126f); // route Z would be 126
+        const float terrainZ = 135f;                  // 9m relief everywhere
+        Func<Vector3, uint, float> terrain = (_, _) => terrainZ;
+
+        var clock = new FakeTimeProvider();
+        GameplayActor? actor = null;
+        var executor = new BotRoamStepExecutor
+        {
+            GroundHeightProvider = terrain,
+            TimeProvider = clock,
+            BroadcastInterval = TimeSpan.FromMilliseconds(200),
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2.5f,
+            ActorFactory = c => actor = new GameplayActor(c)
+        };
+
+        var manager = new RecordingManager();
+        var scheduler = new RecordingScheduler();
+        var director = new RecordingDirector();
+        Character? character = null;
+        var provisioner = (string username, string name, Race race, Gender gender, byte level) =>
+        {
+            var session = HeadlessSession.Create(901, name, level, race);
+            character = session.Character;
+            // NOTE: no WorldInstance.AddObject here — it touches
+            // WorldManager.Instance (unseeded in this fixture). The roam
+            // executor's BroadcastPacket is safe without a Region
+            // (WorldManager.GetAround early-returns on null Region; the
+            // headless SendPacket sink no-ops).
+            return session;
+        };
+
+        var coordinator = new BotPresenceCoordinator(
+            manager, scheduler, director, executor,
+            _ => home,
+            provisioner,
+            groundHeightProvider: terrain);
+
+        await Assert.That(coordinator.Start(Config(1))).IsTrue();
+        await Assert.That(character).IsNotNull();
+        await Assert.That(actor).IsNotNull();
+
+        GameplayActorTestRig.SetPosition(actor!, home);
+        var runtime = new PlayerBotRuntime(character!, "presence-demo");
+
+        // Drive ~1.3 patrol loops: first leg 27m + 7 chords of ~20.7m at
+        // 2.5 m/s ≈ 69s of walking; 900 steps of 100ms fake time ≈ 90s.
+        TimeSpan? next = TimeSpan.Zero;
+        var guard = 0;
+        while (next is not null && guard++ < 900)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            next = await executor.StepAsync(runtime, CancellationToken.None);
+        }
+
+        // Full loop: ≥ 8 Move legs COMPLETED ("arrived"), and NO leg ever
+        // timed out (the wedge signature was a leg stuck until timeout).
+        var completedMoves = actor!.AuditTrace.Count(r =>
+            r.Action == ActorActionType.Move && r.Result == ActorLifecycleState.Completed);
+        await Assert.That(completedMoves).IsGreaterThanOrEqualTo(8);
+        await Assert.That(actor.AuditTrace.Count(r =>
+            r.Action == ActorActionType.Move && r.Result == ActorLifecycleState.TimedOut)).IsEqualTo(0);
+
+        // The bot walks ON the terrain (the clamp owns Z) and stays on the
+        // patrol circle — it is not wedged at one waypoint.
+        var pos = actor.Character.Transform.World.Position;
+        await Assert.That(pos.Z).IsEqualTo(terrainZ);
+        await Assert.That(MathUtil.CalculateDistance(home, pos, false)).IsLessThanOrEqualTo(30f);
     }
 
     // ---------------------------------------------------------------- singleton seeding
