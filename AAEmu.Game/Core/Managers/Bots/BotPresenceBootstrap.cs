@@ -45,7 +45,15 @@ internal static class BotPresenceBootstrap
                 for (var i = 0; i < 600 && !worldReady; i++)
                 {
                     var worlds = WorldManager.Instance.GetWorlds();
-                    worldReady = WorldManager.Instance.GetWorld(WorldManager.DefaultInstanceId) != null
+                    // Non-logging probe: GetWorld(DefaultInstanceId) logs [FATAL]
+                    // per miss, and the world is polled every 100ms while it is
+                    // still being created (~146 FATAL boot lines on the
+                    // presence-enabled build). The worlds array is keyed by
+                    // WorldInstance.Id (WorldManager.cs:491), so Any() over the
+                    // same array is exactly equivalent — minus the log. The
+                    // empty-table case reads as not-ready too (Any() is false),
+                    // mirroring BotProvisioningControlHost's run-9 lesson.
+                    worldReady = worlds.Any(w => w.Id == WorldManager.DefaultInstanceId)
                         && worlds is { Length: > 0 }
                         && worlds.All(w => w.MateManager != null)
                         && UnitManagers.CharacterManager.Instance.GetTemplate(Race.Nuian, Gender.Male) != null;
