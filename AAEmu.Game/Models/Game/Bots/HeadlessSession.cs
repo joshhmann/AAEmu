@@ -166,6 +166,21 @@ public class HeadlessSession
                 throw new InvalidOperationException(
                     $"Provisioning failed: name '{name}' row {existingId} belongs to account {adoptedCharacter.AccountId} but NameManager maps it to {account.AccountId} (registry/row desync — refusing adoption)");
 
+            // P0 hotfix t_76730833: rows provisioned BEFORE the model-params
+            // fix carry a degenerate 1-byte blob (type=None) — the client
+            // renders the name tag but no body. Heal the in-memory params
+            // AND persist them so the row stays visible across reboots.
+            var adoptedTemplate = CharacterManager.Instance.GetTemplate(adoptedCharacter.Race, adoptedCharacter.Gender);
+            if (BotAppearanceDefaults.IsDegenerate(adoptedCharacter.ModelParams))
+            {
+                adoptedCharacter.ModelParams = BotAppearanceDefaults.BuildDefault(
+                    adoptedCharacter.Race, adoptedCharacter.Gender, adoptedTemplate?.ModelId ?? 0);
+                if (!adoptedCharacter.SaveDirectlyToDatabase())
+                    Logger.Warn("Provisioning: adopted '{Name}' (id {Id}) — model-params heal save FAILED", name, adoptedCharacter.Id);
+                else
+                    Logger.Info("Provisioning: healed degenerate unit_model_params for adopted bot '{Name}' (id {Id})", name, adoptedCharacter.Id);
+            }
+
             Logger.Info("Provisioning: adopted existing character row '{Name}' (id {Id}, account {AccountId}) — re-embodying",
                 name, adoptedCharacter.Id, account.AccountId);
 
@@ -252,7 +267,14 @@ public class HeadlessSession
     private static Character BuildProvisionedCharacter(uint characterId, uint accountId, string name,
         Race race, Gender gender, byte level, CharacterTemplate template)
     {
-        var character = new Character(new UnitCustomModelParams())
+        // P0 hotfix t_76730833: a bare UnitCustomModelParams serializes a
+        // 1-byte blob (type=None) and the 1.2 client cannot build the
+        // character mesh from empty custom model params — name tags render,
+        // the body does not (prod evidence: Citizen01-03 rows = 0x00 vs a
+        // real human row's 231-byte Face blob). Provision with the
+        // race-appropriate default appearance (canonical hair/skin per
+        // model + full FaceModel) so the body renders under the tag.
+        var character = new Character(BotAppearanceDefaults.BuildDefault(race, gender, template.ModelId))
         {
             Id = characterId,
             TemplateId = characterId,
