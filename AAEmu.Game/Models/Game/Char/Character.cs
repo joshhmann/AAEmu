@@ -331,7 +331,7 @@ public partial class Character : Unit, ICharacter
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var result = formula.Evaluate(parameters);
             var res = result;
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Str;
             res = CalculateWithBonuses(res, UnitAttribute.Str);
@@ -348,7 +348,7 @@ public partial class Character : Unit, ICharacter
             var formula = FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.Dex);
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var res = formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Dex;
             res = CalculateWithBonuses(res, UnitAttribute.Dex);
@@ -365,7 +365,7 @@ public partial class Character : Unit, ICharacter
             var formula = FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.Sta);
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var res = formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Sta;
             res = CalculateWithBonuses(res, UnitAttribute.Sta);
@@ -382,7 +382,7 @@ public partial class Character : Unit, ICharacter
             var formula = FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.Int);
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var res = formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Int;
             res = CalculateWithBonuses(res, UnitAttribute.Int);
@@ -399,7 +399,7 @@ public partial class Character : Unit, ICharacter
             var formula = FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.Spi);
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var res = formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Spi;
             res = CalculateWithBonuses(res, UnitAttribute.Spi);
@@ -1127,7 +1127,7 @@ public partial class Character : Unit, ICharacter
                 ["fai"] = Fai
             };
             var res = (int)formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
             {
                 switch (item)
                 {
@@ -1167,7 +1167,7 @@ public partial class Character : Unit, ICharacter
                 ["fai"] = Fai
             };
             var res = (int)formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
             {
                 switch (item)
                 {
@@ -2041,7 +2041,7 @@ public partial class Character : Unit, ICharacter
             if (item == null)
                 continue;
 
-            if (!Inventory.Bag.Items.Contains(item) && !Equipment.Items.Contains(item))
+            if (!Inventory.Bag.GetItemsSnapshot().Contains(item) && !Equipment.GetItemsSnapshot().Contains(item))
             {
                 Logger.Warn($"Attempting to repair an item that isn't in your inventory or equipment, Item: {item.Id}");
                 continue;
