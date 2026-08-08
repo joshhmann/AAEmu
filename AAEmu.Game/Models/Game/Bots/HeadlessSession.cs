@@ -1,3 +1,4 @@
+using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
@@ -121,6 +122,8 @@ public class HeadlessSession
     public static HeadlessSession Provision(string username, string name, Race race = Race.Nuian,
         Gender gender = Gender.Male, byte level = 1)
     {
+        name = name.NormalizeName();
+
         // Fail fast on bad input BEFORE any side effects: name rules mirror the
         // human create path (NameManager regex + duplicate check). A bot
         // character name lives in the same namespace as human names.
@@ -137,6 +140,11 @@ public class HeadlessSession
             ?? throw new InvalidOperationException($"Provisioning failed: no character template for race {race} / gender {gender} (server data not loaded?)");
 
         var characterId = CharacterIdManager.Instance.GetNextId();
+        // Register the name BEFORE the row save, exactly like the human create
+        // path (CharacterManager.Create): bot names occupy the same namespace
+        // as human names, so duplicates and human-side squatting are rejected
+        // by the same registry. RemoveCharacterId on failure releases it.
+        NameManager.Instance.AddCharacter(characterId, name, account.AccountId);
         var character = BuildProvisionedCharacter(characterId, account.AccountId, name, race, gender, level, template);
         if (!character.SaveDirectlyToDatabase())
         {

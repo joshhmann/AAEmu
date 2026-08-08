@@ -1,5 +1,7 @@
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -167,6 +169,25 @@ public sealed class BotProvisioningControlHost
 
     private string HandleProvision(JsonElement root)
     {
+        try
+        {
+            return HandleProvisionCore(root);
+        }
+        catch (Exception ex)
+        {
+            // The real error must land in the server log AND in the response —
+            // the rig fails fast on raw errors (only the explicit boot guards
+            // below say "server not ready"), so a genuine provisioning bug is
+            // diagnosable instead of being retried into the void (run-6
+            // lesson: a mid-boot failure was wrapped as retryable and the
+            // retries then collided with the already-registered name).
+            Logger.Error(ex, "Provisioning control host: provision failed");
+            return Err("provision failed: " + ex.GetType().Name + ": " + ex.Message);
+        }
+    }
+
+    private string HandleProvisionCore(JsonElement root)
+    {
         var username = root.GetProperty("username").GetString();
         var name = root.GetProperty("name").GetString();
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(name))
@@ -180,10 +201,30 @@ public sealed class BotProvisioningControlHost
             : Gender.Male;
         var level = (byte)Math.Clamp(GetInt(root, "level", 1), 1, 55);
 
-        // Readiness guard: provisioning builds the character from
-        // CharacterManager templates; the rig retries until the server is booted.
-        if (CharacterManager.Instance.GetTemplate(race, gender) == null)
+        // Readiness guards — the rig retries on the "server not ready" marker.
+        // Boot order matters: the control host can bind as soon as the DI
+        // container is built, but world instances and character templates load
+        // seconds later. GetWorlds() populates as each world is CREATED, while
+        // MateManager is assigned moments later (WorldManager.cs:528) — the
+        // main world can be complete while a SIBLING world is still mid-wiring
+        // (run-8: EnterWorld iterates ALL worlds and NREd on arche_mall's
+        // MateManager). And an EMPTY world table must read as not-ready too
+        // (run-9: Any() over an empty table is false, so the guard passed
+        // mid-boot and GetWorld(0) FATALed → ParentWorld null NRE). Every
+        // world must exist AND be fully wired before provisioning.
+        var worlds = WorldManager.Instance.GetWorlds();
+        if (worlds.Length == 0 || worlds.Any(w => w.MateManager == null))
+            return Err("server not ready (worlds still loading)");
+
+        try
+        {
+            if (CharacterManager.Instance.GetTemplate(race, gender) == null)
+                return Err("server not ready (character templates not loaded)");
+        }
+        catch
+        {
             return Err("server not ready (character templates not loaded)");
+        }
 
         var session = HeadlessSession.Provision(username, name, race, gender, level);
         return Ok(new
@@ -255,6 +296,15 @@ internal static class BotProvisioningControlHostBootstrap
     [ModuleInitializer]
     internal static void Init()
     {
+        // ONLY the real game server process may host the control surface. A
+        // process that merely LOADS AAEmu.Game.dll (e.g. the unit-test runner
+        // when AAEMU_BOT_PROVISION_TEST is in its environment) must never bind
+        // the port — otherwise the live rig would talk to its own in-process
+        // host and the real server's bind would fail (EADDRINUSE), producing
+        // an undrivable server and a self-inflicted retry loop.
+        if (Assembly.GetEntryAssembly()?.GetName().Name != "AAEmu.Game")
+            return;
+
         if (Environment.GetEnvironmentVariable("AAEMU_BOT_PROVISION_TEST") is not ("1" or "true" or "True"))
             return;
 

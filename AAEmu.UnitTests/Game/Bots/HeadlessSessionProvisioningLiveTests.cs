@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using AAEmu.Game.Core.Managers;
 using MySql.Data.MySqlClient;
 
 namespace AAEmu.UnitTests.Game.Bots;
@@ -50,10 +51,16 @@ public sealed class LiveRigOnlyAttribute : SkipAttribute
 public class HeadlessSessionProvisioningLiveTests
 {
     private const string Username = "bot_managed_rig_0001";
-    private const string CharacterName = "RigBot01";
+    // Normalized display name (human create path normalizes: first char upper,
+    // rest lower) — the provision path mirrors it, so the row/response name is
+    // "Rigbot01" even when the request says "RigBot01".
+    private const string CharacterName = "Rigbot01";
     private const int ControlPort = 1261;
     private const int GamePort = 1279;
-    private const int StreamPort = 1280;
+    // 1281, not 1280: a lingering shared-stack game (e.g. another worker's
+    // finished-but-not-torn-down run) holds :1280 — the rig must boot without
+    // touching the shared stack's ports.
+    private const int StreamPort = 1281;
 
     private static string DbHost => Environment.GetEnvironmentVariable("AAEMU_E2E_DB_HOST") ?? "127.0.0.1";
     private static string DbPort => Environment.GetEnvironmentVariable("AAEMU_E2E_DB_PORT") ?? "3306";
@@ -71,15 +78,19 @@ public class HeadlessSessionProvisioningLiveTests
     [Timeout(900_000)]
     public async Task Provision_Activate_Persist_Deactivate_RoundTrip()
     {
+        var passed = false;
         try
         {
             await RunRoundTripAsync();
+            passed = true;
         }
         finally
         {
             CleanupRows();
             KillServer();
-            if (Directory.Exists(RigDir))
+            // Remove the rig dir only on success — on failure the server.log
+            // inside it is the diagnosis trail.
+            if (passed && Directory.Exists(RigDir) && !string.IsNullOrEmpty(RigDir))
             {
                 try { Directory.Delete(RigDir, recursive: true); } catch { /* best effort */ }
             }
@@ -107,9 +118,13 @@ public class HeadlessSessionProvisioningLiveTests
                 race = "Nuian",
                 gender = "Male",
                 level = 1
-            }, retries: 30, retryDelay: TimeSpan.FromSeconds(2)); // server-not-ready guard
+            }, retries: 90, retryDelay: TimeSpan.FromSeconds(2)); // boot-readiness guard (templates load takes ~1-2min)
 
-            await Assert.That(IsOk(provision)).IsTrue();
+            // Fail fast WITH the server's actual error text — a bare ok:false
+            // is undiagnosable (run-5 lesson: the retry budget exhausted
+            // against the wrong listener and the reason was invisible).
+            if (!IsOk(provision))
+                throw new InvalidOperationException("provision failed: " + GetError(provision));
             var provisionData = GetData(provision);
             _accountId = GetUInt(provisionData, "accountId");
             _characterId = GetUInt(provisionData, "characterId");
@@ -128,9 +143,10 @@ public class HeadlessSessionProvisioningLiveTests
                 using var reader = cmd.ExecuteReader();
                 await Assert.That(reader.Read()).IsTrue();
                 await Assert.That(reader.GetUInt32("id")).IsEqualTo(_accountId);
-                await Assert.That(reader.GetByte("account_type")).IsEqualTo((byte)1); // HeadlessBot
+                // MySql.Data returns tinyint as Int32 — cast, don't GetByte.
+                await Assert.That(reader.GetInt32("account_type")).IsEqualTo((int)BotAccountType.HeadlessBot);
                 await Assert.That(reader.GetBoolean("banned")).IsTrue(); // client login blocked
-                await Assert.That(reader.GetByte("ban_reason")).IsEqualTo((byte)19); // use_bot_forever
+                await Assert.That(reader.GetInt32("ban_reason")).IsEqualTo((int)BotAccountProvisioningService.ClientLoginBlockBanReason);
                 await Assert.That(reader.GetString("email")).IsEqualTo($"{Username}@managed.local");
             }
 
@@ -145,8 +161,14 @@ public class HeadlessSessionProvisioningLiveTests
                 await Assert.That(reader.Read()).IsTrue();
                 await Assert.That(reader.GetUInt32("account_id")).IsEqualTo(_accountId);
                 await Assert.That(reader.GetString("name")).IsEqualTo(CharacterName);
-                await Assert.That(reader.GetByte("level")).IsEqualTo((byte)1);
-                await Assert.That(reader.GetUInt32("world_id")).IsGreaterThan(0u); // real world placement
+                await Assert.That(reader.GetInt32("level")).IsEqualTo(1);
+                // Ordinary row contract: world_id is 0 for fresh rows — ServerId
+                // is only ever READ from the row, never assigned (verified
+                // empirically: the E2E harness's human-path characters also
+                // carry world_id=0). Real placement lives in the spawn
+                // coordinates (template spawn position) and the embodiment
+                // (WorldManager membership, proven by setLevel below).
+                await Assert.That(reader.GetUInt32("world_id")).IsEqualTo(0u);
                 await Assert.That(reader.GetInt32("deleted")).IsEqualTo(0);
             }
 
@@ -165,7 +187,7 @@ public class HeadlessSessionProvisioningLiveTests
                 cmd.Parameters.AddWithValue("@id", _characterId);
                 using var reader = cmd.ExecuteReader();
                 await Assert.That(reader.Read()).IsTrue();
-                await Assert.That(reader.GetByte("level")).IsEqualTo((byte)7); // leave-save persisted the mutation
+                await Assert.That(reader.GetInt32("level")).IsEqualTo(7); // leave-save persisted the mutation
                 await Assert.That(reader.GetInt32("deleted")).IsEqualTo(0); // deactivate persists, never deletes
             }
 
@@ -174,13 +196,17 @@ public class HeadlessSessionProvisioningLiveTests
             {
                 cmd = "provision",
                 username = Username,
-                name = CharacterName,
+                name = "RigBot02", // fresh character name: bot names share the
+                                   // human NameManager namespace — reusing
+                                   // "RigBot01" must now FAIL (name registered
+                                   // by the first provision, like a human char)
                 race = "Nuian",
                 gender = "Male",
                 level = 1
             });
             await Assert.That(IsOk(reprovision)).IsTrue();
             await Assert.That(GetUInt(GetData(reprovision), "accountId")).IsEqualTo(_accountId);
+            await Assert.That(GetUInt(GetData(reprovision), "characterId")).IsGreaterThan(0u);
 
             using (var conn = OpenDb("aaemu_login"))
             using (var cmd = conn.CreateCommand())
@@ -207,8 +233,13 @@ public class HeadlessSessionProvisioningLiveTests
         // Canonical game data (compact.sqlite3 etc.) copied from the E2E
         // canonical source (the same one E2eStack.EnsureRuntimeLayout uses);
         // ClientData is symlinked (16GB pak, never mutated — same as E2E).
+        // The publish output may carry an empty ClientData dir — replace it
+        // with the symlink so the pak is not duplicated (E2eStack pattern).
         CopyDirectory(Path.Combine(GameDataRoot, "Data"), Path.Combine(gameDir, "Data"));
-        Directory.CreateSymbolicLink(Path.Combine(gameDir, "ClientData"), Path.Combine(GameDataRoot, "ClientData"));
+        var clientLink = Path.Combine(gameDir, "ClientData");
+        if (Directory.Exists(clientLink))
+            Directory.Delete(clientLink, recursive: true);
+        Directory.CreateSymbolicLink(clientLink, Path.Combine(GameDataRoot, "ClientData"));
 
         // Capped NLog config from the E2E runtime (the publish output carries
         // the repo's uncapped daily-rotation version).
@@ -339,6 +370,9 @@ public class HeadlessSessionProvisioningLiveTests
                 continue;
             }
 
+            if (!root.GetProperty("ok").GetBoolean() && attempt == 1)
+                Console.WriteLine($"[live-rig] command failed: {JsonSerializer.Serialize(command)} -> {line}");
+
             return root;
         }
     }
@@ -433,6 +467,9 @@ public class HeadlessSessionProvisioningLiveTests
 
     private static string GetString(JsonElement data, string name)
         => data.TryGetProperty(name, out var el) && el.ValueKind == JsonValueKind.String ? el.GetString() ?? "" : "";
+
+    private static string GetError(JsonElement root)
+        => root.TryGetProperty("error", out var err) && err.ValueKind == JsonValueKind.String ? err.GetString() ?? "" : "(no error field)";
 
     private static bool IsOk(JsonElement root)
         => root.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True;
