@@ -48,6 +48,7 @@ public sealed class BotPresenceCoordinator
     private readonly BotRoamStepExecutor _stepExecutor;
     private readonly Func<BotPresenceConfig, Vector3> _homeResolver;
     private readonly Func<string, string, Race, Gender, byte, HeadlessSession> _provisioner;
+    private readonly Func<Vector3, uint, float> _groundHeightProvider;
 
     public sealed record BotPresenceConfig(
         int BotCount,
@@ -69,7 +70,8 @@ public sealed class BotPresenceCoordinator
         IPopulationDirector director,
         BotRoamStepExecutor stepExecutor,
         Func<BotPresenceConfig, Vector3>? homeResolver = null,
-        Func<string, string, Race, Gender, byte, HeadlessSession>? provisioner = null)
+        Func<string, string, Race, Gender, byte, HeadlessSession>? provisioner = null,
+        Func<Vector3, uint, float>? groundHeightProvider = null)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
@@ -77,6 +79,7 @@ public sealed class BotPresenceCoordinator
         _stepExecutor = stepExecutor ?? throw new ArgumentNullException(nameof(stepExecutor));
         _homeResolver = homeResolver ?? DefaultHomeResolver;
         _provisioner = provisioner ?? DefaultProvisioner;
+        _groundHeightProvider = groundHeightProvider ?? DefaultGroundHeightProvider;
     }
 
     /// <summary>
@@ -215,8 +218,11 @@ public sealed class BotPresenceCoordinator
                     Logger.Warn("BotPresenceCoordinator: fidelity Full {Result} for {Name}", full, name);
 
                 // Bounded patrol route around home — offset each bot's start so
-                // they don't all walk the same circle in lockstep.
-                var route = BuildRoamRoute(home, config.RoamRadius, i);
+                // they don't all walk the same circle in lockstep. Waypoint Z is
+                // terrain-aware (probing the same heightmap the executor clamps
+                // against, via the bot's own zone) so every leg can actually
+                // arrive (t_d7e45251 wedge fix).
+                var route = BuildRoamRoute(home, config.RoamRadius, i, character.Transform.ZoneId, _groundHeightProvider);
                 _stepExecutor.SetRoamRoute(character, route);
 
                 _scheduler.Wake(character.Id);
@@ -238,8 +244,15 @@ public sealed class BotPresenceCoordinator
     /// per-bot angular offset so bots visibly spread. All waypoints lie within
     /// RoamRadius of home (BotPath.AllWaypointsWithin safety contract).
     /// </summary>
-    internal static BotPath BuildRoamRoute(Vector3 home, float radius, int seed)
+    /// <param name="home">Route center (the bot's spawn/home position).</param>
+    /// <param name="radius">Flat radius of the patrol circle.</param>
+    /// <param name="seed">Per-bot phase offset (degrees, 45° steps).</param>
+    /// <param name="zoneId">Bot's zone (the same ZoneId the executor clamp uses).</param>
+    /// <param name="groundHeightProvider">Terrain probe; 0 = no heightmap data.</param>
+    internal static BotPath BuildRoamRoute(Vector3 home, float radius, int seed,
+        uint zoneId = 0, Func<Vector3, uint, float>? groundHeightProvider = null)
     {
+        var heightProvider = groundHeightProvider ?? DefaultGroundHeightProvider;
         var waypoints = new List<Vector3>();
         var startAngle = seed * 45f; // per-bot offset so they don't sync
         for (var i = 0; i < 8; i++)
@@ -247,11 +260,30 @@ public sealed class BotPresenceCoordinator
             var angle = (startAngle + i * 45f).DegToRad();
             var x = home.X + MathF.Cos(angle) * radius * 0.9f;
             var y = home.Y + MathF.Sin(angle) * radius * 0.9f;
-            waypoints.Add(new Vector3(x, y, home.Z));
+
+            // Terrain-aware waypoint Z (t_d7e45251 wedge fix): the roam
+            // executor ground-clamps Z to the heightmap every step, so a
+            // waypoint built flat at home.Z can never be "arrived at" when
+            // terrain deviates > ArrivalRadius from home.Z (prod: 8.68m gap
+            // at the 315° waypoint → leg timeout → bot frozen at the
+            // waypoint). Probe the terrain at build time; 0 = no heightmap
+            // data → keep home.Z (the executor's 0 = skip-clamp convention,
+            // so a data-less zone is no worse than before).
+            var terrainZ = heightProvider(new Vector3(x, y, home.Z), zoneId);
+            waypoints.Add(new Vector3(x, y, terrainZ != 0f ? terrainZ : home.Z));
         }
 
         return new BotPath(waypoints, BotPath.LoopMode.Loop, BotPath.ArrivalRadiusDefault, radius * 0.2f);
     }
+
+    /// <summary>
+    /// Default terrain probe: the same WorldManager heightmap call the roam
+    /// executor uses for its step-3a clamp (GetReferenceHeight with a null
+    /// AI — the plain terrain-height branch), so route Z and clamped Z come
+    /// from the same source.
+    /// </summary>
+    internal static float DefaultGroundHeightProvider(Vector3 position, uint zoneId)
+        => WorldManager.Instance.GetReferenceHeight(null, position.X, position.Y, position.Z, zoneId);
 
     /// <summary>
     /// Default home: the Nuian character template spawn (Solzreed — the
