@@ -1,0 +1,140 @@
+{
+ "questId": 1065,
+ "name": "철광산을 오르며",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 11,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3443
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5334,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8261,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 914,
+      "npcId": 3443
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5336,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8263,
+      "type": "QuestActConReportNpc",
+      "detailId": 1050,
+      "npcId": 3443
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5337,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23307,
+      "type": "QuestActSupplyItem",
+      "detailId": 2272,
+      "itemId": 14677,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8300,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11990,
+      "type": "QuestActObjItemGather",
+      "detailId": 757,
+      "itemId": 14201,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14201,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3443,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 14677,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14201,
+   "count": 5
+  }
+ ]
+}

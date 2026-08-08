@@ -1,0 +1,147 @@
+{
+ "questId": 2745,
+ "name": "핏빛안개 부족 오크 처치",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 835
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11546,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16823,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 436,
+      "npcId": 835
+     },
+     {
+      "actId": 16824,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 437,
+      "npcId": 836
+     },
+     {
+      "actId": 16825,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 438,
+      "npcId": 837
+     },
+     {
+      "actId": 16826,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 439,
+      "npcId": 838
+     },
+     {
+      "actId": 16828,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 440,
+      "npcId": 839
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11547,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16834,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 251,
+      "monsterGroupId": 87,
+      "count": 24
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11548,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16832,
+      "type": "QuestActConReportJournal",
+      "detailId": 145
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16833,
+      "type": "QuestActSupplyCopper",
+      "detailId": 226,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 87,
+     "count": 24
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

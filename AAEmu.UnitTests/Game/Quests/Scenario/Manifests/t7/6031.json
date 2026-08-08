@@ -1,0 +1,119 @@
+{
+ "questId": 6031,
+ "name": "가장 완벽한 돌",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3392
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25967,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35563,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4594,
+      "npcId": 3392
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25968,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35564,
+      "type": "QuestActObjCraft",
+      "detailId": 301,
+      "craftId": 5462,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25969,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35565,
+      "type": "QuestActConReportNpc",
+      "detailId": 4823,
+      "npcId": 3392
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27305,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 5462,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3392,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

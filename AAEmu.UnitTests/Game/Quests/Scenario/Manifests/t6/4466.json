@@ -1,0 +1,123 @@
+{
+ "questId": 4466,
+ "name": "붉은 꽃 슬라임 처치",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2215
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19509,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26558,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1077,
+      "npcId": 2215
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19510,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26559,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 986,
+      "npcId": 2215,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19511,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26560,
+      "type": "QuestActConReportJournal",
+      "detailId": 321
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19512,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26561,
+      "type": "QuestActSupplyCopper",
+      "detailId": 540,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2215,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

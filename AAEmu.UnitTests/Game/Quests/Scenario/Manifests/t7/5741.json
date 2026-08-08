@@ -1,0 +1,115 @@
+{
+ "questId": 5741,
+ "name": "내 손으로 만드는 머리 방어구: 재료",
+ "zoneId": 1,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24674,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34234,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 227,
+      "questContextId": 5741
+     },
+     {
+      "actId": 34389,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4403,
+      "npcId": 754
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24675,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34235,
+      "type": "QuestActObjItemGather",
+      "detailId": 2797,
+      "itemId": 29495,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24676,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34236,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 228,
+      "questContextId": 5742
+     },
+     {
+      "actId": 34237,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1479
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29495,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29495,
+   "count": 8
+  }
+ ]
+}

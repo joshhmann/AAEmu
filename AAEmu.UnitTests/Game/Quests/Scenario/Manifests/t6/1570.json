@@ -1,0 +1,142 @@
+{
+ "questId": 1570,
+ "name": "어머니의 걱정",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 5,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6023
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7504,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10534,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1345,
+      "npcId": 6023
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7507,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16167,
+      "type": "QuestActConReportNpc",
+      "detailId": 2334,
+      "npcId": 4205
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10468,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38872,
+      "type": "QuestActSupplyItem",
+      "detailId": 4538,
+      "itemId": 32530,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38873,
+      "type": "QuestActSupplyItem",
+      "detailId": 4539,
+      "itemId": 32531,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38874,
+      "type": "QuestActSupplyItem",
+      "detailId": 4540,
+      "itemId": 32532,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000152,
+      "type": "QuestActSupplyItem",
+      "detailId": 8000129,
+      "itemId": 35829,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4205,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32530,
+      "count": 1
+     },
+     {
+      "itemId": 32531,
+      "count": 1
+     },
+     {
+      "itemId": 32532,
+      "count": 1
+     },
+     {
+      "itemId": 35829,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

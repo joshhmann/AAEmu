@@ -1,0 +1,141 @@
+{
+ "questId": 1066,
+ "name": "기계혼 떠나보내기",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3443
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5338,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8264,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 915,
+      "npcId": 3443
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5339,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8265,
+      "type": "QuestActSupplyItem",
+      "detailId": 657,
+      "itemId": 13940,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5341,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8267,
+      "type": "QuestActConReportNpc",
+      "detailId": 1051,
+      "npcId": 3392
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5342,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35567,
+      "type": "QuestActSupplyItem",
+      "detailId": 3990,
+      "itemId": 8327,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37285,
+      "type": "QuestActSupplyItem",
+      "detailId": 4153,
+      "itemId": 8343,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3392,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 8327,
+      "count": 1
+     },
+     {
+      "itemId": 8343,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

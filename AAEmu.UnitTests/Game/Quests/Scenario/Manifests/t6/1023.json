@@ -1,0 +1,140 @@
+{
+ "questId": 1023,
+ "name": "맥주엔 고드름이 최고",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4610
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5010,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7921,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 849,
+      "npcId": 4610
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5011,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7922,
+      "type": "QuestActObjItemGather",
+      "detailId": 400,
+      "itemId": 13912,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5012,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7923,
+      "type": "QuestActConReportNpc",
+      "detailId": 983,
+      "npcId": 4610
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5013,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16689,
+      "type": "QuestActSupplyItem",
+      "detailId": 1668,
+      "itemId": 17540,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13912,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4610,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17540,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13912,
+   "count": 5
+  }
+ ]
+}

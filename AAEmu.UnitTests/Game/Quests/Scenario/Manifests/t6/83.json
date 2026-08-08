@@ -1,0 +1,134 @@
+{
+ "questId": 83,
+ "name": "익사체",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6487
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 834,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1013,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 202,
+      "npcId": 6487
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1089,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1014,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 54,
+      "npcId": 556,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1090,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1016,
+      "type": "QuestActConReportNpc",
+      "detailId": 206,
+      "npcId": 6487
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36947,
+      "type": "QuestActSupplyItem",
+      "detailId": 4092,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 556,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6487,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

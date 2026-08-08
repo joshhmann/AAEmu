@@ -1,0 +1,121 @@
+{
+ "questId": 5562,
+ "name": "달아라 너의 장치",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4873
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24015,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33845,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4292,
+      "npcId": 4873
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24016,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33844,
+      "type": "QuestActObjInteraction",
+      "detailId": 707,
+      "doodadId": 7040,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24017,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33846,
+      "type": "QuestActConReportNpc",
+      "detailId": 4602,
+      "npcId": 4873
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24387,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7040,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4873,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

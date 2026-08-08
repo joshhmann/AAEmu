@@ -1,0 +1,106 @@
+{
+ "questId": 3513,
+ "name": "하만과 만나다",
+ "zoneId": 134,
+ "categoryId": 62,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7762
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15697,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21322,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2993,
+      "npcId": 7762
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21323,
+      "type": "QuestActConReportNpc",
+      "detailId": 3218,
+      "npcId": 10047
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40820,
+      "type": "QuestActSupplyItem",
+      "detailId": 4787,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10047,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

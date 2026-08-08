@@ -1,0 +1,197 @@
+{
+ "questId": 1120,
+ "name": "새 주거 지역 건설",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5697
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5738,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8705,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1002,
+      "npcId": 5697
+     },
+     {
+      "actId": 29082,
+      "type": "QuestActCheckTimer",
+      "detailId": 122,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5740,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13069,
+      "type": "QuestActObjInteraction",
+      "detailId": 311,
+      "doodadId": 2880,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5742,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8706,
+      "type": "QuestActConReportNpc",
+      "detailId": 1150,
+      "npcId": 5697
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5743,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38863,
+      "type": "QuestActSupplyItem",
+      "detailId": 4529,
+      "itemId": 32515,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38864,
+      "type": "QuestActSupplyItem",
+      "detailId": 4530,
+      "itemId": 32516,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38865,
+      "type": "QuestActSupplyItem",
+      "detailId": 4531,
+      "itemId": 32517,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21078,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28911,
+      "type": "QuestActSupplyItem",
+      "detailId": 3275,
+      "itemId": 25223,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 21115,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2880,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5697,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32515,
+      "count": 1
+     },
+     {
+      "itemId": 32516,
+      "count": 1
+     },
+     {
+      "itemId": 32517,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

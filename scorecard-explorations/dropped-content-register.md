@@ -70,12 +70,35 @@ needed, never by editing the reference file.
 |---|---|
 | quests 330/776/777 COMPONENT_NEXT_MISSING | **FIXED** via additive in-memory overlay QuestDataOverlay (1520→1521, 3480→3482, 3488→11591) — branch fix/next-missing-776-777 @ aa35a503, Rei gate t_d8a8c798. 330 is golden-route (step 3, zero runtime impact). |
 
+## 6. M2a engine-stuck cluster — 26 templates (old Sunny Wilderness)
+
+| Field | Value |
+|---|---|
+| Quests | **1867, 1898, 1904, 1908, 2054** (A1 — carry real NPC dialogue) + **5575, 5578, 5579, 5584, 5589, 5596, 5597, 5601, 5603, 5604, 5608, 5619, 5630, 5632, 5636, 5637, 5640, 5643, 5644, 5645** (A2 — act-less, cat 32) + **5641** (A3 — ltd='f' score=100, score never met) |
+| Shape | zone 22 (old_e_sunny_wilderness), milestone 5, let_it_done='t' (except 5641). Zero report acts → engine can never leave Progress (QuestStep.cs:127-129 ltd force; NewQuestCode.cs:69-78 HackFix needs Score>0 AND no Ready step — none qualify). Zero accept surfaces (0 item_accept_quests / doodad_func_quests / accept_quest_effects / con_accept_components) → unreachable in live play |
+| Verdict | Josh 2026-08-08 ("Option A is nice") — drop. Triage: t_f105ee3b; census SKIP guards (ltd-without-report-act / score-without-objectives) in the M2a band census |
+| Drop action | `SQL/patches/compact/2026-08-06-drop-m2a-stuck-and-shells.sql`: −26 quest_contexts / −83 quest_components / −5 quest_acts / −5 act-detail rows / −10 quest_component_texts / −27 quest_chat_bubbles (A+B surfaces); 26 were never allowlisted (they have components — no mask to remove) |
+| Execution card | t_e5deb128 (impl) → Rei gate t_656ed5fe |
+| Restore pointer | **A1 dialogue preserved as reference**: 1867/1898/1904/1908/2054 carry real old-zone NPC dialogue — 27 quest_chat_bubbles on comps 8593/8594/8595/8804/8805/8806/8835/8836/8837/8851/8852/8853/9447/9448/9449 (NPCs 4917/4927/4922/4931/4938), 10 component_texts, 5 acts (item_gathers 848/878/885, monster_hunts 532/533). Superseded old-Sunny-Wilderness content worth preserving as reference — restore only if a 1.2-era Sunny Wilderness quest line is rebuilt. **Quest 1899** ("두려운 사실", same old cluster, census-PASS vacuous) is NOT dropped — flagged future-look: its Start gate unit_reqs 18563 (→1898) was pruned with this drop; re-check 1899's shape before any restore work |
+| Residue (runtime-safe, verifier-silent) | 3 `items.loot_quest_id` rows dangle → dropped quests (15887→2054, 15985→1867, 16018→1904). Inert: item rows still load, loot just never fires. Leave unless rebuilding the Sunny Wilderness line |
+
+## 7. M2a zero-component shells — 91 (reserve + Hadir cutscenes)
+
+| Field | Value |
+|---|---|
+| Quests | **2148–2229** (82 "하다보니(reserve)", cat 34, zone 1, lvl 1, ms 5, ltd='f' — deliberate reserve block) + **3748, 3750–3757** (9 Hadir's Farm instance-cutscene shells, zone 169 instance_hadir_farm, cat 63) |
+| Shape | zero quest_components each; census SKIP "no components" |
+| Verdict | Josh 2026-08-08 ("Option A is nice") — drop. data-defects.md §6 already ruled reserve shells dead |
+| Drop action | `SQL/patches/compact/2026-08-06-drop-m2a-stuck-and-shells.sql`: −91 quest_contexts / −9 sphere_quests rows (725→3748, 727–734→3750–3757 — accept triggers, MUST prune with the drop); removed all 91 from verifier allowlist (QuestSanityVerifier.cs — was 108 ids, now 17) so a regression re-reports at WARN |
+| Execution card | t_e5deb128 (impl) → Rei gate t_656ed5fe |
+| Restore pointer | None — deliberate reserve/cutscene shells with zero content. ⚠ Kind-35 Skill unit_reqs (38519/38559/38561/38563/38565/38955/38959/38968/38969/38973/38976/40175/40335/40383) reference spheres 2148–2189 (AreaSphere id collisions with the reserve ids) — **UNTOUCHED**; do not prune them when re-checking this drop |
+
 ---
 
 ## How to check if an id is in this register
 
 ```bash
-grep -n "745\|1421\|1391\|1533\|2140\|1954" scorecard-explorations/dropped-content-register.md
+grep -n "745\|1421\|1391\|1533\|2140\|1954\|1867\|2148\|3748\|5575" scorecard-explorations/dropped-content-register.md
 ```
 
 Before filing any future quest-defect card, check this file — a "missing"

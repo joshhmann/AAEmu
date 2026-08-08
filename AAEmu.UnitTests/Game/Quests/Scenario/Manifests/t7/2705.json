@@ -1,0 +1,129 @@
+{
+ "questId": 2705,
+ "name": "마하데비 물소 퇴치",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2487
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16441,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 355,
+      "npcId": 2487
+     },
+     {
+      "actId": 16479,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 367,
+      "npcId": 2506
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11362,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16480,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 226,
+      "monsterGroupId": 217,
+      "count": 18
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11363,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16443,
+      "type": "QuestActConReportJournal",
+      "detailId": 111
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11365,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16444,
+      "type": "QuestActSupplyCopper",
+      "detailId": 193,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 217,
+     "count": 18
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

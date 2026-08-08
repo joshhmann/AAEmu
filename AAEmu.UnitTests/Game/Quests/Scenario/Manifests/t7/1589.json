@@ -1,0 +1,152 @@
+{
+ "questId": 1589,
+ "name": "굳게 닫힌 성채 속의 증거",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 14745
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7705,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16751,
+      "type": "QuestActConAcceptItem",
+      "detailId": 98,
+      "itemId": 14745
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10826,
+      "type": "QuestActObjItemGather",
+      "detailId": 641,
+      "itemId": 14748,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7707,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10827,
+      "type": "QuestActConReportNpc",
+      "detailId": 1588,
+      "npcId": 1907
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7708,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 11631,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17043,
+      "type": "QuestActObjItemGather",
+      "detailId": 1085,
+      "itemId": 14745,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14748,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 14745,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1907,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14745,
+   "count": 1
+  },
+  {
+   "itemId": 14748,
+   "count": 1
+  },
+  {
+   "itemId": 14745,
+   "count": 1
+  }
+ ]
+}

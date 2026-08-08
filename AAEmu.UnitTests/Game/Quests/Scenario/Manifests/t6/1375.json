@@ -1,0 +1,91 @@
+{
+ "questId": 1375,
+ "name": "꼬마 드워프의 거짓말",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5794
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6802,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9505,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1178,
+      "npcId": 5794
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6805,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9508,
+      "type": "QuestActConReportNpc",
+      "detailId": 1344,
+      "npcId": 5795
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6806,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5795,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

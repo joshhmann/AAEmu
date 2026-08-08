@@ -1,0 +1,157 @@
+{
+ "questId": 2488,
+ "name": "맬컴의 가족",
+ "zoneId": 11,
+ "categoryId": 3,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7595
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10750,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14969,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2045,
+      "npcId": 7595
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10752,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14971,
+      "type": "QuestActConReportNpc",
+      "detailId": 2254,
+      "npcId": 10636
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10753,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40855,
+      "type": "QuestActSupplyItem",
+      "detailId": 4822,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10938,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25073,
+      "type": "QuestActObjItemUse",
+      "detailId": 632,
+      "itemId": 17585,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 18204,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23776,
+      "type": "QuestActSupplyItem",
+      "detailId": 2290,
+      "itemId": 17585,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 17585,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10636,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

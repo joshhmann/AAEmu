@@ -1,0 +1,134 @@
+{
+ "questId": 1407,
+ "name": "시치미 약탈단 본거지 습격",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 8,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4296
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5993,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10403,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1327,
+      "npcId": 4296
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5996,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8594,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 70,
+      "monsterGroupId": 74,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5997,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10404,
+      "type": "QuestActConReportNpc",
+      "detailId": 1500,
+      "npcId": 4213
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5999,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38507,
+      "type": "QuestActSupplyItem",
+      "detailId": 4296,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 74,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4213,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

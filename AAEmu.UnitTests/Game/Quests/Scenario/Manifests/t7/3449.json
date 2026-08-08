@@ -1,0 +1,132 @@
+{
+ "questId": 3449,
+ "name": "거미 고치에 갇힌 자",
+ "zoneId": 179,
+ "categoryId": 61,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4255
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16262,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21456,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 113,
+      "doodadId": 4255
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21459,
+      "type": "QuestActObjTalk",
+      "detailId": 924,
+      "npcId": 9801
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21460,
+      "type": "QuestActConReportNpc",
+      "detailId": 3242,
+      "npcId": 9802
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16269,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40796,
+      "type": "QuestActSupplyItem",
+      "detailId": 4763,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 9801
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9802,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

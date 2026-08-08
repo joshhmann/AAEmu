@@ -1,0 +1,104 @@
+{
+ "questId": 4289,
+ "name": "용기의 증명",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5281
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18717,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27769,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 152,
+      "doodadId": 5281
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18718,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24646,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 953,
+      "npcId": 7927,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27770,
+      "type": "QuestActConAutoComplete",
+      "detailId": 959
+     },
+     {
+      "actId": 37038,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1427,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 7927,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,106 @@
+{
+ "questId": 2403,
+ "name": "유족들에게 전하는 소식",
+ "zoneId": 128,
+ "categoryId": 8,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7825
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10327,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14526,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1946,
+      "npcId": 7825
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10328,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14525,
+      "type": "QuestActConReportNpc",
+      "detailId": 2158,
+      "npcId": 7138
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10329,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40883,
+      "type": "QuestActSupplyItem",
+      "detailId": 4850,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7138,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

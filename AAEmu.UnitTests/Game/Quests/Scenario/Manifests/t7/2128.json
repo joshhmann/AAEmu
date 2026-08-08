@@ -1,0 +1,135 @@
+{
+ "questId": 2128,
+ "name": "알카란의 보물",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7627
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9813,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13821,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1829,
+      "npcId": 7627
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9814,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16316,
+      "type": "QuestActObjInteraction",
+      "detailId": 402,
+      "doodadId": 2635,
+      "count": 1,
+      "wiId": 19
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9815,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13824,
+      "type": "QuestActConReportNpc",
+      "detailId": 2063,
+      "npcId": 7627
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9816,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38611,
+      "type": "QuestActSupplyItem",
+      "detailId": 4360,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2635,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7627,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

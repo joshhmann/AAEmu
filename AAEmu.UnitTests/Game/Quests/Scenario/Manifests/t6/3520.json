@@ -1,0 +1,106 @@
+{
+ "questId": 3520,
+ "name": "그림자 매의 바그바트",
+ "zoneId": 23,
+ "categoryId": 62,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10123
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16346,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21616,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3041,
+      "npcId": 10123
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16381,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21574,
+      "type": "QuestActConReportNpc",
+      "detailId": 3254,
+      "npcId": 10125
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16382,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40824,
+      "type": "QuestActSupplyItem",
+      "detailId": 4791,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10125,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

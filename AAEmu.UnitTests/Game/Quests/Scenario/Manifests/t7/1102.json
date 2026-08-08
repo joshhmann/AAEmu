@@ -1,0 +1,147 @@
+{
+ "questId": 1102,
+ "name": "야타 길들이기",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3431
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5511,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9882,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1253,
+      "npcId": 3431
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5513,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9889,
+      "type": "QuestActConReportNpc",
+      "detailId": 1423,
+      "npcId": 3431
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7166,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 7172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9895,
+      "type": "QuestActSupplyItem",
+      "detailId": 795,
+      "itemId": 13965,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7173,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9899,
+      "type": "QuestActObjTalk",
+      "detailId": 685,
+      "npcId": 3450
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 8292,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 3450
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3431,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

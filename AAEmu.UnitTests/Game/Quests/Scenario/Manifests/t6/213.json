@@ -1,0 +1,106 @@
+{
+ "questId": 213,
+ "name": "원로원의 진상 조사 위원",
+ "zoneId": 128,
+ "categoryId": 8,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 569
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15401,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2092,
+      "npcId": 569
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 312,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 509,
+      "type": "QuestActConReportNpc",
+      "detailId": 118,
+      "npcId": 582
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40878,
+      "type": "QuestActSupplyItem",
+      "detailId": 4845,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 582,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

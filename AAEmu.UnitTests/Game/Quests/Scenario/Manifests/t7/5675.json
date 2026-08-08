@@ -1,0 +1,119 @@
+{
+ "questId": 5675,
+ "name": "지역 안정군",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5807
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24370,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34095,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4359,
+      "npcId": 5807
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24371,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24372,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34097,
+      "type": "QuestActConReportNpc",
+      "detailId": 4659,
+      "npcId": 5804
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24554,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 24555,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5804,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

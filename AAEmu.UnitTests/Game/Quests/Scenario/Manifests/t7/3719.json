@@ -1,0 +1,136 @@
+{
+ "questId": 3719,
+ "name": "수습하지 못한 전우의 시체",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9979
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15525,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21189,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2968,
+      "npcId": 9979
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15526,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21239,
+      "type": "QuestActObjInteraction",
+      "detailId": 511,
+      "doodadId": 4117,
+      "count": 5,
+      "wiId": 19,
+      "phase": 9986
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15527,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21190,
+      "type": "QuestActConReportNpc",
+      "detailId": 3200,
+      "npcId": 9979
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15528,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38609,
+      "type": "QuestActSupplyItem",
+      "detailId": 4358,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4117,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9979,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,104 @@
+{
+ "questId": 4776,
+ "name": "독 거대 전갈의 위협",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5319
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20631,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28220,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 156,
+      "doodadId": 5319
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20632,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28221,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 993,
+      "npcId": 2231,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20633,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28222,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1038
+     },
+     {
+      "actId": 37044,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1433,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2231,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

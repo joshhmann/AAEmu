@@ -1,0 +1,144 @@
+{
+ "questId": 2417,
+ "name": "손끝으로 만드는 기적",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7883
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10416,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14655,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1968,
+      "npcId": 7883
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 10417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14749,
+      "type": "QuestActSupplyItem",
+      "detailId": 1401,
+      "itemId": 16491,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14750,
+      "type": "QuestActObjInteraction",
+      "detailId": 373,
+      "doodadId": 2914,
+      "count": 1,
+      "wiId": 19,
+      "phase": 6553
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10419,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14656,
+      "type": "QuestActConReportNpc",
+      "detailId": 2183,
+      "npcId": 7819
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10420,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2914,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7819,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

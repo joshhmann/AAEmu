@@ -1,0 +1,163 @@
+{
+ "questId": 82,
+ "name": "결탁의 증거",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9990
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4405,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11072,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1445,
+      "npcId": 9990
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6751,
+      "type": "QuestActObjItemGather",
+      "detailId": 339,
+      "itemId": 24384,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11073,
+      "type": "QuestActObjItemGather",
+      "detailId": 663,
+      "itemId": 3898,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4409,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6754,
+      "type": "QuestActConReportNpc",
+      "detailId": 849,
+      "npcId": 813
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4410,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38606,
+      "type": "QuestActSupplyItem",
+      "detailId": 4355,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24384,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 3898,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 813,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24384,
+   "count": 1
+  },
+  {
+   "itemId": 3898,
+   "count": 1
+  }
+ ]
+}

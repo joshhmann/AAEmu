@@ -1,0 +1,160 @@
+{
+ "questId": 1061,
+ "name": "우리날개 1435호",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3444
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5319,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8249,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 910,
+      "npcId": 3444
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5320,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8251,
+      "type": "QuestActObjInteraction",
+      "detailId": 182,
+      "doodadId": 1412,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5321,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8250,
+      "type": "QuestActConReportNpc",
+      "detailId": 1046,
+      "npcId": 3444
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5322,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37274,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2506,
+      "itemId": 33124,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37275,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2507,
+      "itemId": 33125,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37276,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2508,
+      "itemId": 33126,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38600,
+      "type": "QuestActSupplyItem",
+      "detailId": 4349,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1412,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3444,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

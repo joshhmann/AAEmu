@@ -1,0 +1,91 @@
+{
+ "questId": 1171,
+ "name": "거미줄에 걸린 마음",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3440
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5960,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13875,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1840,
+      "npcId": 3440
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5962,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8904,
+      "type": "QuestActConReportNpc",
+      "detailId": 1205,
+      "npcId": 3438
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5963,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3438,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,123 @@
+{
+ "questId": 2702,
+ "name": "마하데비 호랑이 퇴치",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2496
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11345,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16423,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 349,
+      "npcId": 2496
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11346,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16424,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 613,
+      "npcId": 2496,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11347,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16425,
+      "type": "QuestActConReportJournal",
+      "detailId": 107
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11348,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16426,
+      "type": "QuestActSupplyCopper",
+      "detailId": 189,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2496,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

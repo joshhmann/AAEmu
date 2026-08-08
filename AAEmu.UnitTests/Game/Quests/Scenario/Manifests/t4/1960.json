@@ -9,8 +9,8 @@
  "score": 0,
  "family": "QuestActConAcceptComponent",
  "acceptor": {
-  "type": "Item",
-  "id": 15589
+  "type": "Npc",
+  "id": 0
  },
  "template": {
   "level": 1,
@@ -119,11 +119,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "inventory": [
-  {
-   "itemId": 15589,
-   "count": 1
-  }
- ]
+ "selectedRewardIndex": 0
 }

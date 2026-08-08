@@ -1,0 +1,117 @@
+{
+ "questId": 5315,
+ "name": "정착지를 찾아서",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9789
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22921,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33910,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4316,
+      "npcId": 9789
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22922,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33911,
+      "type": "QuestActObjTalk",
+      "detailId": 1042,
+      "npcId": 4320
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22923,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32309,
+      "type": "QuestActConReportNpc",
+      "detailId": 4395,
+      "npcId": 9789
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22936,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 4320
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9789,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

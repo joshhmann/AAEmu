@@ -1,0 +1,140 @@
+{
+ "questId": 873,
+ "name": "순진한 남자의 사랑",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 17,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5215
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4033,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5727,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 660,
+      "npcId": 5215
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4034,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5728,
+      "type": "QuestActObjItemGather",
+      "detailId": 293,
+      "itemId": 13810,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4035,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5729,
+      "type": "QuestActConReportNpc",
+      "detailId": 754,
+      "npcId": 5215
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4037,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38229,
+      "type": "QuestActSupplyItem",
+      "detailId": 4236,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13810,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5215,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13810,
+   "count": 5
+  }
+ ]
+}

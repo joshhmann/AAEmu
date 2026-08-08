@@ -1,0 +1,106 @@
+{
+ "questId": 1403,
+ "name": "합리적이고 이성적으로",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5812
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7035,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9695,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1217,
+      "npcId": 5812
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 7036,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9696,
+      "type": "QuestActSupplyItem",
+      "detailId": 768,
+      "itemId": 14204,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7037,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 7039,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34112,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1466
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

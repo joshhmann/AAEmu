@@ -1,0 +1,147 @@
+{
+ "questId": 1191,
+ "name": "바이암 습격자들 방어",
+ "zoneId": 135,
+ "categoryId": 23,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2226
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6063,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15733,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 255,
+      "npcId": 2226
+     },
+     {
+      "actId": 15734,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 256,
+      "npcId": 2227
+     },
+     {
+      "actId": 15735,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 257,
+      "npcId": 2229
+     },
+     {
+      "actId": 15736,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 258,
+      "npcId": 2483
+     },
+     {
+      "actId": 15737,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 259,
+      "npcId": 5661
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6066,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15745,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 196,
+      "monsterGroupId": 189,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6067,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15748,
+      "type": "QuestActConReportJournal",
+      "detailId": 64
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6068,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15747,
+      "type": "QuestActSupplyCopper",
+      "detailId": 153,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 189,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

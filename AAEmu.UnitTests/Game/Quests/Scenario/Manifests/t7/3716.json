@@ -1,0 +1,125 @@
+{
+ "questId": 3716,
+ "name": "감춰둔 물건",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5847
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15516,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21131,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2940,
+      "npcId": 5847
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15517,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21235,
+      "type": "QuestActObjItemGather",
+      "detailId": 1550,
+      "itemId": 20037,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15518,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21132,
+      "type": "QuestActConReportNpc",
+      "detailId": 3174,
+      "npcId": 5847
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15519,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20037,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5847,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20037,
+   "count": 1
+  }
+ ]
+}

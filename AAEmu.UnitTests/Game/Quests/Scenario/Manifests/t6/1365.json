@@ -1,0 +1,136 @@
+{
+ "questId": 1365,
+ "name": "예상치 못한 습격",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10848
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5631,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8490,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 966,
+      "npcId": 10848
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5637,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14627,
+      "type": "QuestActConReportNpc",
+      "detailId": 2177,
+      "npcId": 10848
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5638,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38506,
+      "type": "QuestActSupplyItem",
+      "detailId": 4295,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28205,
+      "type": "QuestActObjInteraction",
+      "detailId": 609,
+      "doodadId": 2884,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2884,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10848,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

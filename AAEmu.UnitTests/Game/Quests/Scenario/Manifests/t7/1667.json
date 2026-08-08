@@ -1,0 +1,158 @@
+{
+ "questId": 1667,
+ "name": "모아린의 약",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2948
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7970,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11132,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1462,
+      "npcId": 2948
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7971,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11133,
+      "type": "QuestActObjItemGather",
+      "detailId": 669,
+      "itemId": 14847,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7972,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11134,
+      "type": "QuestActConReportNpc",
+      "detailId": 1653,
+      "npcId": 2948
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7973,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38314,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2574,
+      "itemId": 33396,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38315,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2575,
+      "itemId": 33397,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38316,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2576,
+      "itemId": 33398,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000160,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 8000011,
+      "itemId": 35836,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14847,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2948,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 14847,
+   "count": 1
+  }
+ ]
+}

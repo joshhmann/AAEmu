@@ -1,0 +1,102 @@
+{
+ "questId": 6213,
+ "name": "다시 가리여울 마을로",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26635,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36819,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 410,
+      "questContextId": 6213
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26636,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36678,
+      "type": "QuestActObjSphere",
+      "detailId": 688,
+      "sphereId": 2270
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26637,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36677,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1692
+     },
+     {
+      "actId": 37060,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 423,
+      "questContextId": 6224
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 26636
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

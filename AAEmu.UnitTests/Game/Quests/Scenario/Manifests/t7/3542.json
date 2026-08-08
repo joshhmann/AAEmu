@@ -1,0 +1,167 @@
+{
+ "questId": 3542,
+ "name": "기계와 협상하는 법",
+ "zoneId": 23,
+ "categoryId": 62,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7764
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16349,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21581,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3031,
+      "npcId": 7764
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16389,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21583,
+      "type": "QuestActObjItemUse",
+      "detailId": 545,
+      "itemId": 20157,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 16390,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21582,
+      "type": "QuestActSupplyItem",
+      "detailId": 2148,
+      "itemId": 20157,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16391,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21584,
+      "type": "QuestActConReportNpc",
+      "detailId": 3257,
+      "npcId": 7968
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16392,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 16393,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21586,
+      "type": "QuestActObjItemGather",
+      "detailId": 1601,
+      "itemId": 20158,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 20157,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 20158,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7968,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20158,
+   "count": 1
+  }
+ ]
+}

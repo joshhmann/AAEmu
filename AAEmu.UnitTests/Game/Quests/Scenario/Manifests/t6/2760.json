@@ -1,0 +1,171 @@
+{
+ "questId": 2760,
+ "name": "흰 구름결 부족의 적 처치",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4190
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11609,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16941,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 492,
+      "npcId": 4190
+     },
+     {
+      "actId": 16942,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 493,
+      "npcId": 4191
+     },
+     {
+      "actId": 16943,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 494,
+      "npcId": 4192
+     },
+     {
+      "actId": 16944,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 495,
+      "npcId": 4193
+     },
+     {
+      "actId": 16947,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 498,
+      "npcId": 4194
+     },
+     {
+      "actId": 16948,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 499,
+      "npcId": 4195
+     },
+     {
+      "actId": 16949,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 500,
+      "npcId": 4196
+     },
+     {
+      "actId": 16951,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 502,
+      "npcId": 8115
+     },
+     {
+      "actId": 16952,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 503,
+      "npcId": 8116
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11610,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16904,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 263,
+      "monsterGroupId": 238,
+      "count": 36
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11611,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16905,
+      "type": "QuestActConReportJournal",
+      "detailId": 158
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11612,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16906,
+      "type": "QuestActSupplyCopper",
+      "detailId": 239,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 238,
+     "count": 36
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

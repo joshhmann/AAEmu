@@ -1,0 +1,152 @@
+{
+ "questId": 6359,
+ "name": "뼛속까지 암울한 남자의 부탁",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14845
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27229,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38519,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4743,
+      "npcId": 14845
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27230,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38516,
+      "type": "QuestActObjItemGather",
+      "detailId": 2945,
+      "itemId": 3711,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27231,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38522,
+      "type": "QuestActConReportNpc",
+      "detailId": 4972,
+      "npcId": 14845
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27233,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38513,
+      "type": "QuestActSupplyItem",
+      "detailId": 4300,
+      "itemId": 33961,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38848,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1659,
+      "amount": 100
+     },
+     {
+      "actId": 38849,
+      "type": "QuestActSupplyExp",
+      "detailId": 1348,
+      "exp": 1004
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3711,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14845,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33961,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3711,
+   "count": 10
+  }
+ ]
+}

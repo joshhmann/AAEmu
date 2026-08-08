@@ -1,0 +1,106 @@
+{
+ "questId": 1574,
+ "name": "아바란 마라",
+ "zoneId": 130,
+ "categoryId": 61,
+ "level": 2,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4236
+ },
+ "template": {
+  "level": 2,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7531,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10604,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1355,
+      "npcId": 4236
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7532,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14424,
+      "type": "QuestActConReportNpc",
+      "detailId": 2135,
+      "npcId": 4239
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7533,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40784,
+      "type": "QuestActSupplyItem",
+      "detailId": 4751,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4239,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

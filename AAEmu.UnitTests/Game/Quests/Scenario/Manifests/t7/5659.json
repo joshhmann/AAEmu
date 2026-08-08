@@ -1,0 +1,91 @@
+{
+ "questId": 5659,
+ "name": "지연되는 공사",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2292
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24316,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33996,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4340,
+      "npcId": 2292
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24317,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24318,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33997,
+      "type": "QuestActConReportNpc",
+      "detailId": 4638,
+      "npcId": 2293
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2293,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

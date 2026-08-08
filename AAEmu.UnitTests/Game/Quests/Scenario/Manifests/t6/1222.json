@@ -1,0 +1,142 @@
+{
+ "questId": 1222,
+ "name": "다스갈의 시험",
+ "zoneId": 130,
+ "categoryId": 61,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4237
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14421,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1915,
+      "npcId": 4237
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5180,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14419,
+      "type": "QuestActSupplyItem",
+      "detailId": 1364,
+      "itemId": 14045,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5181,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14420,
+      "type": "QuestActObjItemUse",
+      "detailId": 410,
+      "itemId": 14045,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14423,
+      "type": "QuestActConReportNpc",
+      "detailId": 2134,
+      "npcId": 4237
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10219,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14045,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4237,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

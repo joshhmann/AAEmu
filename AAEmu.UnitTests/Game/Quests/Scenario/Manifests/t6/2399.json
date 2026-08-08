@@ -1,0 +1,106 @@
+{
+ "questId": 2399,
+ "name": "상황 보고",
+ "zoneId": 128,
+ "categoryId": 8,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7828
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10311,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14514,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1943,
+      "npcId": 7828
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10314,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14519,
+      "type": "QuestActConReportNpc",
+      "detailId": 2155,
+      "npcId": 7825
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11521,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40882,
+      "type": "QuestActSupplyItem",
+      "detailId": 4849,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7825,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

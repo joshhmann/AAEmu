@@ -1,0 +1,97 @@
+{
+ "questId": 3303,
+ "name": "조부의 유산",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 25781
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14270,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29423,
+      "type": "QuestActConAcceptItem",
+      "detailId": 171,
+      "itemId": 25781
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14272,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19652,
+      "type": "QuestActConReportNpc",
+      "detailId": 2855,
+      "npcId": 9189
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14273,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9189,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25781,
+   "count": 1
+  }
+ ]
+}

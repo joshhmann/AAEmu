@@ -1,0 +1,144 @@
+{
+ "questId": 1583,
+ "name": "다후타 교단",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 10,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6505
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7551,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10629,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1360,
+      "npcId": 6505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7552,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11253,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 86,
+      "monsterGroupId": 89,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7555,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10630,
+      "type": "QuestActConReportNpc",
+      "detailId": 1542,
+      "npcId": 6505
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7556,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37271,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2503,
+      "itemId": 33118,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37272,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2504,
+      "itemId": 33119,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37273,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2505,
+      "itemId": 33120,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 89,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6505,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

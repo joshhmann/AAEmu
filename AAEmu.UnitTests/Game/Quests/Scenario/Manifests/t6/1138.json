@@ -1,0 +1,104 @@
+{
+ "questId": 1138,
+ "name": "웅덩이를 더럽히는 주범",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5102
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5826,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26565,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 146,
+      "doodadId": 5102
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5828,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14567,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 156,
+      "monsterGroupId": 157,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9385,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26564,
+      "type": "QuestActConAutoComplete",
+      "detailId": 805
+     },
+     {
+      "actId": 36977,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1385,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 157,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

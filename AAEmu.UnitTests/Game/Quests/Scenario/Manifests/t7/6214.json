@@ -1,0 +1,91 @@
+{
+ "questId": 6214,
+ "name": "푸른 전나무회에 전하는 희소식",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26639,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37048,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 420,
+      "questContextId": 6214
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26641,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37017,
+      "type": "QuestActConReportNpc",
+      "detailId": 4940,
+      "npcId": 3435
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26677,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3435,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

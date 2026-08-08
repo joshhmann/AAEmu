@@ -1,0 +1,115 @@
+{
+ "questId": 5753,
+ "name": "내 손으로 만드는 다리 방어구: 재료",
+ "zoneId": 1,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24710,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34343,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 249,
+      "questContextId": 5753
+     },
+     {
+      "actId": 34344,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4388,
+      "npcId": 13068
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24711,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34345,
+      "type": "QuestActObjItemGather",
+      "detailId": 2821,
+      "itemId": 29503,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24712,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34346,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 250,
+      "questContextId": 5754
+     },
+     {
+      "actId": 34347,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1491
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29503,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29503,
+   "count": 8
+  }
+ ]
+}

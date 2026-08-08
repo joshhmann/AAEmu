@@ -1,0 +1,125 @@
+{
+ "questId": 3310,
+ "name": "설레는 마음을 전하는 길",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 17,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9196
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14298,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19675,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2630,
+      "npcId": 9196
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14299,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19676,
+      "type": "QuestActObjItemGather",
+      "detailId": 1379,
+      "itemId": 19567,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14300,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19677,
+      "type": "QuestActConReportNpc",
+      "detailId": 2861,
+      "npcId": 9196
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14301,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19567,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9196,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19567,
+   "count": 5
+  }
+ ]
+}

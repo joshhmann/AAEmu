@@ -1,0 +1,148 @@
+{
+ "questId": 3530,
+ "name": "살피라 신도들의 상자",
+ "zoneId": 143,
+ "categoryId": 62,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10139
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22238,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3147,
+      "npcId": 10139
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16858,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24229,
+      "type": "QuestActObjItemGather",
+      "detailId": 1988,
+      "itemId": 23623,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16859,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22240,
+      "type": "QuestActConReportNpc",
+      "detailId": 3378,
+      "npcId": 10139
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16860,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 16865,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22241,
+      "type": "QuestActSupplyItem",
+      "detailId": 2207,
+      "itemId": 21321,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23623,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10139,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23623,
+   "count": 1
+  }
+ ]
+}

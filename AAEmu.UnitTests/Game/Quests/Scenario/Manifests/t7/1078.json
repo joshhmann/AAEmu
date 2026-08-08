@@ -1,0 +1,150 @@
+{
+ "questId": 1078,
+ "name": "재활용 방침",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 12,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3436
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5392,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8291,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 921,
+      "npcId": 3436
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5393,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8292,
+      "type": "QuestActObjItemGather",
+      "detailId": 444,
+      "itemId": 13950,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8294,
+      "type": "QuestActConReportNpc",
+      "detailId": 1058,
+      "npcId": 3436
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5396,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37403,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2525,
+      "itemId": 33113,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37404,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2526,
+      "itemId": 33115,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37405,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2527,
+      "itemId": 33117,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13950,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3436,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 13950,
+   "count": 8
+  }
+ ]
+}

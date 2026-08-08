@@ -1,0 +1,148 @@
+{
+ "questId": 3524,
+ "name": "다시 만난 바그바트",
+ "zoneId": 179,
+ "categoryId": 62,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10130
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16352,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21600,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3035,
+      "npcId": 10130
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16402,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21598,
+      "type": "QuestActObjItemGather",
+      "detailId": 1605,
+      "itemId": 20163,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 16403,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21597,
+      "type": "QuestActSupplyItem",
+      "detailId": 2151,
+      "itemId": 20163,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16404,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21599,
+      "type": "QuestActConReportNpc",
+      "detailId": 3261,
+      "npcId": 10131
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16405,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20163,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10131,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20163,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 879,
+ "name": "피를 찾는 아버지의 마음",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 17,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5219
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4004,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5686,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 657,
+      "npcId": 5219
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17067,
+      "type": "QuestActObjItemGather",
+      "detailId": 1087,
+      "itemId": 18164,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4006,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5688,
+      "type": "QuestActConReportNpc",
+      "detailId": 751,
+      "npcId": 5219
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4007,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38614,
+      "type": "QuestActSupplyItem",
+      "detailId": 4363,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18164,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5219,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18164,
+   "count": 8
+  }
+ ]
+}

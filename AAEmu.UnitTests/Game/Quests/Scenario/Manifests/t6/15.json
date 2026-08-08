@@ -1,0 +1,140 @@
+{
+ "questId": 15,
+ "name": "나무 위의 새알",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 624
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 79,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10008,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1279,
+      "npcId": 624
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 81,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10010,
+      "type": "QuestActObjItemGather",
+      "detailId": 583,
+      "itemId": 1466,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 82,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12758,
+      "type": "QuestActConReportNpc",
+      "detailId": 1883,
+      "npcId": 624
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7249,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38569,
+      "type": "QuestActSupplyItem",
+      "detailId": 4318,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 1466,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 624,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 1466,
+   "count": 1
+  }
+ ]
+}

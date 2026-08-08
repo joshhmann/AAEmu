@@ -1,0 +1,134 @@
+{
+ "questId": 59,
+ "name": "골렘에 대한 공포",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 730
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 703,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 544,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 124,
+      "npcId": 730
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 704,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15776,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 201,
+      "monsterGroupId": 195,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 548,
+      "type": "QuestActConReportNpc",
+      "detailId": 129,
+      "npcId": 730
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 707,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38202,
+      "type": "QuestActSupplyItem",
+      "detailId": 4221,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 195,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 730,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,123 @@
+{
+ "questId": 2511,
+ "name": "환상 습지대 정화하기",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 556
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10853,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15083,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 171,
+      "npcId": 556
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10854,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15085,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 172,
+      "monsterGroupId": 171,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10855,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15095,
+      "type": "QuestActConReportJournal",
+      "detailId": 24
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10856,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15086,
+      "type": "QuestActSupplyCopper",
+      "detailId": 125,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 171,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

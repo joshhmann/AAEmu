@@ -24,6 +24,19 @@ Tiers:
        families (QuestActObjCinema, QuestActEtcItemObtain,
        QuestActConAcceptItemGain, QuestActSupplyLp), minus dropped content,
        minus quests already sampled in T1/T2/T3 (each quest driven once).
+  T5 = M2a wave-2: band 1-20 quests carrying any of the four wave-2 closed
+       act families (QuestActObjExpressFire, QuestActObjAggro,
+       QuestActCheckCompleteComponent, QuestActSupplyHonorPoint), minus
+       already-sampled.
+  T6 = M2a census: FULL band 1-10 sweep - every non-dropped quest with
+       LEVEL 1-10, minus quests already sampled in T1-T5 (each quest driven
+       exactly once across the census). Family = primary act family.
+  T7 = M2a census: FULL band 11-20 sweep - every non-dropped quest with
+       LEVEL 11-20, minus already-sampled (same rule).
+
+Also emits Manifests/census-meta.json (band denominators incl. dropped
+ids per band + signature-zone map) so the tier test can render the M2a
+band-census acceptance table and zone-coverage rows deterministically.
 
 Quests whose shapes the harness cannot synthesize are emitted with a "skip"
 block (broken refs, unsupported act types) - reported, never faked.
@@ -77,6 +90,9 @@ ACT_TABLES = {
     "QuestActObjLevel": ("quest_act_obj_levels", {"level": "LEVEL"}),
     "QuestActObjZoneMonsterHunt": ("quest_act_obj_zone_monster_hunts", {"zoneId": "zone_id", "count": "count"}),
     "QuestActObjExpressFire": ("quest_act_obj_express_fires", {"expressKeyId": "express_key_id", "npcGroupId": "npc_group_id", "count": "count"}),
+    "QuestActObjAggro": ("quest_act_obj_aggros", {"range": "RANGE", "rank1": "rank1", "rank2": "rank2", "rank3": "rank3", "rank1Ratio": "rank1_ratio", "rank2Ratio": "rank2_ratio", "rank3Ratio": "rank3_ratio", "rank1Item": "rank1_item", "rank2Item": "rank2_item", "rank3Item": "rank3_item", "useAlias": "use_alias", "questActObjAliasId": "quest_act_obj_alias_id"}),
+    "QuestActCheckCompleteComponent": ("quest_act_check_complete_components", {"completeComponent": "complete_component"}),
+    "QuestActSupplyHonorPoint": ("quest_act_supply_honor_points", {"point": "point"}),
     "QuestActCheckGuard": ("quest_act_check_guards", {"npcId": "npc_id"}),
     "QuestActCheckSphere": ("quest_act_check_spheres", {"sphereId": "sphere_id"}),
     "QuestActCheckTimer": ("quest_act_check_timers", {"limitTime": "limit_time", "nextComponent": "next_component"}),
@@ -100,16 +116,18 @@ NO_EVENT_TYPES = {
     "QuestActConAcceptItem", "QuestActConAcceptSphere", "QuestActConAcceptLevelUp",
     "QuestActConAcceptComponent", "QuestActConAutoComplete", "QuestActCheckGuard",
     "QuestActCheckSphere", "QuestActCheckTimer",
+    "QuestActCheckCompleteComponent",
     "QuestActSupplyItem", "QuestActSupplyCopper", "QuestActSupplyExp",
     "QuestActSupplyJuryPoint", "QuestActSupplyAppellation", "QuestActSupplyRemoveItem",
     "QuestActSupplySelectiveItem",
     # M2a wave-1: pass-through / state-check acts with no synthetic event.
     "QuestActEtcItemObtain", "QuestActConAcceptItemGain", "QuestActSupplyLp",
+    "QuestActSupplyHonorPoint",
 }
 
 # Act types -> synthetic event shape builder. Returns None when the shape is
 # not synthesizable (quest must be SKIPPED with reason).
-def event_shape(act_type, params, component_id, group_members):
+def event_shape(act_type, params, component_id, group_members, npc_groups=None, acceptor_npc_id=0):
     if act_type == "QuestActObjMonsterHunt":
         return {"type": "MonsterHunt", "npcId": params.get("npcId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjMonsterGroupHunt":
@@ -138,7 +156,13 @@ def event_shape(act_type, params, component_id, group_members):
     if act_type == "QuestActObjTalk":
         return {"type": "Talk", "npcId": params.get("npcId", 0)}
     if act_type == "QuestActObjTalkNpcGroup":
-        return None  # npc-group member mapping not synthesizable -> skip quest
+        # M2a wave-2 (t_41a14bab): npc-group member mapping now synthesizable -
+        # the driver seeds QuestManager._groupNpcs from manifest groups
+        # (quest_monster_npcs read path) and fires OnTalkNpcGroupMade.
+        members = (npc_groups or {}).get(params.get("npcGroupId", 0), [])
+        if not members:
+            return None
+        return {"type": "TalkNpcGroup", "npcGroupId": params.get("npcGroupId", 0), "npcId": members[0], "componentId": component_id}
     if act_type == "QuestActObjInteraction":
         # RC-4 pattern: OnInteraction credits +1 per event (AddObjective(1),
         # Interaction.cs:54) and RunAct requires currentObjectiveCount >= Count
@@ -147,7 +171,11 @@ def event_shape(act_type, params, component_id, group_members):
     if act_type == "QuestActObjSphere":
         return {"type": "EnterSphere", "componentId": component_id}
     if act_type == "QuestActObjCraft":
-        return {"type": "Craft", "craftId": params.get("craftId", 0)}
+        # RC-4 pattern (band-sweep finding, 2026-08-06): QuestActObjCraft.OnCraft
+        # credits +1 per event (Craft.cs:47) and RunAct requires
+        # currentObjectiveCount >= Count - the driver fires the event 'count'
+        # times, so carry the count on the shape.
+        return {"type": "Craft", "craftId": params.get("craftId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjLevel":
         return {"type": "LevelUp"}
     if act_type == "QuestActObjCinema":
@@ -163,7 +191,20 @@ def event_shape(act_type, params, component_id, group_members):
     if act_type == "QuestActObjZoneMonsterHunt":
         return None  # zone->zone-group mapping unverified -> skip quest
     if act_type == "QuestActObjExpressFire":
-        return None  # npc-group member mapping unverified -> skip quest
+        # M2a wave-2 (t_41a14bab): ExpressFire credits when the owner expresses
+        # an emotion at a member of the act's npc group. Fire the group's first
+        # member with the act's express key (emotion id), 'count' times.
+        members = (npc_groups or {}).get(params.get("npcGroupId", 0), [])
+        if not members:
+            return None
+        return {"type": "ExpressFire", "npcId": members[0], "emotionId": params.get("expressKeyId", 0), "count": params.get("count", 1)}
+    if act_type == "QuestActObjAggro":
+        # M2a wave-2 (t_41a14bab): the act credits OnKill when the killed npc's
+        # template id equals the quest acceptor npc id AND the owner holds aggro
+        # on it (rating 0 = most aggro -> rank 1). Requires an Npc acceptor.
+        if not acceptor_npc_id:
+            return None
+        return {"type": "Aggro", "npcId": acceptor_npc_id}
     if act_type == "QuestActConReportNpc":
         return {"type": "ReportNpc", "npcId": params.get("npcId", 0), "selected": 0}
     if act_type == "QuestActConReportDoodad":
@@ -178,6 +219,22 @@ def load_item_groups(c):
     for row in c.execute("SELECT quest_item_group_id, item_id FROM quest_item_group_items").fetchall():
         groups.setdefault(row[0], []).append(row[1])
     return groups
+
+
+def load_npc_groups(c):
+    """quest_monster_npcs -> {quest_monster_group_id: [npc_ids]}. The engine's
+    QuestManager._groupNpcs is populated from this table (LoadQuestMonsterNpcs),
+    so ExpressFire's CheckGroupNpc / TalkNpcGroup membership resolve against it."""
+    groups = {}
+    for row in c.execute("SELECT quest_monster_group_id, npc_id FROM quest_monster_npcs").fetchall():
+        groups.setdefault(row[0], []).append(row[1])
+    return groups
+
+
+# Act types whose detail-table NUM columns hold 't'/'f' text (never bool() them).
+BOOL_COLUMNS = {
+    "QuestActObjAggro": {"rank1Item", "rank2Item", "rank3Item", "useAlias"},
+}
 
 
 def load_quest_acts(c, quest_id):
@@ -207,14 +264,15 @@ def load_quest_acts(c, quest_id):
         cols = [r[1] for r in c.execute(f"PRAGMA table_info({table})").fetchall()]
         values = dict(zip(cols, row))
         act = {"actId": act_id, "type": act_type, "detailId": detail_id}
+        bool_fields = BOOL_COLUMNS.get(act_type, set())
         for json_field, column in params_map.items():
             if column in values and values[column] is not None:
-                act[json_field] = values[column]
+                act[json_field] = parse_bool(values[column]) if json_field in bool_fields else values[column]
         acts.setdefault(comp_id, []).append(act)
     return acts
 
 
-def build_manifest(c, quest_id, family, item_groups):
+def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     ctx = c.execute("SELECT id, name, category_id, LEVEL, zone_id, let_it_done, selective, score FROM quest_contexts WHERE id = ?",
                     (quest_id,)).fetchone()
     if ctx is None:
@@ -230,8 +288,60 @@ def build_manifest(c, quest_id, family, item_groups):
     comps = c.execute("SELECT id, component_kind_id, next_component FROM quest_components WHERE quest_context_id = ? ORDER BY id",
                       (quest_id,)).fetchall()
     if not comps:
-        return {"questId": qid, "name": name, "family": family, "skip": {"reason": "no components"}}
+        # Act-less shell: still a band quest - carry level + zoneId so the
+        # band-census rollup and zone-coverage rows count the SKIP honestly.
+        return {"questId": qid, "name": name, "family": family,
+                "zoneId": zone_id, "template": {"level": level},
+                "skip": {"reason": "no components"}}
     acts = load_quest_acts(c, quest_id)
+
+    # ---- acceptor from the Start component ----
+    # Computed BEFORE the component loop so the skip-check / event shapes can
+    # resolve the Aggro event's target npc (M2a wave-2). ConAcceptComponent
+    # (self-start) quests accept via engage-combat: the npc whose
+    # engage_combat_give_quest_id == this quest id is the real acceptor.
+    acceptor = {"type": "Npc", "id": 0}
+    inventory = []
+    for cid, kind, _nxt in comps:
+        if kind != 2:  # Start
+            continue
+        for act in acts.get(cid, []):
+            t = act["type"]
+            if t == "QuestActConAcceptNpc":
+                acceptor = {"type": "Npc", "id": act.get("npcId", 0)}
+                break
+            elif t == "QuestActConAcceptNpcKill":
+                acceptor = {"type": "Kill", "id": act.get("npcId", 0)}
+                break
+            elif t == "QuestActConAcceptDoodad":
+                acceptor = {"type": "Doodad", "id": act.get("doodadId", 0)}
+                break
+            elif t == "QuestActConAcceptItem":
+                acceptor = {"type": "Item", "id": act.get("itemId", 0)}
+                inventory.append({"itemId": act.get("itemId", 0), "count": 1})
+                break
+            elif t == "QuestActConAcceptItemGain":
+                # M2a wave-1: mirrors ConAcceptItem (acceptor Item + inventory
+                # preseed) but with the act's own Count - CAIG.RunAct checks
+                # CheckItems(ItemId, Count) (QuestActConAcceptItemGain.cs:24).
+                acceptor = {"type": "Item", "id": act.get("itemId", 0)}
+                inventory.append({"itemId": act.get("itemId", 0), "count": act.get("count", 1)})
+                break
+            elif t == "QuestActConAcceptSphere":
+                acceptor = {"type": "Sphere", "id": act.get("sphereId", 0)}
+                break
+            elif t == "QuestActConAcceptComponent":
+                row = c.execute("SELECT id FROM npcs WHERE engage_combat_give_quest_id = ? LIMIT 1",
+                                (quest_id,)).fetchone()
+                if row:
+                    acceptor = {"type": "Npc", "id": row[0]}
+                    break
+                # no engage-combat npc: self-start alone is not a usable acceptor
+                # (cat-34 dailies carry ConAcceptComponent BEFORE CAIG - keep
+                # scanning so the CAIG branch can claim the Item acceptor)
+            break  # first accept act wins
+        break
+    acceptor_npc_id = acceptor["id"] if acceptor["type"] == "Npc" else 0
 
     comp_by_id = {cid: (kind, nxt) for cid, kind, nxt in comps}
     kind_names = {2: "Start", 3: "Supply", 4: "Progress", 5: "Fail", 6: "Ready", 7: "Drop", 8: "Reward"}
@@ -272,7 +382,7 @@ def build_manifest(c, quest_id, family, item_groups):
                 continue
             if act["type"] in NO_EVENT_TYPES or act["type"] in ("QuestActObjSphere", "QuestActObjMonsterGroupHunt", "QuestActObjItemGroupUse", "QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal", "QuestActObjMonsterHunt", "QuestActObjItemGather", "QuestActObjItemUse", "QuestActObjTalk", "QuestActObjInteraction", "QuestActObjCraft", "QuestActObjLevel", "QuestActObjItemGroupGather"):
                 continue
-            if event_shape(act["type"], act, cid, item_groups) is None:
+            if event_shape(act["type"], act, cid, item_groups, npc_groups, acceptor_npc_id) is None:
                 skip_reasons.append(f"unsynthesizable event shape for {act['type']}")
 
         components.append({
@@ -284,39 +394,6 @@ def build_manifest(c, quest_id, family, item_groups):
 
     if not any(comp["kind"] == "Start" for comp in components):
         skip_reasons.append("no Start component")
-
-    # ---- acceptor from the Start component ----
-    acceptor = {"type": "Npc", "id": 0}
-    inventory = []
-    for comp in components:
-        if comp["kind"] != "Start":
-            continue
-        for act in comp["acts"]:
-            t = act["type"]
-            if t == "QuestActConAcceptNpc":
-                acceptor = {"type": "Npc", "id": act.get("npcId", 0)}
-                break
-            elif t == "QuestActConAcceptNpcKill":
-                acceptor = {"type": "Kill", "id": act.get("npcId", 0)}
-                break
-            elif t == "QuestActConAcceptDoodad":
-                acceptor = {"type": "Doodad", "id": act.get("doodadId", 0)}
-                break
-            elif t == "QuestActConAcceptItem":
-                acceptor = {"type": "Item", "id": act.get("itemId", 0)}
-                inventory.append({"itemId": act.get("itemId", 0), "count": 1})
-                break
-            elif t == "QuestActConAcceptItemGain":
-                # M2a wave-1: mirrors ConAcceptItem (acceptor Item + inventory
-                # preseed) but with the act's own Count - CAIG.RunAct checks
-                # CheckItems(ItemId, Count) (QuestActConAcceptItemGain.cs:24).
-                acceptor = {"type": "Item", "id": act.get("itemId", 0)}
-                inventory.append({"itemId": act.get("itemId", 0), "count": act.get("count", 1)})
-                break
-            elif t == "QuestActConAcceptSphere":
-                acceptor = {"type": "Sphere", "id": act.get("sphereId", 0)}
-                break
-        break
 
     # ---- stage plan: the engine walks KINDS (GoToNextStep) and the driver calls
     # RunCurrentStep once at accept + once per stage. Each call advances past the
@@ -335,6 +412,7 @@ def build_manifest(c, quest_id, family, item_groups):
         # M2a wave-1: pass-through / state-check acts (RunAct->true once the
         # rig satisfies the condition; cinema needs events and is NOT here).
         "QuestActEtcItemObtain", "QuestActConAcceptItemGain", "QuestActSupplyLp",
+        "QuestActSupplyHonorPoint",
     }
 
     # Act types that pass without events because the generator pre-stocks the inventory
@@ -351,7 +429,7 @@ def build_manifest(c, quest_id, family, item_groups):
         "QuestActObjSphere", "QuestActObjCraft", "QuestActObjLevel",
         "QuestActObjZoneMonsterHunt", "QuestActObjExpressFire",
         # M2a wave-1: QuestActObjCinema overrides CountsAsAnObjective => true.
-        "QuestActObjCinema",
+        "QuestActObjCinema", "QuestActObjAggro",
     }
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
@@ -365,7 +443,7 @@ def build_manifest(c, quest_id, family, item_groups):
                 continue
             if act["type"] in NO_EVENT_TYPES:
                 continue
-            shape = event_shape(act["type"], act, comp["id"], item_groups)
+            shape = event_shape(act["type"], act, comp["id"], item_groups, npc_groups, acceptor_npc_id)
             if shape is not None:
                 # Multi-event shapes (e.g. cinema started->ended) come as lists.
                 shapes = shape if isinstance(shape, list) else [shape]
@@ -386,12 +464,52 @@ def build_manifest(c, quest_id, family, item_groups):
     # template has no Ready step (NewQuestCode.RunCurrentStep).
     progress_forced_stuck = let_it_done and not (score > 0 and "Ready" not in present)
 
+    # ---- engine completion-path guards (band-sweep findings, 2026-08-06) ----
+    # (1) A let-it-done Progress is force-blocked; the ONLY exits are a report
+    #     act force-advance (OnReportNpc/OnReportDoodad/OnReportJournal) or the
+    #     HackFix. Quests with neither (old Sunny Wilderness cluster 1867/1898/
+    #     1904/1908/2054 + act-less 5575-5645) can NEVER leave Progress - the
+    #     template has no engine completion path. SKIP with reason, never fake-
+    #     pass a quest the engine cannot complete.
+    # (2) score>0 Progress evaluates score over OBJECTIVE acts; with no
+    #     objective acts the score can never be met (stuck at Progress).
+    has_report_act = any(
+        a["type"] in ("QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal")
+        for comp in components for a in comp["acts"])
+    progress_obj_acts = [a for comp in components if comp["kind"] == "Progress"
+                         for a in comp["acts"] if a["type"] in OBJECTIVE_TYPES]
+    if progress_forced_stuck and not has_report_act:
+        skip_reasons.append("let-it-done quest with no report act (engine has no completion path)")
+    if score > 0 and "Progress" in present and not progress_obj_acts:
+        skip_reasons.append("score quest with no Progress objectives (score can never be met)")
+
+    def progress_score_met(events_credited):
+        """Mimics the engine's Progress+Score>0 branch (QuestStep.RunComponents):
+        res = score >= Template.Score where score = sum(Count * Objective) over
+        objective acts; hydrated gather objectives carry their full count from
+        accept time."""
+        acts = [a for comp in components if comp["kind"] == "Progress" for a in comp["acts"]]
+        obj_acts = [a for a in acts if a["type"] in OBJECTIVE_TYPES]
+        s = sum(a.get("count", 1) * (a.get("count", 1)
+                                     if (events_credited or a["type"] in HYDRATED_TYPES) else 0)
+                for a in obj_acts)
+        return s >= score
+
     def kind_is_auto(kind_name):
         if progress_forced_stuck and kind_name == "Progress":
             return False  # let-it-done Progress never auto-advances
         acts = [a for comp in components if comp["kind"] == kind_name for a in comp["acts"]]
         if not acts:
-            return True  # empty components pass vacuously
+            # empty components pass vacuously - EXCEPT score Progress: the
+            # engine still evaluates score >= Template.Score (score = 0 with
+            # no acts -> never met -> stuck), so it never auto-advances.
+            if kind_name == "Progress" and score > 0:
+                return progress_score_met(False)
+            return True
+        if kind_name == "Progress" and score > 0:
+            # engine: Progress + Score>0 -> res = score >= Score; hydrated
+            # gather objectives credit at accept, event acts credit later
+            return progress_score_met(False)
         if selective:
             # Selective quests pass the Progress step when ANY active component passes
             return any(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
@@ -407,11 +525,7 @@ def build_manifest(c, quest_id, family, item_groups):
         if not obj_acts:
             return True  # no objectives -> QuestComplete
         if score > 0:
-            # Score handler: score = sum(Count * Objectives[index])
-            s = sum(a.get("count", 1) * (a.get("count", 1)
-                                         if (events_credited or a["type"] in HYDRATED_TYPES) else 0)
-                    for a in obj_acts)
-            return s >= score
+            return progress_score_met(events_credited)
         # Per-act counts: min over acts (max when selective)
         per_act = []
         for a in obj_acts:
@@ -434,10 +548,18 @@ def build_manifest(c, quest_id, family, item_groups):
     def expect_for_rest(pos, stage_kind):
         """Expectation for a resting position; let-it-done quests stuck at
         Progress get the engine's actual status (Ready once objectives are
-        credited, else Progress) instead of the fixed Progress->'Progress' map."""
-        expect = dict(expect_for(pos))
+        credited, else Progress) instead of the fixed Progress->'Progress' map.
+        The ltd status re-evaluation only happens when RunComponents executes
+        AT Progress (QuestStep.RunComponents ltd branch); the START stage's
+        call runs at the FIRST present kind (Supply when one precedes Progress),
+        so its rest carries the transition status (Progress)."""
+        expect: dict = dict(expect_for(pos))
         if progress_forced_stuck and pos == "Progress":
-            expect["status"] = "Ready" if progress_status_ready(stage_kind == "Progress") else "Progress"
+            ran_at_progress = stage_kind != "Start" or first == "Progress"
+            if progress_status_ready(stage_kind == "Progress") and ran_at_progress:
+                expect["status"] = "Ready"
+            else:
+                expect["status"] = "Progress"
         return expect
 
     def advance(pos):
@@ -552,6 +674,10 @@ def build_manifest(c, quest_id, family, item_groups):
                 gid = a.get("itemGroupId", 0)
                 if gid and gid in item_groups:
                     groups.setdefault("itemGroups", {})[str(gid)] = item_groups[gid]
+            elif a["type"] in ("QuestActObjExpressFire", "QuestActObjTalkNpcGroup"):
+                gid = a.get("npcGroupId", 0)
+                if gid and npc_groups and gid in npc_groups:
+                    groups.setdefault("npcGroups", {})[str(gid)] = npc_groups[gid]
     if groups:
         manifest["groups"] = groups
 
@@ -607,6 +733,108 @@ def select_t4_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
+# ---- T5 (M2a wave-2): band 1-20 quests carrying the four wave-2 act families ----
+# Same deterministic selection as T4: quests whose acts include any wave-2 family
+# AND level 1-20, minus dropped content, minus quests already sampled in
+# T1/T2/T3/T4 (each quest driven exactly once across the census).
+WAVE2_ACT_TYPES = (
+    "QuestActObjExpressFire",
+    "QuestActObjAggro",
+    "QuestActCheckCompleteComponent",
+    "QuestActSupplyHonorPoint",
+)
+
+
+def select_t5_quests(c, existing_ids):
+    """Band 1-20 wave-2 act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE2_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        JOIN quest_contexts q ON q.id = cmp.quest_context_id
+        WHERE a.act_detail_type IN ({placeholders})
+          AND q.LEVEL BETWEEN 1 AND 20
+        ORDER BY cmp.quest_context_id""", WAVE2_ACT_TYPES).fetchall()
+    return [r[0] for r in rows if r[0] not in existing_ids]
+
+
+# ---- T6/T7 (M2a census): full band sweeps ----
+# Every non-dropped quest in the band, minus quests already sampled in
+# T1-T5 (each quest driven exactly once across the census).
+BAND_TIERS = [
+    ("t6", "band 1-10", 1, 10),
+    ("t7", "band 11-20", 11, 20),
+]
+
+# Dropped content (scorecard-explorations/dropped-content-register.md):
+# dummy shell 1391 + 23 no-start tutorial shells + 8 orphaned contexts
+# (745/1421/1954-1958/2140 have no quest_contexts row - excluded by the
+# JOIN already; listed for the census denominator bookkeeping). The
+# level-1 tutorial shells (1533, 1535-1541) DO have rows and land in band
+# 1-10 - exclude explicitly so sweep denominators match the register.
+# M2a drop (2026-08-08, register §6/§7, t_e5deb128): 26 engine-stuck
+# templates (1867/1898/1904/1908/2054 + 5575-5645 + 5641, zone 22) + 91
+# zero-component shells (2148-2229 reserve + 3748/3750-3757 Hadir) - rows
+# deleted by SQL/patches/compact/2026-08-06-drop-m2a-stuck-and-shells.sql.
+DROPPED_QUESTS = {
+    1391, 745, 1421, 1954, 1955, 1956, 1957, 1958, 2140,
+    1533, 1535, 1536, 1537, 1538, 1539, 1540, 1541, 1542, 1543,
+    1544, 1545, 1546, 1547, 1548, 1549, 1551, 1552, 1553, 1554,
+    1640, 1830, 1831,
+    # --- M2a drop cluster A (26 engine-stuck, zone 22 old Sunny Wilderness) ---
+    1867, 1898, 1904, 1908, 2054,
+    5575, 5578, 5579, 5584, 5589, 5596, 5597, 5601, 5603, 5604, 5608, 5619,
+    5630, 5632, 5636, 5637, 5640, 5641, 5643, 5644, 5645,
+    # --- M2a drop cluster B (91 zero-component shells) ---
+    *range(2148, 2230),  # 2148-2229 reserve block
+    3748, *range(3750, 3758),  # Hadir-farm cutscenes
+}
+
+# Signature zones for the M2a zone-coverage rows (M2_PLAN.md zone map):
+# REAL zone ids only - the catch-all w_gweonid_forest_1 (1) and the
+# old_/test_/machinima_ variants carry meaningless attribution.
+SIGNATURE_ZONES = {
+    "Gweonid": [127, 128],
+    "Lilyut": [11, 141],
+    "Mahadevi": [18, 142, 143],
+    "Tiger Spine": [23, 179],
+    "Falcony": [21, 130],
+    "Sunny Wilderness": [22, 136],
+}
+
+
+def select_band_quests(c, lo, hi, existing_ids):
+    """Full band sweep: non-dropped quest_contexts with LEVEL in [lo, hi],
+    minus quests already sampled in earlier tiers, ordered by id."""
+    rows = c.execute(
+        "SELECT id FROM quest_contexts WHERE LEVEL BETWEEN ? AND ? ORDER BY id",
+        (lo, hi)).fetchall()
+    return [r[0] for r in rows if r[0] not in DROPPED_QUESTS and r[0] not in existing_ids]
+
+
+def emit_census_meta(c, out_root):
+    """Band denominators (total / dropped-in-band / non-dropped) + signature
+    zone map -> Manifests/census-meta.json. The tier test reads this to
+    render the M2a band-census acceptance table and zone-coverage rows.
+    Deterministic: fixed key order, no wall-clock."""
+    meta = {"bands": {}, "signatureZones": []}
+    for tier, label, lo, hi in BAND_TIERS:
+        ids = [r[0] for r in c.execute(
+            "SELECT id FROM quest_contexts WHERE LEVEL BETWEEN ? AND ? ORDER BY id",
+            (lo, hi)).fetchall()]
+        dropped = sorted(q for q in ids if q in DROPPED_QUESTS)
+        meta["bands"][f"{lo}-{hi}"] = {
+            "label": label, "tier": tier, "total": len(ids),
+            "dropped": dropped, "nonDropped": len(ids) - len(dropped),
+        }
+    for name, zone_ids in SIGNATURE_ZONES.items():
+        meta["signatureZones"].append({"name": name, "zoneIds": zone_ids})
+    with open(os.path.join(out_root, "census-meta.json"), "w") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=1)
+    return meta
+
+
 def primary_family(acts):
     """Quest family label for the report: most frequent act type, preferring
     supported (generator-known) types so common families label drivable quests."""
@@ -615,6 +843,8 @@ def primary_family(acts):
         counts[a] = counts.get(a, 0) + 1
     supported = sorted([a for a in counts if a in ACT_TABLES], key=lambda a: (-counts[a], a))
     unsupported = sorted([a for a in counts if a not in ACT_TABLES], key=lambda a: (-counts[a], a))
+    if not (supported or unsupported):
+        return "no-acts"  # act-less shell (band sweep includes empty contexts)
     return (supported or unsupported)[0]
 
 
@@ -622,6 +852,7 @@ def main():
     c = sqlite3.connect(DB)
     c.row_factory = sqlite3.Row
     item_groups = load_item_groups(c)
+    npc_groups = load_npc_groups(c)
 
     # ---- T1: Solzreed golden zone ----
     t1_ids = [r[0] for r in c.execute(
@@ -652,7 +883,7 @@ def main():
         os.makedirs(out_dir, exist_ok=True)
         family = "golden-zone" if tier == "t1" else "mixed-families"
         for qid in ids:
-            manifest = build_manifest(c, qid, family, item_groups)
+            manifest = build_manifest(c, qid, family, item_groups, npc_groups)
             if manifest is None:
                 continue
             with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
@@ -673,7 +904,7 @@ def main():
             """SELECT a.act_detail_type FROM quest_acts a
               JOIN quest_components cmp ON a.quest_component_id = cmp.id
               WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
-        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
         if manifest is None:
             continue
         with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
@@ -690,16 +921,62 @@ def main():
             """SELECT a.act_detail_type FROM quest_acts a
               JOIN quest_components cmp ON a.quest_component_id = cmp.id
               WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
-        manifest = build_manifest(c, qid, primary_family(acts), item_groups)
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
         if manifest is None:
             continue
         with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
             json.dump(manifest, f, ensure_ascii=False, indent=1)
         counts["t4"] = counts.get("t4", 0) + 1
 
+    # ---- T5 (M2a wave-2): band 1-20 quests carrying the wave-2 act families ----
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t4")) if f.endswith(".json")}
+    t5_ids = select_t5_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t5")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t5_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t5"] = counts.get("t5", 0) + 1
+    # Fold t5 into the sampled set so the band sweeps exclude wave-2 carriers
+    # too (each quest driven exactly once across the census).
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t5")) if f.endswith(".json")}
+
+    # ---- T6/T7 (M2a census): full band sweeps ----
+    # The band denominators (incl. dropped ids per band) and the signature
+    # zone map are emitted to Manifests/census-meta.json for the tier test's
+    # acceptance table + zone-coverage rows.
+    emit_census_meta(c, OUT_ROOT)
+    band_counts = {}
+    for tier, label, lo, hi in BAND_TIERS:
+        band_ids = select_band_quests(c, lo, hi, existing_ids)
+        out_dir = os.path.join(OUT_ROOT, tier)
+        os.makedirs(out_dir, exist_ok=True)
+        for qid in band_ids:
+            acts = set(r[0] for r in c.execute(
+                """SELECT a.act_detail_type FROM quest_acts a
+                  JOIN quest_components cmp ON a.quest_component_id = cmp.id
+                  WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+            manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+            if manifest is None:
+                continue
+            with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+                json.dump(manifest, f, ensure_ascii=False, indent=1)
+            counts[tier] = counts.get(tier, 0) + 1
+        band_counts[tier] = len(band_ids)
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
                       "t1_total": len(t1_ids), "t2_total": len(t2_ids),
-                      "t3_selected": len(t3_ids), "t4_selected": len(t4_ids)}, indent=1))
+                      "t3_selected": len(t3_ids), "t4_selected": len(t4_ids),
+                      "t5_selected": len(t5_ids),
+                      "t6_selected": band_counts.get("t6", 0),
+                      "t7_selected": band_counts.get("t7", 0)}, indent=1))
 
 
 if __name__ == "__main__":

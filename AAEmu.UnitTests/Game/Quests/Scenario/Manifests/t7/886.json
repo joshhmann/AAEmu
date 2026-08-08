@@ -1,0 +1,119 @@
+{
+ "questId": 886,
+ "name": "상자 속에 든 도둑쥐",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 17,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5224
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4240,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6066,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 700,
+      "npcId": 5224
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4242,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6068,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 244,
+      "npcId": 2513,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4243,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6069,
+      "type": "QuestActConReportNpc",
+      "detailId": 796,
+      "npcId": 5224
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4244,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2513,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5224,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

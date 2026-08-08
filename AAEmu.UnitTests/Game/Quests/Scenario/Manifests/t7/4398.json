@@ -1,0 +1,106 @@
+{
+ "questId": 4398,
+ "name": "반지의 또 다른 주인들",
+ "zoneId": 7,
+ "categoryId": 3,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10555
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19123,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26330,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3689,
+      "npcId": 10555
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19124,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26331,
+      "type": "QuestActConReportNpc",
+      "detailId": 3965,
+      "npcId": 10556
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40862,
+      "type": "QuestActSupplyItem",
+      "detailId": 4829,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10556,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

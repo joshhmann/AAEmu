@@ -1,0 +1,140 @@
+{
+ "questId": 1500,
+ "name": "가르바슈의 먹이",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5249
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7148,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9933,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1260,
+      "npcId": 5249
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7184,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9934,
+      "type": "QuestActObjItemGather",
+      "detailId": 570,
+      "itemId": 5225,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7185,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9935,
+      "type": "QuestActConReportNpc",
+      "detailId": 1429,
+      "npcId": 5249
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7186,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38224,
+      "type": "QuestActSupplyItem",
+      "detailId": 4231,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5225,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5249,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5225,
+   "count": 5
+  }
+ ]
+}

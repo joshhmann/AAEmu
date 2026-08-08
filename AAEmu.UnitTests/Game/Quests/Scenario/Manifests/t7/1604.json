@@ -1,0 +1,134 @@
+{
+ "questId": 1604,
+ "name": "산적 소탕",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1914
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10853,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1406,
+      "npcId": 1914
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27032,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 484,
+      "monsterGroupId": 438,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10858,
+      "type": "QuestActConReportNpc",
+      "detailId": 1595,
+      "npcId": 1914
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7730,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38182,
+      "type": "QuestActSupplyItem",
+      "detailId": 4213,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 438,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1914,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

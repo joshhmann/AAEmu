@@ -1,0 +1,136 @@
+{
+ "questId": 1439,
+ "name": "뼈의 정체",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5742
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6382,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9124,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1107,
+      "npcId": 5742
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6384,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9126,
+      "type": "QuestActConReportNpc",
+      "detailId": 1267,
+      "npcId": 5742
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6385,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38583,
+      "type": "QuestActSupplyItem",
+      "detailId": 4332,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11388,
+      "type": "QuestActObjInteraction",
+      "detailId": 270,
+      "doodadId": 2130,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2130,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5742,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

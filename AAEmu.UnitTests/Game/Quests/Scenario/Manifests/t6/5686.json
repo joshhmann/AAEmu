@@ -1,0 +1,152 @@
+{
+ "questId": 5686,
+ "name": "강인하고 멋진 남자 여름옷을 위해",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13634
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24422,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33916,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4318,
+      "npcId": 13634
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24423,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33919,
+      "type": "QuestActObjItemGather",
+      "detailId": 2763,
+      "itemId": 29177,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24424,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33920,
+      "type": "QuestActConReportNpc",
+      "detailId": 4616,
+      "npcId": 13634
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33921,
+      "type": "QuestActSupplyItem",
+      "detailId": 3864,
+      "itemId": 28760,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33922,
+      "type": "QuestActSupplyItem",
+      "detailId": 3865,
+      "itemId": 28761,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29177,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13634,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28760,
+      "count": 1
+     },
+     {
+      "itemId": 28761,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29177,
+   "count": 12
+  }
+ ]
+}

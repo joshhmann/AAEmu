@@ -1,0 +1,104 @@
+{
+ "questId": 24,
+ "name": "숲의 인도자를 위한 일",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5253
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 760,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27502,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 148,
+      "doodadId": 5253
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 761,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27504,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 990,
+      "npcId": 7625,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27503,
+      "type": "QuestActConAutoComplete",
+      "detailId": 923
+     },
+     {
+      "actId": 36957,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1369,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 7625,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

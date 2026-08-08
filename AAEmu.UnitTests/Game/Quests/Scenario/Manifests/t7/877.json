@@ -1,0 +1,104 @@
+{
+ "questId": 877,
+ "name": "채석장을 정리해주세요",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 19,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5404
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4112,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28740,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 171,
+      "doodadId": 5404
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4114,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16555,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 235,
+      "monsterGroupId": 220,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4118,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28739,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1079
+     },
+     {
+      "actId": 36967,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1378,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 220,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

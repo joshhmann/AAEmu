@@ -1,0 +1,129 @@
+{
+ "questId": 1587,
+ "name": "일그러진 괴물의 머리",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 14739
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7679,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10797,
+      "type": "QuestActConAcceptItem",
+      "detailId": 74,
+      "itemId": 14739
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7680,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10798,
+      "type": "QuestActConReportNpc",
+      "detailId": 1584,
+      "npcId": 1885
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7681,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 11494,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16753,
+      "type": "QuestActObjItemGather",
+      "detailId": 1077,
+      "itemId": 14739,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14739,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1885,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14739,
+   "count": 1
+  },
+  {
+   "itemId": 14739,
+   "count": 1
+  }
+ ]
+}

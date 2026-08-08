@@ -1,0 +1,129 @@
+{
+ "questId": 2544,
+ "name": "부러진 날개의 형제회 용병 처치",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2040
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15640,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 218,
+      "npcId": 2040
+     },
+     {
+      "actId": 15641,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 219,
+      "npcId": 2041
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15642,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 183,
+      "monsterGroupId": 182,
+      "count": 7
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11054,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15643,
+      "type": "QuestActConReportJournal",
+      "detailId": 45
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11055,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15644,
+      "type": "QuestActSupplyCopper",
+      "detailId": 135,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 182,
+     "count": 7
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

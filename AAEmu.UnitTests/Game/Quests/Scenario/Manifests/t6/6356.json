@@ -1,0 +1,152 @@
+{
+ "questId": 6356,
+ "name": "마음을 전하는 달콤한 방법",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14844
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27220,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38517,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4741,
+      "npcId": 14844
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27221,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38515,
+      "type": "QuestActObjItemGather",
+      "detailId": 2944,
+      "itemId": 8055,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27222,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38524,
+      "type": "QuestActConReportNpc",
+      "detailId": 4974,
+      "npcId": 14844
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27235,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38514,
+      "type": "QuestActSupplyItem",
+      "detailId": 4301,
+      "itemId": 33957,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38842,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1656,
+      "amount": 100
+     },
+     {
+      "actId": 38843,
+      "type": "QuestActSupplyExp",
+      "detailId": 1345,
+      "exp": 1004
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8055,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14844,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33957,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8055,
+   "count": 5
+  }
+ ]
+}

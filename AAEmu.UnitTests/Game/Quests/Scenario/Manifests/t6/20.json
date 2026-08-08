@@ -1,0 +1,119 @@
+{
+ "questId": 20,
+ "name": "사라세니아에 관한 문제",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 5,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3680
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 659,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 502,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 114,
+      "npcId": 3680
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 676,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14156,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 149,
+      "monsterGroupId": 21,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 678,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 511,
+      "type": "QuestActConReportNpc",
+      "detailId": 119,
+      "npcId": 3680
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 680,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 21,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3680,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

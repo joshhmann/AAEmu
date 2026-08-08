@@ -1,0 +1,171 @@
+{
+ "questId": 2759,
+ "name": "옥시언 상단의 적 처치",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4189
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11605,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16935,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 486,
+      "npcId": 4189
+     },
+     {
+      "actId": 16936,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 487,
+      "npcId": 5737
+     },
+     {
+      "actId": 16937,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 488,
+      "npcId": 5738
+     },
+     {
+      "actId": 16938,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 489,
+      "npcId": 5739
+     },
+     {
+      "actId": 16939,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 490,
+      "npcId": 5740
+     },
+     {
+      "actId": 28855,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1080,
+      "npcId": 4210
+     },
+     {
+      "actId": 28856,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1081,
+      "npcId": 11941
+     },
+     {
+      "actId": 28857,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1082,
+      "npcId": 11944
+     },
+     {
+      "actId": 28858,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1083,
+      "npcId": 11945
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11606,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16901,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 262,
+      "monsterGroupId": 237,
+      "count": 26
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16902,
+      "type": "QuestActConReportJournal",
+      "detailId": 157
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11608,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16903,
+      "type": "QuestActSupplyCopper",
+      "detailId": 238,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 237,
+     "count": 26
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

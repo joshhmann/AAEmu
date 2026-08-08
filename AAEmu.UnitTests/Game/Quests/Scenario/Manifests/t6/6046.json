@@ -1,0 +1,121 @@
+{
+ "questId": 6046,
+ "name": "진격, 진격!",
+ "zoneId": 1,
+ "categoryId": 108,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14317
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26020,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35878,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4632,
+      "npcId": 14317
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35877,
+      "type": "QuestActObjItemGather",
+      "detailId": 2881,
+      "itemId": 30802,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26062,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35635,
+      "type": "QuestActSupplyExp",
+      "detailId": 829,
+      "exp": 0
+     },
+     {
+      "actId": 35636,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1275,
+      "amount": 0
+     },
+     {
+      "actId": 35879,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1603
+     },
+     {
+      "actId": 35880,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 368,
+      "questContextId": 6047
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30802,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30802,
+   "count": 3
+  }
+ ]
+}

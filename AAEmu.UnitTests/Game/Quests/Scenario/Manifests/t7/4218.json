@@ -1,0 +1,98 @@
+{
+ "questId": 4218,
+ "name": "나오시스가 놓친 것",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 13,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1876
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18231,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23802,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1024,
+      "npcId": 1876
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18232,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23804,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 912,
+      "npcId": 1876,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18233,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23803,
+      "type": "QuestActConAutoComplete",
+      "detailId": 744
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1876,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

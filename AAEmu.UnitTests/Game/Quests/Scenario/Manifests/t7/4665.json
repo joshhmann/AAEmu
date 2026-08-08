@@ -1,0 +1,163 @@
+{
+ "questId": 4665,
+ "name": "거상의 꿈, 오스테라로 가는 길",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11070
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20250,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27558,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3771,
+      "npcId": 11070
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20251,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27559,
+      "type": "QuestActObjCraft",
+      "detailId": 159,
+      "craftId": 6227,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20252,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27561,
+      "type": "QuestActConReportNpc",
+      "detailId": 4052,
+      "npcId": 11070
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20271,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27560,
+      "type": "QuestActObjSphere",
+      "detailId": 640,
+      "sphereId": 1713
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20272,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27563,
+      "type": "QuestActSupplyItem",
+      "detailId": 3053,
+      "itemId": 15566,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38285,
+      "type": "QuestActSupplyItem",
+      "detailId": 4265,
+      "itemId": 31892,
+      "gradeId": 0,
+      "count": 50
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6227,
+     "count": 1
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 20271
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11070,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 15566,
+      "count": 1
+     },
+     {
+      "itemId": 31892,
+      "count": 50
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,135 @@
+{
+ "questId": 2749,
+ "name": "부서지는 해안의 오크 처치",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 794
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11563,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16851,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 448,
+      "npcId": 794
+     },
+     {
+      "actId": 16852,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 449,
+      "npcId": 795
+     },
+     {
+      "actId": 16853,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 450,
+      "npcId": 796
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11564,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16855,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 254,
+      "monsterGroupId": 10,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11565,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16854,
+      "type": "QuestActConReportJournal",
+      "detailId": 149
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11566,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16856,
+      "type": "QuestActSupplyCopper",
+      "detailId": 230,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 10,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

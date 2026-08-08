@@ -1,0 +1,119 @@
+{
+ "questId": 5660,
+ "name": "신에게 바칠 음식",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2292
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24319,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33998,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4341,
+      "npcId": 2292
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24320,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24321,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33999,
+      "type": "QuestActConReportNpc",
+      "detailId": 4639,
+      "npcId": 2294
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24480,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 24481,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2294,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

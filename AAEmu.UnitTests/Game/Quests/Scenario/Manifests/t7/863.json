@@ -1,0 +1,148 @@
+{
+ "questId": 863,
+ "name": "걱정을 부르는 입맛",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5241
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4137,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5958,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 680,
+      "npcId": 5241
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 4138,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5959,
+      "type": "QuestActSupplyItem",
+      "detailId": 358,
+      "itemId": 21555,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4139,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5960,
+      "type": "QuestActObjItemGather",
+      "detailId": 302,
+      "itemId": 21555,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4140,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5961,
+      "type": "QuestActConReportNpc",
+      "detailId": 777,
+      "npcId": 2564
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4141,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21555,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2564,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21555,
+   "count": 1
+  }
+ ]
+}

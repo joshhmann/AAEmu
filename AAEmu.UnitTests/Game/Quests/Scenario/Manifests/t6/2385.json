@@ -1,0 +1,106 @@
+{
+ "questId": 2385,
+ "name": "무투회 참가",
+ "zoneId": 1,
+ "categoryId": 8,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 390
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10253,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14478,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1926,
+      "npcId": 390
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10254,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14479,
+      "type": "QuestActConReportNpc",
+      "detailId": 2138,
+      "npcId": 7816
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10255,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40874,
+      "type": "QuestActSupplyItem",
+      "detailId": 4841,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7816,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

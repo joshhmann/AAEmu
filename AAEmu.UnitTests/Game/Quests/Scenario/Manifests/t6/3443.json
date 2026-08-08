@@ -1,0 +1,140 @@
+{
+ "questId": 3443,
+ "name": "살아있는 시체들의 땅",
+ "zoneId": 21,
+ "categoryId": 61,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10039
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14870,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21282,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2984,
+      "npcId": 10039
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14871,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21285,
+      "type": "QuestActObjItemGather",
+      "detailId": 1565,
+      "itemId": 20041,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14872,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20218,
+      "type": "QuestActConReportNpc",
+      "detailId": 2975,
+      "npcId": 4265
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14873,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40792,
+      "type": "QuestActSupplyItem",
+      "detailId": 4759,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20041,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4265,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20041,
+   "count": 3
+  }
+ ]
+}

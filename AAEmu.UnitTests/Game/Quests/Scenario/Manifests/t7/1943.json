@@ -1,0 +1,110 @@
+{
+ "questId": 1943,
+ "name": "뭐든지 먹어치우는 멧돼지 처치",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4827
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8999,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12627,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 5,
+      "npcId": 4827
+     },
+     {
+      "actId": 12628,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 6,
+      "npcId": 4887
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9000,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12629,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 96,
+      "monsterGroupId": 100,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9001,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12630,
+      "type": "QuestActConAutoComplete",
+      "detailId": 339
+     },
+     {
+      "actId": 12631,
+      "type": "QuestActSupplyCopper",
+      "detailId": 36,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 100,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

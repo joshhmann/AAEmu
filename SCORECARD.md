@@ -152,14 +152,17 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M2a wave-1, census 2026-08-06): **189/189 driven quests runnable** across the 218-quest
-> scenario-harness census (T1 97/97, T2 29/29, T3 32/32, T4 31/31 PASS; 0 FAIL; 29 SKIP = 8 orphaned
-> quest_contexts + 21 harness gaps — wave-1 closures flipped 36 SKIP→PASS: 12 cinema
-> (6037/6040/6041/6044/6045/6047/6049/6051/6053-6056 prologue), 11 EtcItemObtain (84/128/134/869/871/882/
-> 884/997/3537 + t3 2301/5052), 13 CAIG+SupplyLp (1953/1959/1960/2144/2145/4881-4888). 1702 stays
-> SKIP (multi-gap: also QuestActCheckCompleteComponent — wave-2 scope). Fail-before census (rig commit
-> 2283c0df): 153/153 runnable, 65 SKIP. Census header now deterministic (no wall-clock churn, M2a acceptance).
-> QuestActEtcItemObtain = engine no-op (watch §2.4); cinema domain zero-wired server-side (watch §2.4).
+> Quest-runnability (M2a, band 1-20 census 2026-08-06 + M2a data drop 2026-08-08): **1233/1233 driven quests runnable, 0 FAIL** across the
+> 1252-quest scenario-harness census (117 dead templates dropped 2026-08-08 — register §6/§7, t_e5deb128). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
+> 560 non-dropped (668 − 108 dropped). **Band 11-20: 609 PASS / 0 SKIP / 0 FAIL = 100.0%** of 609 non-dropped.
+> All SKIPs documented-SKIP with reason (19): 8 orphaned contexts (no quest_contexts row),
+> 10 unsupported-act-type (ZoneKill 3 / CrimePoint 2 / MateLevel 2 / CompleteQuest 2 / AbilityLevel 1),
+> 1 let-it-done-without-report-act (6069). Wave-1+2 closures
+> flipped 73 SKIP→PASS cumulative (36 wave-1 + 37 merged-line incl. 1702 multi-gap); zero PASS→SKIP regressions.
+> Census regen deterministic (byte-identical); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
+> Tiger Spine/Falcony/Sunny Wilderness) in runnability.md (census-meta.json-driven). Fail-before states on the
+> wave-1/wave-2 rig commits (2283c0df/7a1145be). Watch items: EtcItemObtain engine no-op, cinema zero-wired,
+> honor zero-wired (zero-wired-domains.md).
 > See scorecard-explorations/runnability.md + zero-wired-domains.md §8.
 
 ## Zero-data-wired domains (data exists, server ignores it)

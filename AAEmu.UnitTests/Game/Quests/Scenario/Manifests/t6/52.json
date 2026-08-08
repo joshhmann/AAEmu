@@ -1,0 +1,140 @@
+{
+ "questId": 52,
+ "name": "바위처럼",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5938
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10244,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14466,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1923,
+      "npcId": 5938
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10245,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14468,
+      "type": "QuestActObjItemGather",
+      "detailId": 964,
+      "itemId": 16388,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10246,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14467,
+      "type": "QuestActConReportNpc",
+      "detailId": 2136,
+      "npcId": 5938
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10247,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36929,
+      "type": "QuestActSupplyItem",
+      "detailId": 4086,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16388,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5938,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16388,
+   "count": 5
+  }
+ ]
+}

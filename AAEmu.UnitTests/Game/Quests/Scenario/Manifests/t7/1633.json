@@ -1,0 +1,197 @@
+{
+ "questId": 1633,
+ "name": "여신의 손톱 자국 지우기",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 14,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7001
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7930,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11058,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1441,
+      "npcId": 7001
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 7931,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11059,
+      "type": "QuestActSupplyItem",
+      "detailId": 933,
+      "itemId": 14976,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7932,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28815,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 495,
+      "monsterGroupId": 444,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7933,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11060,
+      "type": "QuestActConReportNpc",
+      "detailId": 1632,
+      "npcId": 7001
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7934,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38187,
+      "type": "QuestActSupplyItem",
+      "detailId": 4218,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21026,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28814,
+      "type": "QuestActObjInteraction",
+      "detailId": 617,
+      "doodadId": 1914,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21027,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28813,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1002,
+      "npcId": 1896,
+      "count": 30
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 444,
+     "count": 10
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 1914,
+     "count": 5
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 1896,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7001,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

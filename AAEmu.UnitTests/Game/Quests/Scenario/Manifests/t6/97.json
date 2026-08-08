@@ -1,0 +1,181 @@
+{
+ "questId": 97,
+ "name": "책 읽어주는 엘프",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 5,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 581
+ },
+ "template": {
+  "level": 5,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10357,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14571,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1953,
+      "npcId": 581
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 10358,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14569,
+      "type": "QuestActSupplyItem",
+      "detailId": 1381,
+      "itemId": 16401,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10359,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14570,
+      "type": "QuestActObjItemUse",
+      "detailId": 411,
+      "itemId": 16401,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10360,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14572,
+      "type": "QuestActConReportNpc",
+      "detailId": 2166,
+      "npcId": 581
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38856,
+      "type": "QuestActSupplyItem",
+      "detailId": 4522,
+      "itemId": 32503,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38857,
+      "type": "QuestActSupplyItem",
+      "detailId": 4523,
+      "itemId": 32504,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38858,
+      "type": "QuestActSupplyItem",
+      "detailId": 4524,
+      "itemId": 32505,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 16401,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 581,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32503,
+      "count": 1
+     },
+     {
+      "itemId": 32504,
+      "count": 1
+     },
+     {
+      "itemId": 32505,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,148 @@
+{
+ "questId": 5736,
+ "name": "내 손으로 만드는 손 방어구: 제작",
+ "zoneId": 1,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24659,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34195,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 217,
+      "questContextId": 5736
+     },
+     {
+      "actId": 34384,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4398,
+      "npcId": 754
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24660,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34205,
+      "type": "QuestActObjCraft",
+      "detailId": 263,
+      "craftId": 5747,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24661,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34211,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 218,
+      "questContextId": 5737
+     },
+     {
+      "actId": 34212,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1474
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24737,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34210,
+      "type": "QuestActObjCraft",
+      "detailId": 265,
+      "craftId": 5775,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24738,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34207,
+      "type": "QuestActObjCraft",
+      "detailId": 264,
+      "craftId": 5761,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 5747,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 5775,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 5761,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

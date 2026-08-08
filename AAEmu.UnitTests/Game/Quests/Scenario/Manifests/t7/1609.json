@@ -1,0 +1,91 @@
+{
+ "questId": 1609,
+ "name": "버려진 초소",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 1875
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7788,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10954,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 45,
+      "doodadId": 1875
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7789,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29440,
+      "type": "QuestActConReportNpc",
+      "detailId": 4177,
+      "npcId": 6972
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7790,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6972,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

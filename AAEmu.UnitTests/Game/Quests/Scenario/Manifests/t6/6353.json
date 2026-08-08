@@ -1,0 +1,136 @@
+{
+ "questId": 6353,
+ "name": "거대한 풀피리",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5750
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27206,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38247,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4735,
+      "npcId": 5750
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38248,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1275,
+      "npcId": 4194,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38249,
+      "type": "QuestActConReportNpc",
+      "detailId": 4967,
+      "npcId": 5750
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27209,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38259,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2564,
+      "itemId": 32456,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38260,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2565,
+      "itemId": 32457,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4194,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5750,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

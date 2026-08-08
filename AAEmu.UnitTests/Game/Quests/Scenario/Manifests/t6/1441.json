@@ -1,0 +1,121 @@
+{
+ "questId": 1441,
+ "name": "말하는 기계",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4224
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6390,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15556,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2115,
+      "npcId": 4224
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6392,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15554,
+      "type": "QuestActObjInteraction",
+      "detailId": 394,
+      "doodadId": 3003,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6393,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15555,
+      "type": "QuestActConReportNpc",
+      "detailId": 2318,
+      "npcId": 3446
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6394,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3003,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3446,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

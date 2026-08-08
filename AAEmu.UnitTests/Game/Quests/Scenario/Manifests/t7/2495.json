@@ -1,0 +1,106 @@
+{
+ "questId": 2495,
+ "name": "마리안을 태운 마차",
+ "zoneId": 131,
+ "categoryId": 3,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10553
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10775,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14989,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2051,
+      "npcId": 10553
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10776,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14991,
+      "type": "QuestActConReportNpc",
+      "detailId": 2259,
+      "npcId": 10554
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10777,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40861,
+      "type": "QuestActSupplyItem",
+      "detailId": 4828,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10554,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,159 @@
+{
+ "questId": 2059,
+ "name": "은의 배",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4629
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13143,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1767,
+      "npcId": 4629
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9473,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13144,
+      "type": "QuestActSupplyItem",
+      "detailId": 1263,
+      "itemId": 16235,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13996,
+      "type": "QuestActObjInteraction",
+      "detailId": 350,
+      "doodadId": 2713,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13995,
+      "type": "QuestActConReportNpc",
+      "detailId": 2084,
+      "npcId": 4629
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9486,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13997,
+      "type": "QuestActSupplyItem",
+      "detailId": 1329,
+      "itemId": 17944,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2713,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4629,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17944,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

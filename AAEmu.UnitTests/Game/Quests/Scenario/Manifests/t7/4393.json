@@ -1,0 +1,106 @@
+{
+ "questId": 4393,
+ "name": "가리여울 마을의 맬컴",
+ "zoneId": 11,
+ "categoryId": 3,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10987
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19107,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26170,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3651,
+      "npcId": 10987
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19109,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27491,
+      "type": "QuestActConReportNpc",
+      "detailId": 4046,
+      "npcId": 8064
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40854,
+      "type": "QuestActSupplyItem",
+      "detailId": 4821,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8064,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

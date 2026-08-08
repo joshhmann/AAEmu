@@ -115,6 +115,12 @@
      "type": "ItemGather",
      "itemId": 25813,
      "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 12219,
+     "emotionId": 308,
+     "count": 1
     }
    ],
    "expect": {
@@ -164,7 +170,11 @@
    "count": 1
   }
  ],
- "skip": {
-  "reason": "unsynthesizable event shape for QuestActObjExpressFire; unsynthesizable event shape for QuestActObjExpressFire (comp 21244)"
+ "groups": {
+  "npcGroups": {
+   "461": [
+    12219
+   ]
+  }
  }
 }

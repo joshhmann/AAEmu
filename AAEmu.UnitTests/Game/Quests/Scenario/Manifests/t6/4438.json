@@ -1,0 +1,144 @@
+{
+ "questId": 4438,
+ "name": "논두렁 밭고랑",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9789
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19356,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26269,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3673,
+      "npcId": 9789
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19357,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 19358,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26271,
+      "type": "QuestActConReportNpc",
+      "detailId": 3950,
+      "npcId": 9789
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19404,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26272,
+      "type": "QuestActSupplyItem",
+      "detailId": 2835,
+      "itemId": 15596,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33625,
+      "type": "QuestActSupplyItem",
+      "detailId": 3826,
+      "itemId": 8337,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38283,
+      "type": "QuestActSupplyItem",
+      "detailId": 4263,
+      "itemId": 31892,
+      "gradeId": 0,
+      "count": 25
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9789,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 15596,
+      "count": 1
+     },
+     {
+      "itemId": 8337,
+      "count": 1
+     },
+     {
+      "itemId": 31892,
+      "count": 25
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

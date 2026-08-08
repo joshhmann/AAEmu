@@ -1,0 +1,112 @@
+{
+ "questId": 6514,
+ "name": "누이 여신",
+ "zoneId": 1,
+ "categoryId": 81,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 502
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27819,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40561,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5079,
+      "npcId": 502
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27820,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39807,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1765,
+      "amount": 5000
+     },
+     {
+      "actId": 39808,
+      "type": "QuestActSupplyItem",
+      "detailId": 4633,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27821,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39798,
+      "type": "QuestActConReportNpc",
+      "detailId": 5031,
+      "npcId": 502
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 502,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

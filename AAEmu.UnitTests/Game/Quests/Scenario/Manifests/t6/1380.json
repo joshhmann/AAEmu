@@ -1,0 +1,105 @@
+{
+ "questId": 1380,
+ "name": "위협적인 소머리",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 10,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2281
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6837,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33959,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4327,
+      "npcId": 2281
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6838,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 6839,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33960,
+      "type": "QuestActConReportNpc",
+      "detailId": 4624,
+      "npcId": 2284
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6840,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2284,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

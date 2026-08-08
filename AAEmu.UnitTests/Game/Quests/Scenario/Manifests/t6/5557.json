@@ -1,0 +1,104 @@
+{
+ "questId": 5557,
+ "name": "골칫덩이 수집 기계",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7023
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24000,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33767,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 247,
+      "doodadId": 7023
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24001,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33769,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1138,
+      "npcId": 4829,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24002,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33766,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1435
+     },
+     {
+      "actId": 37045,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1434,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4829,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

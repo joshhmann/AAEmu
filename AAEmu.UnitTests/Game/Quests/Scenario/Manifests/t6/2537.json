@@ -1,0 +1,91 @@
+{
+ "questId": 2537,
+ "name": "기계공학자 보그",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4213
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11028,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15549,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2112,
+      "npcId": 4213
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11029,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15550,
+      "type": "QuestActConReportNpc",
+      "detailId": 2317,
+      "npcId": 5751
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11030,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5751,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

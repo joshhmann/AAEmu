@@ -1,0 +1,91 @@
+{
+ "questId": 2401,
+ "name": "두 번째 시합을 위해",
+ "zoneId": 128,
+ "categoryId": 8,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7817
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10320,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14521,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1944,
+      "npcId": 7817
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10322,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14520,
+      "type": "QuestActConReportNpc",
+      "detailId": 2156,
+      "npcId": 10161
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10323,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10161,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,89 @@
+{
+ "questId": 5581,
+ "name": "조심 또 조심",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 8,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7028
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24072,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33786,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 252,
+      "doodadId": 7028
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24073,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 24074,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33785,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1441
+     },
+     {
+      "actId": 37049,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1437,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

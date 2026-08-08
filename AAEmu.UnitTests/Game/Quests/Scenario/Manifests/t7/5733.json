@@ -1,0 +1,115 @@
+{
+ "questId": 5733,
+ "name": "내 손으로 만드는 허리 방어구: 재료",
+ "zoneId": 1,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24650,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34178,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 211,
+      "questContextId": 5733
+     },
+     {
+      "actId": 34381,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4395,
+      "npcId": 754
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24651,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34179,
+      "type": "QuestActObjItemGather",
+      "detailId": 2790,
+      "itemId": 29483,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34180,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 212,
+      "questContextId": 5734
+     },
+     {
+      "actId": 34188,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1470
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29483,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29483,
+   "count": 5
+  }
+ ]
+}

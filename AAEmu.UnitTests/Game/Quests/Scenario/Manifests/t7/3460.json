@@ -1,0 +1,114 @@
+{
+ "questId": 3460,
+ "name": "루브크라프스 연구소 안으로",
+ "zoneId": 142,
+ "categoryId": 61,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9898
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16831,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22191,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3133,
+      "npcId": 9898
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16832,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26491,
+      "type": "QuestActConReportNpc",
+      "detailId": 3980,
+      "npcId": 9899
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16833,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 18663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24342,
+      "type": "QuestActSupplyItem",
+      "detailId": 2376,
+      "itemId": 23673,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9899,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

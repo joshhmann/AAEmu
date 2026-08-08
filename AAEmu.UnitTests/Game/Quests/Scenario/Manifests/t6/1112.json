@@ -1,0 +1,98 @@
+{
+ "questId": 1112,
+ "name": "바람이 향하는 곳",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2477
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12215,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1554,
+      "npcId": 2477
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5708,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12216,
+      "type": "QuestActConReportNpc",
+      "detailId": 1750,
+      "npcId": 2473
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5709,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38239,
+      "type": "QuestActSupplyExp",
+      "detailId": 1320,
+      "exp": 110
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2473,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

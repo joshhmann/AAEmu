@@ -1,0 +1,134 @@
+{
+ "questId": 4862,
+ "name": "호랑이보다 빠르게",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12049
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21012,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28729,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3853,
+      "npcId": 12049
+     },
+     {
+      "actId": 28735,
+      "type": "QuestActCheckTimer",
+      "detailId": 119,
+      "limitTime": 600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21014,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28731,
+      "type": "QuestActConReportNpc",
+      "detailId": 4131,
+      "npcId": 12050
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21015,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 21016,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28730,
+      "type": "QuestActSupplyItem",
+      "detailId": 3254,
+      "itemId": 25115,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 21017,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Drop",
+    "id": 21080,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12050,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

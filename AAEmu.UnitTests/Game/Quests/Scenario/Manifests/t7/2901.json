@@ -1,0 +1,125 @@
+{
+ "questId": 2901,
+ "name": "친구를 위하여",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 17,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7640
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12196,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17771,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2266,
+      "npcId": 7640
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12197,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17772,
+      "type": "QuestActObjItemGather",
+      "detailId": 1206,
+      "itemId": 18457,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17773,
+      "type": "QuestActConReportNpc",
+      "detailId": 2492,
+      "npcId": 7640
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12199,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18457,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7640,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18457,
+   "count": 8
+  }
+ ]
+}

@@ -1,0 +1,104 @@
+{
+ "questId": 1241,
+ "name": "시궁쥐이빨 부족 소탕",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5272
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27551,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 149,
+      "doodadId": 5272
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5575,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24777,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 476,
+      "monsterGroupId": 72,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5577,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27552,
+      "type": "QuestActConAutoComplete",
+      "detailId": 924
+     },
+     {
+      "actId": 36980,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1388,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 72,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

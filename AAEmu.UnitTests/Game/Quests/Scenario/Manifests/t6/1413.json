@@ -1,0 +1,123 @@
+{
+ "questId": 1413,
+ "name": "매의 꽃을 피우리",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11120
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6158,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28265,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3791,
+      "npcId": 11120
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 6164,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10417,
+      "type": "QuestActSupplyItem",
+      "detailId": 858,
+      "itemId": 14613,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6165,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8629,
+      "type": "QuestActObjInteraction",
+      "detailId": 203,
+      "doodadId": 1488,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6171,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14626,
+      "type": "QuestActConAutoComplete",
+      "detailId": 503
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1488,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

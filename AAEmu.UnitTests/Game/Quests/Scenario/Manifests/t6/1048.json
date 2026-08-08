@@ -1,0 +1,125 @@
+{
+ "questId": 1048,
+ "name": "불꽃 매의 깃털",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 10,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3446
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5206,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8147,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 894,
+      "npcId": 3446
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8148,
+      "type": "QuestActObjItemGather",
+      "detailId": 424,
+      "itemId": 13928,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8149,
+      "type": "QuestActConReportNpc",
+      "detailId": 1026,
+      "npcId": 3446
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5209,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13928,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3446,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13928,
+   "count": 5
+  }
+ ]
+}

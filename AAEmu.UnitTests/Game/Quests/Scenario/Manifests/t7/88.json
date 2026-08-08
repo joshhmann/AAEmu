@@ -1,0 +1,140 @@
+{
+ "questId": 88,
+ "name": "현상 수배: 검은수염 개리엇",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 19,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 703
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 242,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1175,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 7,
+      "doodadId": 703
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 244,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2725,
+      "type": "QuestActObjItemGather",
+      "detailId": 144,
+      "itemId": 2724,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 245,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 267,
+      "type": "QuestActConReportNpc",
+      "detailId": 63,
+      "npcId": 766
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 246,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38211,
+      "type": "QuestActSupplyItem",
+      "detailId": 4230,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 2724,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 766,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 2724,
+   "count": 1
+  }
+ ]
+}

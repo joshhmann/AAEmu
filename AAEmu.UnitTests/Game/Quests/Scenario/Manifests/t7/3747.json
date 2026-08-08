@@ -1,0 +1,160 @@
+{
+ "questId": 3747,
+ "name": "등짐을 메고 노를 저어",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4135
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15717,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21348,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 110,
+      "doodadId": 4135
+     },
+     {
+      "actId": 29394,
+      "type": "QuestActCheckTimer",
+      "detailId": 126,
+      "limitTime": 1800000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15718,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21350,
+      "type": "QuestActSupplyItem",
+      "detailId": 2131,
+      "itemId": 20048,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15719,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21347,
+      "type": "QuestActObjSphere",
+      "detailId": 594,
+      "sphereId": 1271
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21349,
+      "type": "QuestActConReportNpc",
+      "detailId": 3222,
+      "npcId": 10012
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15721,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Drop",
+    "id": 21198,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Fail",
+    "id": 21199,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 15719
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10012,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

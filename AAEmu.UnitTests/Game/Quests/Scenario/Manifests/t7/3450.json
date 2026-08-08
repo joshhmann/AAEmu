@@ -1,0 +1,91 @@
+{
+ "questId": 3450,
+ "name": "그렐을 수소문하다",
+ "zoneId": 137,
+ "categoryId": 61,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9894
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18606,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24226,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3493,
+      "npcId": 9894
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24225,
+      "type": "QuestActConReportNpc",
+      "detailId": 3756,
+      "npcId": 9906
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18608,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9906,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

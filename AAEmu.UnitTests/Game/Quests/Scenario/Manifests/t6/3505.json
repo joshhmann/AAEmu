@@ -1,0 +1,106 @@
+{
+ "questId": 3505,
+ "name": "강아지가 사라졌다",
+ "zoneId": 133,
+ "categoryId": 62,
+ "level": 2,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10045
+ },
+ "template": {
+  "level": 2,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15664,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21294,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2985,
+      "npcId": 10045
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15665,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21437,
+      "type": "QuestActConReportNpc",
+      "detailId": 3237,
+      "npcId": 10044
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15669,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40814,
+      "type": "QuestActSupplyItem",
+      "detailId": 4781,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10044,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

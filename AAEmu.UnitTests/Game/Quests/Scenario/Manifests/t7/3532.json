@@ -1,0 +1,125 @@
+{
+ "questId": 3532,
+ "name": "살피라 제단의 보물",
+ "zoneId": 142,
+ "categoryId": 62,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10145
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16869,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22244,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3149,
+      "npcId": 10145
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16870,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22686,
+      "type": "QuestActObjItemGather",
+      "detailId": 1708,
+      "itemId": 21322,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16871,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22247,
+      "type": "QuestActConReportNpc",
+      "detailId": 3380,
+      "npcId": 9891
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16872,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21322,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9891,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21322,
+   "count": 1
+  }
+ ]
+}

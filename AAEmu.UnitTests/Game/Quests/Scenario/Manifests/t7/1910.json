@@ -1,0 +1,124 @@
+{
+ "questId": 1910,
+ "name": "(구 불볕황야)서쪽 마을의 위기",
+ "zoneId": 22,
+ "categoryId": 1,
+ "level": 14,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjInteraction",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 14,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8859,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 8860,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13440,
+      "type": "QuestActSupplyItem",
+      "detailId": 1298,
+      "itemId": 16021,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8861,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13441,
+      "type": "QuestActObjInteraction",
+      "detailId": 337,
+      "doodadId": 2586,
+      "count": 4,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8862,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 8863,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2586,
+     "count": 4
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,129 @@
+{
+ "questId": 3726,
+ "name": "옛부터 보관하던 물건",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 20020
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15557,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21243,
+      "type": "QuestActConAcceptItem",
+      "detailId": 115,
+      "itemId": 20020
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24600,
+      "type": "QuestActObjItemGather",
+      "detailId": 2019,
+      "itemId": 23721,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15560,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 18703,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25856,
+      "type": "QuestActConReportNpc",
+      "detailId": 3837,
+      "npcId": 740
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23721,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 740,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20020,
+   "count": 1
+  },
+  {
+   "itemId": 23721,
+   "count": 1
+  }
+ ]
+}

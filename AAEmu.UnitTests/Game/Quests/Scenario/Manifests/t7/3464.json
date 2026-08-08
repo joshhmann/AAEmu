@@ -1,0 +1,136 @@
+{
+ "questId": 3464,
+ "name": "방랑자들을 위한 게시판",
+ "zoneId": 8,
+ "categoryId": 61,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9903
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22464,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3194,
+      "npcId": 9903
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17022,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22468,
+      "type": "QuestActObjInteraction",
+      "detailId": 555,
+      "doodadId": 4295,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17023,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22467,
+      "type": "QuestActConReportNpc",
+      "detailId": 3433,
+      "npcId": 9903
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17024,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40803,
+      "type": "QuestActSupplyItem",
+      "detailId": 4770,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4295,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9903,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

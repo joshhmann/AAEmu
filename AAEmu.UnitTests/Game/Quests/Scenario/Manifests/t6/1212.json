@@ -1,0 +1,98 @@
+{
+ "questId": 1212,
+ "name": "아이니의 부름",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4220
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5129,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8031,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 871,
+      "npcId": 4220
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5131,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8032,
+      "type": "QuestActConReportNpc",
+      "detailId": 1005,
+      "npcId": 6045
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5132,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38242,
+      "type": "QuestActSupplyExp",
+      "detailId": 1322,
+      "exp": 110
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6045,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

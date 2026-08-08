@@ -1,0 +1,152 @@
+{
+ "questId": 5690,
+ "name": "여름을 위한 모자와 신발",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 1,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13638
+ },
+ "template": {
+  "level": 1,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24438,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33937,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4323,
+      "npcId": 13638
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24439,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33938,
+      "type": "QuestActObjItemGather",
+      "detailId": 2766,
+      "itemId": 29177,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24440,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33939,
+      "type": "QuestActConReportNpc",
+      "detailId": 4620,
+      "npcId": 13638
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24441,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33940,
+      "type": "QuestActSupplyItem",
+      "detailId": 3873,
+      "itemId": 28758,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33941,
+      "type": "QuestActSupplyItem",
+      "detailId": 3874,
+      "itemId": 28759,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29177,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13638,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28758,
+      "count": 1
+     },
+     {
+      "itemId": 28759,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29177,
+   "count": 12
+  }
+ ]
+}

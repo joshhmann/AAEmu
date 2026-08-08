@@ -1,0 +1,104 @@
+{
+ "questId": 1947,
+ "name": "폭주한 워본 처치하기",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4843
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9011,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12649,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 15,
+      "npcId": 4843
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9012,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13714,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 548,
+      "npcId": 4843,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9013,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12653,
+      "type": "QuestActConAutoComplete",
+      "detailId": 343
+     },
+     {
+      "actId": 12654,
+      "type": "QuestActSupplyCopper",
+      "detailId": 40,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4843,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

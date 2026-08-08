@@ -1,0 +1,143 @@
+{
+ "questId": 3840,
+ "name": "에오카드의 엘크",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16135,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24641,
+      "type": "QuestActCheckTimer",
+      "detailId": 116,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     },
+     {
+      "actId": 24675,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3535,
+      "npcId": 10845
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 16136,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24642,
+      "type": "QuestActSupplyItem",
+      "detailId": 2425,
+      "itemId": 23606,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16138,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24676,
+      "type": "QuestActConReportNpc",
+      "detailId": 3797,
+      "npcId": 10846
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16139,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25703,
+      "type": "QuestActSupplyItem",
+      "detailId": 2695,
+      "itemId": 23635,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 18723,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10846,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23635,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

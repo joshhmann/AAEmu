@@ -1,0 +1,104 @@
+{
+ "questId": 1590,
+ "name": "구릉지 야수 처치",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5393
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7635,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28805,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 179,
+      "doodadId": 5393
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7636,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28807,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 494,
+      "monsterGroupId": 451,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7642,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28806,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1087
+     },
+     {
+      "actId": 36983,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1391,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 451,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

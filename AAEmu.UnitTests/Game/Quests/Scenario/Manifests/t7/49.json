@@ -1,0 +1,121 @@
+{
+ "questId": 49,
+ "name": "아직 마르지 않은 핏자국",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 5
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 64,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11435,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 162,
+      "sphereId": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 66,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11437,
+      "type": "QuestActObjInteraction",
+      "detailId": 273,
+      "doodadId": 702,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 68,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11436,
+      "type": "QuestActConReportNpc",
+      "detailId": 1694,
+      "npcId": 730
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7675,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 702,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 730,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

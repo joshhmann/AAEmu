@@ -1,0 +1,134 @@
+{
+ "questId": 3305,
+ "name": "원수의 뜨거운 피는 대지를 적신다",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9192
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14278,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25858,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3574,
+      "npcId": 9192
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14279,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19658,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 715,
+      "npcId": 9199,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38227,
+      "type": "QuestActSupplyItem",
+      "detailId": 4234,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18855,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25859,
+      "type": "QuestActConReportNpc",
+      "detailId": 3838,
+      "npcId": 9192
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9199,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9192,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

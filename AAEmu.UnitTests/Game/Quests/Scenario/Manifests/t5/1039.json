@@ -1,0 +1,171 @@
+{
+ "questId": 1039,
+ "name": "순록을 보호하라",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckCompleteComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4624
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7991,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 865,
+      "npcId": 4624
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5092,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12751,
+      "type": "QuestActSupplyItem",
+      "detailId": 1221,
+      "itemId": 15840,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5093,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12752,
+      "type": "QuestActObjTalk",
+      "detailId": 804,
+      "npcId": 4729
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5094,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12754,
+      "type": "QuestActObjSphere",
+      "detailId": 498,
+      "sphereId": 943,
+      "npcId": 4729
+     },
+     {
+      "actId": 13129,
+      "type": "QuestActCheckCompleteComponent",
+      "detailId": 963,
+      "completeComponent": 5093
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5095,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13376,
+      "type": "QuestActConReportNpc",
+      "detailId": 2033,
+      "npcId": 4624
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 5096,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 9090,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 4729
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 5094
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4624,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

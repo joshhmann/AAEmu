@@ -1,0 +1,115 @@
+{
+ "questId": 5749,
+ "name": "내 손으로 만드는 손 방어구: 재료",
+ "zoneId": 1,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34309,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 241,
+      "questContextId": 5749
+     },
+     {
+      "actId": 34310,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4384,
+      "npcId": 13068
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24699,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34311,
+      "type": "QuestActObjItemGather",
+      "detailId": 2819,
+      "itemId": 29501,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34312,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 242,
+      "questContextId": 5750
+     },
+     {
+      "actId": 34313,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1487
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29501,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29501,
+   "count": 10
+  }
+ ]
+}

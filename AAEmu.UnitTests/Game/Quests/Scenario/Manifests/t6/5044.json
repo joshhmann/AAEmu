@@ -1,0 +1,114 @@
+{
+ "questId": 5044,
+ "name": "정성만큼 큰 복이",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 10,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAutoComplete",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 10,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21837,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21838,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30800,
+      "type": "QuestActObjCraft",
+      "detailId": 180,
+      "craftId": 5384,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21839,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30764,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1266
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21877,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30780,
+      "type": "QuestActSupplyItem",
+      "detailId": 3535,
+      "itemId": 19731,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 5384,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

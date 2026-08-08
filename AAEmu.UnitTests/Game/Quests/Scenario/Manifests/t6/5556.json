@@ -1,0 +1,125 @@
+{
+ "questId": 5556,
+ "name": "멧돼지야 미안해",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 2,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4871
+ },
+ "template": {
+  "level": 2,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23997,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33821,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4286,
+      "npcId": 4871
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23998,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33823,
+      "type": "QuestActObjItemGather",
+      "detailId": 2752,
+      "itemId": 29150,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23999,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33822,
+      "type": "QuestActConReportNpc",
+      "detailId": 4597,
+      "npcId": 4871
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24367,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29150,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4871,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29150,
+   "count": 3
+  }
+ ]
+}

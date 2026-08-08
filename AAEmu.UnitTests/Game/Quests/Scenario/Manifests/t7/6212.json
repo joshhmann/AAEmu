@@ -1,0 +1,152 @@
+{
+ "questId": 6212,
+ "name": "기계의 소란",
+ "zoneId": 1,
+ "categoryId": 21,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14596
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26626,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36484,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4683,
+      "npcId": 14596
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26627,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36485,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 622,
+      "monsterGroupId": 570,
+      "count": 25
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26628,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36486,
+      "type": "QuestActConReportNpc",
+      "detailId": 4879,
+      "npcId": 14596
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26631,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36566,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1360,
+      "amount": 0
+     },
+     {
+      "actId": 38409,
+      "type": "QuestActSupplyItem",
+      "detailId": 4292,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 38410,
+      "type": "QuestActSupplyItem",
+      "detailId": 4293,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 570,
+     "count": 25
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14596,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     },
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

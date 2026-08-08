@@ -1,0 +1,140 @@
+{
+ "questId": 859,
+ "name": "맹독을 내뿜는 사금",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 15,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5202
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3878,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5505,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 636,
+      "npcId": 5202
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3880,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5509,
+      "type": "QuestActObjItemGather",
+      "detailId": 271,
+      "itemId": 5186,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3881,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5511,
+      "type": "QuestActConReportNpc",
+      "detailId": 726,
+      "npcId": 5202
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3882,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38615,
+      "type": "QuestActSupplyItem",
+      "detailId": 4364,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5186,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5202,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5186,
+   "count": 3
+  }
+ ]
+}

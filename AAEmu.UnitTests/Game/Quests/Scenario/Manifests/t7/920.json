@@ -1,0 +1,104 @@
+{
+ "questId": 920,
+ "name": "미쳐버린 골렘들",
+ "zoneId": 7,
+ "categoryId": 2,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5533
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4270,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29088,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 189,
+      "doodadId": 5533
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4271,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10727,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 79,
+      "monsterGroupId": 2,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29089,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1103
+     },
+     {
+      "actId": 36968,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1379,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 2,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

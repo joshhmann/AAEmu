@@ -1,0 +1,135 @@
+{
+ "questId": 2103,
+ "name": "맥주 창고의 두들링 처치",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4631
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9696,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13519,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 51,
+      "npcId": 4631
+     },
+     {
+      "actId": 13520,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 52,
+      "npcId": 4632
+     },
+     {
+      "actId": 13521,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 53,
+      "npcId": 4633
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9697,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13523,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 120,
+      "monsterGroupId": 124,
+      "count": 9
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14850,
+      "type": "QuestActConReportJournal",
+      "detailId": 18
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10637,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14851,
+      "type": "QuestActSupplyCopper",
+      "detailId": 118,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 124,
+     "count": 9
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

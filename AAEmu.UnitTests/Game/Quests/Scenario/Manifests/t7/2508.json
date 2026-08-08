@@ -1,0 +1,106 @@
+{
+ "questId": 2508,
+ "name": "가리여울 마을의 마법사",
+ "zoneId": 11,
+ "categoryId": 8,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8090
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15080,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2071,
+      "npcId": 8090
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10851,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15081,
+      "type": "QuestActConReportNpc",
+      "detailId": 2277,
+      "npcId": 8091
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10852,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40885,
+      "type": "QuestActSupplyItem",
+      "detailId": 4852,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8091,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

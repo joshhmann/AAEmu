@@ -1,0 +1,140 @@
+{
+ "questId": 765,
+ "name": "온천의 불청객",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2980
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3415,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4861,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 576,
+      "npcId": 2980
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21532,
+      "type": "QuestActObjItemGather",
+      "detailId": 1596,
+      "itemId": 19963,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4866,
+      "type": "QuestActConReportNpc",
+      "detailId": 660,
+      "npcId": 2980
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3419,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38325,
+      "type": "QuestActSupplyItem",
+      "detailId": 4277,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19963,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2980,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19963,
+   "count": 12
+  }
+ ]
+}

@@ -1,0 +1,172 @@
+{
+ "questId": 1619,
+ "name": "폐허가 된 마을",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 13,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6987
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7822,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10982,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1421,
+      "npcId": 6987
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7823,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10984,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 444,
+      "npcId": 1875,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7825,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10986,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 446,
+      "npcId": 1878,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7826,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27027,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 483,
+      "monsterGroupId": 437,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7827,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10983,
+      "type": "QuestActConReportNpc",
+      "detailId": 1614,
+      "npcId": 6987
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7828,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38184,
+      "type": "QuestActSupplyItem",
+      "detailId": 4215,
+      "itemId": 34000,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1875,
+     "count": 5
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 1878,
+     "count": 5
+    },
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 437,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6987,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34000,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

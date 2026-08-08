@@ -1,0 +1,125 @@
+{
+ "questId": 3435,
+ "name": "정령의 시험",
+ "zoneId": 21,
+ "categoryId": 61,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4219
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14833,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20188,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2738,
+      "npcId": 4219
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14834,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20189,
+      "type": "QuestActConReportNpc",
+      "detailId": 2966,
+      "npcId": 7734
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14835,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 27194,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38149,
+      "type": "QuestActObjItemGather",
+      "detailId": 2936,
+      "itemId": 21796,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21796,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7734,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21796,
+   "count": 1
+  }
+ ]
+}

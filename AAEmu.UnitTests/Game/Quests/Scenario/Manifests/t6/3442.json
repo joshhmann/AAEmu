@@ -1,0 +1,121 @@
+{
+ "questId": 3442,
+ "name": "불안을 퍼트리는 기계장치",
+ "zoneId": 21,
+ "categoryId": 61,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4269
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14867,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21281,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2983,
+      "npcId": 4269
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14868,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20217,
+      "type": "QuestActConReportNpc",
+      "detailId": 2974,
+      "npcId": 10039
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14869,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 15657,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21280,
+      "type": "QuestActObjInteraction",
+      "detailId": 520,
+      "doodadId": 3000,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3000,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10039,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

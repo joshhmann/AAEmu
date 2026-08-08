@@ -1,0 +1,105 @@
+{
+ "questId": 5669,
+ "name": "곤 신은 과일을 좋아해",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 13,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2294
+ },
+ "template": {
+  "level": 13,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24347,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34022,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4349,
+      "npcId": 2294
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24348,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24349,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34023,
+      "type": "QuestActConReportNpc",
+      "detailId": 4649,
+      "npcId": 2294
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24496,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2294,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

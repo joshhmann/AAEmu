@@ -1,0 +1,123 @@
+{
+ "questId": 3862,
+ "name": "여행자의 샘을 위협하는 불정령 처치",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2952
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21472,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 815,
+      "npcId": 2952
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16275,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21474,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 817,
+      "npcId": 2952,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21476,
+      "type": "QuestActConReportJournal",
+      "detailId": 229
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16277,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21477,
+      "type": "QuestActSupplyCopper",
+      "detailId": 336,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2952,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

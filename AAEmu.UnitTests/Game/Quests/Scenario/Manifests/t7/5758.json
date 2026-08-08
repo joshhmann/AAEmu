@@ -1,0 +1,142 @@
+{
+ "questId": 5758,
+ "name": "내 손으로 만드는 가슴 방어구: 제작",
+ "zoneId": 1,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34374,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 259,
+      "questContextId": 5758
+     },
+     {
+      "actId": 34375,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4393,
+      "npcId": 13068
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34376,
+      "type": "QuestActObjCraft",
+      "detailId": 296,
+      "craftId": 5758,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34379,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1496
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24794,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34378,
+      "type": "QuestActObjCraft",
+      "detailId": 298,
+      "craftId": 5786,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24795,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34377,
+      "type": "QuestActObjCraft",
+      "detailId": 297,
+      "craftId": 5772,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 5758,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 5786,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 5772,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

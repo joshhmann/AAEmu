@@ -1,0 +1,150 @@
+{
+ "questId": 1144,
+ "name": "셈을 위해 필요한 것",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 8,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5667
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5849,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8788,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1025,
+      "npcId": 5667
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14592,
+      "type": "QuestActObjItemGather",
+      "detailId": 971,
+      "itemId": 13991,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5851,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8793,
+      "type": "QuestActConReportNpc",
+      "detailId": 1174,
+      "npcId": 5706
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5852,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37197,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2484,
+      "itemId": 32521,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37198,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2485,
+      "itemId": 32522,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37199,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2486,
+      "itemId": 32523,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13991,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5706,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 13991,
+   "count": 5
+  }
+ ]
+}

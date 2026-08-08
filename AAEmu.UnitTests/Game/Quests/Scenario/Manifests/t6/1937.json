@@ -1,0 +1,130 @@
+{
+ "questId": 1937,
+ "name": "안델프에 전갈을",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4763
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8978,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12609,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1657,
+      "npcId": 4763
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8979,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12610,
+      "type": "QuestActConReportNpc",
+      "detailId": 1864,
+      "npcId": 5499
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8980,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16650,
+      "type": "QuestActSupplyItem",
+      "detailId": 1631,
+      "itemId": 17312,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16651,
+      "type": "QuestActSupplyItem",
+      "detailId": 1632,
+      "itemId": 17317,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 16653,
+      "type": "QuestActSupplyItem",
+      "detailId": 1634,
+      "itemId": 17321,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5499,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17312,
+      "count": 1
+     },
+     {
+      "itemId": 17317,
+      "count": 1
+     },
+     {
+      "itemId": 17321,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

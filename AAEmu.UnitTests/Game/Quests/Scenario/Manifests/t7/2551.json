@@ -1,0 +1,129 @@
+{
+ "questId": 2551,
+ "name": "하얀 숲 동부의 되살아난 시체 정화",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2036
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11080,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15682,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 233,
+      "npcId": 2036
+     },
+     {
+      "actId": 15683,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 234,
+      "npcId": 2037
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11081,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15687,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 188,
+      "monsterGroupId": 185,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11082,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15690,
+      "type": "QuestActConReportJournal",
+      "detailId": 55
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11084,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15691,
+      "type": "QuestActSupplyCopper",
+      "detailId": 144,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 185,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

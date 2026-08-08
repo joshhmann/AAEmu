@@ -1,0 +1,180 @@
+{
+ "questId": 1445,
+ "name": "마을을 지켜주세요!",
+ "zoneId": 23,
+ "categoryId": 21,
+ "level": 12,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3419
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6409,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9155,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1111,
+      "npcId": 3419
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6410,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28915,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1006,
+      "npcId": 3354,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6411,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9157,
+      "type": "QuestActConReportNpc",
+      "detailId": 1273,
+      "npcId": 3440
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6412,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38167,
+      "type": "QuestActSupplyItem",
+      "detailId": 4198,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20846,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28914,
+      "type": "QuestActObjItemGather",
+      "detailId": 2314,
+      "itemId": 14154,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21081,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28913,
+      "type": "QuestActObjInteraction",
+      "detailId": 619,
+      "doodadId": 1415,
+      "count": 10,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3354,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 14154,
+     "count": 10
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 1415,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3440,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14154,
+   "count": 10
+  }
+ ]
+}

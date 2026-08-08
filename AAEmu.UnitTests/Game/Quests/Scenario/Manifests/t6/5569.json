@@ -1,0 +1,148 @@
+{
+ "questId": 5569,
+ "name": "땔깜이 부족해",
+ "zoneId": 22,
+ "categoryId": 32,
+ "level": 6,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4879
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24036,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33946,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4324,
+      "npcId": 4879
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24037,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33947,
+      "type": "QuestActObjItemGather",
+      "detailId": 2768,
+      "itemId": 29191,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24038,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33949,
+      "type": "QuestActConReportNpc",
+      "detailId": 4622,
+      "npcId": 4879
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24445,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33948,
+      "type": "QuestActObjItemGather",
+      "detailId": 2769,
+      "itemId": 29192,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24446,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29191,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29192,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4879,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29191,
+   "count": 20
+  },
+  {
+   "itemId": 29192,
+   "count": 10
+  }
+ ]
+}

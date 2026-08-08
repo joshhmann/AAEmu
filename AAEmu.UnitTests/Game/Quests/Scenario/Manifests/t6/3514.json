@@ -1,0 +1,96 @@
+{
+ "questId": 3514,
+ "name": "그림자 매의 사례비",
+ "zoneId": 134,
+ "categoryId": 62,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10047
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15701,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21325,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2994,
+      "npcId": 10047
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15702,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22721,
+      "type": "QuestActObjTalk",
+      "detailId": 946,
+      "npcId": 10048
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15703,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23054,
+      "type": "QuestActConAutoComplete",
+      "detailId": 738
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 10048
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

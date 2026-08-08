@@ -1,0 +1,123 @@
+{
+ "questId": 2552,
+ "name": "하얀 숲 동부의 살덩이 골렘 정화",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2038
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11085,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15692,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 237,
+      "npcId": 2038
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11086,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15707,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 191,
+      "monsterGroupId": 186,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11087,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15709,
+      "type": "QuestActConReportJournal",
+      "detailId": 58
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11088,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15711,
+      "type": "QuestActSupplyCopper",
+      "detailId": 147,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 186,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

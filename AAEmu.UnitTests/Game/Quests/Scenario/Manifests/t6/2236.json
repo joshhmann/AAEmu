@@ -1,0 +1,135 @@
+{
+ "questId": 2236,
+ "name": "라벤더를 어루만져봐",
+ "zoneId": 1,
+ "categoryId": 9,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1174
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9893,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14566,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1952,
+      "npcId": 1174
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9894,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13992,
+      "type": "QuestActObjInteraction",
+      "detailId": 349,
+      "doodadId": 1600,
+      "count": 3,
+      "wiId": 19
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9895,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13977,
+      "type": "QuestActConReportNpc",
+      "detailId": 2081,
+      "npcId": 1174
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9896,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38564,
+      "type": "QuestActSupplyItem",
+      "detailId": 4313,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1600,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1174,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

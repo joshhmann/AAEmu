@@ -1,0 +1,129 @@
+{
+ "questId": 2753,
+ "name": "바위비늘 쌍두사 무리 처치",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 778
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11575,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16872,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 454,
+      "npcId": 778
+     },
+     {
+      "actId": 16873,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 455,
+      "npcId": 819
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11576,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16874,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 256,
+      "monsterGroupId": 231,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11577,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16875,
+      "type": "QuestActConReportJournal",
+      "detailId": 152
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11578,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16876,
+      "type": "QuestActSupplyCopper",
+      "detailId": 233,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 231,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,96 @@
+{
+ "questId": 2764,
+ "name": "물란의 집 구경",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6592
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17023,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2161,
+      "npcId": 6592
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17022,
+      "type": "QuestActObjSphere",
+      "detailId": 559,
+      "sphereId": 1143
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11626,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17021,
+      "type": "QuestActConAutoComplete",
+      "detailId": 550
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 11625
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

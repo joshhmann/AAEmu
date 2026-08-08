@@ -1,0 +1,125 @@
+{
+ "questId": 1508,
+ "name": "물소의 뒷다리",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 18,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2639
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7156,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9962,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1268,
+      "npcId": 2639
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7210,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9963,
+      "type": "QuestActObjItemGather",
+      "detailId": 572,
+      "itemId": 14382,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7211,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9964,
+      "type": "QuestActConReportNpc",
+      "detailId": 1435,
+      "npcId": 2639
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7212,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14382,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2639,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14382,
+   "count": 8
+  }
+ ]
+}

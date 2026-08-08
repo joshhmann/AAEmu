@@ -1,0 +1,186 @@
+{
+ "questId": 899,
+ "name": "디르마의 요리",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 18,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2564
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4203,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6029,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 693,
+      "npcId": 2564
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4204,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6030,
+      "type": "QuestActObjItemGather",
+      "detailId": 311,
+      "itemId": 5269,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4205,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6031,
+      "type": "QuestActObjItemGather",
+      "detailId": 312,
+      "itemId": 5270,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4206,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6032,
+      "type": "QuestActObjItemGather",
+      "detailId": 313,
+      "itemId": 5271,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6033,
+      "type": "QuestActConReportNpc",
+      "detailId": 789,
+      "npcId": 2564
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4209,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38618,
+      "type": "QuestActSupplyItem",
+      "detailId": 4367,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5269,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 5270,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 5271,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2564,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34008,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5269,
+   "count": 10
+  },
+  {
+   "itemId": 5270,
+   "count": 10
+  },
+  {
+   "itemId": 5271,
+   "count": 10
+  }
+ ]
+}

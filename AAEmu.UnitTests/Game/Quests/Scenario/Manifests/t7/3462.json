@@ -1,0 +1,91 @@
+{
+ "questId": 3462,
+ "name": "총관의 수배령",
+ "zoneId": 142,
+ "categoryId": 61,
+ "level": 17,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9901
+ },
+ "template": {
+  "level": 17,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16842,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22198,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3136,
+      "npcId": 9901
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16843,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22197,
+      "type": "QuestActConReportNpc",
+      "detailId": 3364,
+      "npcId": 9902
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16845,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9902,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

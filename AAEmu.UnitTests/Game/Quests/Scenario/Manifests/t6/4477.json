@@ -1,0 +1,91 @@
+{
+ "questId": 4477,
+ "name": "성인식 준비",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 3,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4272
+ },
+ "template": {
+  "level": 3,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19545,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26572,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3703,
+      "npcId": 4272
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19547,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26573,
+      "type": "QuestActConReportNpc",
+      "detailId": 3983,
+      "npcId": 4241
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19548,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4241,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

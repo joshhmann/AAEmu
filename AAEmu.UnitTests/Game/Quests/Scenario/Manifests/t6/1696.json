@@ -1,0 +1,131 @@
+{
+ "questId": 1696,
+ "name": "자바어 해독",
+ "zoneId": 130,
+ "categoryId": 22,
+ "level": 6,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4270
+ },
+ "template": {
+  "level": 6,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8102,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11317,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1498,
+      "npcId": 4270
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8103,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11320,
+      "type": "QuestActSupplyItem",
+      "detailId": 973,
+      "itemId": 25224,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8105,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11318,
+      "type": "QuestActConReportNpc",
+      "detailId": 1685,
+      "npcId": 4296
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8106,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37157,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2459,
+      "itemId": 32458,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37158,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2460,
+      "itemId": 32462,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4296,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

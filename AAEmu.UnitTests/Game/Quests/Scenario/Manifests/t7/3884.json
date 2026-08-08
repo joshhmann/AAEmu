@@ -1,0 +1,106 @@
+{
+ "questId": 3884,
+ "name": "추적자의 뜻, 수호자의 뜻",
+ "zoneId": 10,
+ "categoryId": 8,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11957
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18542,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24468,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3510,
+      "npcId": 11957
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18544,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24469,
+      "type": "QuestActConReportNpc",
+      "detailId": 3773,
+      "npcId": 8120
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18545,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40893,
+      "type": "QuestActSupplyItem",
+      "detailId": 4860,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8120,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

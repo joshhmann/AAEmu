@@ -1,0 +1,105 @@
+{
+ "questId": 5657,
+ "name": "즐거운 노동을 위해",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 12,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2288
+ },
+ "template": {
+  "level": 12,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33992,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4338,
+      "npcId": 2288
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24311,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 24312,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33993,
+      "type": "QuestActConReportNpc",
+      "detailId": 4636,
+      "npcId": 2288
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24478,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2288,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

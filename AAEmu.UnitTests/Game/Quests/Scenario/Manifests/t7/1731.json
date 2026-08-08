@@ -1,0 +1,173 @@
+{
+ "questId": 1731,
+ "name": "유적지의 애주가에게",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3015
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8378,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12123,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1549,
+      "npcId": 3015
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8379,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12132,
+      "type": "QuestActSupplyItem",
+      "detailId": 1175,
+      "itemId": 15615,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8382,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12124,
+      "type": "QuestActConReportNpc",
+      "detailId": 1743,
+      "npcId": 3063
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8384,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38311,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2571,
+      "itemId": 33393,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38312,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2572,
+      "itemId": 33592,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38313,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2573,
+      "itemId": 33395,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13012,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29421,
+      "type": "QuestActObjItemGather",
+      "detailId": 2369,
+      "itemId": 15615,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15615,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3063,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 15615,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,104 @@
+{
+ "questId": 2235,
+ "name": "호수를 지키는 자",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 7,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5123
+ },
+ "template": {
+  "level": 7,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9889,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26826,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 147,
+      "doodadId": 5123
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9890,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28231,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 994,
+      "npcId": 513,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9892,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26827,
+      "type": "QuestActConAutoComplete",
+      "detailId": 851
+     },
+     {
+      "actId": 36989,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1397,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 513,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 1156,
+ "name": "황야의 꿈",
+ "zoneId": 135,
+ "categoryId": 23,
+ "level": 9,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5692
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5898,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 8853,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1040,
+      "npcId": 5692
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5899,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13017,
+      "type": "QuestActObjItemGather",
+      "detailId": 833,
+      "itemId": 14004,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 5900,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14829,
+      "type": "QuestActConReportNpc",
+      "detailId": 2231,
+      "npcId": 5692
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5902,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37209,
+      "type": "QuestActSupplyItem",
+      "detailId": 4143,
+      "itemId": 18791,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14004,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5692,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18791,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14004,
+   "count": 5
+  }
+ ]
+}

@@ -1,0 +1,106 @@
+{
+ "questId": 1935,
+ "name": "아스트라를 추적하라",
+ "zoneId": 19,
+ "categoryId": 20,
+ "level": 4,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4757
+ },
+ "template": {
+  "level": 4,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8996,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12622,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1661,
+      "npcId": 4757
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8997,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13197,
+      "type": "QuestActConReportNpc",
+      "detailId": 1994,
+      "npcId": 7477
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8998,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16656,
+      "type": "QuestActSupplyItem",
+      "detailId": 1637,
+      "itemId": 17325,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7477,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17325,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

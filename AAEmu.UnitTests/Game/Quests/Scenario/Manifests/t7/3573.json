@@ -1,0 +1,142 @@
+{
+ "questId": 3573,
+ "name": "죽은 자의 삶",
+ "zoneId": 11,
+ "categoryId": 3,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8064
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19816,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26995,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3718,
+      "npcId": 8064
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 19817,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27493,
+      "type": "QuestActSupplyItem",
+      "detailId": 3031,
+      "itemId": 24969,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19818,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27494,
+      "type": "QuestActObjItemUse",
+      "detailId": 672,
+      "itemId": 24969,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19819,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26996,
+      "type": "QuestActConReportNpc",
+      "detailId": 3996,
+      "npcId": 7595
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19820,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 24969,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7595,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

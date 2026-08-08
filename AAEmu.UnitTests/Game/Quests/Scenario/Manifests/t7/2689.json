@@ -1,0 +1,141 @@
+{
+ "questId": 2689,
+ "name": "무너진 성채의 위협자들 처치하기",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1872
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11267,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16329,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 330,
+      "npcId": 1872
+     },
+     {
+      "actId": 16330,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 331,
+      "npcId": 1905
+     },
+     {
+      "actId": 16331,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 332,
+      "npcId": 1871
+     },
+     {
+      "actId": 16332,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 333,
+      "npcId": 1869
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11268,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16333,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 215,
+      "monsterGroupId": 208,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11269,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16334,
+      "type": "QuestActConReportJournal",
+      "detailId": 86
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11270,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16335,
+      "type": "QuestActSupplyCopper",
+      "detailId": 182,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 208,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

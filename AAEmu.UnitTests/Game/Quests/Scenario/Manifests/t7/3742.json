@@ -1,0 +1,125 @@
+{
+ "questId": 3742,
+ "name": "(가랑돌 평원) 쥐를 잡자",
+ "zoneId": 131,
+ "categoryId": 18,
+ "level": 19,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15621,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 15622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21263,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 807,
+      "npcId": 10004,
+      "count": 15
+     },
+     {
+      "actId": 21370,
+      "type": "QuestActObjInteraction",
+      "detailId": 522,
+      "count": 0,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21164,
+      "type": "QuestActConReportNpc",
+      "detailId": 3188,
+      "npcId": 753
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15624,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10004,
+     "count": 15
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 0,
+     "count": 0
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 753,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

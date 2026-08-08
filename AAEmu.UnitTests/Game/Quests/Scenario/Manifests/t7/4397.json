@@ -1,0 +1,106 @@
+{
+ "questId": 4397,
+ "name": "모래 먼지 마을의 위험",
+ "zoneId": 7,
+ "categoryId": 3,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10550
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19120,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26328,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3688,
+      "npcId": 10550
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26329,
+      "type": "QuestActConReportNpc",
+      "detailId": 3964,
+      "npcId": 10553
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19122,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40860,
+      "type": "QuestActSupplyItem",
+      "detailId": 4827,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10553,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

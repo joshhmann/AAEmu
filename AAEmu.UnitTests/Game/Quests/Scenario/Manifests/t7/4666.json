@@ -1,0 +1,136 @@
+{
+ "questId": 4666,
+ "name": "거상의 꿈, 옥시언 상단으로 가는 길",
+ "zoneId": 23,
+ "categoryId": 70,
+ "level": 15,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11079
+ },
+ "template": {
+  "level": 15,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20253,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27564,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3772,
+      "npcId": 11079
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20254,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27565,
+      "type": "QuestActObjCraft",
+      "detailId": 160,
+      "craftId": 6237,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20255,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27567,
+      "type": "QuestActConReportNpc",
+      "detailId": 4053,
+      "npcId": 11079
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27566,
+      "type": "QuestActObjSphere",
+      "detailId": 641,
+      "sphereId": 1714
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20274,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6237,
+     "count": 1
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 20273
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11079,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

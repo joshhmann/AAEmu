@@ -1,0 +1,125 @@
+{
+ "questId": 3741,
+ "name": "목책을 더욱 단단히",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 19,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9993
+ },
+ "template": {
+  "level": 19,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15617,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21161,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2953,
+      "npcId": 9993
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21262,
+      "type": "QuestActObjItemGather",
+      "detailId": 1559,
+      "itemId": 20016,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15619,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21162,
+      "type": "QuestActConReportNpc",
+      "detailId": 3187,
+      "npcId": 9993
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15620,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20016,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9993,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20016,
+   "count": 5
+  }
+ ]
+}

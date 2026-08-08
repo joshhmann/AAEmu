@@ -1,0 +1,148 @@
+{
+ "questId": 3604,
+ "name": "아마렌드라 4세의 어명",
+ "zoneId": 18,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2529
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14951,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20474,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2831,
+      "npcId": 2529
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 14952,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20471,
+      "type": "QuestActSupplyItem",
+      "detailId": 2041,
+      "itemId": 19792,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20472,
+      "type": "QuestActObjItemGather",
+      "detailId": 1477,
+      "itemId": 19792,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14954,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20473,
+      "type": "QuestActConReportNpc",
+      "detailId": 3057,
+      "npcId": 5224
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14959,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19792,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5224,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19792,
+   "count": 1
+  }
+ ]
+}

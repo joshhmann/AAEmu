@@ -1,0 +1,106 @@
+{
+ "questId": 1690,
+ "name": "소식이 끊긴 상단",
+ "zoneId": 11,
+ "categoryId": 24,
+ "level": 11,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1882
+ },
+ "template": {
+  "level": 11,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8071,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11281,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1489,
+      "npcId": 1882
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8072,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11280,
+      "type": "QuestActConReportNpc",
+      "detailId": 1679,
+      "npcId": 1887
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8073,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38593,
+      "type": "QuestActSupplyItem",
+      "detailId": 4342,
+      "itemId": 34004,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1887,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34004,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

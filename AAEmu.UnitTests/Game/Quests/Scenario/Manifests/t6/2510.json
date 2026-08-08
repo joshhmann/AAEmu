@@ -1,0 +1,163 @@
+{
+ "questId": 2510,
+ "name": "새로운 연구에 필요한 재료",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 9,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3679
+ },
+ "template": {
+  "level": 9,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10842,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15082,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2072,
+      "npcId": 3679
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 10843,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15076,
+      "type": "QuestActSupplyItem",
+      "detailId": 1434,
+      "itemId": 17249,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10845,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15077,
+      "type": "QuestActObjItemGather",
+      "detailId": 1006,
+      "itemId": 17249,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10847,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15079,
+      "type": "QuestActConReportNpc",
+      "detailId": 2276,
+      "npcId": 6490
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10848,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37163,
+      "type": "QuestActSupplyItem",
+      "detailId": 4134,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17249,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6490,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17249,
+   "count": 1
+  }
+ ]
+}

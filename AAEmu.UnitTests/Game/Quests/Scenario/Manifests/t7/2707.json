@@ -1,0 +1,123 @@
+{
+ "questId": 2707,
+ "name": "검은 모래회 조직원 처치",
+ "zoneId": 142,
+ "categoryId": 17,
+ "level": 16,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2573
+ },
+ "template": {
+  "level": 16,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11349,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16427,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 350,
+      "npcId": 2573
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11350,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16428,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 614,
+      "npcId": 2573,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11351,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16429,
+      "type": "QuestActConReportJournal",
+      "detailId": 108
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11352,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16430,
+      "type": "QuestActSupplyCopper",
+      "detailId": 190,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2573,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

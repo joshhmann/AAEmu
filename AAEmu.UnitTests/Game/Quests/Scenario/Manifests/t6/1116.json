@@ -1,0 +1,104 @@
+{
+ "questId": 1116,
+ "name": "채석장의 애물단지",
+ "zoneId": 133,
+ "categoryId": 23,
+ "level": 2,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5276
+ },
+ "template": {
+  "level": 2,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27762,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 151,
+      "doodadId": 5276
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5723,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12957,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 509,
+      "npcId": 2203,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 5725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27763,
+      "type": "QuestActConAutoComplete",
+      "detailId": 958
+     },
+     {
+      "actId": 36974,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1384,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2203,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

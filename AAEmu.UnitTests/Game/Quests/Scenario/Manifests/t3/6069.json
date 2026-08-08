@@ -104,6 +104,6 @@
  ],
  "selectedRewardIndex": 0,
  "skip": {
-  "reason": "unsupported act type QuestActObjAbilityLevel; unsynthesizable event shape for QuestActObjAbilityLevel (comp 26120)"
+  "reason": "let-it-done quest with no report act (engine has no completion path); unsupported act type QuestActObjAbilityLevel; unsynthesizable event shape for QuestActObjAbilityLevel (comp 26120)"
  }
 }

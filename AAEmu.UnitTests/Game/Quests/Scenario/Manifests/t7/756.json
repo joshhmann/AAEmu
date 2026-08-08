@@ -1,0 +1,114 @@
+{
+ "questId": 756,
+ "name": "식생 연구 야영지로",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 20,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2975
+ },
+ "template": {
+  "level": 20,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3364,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16626,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2151,
+      "npcId": 2975
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4535,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16627,
+      "type": "QuestActConReportNpc",
+      "detailId": 2359,
+      "npcId": 2988
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4536,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 11517,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16778,
+      "type": "QuestActSupplyItem",
+      "detailId": 1688,
+      "itemId": 18000,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2988,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

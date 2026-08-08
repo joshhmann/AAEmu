@@ -1,0 +1,140 @@
+{
+ "questId": 333,
+ "name": "아등바등 살 궁리",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 764
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1527,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10919,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1409,
+      "npcId": 764
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1528,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11067,
+      "type": "QuestActObjItemGather",
+      "detailId": 662,
+      "itemId": 3828,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1529,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2451,
+      "type": "QuestActConReportNpc",
+      "detailId": 331,
+      "npcId": 764
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1530,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38208,
+      "type": "QuestActSupplyItem",
+      "detailId": 4227,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3828,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 764,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3828,
+   "count": 8
+  }
+ ]
+}

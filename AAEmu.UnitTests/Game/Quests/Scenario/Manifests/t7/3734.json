@@ -1,0 +1,91 @@
+{
+ "questId": 3734,
+ "name": "싱싱한 생선이 필요해",
+ "zoneId": 131,
+ "categoryId": 2,
+ "level": 18,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9983
+ },
+ "template": {
+  "level": 18,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15590,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21148,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2946,
+      "npcId": 9983
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15591,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21149,
+      "type": "QuestActConReportNpc",
+      "detailId": 3181,
+      "npcId": 9985
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15592,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9985,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

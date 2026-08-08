@@ -1,0 +1,140 @@
+{
+ "questId": 68,
+ "name": "안식을 위한 꽃잎",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 8,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 618
+ },
+ "template": {
+  "level": 8,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 827,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 976,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 195,
+      "npcId": 618
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7478,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10497,
+      "type": "QuestActObjItemGather",
+      "detailId": 619,
+      "itemId": 14634,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7479,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10496,
+      "type": "QuestActConReportNpc",
+      "detailId": 1518,
+      "npcId": 618
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38571,
+      "type": "QuestActSupplyItem",
+      "detailId": 4320,
+      "itemId": 18792,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14634,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 618,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18792,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14634,
+   "count": 5
+  }
+ ]
+}
