@@ -64,6 +64,85 @@ public class HeadlessSessionProvisioningTests
         Assert.Throws<ArgumentException>(() => HeadlessSession.Provision("bot_managed_hermetic_0002", ""));
     }
 
+    // ---------------------------------------------------------------- adopt decision (t_db5b2be7)
+
+    [Test]
+    public async Task ResolveAdoptable_UnregisteredName_ReturnsZero_CreatePath()
+    {
+        // A name no one owns is a fresh create — no adoption.
+        var nameManager = BuildSeededNameManager([]);
+
+        var result = HeadlessSession.ResolveAdoptableBotCharacterId(nameManager, "citizen01", botAccountId: 14);
+
+        await Assert.That(result).IsEqualTo(0u);
+    }
+
+    [Test]
+    public async Task ResolveAdoptable_BotOwnedName_ReturnsExistingCharacterId()
+    {
+        // A prior boot's row: the name is registered under the SAME managed
+        // bot account → adopt (reload + re-embody), never a new row.
+        var nameManager = BuildSeededNameManager(new Dictionary<uint, (string Name, uint AccountId)>
+        {
+            [101] = ("citizen01", 14)
+        });
+
+        var result = HeadlessSession.ResolveAdoptableBotCharacterId(nameManager, "citizen01", botAccountId: 14);
+
+        await Assert.That(result).IsEqualTo(101u);
+    }
+
+    [Test]
+    public void ResolveAdoptable_ForeignOwnedName_Throws_SquattingProtection()
+    {
+        // The name is taken by a HUMAN account (7) — bots never adopt foreign
+        // rows; the NameManager duplicate guard stays in force for human
+        // names, exactly like the create-only path.
+        var nameManager = BuildSeededNameManager(new Dictionary<uint, (string Name, uint AccountId)>
+        {
+            [202] = ("citizen01", 7)
+        });
+
+        Assert.Throws<ArgumentException>(() =>
+            HeadlessSession.ResolveAdoptableBotCharacterId(nameManager, "citizen01", botAccountId: 14));
+    }
+
+    [Test]
+    public void ResolveAdoptable_AnotherBotAccountsName_Throws_NoCrossAdoption()
+    {
+        // The name is owned by a DIFFERENT managed bot account (15). Same
+        // guard as human squatting: adoption is strictly find-by-name+account,
+        // so a config change that renames the account prefix surfaces loudly
+        // instead of silently re-attaching another bot's character.
+        var nameManager = BuildSeededNameManager(new Dictionary<uint, (string Name, uint AccountId)>
+        {
+            [303] = ("citizen01", 15)
+        });
+
+        Assert.Throws<ArgumentException>(() =>
+            HeadlessSession.ResolveAdoptableBotCharacterId(nameManager, "citizen01", botAccountId: 14));
+    }
+
+    /// <summary>Builds a fresh NameManager seeded from in-memory registries
+    /// (the internal Load overload — the same shape NameManager.Load reads
+    /// from the characters table at boot).</summary>
+    private static NameManager BuildSeededNameManager(Dictionary<uint, (string Name, uint AccountId)> characters)
+    {
+        var nameManager = new NameManager();
+        var ids = new Dictionary<uint, string>();
+        var names = new Dictionary<string, uint>();
+        var accounts = new Dictionary<uint, uint>();
+        foreach (var (id, (characterName, accountId)) in characters)
+        {
+            ids[id] = characterName;
+            names[characterName] = id;
+            accounts[id] = accountId;
+        }
+
+        nameManager.Load(ids, names, accounts);
+        return nameManager;
+    }
+
     // ---------------------------------------------------------------- singleton seeding
 
     /// <summary>

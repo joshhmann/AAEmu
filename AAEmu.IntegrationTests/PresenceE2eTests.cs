@@ -122,6 +122,56 @@ public class PresenceE2eTests
         }
     }
 
+    [Fact]
+    [Trait("Category", "e2e")]
+    public async Task PresenceE2e_RestartWithoutDbWipe_ReembodiesAllBots_NoNameAlreadyExists()
+    {
+        // Restart-idempotency (t_db5b2be7): boot the demo, then restart ONLY
+        // the game process — MySQL keeps the bot rows. The second boot must
+        // ADOPT the existing Citizen01-03 rows (owned by the bot_managed_*
+        // accounts) and come up 3/3 again with ZERO NameAlreadyExists errors.
+        // The create-only path failed this with 0/3 on every boot after the
+        // first (the reported prod defect).
+        Environment.SetEnvironmentVariable("AAEMU_PRESENCE_DEMO", "1");
+        Environment.SetEnvironmentVariable("AAEMU_PRESENCE_BOT_COUNT", "3");
+        try
+        {
+            E2eStack.EnsureUp();
+
+            // Boot 1: provisions (or adopts leftover rows from a prior run) —
+            // must come up 3/3 either way.
+            var gameLog = Path.Combine(E2eStack.E2eRoot, "logs", "game.log");
+            var up1 = await WaitForLogLineAsync(gameLog, "presence demo up", TimeSpan.FromSeconds(180));
+            Assert.NotNull(up1);
+            Assert.Contains("3/3 citizen bots roaming", up1);
+
+            // Restart ONLY the game process — no DB wipe, no row cleanup.
+            E2eStack.RestartGameServer();
+
+            // Boot 2 writes to game-restart.log (FileMode.Create — a fresh
+            // file, so every line in it is from the second boot).
+            var restartLog = Path.Combine(E2eStack.E2eRoot, "logs", "game-restart.log");
+            var up2 = await WaitForLogLineAsync(restartLog, "presence demo up", TimeSpan.FromSeconds(180));
+            Assert.NotNull(up2);
+            Assert.Contains("3/3 citizen bots roaming", up2);
+
+            // The second boot adopted the existing rows: the log shows the
+            // adopt path and zero NameAlreadyExists / provisioning rejections.
+            var secondBoot = string.Join("\n", File.ReadAllLines(restartLog));
+            Assert.DoesNotContain("NameAlreadyExists", secondBoot);
+            Assert.DoesNotContain("rejected by NameManager", secondBoot);
+            Assert.DoesNotContain("failed to provision", secondBoot);
+            Assert.Contains("adopted existing character", secondBoot);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("AAEMU_PRESENCE_DEMO", null);
+            Environment.SetEnvironmentVariable("AAEMU_PRESENCE_BOT_COUNT", null);
+            E2eStack.CleanupBotRows(ObserverAccount,
+                "bot_managed_presence_001", "bot_managed_presence_002", "bot_managed_presence_003");
+        }
+    }
+
     private static async Task<string?> WaitForLogLineAsync(string logPath, string needle, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;

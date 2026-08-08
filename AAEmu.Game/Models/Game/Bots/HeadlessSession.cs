@@ -14,6 +14,8 @@ using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.StaticValues;
 
+using NLog;
+
 namespace AAEmu.Game.Models.Game.Bots;
 
 /// <summary>
@@ -43,6 +45,8 @@ namespace AAEmu.Game.Models.Game.Bots;
 /// </summary>
 public class HeadlessSession
 {
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+
     public Character Character { get; }
     public WorldInstance World { get; }
 
@@ -94,11 +98,21 @@ public class HeadlessSession
     ///  1. <see cref="BotAccountProvisioningService.ProvisionBotAccount"/> —
     ///     aaemu_login.users row with account_type=HeadlessBot + banned=1
     ///     (client login blocked; the login server's existing auth path denies
-    ///     banned accounts — no login-server code change).
-    ///  2. Ordinary character creation shape (CharacterManager template spawn
-    ///     position + faction, NameManager reservation, CharacterIdManager id),
-    ///     persisted via <see cref="Character.SaveDirectlyToDatabase"/> — a
-    ///     real characters row owned by the managed account.
+    ///     banned accounts — no login-server code change). Idempotent: an
+    ///     existing bot_managed_* row is reused as-is.
+    ///  2. Adopt-or-create the character row:
+    ///     - Name NOT registered → ordinary creation shape (CharacterManager
+    ///       template spawn position + faction, NameManager reservation,
+    ///       CharacterIdManager id), persisted via
+    ///       <see cref="Character.SaveDirectlyToDatabase"/> — a real
+    ///       characters row owned by the managed account.
+    ///     - Name ALREADY registered (a prior boot provisioned it) → ADOPT
+    ///       the existing row: reload it from the DB and re-embody. Only rows
+    ///       owned by the SAME managed bot account are adopted — the
+    ///       NameManager duplicate guard still protects human names
+    ///       (squatting), so a restart WITHOUT a DB wipe comes up with the
+    ///       same citizens instead of failing with NameAlreadyExists
+    ///       (restart-idempotency, t_db5b2be7).
     ///  3. <see cref="ICharacterLifecycleService.ActivateHeadless"/> — the
     ///     shared entry core (Load → ObjId → TryAddCharacter → buffs/HP/MP),
     ///     no client packets.
@@ -117,7 +131,8 @@ public class HeadlessSession
     /// faction come from the booted CharacterManager (real world placement).</param>
     /// <param name="gender">Gender.</param>
     /// <param name="level">Starting level.</param>
-    /// <exception cref="ArgumentException">Invalid managed username or character name.</exception>
+    /// <exception cref="ArgumentException">Invalid managed username or character
+    /// name, or a character name owned by another (non-bot) account.</exception>
     /// <exception cref="InvalidOperationException">Non-bot account collision, or the character row save failed.</exception>
     public static HeadlessSession Provision(string username, string name, Race race = Race.Nuian,
         Gender gender = Gender.Male, byte level = 1)
@@ -127,13 +142,45 @@ public class HeadlessSession
         // Fail fast on bad input BEFORE any side effects: name rules mirror the
         // human create path (NameManager regex + duplicate check). A bot
         // character name lives in the same namespace as human names.
+        // NameAlreadyExists is NOT a failure here — a registered name owned by
+        // this bot's managed account is a prior boot's row and is ADOPTED
+        // below (restart-idempotency, t_db5b2be7).
         var nameError = NameManager.Instance.ValidateCharacterName(name);
-        if (nameError != CharacterCreateError.Ok)
+        if (nameError != CharacterCreateError.Ok && nameError != CharacterCreateError.NameAlreadyExists)
             throw new ArgumentException(
                 $"Provisioning failed: character name '{name}' rejected by NameManager ({nameError})", nameof(name));
 
         // 1. Real managed account row (HeadlessBot flag + client-login block).
         var account = BotAccountProvisioningService.Instance.ProvisionBotAccount(username);
+
+        // 2b. ADOPT path — the name is already registered. Reload the existing
+        //     row (owned by this bot's managed account) and re-embody it
+        //     instead of creating a duplicate.
+        if (nameError == CharacterCreateError.NameAlreadyExists)
+        {
+            var existingId = ResolveAdoptableBotCharacterId(NameManager.Instance, name, account.AccountId);
+            var adoptedCharacter = Character.Load(existingId)
+                ?? throw new InvalidOperationException(
+                    $"Provisioning failed: name '{name}' is registered but characters row {existingId} is missing or deleted");
+            if (adoptedCharacter.AccountId != account.AccountId)
+                throw new InvalidOperationException(
+                    $"Provisioning failed: name '{name}' row {existingId} belongs to account {adoptedCharacter.AccountId} but NameManager maps it to {account.AccountId} (registry/row desync — refusing adoption)");
+
+            Logger.Info("Provisioning: adopted existing character row '{Name}' (id {Id}, account {AccountId}) — re-embodying",
+                name, adoptedCharacter.Id, account.AccountId);
+
+            CharacterLifecycleService.Instance.ActivateHeadless(adoptedCharacter, new BotContext
+            {
+                BotId = adoptedCharacter.Id,
+                Name = name
+            });
+
+            var adoptedWorld = adoptedCharacter.ParentWorld as WorldInstance;
+            if (adoptedWorld == null)
+                throw new InvalidOperationException("Provisioning failed: activated bot character has no parent WorldInstance");
+
+            return new HeadlessSession(adoptedCharacter, adoptedWorld) { ProvisionedAccount = account };
+        }
 
         // 2. Real character row — ordinary creation shape, persisted for real.
         var template = CharacterManager.Instance.GetTemplate(race, gender)
@@ -165,6 +212,31 @@ public class HeadlessSession
             throw new InvalidOperationException("Provisioning failed: activated bot character has no parent WorldInstance");
 
         return new HeadlessSession(character, world) { ProvisionedAccount = account };
+    }
+
+    /// <summary>
+    /// Resolves whether a registered character name can be ADOPTED by a bot
+    /// provisioning call (restart-idempotency, t_db5b2be7). Returns the
+    /// existing character id when the name is registered AND owned by the
+    /// given bot account — a prior boot's row. Throws when the name is
+    /// registered under ANY other account: bots never adopt foreign rows
+    /// (human squatting protection — the NameManager duplicate guard stays in
+    /// force for human names). Returns 0 for unregistered names (fresh create
+    /// path).
+    /// </summary>
+    internal static uint ResolveAdoptableBotCharacterId(INameManager nameManager, string normalizedName, uint botAccountId)
+    {
+        var existingId = nameManager.GetCharacterId(normalizedName);
+        if (existingId == 0)
+            return 0;
+
+        var owningAccountId = nameManager.GetCharacterAccount(existingId);
+        if (owningAccountId != botAccountId)
+            throw new ArgumentException(
+                $"Provisioning failed: character name '{normalizedName}' already exists and is owned by account {owningAccountId} — bots only adopt rows owned by the same managed bot account (squatting protection)",
+                nameof(normalizedName));
+
+        return existingId;
     }
 
     /// <summary>

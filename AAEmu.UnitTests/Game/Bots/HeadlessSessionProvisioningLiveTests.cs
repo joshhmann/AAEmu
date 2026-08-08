@@ -198,8 +198,9 @@ public class HeadlessSessionProvisioningLiveTests
                 username = Username,
                 name = "RigBot02", // fresh character name: bot names share the
                                    // human NameManager namespace — reusing
-                                   // "RigBot01" must now FAIL (name registered
-                                   // by the first provision, like a human char)
+                                   // "Rigbot01" below must now ADOPT the
+                                   // existing row (restart-idempotency,
+                                   // t_db5b2be7), not create a duplicate
                 race = "Nuian",
                 gender = "Male",
                 level = 1
@@ -215,6 +216,40 @@ public class HeadlessSessionProvisioningLiveTests
                 cmd.Parameters.AddWithValue("@u", Username);
                 await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(1); // still exactly one row
             }
+
+            // ------------------------------------------------------------------ restart-idempotent adoption (t_db5b2be7)
+            // Re-provisioning the SAME character name — exactly what a restart
+            // WITHOUT a DB wipe does — must ADOPT the existing row owned by
+            // this bot's managed account: same characterId, no duplicate row,
+            // no NameAlreadyExists error. The create-only path failed this
+            // with NameAlreadyExists on every boot after the first (0/3 bots
+            // on the presence demo).
+            var adopt = await SendCommandAsync(control, new
+            {
+                cmd = "provision",
+                username = Username,
+                name = CharacterName, // "Rigbot01" — provisioned at the top of this round-trip
+                race = "Nuian",
+                gender = "Male",
+                level = 1
+            });
+            await Assert.That(IsOk(adopt)).IsTrue();
+            await Assert.That(GetUInt(GetData(adopt), "characterId")).IsEqualTo(_characterId);
+
+            using (var conn = OpenDb("aaemu_game"))
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT COUNT(*) FROM characters WHERE `name` = @n AND `account_id` = @a AND `deleted` = 0";
+                cmd.Parameters.AddWithValue("@n", CharacterName);
+                cmd.Parameters.AddWithValue("@a", _accountId);
+                await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(1); // adopted, never duplicated
+            }
+
+            // The server log must show the adopt path — and NO NameAlreadyExists
+            // rejection for the re-provisioned name.
+            var serverLog = File.ReadAllText(Path.Combine(RigDir, "server.log"));
+            await Assert.That(serverLog.Contains("rejected by NameManager", StringComparison.Ordinal)).IsFalse();
+            await Assert.That(serverLog.Contains("adopted existing character", StringComparison.Ordinal)).IsTrue();
         }
         finally
         {
