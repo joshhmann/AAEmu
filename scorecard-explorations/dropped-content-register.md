@@ -80,6 +80,7 @@ needed, never by editing the reference file.
 | Drop action | `SQL/patches/compact/2026-08-06-drop-m2a-stuck-and-shells.sql`: −26 quest_contexts / −83 quest_components / −5 quest_acts / −5 act-detail rows / −10 quest_component_texts / −27 quest_chat_bubbles (A+B surfaces); 26 were never allowlisted (they have components — no mask to remove) |
 | Execution card | t_e5deb128 (impl) → Rei gate t_656ed5fe |
 | Restore pointer | **A1 dialogue preserved as reference**: 1867/1898/1904/1908/2054 carry real old-zone NPC dialogue — 27 quest_chat_bubbles on comps 8593/8594/8595/8804/8805/8806/8835/8836/8837/8851/8852/8853/9447/9448/9449 (NPCs 4917/4927/4922/4931/4938), 10 component_texts, 5 acts (item_gathers 848/878/885, monster_hunts 532/533). Superseded old-Sunny-Wilderness content worth preserving as reference — restore only if a 1.2-era Sunny Wilderness quest line is rebuilt. **Quest 1899** ("두려운 사실", same old cluster, census-PASS vacuous) is NOT dropped — flagged future-look: its Start gate unit_reqs 18563 (→1898) was pruned with this drop; re-check 1899's shape before any restore work |
+| Residue (runtime-safe, verifier-silent) | 3 `items.loot_quest_id` rows dangle → dropped quests (15887→2054, 15985→1867, 16018→1904). Inert: item rows still load, loot just never fires. Leave unless rebuilding the Sunny Wilderness line |
 
 ## 7. M2a zero-component shells — 91 (reserve + Hadir cutscenes)
 
