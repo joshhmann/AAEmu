@@ -225,7 +225,11 @@ public class BotPresenceCoordinatorTests
         SetSingletonIfMissing(typeof(Singleton<ItemManager>), BuildFixtureItemManager());
         // Fail-closed on missing MySQL (logged, empty used ids), then serves
         // incrementing ids from its range — same call the pilot rig makes.
-        ContainerIdManager.Instance.Initialize(true);
+        // NO forceReset: re-initializing an established ContainerIdManager
+        // resets the id counter while _allPersistentContainers still holds
+        // keys from earlier tests → duplicate-key 65536 (full-suite failure,
+        // t_6bad0654). Initialize(false) is a no-op when already initialized.
+        ContainerIdManager.Instance.Initialize(false);
     }
 
     private static ItemManager BuildFixtureItemManager()
