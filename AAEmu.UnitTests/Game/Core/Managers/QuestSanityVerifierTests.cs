@@ -238,7 +238,7 @@ public class QuestSanityVerifierTests
     public async Task VerifyLoadedState_AllowlistedQuestWithoutComponents_ReportsInfo()
     {
         var state = BuildCleanState();
-        state.Quest.Id = 2148; // "하다보니(reserve)" block shell (data-defects.md §6)
+        state.Quest.Id = 315; // "do-not-delete" shell (data-defects.md §6) — still allowlisted
         state.Quest.Components.Clear();
 
         var report = Run(state);
@@ -251,7 +251,7 @@ public class QuestSanityVerifierTests
     public async Task VerifyLoadedState_AllowlistedQuestWithoutStart_ReportsInfo()
     {
         var state = BuildCleanState();
-        state.Quest.Id = 2148; // "하다보니(reserve)" block shell (data-defects.md §6)
+        state.Quest.Id = 315; // "do-not-delete" shell (data-defects.md §6) — still allowlisted
         state.Component.KindId = QuestComponentKind.Progress;
 
         var report = Run(state);
@@ -280,17 +280,18 @@ public class QuestSanityVerifierTests
     [Test]
     public async Task Allowlist_ContainsClassifiedShells()
     {
-        // Spot-check every allowlist group from data-defects.md (108 ids total — was 109
-        // before 1391 was dropped on 2026-08-05, dropped-content-register.md §1).
+        // Spot-check every allowlist group from data-defects.md (17 ids total — was 108
+        // before the 91 B-cluster shells (2148–2229 reserve + 3748/3750–3757 Hadir) were
+        // dropped on 2026-08-08, dropped-content-register.md §7).
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(315u)).IsTrue();  // do-not-delete shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1728u)).IsTrue(); // do-not-delete shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1391u)).IsFalse(); // dummy shell — DROPPED 2026-08-05 (dropped-content-register.md §1)
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1576u)).IsTrue(); // dummy shell
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2046u)).IsTrue(); // dummy shell
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2148u)).IsTrue(); // reserve block start
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2229u)).IsTrue(); // reserve block end
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(3748u)).IsTrue(); // Hadir cutscene
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(3757u)).IsTrue(); // Hadir cutscene end
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2148u)).IsFalse(); // reserve block start — DROPPED 2026-08-08 (register §7)
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2229u)).IsFalse(); // reserve block end — DROPPED 2026-08-08 (register §7)
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(3748u)).IsFalse(); // Hadir cutscene — DROPPED 2026-08-08 (register §7)
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(3757u)).IsFalse(); // Hadir cutscene end — DROPPED 2026-08-08 (register §7)
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1954u)).IsTrue(); // cat-34 orphan context
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(1960u)).IsTrue(); // cat-34 dangling accept
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(2145u)).IsTrue(); // cat-34 dangling accept
@@ -311,7 +312,7 @@ public class QuestSanityVerifierTests
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(330u)).IsFalse();
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(776u)).IsFalse();
         await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Contains(777u)).IsFalse();
-        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Count == 108).IsTrue();
+        await Assert.That(QuestSanityVerifier.AllowlistedQuestIds.Count == 17).IsTrue();
     }
 
     // -- Zone/kind rollup (scope add: which zones/kinds are quest-broken). --
@@ -320,7 +321,7 @@ public class QuestSanityVerifierTests
     public async Task VerifyLoadedState_ZoneAndKindRollup_CountsFailedAndWarned()
     {
         // zone 125: quest 1 clean + quest 2 failed (Error); zone 8: quest 3 warned (Warn)
-        // + quest 2148 allowlisted (no-start downgraded to Info → NOT counted as warned).
+        // + quest 315 allowlisted (no-start downgraded to Info → NOT counted as warned).
         var q1 = new QuestTemplate { Id = 1, ZoneId = 125, CategoryId = 4 };
         var c1 = new QuestComponentTemplate(q1) { Id = 100, KindId = QuestComponentKind.Start };
         q1.Components[100] = c1;
@@ -335,11 +336,11 @@ public class QuestSanityVerifierTests
         q3.Components[300] = c3;
         c3.ActTemplates.Add(new QuestActObjTalk(c3) { DetailId = 700 });
 
-        var q4 = new QuestTemplate { Id = 2148, ZoneId = 8, CategoryId = 28 };
+        var q4 = new QuestTemplate { Id = 315, ZoneId = 8, CategoryId = 28 };
         var c4 = new QuestComponentTemplate(q4) { Id = 400, KindId = QuestComponentKind.Progress };
         q4.Components[400] = c4;
 
-        var quests = new Dictionary<uint, QuestTemplate> { [1] = q1, [2] = q2, [3] = q3, [2148] = q4 };
+        var quests = new Dictionary<uint, QuestTemplate> { [1] = q1, [2] = q2, [3] = q3, [315] = q4 };
         var components = new Dictionary<uint, QuestComponentTemplate> { [100] = c1, [200] = c2, [300] = c3, [400] = c4 };
 
         var report = QuestSanityVerifier.VerifyLoadedState(quests, components,

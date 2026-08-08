@@ -773,11 +773,22 @@ BAND_TIERS = [
 # JOIN already; listed for the census denominator bookkeeping). The
 # level-1 tutorial shells (1533, 1535-1541) DO have rows and land in band
 # 1-10 - exclude explicitly so sweep denominators match the register.
+# M2a drop (2026-08-08, register §6/§7, t_e5deb128): 26 engine-stuck
+# templates (1867/1898/1904/1908/2054 + 5575-5645 + 5641, zone 22) + 91
+# zero-component shells (2148-2229 reserve + 3748/3750-3757 Hadir) - rows
+# deleted by SQL/patches/compact/2026-08-06-drop-m2a-stuck-and-shells.sql.
 DROPPED_QUESTS = {
     1391, 745, 1421, 1954, 1955, 1956, 1957, 1958, 2140,
     1533, 1535, 1536, 1537, 1538, 1539, 1540, 1541, 1542, 1543,
     1544, 1545, 1546, 1547, 1548, 1549, 1551, 1552, 1553, 1554,
     1640, 1830, 1831,
+    # --- M2a drop cluster A (26 engine-stuck, zone 22 old Sunny Wilderness) ---
+    1867, 1898, 1904, 1908, 2054,
+    5575, 5578, 5579, 5584, 5589, 5596, 5597, 5601, 5603, 5604, 5608, 5619,
+    5630, 5632, 5636, 5637, 5640, 5641, 5643, 5644, 5645,
+    # --- M2a drop cluster B (91 zero-component shells) ---
+    *range(2148, 2230),  # 2148-2229 reserve block
+    3748, *range(3750, 3758),  # Hadir-farm cutscenes
 }
 
 # Signature zones for the M2a zone-coverage rows (M2_PLAN.md zone map):

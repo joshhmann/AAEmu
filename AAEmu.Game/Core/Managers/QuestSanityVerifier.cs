@@ -86,11 +86,11 @@ public static class QuestSanityVerifier
         {
             // QUEST_NO_COMPONENTS — reserve/dummy/cutscene shells (data-defects.md §6):
             // 315/1728 carry a "do not delete" label (client-side skill/doodad link hooks),
-            // 1576/2046 are dummies, 2148–2229 are the "하다보니(reserve)" block,
-            // 3748/3750–3757 are the Hadir-farm instance cutscenes (unreachable in M1).
-            // 1391 was dropped 2026-08-05 (dropped-content-register.md §1, t_5a61cee3) —
-            // NOT allowlisted anymore, so a regression re-reports at WARN.
-            315, 1576, 1728, 2046, 3748,
+            // 1576/2046 are dummies. 1391 was dropped 2026-08-05 (dropped-content-register.md
+            // §1), and the whole 2148–2229 reserve block + Hadir cutscenes (3748, 3750–3757)
+            // were dropped 2026-08-08 (dropped-content-register.md §7, t_e5deb128) — NOT
+            // allowlisted anymore, so regressions re-report at WARN.
+            315, 1576, 1728, 2046,
 
             // Dead cat-34 crafting chain (data-defects.md §4): the orphan mid-chain contexts
             // (1954–1958, 1961, 2140–2143, 2146 — no quest_contexts row, never loaded) and the
@@ -100,8 +100,6 @@ public static class QuestSanityVerifier
         };
 
         // Ranges (inclusive), each with the group it belongs to.
-        ids.UnionWith(Enumerable.Range(2148, 2229 - 2148 + 1).Select(i => (uint)i)); // 2148–2229  reserve block
-        ids.UnionWith(Enumerable.Range(3750, 3757 - 3750 + 1).Select(i => (uint)i)); // 3750–3757  Hadir cutscenes
         ids.UnionWith(Enumerable.Range(1954, 1958 - 1954 + 1).Select(i => (uint)i)); // 1954–1958  cat-34 chain
         ids.UnionWith(Enumerable.Range(2140, 2143 - 2140 + 1).Select(i => (uint)i)); // 2140–2143  cat-34 chain
         return ids;
