@@ -36,11 +36,18 @@ internal static class BotPresenceBootstrap
                 if (SingletonContainer.ServiceProvider == null)
                     return;
 
-                // Wait for the main world + character templates (spawn position).
+                // Wait for the main world + character templates (spawn position)
+                // + FULL world wiring. The MateManager guard mirrors
+                // BotProvisioningControlHost (run-8): EnterWorld iterates ALL
+                // worlds and NREs on any world whose MateManager is still null
+                // (assigned moments after world creation, WorldManager.cs:528).
                 var worldReady = false;
                 for (var i = 0; i < 600 && !worldReady; i++)
                 {
+                    var worlds = WorldManager.Instance.GetWorlds();
                     worldReady = WorldManager.Instance.GetWorld(WorldManager.DefaultInstanceId) != null
+                        && worlds is { Length: > 0 }
+                        && worlds.All(w => w.MateManager != null)
                         && UnitManagers.CharacterManager.Instance.GetTemplate(Race.Nuian, Gender.Male) != null;
                     if (!worldReady)
                         await Task.Delay(100).ConfigureAwait(false);
