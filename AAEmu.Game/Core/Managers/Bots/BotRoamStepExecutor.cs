@@ -109,6 +109,14 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 characterId, path.Waypoints.Count, path.Mode);
     }
 
+    /// <summary>
+    /// Test/observability seam: the currently assigned route for a bot
+    /// (null when none was set or it was cleared). Used by the rig to prove
+    /// route arming/clearing without stepping the executor.
+    /// </summary>
+    internal BotPath? GetRoamRoute(uint characterId)
+        => _states.TryGetValue(characterId, out var state) ? state.Path : null;
+
     public Task<TimeSpan?> StepAsync(PlayerBotRuntime bot, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
