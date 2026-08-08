@@ -132,6 +132,18 @@ public sealed class BotNetworkSession : IDisposable
         if (reason != 0)
             throw new InvalidOperationException($"{botName}: enter world refused (reason {reason})");
 
+        // Real clients ping immediately after the enter-world handshake, from
+        // the lobby flow onward. This matters: the server's 30s dead-account
+        // sweep (AccountManager.RemoveDeadConnections) only sees LastPing,
+        // which ONLY PingPacket updates — a connection that lingers in the
+        // lobby/select flow with no ping yet (LastPing = MinValue) is shut
+        // down at the next sweep boundary. Under a 25-bot connect burst the
+        // sweep boundary lands mid-burst and kills the pre-first-ping tail
+        // (observed: stage 25 gate, all 7 dropped bots were pre-first-ping;
+        // the old 8s-delay first ping left an artificial vulnerability
+        // window real clients don't have). Gate finding t_0b2b6418.
+        session.SendPing();
+
         // Character list.
         session.CharacterId = session.RequestCharacterList().FirstOrDefault();
 
@@ -247,6 +259,19 @@ public sealed class BotNetworkSession : IDisposable
             throw new InvalidOperationException($"{BotName}: character creation FAILED (server rejected the create packet)");
     }
 
+    /// <summary>Sends one game-protocol ping (the server's LastPing / activity source).</summary>
+    private void SendPing()
+    {
+        if (_game?.Connected != true)
+            return;
+        _game.SendGameFrame(PPOffsets.PingPacket, 2, body =>
+        {
+            body.Write(0L); // tPhy
+            body.Write(0L); // ping
+            body.Write(0u); // local
+        });
+    }
+
     private async Task PingLoopAsync(CancellationToken ct)
     {
         try
@@ -256,12 +281,7 @@ public sealed class BotNetworkSession : IDisposable
                 await Task.Delay(8000, ct).ConfigureAwait(false);
                 if (!_game.Connected)
                     break;
-                _game.SendGameFrame(PPOffsets.PingPacket, 2, body =>
-                {
-                    body.Write(0L); // tPhy
-                    body.Write(0L); // ping
-                    body.Write(0u); // local
-                });
+                SendPing();
             }
         }
         catch

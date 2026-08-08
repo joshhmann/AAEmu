@@ -5,9 +5,12 @@ using System.Text.Json;
 using AAEmu.Commons.IO;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Static;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 
 namespace AAEmu.Game.Models.Game.Bots;
@@ -169,6 +172,10 @@ public sealed class BotDriveBridge
                 }
                 catch (Exception ex)
                 {
+                    // Gate observability: log the FULL stack — a bridge op NRE
+                    // must be diagnosable from the server log, not just echoed
+                    // as a one-line error string to the test.
+                    Logger.Error(ex, "E2E bridge command failed: {Line}", line);
                     response = Err($"bridge error: {ex.GetType().Name}: {ex.Message}");
                 }
 
@@ -197,6 +204,8 @@ public sealed class BotDriveBridge
                 return Ok(new { pong = true, bridgePort = _port });
             case "stats":
                 return Ok(CollectStats());
+            case "metrics":
+                return Ok(CollectGateMetrics());
             case "drive":
                 return HandleDrive(root);
             default:
@@ -212,6 +221,136 @@ public sealed class BotDriveBridge
             connections = connections.Count,
             inWorld = connections.Count(c => c.ActiveChar != null),
             accounts = AccountManager.Instance.Count()
+        };
+    }
+
+    /// <summary>
+    /// Gate-harness metrics surface (test seam — additive, no behavior
+    /// change). Returns whatever the running server actually exposes:
+    /// TickManager duration metrics + ActiveRegionTick budget stats (H2),
+    /// PlayerBotScheduler wake-latency metrics (slice #6), PopulationDirector
+    /// fidelity counts (slice #9). Missing systems report null — the gate
+    /// runner treats absent instrumentation as a gate condition (e.g. stage 25
+    /// hard-stops when H2 metrics are missing), never as a silent pass.
+    /// </summary>
+    private object CollectGateMetrics()
+    {
+        // H2 — TickManager duration metrics (p50/p95/max + per-subscriber).
+        object tick = null;
+        try
+        {
+            var m = TickManager.Instance.GetTickMetrics();
+            tick = new
+            {
+                available = true,
+                subscriberCount = m.SubscriberCount,
+                invokeSampleCount = m.InvokeSampleCount,
+                invokeP50Ms = m.InvokeP50Ms,
+                invokeP95Ms = m.InvokeP95Ms,
+                invokeMaxMs = m.InvokeMaxMs,
+                subscribers = m.Subscribers.ToDictionary(
+                    kv => kv.Key,
+                    kv => new { kv.Value.SampleCount, kv.Value.P50Ms, kv.Value.P95Ms, kv.Value.MaxMs })
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "gate metrics: tick snapshot unavailable");
+            tick = new { available = false, error = ex.Message };
+        }
+
+        // H2 — ActiveRegionTick per-pass budget stats.
+        object regionTick = null;
+        try
+        {
+            var s = WorldManager.Instance.RegionTickStats;
+            regionTick = new
+            {
+                available = true,
+                charactersTotal = s.CharactersTotal,
+                charactersProcessed = s.CharactersProcessed,
+                matesProcessed = s.MatesProcessed,
+                slavesProcessed = s.SlavesProcessed,
+                spawnersTotal = s.SpawnersTotal,
+                spawnersProcessed = s.SpawnersProcessed,
+                elapsedMs = s.ElapsedMs,
+                budgetMs = WorldManager.ActiveRegionTickBudgetMs
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "gate metrics: region tick stats unavailable");
+            regionTick = new { available = false, error = ex.Message };
+        }
+
+        // Slice #6 — PlayerBotScheduler wake-latency metrics (null when the
+        // scheduler isn't registered in DI, e.g. a build without slice #6).
+        object scheduler = null;
+        try
+        {
+            var s = SingletonContainer.ServiceProvider?.GetService<IPlayerBotScheduler>();
+            if (s != null)
+            {
+                var m = s.GetMetrics();
+                scheduler = new
+                {
+                    available = true,
+                    isRunning = s.IsRunning,
+                    workerCount = m.WorkerCount,
+                    activeWorkers = m.ActiveWorkers,
+                    dueQueueDepth = m.DueQueueDepth,
+                    eventQueueDepth = m.EventQueueDepth,
+                    inFlight = m.InFlight,
+                    totalStepsRun = m.TotalStepsRun,
+                    totalStepsSkipped = m.TotalStepsSkipped,
+                    totalStepsFailed = m.TotalStepsFailed,
+                    totalStepsTimedOut = m.TotalStepsTimedOut,
+                    avgWakeLatencyMs = m.AverageWakeLatencyMs,
+                    maxWakeLatencyMs = m.MaxWakeLatencyMs,
+                    workerUtilization = m.WorkerUtilization
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "gate metrics: scheduler metrics unavailable");
+            scheduler = new { available = false, error = ex.Message };
+        }
+
+        // Slice #9 — PopulationDirector fidelity counts (null when absent).
+        object population = null;
+        try
+        {
+            var p = SingletonContainer.ServiceProvider?.GetService<IPopulationDirector>();
+            if (p != null)
+            {
+                var m = p.GetMetrics();
+                population = new
+                {
+                    available = true,
+                    dormant = m.DormantCount,
+                    reduced = m.ReducedCount,
+                    full = m.FullCount,
+                    embodied = m.Embodied,
+                    pressure = m.Pressure.ToString(),
+                    transitionsApplied = m.TotalTransitionsApplied,
+                    transitionsRejected = m.TotalTransitionsRejected
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "gate metrics: population metrics unavailable");
+            population = new { available = false, error = ex.Message };
+        }
+
+        return new
+        {
+            tick,
+            regionTick,
+            scheduler,
+            population,
+            uptimeMs = Environment.TickCount64
         };
     }
 
