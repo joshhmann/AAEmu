@@ -199,7 +199,13 @@ public class HeadlessSession
             Ability3 = AbilityType.Will,
             Created = DateTime.UtcNow,
             ReturnDistrictId = template.ReturnDistrictId,
-            ResurrectionDistrictId = template.ResurrectionDistrictId
+            ResurrectionDistrictId = template.ResurrectionDistrictId,
+            // Bots never receive a client spawn packet, so
+            // CSSpawnCharacterPacket's VisualOptions assignment never runs for
+            // them — carry an ordinary default instance instead of null (P0
+            // hotfix t_506a9acb: null VisualOptions NRE'd SCUnitStatePacket
+            // while serializing bots to a real client).
+            VisualOptions = new CharacterVisualOptions()
         };
 
         character.Transform.ApplyWorldSpawnPosition(template.SpawnPosition);
@@ -252,6 +258,9 @@ public class HeadlessSession
         character.Ability2 = AbilityType.Magic;
         character.Ability3 = AbilityType.Will;
         character.Quests = new CharacterQuests(character);
+        // E2E-fixture path — same ordinary default as Provision's
+        // BuildProvisionedCharacter (no client spawn packet ever sets this).
+        character.VisualOptions = new CharacterVisualOptions();
         // Every ordinary character row carries a faction (faction_id). Unit
         // requirement gates (MotherFaction/FactionMatch) dereference
         // Faction.MotherId — a null Faction NREs the gate (UnitReqs.cs:199).

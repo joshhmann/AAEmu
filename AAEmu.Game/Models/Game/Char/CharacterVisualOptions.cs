@@ -9,6 +9,12 @@ public class CharacterVisualOptions : PacketMarshaler
     /// 6-byte block in SCUnitStatePacket regardless of the create/spawn flag).</summary>
     private static readonly byte[] EmptyStp = new byte[6];
 
+    /// <summary>Shared empty instance for characters that never received a
+    /// client-supplied visual-option payload (headless-provisioned bots have
+    /// no spawn packet, so CSSpawnCharacterPacket's assignment never runs).
+    /// Read-only in practice — the packet write paths only read fields.</summary>
+    public static readonly CharacterVisualOptions Default = new();
+
     private byte _flag;
     public byte[] Stp;
     public bool Helmet;
