@@ -222,25 +222,34 @@ public static class Program
                 services.AddSingleton<IPortalManager>(sp => sp.GetRequiredService<PortalManager>());
 
                 // -- PlayerBot manager + lifecycle seam (AAEmu.Game.Core.Managers.Bots) --
-                // Lifecycle seam: fail-closed placeholder until slice #3
-                // (CharacterLifecycleService extraction) lands and is wired here.
-                services.AddSingleton<UnwiredPlayerBotLifecycleService>();
-                services.AddSingleton<IPlayerBotLifecycleService>(sp => sp.GetRequiredService<UnwiredPlayerBotLifecycleService>());
+                // Real lifecycle: CharacterLifecycleService (the shared
+                // activation core) + region placement (PRESENCE PROOF — the
+                // headless equivalent of the first CSMoveUnitPacket placement).
+                services.AddSingleton<PlayerBotLifecycleAdapter>();
+                services.AddSingleton<IPlayerBotLifecycleService>(sp => sp.GetRequiredService<PlayerBotLifecycleAdapter>());
 
                 services.AddSingleton<PlayerBotManager>();
                 services.AddSingleton<IPlayerBotManager>(sp => sp.GetRequiredService<PlayerBotManager>());
 
-                // Step executor seam: the M5 actor (IGameplayActor) adapts
-                // into the scheduler's step seam — one actor Tick per wake,
-                // live requests keep the scan cadence, idle bots go dormant.
-                services.AddSingleton<GameplayActorStepExecutor>();
-                services.AddSingleton<IBotStepExecutor>(sp => sp.GetRequiredService<GameplayActorStepExecutor>());
+                // Step executor seam: the roam-driven M5 actor executor —
+                // issues MoveTo legs from a BotPath, ticks the actor, and
+                // applies Option A visibility (ground clamp + 4-6 Hz movement
+                // broadcast). Bots without a route behave like the plain
+                // actor executor (tick-only).
+                services.AddSingleton<BotRoamStepExecutor>();
+                services.AddSingleton<IBotStepExecutor>(sp => sp.GetRequiredService<BotRoamStepExecutor>());
 
                 // Due-time scheduler + bounded worker pool (4-8, spec §5). Not
-                // auto-started: the PopulationDirector slice (or admin command)
+                // auto-started: the BotPresenceCoordinator (or admin command)
                 // calls Start(), so an unwired deployment stays inert.
                 services.AddSingleton<PlayerBotScheduler>();
                 services.AddSingleton<IPlayerBotScheduler>(sp => sp.GetRequiredService<PlayerBotScheduler>());
+
+                // Fidelity authority: the ONLY bot fidelity assigner. Wired
+                // for the presence demo; pressure sweeps stay dormant until
+                // RefreshPressure() is driven.
+                services.AddSingleton<PopulationDirector>();
+                services.AddSingleton<IPopulationDirector>(sp => sp.GetRequiredService<PopulationDirector>());
 
                 services.AddSingleton<PublicFarmManager>();
                 services.AddSingleton<IPublicFarmManager>(sp => sp.GetRequiredService<PublicFarmManager>());

@@ -1,0 +1,272 @@
+using System.Numerics;
+
+using AAEmu.Commons.IO;
+using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Models;
+using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Utils;
+
+using NLog;
+
+namespace AAEmu.Game.Core.Managers.Bots;
+
+/// <summary>
+/// PRESENCE PROOF coordinator (integration card t_6bad0654) — wires the
+/// proven pieces into one living loop:
+///
+///   HeadlessSession.Provision (production path: real account + character
+///   rows, ActivateHeadless embodiment)
+///     → PlayerBotManager.Spawn/Activate (real lifecycle adapter — region
+///       placement included)
+///     → PopulationDirector.TrySetFidelity(Full) (the demo set gets full
+///       presence)
+///     → BotRoamStepExecutor.SetRoamRoute (BotPath loop around the spawn)
+///     → PlayerBotScheduler.Wake (the due-time loop drives the actor)
+///
+/// DISABLED BY DEFAULT. Enabled only when the runtime Config.Local.json sets
+/// "Bots": { "EnablePresenceDemo": true } (or the AAEMU_PRESENCE_DEMO env var
+/// is 1/true); prod config never sets it. Bot count:
+/// "Bots"."PresenceBotCount" / AAEMU_PRESENCE_BOT_COUNT (default 3, clamped
+/// 1..10 for the demo).
+///
+/// The coordinator runs once the world is ready (main world loaded + spawn
+/// templates available). All bots are provisioned through the production
+/// path and walked on a bounded patrol route around their spawn position —
+/// Option A visibility (ground clamp + 4-6 Hz movement broadcast) lives in
+/// the step executor.
+/// </summary>
+public sealed class BotPresenceCoordinator
+{
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+
+    private readonly IPlayerBotManager _manager;
+    private readonly IPlayerBotScheduler _scheduler;
+    private readonly IPopulationDirector _director;
+    private readonly BotRoamStepExecutor _stepExecutor;
+    private readonly Func<BotPresenceConfig, Vector3> _homeResolver;
+    private readonly Func<string, string, Race, Gender, byte, HeadlessSession> _provisioner;
+
+    public sealed record BotPresenceConfig(
+        int BotCount,
+        uint ZoneId,
+        Vector3 HomePosition,
+        float RoamRadius,
+        float RoamSpeed,
+        byte Level,
+        string NamePrefix,
+        string AccountPrefix);
+
+    /// <summary>
+    /// DI-friendly constructor. Tests inject fakes for the loop pieces and
+    /// custom home/provision delegates; production uses the defaults.
+    /// </summary>
+    public BotPresenceCoordinator(
+        IPlayerBotManager manager,
+        IPlayerBotScheduler scheduler,
+        IPopulationDirector director,
+        BotRoamStepExecutor stepExecutor,
+        Func<BotPresenceConfig, Vector3>? homeResolver = null,
+        Func<string, string, Race, Gender, byte, HeadlessSession>? provisioner = null)
+    {
+        _manager = manager ?? throw new ArgumentNullException(nameof(manager));
+        _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
+        _director = director ?? throw new ArgumentNullException(nameof(director));
+        _stepExecutor = stepExecutor ?? throw new ArgumentNullException(nameof(stepExecutor));
+        _homeResolver = homeResolver ?? DefaultHomeResolver;
+        _provisioner = provisioner ?? DefaultProvisioner;
+    }
+
+    /// <summary>
+    /// Reads the runtime config gate. True only when the demo is explicitly
+    /// enabled (Config.Local.json "Bots"."EnablePresenceDemo" or env).
+    /// </summary>
+    public static bool IsEnabled()
+    {
+        var env = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_DEMO");
+        if (env is "1" or "true" or "True")
+            return true;
+
+        foreach (var fileName in new[] { "Config.Local.json", "Config.json" })
+        {
+            var path = Path.Combine(FileManager.AppPath, fileName);
+            if (!File.Exists(path))
+                continue;
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+                if (doc.RootElement.TryGetProperty("Bots", out var bots) &&
+                    bots.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    bots.TryGetProperty("EnablePresenceDemo", out var flag) &&
+                    flag.ValueKind == System.Text.Json.JsonValueKind.True)
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "BotPresenceCoordinator: failed to read {Path}", path);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Logs a warning through the coordinator logger (bootstrap/DI helper).</summary>
+    public static void LogWarn(string message)
+        => Logger.Warn(message);
+
+    /// <summary>Logs an error through the coordinator logger (bootstrap/DI helper).</summary>
+    public static void LogError(Exception ex, string message)
+        => Logger.Error(ex, message);
+
+    /// <summary>Reads the bot count from env / config (clamped 1..10).</summary>
+    public static int ReadBotCount(int fallback = 3)
+    {
+        var count = fallback;
+        var env = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BOT_COUNT");
+        if (int.TryParse(env, out var envCount) && envCount > 0)
+            count = envCount;
+
+        foreach (var fileName in new[] { "Config.Local.json", "Config.json" })
+        {
+            var path = Path.Combine(FileManager.AppPath, fileName);
+            if (!File.Exists(path))
+                continue;
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+                if (doc.RootElement.TryGetProperty("Bots", out var bots) &&
+                    bots.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    bots.TryGetProperty("PresenceBotCount", out var c) &&
+                    c.TryGetInt32(out var cfgCount) && cfgCount > 0)
+                {
+                    count = cfgCount;
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "BotPresenceCoordinator: failed to read {Path}", path);
+            }
+        }
+
+        return Math.Clamp(count, 1, 10);
+    }
+
+    /// <summary>
+    /// Runs the presence demo: provisions <see cref="BotPresenceConfig.BotCount"/>
+    /// bots, spawns them, assigns Full fidelity, and arms a bounded roam route
+    /// around home. Idempotent: a second call skips when bots are already up.
+    /// </summary>
+    public bool Start(BotPresenceConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+
+        if (_director.EmbodiedCount >= config.BotCount)
+        {
+            Logger.Info("BotPresenceCoordinator: {Count} bots already embodied — skipping (idempotent)",
+                _director.EmbodiedCount);
+            return true;
+        }
+
+        var home = _homeResolver(config);
+        Logger.Info("BotPresenceCoordinator: provisioning {Count} citizen bots (home {Home}, zone {ZoneId})",
+            config.BotCount, home, config.ZoneId);
+
+        _scheduler.Start();
+
+        var spawned = 0;
+        for (var i = 0; i < config.BotCount; i++)
+        {
+            var accountName = $"{BotAccountProvisioningService.ManagedUsernamePrefix}{config.AccountPrefix}_{i + 1:D3}";
+            var name = $"{config.NamePrefix}{i + 1:D2}";
+
+            try
+            {
+                var session = _provisioner(accountName, name, Race.Nuian, Gender.Male, config.Level);
+                if (session == null)
+                {
+                    Logger.Error("BotPresenceCoordinator: provisioner returned null for {Name}", name);
+                    continue;
+                }
+
+                var character = session.Character;
+                if (!_manager.Spawn(character, "presence-demo"))
+                {
+                    Logger.Warn("BotPresenceCoordinator: spawn refused for {Name} — already registered?", name);
+                    continue;
+                }
+
+                if (!_manager.Activate(character.Id, new BotContext { BotId = character.Id, Name = name }, "presence-demo"))
+                {
+                    Logger.Warn("BotPresenceCoordinator: activation failed for {Name}", name);
+                    continue;
+                }
+
+                // Full fidelity for the demo set (single-step ladder: Dormant → Reduced → Full).
+                var reduced = _director.TrySetFidelity(character.Id, BotFidelity.Reduced, "presence-demo");
+                if (reduced != FidelityTransitionResult.Applied)
+                    Logger.Warn("BotPresenceCoordinator: fidelity Reduced {Result} for {Name}", reduced, name);
+                var full = _director.TrySetFidelity(character.Id, BotFidelity.Full, "presence-demo");
+                if (full != FidelityTransitionResult.Applied)
+                    Logger.Warn("BotPresenceCoordinator: fidelity Full {Result} for {Name}", full, name);
+
+                // Bounded patrol route around home — offset each bot's start so
+                // they don't all walk the same circle in lockstep.
+                var route = BuildRoamRoute(home, config.RoamRadius, i);
+                _stepExecutor.SetRoamRoute(character, route);
+
+                _scheduler.Wake(character.Id);
+                spawned++;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "BotPresenceCoordinator: failed to provision {Name}", name);
+            }
+        }
+
+        Logger.Info("BotPresenceCoordinator: presence demo up — {Spawned}/{Count} citizen bots roaming",
+            spawned, config.BotCount);
+        return spawned > 0;
+    }
+
+    /// <summary>
+    /// Builds a bounded patrol route (Loop) around home: a rounded square with
+    /// per-bot angular offset so bots visibly spread. All waypoints lie within
+    /// RoamRadius of home (BotPath.AllWaypointsWithin safety contract).
+    /// </summary>
+    internal static BotPath BuildRoamRoute(Vector3 home, float radius, int seed)
+    {
+        var waypoints = new List<Vector3>();
+        var startAngle = seed * 45f; // per-bot offset so they don't sync
+        for (var i = 0; i < 8; i++)
+        {
+            var angle = (startAngle + i * 45f).DegToRad();
+            var x = home.X + MathF.Cos(angle) * radius * 0.9f;
+            var y = home.Y + MathF.Sin(angle) * radius * 0.9f;
+            waypoints.Add(new Vector3(x, y, home.Z));
+        }
+
+        return new BotPath(waypoints, BotPath.LoopMode.Loop, BotPath.ArrivalRadiusDefault, radius * 0.2f);
+    }
+
+    /// <summary>
+    /// Default home: the Nuian character template spawn (Solzreed — the
+    /// known-good world; the same position a fresh player character appears
+    /// at, so the bots are immediately visible to a logging-in human).
+    /// </summary>
+    internal static Vector3 DefaultHomeResolver(BotPresenceConfig config)
+    {
+        var template = UnitManagers.CharacterManager.Instance.GetTemplate(Race.Nuian, Gender.Male);
+        var spawn = template?.SpawnPosition;
+        return spawn != null
+            ? new Vector3(spawn.X, spawn.Y, spawn.Z)
+            : config.HomePosition;
+    }
+
+    private static HeadlessSession DefaultProvisioner(string username, string name, Race race, Gender gender, byte level)
+        => HeadlessSession.Provision(username, name, race, gender, level);
+}
