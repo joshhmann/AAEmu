@@ -1,0 +1,100 @@
+{
+ "questId": 811,
+ "name": "매혹의 향기",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5041
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3064,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4526,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 509,
+      "npcId": 5041
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3065,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12585,
+      "type": "QuestActObjInteraction",
+      "detailId": 299,
+      "doodadId": 1068,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3067,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12586,
+      "type": "QuestActConAutoComplete",
+      "detailId": 337
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1068,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

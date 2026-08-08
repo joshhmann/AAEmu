@@ -1,0 +1,181 @@
+{
+ "questId": 2272,
+ "name": "애도의 제물",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1484
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12259,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18017,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2285,
+      "npcId": 1484
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12260,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18079,
+      "type": "QuestActObjItemGather",
+      "detailId": 1223,
+      "itemId": 17264,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12261,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18078,
+      "type": "QuestActObjItemGather",
+      "detailId": 1222,
+      "itemId": 17263,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12262,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18020,
+      "type": "QuestActConReportNpc",
+      "detailId": 2513,
+      "npcId": 1484
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38435,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2674,
+      "itemId": 33821,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38436,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2675,
+      "itemId": 33822,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38437,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2676,
+      "itemId": 33823,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000166,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 8000017,
+      "itemId": 35841,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17264,
+     "count": 3
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 17263,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1484,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 17264,
+   "count": 3
+  },
+  {
+   "itemId": 17263,
+   "count": 3
+  }
+ ]
+}

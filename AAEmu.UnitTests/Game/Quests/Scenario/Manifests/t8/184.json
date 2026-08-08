@@ -1,0 +1,134 @@
+{
+ "questId": 184,
+ "name": "농장에 스며든 그림자",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 638
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11344,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1501,
+      "npcId": 638
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8124,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22443,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 869,
+      "npcId": 5127,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11351,
+      "type": "QuestActConReportNpc",
+      "detailId": 1686,
+      "npcId": 638
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8126,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38653,
+      "type": "QuestActSupplyItem",
+      "detailId": 4402,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 5127,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 638,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

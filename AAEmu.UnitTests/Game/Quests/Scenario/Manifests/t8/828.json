@@ -1,0 +1,134 @@
+{
+ "questId": 828,
+ "name": "무서운 이야기",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 25,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5046
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3140,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4598,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 524,
+      "npcId": 5046
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3142,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13311,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 105,
+      "monsterGroupId": 111,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3144,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4603,
+      "type": "QuestActConReportNpc",
+      "detailId": 606,
+      "npcId": 5046
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3145,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38661,
+      "type": "QuestActSupplyItem",
+      "detailId": 4410,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 111,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5046,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

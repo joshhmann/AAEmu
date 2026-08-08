@@ -1,0 +1,125 @@
+{
+ "questId": 2051,
+ "name": "사악한 기운이 담긴 생명석",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3332
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9435,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13094,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1759,
+      "npcId": 3332
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13095,
+      "type": "QuestActObjItemGather",
+      "detailId": 846,
+      "itemId": 15885,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9437,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13096,
+      "type": "QuestActConReportNpc",
+      "detailId": 1971,
+      "npcId": 3332
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9438,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15885,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3332,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15885,
+   "count": 12
+  }
+ ]
+}

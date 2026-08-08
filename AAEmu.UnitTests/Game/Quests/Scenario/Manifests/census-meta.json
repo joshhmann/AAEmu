@@ -22,6 +22,13 @@
    "total": 626,
    "dropped": [],
    "nonDropped": 626
+  },
+  "21-30": {
+   "label": "band 21-30",
+   "tier": "t8",
+   "total": 847,
+   "dropped": [],
+   "nonDropped": 847
   }
  },
  "signatureZones": [
@@ -66,6 +73,42 @@
    "zoneIds": [
     22,
     136
+   ]
+  },
+  {
+   "name": "Ancient Forest",
+   "zoneIds": [
+    24
+   ]
+  },
+  {
+   "name": "Marionople",
+   "zoneIds": [
+    2
+   ]
+  },
+  {
+   "name": "Two Crowns",
+   "zoneIds": [
+    15
+   ]
+  },
+  {
+   "name": "White Forest",
+   "zoneIds": [
+    10
+   ]
+  },
+  {
+   "name": "Singing Land",
+   "zoneIds": [
+    140
+   ]
+  },
+  {
+   "name": "Sunrise Peninsula",
+   "zoneIds": [
+    8
    ]
   }
  ]

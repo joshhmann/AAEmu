@@ -1,0 +1,121 @@
+{
+ "questId": 1341,
+ "name": "실종자 수색",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3161
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6711,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9399,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1163,
+      "npcId": 3161
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6713,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12267,
+      "type": "QuestActObjInteraction",
+      "detailId": 289,
+      "doodadId": 1518,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6714,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9403,
+      "type": "QuestActConReportNpc",
+      "detailId": 1327,
+      "npcId": 3161
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6715,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1518,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3161,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

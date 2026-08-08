@@ -1,0 +1,134 @@
+{
+ "questId": 810,
+ "name": "벌레만 잡을 수 있다면",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5034
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3059,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4522,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 508,
+      "npcId": 5034
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3062,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4525,
+      "type": "QuestActConReportNpc",
+      "detailId": 589,
+      "npcId": 5034
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3063,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38668,
+      "type": "QuestActSupplyItem",
+      "detailId": 4417,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12373,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 491,
+      "npcId": 5004,
+      "count": 8
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 5004,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5034,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

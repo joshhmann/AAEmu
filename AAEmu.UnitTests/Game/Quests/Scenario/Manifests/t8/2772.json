@@ -1,0 +1,135 @@
+{
+ "questId": 2772,
+ "name": "식물학자를 괴롭히는 고블린들 처치",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2901
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11672,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17120,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 513,
+      "npcId": 2901
+     },
+     {
+      "actId": 17121,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 514,
+      "npcId": 2902
+     },
+     {
+      "actId": 17122,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 515,
+      "npcId": 2903
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11673,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17123,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 267,
+      "monsterGroupId": 242,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11674,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17118,
+      "type": "QuestActConReportJournal",
+      "detailId": 161
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11675,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17116,
+      "type": "QuestActSupplyCopper",
+      "detailId": 245,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 242,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

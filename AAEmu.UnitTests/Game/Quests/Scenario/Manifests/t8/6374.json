@@ -1,0 +1,97 @@
+{
+ "questId": 6374,
+ "name": "델피나드의 별 50개로 살 수 있는 것",
+ "zoneId": 1,
+ "categoryId": 110,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27299,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 27300,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38835,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1655,
+      "amount": 1000
+     },
+     {
+      "actId": 38836,
+      "type": "QuestActSupplyExp",
+      "detailId": 1344,
+      "exp": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27301,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38837,
+      "type": "QuestActConReportNpc",
+      "detailId": 4990,
+      "npcId": 10857
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10857,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

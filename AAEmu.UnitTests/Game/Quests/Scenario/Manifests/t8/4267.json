@@ -1,0 +1,91 @@
+{
+ "questId": 4267,
+ "name": "오색 들판의 평화",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5867
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18372,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24030,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3446,
+      "npcId": 5867
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18373,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24031,
+      "type": "QuestActConReportNpc",
+      "detailId": 3715,
+      "npcId": 1680
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18374,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1680,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

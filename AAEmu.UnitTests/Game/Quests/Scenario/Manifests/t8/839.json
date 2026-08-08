@@ -1,0 +1,125 @@
+{
+ "questId": 839,
+ "name": "벌목 작업",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5052
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3216,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4680,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 541,
+      "npcId": 5052
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12434,
+      "type": "QuestActObjItemGather",
+      "detailId": 800,
+      "itemId": 14312,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4682,
+      "type": "QuestActConReportNpc",
+      "detailId": 623,
+      "npcId": 5052
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3219,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14312,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5052,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14312,
+   "count": 5
+  }
+ ]
+}

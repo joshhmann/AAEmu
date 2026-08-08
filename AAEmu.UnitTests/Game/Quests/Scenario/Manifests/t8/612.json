@@ -1,0 +1,157 @@
+{
+ "questId": 612,
+ "name": "광산 땅벌레의 분노",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1713
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2570,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3896,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 431,
+      "npcId": 1713
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2571,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23892,
+      "type": "QuestActObjItemUse",
+      "detailId": 604,
+      "itemId": 17255,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2574,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38687,
+      "type": "QuestActSupplyItem",
+      "detailId": 4436,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24227,
+      "type": "QuestActConReportNpc",
+      "detailId": 3757,
+      "npcId": 1690
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 18609,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24228,
+      "type": "QuestActSupplyItem",
+      "detailId": 2327,
+      "itemId": 17255,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 17255,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1690,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

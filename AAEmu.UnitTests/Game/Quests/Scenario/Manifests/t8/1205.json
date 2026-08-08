@@ -1,0 +1,129 @@
+{
+ "questId": 1205,
+ "name": "뱀밭의 뱀 잡기",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 7420
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6131,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13738,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 112,
+      "npcId": 7420
+     },
+     {
+      "actId": 13739,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 113,
+      "npcId": 7421
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6167,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13740,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 137,
+      "monsterGroupId": 140,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6168,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13742,
+      "type": "QuestActSupplyCopper",
+      "detailId": 80,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15509,
+      "type": "QuestActConReportJournal",
+      "detailId": 25
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 140,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,129 @@
+{
+ "questId": 6166,
+ "name": "숙련자와 함께 아크미트 처치",
+ "zoneId": 170,
+ "categoryId": 64,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14423
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36198,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4663,
+      "npcId": 14423
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36206,
+      "type": "QuestActObjItemGather",
+      "detailId": 2897,
+      "itemId": 31592,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26481,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36204,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1679
+     },
+     {
+      "actId": 36357,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1332,
+      "amount": 0
+     },
+     {
+      "actId": 36358,
+      "type": "QuestActSupplyExp",
+      "detailId": 886,
+      "exp": 9450
+     },
+     {
+      "actId": 37088,
+      "type": "QuestActSupplyItem",
+      "detailId": 4114,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 31592,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31592,
+   "count": 1
+  }
+ ]
+}

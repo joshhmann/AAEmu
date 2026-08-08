@@ -1,0 +1,121 @@
+{
+ "questId": 526,
+ "name": "드워프 연구소의 선물",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2421
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2048,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3196,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 327,
+      "npcId": 2421
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2049,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3197,
+      "type": "QuestActObjInteraction",
+      "detailId": 67,
+      "doodadId": 920,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2050,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3198,
+      "type": "QuestActConReportNpc",
+      "detailId": 390,
+      "npcId": 2421
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2051,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 920,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2421,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

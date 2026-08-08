@@ -1,0 +1,91 @@
+{
+ "questId": 3468,
+ "name": "신의 채찍과의 만남",
+ "zoneId": 137,
+ "categoryId": 61,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9913
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17038,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22483,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3200,
+      "npcId": 9913
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17039,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22484,
+      "type": "QuestActConReportNpc",
+      "detailId": 3437,
+      "npcId": 3078
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17040,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3078,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

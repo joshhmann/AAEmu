@@ -1,0 +1,130 @@
+{
+ "questId": 3560,
+ "name": "바그바트의 선물",
+ "zoneId": 24,
+ "categoryId": 62,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10370
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22652,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3242,
+      "npcId": 10370
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27530,
+      "type": "QuestActConReportDoodad",
+      "detailId": 45,
+      "doodadId": 685
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17176,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27526,
+      "type": "QuestActSupplyItem",
+      "detailId": 3045,
+      "itemId": 24577,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29259,
+      "type": "QuestActSupplyItem",
+      "detailId": 3324,
+      "itemId": 24086,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40843,
+      "type": "QuestActSupplyItem",
+      "detailId": 4810,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 685,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24577,
+      "count": 1
+     },
+     {
+      "itemId": 24086,
+      "count": 1
+     },
+     {
+      "itemId": 23633,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

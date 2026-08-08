@@ -1,0 +1,163 @@
+{
+ "questId": 4800,
+ "name": "가면보단 문신 축제",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11083
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28557,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3818,
+      "npcId": 11083
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28560,
+      "type": "QuestActObjItemGather",
+      "detailId": 2253,
+      "itemId": 3630,
+      "count": 25
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28563,
+      "type": "QuestActConReportNpc",
+      "detailId": 4094,
+      "npcId": 11083
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20843,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28561,
+      "type": "QuestActObjItemGather",
+      "detailId": 2254,
+      "itemId": 8019,
+      "count": 25
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20844,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28564,
+      "type": "QuestActSupplyItem",
+      "detailId": 3239,
+      "itemId": 24876,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3630,
+     "count": 25
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8019,
+     "count": 25
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11083,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24876,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3630,
+   "count": 25
+  },
+  {
+   "itemId": 8019,
+   "count": 25
+  }
+ ]
+}

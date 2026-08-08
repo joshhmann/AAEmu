@@ -1,0 +1,106 @@
+{
+ "questId": 3558,
+ "name": "이어지는 길",
+ "zoneId": 24,
+ "categoryId": 62,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10363
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17167,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22640,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3240,
+      "npcId": 10363
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17168,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40841,
+      "type": "QuestActSupplyItem",
+      "detailId": 4808,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17169,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22641,
+      "type": "QuestActConReportNpc",
+      "detailId": 3474,
+      "npcId": 10365
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10365,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

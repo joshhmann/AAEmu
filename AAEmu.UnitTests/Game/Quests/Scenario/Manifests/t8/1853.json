@@ -1,0 +1,135 @@
+{
+ "questId": 1853,
+ "name": "술 취한 논의 골칫거리 처치",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 5016
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8705,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13536,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 57,
+      "npcId": 5016
+     },
+     {
+      "actId": 13550,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 62,
+      "npcId": 5112
+     },
+     {
+      "actId": 13552,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 63,
+      "npcId": 5113
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13547,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 123,
+      "monsterGroupId": 127,
+      "count": 56
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8708,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13544,
+      "type": "QuestActSupplyCopper",
+      "detailId": 56,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11008,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15512,
+      "type": "QuestActConReportJournal",
+      "detailId": 28
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 127,
+     "count": 56
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

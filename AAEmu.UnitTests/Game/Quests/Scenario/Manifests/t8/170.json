@@ -1,0 +1,91 @@
+{
+ "questId": 170,
+ "name": "절박한 사연",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3986
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14812,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2014,
+      "npcId": 3986
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2439,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3679,
+      "type": "QuestActConReportNpc",
+      "detailId": 469,
+      "npcId": 641
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2451,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 641,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

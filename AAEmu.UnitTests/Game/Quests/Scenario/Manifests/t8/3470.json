@@ -1,0 +1,106 @@
+{
+ "questId": 3470,
+ "name": "협상의 시간",
+ "zoneId": 137,
+ "categoryId": 61,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3078
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22500,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3203,
+      "npcId": 3078
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22501,
+      "type": "QuestActConReportNpc",
+      "detailId": 3441,
+      "npcId": 9900
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17054,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40805,
+      "type": "QuestActSupplyItem",
+      "detailId": 4772,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9900,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

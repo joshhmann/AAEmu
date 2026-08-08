@@ -1,0 +1,114 @@
+{
+ "questId": 357,
+ "name": "베아트리체의 서신",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5193
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3570,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7562,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 790,
+      "npcId": 5193
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 3571,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5138,
+      "type": "QuestActSupplyItem",
+      "detailId": 320,
+      "itemId": 5208,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3572,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7567,
+      "type": "QuestActConReportNpc",
+      "detailId": 929,
+      "npcId": 1774
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3573,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1774,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

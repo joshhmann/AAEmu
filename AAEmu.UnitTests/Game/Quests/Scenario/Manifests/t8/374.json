@@ -1,0 +1,142 @@
+{
+ "questId": 374,
+ "name": "이름 없는 부랑자",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4351
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16584,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21885,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 122,
+      "doodadId": 4351
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16585,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22573,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 429,
+      "monsterGroupId": 395,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16586,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21886,
+      "type": "QuestActConReportNpc",
+      "detailId": 3327,
+      "npcId": 474
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16587,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 17093,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22571,
+      "type": "QuestActSupplyItem",
+      "detailId": 2232,
+      "itemId": 21527,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 395,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 474,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

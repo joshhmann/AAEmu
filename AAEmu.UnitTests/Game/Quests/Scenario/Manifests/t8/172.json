@@ -1,0 +1,91 @@
+{
+ "questId": 172,
+ "name": "슬픔에 잠긴 노인",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5121
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3492,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 386,
+      "npcId": 5121
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2363,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3493,
+      "type": "QuestActConReportNpc",
+      "detailId": 451,
+      "npcId": 441
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2518,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 441,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

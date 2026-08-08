@@ -1,0 +1,163 @@
+{
+ "questId": 1334,
+ "name": "낚시꾼 빈캐리",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3154
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6681,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9374,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1157,
+      "npcId": 3154
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6682,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9375,
+      "type": "QuestActObjItemGather",
+      "detailId": 524,
+      "itemId": 14128,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6683,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9376,
+      "type": "QuestActConReportNpc",
+      "detailId": 1321,
+      "npcId": 3154
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6684,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38709,
+      "type": "QuestActSupplyItem",
+      "detailId": 4458,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21202,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29408,
+      "type": "QuestActObjItemGather",
+      "detailId": 2362,
+      "itemId": 21204,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14128,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 21204,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3154,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14128,
+   "count": 10
+  },
+  {
+   "itemId": 21204,
+   "count": 5
+  }
+ ]
+}

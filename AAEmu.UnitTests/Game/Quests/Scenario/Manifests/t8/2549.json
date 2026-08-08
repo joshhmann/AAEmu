@@ -1,0 +1,129 @@
+{
+ "questId": 2549,
+ "name": "검은갈기 일족 노예 코볼트 처치",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2043
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11072,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15666,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 225,
+      "npcId": 2043
+     },
+     {
+      "actId": 15667,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 226,
+      "npcId": 2044
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11073,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15668,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 184,
+      "monsterGroupId": 183,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11074,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15669,
+      "type": "QuestActConReportJournal",
+      "detailId": 51
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11075,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15671,
+      "type": "QuestActSupplyCopper",
+      "detailId": 141,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 183,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

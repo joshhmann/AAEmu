@@ -1,0 +1,163 @@
+{
+ "questId": 4224,
+ "name": "환영에 갇힌 기사단",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10626
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24080,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3460,
+      "npcId": 10626
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18419,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24081,
+      "type": "QuestActObjItemGather",
+      "detailId": 1970,
+      "itemId": 23400,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18420,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24082,
+      "type": "QuestActObjItemGather",
+      "detailId": 1971,
+      "itemId": 23401,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18421,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24084,
+      "type": "QuestActConReportNpc",
+      "detailId": 3727,
+      "npcId": 10626
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18422,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38267,
+      "type": "QuestActSupplyItem",
+      "detailId": 4255,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23400,
+     "count": 5
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 23401,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10626,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23400,
+   "count": 5
+  },
+  {
+   "itemId": 23401,
+   "count": 5
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "questId": 796,
+ "name": "폭소병의 원인",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5062
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2997,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4471,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 495,
+      "npcId": 5062
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2998,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4472,
+      "type": "QuestActConReportNpc",
+      "detailId": 576,
+      "npcId": 7143
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2999,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7143,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

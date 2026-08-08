@@ -1,0 +1,132 @@
+{
+ "questId": 1351,
+ "name": "아직 못다 한 임무",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3266
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6751,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9447,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1171,
+      "npcId": 3266
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9451,
+      "type": "QuestActObjItemGather",
+      "detailId": 533,
+      "itemId": 14172,
+      "count": 1
+     },
+     {
+      "actId": 13749,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 10,
+      "itemId": 14136,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10379,
+      "type": "QuestActConReportNpc",
+      "detailId": 1497,
+      "npcId": 3266
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7443,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14172,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3266,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14172,
+   "count": 1
+  }
+ ]
+}

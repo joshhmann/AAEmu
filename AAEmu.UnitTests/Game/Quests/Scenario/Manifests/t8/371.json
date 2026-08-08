@@ -1,0 +1,149 @@
+{
+ "questId": 371,
+ "name": "쓰레기더미 처치 의뢰",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4348
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1771,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21883,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 121,
+      "doodadId": 4348
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1772,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22460,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 870,
+      "npcId": 10450,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1774,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21884,
+      "type": "QuestActConReportNpc",
+      "detailId": 3326,
+      "npcId": 901
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1775,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38652,
+      "type": "QuestActSupplyItem",
+      "detailId": 4401,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "None",
+    "id": 17219,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22725,
+      "type": "QuestActSupplyItem",
+      "detailId": 2249,
+      "itemId": 21571,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10450,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 901,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

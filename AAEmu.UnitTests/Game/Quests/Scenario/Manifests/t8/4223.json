@@ -1,0 +1,140 @@
+{
+ "questId": 4223,
+ "name": "공중을 떠도는 그림자",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10631
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18411,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24074,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3459,
+      "npcId": 10631
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18413,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24076,
+      "type": "QuestActObjItemGather",
+      "detailId": 1968,
+      "itemId": 23404,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18414,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24078,
+      "type": "QuestActConReportNpc",
+      "detailId": 3726,
+      "npcId": 10631
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18415,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38620,
+      "type": "QuestActSupplyItem",
+      "detailId": 4369,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23404,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10631,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23404,
+   "count": 5
+  }
+ ]
+}

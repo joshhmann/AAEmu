@@ -1,0 +1,134 @@
+{
+ "questId": 2280,
+ "name": "홀름젠의 시험",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8783
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18031,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2288,
+      "npcId": 8783
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18033,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 293,
+      "monsterGroupId": 263,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12275,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18034,
+      "type": "QuestActConReportNpc",
+      "detailId": 2517,
+      "npcId": 8783
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38723,
+      "type": "QuestActSupplyItem",
+      "detailId": 4472,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 263,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8783,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

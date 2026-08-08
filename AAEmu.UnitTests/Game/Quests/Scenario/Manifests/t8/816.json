@@ -1,0 +1,144 @@
+{
+ "questId": 816,
+ "name": "백 년 뿌리의 지혜",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7152
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3086,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4545,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 513,
+      "npcId": 7152
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3087,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12502,
+      "type": "QuestActObjInteraction",
+      "detailId": 296,
+      "doodadId": 1063,
+      "count": 1,
+      "wiId": 0,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3088,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4548,
+      "type": "QuestActConReportNpc",
+      "detailId": 594,
+      "npcId": 5064
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3089,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 8673,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12393,
+      "type": "QuestActSupplyItem",
+      "detailId": 1197,
+      "itemId": 15804,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1063,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5064,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

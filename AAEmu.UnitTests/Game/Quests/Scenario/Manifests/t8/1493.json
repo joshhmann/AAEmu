@@ -1,0 +1,211 @@
+{
+ "questId": 1493,
+ "name": "이건 먹어도 되는 약초인가?",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3163
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7082,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9811,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1238,
+      "npcId": 3163
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 7115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9812,
+      "type": "QuestActSupplyItem",
+      "detailId": 784,
+      "itemId": 14322,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 9813,
+      "type": "QuestActSupplyItem",
+      "detailId": 785,
+      "itemId": 14323,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 9814,
+      "type": "QuestActSupplyItem",
+      "detailId": 786,
+      "itemId": 14324,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9815,
+      "type": "QuestActObjItemUse",
+      "detailId": 251,
+      "itemId": 14322,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9816,
+      "type": "QuestActObjItemUse",
+      "detailId": 252,
+      "itemId": 14323,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7118,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9817,
+      "type": "QuestActObjItemUse",
+      "detailId": 253,
+      "itemId": 14324,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7119,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9818,
+      "type": "QuestActConReportNpc",
+      "detailId": 1406,
+      "npcId": 3163
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7120,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38706,
+      "type": "QuestActSupplyItem",
+      "detailId": 4455,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14322,
+     "count": 1
+    },
+    {
+     "type": "ItemUse",
+     "itemId": 14323,
+     "count": 1
+    },
+    {
+     "type": "ItemUse",
+     "itemId": 14324,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3163,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

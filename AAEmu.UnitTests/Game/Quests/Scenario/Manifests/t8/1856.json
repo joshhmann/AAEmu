@@ -1,0 +1,157 @@
+{
+ "questId": 1856,
+ "name": "다시 날개를 펼칠 수 있도록",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5076
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9045,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21712,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3060,
+      "npcId": 5076
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9046,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12710,
+      "type": "QuestActSupplyItem",
+      "detailId": 1219,
+      "itemId": 5215,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9047,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12712,
+      "type": "QuestActObjItemUse",
+      "detailId": 350,
+      "itemId": 5215,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9048,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12713,
+      "type": "QuestActConReportNpc",
+      "detailId": 1874,
+      "npcId": 5076
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9049,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38674,
+      "type": "QuestActSupplyItem",
+      "detailId": 4423,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 5215,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5076,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

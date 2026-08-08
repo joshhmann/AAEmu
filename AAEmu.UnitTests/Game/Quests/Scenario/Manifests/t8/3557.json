@@ -1,0 +1,106 @@
+{
+ "questId": 3557,
+ "name": "그리고 여운",
+ "zoneId": 25,
+ "categoryId": 62,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9915
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22607,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3229,
+      "npcId": 9915
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17126,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22608,
+      "type": "QuestActConReportNpc",
+      "detailId": 3464,
+      "npcId": 10325
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17127,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40840,
+      "type": "QuestActSupplyItem",
+      "detailId": 4807,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10325,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

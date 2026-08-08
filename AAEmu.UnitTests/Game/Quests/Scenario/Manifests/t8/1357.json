@@ -1,0 +1,98 @@
+{
+ "questId": 1357,
+ "name": "왕릉의 유령",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3284
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6777,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10455,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1336,
+      "npcId": 3284
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6779,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9482,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 368,
+      "npcId": 3309,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10456,
+      "type": "QuestActConAutoComplete",
+      "detailId": 267
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3309,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

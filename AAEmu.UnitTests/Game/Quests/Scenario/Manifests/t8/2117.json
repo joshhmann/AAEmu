@@ -1,0 +1,123 @@
+{
+ "questId": 2117,
+ "name": "저주받은 흑마법사 퇴치",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 7498
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9746,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13681,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 104,
+      "npcId": 7498
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9747,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13682,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 541,
+      "npcId": 7498,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13687,
+      "type": "QuestActSupplyCopper",
+      "detailId": 74,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11339,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16416,
+      "type": "QuestActConReportJournal",
+      "detailId": 101
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 7498,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

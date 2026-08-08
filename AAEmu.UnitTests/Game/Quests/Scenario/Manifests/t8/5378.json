@@ -1,0 +1,134 @@
+{
+ "questId": 5378,
+ "name": "섬세한 탄성을 담는 기술",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9786
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23262,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32753,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4153,
+      "npcId": 9786
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32745,
+      "type": "QuestActObjCraft",
+      "detailId": 253,
+      "craftId": 5515,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32754,
+      "type": "QuestActConReportNpc",
+      "detailId": 4456,
+      "npcId": 9786
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32749,
+      "type": "QuestActSupplyItem",
+      "detailId": 3717,
+      "itemId": 27142,
+      "gradeId": 0,
+      "count": 50
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 5515,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9786,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 27142,
+      "count": 50
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

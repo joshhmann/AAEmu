@@ -1,0 +1,123 @@
+{
+ "questId": 4088,
+ "name": "고대의 사라세니아 퇴치",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8606
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17604,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23245,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1016,
+      "npcId": 8606
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17605,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23246,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 905,
+      "npcId": 8606,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17606,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23249,
+      "type": "QuestActConReportJournal",
+      "detailId": 307
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24920,
+      "type": "QuestActSupplyCopper",
+      "detailId": 486,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8606,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

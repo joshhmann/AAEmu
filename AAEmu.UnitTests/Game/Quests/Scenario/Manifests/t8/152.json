@@ -1,0 +1,134 @@
+{
+ "questId": 152,
+ "name": "지긋지긋한 코볼트 무리",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2099
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 892,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2379,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 281,
+      "npcId": 2099
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2383,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 25,
+      "monsterGroupId": 18,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1482,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2380,
+      "type": "QuestActConReportNpc",
+      "detailId": 318,
+      "npcId": 2099
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1484,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38268,
+      "type": "QuestActSupplyItem",
+      "detailId": 4256,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 18,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2099,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,117 @@
+{
+ "questId": 4785,
+ "name": "배심원자격1단계:증인 보호를 요청",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20680,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28961,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3873,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20681,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28963,
+      "type": "QuestActObjTalk",
+      "detailId": 986,
+      "npcId": 6400
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20682,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28964,
+      "type": "QuestActConReportNpc",
+      "detailId": 4149,
+      "npcId": 10895
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21096,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 6400
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10895,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,104 @@
+{
+ "questId": 154,
+ "name": "신병 롤랑의 경고",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5101
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 894,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26546,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 145,
+      "doodadId": 5101
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2369,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 24,
+      "monsterGroupId": 17,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29466,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1116
+     },
+     {
+      "actId": 36959,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1371,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 17,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

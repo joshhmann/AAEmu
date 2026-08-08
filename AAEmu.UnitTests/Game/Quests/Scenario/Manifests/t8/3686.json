@@ -1,0 +1,142 @@
+{
+ "questId": 3686,
+ "name": "영혼을 울리는 북소리",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3000
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15394,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21060,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2922,
+      "npcId": 3000
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21062,
+      "type": "QuestActSupplyItem",
+      "detailId": 2100,
+      "itemId": 19989,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15396,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21292,
+      "type": "QuestActObjItemUse",
+      "detailId": 535,
+      "itemId": 19989,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15397,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21065,
+      "type": "QuestActConReportNpc",
+      "detailId": 3153,
+      "npcId": 3000
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15398,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 19989,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3000,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

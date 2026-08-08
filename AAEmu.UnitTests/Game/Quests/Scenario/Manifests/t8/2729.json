@@ -1,0 +1,141 @@
+{
+ "questId": 2729,
+ "name": "오색 들판 경비대 제압하기",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1597
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16581,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 403,
+      "npcId": 1597
+     },
+     {
+      "actId": 16582,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 404,
+      "npcId": 1598
+     },
+     {
+      "actId": 16583,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 405,
+      "npcId": 1599
+     },
+     {
+      "actId": 24592,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1058,
+      "npcId": 1606
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16585,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 241,
+      "monsterGroupId": 227,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11466,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16788,
+      "type": "QuestActConReportJournal",
+      "detailId": 138
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11467,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16584,
+      "type": "QuestActSupplyCopper",
+      "detailId": 214,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 227,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

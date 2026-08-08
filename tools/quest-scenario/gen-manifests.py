@@ -33,6 +33,8 @@ Tiers:
        exactly once across the census). Family = primary act family.
   T7 = M2a census: FULL band 11-20 sweep - every non-dropped quest with
        LEVEL 11-20, minus already-sampled (same rule).
+  T8 = M2c census: FULL band 21-30 sweep - every non-dropped quest with
+       LEVEL 21-30, minus already-sampled (same rule).
 
 Also emits Manifests/census-meta.json (band denominators incl. dropped
 ids per band + signature-zone map) so the tier test can render the M2a
@@ -344,7 +346,12 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     acceptor_npc_id = acceptor["id"] if acceptor["type"] == "Npc" else 0
 
     comp_by_id = {cid: (kind, nxt) for cid, kind, nxt in comps}
-    kind_names = {2: "Start", 3: "Supply", 4: "Progress", 5: "Fail", 6: "Ready", 7: "Drop", 8: "Reward"}
+    # kind_id 1 = None: the engine's legacy task-board step (NewQuestCode.cs
+    # GoToNextStep walks Start -> None -> Supply; the None step runs its
+    # components like any other and auto-passes when they pass). Only 5 quests
+    # corpus-wide carry a None component (275/281/305/371/604, band 21-30).
+    kind_names = {1: "None", 2: "Start", 3: "Supply", 4: "Progress", 5: "Fail",
+                  6: "Ready", 7: "Drop", 8: "Reward"}
     kind_ids = {v: k for k, v in kind_names.items()}
 
     # ---- components with materialized acts ----
@@ -398,9 +405,13 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     # ---- stage plan: the engine walks KINDS (GoToNextStep) and the driver calls
     # RunCurrentStep once at accept + once per stage. Each call advances past the
     # current kind when its components pass, resting at the next present kind.
-    # Auto-pass kinds (accept/supply/timer/auto-complete acts, empty comps) are
-    # passed through by the START stage's second call.
-    kind_order = ["Supply", "Progress", "Ready", "Reward"]
+    # kind_order mirrors the engine's GoToNextStep chain: Start -> None -> Supply
+    # -> Progress -> Ready -> Reward (None = legacy task-board step, kind_id 1).
+    # Stage kinds (Supply/Progress/Ready) get their own manifest stage; None is
+    # consumed by the START stage's auto-pass walk (its components are supply-
+    # shaped and pass without events in every real carrier).
+    kind_order = ["None", "Supply", "Progress", "Ready", "Reward"]
+    STAGE_KINDS = ["Supply", "Progress", "Ready"]
     AUTO_PASS_TYPES = {
         "QuestActConAcceptNpc", "QuestActConAcceptNpcKill", "QuestActConAcceptDoodad",
         "QuestActConAcceptItem", "QuestActConAcceptSphere", "QuestActConAcceptLevelUp",
@@ -594,9 +605,11 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         pos = advance(first) if (first is not None and kind_is_auto(first)) else first
         stages.append({"name": "START", "events": [], "expect": expect_for_rest(pos, "Start")})
 
-        # ---- one stage per present kind (Supply/Progress/Ready) ----
-        for kind in kind_order:
-            if kind not in present or kind == "Reward":
+        # ---- one stage per present stage-kind (Supply/Progress/Ready) ----
+        # (None is consumed by the START auto-pass walk; it never gets its own
+        # manifest stage - its acts are supply-shaped in every real carrier.)
+        for kind in STAGE_KINDS:
+            if kind not in present:
                 continue
             if pos is None:
                 # quest already completed - the stage's call cannot move it
@@ -759,12 +772,13 @@ def select_t5_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
-# ---- T6/T7 (M2a census): full band sweeps ----
+# ---- T6/T7/T8 (M2a/M2c census): full band sweeps ----
 # Every non-dropped quest in the band, minus quests already sampled in
 # T1-T5 (each quest driven exactly once across the census).
 BAND_TIERS = [
     ("t6", "band 1-10", 1, 10),
     ("t7", "band 11-20", 11, 20),
+    ("t8", "band 21-30", 21, 30),
 ]
 
 # Dropped content (scorecard-explorations/dropped-content-register.md):
@@ -780,9 +794,13 @@ DROPPED_QUESTS = {
     1640, 1830, 1831,
 }
 
-# Signature zones for the M2a zone-coverage rows (M2_PLAN.md zone map):
+# Signature zones for the M2a/M2c zone-coverage rows (M2_PLAN.md zone map):
 # REAL zone ids only - the catch-all w_gweonid_forest_1 (1) and the
-# old_/test_/machinima_ variants carry meaningless attribution.
+# old_/test_/machinima_ variants carry meaningless attribution. Band 21-30
+# sets match M2_PLAN.md per-zone counts exactly (Ancient Forest 113,
+# Marionople 102, Two Crowns 91, White Forest 90, Singing Land 84,
+# Sunrise Peninsula 80, Lilyut 49) - the secondary zone ids (132/25/137)
+# are NOT folded in so the zone-coverage rows reproduce the plan's numbers.
 SIGNATURE_ZONES = {
     "Gweonid": [127, 128],
     "Lilyut": [11, 141],
@@ -790,6 +808,12 @@ SIGNATURE_ZONES = {
     "Tiger Spine": [23, 179],
     "Falcony": [21, 130],
     "Sunny Wilderness": [22, 136],
+    "Ancient Forest": [24],
+    "Marionople": [2],
+    "Two Crowns": [15],
+    "White Forest": [10],
+    "Singing Land": [140],
+    "Sunrise Peninsula": [8],
 }
 
 

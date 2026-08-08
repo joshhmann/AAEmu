@@ -1,0 +1,183 @@
+{
+ "questId": 854,
+ "name": "죽은 자의 목을 비틀어",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5082
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3287,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6949,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 745,
+      "npcId": 5082
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3289,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28985,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1007,
+      "npcId": 5008,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3290,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28984,
+      "type": "QuestActObjItemGather",
+      "detailId": 2333,
+      "itemId": 15810,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3291,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28983,
+      "type": "QuestActConReportNpc",
+      "detailId": 4153,
+      "npcId": 5082
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21103,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38356,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2604,
+      "itemId": 33610,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38357,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2605,
+      "itemId": 33611,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38358,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2606,
+      "itemId": 33612,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38675,
+      "type": "QuestActSupplyItem",
+      "detailId": 4424,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 5008,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 15810,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5082,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 15810,
+   "count": 10
+  }
+ ]
+}

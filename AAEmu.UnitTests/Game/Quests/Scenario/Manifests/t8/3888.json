@@ -1,0 +1,125 @@
+{
+ "questId": 3888,
+ "name": "봉인석의 조각들",
+ "zoneId": 10,
+ "categoryId": 8,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9849
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18557,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24806,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3553,
+      "npcId": 9849
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24838,
+      "type": "QuestActObjItemGather",
+      "detailId": 2040,
+      "itemId": 24052,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18559,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24830,
+      "type": "QuestActConReportNpc",
+      "detailId": 3815,
+      "npcId": 9849
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18560,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24052,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9849,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24052,
+   "count": 3
+  }
+ ]
+}

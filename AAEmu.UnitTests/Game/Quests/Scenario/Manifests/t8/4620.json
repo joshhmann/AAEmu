@@ -1,0 +1,159 @@
+{
+ "questId": 4620,
+ "name": "고무나무와 껍질",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11075
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20082,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27369,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3755,
+      "npcId": 11075
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20083,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27370,
+      "type": "QuestActObjItemUse",
+      "detailId": 661,
+      "itemId": 13728,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20084,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27372,
+      "type": "QuestActConReportNpc",
+      "detailId": 4036,
+      "npcId": 11075
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20128,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27371,
+      "type": "QuestActObjItemGather",
+      "detailId": 2183,
+      "itemId": 33312,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20129,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27418,
+      "type": "QuestActSupplyItem",
+      "detailId": 3010,
+      "itemId": 24875,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 13728,
+     "count": 5
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 33312,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11075,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24875,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33312,
+   "count": 2
+  }
+ ]
+}

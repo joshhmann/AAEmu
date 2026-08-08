@@ -1,0 +1,161 @@
+{
+ "questId": 1490,
+ "name": "로즈메린의 영혼석 만들기",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3298
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7079,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9789,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1235,
+      "npcId": 3298
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7102,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9794,
+      "type": "QuestActObjItemGather",
+      "detailId": 559,
+      "itemId": 14318,
+      "count": 1
+     },
+     {
+      "actId": 13731,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 2,
+      "itemId": 14528,
+      "count": 1
+     },
+     {
+      "actId": 13732,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 3,
+      "itemId": 14527,
+      "count": 1
+     },
+     {
+      "actId": 13733,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 4,
+      "itemId": 14317,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7103,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9795,
+      "type": "QuestActConReportNpc",
+      "detailId": 1404,
+      "npcId": 3298
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7104,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38711,
+      "type": "QuestActSupplyItem",
+      "detailId": 4460,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14318,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3298,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14318,
+   "count": 1
+  }
+ ]
+}

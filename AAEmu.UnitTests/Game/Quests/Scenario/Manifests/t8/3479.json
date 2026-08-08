@@ -1,0 +1,106 @@
+{
+ "questId": 3479,
+ "name": "바람에 흩어진, 삶에 모인",
+ "zoneId": 25,
+ "categoryId": 61,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10327
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17150,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22626,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3235,
+      "npcId": 10327
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17151,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22627,
+      "type": "QuestActConReportNpc",
+      "detailId": 3470,
+      "npcId": 10342
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40809,
+      "type": "QuestActSupplyItem",
+      "detailId": 4776,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10342,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

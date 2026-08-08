@@ -1,0 +1,91 @@
+{
+ "questId": 836,
+ "name": "왕년의 가락",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5104
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12410,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1602,
+      "npcId": 5104
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3182,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4640,
+      "type": "QuestActConReportNpc",
+      "detailId": 615,
+      "npcId": 5044
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3183,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5044,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

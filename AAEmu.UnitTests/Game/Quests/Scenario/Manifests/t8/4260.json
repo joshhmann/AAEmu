@@ -1,0 +1,129 @@
+{
+ "questId": 4260,
+ "name": "올빼미와 부엉이",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 10587
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18344,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23992,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1025,
+      "npcId": 10587
+     },
+     {
+      "actId": 23993,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1026,
+      "npcId": 10588
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18345,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23994,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 462,
+      "monsterGroupId": 420,
+      "count": 24
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18346,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23995,
+      "type": "QuestActConReportJournal",
+      "detailId": 308
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18347,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23996,
+      "type": "QuestActSupplyCopper",
+      "detailId": 446,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 420,
+     "count": 24
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

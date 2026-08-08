@@ -1,0 +1,163 @@
+{
+ "questId": 4872,
+ "name": "젖소 키우기",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11073
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28929,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3868,
+      "npcId": 11073
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28930,
+      "type": "QuestActObjItemGather",
+      "detailId": 2318,
+      "itemId": 8048,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21054,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28932,
+      "type": "QuestActConReportNpc",
+      "detailId": 4144,
+      "npcId": 11073
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21085,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28933,
+      "type": "QuestActSupplyItem",
+      "detailId": 3281,
+      "itemId": 24862,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21086,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28931,
+      "type": "QuestActObjItemGather",
+      "detailId": 2319,
+      "itemId": 8055,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8048,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8055,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11073,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24862,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8048,
+   "count": 10
+  },
+  {
+   "itemId": 8055,
+   "count": 10
+  }
+ ]
+}

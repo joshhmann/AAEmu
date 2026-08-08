@@ -1,0 +1,140 @@
+{
+ "questId": 2465,
+ "name": "튼튼하고 찰진 밧줄",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7799
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10653,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14873,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2024,
+      "npcId": 7799
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10654,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14874,
+      "type": "QuestActObjItemGather",
+      "detailId": 998,
+      "itemId": 16538,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10655,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14875,
+      "type": "QuestActConReportNpc",
+      "detailId": 2235,
+      "npcId": 7799
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10656,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38694,
+      "type": "QuestActSupplyItem",
+      "detailId": 4443,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16538,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7799,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16538,
+   "count": 8
+  }
+ ]
+}

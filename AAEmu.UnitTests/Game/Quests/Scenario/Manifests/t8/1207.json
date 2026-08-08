@@ -1,0 +1,135 @@
+{
+ "questId": 1207,
+ "name": "자운의 목장 문제 해결",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 7271
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6176,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13595,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 83,
+      "npcId": 7271
+     },
+     {
+      "actId": 13596,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 84,
+      "npcId": 5088
+     },
+     {
+      "actId": 13597,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 85,
+      "npcId": 5037
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6177,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13598,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 129,
+      "monsterGroupId": 132,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13600,
+      "type": "QuestActSupplyCopper",
+      "detailId": 62,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11011,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15515,
+      "type": "QuestActConReportJournal",
+      "detailId": 31
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 132,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

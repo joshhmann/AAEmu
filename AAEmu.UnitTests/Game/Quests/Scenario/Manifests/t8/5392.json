@@ -1,0 +1,140 @@
+{
+ "questId": 5392,
+ "name": "대어가 좋아하는 것",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9788
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23304,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32904,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4169,
+      "npcId": 9788
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23305,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38254,
+      "type": "QuestActObjItemGather",
+      "detailId": 2939,
+      "itemId": 27315,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23306,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32894,
+      "type": "QuestActConReportNpc",
+      "detailId": 4473,
+      "npcId": 9788
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32893,
+      "type": "QuestActSupplyItem",
+      "detailId": 3728,
+      "itemId": 27319,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27315,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9788,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 27319,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27315,
+   "count": 3
+  }
+ ]
+}

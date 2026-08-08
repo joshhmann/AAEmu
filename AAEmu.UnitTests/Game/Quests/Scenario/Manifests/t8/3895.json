@@ -1,0 +1,163 @@
+{
+ "questId": 3895,
+ "name": "에노이르의 쪽지",
+ "zoneId": 129,
+ "categoryId": 8,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 466
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24501,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3519,
+      "npcId": 466
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 18687,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24535,
+      "type": "QuestActSupplyItem",
+      "detailId": 2397,
+      "itemId": 23706,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18688,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24536,
+      "type": "QuestActObjItemGather",
+      "detailId": 2018,
+      "itemId": 23706,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18689,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24502,
+      "type": "QuestActConReportNpc",
+      "detailId": 3782,
+      "npcId": 3674
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18690,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40898,
+      "type": "QuestActSupplyItem",
+      "detailId": 4865,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23706,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3674,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23706,
+   "count": 1
+  }
+ ]
+}

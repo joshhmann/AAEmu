@@ -1,0 +1,114 @@
+{
+ "questId": 2794,
+ "name": "십자별 평원을 지켜라 1단계",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1148
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12073,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20141,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 209,
+      "sphereId": 1148
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12074,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17552,
+      "type": "QuestActObjZoneKill",
+      "detailId": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12075,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17553,
+      "type": "QuestActConReportNpc",
+      "detailId": 2464,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12076,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7054,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "skip": {
+  "reason": "unsupported act type QuestActObjZoneKill; unsynthesizable event shape for QuestActObjZoneKill (comp 12074)"
+ }
+}

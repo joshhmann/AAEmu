@@ -1,0 +1,146 @@
+{
+ "questId": 4290,
+ "name": "왕궁 지하의 수상한 움직임",
+ "zoneId": 142,
+ "categoryId": 64,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10833
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18724,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24656,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3533,
+      "npcId": 10833
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24657,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 473,
+      "monsterGroupId": 430,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24658,
+      "type": "QuestActConReportNpc",
+      "detailId": 3794,
+      "npcId": 10833
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38917,
+      "type": "QuestActSupplyItem",
+      "detailId": 4555,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 38918,
+      "type": "QuestActSupplyItem",
+      "detailId": 4556,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 430,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10833,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 10
+     },
+     {
+      "itemId": 34008,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

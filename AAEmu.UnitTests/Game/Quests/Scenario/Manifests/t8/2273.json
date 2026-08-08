@@ -1,0 +1,156 @@
+{
+ "questId": 2273,
+ "name": "슬픈 행렬",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7735
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12317,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18087,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2300,
+      "npcId": 7735
+     },
+     {
+      "actId": 23044,
+      "type": "QuestActCheckTimer",
+      "detailId": 113,
+      "limitTime": 600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12373,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18088,
+      "type": "QuestActSupplyItem",
+      "detailId": 1822,
+      "itemId": 18638,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12374,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18089,
+      "type": "QuestActObjItemUse",
+      "detailId": 466,
+      "itemId": 18638,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12375,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18936,
+      "type": "QuestActConReportNpc",
+      "detailId": 2687,
+      "npcId": 1402
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13496,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Fail",
+    "id": 17419,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 18638,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1402,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

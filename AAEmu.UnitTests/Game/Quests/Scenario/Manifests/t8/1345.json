@@ -1,0 +1,148 @@
+{
+ "questId": 1345,
+ "name": "외르겐센의 부탁",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3163
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9415,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1167,
+      "npcId": 3163
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 6730,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9416,
+      "type": "QuestActSupplyItem",
+      "detailId": 743,
+      "itemId": 14134,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6731,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9420,
+      "type": "QuestActObjItemGather",
+      "detailId": 529,
+      "itemId": 14134,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6732,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9421,
+      "type": "QuestActConReportNpc",
+      "detailId": 1331,
+      "npcId": 3177
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6733,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14134,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3177,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14134,
+   "count": 1
+  }
+ ]
+}

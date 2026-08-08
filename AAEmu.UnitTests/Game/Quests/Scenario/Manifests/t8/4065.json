@@ -1,0 +1,104 @@
+{
+ "questId": 4065,
+ "name": "수사슴의 횡포",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5392
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17563,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29300,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 196,
+      "doodadId": 5392
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17564,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23212,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 904,
+      "npcId": 8002,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17566,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23882,
+      "type": "QuestActConAutoComplete",
+      "detailId": 747
+     },
+     {
+      "actId": 37036,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1425,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8002,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

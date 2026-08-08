@@ -1,0 +1,129 @@
+{
+ "questId": 2945,
+ "name": "장미 장원 저택의 뒤틀린 실험체들 처치",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8012
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12894,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18665,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 660,
+      "npcId": 8012
+     },
+     {
+      "actId": 18666,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 661,
+      "npcId": 8043
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12969,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18664,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 326,
+      "monsterGroupId": 293,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12970,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18593,
+      "type": "QuestActConReportJournal",
+      "detailId": 184
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12971,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18596,
+      "type": "QuestActSupplyCopper",
+      "detailId": 283,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 293,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

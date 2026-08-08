@@ -1,0 +1,124 @@
+{
+ "questId": 6382,
+ "name": "검은수염 도적단 소탕",
+ "zoneId": 180,
+ "categoryId": 77,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12162
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27328,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38923,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4764,
+      "npcId": 12162
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27329,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38922,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 673,
+      "monsterGroupId": 602,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27330,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38919,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1722
+     },
+     {
+      "actId": 38920,
+      "type": "QuestActSupplyItem",
+      "detailId": 4557,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 38921,
+      "type": "QuestActSupplyItem",
+      "detailId": 4558,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 602,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 10
+     },
+     {
+      "itemId": 34009,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

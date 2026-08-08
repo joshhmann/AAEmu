@@ -1,0 +1,174 @@
+{
+ "questId": 3993,
+ "name": "금빛 표지에 깃든 힘",
+ "zoneId": 15,
+ "categoryId": 3,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10798
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24721,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3545,
+      "npcId": 10798
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17209,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29899,
+      "type": "QuestActObjItemUse",
+      "detailId": 686,
+      "itemId": 26023,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17210,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40872,
+      "type": "QuestActSupplyItem",
+      "detailId": 4839,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19840,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27031,
+      "type": "QuestActObjTalk",
+      "detailId": 974,
+      "npcId": 10849
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19841,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27030,
+      "type": "QuestActConReportNpc",
+      "detailId": 4006,
+      "npcId": 10798
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29904,
+      "type": "QuestActSupplyItem",
+      "detailId": 3410,
+      "itemId": 26023,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 26023,
+     "count": 1
+    },
+    {
+     "type": "Talk",
+     "npcId": 10849
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10798,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

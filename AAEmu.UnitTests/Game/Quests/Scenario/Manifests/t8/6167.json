@@ -1,0 +1,123 @@
+{
+ "questId": 6167,
+ "name": "초심자와 함께 아크미트 처치",
+ "zoneId": 170,
+ "categoryId": 64,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14423
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26467,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36199,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4664,
+      "npcId": 14423
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26468,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36207,
+      "type": "QuestActObjItemGather",
+      "detailId": 2898,
+      "itemId": 31591,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26482,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36205,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1680
+     },
+     {
+      "actId": 36371,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1335,
+      "amount": 0
+     },
+     {
+      "actId": 37089,
+      "type": "QuestActSupplyItem",
+      "detailId": 4115,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 31591,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31591,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,129 @@
+{
+ "questId": 3860,
+ "name": "식물학자들을 위협하는 야수 처치",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2900
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16265,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21457,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 810,
+      "npcId": 2900
+     },
+     {
+      "actId": 21458,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 811,
+      "npcId": 9847
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21462,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 387,
+      "monsterGroupId": 352,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16267,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21463,
+      "type": "QuestActConReportJournal",
+      "detailId": 227
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16268,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21464,
+      "type": "QuestActSupplyCopper",
+      "detailId": 334,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 352,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

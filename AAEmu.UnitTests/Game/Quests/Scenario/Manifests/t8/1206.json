@@ -1,0 +1,129 @@
+{
+ "questId": 1206,
+ "name": "재회의 사당에 드리운 그림자 지우기",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 5018
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6170,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13602,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 87,
+      "npcId": 5018
+     },
+     {
+      "actId": 13603,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 88,
+      "npcId": 5019
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6173,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13604,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 130,
+      "monsterGroupId": 133,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13606,
+      "type": "QuestActSupplyCopper",
+      "detailId": 63,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11012,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15516,
+      "type": "QuestActConReportJournal",
+      "detailId": 32
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 133,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

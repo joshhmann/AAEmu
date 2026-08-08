@@ -1,0 +1,125 @@
+{
+ "questId": 2407,
+ "name": "인어 비늘의 가치",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1728
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10368,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23474,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3359,
+      "npcId": 1728
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10371,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14585,
+      "type": "QuestActConReportNpc",
+      "detailId": 2169,
+      "npcId": 1728
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10372,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 17499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23160,
+      "type": "QuestActObjItemGather",
+      "detailId": 1782,
+      "itemId": 21846,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21846,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1728,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21846,
+   "count": 3
+  }
+ ]
+}

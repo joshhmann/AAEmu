@@ -1,0 +1,148 @@
+{
+ "questId": 2415,
+ "name": "노예 소녀 클리오",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1726
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10405,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14619,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1962,
+      "npcId": 1726
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 10406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14620,
+      "type": "QuestActSupplyItem",
+      "detailId": 1387,
+      "itemId": 16407,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14621,
+      "type": "QuestActObjItemGather",
+      "detailId": 977,
+      "itemId": 16407,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10408,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14622,
+      "type": "QuestActConReportNpc",
+      "detailId": 2176,
+      "npcId": 7769
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10409,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16407,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7769,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16407,
+   "count": 3
+  }
+ ]
+}

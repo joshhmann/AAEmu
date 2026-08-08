@@ -1,0 +1,91 @@
+{
+ "questId": 4242,
+ "name": "은사시나무 혐오자들",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10618
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18533,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24210,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3489,
+      "npcId": 10618
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18534,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24211,
+      "type": "QuestActConReportNpc",
+      "detailId": 3753,
+      "npcId": 10620
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18535,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10620,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

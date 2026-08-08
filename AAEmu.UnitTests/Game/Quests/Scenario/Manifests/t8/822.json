@@ -1,0 +1,125 @@
+{
+ "questId": 822,
+ "name": "아직 남아 있는 비옥함",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 25,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5047
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4577,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 519,
+      "npcId": 5047
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3118,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16070,
+      "type": "QuestActObjItemGather",
+      "detailId": 1056,
+      "itemId": 5150,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3119,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4579,
+      "type": "QuestActConReportNpc",
+      "detailId": 600,
+      "npcId": 5047
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3120,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5150,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5047,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5150,
+   "count": 8
+  }
+ ]
+}

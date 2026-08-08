@@ -1,0 +1,124 @@
+{
+ "questId": 6381,
+ "name": "칼바람 속의 혼란",
+ "zoneId": 180,
+ "categoryId": 77,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12162
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27325,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38893,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4759,
+      "npcId": 12162
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27326,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38912,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 672,
+      "monsterGroupId": 602,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27327,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38911,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1721
+     },
+     {
+      "actId": 38913,
+      "type": "QuestActSupplyItem",
+      "detailId": 4551,
+      "itemId": 34006,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 38914,
+      "type": "QuestActSupplyItem",
+      "detailId": 4552,
+      "itemId": 34008,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 602,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34006,
+      "count": 10
+     },
+     {
+      "itemId": 34008,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

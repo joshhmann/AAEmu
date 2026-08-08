@@ -1,0 +1,91 @@
+{
+ "questId": 4268,
+ "name": "아도니스를 위한 요리 재료",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1680
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18375,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24033,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3447,
+      "npcId": 1680
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18376,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24032,
+      "type": "QuestActConReportNpc",
+      "detailId": 3716,
+      "npcId": 7925
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18377,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7925,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

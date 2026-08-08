@@ -1,0 +1,146 @@
+{
+ "questId": 6517,
+ "name": "백합 한 송이",
+ "zoneId": 1,
+ "categoryId": 81,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 502
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27828,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40563,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5081,
+      "npcId": 502
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27829,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40758,
+      "type": "QuestActObjItemGather",
+      "detailId": 3047,
+      "itemId": 3564,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27830,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39804,
+      "type": "QuestActConReportNpc",
+      "detailId": 5034,
+      "npcId": 502
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39813,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1768,
+      "amount": 15000
+     },
+     {
+      "actId": 39814,
+      "type": "QuestActSupplyItem",
+      "detailId": 4636,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3564,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 502,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3564,
+   "count": 1
+  }
+ ]
+}

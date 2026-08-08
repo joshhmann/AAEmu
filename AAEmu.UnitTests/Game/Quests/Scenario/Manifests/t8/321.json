@@ -1,0 +1,134 @@
+{
+ "questId": 321,
+ "name": "방목장을 지켜라!",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 440
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1340,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2096,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 249,
+      "npcId": 440
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1342,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3128,
+      "type": "QuestActConReportNpc",
+      "detailId": 379,
+      "npcId": 440
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38648,
+      "type": "QuestActSupplyItem",
+      "detailId": 4397,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2012,
+    "nextComponent": null,
+    "acts": [
+     {
+      "actId": 3160,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 92,
+      "npcId": 4941,
+      "count": 8
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4941,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 440,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

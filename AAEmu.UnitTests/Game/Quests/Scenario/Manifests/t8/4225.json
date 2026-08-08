@@ -1,0 +1,144 @@
+{
+ "questId": 4225,
+ "name": "오캄 남작에게 대항할 꽃",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10632
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24097,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3463,
+      "npcId": 10632
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18426,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24099,
+      "type": "QuestActObjInteraction",
+      "detailId": 572,
+      "doodadId": 4550,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18427,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24098,
+      "type": "QuestActConReportNpc",
+      "detailId": 3729,
+      "npcId": 10632
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18428,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 18649,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24273,
+      "type": "QuestActSupplyItem",
+      "detailId": 2333,
+      "itemId": 23630,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4550,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10632,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

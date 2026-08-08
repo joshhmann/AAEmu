@@ -1,0 +1,114 @@
+{
+ "questId": 537,
+ "name": "악마 사냥꾼의 조언",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2393
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2120,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3258,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 338,
+      "npcId": 2393
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 2121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3259,
+      "type": "QuestActSupplyItem",
+      "detailId": 202,
+      "itemId": 4954,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2122,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3260,
+      "type": "QuestActConReportNpc",
+      "detailId": 403,
+      "npcId": 2387
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2123,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2387,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

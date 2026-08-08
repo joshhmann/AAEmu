@@ -1,0 +1,147 @@
+{
+ "questId": 2726,
+ "name": "해안의 위협자들 처치",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1631
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11452,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16565,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 396,
+      "npcId": 1631
+     },
+     {
+      "actId": 16566,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 397,
+      "npcId": 1632
+     },
+     {
+      "actId": 16567,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 398,
+      "npcId": 1633
+     },
+     {
+      "actId": 24594,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1059,
+      "npcId": 1617
+     },
+     {
+      "actId": 24595,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1060,
+      "npcId": 8087
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11453,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16568,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 238,
+      "monsterGroupId": 172,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11454,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16570,
+      "type": "QuestActConReportJournal",
+      "detailId": 128
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11455,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16569,
+      "type": "QuestActSupplyCopper",
+      "detailId": 211,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 172,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

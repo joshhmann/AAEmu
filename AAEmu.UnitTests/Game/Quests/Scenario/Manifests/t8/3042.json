@@ -1,0 +1,163 @@
+{
+ "questId": 3042,
+ "name": "잠수모의 재료",
+ "zoneId": 30,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8907
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19342,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2573,
+      "npcId": 8907
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 13180,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18890,
+      "type": "QuestActSupplyItem",
+      "detailId": 1899,
+      "itemId": 19032,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13181,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18891,
+      "type": "QuestActObjItemGather",
+      "detailId": 1292,
+      "itemId": 19032,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13182,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18892,
+      "type": "QuestActConReportNpc",
+      "detailId": 2675,
+      "npcId": 8905
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13183,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18889,
+      "type": "QuestActSupplyItem",
+      "detailId": 1898,
+      "itemId": 19020,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19032,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8905,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 19020,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19032,
+   "count": 1
+  }
+ ]
+}

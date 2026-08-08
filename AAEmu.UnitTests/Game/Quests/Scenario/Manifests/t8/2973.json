@@ -1,0 +1,125 @@
+{
+ "questId": 2973,
+ "name": "정화의 의식 준비",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8790
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18717,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2404,
+      "npcId": 8790
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13006,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18718,
+      "type": "QuestActObjItemGather",
+      "detailId": 1268,
+      "itemId": 18651,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13007,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18719,
+      "type": "QuestActConReportNpc",
+      "detailId": 2634,
+      "npcId": 8790
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13008,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18651,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8790,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18651,
+   "count": 1
+  }
+ ]
+}

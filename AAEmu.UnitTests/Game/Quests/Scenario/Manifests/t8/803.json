@@ -1,0 +1,119 @@
+{
+ "questId": 803,
+ "name": "눈물 젖은 부탁",
+ "zoneId": 25,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5061
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3026,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4495,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 502,
+      "npcId": 5061
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3028,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16748,
+      "type": "QuestActObjTalk",
+      "detailId": 869,
+      "npcId": 5060
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3029,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16749,
+      "type": "QuestActConAutoComplete",
+      "detailId": 545
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9410,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13050,
+      "type": "QuestActSupplyItem",
+      "detailId": 1250,
+      "itemId": 5147,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 5060
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,119 @@
+{
+ "questId": 1314,
+ "name": "최소한의 자기 방어",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 26,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3139
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6551,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9276,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1136,
+      "npcId": 3139
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6552,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9277,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 361,
+      "npcId": 3140,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6553,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9278,
+      "type": "QuestActConReportNpc",
+      "detailId": 1299,
+      "npcId": 3139
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6555,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3140,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3139,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

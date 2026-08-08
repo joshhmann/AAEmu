@@ -1,0 +1,121 @@
+{
+ "questId": 2473,
+ "name": "망자의 소환석",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7802
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10889,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15213,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2080,
+      "npcId": 7802
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10890,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15215,
+      "type": "QuestActObjInteraction",
+      "detailId": 389,
+      "doodadId": 2963,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10892,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17096,
+      "type": "QuestActConReportNpc",
+      "detailId": 2385,
+      "npcId": 7802
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11663,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2963,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7802,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

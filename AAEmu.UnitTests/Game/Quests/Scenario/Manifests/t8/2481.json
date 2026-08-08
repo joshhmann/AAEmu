@@ -1,0 +1,112 @@
+{
+ "questId": 2481,
+ "name": "소작농의 하소연",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1658
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23988,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3443,
+      "npcId": 1658
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23438,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 452,
+      "monsterGroupId": 262,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14950,
+      "type": "QuestActConAutoComplete",
+      "detailId": 516
+     },
+     {
+      "actId": 38682,
+      "type": "QuestActSupplyItem",
+      "detailId": 4431,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 262,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

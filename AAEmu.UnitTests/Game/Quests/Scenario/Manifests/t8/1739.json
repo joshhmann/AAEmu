@@ -1,0 +1,142 @@
+{
+ "questId": 1739,
+ "name": "반딧불의 호수",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3310
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12232,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1558,
+      "npcId": 3310
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8426,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12233,
+      "type": "QuestActSupplyItem",
+      "detailId": 1181,
+      "itemId": 15706,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8427,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12234,
+      "type": "QuestActObjItemUse",
+      "detailId": 331,
+      "itemId": 15706,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8428,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12235,
+      "type": "QuestActConReportNpc",
+      "detailId": 1755,
+      "npcId": 3310
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8429,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 15706,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3310,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

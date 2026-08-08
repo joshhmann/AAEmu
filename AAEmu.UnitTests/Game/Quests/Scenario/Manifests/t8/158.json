@@ -1,0 +1,140 @@
+{
+ "questId": 158,
+ "name": "붉은 이끼 동굴",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 22,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2102
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 898,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2358,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 274,
+      "npcId": 2102
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1460,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2359,
+      "type": "QuestActObjItemGather",
+      "detailId": 132,
+      "itemId": 4008,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1461,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2360,
+      "type": "QuestActConReportNpc",
+      "detailId": 312,
+      "npcId": 2102
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1462,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38386,
+      "type": "QuestActSupplyItem",
+      "detailId": 4289,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4008,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2102,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4008,
+   "count": 5
+  }
+ ]
+}

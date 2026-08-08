@@ -1,0 +1,125 @@
+{
+ "questId": 2067,
+ "name": "지독한 향신료",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3337
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9543,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13237,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1781,
+      "npcId": 3337
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9544,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13239,
+      "type": "QuestActObjItemGather",
+      "detailId": 867,
+      "itemId": 15920,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9545,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13240,
+      "type": "QuestActConReportNpc",
+      "detailId": 2007,
+      "npcId": 3337
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9546,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15920,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3337,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15920,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,163 @@
+{
+ "questId": 276,
+ "name": "칼바람 셀렌 처치 의뢰",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4346
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21802,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 116,
+      "doodadId": 4346
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16502,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21803,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 831,
+      "npcId": 548,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16503,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21805,
+      "type": "QuestActConReportNpc",
+      "detailId": 3306,
+      "npcId": 903
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16504,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25708,
+      "type": "QuestActSupplyCopper",
+      "detailId": 497,
+      "amount": 7000
+     },
+     {
+      "actId": 38649,
+      "type": "QuestActSupplyItem",
+      "detailId": 4398,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 17217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22723,
+      "type": "QuestActSupplyItem",
+      "detailId": 2247,
+      "itemId": 21569,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 548,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 903,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

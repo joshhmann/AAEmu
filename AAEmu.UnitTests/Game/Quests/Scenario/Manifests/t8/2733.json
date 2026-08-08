@@ -1,0 +1,135 @@
+{
+ "questId": 2733,
+ "name": "울부짖는 미노타우르스 소탕하기",
+ "zoneId": 132,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8083
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16610,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 420,
+      "npcId": 8083
+     },
+     {
+      "actId": 16611,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 421,
+      "npcId": 8084
+     },
+     {
+      "actId": 16612,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 422,
+      "npcId": 8085
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11481,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16613,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 246,
+      "monsterGroupId": 223,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11482,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16614,
+      "type": "QuestActConReportJournal",
+      "detailId": 134
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11483,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16615,
+      "type": "QuestActSupplyCopper",
+      "detailId": 218,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 223,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,186 @@
+{
+ "questId": 2048,
+ "name": "흑마법사의 비약",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3333
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9421,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13079,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1756,
+      "npcId": 3333
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9422,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13080,
+      "type": "QuestActObjItemGather",
+      "detailId": 842,
+      "itemId": 15881,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9423,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13081,
+      "type": "QuestActObjItemGather",
+      "detailId": 843,
+      "itemId": 15882,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9424,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13082,
+      "type": "QuestActObjItemGather",
+      "detailId": 844,
+      "itemId": 15883,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13083,
+      "type": "QuestActConReportNpc",
+      "detailId": 1969,
+      "npcId": 3333
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9426,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38702,
+      "type": "QuestActSupplyItem",
+      "detailId": 4451,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15881,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 15882,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 15883,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3333,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15881,
+   "count": 1
+  },
+  {
+   "itemId": 15882,
+   "count": 1
+  },
+  {
+   "itemId": 15883,
+   "count": 1
+  }
+ ]
+}

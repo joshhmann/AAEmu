@@ -1,0 +1,96 @@
+{
+ "questId": 3041,
+ "name": "돌아오지 않는 친구들",
+ "zoneId": 30,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8905
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13176,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18887,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2444,
+      "npcId": 8905
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13178,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19224,
+      "type": "QuestActObjSphere",
+      "detailId": 576,
+      "sphereId": 1176
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13656,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19225,
+      "type": "QuestActConAutoComplete",
+      "detailId": 643
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 13178
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

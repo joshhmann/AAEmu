@@ -1,0 +1,91 @@
+{
+ "questId": 800,
+ "name": "선율의 나무를 찾아서",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5038
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3015,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4486,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 499,
+      "npcId": 5038
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3018,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21717,
+      "type": "QuestActConReportNpc",
+      "detailId": 3280,
+      "npcId": 5081
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16452,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5081,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,100 @@
+{
+ "questId": 1463,
+ "name": "고릴라로 변한 여인",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 882
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6554,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13213,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1776,
+      "npcId": 882
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6556,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13333,
+      "type": "QuestActObjInteraction",
+      "detailId": 328,
+      "doodadId": 1083,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30712,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1261
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1083,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

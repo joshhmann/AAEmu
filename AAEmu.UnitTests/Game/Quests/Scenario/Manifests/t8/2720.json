@@ -1,0 +1,141 @@
+{
+ "questId": 2720,
+ "name": "황금 바다 해적단 섬멸하기",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 7774
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11428,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16527,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 378,
+      "npcId": 7774
+     },
+     {
+      "actId": 24558,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1049,
+      "npcId": 7773
+     },
+     {
+      "actId": 24559,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1050,
+      "npcId": 7984
+     },
+     {
+      "actId": 24560,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1051,
+      "npcId": 7985
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11429,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24561,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 472,
+      "monsterGroupId": 202,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11430,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16529,
+      "type": "QuestActConReportJournal",
+      "detailId": 123
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11431,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16528,
+      "type": "QuestActSupplyCopper",
+      "detailId": 205,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 202,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

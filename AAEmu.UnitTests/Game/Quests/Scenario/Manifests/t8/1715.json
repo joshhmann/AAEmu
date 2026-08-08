@@ -1,0 +1,125 @@
+{
+ "questId": 1715,
+ "name": "진흙 속 진주",
+ "zoneId": 108,
+ "categoryId": 29,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7096
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8306,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11997,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1528,
+      "npcId": 7096
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12015,
+      "type": "QuestActObjItemGather",
+      "detailId": 762,
+      "itemId": 15552,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8308,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11998,
+      "type": "QuestActConReportNpc",
+      "detailId": 1720,
+      "npcId": 7096
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8309,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15552,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7096,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15552,
+   "count": 5
+  }
+ ]
+}

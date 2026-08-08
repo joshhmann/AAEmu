@@ -1,0 +1,132 @@
+{
+ "questId": 150,
+ "name": "현상수배 : 놀의 우두머리",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 709
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 890,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2352,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 8,
+      "doodadId": 709
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1455,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11823,
+      "type": "QuestActObjItemGather",
+      "detailId": 749,
+      "itemId": 4004,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1456,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11822,
+      "type": "QuestActConReportNpc",
+      "detailId": 1708,
+      "npcId": 2099
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8247,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25673,
+      "type": "QuestActSupplyCopper",
+      "detailId": 495,
+      "amount": 5000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4004,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2099,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4004,
+   "count": 1
+  }
+ ]
+}

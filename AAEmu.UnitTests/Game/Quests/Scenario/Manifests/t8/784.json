@@ -1,0 +1,125 @@
+{
+ "questId": 784,
+ "name": "수상한 식물",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 22,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9862
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3513,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5021,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 600,
+      "npcId": 9862
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3514,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5022,
+      "type": "QuestActObjItemGather",
+      "detailId": 258,
+      "itemId": 5181,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3516,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5024,
+      "type": "QuestActConReportNpc",
+      "detailId": 684,
+      "npcId": 9862
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3517,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5181,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9862,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5181,
+   "count": 8
+  }
+ ]
+}

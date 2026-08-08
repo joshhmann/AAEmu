@@ -1,0 +1,125 @@
+{
+ "questId": 4117,
+ "name": "소중한 반지",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1682
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17816,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24027,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3445,
+      "npcId": 1682
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17817,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24026,
+      "type": "QuestActObjItemGather",
+      "detailId": 1962,
+      "itemId": 5227,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17818,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24272,
+      "type": "QuestActConReportNpc",
+      "detailId": 3768,
+      "npcId": 1682
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17819,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5227,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1682,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5227,
+   "count": 1
+  }
+ ]
+}

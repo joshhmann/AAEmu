@@ -1,0 +1,129 @@
+{
+ "questId": 2555,
+ "name": "돌을 위한 연회장 청소",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2049
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11097,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15743,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 262,
+      "npcId": 2049
+     },
+     {
+      "actId": 15744,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 263,
+      "npcId": 2051
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11098,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15746,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 197,
+      "monsterGroupId": 191,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11099,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15750,
+      "type": "QuestActConReportJournal",
+      "detailId": 65
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11100,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15749,
+      "type": "QuestActSupplyCopper",
+      "detailId": 154,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 191,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 4125,
+ "name": "숲의 정기",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3173
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17849,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24437,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3508,
+      "npcId": 3173
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24436,
+      "type": "QuestActObjItemGather",
+      "detailId": 2011,
+      "itemId": 5036,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17851,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25722,
+      "type": "QuestActConReportNpc",
+      "detailId": 3834,
+      "npcId": 7900
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17852,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5036,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7900,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5036,
+   "count": 3
+  }
+ ]
+}

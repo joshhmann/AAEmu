@@ -1,0 +1,112 @@
+{
+ "questId": 4192,
+ "name": "부활하는 원혼들",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1747
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17853,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24428,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3507,
+      "npcId": 1747
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17854,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23465,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 455,
+      "monsterGroupId": 414,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17856,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24421,
+      "type": "QuestActConAutoComplete",
+      "detailId": 761
+     },
+     {
+      "actId": 38695,
+      "type": "QuestActSupplyItem",
+      "detailId": 4444,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 414,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,117 @@
+{
+ "questId": 3886,
+ "name": "봉인석",
+ "zoneId": 10,
+ "categoryId": 8,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3818
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24476,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3512,
+      "npcId": 3818
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18550,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29721,
+      "type": "QuestActObjTalk",
+      "detailId": 993,
+      "npcId": 7594
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18552,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 21346,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29835,
+      "type": "QuestActConReportNpc",
+      "detailId": 4192,
+      "npcId": 3818
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 7594
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3818,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

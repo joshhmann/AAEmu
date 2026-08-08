@@ -1,0 +1,106 @@
+{
+ "questId": 3555,
+ "name": "복수의 마지막 글자",
+ "zoneId": 25,
+ "categoryId": 62,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10330
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17113,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22593,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3227,
+      "npcId": 10330
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22595,
+      "type": "QuestActConReportNpc",
+      "detailId": 3462,
+      "npcId": 10324
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40838,
+      "type": "QuestActSupplyItem",
+      "detailId": 4805,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10324,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

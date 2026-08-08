@@ -1,0 +1,151 @@
+{
+ "questId": 1679,
+ "name": "망자를 위한 진혼제",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2949
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8016,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11188,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1476,
+      "npcId": 2949
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8017,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11189,
+      "type": "QuestActSupplyItem",
+      "detailId": 953,
+      "itemId": 15565,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8019,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16782,
+      "type": "QuestActObjInteraction",
+      "detailId": 404,
+      "doodadId": 3255,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 16783,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 34,
+      "itemId": 14864,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8022,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11200,
+      "type": "QuestActConReportNpc",
+      "detailId": 1663,
+      "npcId": 2949
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8023,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3255,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2949,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

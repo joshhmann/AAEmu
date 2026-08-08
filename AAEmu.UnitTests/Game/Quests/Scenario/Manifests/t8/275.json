@@ -1,0 +1,155 @@
+{
+ "questId": 275,
+ "name": "딸깍발이 고쉬 처치 의뢰",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4345
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16497,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21801,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 115,
+      "doodadId": 4345
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21800,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 830,
+      "npcId": 655,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21797,
+      "type": "QuestActConReportNpc",
+      "detailId": 3305,
+      "npcId": 501
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25707,
+      "type": "QuestActSupplyCopper",
+      "detailId": 496,
+      "amount": 6000
+     },
+     {
+      "actId": 38639,
+      "type": "QuestActSupplyItem",
+      "detailId": 4388,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "None",
+    "id": 17216,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22722,
+      "type": "QuestActSupplyItem",
+      "detailId": 2246,
+      "itemId": 21568,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 655,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 501,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

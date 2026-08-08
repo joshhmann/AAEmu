@@ -1,0 +1,140 @@
+{
+ "questId": 2697,
+ "name": "웬디아의 후회",
+ "zoneId": 24,
+ "categoryId": 44,
+ "level": 28,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8227
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16393,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2142,
+      "npcId": 8227
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11314,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16506,
+      "type": "QuestActObjItemGather",
+      "detailId": 1074,
+      "itemId": 23845,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16507,
+      "type": "QuestActConReportNpc",
+      "detailId": 2351,
+      "npcId": 8227
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11316,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16508,
+      "type": "QuestActSupplyItem",
+      "detailId": 1608,
+      "itemId": 17827,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23845,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8227,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17827,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23845,
+   "count": 5
+  }
+ ]
+}

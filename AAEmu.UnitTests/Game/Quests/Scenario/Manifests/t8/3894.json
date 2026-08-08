@@ -1,0 +1,132 @@
+{
+ "questId": 3894,
+ "name": "위어드윈드 저택의 회담",
+ "zoneId": 129,
+ "categoryId": 8,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 470
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24497,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3518,
+      "npcId": 470
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30489,
+      "type": "QuestActObjTalk",
+      "detailId": 1000,
+      "npcId": 3664
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18584,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24498,
+      "type": "QuestActConReportNpc",
+      "detailId": 3781,
+      "npcId": 466
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18585,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40897,
+      "type": "QuestActSupplyItem",
+      "detailId": 4864,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 3664
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 466,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

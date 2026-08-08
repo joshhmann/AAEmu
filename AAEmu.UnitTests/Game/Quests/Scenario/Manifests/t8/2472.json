@@ -1,0 +1,142 @@
+{
+ "questId": 2472,
+ "name": "망령의 부탁",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7802
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10685,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14902,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2031,
+      "npcId": 7802
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 10686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14903,
+      "type": "QuestActSupplyItem",
+      "detailId": 1417,
+      "itemId": 16752,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10687,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14904,
+      "type": "QuestActObjItemUse",
+      "detailId": 420,
+      "itemId": 16752,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10688,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14905,
+      "type": "QuestActConReportNpc",
+      "detailId": 2242,
+      "npcId": 7802
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10689,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 16752,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7802,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

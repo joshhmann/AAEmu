@@ -1,0 +1,134 @@
+{
+ "questId": 529,
+ "name": "악마에게 홀린 사람들",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2423
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2064,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3215,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 330,
+      "npcId": 2423
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2066,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3257,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 30,
+      "monsterGroupId": 24,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2068,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3221,
+      "type": "QuestActConReportNpc",
+      "detailId": 395,
+      "npcId": 2423
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2069,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38717,
+      "type": "QuestActSupplyItem",
+      "detailId": 4466,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 24,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2423,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

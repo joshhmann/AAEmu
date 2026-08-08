@@ -1,0 +1,140 @@
+{
+ "questId": 305,
+ "name": "도둑맞은 여행자의 가방",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4352
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16556,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22563,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 130,
+      "doodadId": 4352
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16557,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21854,
+      "type": "QuestActObjItemGather",
+      "detailId": 1641,
+      "itemId": 25332,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22295,
+      "type": "QuestActConReportNpc",
+      "detailId": 3396,
+      "npcId": 901
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16559,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "None",
+    "id": 17088,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22564,
+      "type": "QuestActSupplyItem",
+      "detailId": 2231,
+      "itemId": 21510,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25332,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 901,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25332,
+   "count": 3
+  }
+ ]
+}

@@ -1,0 +1,150 @@
+{
+ "questId": 521,
+ "name": "갑옷을 벗기지 말아 주세요",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7528
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2031,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3178,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 323,
+      "npcId": 7528
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2032,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3179,
+      "type": "QuestActObjItemGather",
+      "detailId": 163,
+      "itemId": 4946,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2033,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3180,
+      "type": "QuestActConReportNpc",
+      "detailId": 386,
+      "npcId": 7528
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2034,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38426,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2665,
+      "itemId": 33818,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38427,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2666,
+      "itemId": 33819,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38428,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2667,
+      "itemId": 33820,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4946,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7528,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 4946,
+   "count": 5
+  }
+ ]
+}

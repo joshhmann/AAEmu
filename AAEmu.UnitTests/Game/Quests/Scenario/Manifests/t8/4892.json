@@ -1,0 +1,162 @@
+{
+ "questId": 4892,
+ "name": "검은수염 도적단 은신처 조사",
+ "zoneId": 131,
+ "categoryId": 77,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12162
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21210,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29428,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3885,
+      "npcId": 12162
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21211,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31481,
+      "type": "QuestActObjInteraction",
+      "detailId": 658,
+      "doodadId": 6197,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21212,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29429,
+      "type": "QuestActConReportNpc",
+      "detailId": 4176,
+      "npcId": 12162
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21219,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29431,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2261,
+      "itemId": 24453,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29432,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2262,
+      "itemId": 24454,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29433,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2263,
+      "itemId": 24455,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29434,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2264,
+      "itemId": 24456,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29435,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2265,
+      "itemId": 24457,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6197,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12162,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

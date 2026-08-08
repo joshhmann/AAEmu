@@ -1,0 +1,123 @@
+{
+ "questId": 2548,
+ "name": "차가운 우물 근처의 밴시들",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2015
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11068,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15662,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 224,
+      "npcId": 2015
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11069,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15663,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 601,
+      "npcId": 2015,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11070,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15664,
+      "type": "QuestActConReportJournal",
+      "detailId": 50
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11071,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15665,
+      "type": "QuestActSupplyCopper",
+      "detailId": 140,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2015,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

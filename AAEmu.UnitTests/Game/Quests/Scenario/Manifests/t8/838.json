@@ -1,0 +1,144 @@
+{
+ "questId": 838,
+ "name": "홀리고 홀리는 것",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5050
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3211,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12415,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1604,
+      "npcId": 5050
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3212,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12416,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 495,
+      "npcId": 5003,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3214,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4677,
+      "type": "QuestActConReportNpc",
+      "detailId": 622,
+      "npcId": 5050
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3215,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38414,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2655,
+      "itemId": 33604,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38415,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2656,
+      "itemId": 33605,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38417,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2658,
+      "itemId": 33606,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 5003,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5050,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

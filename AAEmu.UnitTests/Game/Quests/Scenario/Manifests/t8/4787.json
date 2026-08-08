@@ -1,0 +1,162 @@
+{
+ "questId": 4787,
+ "name": "배심원자격3단계:낯선 얼굴의 경비병",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6401
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28967,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3876,
+      "npcId": 6401
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20687,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29070,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 127,
+      "itemId": 25326,
+      "count": 1
+     },
+     {
+      "actId": 29086,
+      "type": "QuestActObjItemGather",
+      "detailId": 2337,
+      "itemId": 25099,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20688,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28968,
+      "type": "QuestActConReportNpc",
+      "detailId": 4151,
+      "npcId": 6401
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21098,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21099,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28978,
+      "type": "QuestActObjItemGather",
+      "detailId": 2330,
+      "itemId": 25294,
+      "count": 1
+     },
+     {
+      "actId": 29138,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 131,
+      "itemId": 25326,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25099,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 25294,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6401,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25099,
+   "count": 1
+  },
+  {
+   "itemId": 25294,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,106 @@
+{
+ "questId": 3901,
+ "name": "델토킨의 잔향",
+ "zoneId": 2,
+ "categoryId": 8,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3670
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Reward",
+    "id": 18665,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40900,
+      "type": "QuestActSupplyItem",
+      "detailId": 4867,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Start",
+    "id": 18666,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24537,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3525,
+      "npcId": 3670
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18667,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24538,
+      "type": "QuestActConReportNpc",
+      "detailId": 3786,
+      "npcId": 11965
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11965,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

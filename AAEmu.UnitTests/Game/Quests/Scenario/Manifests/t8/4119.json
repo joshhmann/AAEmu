@@ -1,0 +1,112 @@
+{
+ "questId": 4119,
+ "name": "위험한 존재",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1660
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17824,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23440,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3354,
+      "npcId": 1660
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17825,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23442,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 907,
+      "npcId": 1606,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17827,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23443,
+      "type": "QuestActConAutoComplete",
+      "detailId": 741
+     },
+     {
+      "actId": 38683,
+      "type": "QuestActSupplyItem",
+      "detailId": 4432,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1606,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

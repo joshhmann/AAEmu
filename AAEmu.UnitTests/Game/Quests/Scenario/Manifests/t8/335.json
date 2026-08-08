@@ -1,0 +1,104 @@
+{
+ "questId": 335,
+ "name": "농부 티본의 골칫거리",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5571
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1535,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29192,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 192,
+      "doodadId": 5571
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2484,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14815,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 165,
+      "monsterGroupId": 19,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2490,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29196,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1106
+     },
+     {
+      "actId": 36962,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1374,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 19,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

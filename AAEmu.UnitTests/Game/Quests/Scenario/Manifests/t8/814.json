@@ -1,0 +1,134 @@
+{
+ "questId": 814,
+ "name": "목표는 해적의 배",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5039
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3076,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4538,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 511,
+      "npcId": 5039
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3078,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13038,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 514,
+      "npcId": 5013,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3079,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4541,
+      "type": "QuestActConReportNpc",
+      "detailId": 592,
+      "npcId": 5039
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3080,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38660,
+      "type": "QuestActSupplyItem",
+      "detailId": 4409,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 5013,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5039,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

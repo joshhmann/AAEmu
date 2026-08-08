@@ -1,0 +1,123 @@
+{
+ "questId": 2721,
+ "name": "욕심 많은 가시부리새 쫓아내기",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 7781
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11432,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16532,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 379,
+      "npcId": 7781
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11433,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24562,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 950,
+      "npcId": 7781,
+      "count": 6
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11434,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16787,
+      "type": "QuestActConReportJournal",
+      "detailId": 137
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11435,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16531,
+      "type": "QuestActSupplyCopper",
+      "detailId": 206,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 7781,
+     "count": 6
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

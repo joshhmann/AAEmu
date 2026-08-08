@@ -1,0 +1,123 @@
+{
+ "questId": 2946,
+ "name": "북방 이슈바라 침입자들 처치",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8038
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12895,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18667,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 662,
+      "npcId": 8038
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12932,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18668,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 671,
+      "npcId": 8038,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12933,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18594,
+      "type": "QuestActConReportJournal",
+      "detailId": 185
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12934,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18595,
+      "type": "QuestActSupplyCopper",
+      "detailId": 282,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8038,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

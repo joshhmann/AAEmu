@@ -1,0 +1,140 @@
+{
+ "questId": 2701,
+ "name": "우루루 공 되찾기",
+ "zoneId": 11,
+ "categoryId": 44,
+ "level": 28,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8574
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11320,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16399,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2144,
+      "npcId": 8574
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11321,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16525,
+      "type": "QuestActObjItemGather",
+      "detailId": 1076,
+      "itemId": 17862,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11426,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16524,
+      "type": "QuestActConReportNpc",
+      "detailId": 2357,
+      "npcId": 8574
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11427,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16523,
+      "type": "QuestActSupplyItem",
+      "detailId": 1613,
+      "itemId": 17827,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17862,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8574,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17827,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17862,
+   "count": 3
+  }
+ ]
+}

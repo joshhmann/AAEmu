@@ -1,0 +1,157 @@
+{
+ "questId": 6426,
+ "name": "갈색 곡물 수프의 재료",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11080
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39311,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4987,
+      "npcId": 11080
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27466,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39310,
+      "type": "QuestActObjItemGather",
+      "detailId": 3004,
+      "itemId": 8505,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27467,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39314,
+      "type": "QuestActConReportNpc",
+      "detailId": 5003,
+      "npcId": 11080
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27468,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39312,
+      "type": "QuestActObjItemGather",
+      "detailId": 3005,
+      "itemId": 30902,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27469,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39313,
+      "type": "QuestActObjItemGather",
+      "detailId": 3006,
+      "itemId": 8005,
+      "count": 20
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8505,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 30902,
+     "count": 30
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8005,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11080,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8505,
+   "count": 10
+  },
+  {
+   "itemId": 30902,
+   "count": 30
+  },
+  {
+   "itemId": 8005,
+   "count": 20
+  }
+ ]
+}

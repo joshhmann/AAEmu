@@ -1,0 +1,148 @@
+{
+ "questId": 1356,
+ "name": "밝혀지는 숲의 진실",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3177
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6773,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9477,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1174,
+      "npcId": 3177
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6774,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18030,
+      "type": "QuestActObjItemGather",
+      "detailId": 1218,
+      "itemId": 24543,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6775,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18032,
+      "type": "QuestActConReportNpc",
+      "detailId": 2516,
+      "npcId": 3292
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6776,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 12272,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18029,
+      "type": "QuestActSupplyItem",
+      "detailId": 1812,
+      "itemId": 24543,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24543,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3292,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24543,
+   "count": 1
+  }
+ ]
+}

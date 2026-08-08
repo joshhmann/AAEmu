@@ -1,0 +1,105 @@
+{
+ "questId": 6540,
+ "name": "나지막한 별의 목소리 만들기",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11081
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27933,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39946,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5012,
+      "npcId": 11081
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27934,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39947,
+      "type": "QuestActObjCraft",
+      "detailId": 347,
+      "craftId": 6718,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27935,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39948,
+      "type": "QuestActConReportNpc",
+      "detailId": 5038,
+      "npcId": 11081
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6718,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11081,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

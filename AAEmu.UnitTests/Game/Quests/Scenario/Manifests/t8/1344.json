@@ -1,0 +1,140 @@
+{
+ "questId": 1344,
+ "name": "바실리스크의 천적",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3163
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9412,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1166,
+      "npcId": 3163
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9417,
+      "type": "QuestActObjItemGather",
+      "detailId": 527,
+      "itemId": 14133,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9414,
+      "type": "QuestActConReportNpc",
+      "detailId": 1330,
+      "npcId": 3163
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38701,
+      "type": "QuestActSupplyItem",
+      "detailId": 4450,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14133,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3163,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14133,
+   "count": 5
+  }
+ ]
+}

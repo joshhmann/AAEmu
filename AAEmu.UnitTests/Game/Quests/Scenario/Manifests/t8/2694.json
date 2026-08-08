@@ -1,0 +1,140 @@
+{
+ "questId": 2694,
+ "name": "빵모자 해적단",
+ "zoneId": 15,
+ "categoryId": 44,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8229
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11328,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16407,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2145,
+      "npcId": 8229
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11331,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16409,
+      "type": "QuestActConReportNpc",
+      "detailId": 2350,
+      "npcId": 8228
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11332,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24764,
+      "type": "QuestActSupplyItem",
+      "detailId": 2478,
+      "itemId": 17825,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18790,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24763,
+      "type": "QuestActObjItemGather",
+      "detailId": 2036,
+      "itemId": 17832,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17832,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8228,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 17825,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17832,
+   "count": 1
+  }
+ ]
+}

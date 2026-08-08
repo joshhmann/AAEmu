@@ -1,0 +1,91 @@
+{
+ "questId": 340,
+ "name": "암습",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 120
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2541,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3867,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 48,
+      "sphereId": 120
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2543,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14827,
+      "type": "QuestActConReportNpc",
+      "detailId": 2230,
+      "npcId": 5157
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2544,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5157,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

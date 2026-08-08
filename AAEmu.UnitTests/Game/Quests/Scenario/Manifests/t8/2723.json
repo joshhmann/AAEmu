@@ -1,0 +1,165 @@
+{
+ "questId": 2723,
+ "name": "붉은 구월단 혁명가들 처단",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1693
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11440,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16544,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 387,
+      "npcId": 1693
+     },
+     {
+      "actId": 16545,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 388,
+      "npcId": 1695
+     },
+     {
+      "actId": 16546,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 389,
+      "npcId": 1772
+     },
+     {
+      "actId": 24571,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1053,
+      "npcId": 5463
+     },
+     {
+      "actId": 24572,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1054,
+      "npcId": 5464
+     },
+     {
+      "actId": 24573,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1055,
+      "npcId": 7795
+     },
+     {
+      "actId": 24574,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1056,
+      "npcId": 7803
+     },
+     {
+      "actId": 24575,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1057,
+      "npcId": 1694
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11441,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16547,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 234,
+      "monsterGroupId": 225,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11442,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16548,
+      "type": "QuestActConReportJournal",
+      "detailId": 125
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11443,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16549,
+      "type": "QuestActSupplyCopper",
+      "detailId": 208,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 225,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

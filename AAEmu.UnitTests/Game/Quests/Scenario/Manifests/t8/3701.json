@@ -1,0 +1,125 @@
+{
+ "questId": 3701,
+ "name": "해적 첩자의 단서",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9971
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15455,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21113,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2933,
+      "npcId": 9971
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15456,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21112,
+      "type": "QuestActObjItemGather",
+      "detailId": 1543,
+      "itemId": 20002,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15457,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21114,
+      "type": "QuestActConReportNpc",
+      "detailId": 3166,
+      "npcId": 9971
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15458,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20002,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9971,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20002,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 4584,
+ "name": "은괴 납품",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11077
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19954,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27159,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3745,
+      "npcId": 11077
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19955,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27160,
+      "type": "QuestActObjItemGather",
+      "detailId": 2176,
+      "itemId": 17774,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27161,
+      "type": "QuestActConReportNpc",
+      "detailId": 4027,
+      "npcId": 11077
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19970,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27485,
+      "type": "QuestActSupplyItem",
+      "detailId": 3025,
+      "itemId": 24888,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17774,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11077,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24888,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17774,
+   "count": 3
+  }
+ ]
+}

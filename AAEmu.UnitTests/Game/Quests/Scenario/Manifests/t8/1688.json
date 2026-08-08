@@ -1,0 +1,91 @@
+{
+ "questId": 1688,
+ "name": "해적의 소굴로",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9925
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8060,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11257,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1485,
+      "npcId": 9925
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8063,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11261,
+      "type": "QuestActConReportNpc",
+      "detailId": 1674,
+      "npcId": 3010
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8064,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3010,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

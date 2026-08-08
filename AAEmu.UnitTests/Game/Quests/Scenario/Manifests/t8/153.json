@@ -1,0 +1,163 @@
+{
+ "questId": 153,
+ "name": "수상한 발굴 작업",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2100
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 893,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2384,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 282,
+      "npcId": 2100
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 1481,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2381,
+      "type": "QuestActSupplyItem",
+      "detailId": 131,
+      "itemId": 4006,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1483,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2382,
+      "type": "QuestActObjItemGather",
+      "detailId": 133,
+      "itemId": 4007,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1485,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2385,
+      "type": "QuestActConReportNpc",
+      "detailId": 319,
+      "npcId": 2100
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1486,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38625,
+      "type": "QuestActSupplyItem",
+      "detailId": 4374,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4007,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2100,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4007,
+   "count": 5
+  }
+ ]
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 166,
+ "name": "고블린 소굴",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 441
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 91,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 95,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 21,
+      "npcId": 441
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 99,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 101,
+      "type": "QuestActConReportNpc",
+      "detailId": 25,
+      "npcId": 441
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 100,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38638,
+      "type": "QuestActSupplyItem",
+      "detailId": 4387,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2004,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3139,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 90,
+      "npcId": 4942,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4942,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 441,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 200,
+ "name": "조각이 사라진 퍼즐",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 939
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10984,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15484,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2104,
+      "npcId": 939
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10985,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15485,
+      "type": "QuestActConReportNpc",
+      "detailId": 2306,
+      "npcId": 3985
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10986,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 16550,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21925,
+      "type": "QuestActObjItemGather",
+      "detailId": 1652,
+      "itemId": 21260,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21260,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3985,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21260,
+   "count": 1
+  }
+ ]
+}

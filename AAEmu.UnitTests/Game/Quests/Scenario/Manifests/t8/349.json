@@ -1,0 +1,125 @@
+{
+ "questId": 349,
+ "name": "암살자의 정체",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 461
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2621,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21867,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3093,
+      "npcId": 461
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3961,
+      "type": "QuestActConReportNpc",
+      "detailId": 512,
+      "npcId": 461
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2623,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 16571,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21868,
+      "type": "QuestActObjItemGather",
+      "detailId": 1644,
+      "itemId": 24410,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24410,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 461,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24410,
+   "count": 5
+  }
+ ]
+}

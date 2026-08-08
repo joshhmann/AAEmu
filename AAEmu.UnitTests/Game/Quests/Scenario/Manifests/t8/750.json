@@ -1,0 +1,173 @@
+{
+ "questId": 750,
+ "name": "물 정령의 정수 수집",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2975
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3302,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4754,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 557,
+      "npcId": 2975
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 3303,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4755,
+      "type": "QuestActSupplyItem",
+      "detailId": 281,
+      "itemId": 5080,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3304,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4756,
+      "type": "QuestActObjItemGather",
+      "detailId": 235,
+      "itemId": 17905,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3305,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4757,
+      "type": "QuestActConReportNpc",
+      "detailId": 639,
+      "npcId": 2975
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3306,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38317,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2577,
+      "itemId": 33491,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38318,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2578,
+      "itemId": 33492,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38319,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2579,
+      "itemId": 33493,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17905,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2975,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 17905,
+   "count": 12
+  }
+ ]
+}

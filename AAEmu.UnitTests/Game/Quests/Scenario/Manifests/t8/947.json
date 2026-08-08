@@ -1,0 +1,134 @@
+{
+ "questId": 947,
+ "name": "샤프란 도둑 잡기",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 22,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3020
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4548,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7030,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 752,
+      "npcId": 3020
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7027,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 280,
+      "npcId": 2942,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4550,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7031,
+      "type": "QuestActConReportNpc",
+      "detailId": 882,
+      "npcId": 3020
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4551,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38634,
+      "type": "QuestActSupplyItem",
+      "detailId": 4383,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2942,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3020,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

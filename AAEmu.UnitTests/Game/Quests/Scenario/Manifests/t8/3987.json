@@ -1,0 +1,106 @@
+{
+ "questId": 3987,
+ "name": "아탈란시아를 찾아서",
+ "zoneId": 10,
+ "categoryId": 3,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11256
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24054,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3453,
+      "npcId": 11256
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17189,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25143,
+      "type": "QuestActConReportNpc",
+      "detailId": 3826,
+      "npcId": 11269
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17190,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40866,
+      "type": "QuestActSupplyItem",
+      "detailId": 4833,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11269,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}
