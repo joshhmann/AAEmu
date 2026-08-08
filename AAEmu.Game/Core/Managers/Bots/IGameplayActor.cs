@@ -77,8 +77,13 @@ public interface IGameplayActor
     ActorRequest SetTarget(uint targetObjId);
 
     /// <summary>
-    /// Casts a skill through the real engine path (Character.UseSkill —
-    /// the same call CSStartSkillPacket's learned-skill branch makes).
+    /// Casts a skill through the real engine path (Character.UseSkill →
+    /// Unit.UseSkill — the same helper CSStartSkillPacket's MOUNT branch
+    /// uses). The helper builds a fresh Skill with no owner (Level=1) and
+    /// bypasses the GCD (bypassGcd=true); the packet's learned-skill branch
+    /// instead tags the Skill with the casting character and respects the
+    /// GCD — both deltas are deliberate for a controller-driven bot, and
+    /// the engine pipeline is identical either way.
     /// Validates: skill template exists, character knows the skill, target
     /// resolves. Engine refusal maps to Rejected(RejectedAction).
     /// </summary>

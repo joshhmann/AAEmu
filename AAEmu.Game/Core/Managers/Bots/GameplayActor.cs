@@ -184,8 +184,13 @@ public class GameplayActor : IGameplayActor
 
         request.Start($"casting {skillId} on {target.ObjId}");
 
-        // Execute through the REAL engine path — the same call the
-        // CSStartSkillPacket learned-skill branch makes.
+        // Execute through the REAL engine path: Character.UseSkill →
+        // Unit.UseSkill — the same helper CSStartSkillPacket's MOUNT
+        // branch uses (NOT its learned-skill branch, which tags the Skill
+        // with the casting character and respects the GCD). Unit.UseSkill
+        // builds a fresh Skill with owner=null (Level=1) and bypassGcd=true
+        // — both deliberate for a controller-driven bot; the engine
+        // pipeline is identical either way.
         var result = Character.UseSkill(skillId, target);
         if (result == SkillResult.Success)
             return Complete(request, result, $"skill {skillId} cast succeeded");

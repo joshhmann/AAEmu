@@ -10,7 +10,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///
 /// These tests prove the actor executes each action correctly through the
 /// REAL engine paths (Transform movement, Unit.CurrentTarget, the
-/// Character.UseSkill learned-skill branch), and that the lifecycle
+/// Character.UseSkill → Unit.UseSkill engine path), and that the lifecycle
 /// (Requested → Accepted → Running → Completed | Rejected | Interrupted |
 /// TimedOut) + audit trace behave per contract. They deliberately do NOT
 /// judge whether a controller chose the right action — that is the
@@ -320,6 +320,41 @@ public class GameplayActorTests
         }
 
         await Assert.That(actor.AuditTrace.Count).IsEqualTo(40); // 20 targets + 20 stops
+        await Assert.That(actor.AuditTrace[^1].Action).IsEqualTo(ActorActionType.Stop);
+        await Assert.That(actor.AuditTrace[^2].Action).IsEqualTo(ActorActionType.Target);
+    }
+
+    [Test]
+    public async Task Trace_CapExceeded_TrimsOldest_KeepsNewest512()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("audit-3");
+        var npcObjId = GameplayActorTestRig.SpawnNpc(session, 1003);
+
+        // 300 target/stop pairs = 600 terminal records, exceeding the
+        // 512-record cap (GameplayActor.MaxTraceRecords) so the trim path
+        // must evict the oldest 88 and keep the newest 512.
+        Guid oldestTraceId = Guid.Empty;
+        for (var i = 0; i < 300; i++)
+        {
+            var target = actor.SetTarget(npcObjId);
+            if (i == 0)
+                oldestTraceId = target.TraceId;
+            actor.Stop();
+        }
+
+        await Assert.That(actor.AuditTrace.Count).IsEqualTo(512); // capped, not 600
+        // The very first request's record was trimmed from the front...
+        await Assert.That(actor.AuditTrace.Any(r => r.TraceId == oldestTraceId)).IsFalse();
+        // ...and the kept window is the newest 512, oldest-first: it still
+        // alternates Target/Stop (300 pairs trim to 256, 88 evicted = 44
+        // whole pairs, so the window starts on a Target).
+        for (var i = 0; i < actor.AuditTrace.Count; i++)
+        {
+            var expected = i % 2 == 0 ? ActorActionType.Target : ActorActionType.Stop;
+            await Assert.That(actor.AuditTrace[i].Action).IsEqualTo(expected);
+        }
+
+        // Newest-last order: the tail is the final Stop of the last pair.
         await Assert.That(actor.AuditTrace[^1].Action).IsEqualTo(ActorActionType.Stop);
         await Assert.That(actor.AuditTrace[^2].Action).IsEqualTo(ActorActionType.Target);
     }
