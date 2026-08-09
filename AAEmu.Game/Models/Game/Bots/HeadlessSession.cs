@@ -134,8 +134,15 @@ public class HeadlessSession
     /// <exception cref="ArgumentException">Invalid managed username or character
     /// name, or a character name owned by another (non-bot) account.</exception>
     /// <exception cref="InvalidOperationException">Non-bot account collision, or the character row save failed.</exception>
+    /// <param name="appearance">
+    /// Optional player-like appearance (P1 t_61814965 — BotAppearanceFactory).
+    /// When provided, a FRESH character row is born with the generated model
+    /// params + starting equipment, exactly like a human create. Adopted rows
+    /// (prior boot) keep their stored look — appearance is baked at birth.
+    /// When null, the race-appropriate canonical default is used.
+    /// </param>
     public static HeadlessSession Provision(string username, string name, Race race = Race.Nuian,
-        Gender gender = Gender.Male, byte level = 1)
+        Gender gender = Gender.Male, byte level = 1, BotAppearance? appearance = null)
     {
         name = name.NormalizeName();
 
@@ -207,7 +214,14 @@ public class HeadlessSession
         // as human names, so duplicates and human-side squatting are rejected
         // by the same registry. RemoveCharacterId on failure releases it.
         NameManager.Instance.AddCharacter(characterId, name, account.AccountId);
-        var character = BuildProvisionedCharacter(characterId, account.AccountId, name, race, gender, level, template);
+        var character = BuildProvisionedCharacter(characterId, account.AccountId, name, race, gender, level, template, appearance);
+
+        // P1 t_61814965: a fresh citizen is born with its player-like
+        // starting equipment (per-class gear pack + race body items + newbie
+        // consumables) — the same data the human create path applies.
+        if (appearance != null)
+            CharacterManager.Instance.ApplyStartingEquipment(character, appearance);
+
         if (!character.SaveDirectlyToDatabase())
         {
             NameManager.Instance.RemoveCharacterId(characterId);
@@ -227,6 +241,25 @@ public class HeadlessSession
             throw new InvalidOperationException("Provisioning failed: activated bot character has no parent WorldInstance");
 
         return new HeadlessSession(character, world) { ProvisionedAccount = account };
+    }
+
+    /// <summary>
+    /// PRODUCTION convenience overload (P1 t_61814965): generates a full
+    /// player-like appearance from the spec via
+    /// <see cref="BotAppearanceFactory"/> — randomized-but-valid model
+    /// params (type=Face), race/gender-canonical model id, per-class
+    /// starting equipment, name from the race pool — then provisions the bot
+    /// with it. Deterministic per seed: the same spec yields the same name
+    /// and the same born look.
+    /// </summary>
+    /// <param name="username">Managed bot account name (bot_managed_* namespace).</param>
+    /// <param name="spec">Appearance spec (race/gender required; class, seed, name optional).</param>
+    /// <param name="level">Starting level.</param>
+    public static HeadlessSession Provision(string username, BotAppearanceSpec spec, byte level = 1)
+    {
+        ArgumentNullException.ThrowIfNull(spec);
+        var appearance = BotAppearanceFactory.Instance.Generate(spec);
+        return Provision(username, appearance.Name, spec.Race, spec.Gender, level, appearance);
     }
 
     /// <summary>
@@ -265,16 +298,19 @@ public class HeadlessSession
     /// a human character.
     /// </summary>
     private static Character BuildProvisionedCharacter(uint characterId, uint accountId, string name,
-        Race race, Gender gender, byte level, CharacterTemplate template)
+        Race race, Gender gender, byte level, CharacterTemplate template, BotAppearance? appearance = null)
     {
         // P0 hotfix t_76730833: a bare UnitCustomModelParams serializes a
         // 1-byte blob (type=None) and the 1.2 client cannot build the
         // character mesh from empty custom model params — name tags render,
         // the body does not (prod evidence: Citizen01-03 rows = 0x00 vs a
-        // real human row's 231-byte Face blob). Provision with the
-        // race-appropriate default appearance (canonical hair/skin per
-        // model + full FaceModel) so the body renders under the tag.
-        var character = new Character(BotAppearanceDefaults.BuildDefault(race, gender, template.ModelId))
+        // real human row's 231-byte Face blob). Provision with a full Face
+        // blob: the factory-generated appearance when one is given (P1
+        // t_61814965), else the race-appropriate canonical default.
+        var modelParams = appearance?.ModelParams
+            ?? BotAppearanceDefaults.BuildDefault(race, gender, template.ModelId);
+
+        var character = new Character(modelParams)
         {
             Id = characterId,
             TemplateId = characterId,
@@ -288,7 +324,7 @@ public class HeadlessSession
             NumBankSlots = template.NumBankSlot,
             Faction = FactionManager.Instance.GetFaction(template.FactionId),
             FactionName = string.Empty,
-            Ability1 = AbilityType.Fight,
+            Ability1 = appearance?.ClassAbility ?? AbilityType.Fight,
             Ability2 = AbilityType.Magic,
             Ability3 = AbilityType.Will,
             Created = DateTime.UtcNow,

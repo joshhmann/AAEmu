@@ -899,6 +899,61 @@ public class CharacterManager(
         //inventory.Equip[(int) slot] = item;
     }
 
+    /// <summary>
+    /// Starting-equipment data for an ability — the SAME data the human
+    /// create path applies (character_equip_packs + character_supplies):
+    /// the class gear pack, the class newbie consumables, and the shared
+    /// ability-0 consumables (CharacterManager.Create applies both supply
+    /// lists). Bot appearance generation (P1 t_61814965) reads this through
+    /// IBotStartingEquipmentSource so a bot's starting equipment mirrors a
+    /// player's exactly.
+    /// </summary>
+    public AbilityItems GetStartingAbilityEquipment(byte abilityId)
+    {
+        var items = _abilityItems.TryGetValue(abilityId, out var abilityItems)
+            ? abilityItems
+            : new AbilityItems { Ability = abilityId, Items = new EquipItemsTemplate() };
+
+        // Mirror Create(): after the class supplies it also grants the
+        // shared ability-0 supplies. Merge them into one plan.
+        if (abilityId != 0 && _abilityItems.TryGetValue(0, out var general))
+        {
+            var merged = new AbilityItems
+            {
+                Ability = abilityId,
+                Items = items.Items,
+                Supplies = [.. items.Supplies, .. general.Supplies]
+            };
+            return merged;
+        }
+
+        return items;
+    }
+
+    /// <summary>
+    /// Applies a bot appearance's starting-equipment plan (P1 t_61814965) —
+    /// the same primitives and slot mapping as the human create path:
+    /// per-class gear entries via SetEquipItemTemplate, the 7 race body
+    /// items (Face..Beard slots 19..25), and newbie consumables into the bag
+    /// + action bar. Bots stay ordinary Characters (AGENTS.md #9/#10).
+    /// </summary>
+    internal void ApplyStartingEquipment(Character character, Models.Game.Bots.BotAppearance appearance)
+    {
+        foreach (var entry in appearance.Equipment)
+            SetEquipItemTemplate(character.Inventory, entry.TemplateId, entry.Slot, entry.Grade);
+
+        for (var i = 0; i < 7 && i < appearance.BodyItems.Count; i++)
+            SetEquipItemTemplate(character.Inventory, appearance.BodyItems[i], (EquipmentItemSlot)(i + 19), 0);
+
+        var slot = (byte)10;
+        foreach (var supply in appearance.Supplies)
+        {
+            character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Invalid, supply.TemplateId, supply.Amount, supply.Grade);
+            character.SetAction(slot, ActionSlotType.ItemType, supply.TemplateId);
+            slot++;
+        }
+    }
+
     public static void ApplyBeautySalon(Character character, uint hairModel, UnitCustomModelParams modelParams)
     {
         // TODO: Add support for future X-day Salon Certificate items

@@ -353,5 +353,13 @@ public sealed class BotPresenceCoordinator
     }
 
     private static HeadlessSession DefaultProvisioner(string username, string name, Race race, Gender gender, byte level)
-        => HeadlessSession.Provision(username, name, race, gender, level);
+    {
+        // P1 t_61814965: citizens are born through the appearance factory —
+        // the same shape a player create produces (randomized-but-valid Face
+        // params + per-class starting equipment). The seed is the stable FNV
+        // hash of the NAME: every citizen keeps the SAME born look across
+        // reboots while differing from every other citizen.
+        var spec = new BotAppearanceSpec(race, gender, Seed: BotAppearanceFactory.Fnv1a(name), Name: name);
+        return HeadlessSession.Provision(username, spec, level);
+    }
 }

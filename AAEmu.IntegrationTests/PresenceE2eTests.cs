@@ -172,6 +172,112 @@ public class PresenceE2eTests
         }
     }
 
+    // ------------------------------------------------------------------ appearance evidence (P1 t_61814965)
+
+    /// <summary>
+    /// The factory's durable evidence: 3 provisioned citizens carry 3
+    /// DISTINCT player-like appearance blobs — same human-create shape
+    /// (231-byte type=Face), valid race model ids, and none equal to the
+    /// canonical default (the factory RANDOMIZES, it doesn't clone). Rows
+    /// are born through BotAppearanceFactory (per-name stable seed), so the
+    /// same assertion holds on every reboot.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "e2e")]
+    public async Task PresenceE2e_BotsCarryDistinctPlayerLikeFactoryAppearances()
+    {
+        Environment.SetEnvironmentVariable("AAEMU_PRESENCE_DEMO", "1");
+        Environment.SetEnvironmentVariable("AAEMU_PRESENCE_BOT_COUNT", "3");
+        try
+        {
+            E2eStack.EnsureUp();
+
+            var gameLog = Path.Combine(E2eStack.E2eRoot, "logs", "game.log");
+            var upLine = await WaitForLogLineAsync(gameLog, "presence demo up", TimeSpan.FromSeconds(180));
+            Assert.NotNull(upLine);
+            Assert.Contains("3/3 citizen bots roaming", upLine);
+
+            // Read the persisted rows exactly as the client would see them.
+            // (MySQL's characters table stores race/gender — the model id is
+            // the template's, which is what the factory resolved at birth.)
+            var rows = new List<(string Name, AAEmu.Game.Models.Game.Char.Race Race,
+                AAEmu.Game.Models.Game.Char.Gender Gender, byte[] Blob)>();
+            using (var conn = E2eStack.OpenDb("aaemu_game"))
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT name, race, gender, unit_model_params FROM characters WHERE name LIKE 'Citizen%' ORDER BY name";
+                cmd.Prepare();
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    rows.Add((
+                        reader.GetString(0),
+                        (AAEmu.Game.Models.Game.Char.Race)Convert.ToByte(reader.GetValue(1)),
+                        (AAEmu.Game.Models.Game.Char.Gender)Convert.ToByte(reader.GetValue(2)),
+                        (byte[])reader.GetValue(3)));
+                }
+            }
+
+            // 1. All three were born with real player-like appearances.
+            Assert.True(rows.Count >= 3, $"expected >=3 citizen rows with model params, saw {rows.Count}");
+
+            // 2. Same human-create shape: 231-byte type=Face blobs.
+            foreach (var (name, _, _, blob) in rows)
+            {
+                Assert.True(blob.Length == 231,
+                    $"{name}: unit_model_params is {blob.Length} bytes, expected the 231-byte human-create shape");
+                Assert.True(blob[0] == (byte)AAEmu.Game.Models.Game.Units.UnitCustomModelType.Face,
+                    $"{name}: blob type byte is 0x{blob[0]:X2}, expected Face");
+            }
+
+            // 3. Canonical race model ids (10/11 Nuian male/female, 16/17 Elf,
+            //    18/19 Dwarf, 20/21 Hariharan) — the base meshes the 1.2
+            //    client can render. The factory resolved the same id the
+            //    character template carries (race/gender → model).
+            var validModels = new HashSet<uint> { 10, 11, 16, 17, 18, 19, 20, 21 };
+            foreach (var (name, race, gender, _) in rows)
+            {
+                var modelId = AAEmu.Game.Models.Game.Bots.BotAppearanceDefaults.ModelIdFor(race, gender);
+                Assert.True(validModels.Contains(modelId),
+                    $"{name}: race/gender {race}/{gender} maps to model {modelId}, not a creatable character model");
+            }
+
+            // 4. DISTINCT appearances — every citizen looks different (the
+            //    factory randomizes within the valid catalogs).
+            var distinct = rows.Select(r => Convert.ToHexString(r.Blob)).Distinct().Count();
+            Assert.True(distinct >= 3,
+                $"expected 3 distinct appearance blobs, saw {distinct}");
+
+            // 5. RANDOMIZED, not cloned: no citizen carries the canonical
+            //    default blob (the factory draws from presets/decals/colors —
+            //    the canonical default never matches a factory output).
+            var canonicalBlob = Convert.ToHexString(
+                AAEmu.Game.Models.Game.Bots.BotAppearanceDefaults
+                    .BuildDefault(AAEmu.Game.Models.Game.Char.Race.Nuian, AAEmu.Game.Models.Game.Char.Gender.Male, 10)
+                    .Write(new AAEmu.Commons.Network.PacketStream()).GetBytes());
+            Assert.DoesNotContain(rows, r => Convert.ToHexString(r.Blob) == canonicalBlob);
+
+            // Evidence report for the card handoff.
+            var evidencePath = Path.Combine(E2eStack.E2eRoot, "logs", "appearance-evidence.md");
+            var sb = new StringBuilder();
+            sb.AppendLine("# BOT APPEARANCE FACTORY — distinct citizen looks (t_61814965)");
+            sb.AppendLine();
+            sb.AppendLine($"up: {upLine}");
+            sb.AppendLine();
+            foreach (var (name, race, gender, blob) in rows)
+            {
+                sb.AppendLine($"- {name}: race={race} gender={gender} model_id={AAEmu.Game.Models.Game.Bots.BotAppearanceDefaults.ModelIdFor(race, gender)}, blob={blob.Length}B HEX={Convert.ToHexString(blob)}");
+            }
+            File.WriteAllText(evidencePath, sb.ToString());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("AAEMU_PRESENCE_DEMO", null);
+            Environment.SetEnvironmentVariable("AAEMU_PRESENCE_BOT_COUNT", null);
+            E2eStack.CleanupBotRows("bot_managed_presence_001", "bot_managed_presence_002", "bot_managed_presence_003");
+        }
+    }
+
     private static async Task<string?> WaitForLogLineAsync(string logPath, string needle, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;

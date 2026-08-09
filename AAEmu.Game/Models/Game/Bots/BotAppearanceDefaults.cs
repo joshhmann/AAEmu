@@ -45,6 +45,29 @@ public static class BotAppearanceDefaults
         };
 
     /// <summary>
+    /// Canonical character model id per race/gender (characters.model_id:
+    /// 10/11 Nuian, 16/17 Elf, 18/19 Dwarf, 20/21 Hariharan) — the base mesh
+    /// the 1.2 client loads for a player of that race/gender. The
+    /// modelId=733 lesson: any other id = invisible body.
+    /// </summary>
+    public static uint ModelIdFor(Race race, Gender gender) => (race, gender) switch
+    {
+        (Race.Nuian, Gender.Male) => 10,
+        (Race.Nuian, Gender.Female) => 11,
+        (Race.Elf, Gender.Male) => 16,
+        (Race.Elf, Gender.Female) => 17,
+        (Race.Dwarf, Gender.Male) => 18,
+        (Race.Dwarf, Gender.Female) => 19,
+        (Race.Hariharan, Gender.Male) => 20,
+        (Race.Hariharan, Gender.Female) => 21,
+        _ => 10
+    };
+
+    /// <summary>Canonical first hair/skin color id per character model id (see <see cref="CanonicalColors"/>).</summary>
+    public static (uint Hair, uint Skin) CanonicalColorsFor(uint modelId)
+        => CanonicalColors.TryGetValue(modelId, out var colors) ? colors : (1u, 1u);
+
+    /// <summary>
     /// Nuian-male face values copied from the prod human blob (Asssaa id 6)
     /// — the shape that demonstrably renders. Used verbatim for model 10;
     /// other models get a structurally identical face with zero decals.
