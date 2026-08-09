@@ -28,60 +28,30 @@ namespace AAEmu.Game.Models.Game.Bots;
 /// ("no body and no face", SCUnitStatePacket.cs:406). A unit with an empty
 /// equipment container renders name tag + position but no body.
 ///
-/// DEMO BODY SOURCE (Josh direction 2026-08-08): bots are players → they
-/// need player-like appearance. FOR NOW the demo source is Asssaa's exact
-/// appearance (unit_model_params 231B with hair/model 733 + her equipped
-/// items) so bodies render immediately; the full per-race/gender factory is
-/// a separate card. The blob is embedded VERBATIM (prod MySQL HEX, verified
-/// 2026-08-08) and round-tripped through Read/Write so the wire bytes are
-/// byte-identical to the rendering human. Other models fall back to the
-/// canonical per-model builder from hotfix #4.
+/// t_555ed207 (class fix): the t_d0889187 "demo body source" force-stamped
+/// Asssaa's EXACT blob for model 10 — BuildDefault(modelId==10) returned the
+/// embedded demo blob and the adopt path replaced ANY non-demo blob with it
+/// on every boot, collapsing all factory-distinct looks to one identical
+/// appearance after any reboot. That path is REMOVED. BuildDefault now
+/// returns the canonical per-model builder for EVERY model (the render-
+/// proven hotfix-#4 shape: type=Face + canonical hair/skin + Nuian-male
+/// face), so no code path can collapse distinct looks via a "default".
+/// Appearance distinctness is the BotAppearanceFactory's job (t_61814965);
+/// defaults are only for rows with no look at all.
 /// </summary>
 public static class BotAppearanceDefaults
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
     /// <summary>
-    /// Asssaa (id 6, race 1 / gender 1, model 10) unit_model_params blob —
-    /// the DEMO body source, byte-for-byte from prod MySQL HEX
-    /// (LENGTH=231). Head: 03 DD020000 01000000 00000000 ... (type=Face,
-    /// hair 733, skin 1, model 0 + full FaceModel with modifier).
-    /// </summary>
-    private const string DemoBlobHex =
-        "03DD0200000100000000000000000000000000803F0000803F0000000000000000000000000000803F000000000000803F300200000000803FAA" +
-        "0200000000803F000000001D000000000000000000803F000000005AB5F8FF5AB5F8FF3C2300FF603E48FF800000F5000011DC000B0000000017" +
-        "0000000000F323000000003D00000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000" +
-        "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-
-    /// <summary>
-    /// Asssaa's equipped items (prod MySQL, 2026-08-08): slot → template id.
-    /// The demo bots replicate this exact set so the client receives the
-    /// same equipment section as the rendering human.
-    /// </summary>
-    private static readonly IReadOnlyDictionary<int, uint> DemoEquipment =
-        new Dictionary<int, uint>
-        {
-            [2] = 23387,   // Chest
-            [4] = 23388,   // Legs
-            [6] = 23390,   // Feet
-            [15] = 5569,   // Mainhand
-            [16] = 6152,   // Offhand
-            [17] = 6127,   // Ranged
-            [18] = 6177,   // Musical
-            [19] = 19838,  // Face (nu_m_face00)
-            [20] = 24133,  // Hair
-            [24] = 536,    // Body (nu_m_nude)
-        };
-
-    /// <summary>
     /// Canonical first hair/skin color id per character model id
     /// (compact.sqlite3: characters.model_id → hair_colors/skin_colors).
-    /// Verified live 2026-08-08. Fallback path for non-demo models.
+    /// Verified live 2026-08-08.
     /// </summary>
     private static readonly IReadOnlyDictionary<uint, (uint Hair, uint Skin)> CanonicalColors =
         new Dictionary<uint, (uint Hair, uint Skin)>
         {
-            [10] = (733, 1),  // Nuian male — demo (Asssaa's hair/skin)
+            [10] = (1, 1),    // Nuian male
             [11] = (36, 3),   // Nuian female
             [16] = (84, 5),   // Elf male
             [17] = (97, 7),   // Elf female
@@ -115,34 +85,45 @@ public static class BotAppearanceDefaults
         => CanonicalColors.TryGetValue(modelId, out var colors) ? colors : (1u, 1u);
 
     /// <summary>
-    /// Builds the default custom model params for a bot.
+    /// Builds the canonical default custom model params for a bot.
     ///
-    /// DEMO (model 10): returns the EXACT Asssaa blob (embedded verbatim),
-    /// so the wire bytes are byte-identical to the rendering human — head
-    /// <c>03 DD020000 01000000</c> (hair/model 733). Other models: the
-    /// canonical type=Face builder (231-byte structure, per-model hair/skin).
+    /// ALL models (including 10) go through the per-model canonical builder:
+    /// type=Face, canonical first hair/skin ids from compact.sqlite3, and the
+    /// Nuian-male face shape (fixed decals 560/682, normal map 29) proven to
+    /// render on Josh's client (hotfix #4). Serializes to the same 231-byte
+    /// structure as a human create-path row.
+    ///
+    /// t_555ed207: model 10 NO LONGER returns Asssaa's embedded demo blob —
+    /// that special case collapsed every Nuian-male bot to one identical
+    /// look whenever any code path called BuildDefault. A default must be a
+    /// valid look, never a distinctness destroyer.
     /// </summary>
     public static UnitCustomModelParams BuildDefault(Race race, Gender gender, uint modelId)
     {
-        if (modelId == 10)
-            return ReadDemoBlob();
-
         var colors = CanonicalColors.TryGetValue(modelId, out var c) ? c : (Hair: 1u, Skin: 1u);
+        var isNuianMale = modelId == 10;
 
         var face = new FaceModel
         {
             MovableDecalWeight = 1.0f,
             MovableDecalScale = 1.0f,
             DiffuseMapId = 0,
-            NormalMapId = 0,
+            NormalMapId = isNuianMale ? 29u : 0u,
             EyelashMapId = 0,
             NormalMapWeight = 1.0f,
             LipColor = 0,
-            LeftPupilColor = 0,
-            RightPupilColor = 0,
-            EyebrowColor = 0,
-            DecoColor = 0
+            LeftPupilColor = isNuianMale ? 0xFFF8B55Au : 0u,
+            RightPupilColor = isNuianMale ? 0xFFF8B55Au : 0u,
+            EyebrowColor = isNuianMale ? 0xFF00233Cu : 0u,
+            DecoColor = isNuianMale ? 0xFF483E60u : 0u
         };
+
+        if (isNuianMale)
+        {
+            // nu_m_decal_eyebrow001 / nu_m_decal_deco002 (model 10)
+            face.SetFixedDecalAsset(2, 560u, 1.0f);
+            face.SetFixedDecalAsset(3, 682u, 1.0f);
+        }
 
         return new UnitCustomModelParams(UnitCustomModelType.Face)
             .SetHairColorId(colors.Hair)
@@ -165,28 +146,18 @@ public static class BotAppearanceDefaults
     }
 
     /// <summary>
-    /// True when the params serialize to the embedded demo blob (Asssaa's
-    /// exact 231 bytes). Used by the adopt path to detect rows still carrying
-    /// the pre-demo blob (231B but hair 1 instead of 733) and upgrade them to
-    /// the demo appearance so the wire bytes match the rendering human.
-    /// </summary>
-    public static bool IsDemoAppearance(UnitCustomModelParams modelParams)
-    {
-        if (modelParams == null)
-            return false;
-
-        var bytes = modelParams.Write(new PacketStream()).GetBytes();
-        return bytes.SequenceEqual(Convert.FromHexString(DemoBlobHex));
-    }
-
-    /// <summary>
     /// Equips the bot's body items so the 1.2 client can assemble the
     /// character mesh from the SCUnitStatePacket equipment section.
     ///
-    /// DEMO (model 10): replicates Asssaa's exact equipment (her 10 items
-    /// at their slots). Other models: template body parts (face/hair/body,
+    /// Model 10 replicates Asssaa's demo equipment (her 10 items at their
+    /// slots — the demo body source from t_d0889187, kept as the canonical
+    /// model-10 gear set). Other models: template body parts (face/hair/body,
     /// slots 19-25 from CharacterTemplate.Items), mirroring the human
     /// create path (CharacterManager.Create: bodyItems[i] → (i + 19)).
+    ///
+    /// Idempotent: only fires when a row has NO body-part items, so it never
+    /// overwrites factory-born equipment and never touches the appearance
+    /// blob (t_555ed207 scope: blob distinctness is preserved).
     ///
     /// Returns the number of items actually equipped.
     /// </summary>
@@ -200,6 +171,25 @@ public static class BotAppearanceDefaults
 
         return EquipTemplateBodyPartItems(character, template);
     }
+
+    /// <summary>
+    /// Asssaa's equipped items (prod MySQL, 2026-08-08): slot → template id.
+    /// The model-10 gear set mirrors the rendering human's exact equipment.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<int, uint> DemoEquipment =
+        new Dictionary<int, uint>
+        {
+            [2] = 23387,   // Chest
+            [4] = 23388,   // Legs
+            [6] = 23390,   // Feet
+            [15] = 5569,   // Mainhand
+            [16] = 6152,   // Offhand
+            [17] = 6127,   // Ranged
+            [18] = 6177,   // Musical
+            [19] = 19838,  // Face (nu_m_face00)
+            [20] = 24133,  // Hair
+            [24] = 536,    // Body (nu_m_nude)
+        };
 
     private static int EquipDemoItems(Character character)
     {
@@ -251,19 +241,5 @@ public static class BotAppearanceDefaults
         }
 
         return equipped;
-    }
-
-    /// <summary>
-    /// Parses the embedded demo blob back into a UnitCustomModelParams.
-    /// Read/Write are symmetric (ReadBytes uses an Int16 length prefix), so
-    /// Write() reproduces the embedded bytes exactly.
-    /// </summary>
-    private static UnitCustomModelParams ReadDemoBlob()
-    {
-        var bytes = Convert.FromHexString(DemoBlobHex);
-        var stream = new PacketStream(bytes);
-        var modelParams = new UnitCustomModelParams();
-        modelParams.Read(stream);
-        return modelParams;
     }
 }

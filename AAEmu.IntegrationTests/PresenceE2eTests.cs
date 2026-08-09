@@ -138,10 +138,18 @@ public class PresenceE2eTests
         {
             E2eStack.EnsureUp();
 
-            // Boot 1: provisions (or adopts leftover rows from a prior run) —
-            // must come up 3/3 either way.
-            var gameLog = Path.Combine(E2eStack.E2eRoot, "logs", "game.log");
-            var up1 = await WaitForLogLineAsync(gameLog, "presence demo up", TimeSpan.FromSeconds(180));
+            // t_555ed207 order-independence: a sibling test's finally
+            // deletes the bot rows, so the stack can be up with ZERO rows
+            // when this test starts. Provision OUR OWN rows first — clean
+            // + one fresh boot — so the restart under test below has rows
+            // to ADOPT. (EnsureUp alone would no-op on an up stack and the
+            // "adopt" assertion would see a create path instead.)
+            E2eStack.CleanupBotRows("bot_managed_presence_001", "bot_managed_presence_002", "bot_managed_presence_003");
+            E2eStack.RestartGameServer();
+
+            // Boot 1 (this test's own): fresh provision, must come up 3/3.
+            var restartLog = Path.Combine(E2eStack.E2eRoot, "logs", "game-restart.log");
+            var up1 = await WaitForLogLineAsync(restartLog, "presence demo up", TimeSpan.FromSeconds(180));
             Assert.NotNull(up1);
             Assert.Contains("3/3 citizen bots roaming", up1);
 
@@ -150,7 +158,6 @@ public class PresenceE2eTests
 
             // Boot 2 writes to game-restart.log (FileMode.Create — a fresh
             // file, so every line in it is from the second boot).
-            var restartLog = Path.Combine(E2eStack.E2eRoot, "logs", "game-restart.log");
             var up2 = await WaitForLogLineAsync(restartLog, "presence demo up", TimeSpan.FromSeconds(180));
             Assert.NotNull(up2);
             Assert.Contains("3/3 citizen bots roaming", up2);
@@ -162,6 +169,23 @@ public class PresenceE2eTests
             Assert.DoesNotContain("rejected by NameManager", secondBoot);
             Assert.DoesNotContain("failed to provision", secondBoot);
             Assert.Contains("adopted existing character", secondBoot);
+
+            // t_555ed207: the adopt path must NOT force-stamp the demo blob
+            // over factory-born looks. If the demo-body upgrade fired, boot 2
+            // would log this line for every Citizen row — assert it is gone.
+            Assert.DoesNotContain("upgraded unit_model_params to demo appearance", secondBoot);
+
+            // t_555ed207: distinct factory looks survive the reboot — the
+            // exact regression the force-stamp caused (collapse to 1).
+            using (var conn = E2eStack.OpenDb("aaemu_game"))
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT COUNT(DISTINCT unit_model_params) FROM characters WHERE name LIKE 'Citizen%'";
+                cmd.Prepare();
+                var distinct = Convert.ToInt32(cmd.ExecuteScalar());
+                Assert.True(distinct >= 3,
+                    $"expected >=3 distinct appearance blobs after reboot, saw {distinct} (adopt-heal force-stamped the demo blob)");
+            }
         }
         finally
         {
@@ -192,8 +216,17 @@ public class PresenceE2eTests
         {
             E2eStack.EnsureUp();
 
-            var gameLog = Path.Combine(E2eStack.E2eRoot, "logs", "game.log");
-            var upLine = await WaitForLogLineAsync(gameLog, "presence demo up", TimeSpan.FromSeconds(180));
+            // t_555ed207 order-independence: a sibling test's finally deletes
+            // the bot rows and reboots the game — the stack can be up with
+            // ZERO Citizen rows (or rows from a foreign boot) when this test
+            // starts. Provision OUR OWN rows: clean + one fresh boot, then
+            // read exactly what THIS boot wrote. This also fixes the
+            // full-suite ordering hazard (appearance test used to fail after
+            // the restart test because the adopt-heal had collapsed blobs).
+            E2eStack.CleanupBotRows("bot_managed_presence_001", "bot_managed_presence_002", "bot_managed_presence_003");
+            E2eStack.RestartGameServer();
+            var restartLog = Path.Combine(E2eStack.E2eRoot, "logs", "game-restart.log");
+            var upLine = await WaitForLogLineAsync(restartLog, "presence demo up", TimeSpan.FromSeconds(180));
             Assert.NotNull(upLine);
             Assert.Contains("3/3 citizen bots roaming", upLine);
 
