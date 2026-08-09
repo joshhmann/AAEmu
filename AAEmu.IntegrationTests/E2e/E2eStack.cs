@@ -86,6 +86,7 @@ public static class E2eStack
             ResetDbVolume();
             RestoreCanonicalSqlite();
             EnsureDb();
+            AssertFreshDb();
 
             EnsureServerBinaries();
             EnsureRuntimeLayout();
@@ -98,14 +99,84 @@ public static class E2eStack
     /// Destroys the e2e MySQL container + volume so the next `up` re-seeds
     /// from SQL. Fresh accounts every run: no stale characters, no completed
     /// quests leaking across suite runs.
+    ///
+    /// CHECKED EXIT (t_53d4c1f9): a swallowed `down -v` failure leaves the
+    /// volume in place and the next `up` re-seeds onto stale accounts /
+    /// completed quests — the exact "Quest X already completed, not added!"
+    /// pollution this wipe exists to prevent (observed stage-25, quest 252
+    /// completed at START). On failure: log the output, retry once, then
+    /// verify the volume is actually gone; only proceed if it is. Otherwise
+    /// abort the run loudly instead of silently running on stale state.
     /// </summary>
     private static void ResetDbVolume()
     {
         var envFile = Path.Combine(E2eRoot, ".env");
         // Compose project name derives from the compose file's directory
         // (Scripts/e2e -> "e2e"), same as every other invocation in this rig.
-        Run("docker", $"compose -f {ComposeFile} --env-file {envFile} down -v", E2eRoot,
-            timeoutMs: 120_000, check: false);
+        var args = $"compose -f {ComposeFile} --env-file {envFile} down -v";
+
+        for (var attempt = 1; attempt <= 2; attempt++)
+        {
+            var (exitCode, output) = RunCapture("docker", args, E2eRoot,
+                timeoutMs: 120_000, check: false);
+            if (exitCode == 0)
+            {
+                Console.WriteLine("[e2e] db volume reset (compose down -v)");
+                return;
+            }
+
+            Console.WriteLine($"[e2e] ResetDbVolume: `down -v` attempt {attempt} failed ({exitCode}):\n{output}");
+        }
+
+        if (E2eDbVolumeGone())
+        {
+            Console.WriteLine("[e2e] ResetDbVolume: `down -v` failed twice but the volume is already gone — continuing.");
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "ResetDbVolume FAILED: `docker compose down -v` exited non-zero twice and the e2e MySQL " +
+            "volume (e2e_e2e_db_data) is still present. The next `up` would re-seed onto stale " +
+            "quest state (cross-run pollution: 'Quest X already completed, not added!'). Aborting " +
+            "the run — check the docker daemon / compose state before re-running.");
+    }
+
+    /// <summary>True when no compose volume with the e2e db data key remains.</summary>
+    private static bool E2eDbVolumeGone()
+    {
+        var (exitCode, output) = RunCapture("docker", "volume ls", E2eRoot,
+            timeoutMs: 30_000, check: false);
+        if (exitCode != 0)
+            return false; // cannot even list volumes — treat as unverified
+
+        return !output.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Any(line => line.Contains("e2e_db_data", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Asserts the freshly-seeded DB carries NO cross-run quest state — the
+    /// behavioral proof the wipe worked (t_53d4c1f9). The SQL seed creates
+    /// quest tables empty by construction (no INSERTs), so any rows here mean
+    /// a surviving volume leaked the previous run's state. This turns the
+    /// silent pollution into a loud boot-time failure.
+    /// </summary>
+    private static void AssertFreshDb()
+    {
+        using var conn = OpenDb("aaemu_game");
+        using var quests = conn.CreateCommand();
+        quests.CommandText = "SELECT COUNT(*) FROM quests";
+        var questCount = Convert.ToInt64(quests.ExecuteScalar());
+        using var completed = conn.CreateCommand();
+        completed.CommandText = "SELECT COUNT(*) FROM completed_quests";
+        var completedCount = Convert.ToInt64(completed.ExecuteScalar());
+        Console.WriteLine($"[e2e] fresh-seed check: quests={questCount}, completed_quests={completedCount}");
+
+        if (questCount != 0 || completedCount != 0)
+            throw new InvalidOperationException(
+                $"Fresh-seed assertion FAILED after DB wipe: quests={questCount}, " +
+                $"completed_quests={completedCount}. Cross-run quest state survived the reset " +
+                "(ResetDbVolume silently failed?) — aborting before the suite can observe another " +
+                "run's state.");
     }
 
     /// <summary>
