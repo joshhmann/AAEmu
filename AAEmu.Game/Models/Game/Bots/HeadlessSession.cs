@@ -170,15 +170,45 @@ public class HeadlessSession
             // fix carry a degenerate 1-byte blob (type=None) — the client
             // renders the name tag but no body. Heal the in-memory params
             // AND persist them so the row stays visible across reboots.
+            //
+            // P0 hotfix t_d0889187 (demo body source): model-10 bots must
+            // carry the EXACT Asssaa blob (733 at bytes 2-5) — rows from the
+            // hotfix-#4 era have the right structure (231B) but hair 1, so
+            // the degenerate check alone won't upgrade them. Detect via the
+            // demo-bytes comparison and replace when it doesn't match.
             var adoptedTemplate = CharacterManager.Instance.GetTemplate(adoptedCharacter.Race, adoptedCharacter.Gender);
-            if (BotAppearanceDefaults.IsDegenerate(adoptedCharacter.ModelParams))
+            var needDemoBlob = adoptedTemplate?.ModelId == 10 && !BotAppearanceDefaults.IsDemoAppearance(adoptedCharacter.ModelParams);
+            if (needDemoBlob || BotAppearanceDefaults.IsDegenerate(adoptedCharacter.ModelParams))
             {
                 adoptedCharacter.ModelParams = BotAppearanceDefaults.BuildDefault(
                     adoptedCharacter.Race, adoptedCharacter.Gender, adoptedTemplate?.ModelId ?? 0);
                 if (!adoptedCharacter.SaveDirectlyToDatabase())
                     Logger.Warn("Provisioning: adopted '{Name}' (id {Id}) — model-params heal save FAILED", name, adoptedCharacter.Id);
+                else if (needDemoBlob)
+                    Logger.Info("Provisioning: upgraded unit_model_params to demo appearance for adopted bot '{Name}' (id {Id})", name, adoptedCharacter.Id);
                 else
                     Logger.Info("Provisioning: healed degenerate unit_model_params for adopted bot '{Name}' (id {Id})", name, adoptedCharacter.Id);
+            }
+
+            // P0 hotfix t_d0889187: rows provisioned before the equipment fix
+            // have NO body-part items — the 1.2 client builds the character
+            // mesh from the equipment section, so a bot with an empty
+            // equipment container renders tags + positions but no body.
+            // Heal: equip the template body parts (slots 19-25) when the
+            // container has none. Items persist via the periodic SaveManager
+            // tick (Character.Save deliberately skips Inventory.Save — see
+            // M2b-E2E restart persistence notes).
+            var botHasBodyParts = false;
+            for (var s = (int)EquipmentItemSlot.Face; s <= (int)EquipmentItemSlot.Beard && !botHasBodyParts; s++)
+                botHasBodyParts = adoptedCharacter.Inventory?.Equipment?.GetItemBySlot(s) != null;
+            if (!botHasBodyParts && adoptedTemplate != null)
+            {
+                var equipped = BotAppearanceDefaults.EquipTemplateBodyParts(adoptedCharacter, adoptedTemplate);
+                if (equipped > 0)
+                    Logger.Info("Provisioning: healed missing body-part equipment for adopted bot '{Name}' (id {Id}) — equipped {Equipped} body parts",
+                        name, adoptedCharacter.Id, equipped);
+                else
+                    Logger.Warn("Provisioning: adopted bot '{Name}' (id {Id}) has no body parts and the heal equipped none", name, adoptedCharacter.Id);
             }
 
             Logger.Info("Provisioning: adopted existing character row '{Name}' (id {Id}, account {AccountId}) — re-embodying",
@@ -309,6 +339,14 @@ public class HeadlessSession
             character.Slots[i] = new ActionSlot();
 
         character.Inventory = new Inventory(character);
+        // P0 hotfix t_d0889187 (final visibility layer): the 1.2 client
+        // builds the character mesh from the EQUIPMENT section of
+        // SCUnitStatePacket — body-part items (face/hair/body, slots 19-25)
+        // carry the mesh asset ids; without them the client renders tags and
+        // positions but no body (NPC path guards validFlags<=0 as "no body
+        // and no face"). Mirror the human create path: equip the template
+        // body parts exactly like CharacterManager.Create does.
+        BotAppearanceDefaults.EquipTemplateBodyParts(character, template);
         character.Appellations = new CharacterAppellations(character);
         character.Abilities = new CharacterAbilities(character);
         character.Quests = new CharacterQuests(character);
