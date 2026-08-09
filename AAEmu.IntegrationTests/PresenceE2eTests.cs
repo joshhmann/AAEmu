@@ -44,10 +44,15 @@ public class PresenceE2eTests
         {
             E2eStack.EnsureUp();
 
-            // Wait for the living loop to come up (provision -> spawn ->
-            // activate -> fidelity Full -> roam route armed). The demo logs
-            // the final state line; 120s covers boot + world-ready + MySQL.
-            var gameLog = Path.Combine(E2eStack.E2eRoot, "logs", "game.log");
+            // t_555ed207 order-independence: the stack may already be up with
+            // ZERO bot rows (a sibling test's finally deleted them) and the
+            // current game's log may be game-restart.log, not game.log.
+            // Provision OUR OWN rows with a fresh boot, then observe exactly
+            // this boot's bots — same self-provisioning pattern as the
+            // sibling restart/appearance tests, so suite order never matters.
+            E2eStack.CleanupBotRows("bot_managed_presence_001", "bot_managed_presence_002", "bot_managed_presence_003");
+            E2eStack.RestartGameServer();
+            var gameLog = Path.Combine(E2eStack.E2eRoot, "logs", "game-restart.log");
             var upLine = await WaitForLogLineAsync(gameLog, "presence demo up", TimeSpan.FromSeconds(180));
             Assert.NotNull(upLine);
             Assert.Contains("3/3 citizen bots roaming", upLine);
