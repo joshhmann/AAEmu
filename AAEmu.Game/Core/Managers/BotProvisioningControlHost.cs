@@ -10,6 +10,7 @@ using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Skills;
 using NLog;
 
 namespace AAEmu.Game.Core.Managers;
@@ -158,6 +159,8 @@ public sealed class BotProvisioningControlHost
                 return Ok(new { pong = true, port = _port });
             case "provision":
                 return HandleProvision(root);
+            case "provisionFactory":
+                return HandleProvisionFactory(root);
             case "setLevel":
                 return HandleSetLevel(root);
             case "deactivate":
@@ -248,6 +251,77 @@ public sealed class BotProvisioningControlHost
 
         character.Level = (byte)Math.Clamp(GetInt(root, "level", 1), 1, 55);
         return Ok(new { name = character.Name, level = character.Level });
+    }
+
+    /// <summary>
+    /// M6.6 parity-seeding rig (t_747a1c44): provision through the durable
+    /// factory path (BotAppearanceFactory + HeadlessSession.Provision(spec))
+    /// so the live rig exercises the FULL human create-path shape —
+    /// appearance blob, per-class equipment, starter bag supplies, skills,
+    /// actabilities, action-bar blob. Same account/character contract as
+    /// "provision" (adopt-or-create, idempotent re-provision).
+    /// </summary>
+    private string HandleProvisionFactory(JsonElement root)
+    {
+        try
+        {
+            return HandleProvisionFactoryCore(root);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "Provisioning control host: provisionFactory failed");
+            return Err("provisionFactory failed: " + ex.GetType().Name + ": " + ex.Message);
+        }
+    }
+
+    private string HandleProvisionFactoryCore(JsonElement root)
+    {
+        var username = root.GetProperty("username").GetString();
+        var name = root.TryGetProperty("name", out var nameEl) ? nameEl.GetString() : null;
+        if (string.IsNullOrWhiteSpace(username))
+            return Err("provisionFactory requires 'username'");
+
+        var race = Enum.TryParse<Race>(root.TryGetProperty("race", out var raceEl) ? raceEl.GetString() : null, ignoreCase: true, out var parsedRace)
+            ? parsedRace
+            : Race.Nuian;
+        var gender = Enum.TryParse<Gender>(root.TryGetProperty("gender", out var genderEl) ? genderEl.GetString() : null, ignoreCase: true, out var parsedGender)
+            ? parsedGender
+            : Gender.Male;
+        var level = (byte)Math.Clamp(GetInt(root, "level", 1), 1, 55);
+        // Deterministic appearance for the rig: Fight class (the canonical
+        // 1-skill starter set) + fixed seed (byte-identical look across runs).
+        var ability = Enum.TryParse<AbilityType>(root.TryGetProperty("ability", out var abilityEl) ? abilityEl.GetString() : null, ignoreCase: true, out var parsedAbility)
+            ? parsedAbility
+            : AbilityType.Fight;
+
+        // Boot-readiness guards — the rig retries on the "server not ready"
+        // marker (same rationale as HandleProvisionCore: worlds must exist
+        // AND be fully wired before provisioning).
+        var worlds = WorldManager.Instance.GetWorlds();
+        if (worlds.Length == 0 || worlds.Any(w => w.MateManager == null))
+            return Err("server not ready (worlds still loading)");
+
+        try
+        {
+            if (CharacterManager.Instance.GetTemplate(race, gender) == null)
+                return Err("server not ready (character templates not loaded)");
+        }
+        catch
+        {
+            return Err("server not ready (character templates not loaded)");
+        }
+
+        var spec = new BotAppearanceSpec(race, gender, ability, Seed: 0xB075EEDu, Name: name);
+        var session = HeadlessSession.Provision(username, spec, level);
+        return Ok(new
+        {
+            accountId = session.ProvisionedAccount?.AccountId,
+            username = session.ProvisionedAccount?.Username,
+            clientLoginBlocked = session.ProvisionedAccount?.ClientLoginBlocked,
+            characterId = session.Character.Id,
+            name = session.Character.Name,
+            level = session.Character.Level
+        });
     }
 
     private string HandleDeactivate(JsonElement root)

@@ -112,11 +112,12 @@ public class HeadlessSessionProvisioningLiveTests
             // ------------------------------------------------------------------ provision
             var provision = await SendCommandAsync(control, new
             {
-                cmd = "provision",
+                cmd = "provisionFactory", // M6.6 t_747a1c44: the full factory path — appearance + equipment + bag supplies + progression seeding
                 username = Username,
                 name = CharacterName,
                 race = "Nuian",
                 gender = "Male",
+                ability = "Fight",
                 level = 1
             }, retries: 90, retryDelay: TimeSpan.FromSeconds(2)); // boot-readiness guard (templates load takes ~1-2min)
 
@@ -171,6 +172,46 @@ public class HeadlessSessionProvisioningLiveTests
                 await Assert.That(reader.GetUInt32("world_id")).IsEqualTo(0u);
                 await Assert.That(reader.GetInt32("deleted")).IsEqualTo(0);
             }
+
+            // ------------------------------------------------------------------ M6.6 parity seeding (t_747a1c44): fresh row
+            // A provisioned citizen must carry the human create-path seeding:
+            // start-ability skill rows, the full 34-row actability set, a
+            // populated action-bar blob (137B for a Nuian-male Fight level-1
+            // character — byte-identical to the human Asssaa row) and the
+            // starter bag supplies (4 stacks / 10 units: 4045, 18791×3,
+            // 18792×3, 417×3).
+            using (var conn = OpenDb("aaemu_game"))
+            {
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT COUNT(*) FROM skills WHERE `owner` = @id";
+                    cmd.Parameters.AddWithValue("@id", _characterId);
+                    await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(1); // Fight start-ability set
+                }
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT `id` FROM skills WHERE `owner` = @id";
+                    cmd.Parameters.AddWithValue("@id", _characterId);
+                    await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(18132); // canonical Fight starter (Asssaa's row)
+                }
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT COUNT(*) FROM actabilities WHERE `owner` = @id";
+                    cmd.Parameters.AddWithValue("@id", _characterId);
+                    await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(34); // full actability_groups set
+                }
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT LENGTH(`slots`) FROM characters WHERE `id` = @id";
+                    cmd.Parameters.AddWithValue("@id", _characterId);
+                    await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(137); // 85 None + 13 populated × 4B — human shape
+                }
+            }
+
+            // Bag items reach MySQL via the periodic SaveManager tick
+            // (Character.Save's Inventory save is deferred), so poll for the
+            // starter kit (AutoSaveInterval 0.5 in the rig config).
+            await WaitForBagRowsAsync(_characterId, expectedRows: 4, expectedTotalCount: 10, TimeSpan.FromSeconds(30));
 
             // ------------------------------------------------------------------ persist probe: mutate in-memory, deactivate, row must keep it
             var setLevel = await SendCommandAsync(control, new { cmd = "setLevel", characterId = _characterId, level = 7 });
@@ -250,6 +291,59 @@ public class HeadlessSessionProvisioningLiveTests
             var serverLog = File.ReadAllText(Path.Combine(RigDir, "server.log"));
             await Assert.That(serverLog.Contains("rejected by NameManager", StringComparison.Ordinal)).IsFalse();
             await Assert.That(serverLog.Contains("adopted existing character", StringComparison.Ordinal)).IsTrue();
+
+            // ------------------------------------------------------------------ M6.6 parity seeding (t_747a1c44): adopt-path heal
+            // A row provisioned BEFORE the parity seeding (skills 0 rows,
+            // actability 0 rows, all-None action bar) must be HEALED on the
+            // next adopt. Wipe the seeded rows, then re-provision the same
+            // name — the adopt path must restore skills + actability + blob.
+            using (var conn = OpenDb("aaemu_game"))
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM skills WHERE `owner` = @id; DELETE FROM actabilities WHERE `owner` = @id";
+                cmd.Parameters.AddWithValue("@id", _characterId);
+                cmd.ExecuteNonQuery();
+            }
+
+            var healProvision = await SendCommandAsync(control, new
+            {
+                cmd = "provisionFactory",
+                username = Username,
+                name = CharacterName,
+                race = "Nuian",
+                gender = "Male",
+                ability = "Fight",
+                level = 1
+            });
+            await Assert.That(IsOk(healProvision)).IsTrue();
+            await Assert.That(GetUInt(GetData(healProvision), "characterId")).IsEqualTo(_characterId); // adopted, not duplicated
+
+            using (var conn = OpenDb("aaemu_game"))
+            {
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT COUNT(*) FROM skills WHERE `owner` = @id";
+                    cmd.Parameters.AddWithValue("@id", _characterId);
+                    await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(1); // healed back
+                }
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT COUNT(*) FROM actabilities WHERE `owner` = @id";
+                    cmd.Parameters.AddWithValue("@id", _characterId);
+                    await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(34); // healed back
+                }
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT LENGTH(`slots`) FROM characters WHERE `id` = @id";
+                    cmd.Parameters.AddWithValue("@id", _characterId);
+                    await Assert.That(Convert.ToInt64(cmd.ExecuteScalar())).IsEqualTo(137); // blob healed back
+                }
+            }
+
+            // The heal path must have run and persisted (log line is the
+            // discriminator — the periodic save alone could restore rows).
+            var serverLogAfterHeal = File.ReadAllText(Path.Combine(RigDir, "server.log"));
+            await Assert.That(serverLogAfterHeal.Contains("healed skills/actabilities/bag supplies", StringComparison.Ordinal)).IsTrue();
         }
         finally
         {
@@ -427,6 +521,24 @@ public class HeadlessSessionProvisioningLiveTests
         try
         {
             using var game = OpenDb("aaemu_game");
+            // Items/containers have no FK cascade — wipe them first so
+            // repeated live runs never accumulate orphan rows.
+            using (var cmd = game.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM items WHERE `container_id` IN (SELECT `container_id` FROM item_containers WHERE `owner_id` IN " +
+                                  "(SELECT `id` FROM characters WHERE `account_id` IN " +
+                                  "(SELECT `id` FROM aaemu_login.users WHERE `username` = @u)))";
+                cmd.Parameters.AddWithValue("@u", Username);
+                cmd.ExecuteNonQuery();
+            }
+            using (var cmd = game.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM item_containers WHERE `owner_id` IN " +
+                                  "(SELECT `id` FROM characters WHERE `account_id` IN " +
+                                  "(SELECT `id` FROM aaemu_login.users WHERE `username` = @u))";
+                cmd.Parameters.AddWithValue("@u", Username);
+                cmd.ExecuteNonQuery();
+            }
             using (var cmd = game.CreateCommand())
             {
                 cmd.CommandText = "DELETE FROM characters WHERE `account_id` IN " +
@@ -447,6 +559,43 @@ public class HeadlessSessionProvisioningLiveTests
         {
             // teardown best effort — never mask the test verdict
         }
+    }
+
+    /// <summary>
+    /// M6.6 t_747a1c44: bag items only reach MySQL through the periodic
+    /// SaveManager tick (Character.Save defers Inventory), so poll for the
+    /// starter-kit rows instead of asserting once (AutoSaveInterval 0.5 in
+    /// the rig config).
+    /// </summary>
+    private static async Task WaitForBagRowsAsync(uint characterId, int expectedRows, int expectedTotalCount, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        long rows = 0, total = 0;
+        while (DateTime.UtcNow < deadline)
+        {
+            using var conn = OpenDb("aaemu_game");
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT COUNT(*) FROM items i JOIN item_containers ic ON ic.container_id = i.container_id " +
+                                  "WHERE ic.owner_id = @id AND ic.slot_type = 2";
+                cmd.Parameters.AddWithValue("@id", characterId);
+                rows = Convert.ToInt64(cmd.ExecuteScalar());
+            }
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT COALESCE(SUM(i.`count`),0) FROM items i JOIN item_containers ic ON ic.container_id = i.container_id " +
+                                  "WHERE ic.owner_id = @id AND ic.slot_type = 2";
+                cmd.Parameters.AddWithValue("@id", characterId);
+                total = Convert.ToInt64(cmd.ExecuteScalar());
+            }
+            if (rows == expectedRows && total == expectedTotalCount)
+                return;
+
+            await Task.Delay(1000).ConfigureAwait(false);
+        }
+
+        throw new TimeoutException(
+            $"bag rows never reached {expectedRows} rows / {expectedTotalCount} units (last: {rows} rows / {total} units) within {timeout.TotalSeconds}s");
     }
 
     // ------------------------------------------------------------------ helpers

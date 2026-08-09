@@ -554,30 +554,10 @@ public class CharacterManager(
                 slot++;
             }
 
-        character.Abilities = new CharacterAbilities(character);
-        character.Abilities.SetAbility(character.Ability1, 0);
-
-        character.Actability = new CharacterActability(character);
-        foreach (var (id, actabilityTemplate) in _actabilities)
-            character.Actability.Actabilities.Add(id, new Actability(actabilityTemplate));
-
-        character.Skills = new CharacterSkills(character);
-        foreach (var skill in skillManager.GetDefaultSkills())
-        {
-            if (!skill.AddToSlot)
-                continue;
-            character.SetAction(skill.Slot, ActionSlotType.Spell, skill.Template.Id);
-        }
-
-        slot = 1;
-        while (character.Slots[slot].Type != ActionSlotType.None)
-            slot++;
-        foreach (var skill in skillManager.GetStartAbilitySkills(character.Ability1))
-        {
-            character.Skills.AddSkill(skill, 1, false);
-            character.SetAction(slot, ActionSlotType.Spell, skill.Id);
-            slot++;
-        }
+        // Player-progression seeding (abilities tree, full actability set,
+        // start-ability skills + action-bar spell slots) — the shared
+        // create-path seeding, also used by bot provisioning (t_747a1c44).
+        ApplyPlayerProgression(character);
 
         character.Appellations = new CharacterAppellations(character);
         character.Quests = new CharacterQuests(character);
@@ -950,6 +930,91 @@ public class CharacterManager(
         {
             character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Invalid, supply.TemplateId, supply.Amount, supply.Grade);
             character.SetAction(slot, ActionSlotType.ItemType, supply.TemplateId);
+            slot++;
+        }
+    }
+
+    /// <summary>
+    /// Applies the player-create progression seeding — the exact seeding
+    /// block CharacterManager.Create runs for a new human character,
+    /// extracted so bot provisioning (HeadlessSession.Provision) and the
+    /// adopt-path heal apply the SAME shape (player-equivalence, AGENTS.md
+    /// #9/#10; M6.6 parity seeding t_747a1c44):
+    ///
+    ///  * ability-1 tree (Abilities.SetAbility) when no abilities exist;
+    ///  * the full actability set from the canonical actability_groups
+    ///    catalog (34 rows in 1.2 data) when the character has none;
+    ///  * the start-ability skill set (skills rows) when the character has
+    ///    no learned skills;
+    ///  * the default-skill action slots (fixed slot_index) and the
+    ///    start-ability skill slots (first free slots) when the action bar
+    ///    has no spell slots yet — matching Create()'s order, where starter
+    ///    supplies occupy item slots 10.. first.
+    ///
+    /// Every guard is seed-if-missing, so re-running is a no-op (idempotent
+    /// heal for adopted bot rows).
+    /// </summary>
+    public void ApplyPlayerProgression(Character character)
+    {
+        if (character.Abilities == null)
+        {
+            character.Abilities = new CharacterAbilities(character);
+            character.Abilities.SetAbility(character.Ability1, 0);
+        }
+
+        if (character.Actability == null || character.Actability.Actabilities.Count == 0)
+        {
+            character.Actability = new CharacterActability(character);
+            foreach (var (id, actabilityTemplate) in _actabilities)
+                character.Actability.Actabilities.Add(id, new Actability(actabilityTemplate));
+        }
+
+        if (character.Skills == null || character.Skills.Skills.Count == 0)
+        {
+            character.Skills = new CharacterSkills(character);
+            foreach (var skill in skillManager.GetStartAbilitySkills(character.Ability1))
+                character.Skills.AddSkill(skill, 1, false);
+        }
+
+        if (character.Slots.Any(s => s.Type == ActionSlotType.Spell))
+            return;
+
+        foreach (var skill in skillManager.GetDefaultSkills())
+        {
+            if (!skill.AddToSlot)
+                continue;
+            character.SetAction(skill.Slot, ActionSlotType.Spell, skill.Template.Id);
+        }
+
+        var slot = (byte)1;
+        while (character.Slots[slot].Type != ActionSlotType.None)
+            slot++;
+        foreach (var skill in skillManager.GetStartAbilitySkills(character.Ability1))
+        {
+            character.SetAction(slot, ActionSlotType.Spell, skill.Id);
+            slot++;
+        }
+    }
+
+    /// <summary>
+    /// Grants the starter bag supplies the human create path applies — the
+    /// ability-1 newbie kit merged with the shared ability-0 kit
+    /// (<see cref="GetStartingAbilityEquipment"/>). Items land in the bag
+    /// and item action slots start at 10, exactly like Create(). No-op when
+    /// the bag already holds items (idempotent heal for adopted bot rows —
+    /// M6.6 parity seeding t_747a1c44).
+    /// </summary>
+    public void ApplyStarterBagSupplies(Character character)
+    {
+        if (character.Inventory?.Bag == null || character.Inventory.Bag.Items.Count > 0)
+            return;
+
+        var supplies = GetStartingAbilityEquipment((byte)character.Ability1);
+        var slot = (byte)10;
+        foreach (var item in supplies.Supplies)
+        {
+            character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Invalid, item.Id, item.Amount, item.Grade);
+            character.SetAction(slot, ActionSlotType.ItemType, item.Id);
             slot++;
         }
     }

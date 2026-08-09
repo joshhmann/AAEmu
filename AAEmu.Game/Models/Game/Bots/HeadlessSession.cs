@@ -188,6 +188,34 @@ public class HeadlessSession
                     Logger.Info("Provisioning: healed degenerate unit_model_params for adopted bot '{Name}' (id {Id})", name, adoptedCharacter.Id);
             }
 
+            // M6.6 t_747a1c44: rows provisioned before the parity seeding
+            // carry no skills, no actabilities, an all-None action bar and an
+            // empty bag (parity audit: 0 skill rows / 0 vs 34 actability /
+            // 85B blob vs human 137B). Heal the missing seeding in-memory AND
+            // persist it so the row stays a full player across reboots.
+            // Seed-if-missing guards (ApplyPlayerProgression /
+            // ApplyStarterBagSupplies) make the heal idempotent: a healed row
+            // is a no-op on the next boot.
+            var healedSeeding = false;
+            if (adoptedCharacter.Inventory?.Bag is { Items.Count: 0 })
+            {
+                CharacterManager.Instance.ApplyStarterBagSupplies(adoptedCharacter);
+                healedSeeding = true;
+            }
+
+            if (adoptedCharacter.Skills is not { Skills.Count: > 0 } ||
+                adoptedCharacter.Actability is not { Actabilities.Count: > 0 } ||
+                !adoptedCharacter.Slots.Any(s => s.Type == ActionSlotType.Spell))
+            {
+                CharacterManager.Instance.ApplyPlayerProgression(adoptedCharacter);
+                healedSeeding = true;
+            }
+
+            if (healedSeeding && !adoptedCharacter.SaveDirectlyToDatabase())
+                Logger.Warn("Provisioning: adopted '{Name}' (id {Id}) — parity-seeding heal save FAILED", name, adoptedCharacter.Id);
+            else if (healedSeeding)
+                Logger.Info("Provisioning: healed skills/actabilities/bag supplies for adopted bot '{Name}' (id {Id})", name, adoptedCharacter.Id);
+
             Logger.Info("Provisioning: adopted existing character row '{Name}' (id {Id}, account {AccountId}) — re-embodying",
                 name, adoptedCharacter.Id, account.AccountId);
 
@@ -221,6 +249,12 @@ public class HeadlessSession
         // consumables) — the same data the human create path applies.
         if (appearance != null)
             CharacterManager.Instance.ApplyStartingEquipment(character, appearance);
+
+        // M6.6 t_747a1c44: a fresh citizen is born with the human create-path
+        // progression — ability-1 tree, full actability set, start-ability
+        // skill rows + action-bar spell slots. SaveDirectlyToDatabase below
+        // persists the skills/actabilities rows exactly like a human create.
+        CharacterManager.Instance.ApplyPlayerProgression(character);
 
         if (!character.SaveDirectlyToDatabase())
         {
