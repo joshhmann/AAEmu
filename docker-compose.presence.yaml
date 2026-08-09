@@ -1,0 +1,18 @@
+# Presence-demo hotfix overlay (M6) — captured in-repo 2026-08-09 from the
+# live deploy dir /root/aaemu-deploy-hotfix3/docker-compose.presence.yaml.
+# Apply on top of the repo-root stack:
+#   docker compose -f docker-compose.yaml -f docker-compose.presence.yaml up -d game
+# Uses the prebuilt presence-demo image (not the repo version-tagged one) and
+# the env-driven patrol-home override from c22575d9d
+# (AAEMU_PRESENCE_HOME_X/Y/Z, P0 t_118484a7).
+services:
+  game:
+    image: aaemu-game:presence-demo
+    environment:
+      AAEMU_PRESENCE_DEMO: "1"
+      # P0 HOTFIX #3 (t_118484a7, Aya scope-add 2026-08-08 12:05): patrol home
+      # relocated to Josh's spawn (zone 179, Asssaa 15572/15364/126.5) so the
+      # sighting is instant when visibility lands — bots embody + roam AT him.
+      AAEMU_PRESENCE_HOME_X: "15572"
+      AAEMU_PRESENCE_HOME_Y: "15364"
+      AAEMU_PRESENCE_HOME_Z: "126.5"
