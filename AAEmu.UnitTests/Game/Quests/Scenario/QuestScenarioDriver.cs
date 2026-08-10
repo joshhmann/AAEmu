@@ -74,6 +74,11 @@ public class QuestScenarioDriver
     /// (Task.Cancel() resolves Singleton&lt;TaskManager&gt;.Instance - CheckTimer paths).</summary>
     private static TaskManager s_taskManager;
 
+    /// <summary>Incrementing instance-id source for rig-preseeded SummonMate items
+    /// (M2 WI-4). Starts high so ids never collide with the IncrementingIdManager's
+    /// reward-item ids (which count up from 1 in the same process).</summary>
+    private static ulong s_nextMateItemId = 1_000_000;
+
     /// <summary>Snapshot of the quest state captured for the PERSIST round-trip.</summary>
     public sealed record PersistSnapshot(byte[] Data, QuestComponentKind Step, QuestAcceptorType AcceptorType,
         uint AcceptorId, uint ComponentId, int[] Objectives);
@@ -310,6 +315,14 @@ public class QuestScenarioDriver
             {
                 AbilityId = (AbilityType)GetUInt(raw, "abilityId"),
                 Level = GetByte(raw, "level"),
+                UseAlias = GetBool(raw, "useAlias"),
+                QuestActObjAliasId = GetUInt(raw, "questActObjAliasId")
+            },
+            nameof(QuestActObjMateLevel) => new QuestActObjMateLevel(component)
+            {
+                ItemId = GetUInt(raw, "itemId"),
+                Level = GetByte(raw, "level"),
+                Cleanup = GetBool(raw, "cleanup"),
                 UseAlias = GetBool(raw, "useAlias"),
                 QuestActObjAliasId = GetUInt(raw, "questActObjAliasId")
             },
@@ -744,6 +757,28 @@ public class QuestScenarioDriver
                         owner.Abilities.AddExp((AbilityType)i, int.MaxValue);
                 else
                     owner.Abilities.AddExp((AbilityType)abilityId, int.MaxValue);
+                break;
+            case "MateLevel":
+                // M2 WI-4 (t_fe93e2d8): QuestActObjMateLevel.RunAct ->
+                // CalculateObjective scans the owner's inventory for a
+                // SummonMate item with the act's ItemId whose DetailLevel >=
+                // Level (QuestActObjMateLevel.cs:22-58) - a state check at
+                // RunAct time, like AbilityLevel. The event's job is the RIG:
+                // preseed a REAL SummonMate (an ItemMock fails the
+                // `item is not SummonMate` guard) at the required DetailLevel
+                // so the Progress stage's state check counts. _holdingContainer
+                // must be wired so the Cleanup consume path (ConsumeItem ->
+                // RemoveItem, QuestRemoveSupplies) can physically remove the
+                // mate from the bag.
+                var mateItemId = GetUInt(rawEvent, "itemId");
+                var mateLevel = GetByte(rawEvent, "level");
+                var mateBag = ((Character)owner).Inventory.Bag;
+                var mate = new SummonMate(s_nextMateItemId++, new ItemTemplate { Id = mateItemId, MaxCount = 1 }, 1)
+                {
+                    DetailLevel = mateLevel,
+                    _holdingContainer = mateBag
+                };
+                mateBag.Items.Add(mate);
                 break;
             case "Aggro":
                 // M2a wave-2 (t_41a14bab): QuestActObjAggro subscribes OnKill

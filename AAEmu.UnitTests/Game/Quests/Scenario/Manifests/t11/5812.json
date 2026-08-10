@@ -1,6 +1,6 @@
 {
- "questId": 5464,
- "name": "잘 자란 칠흑의 릴리엇 말 납품",
+ "questId": 5812,
+ "name": "잘 자란 날렵한 갈색 곰 납품",
  "zoneId": 1,
  "categoryId": 87,
  "level": 50,
@@ -10,80 +10,94 @@
  "family": "QuestActConAcceptNpc",
  "acceptor": {
   "type": "Npc",
-  "id": 13453
+  "id": 13454
  },
  "template": {
   "level": 50,
   "components": [
    {
     "kind": "Start",
-    "id": 23634,
+    "id": 25119,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33263,
+      "actId": 34545,
       "type": "QuestActConAcceptNpc",
-      "detailId": 4205,
-      "npcId": 13453
+      "detailId": 4430,
+      "npcId": 13454
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 23635,
+    "id": 25120,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33266,
+      "actId": 34549,
       "type": "QuestActObjItemGather",
-      "detailId": 2702,
-      "itemId": 28449,
+      "detailId": 2846,
+      "itemId": 29767,
       "count": 1
      }
     ]
    },
    {
     "kind": "Ready",
-    "id": 23636,
+    "id": 25121,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33276,
+      "actId": 34546,
       "type": "QuestActConReportNpc",
-      "detailId": 4522,
+      "detailId": 4706,
       "npcId": 13453
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 23643,
+    "id": 25125,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33270,
+      "actId": 34550,
       "type": "QuestActObjMateLevel",
-      "detailId": 6,
-      "itemId": 8158,
+      "detailId": 9,
+      "itemId": 28420,
       "level": 50,
       "cleanup": true,
       "useAlias": true,
-      "questActObjAliasId": 2467
+      "questActObjAliasId": 2567
      }
     ]
    },
    {
     "kind": "Reward",
-    "id": 23644,
+    "id": 25127,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33273,
+      "actId": 34552,
       "type": "QuestActSupplyItem",
-      "detailId": 3778,
-      "itemId": 28458,
+      "detailId": 3912,
+      "itemId": 29769,
       "gradeId": 0,
       "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25398,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34708,
+      "type": "QuestActObjItemGather",
+      "detailId": 2851,
+      "itemId": 28481,
+      "count": 500
      }
     ]
    }
@@ -103,13 +117,18 @@
    "events": [
     {
      "type": "ItemGather",
-     "itemId": 28449,
+     "itemId": 29767,
      "count": 1
     },
     {
      "type": "MateLevel",
-     "itemId": 8158,
+     "itemId": 28420,
      "level": 50
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28481,
+     "count": 500
     }
    ],
    "expect": {
@@ -138,7 +157,7 @@
     "completed": true,
     "rewardItems": [
      {
-      "itemId": 28458,
+      "itemId": 29769,
       "count": 1
      }
     ]
@@ -155,8 +174,12 @@
  "selectedRewardIndex": 0,
  "inventory": [
   {
-   "itemId": 28449,
+   "itemId": 29767,
    "count": 1
+  },
+  {
+   "itemId": 28481,
+   "count": 500
   }
  ]
 }

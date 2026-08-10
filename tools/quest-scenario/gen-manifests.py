@@ -145,6 +145,20 @@ ACT_TABLES = {
         "useAlias": "use_alias",
         "questActObjAliasId": "quest_act_obj_alias_id",
     }),
+    # M2 WI-4 (t_fe93e2d8): MateLevel objective act (7 carriers: 5430/5464/
+    # 5465/5466/5812/5813 live + 6015 orphaned context, all level 50,
+    # cleanup='t'). State-check objective: RunAct -> CalculateObjective scans
+    # the owner's inventory for a SummonMate item with the act's ItemId whose
+    # DetailLevel >= Level (QuestActObjMateLevel.cs:22-58) - the driver's
+    # MateLevel event presees the summoned mate (cleanup acts consume it when
+    # the objective is met).
+    "QuestActObjMateLevel": ("quest_act_obj_mate_levels", {
+        "itemId": "item_id",
+        "level": "LEVEL",
+        "cleanup": "cleanup",
+        "useAlias": "use_alias",
+        "questActObjAliasId": "quest_act_obj_alias_id",
+    }),
 }
 
 # Act types that need no synthetic event but whose RunAct is drivable by quest state.
@@ -227,6 +241,14 @@ def event_shape(act_type, params, component_id, group_members, npc_groups=None, 
         # stage. abilityId 0 = the all-abilities branch (every ability
         # 1..10 must meet the level; the driver saturates all of them).
         return {"type": "AbilityLevel", "abilityId": params.get("abilityId", 0), "level": params.get("level", 0)}
+    if act_type == "QuestActObjMateLevel":
+        # M2 WI-4 (t_fe93e2d8): state-check objective - RunAct ->
+        # CalculateObjective scans the owner's inventory for a SummonMate
+        # item with the act's ItemId whose DetailLevel >= Level. The event's
+        # job is the RIG: the driver presees the summoned mate so the state
+        # check counts at the Progress stage (cleanup acts consume it when
+        # the objective is met).
+        return {"type": "MateLevel", "itemId": params.get("itemId", 0), "level": params.get("level", 0)}
     if act_type == "QuestActObjCinema":
         # M2a wave-1: two-event drive. QuestActObjCinema.OnCinemaStarted sets
         # player.CurrentlyPlayingCinemaId = CinemaId; OnCinemaEnded credits the
@@ -307,6 +329,7 @@ def load_npc_groups(c):
 BOOL_COLUMNS = {
     "QuestActObjAggro": {"rank1Item", "rank2Item", "rank3Item", "useAlias"},
     "QuestActObjAbilityLevel": {"useAlias"},
+    "QuestActObjMateLevel": {"cleanup", "useAlias"},
 }
 
 
@@ -458,7 +481,7 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         for act in comp_acts:
             if act["type"] not in NO_EVENT_TYPES and act["type"] not in ACT_TABLES:
                 continue
-            if act["type"] in NO_EVENT_TYPES or act["type"] in ("QuestActObjSphere", "QuestActObjMonsterGroupHunt", "QuestActObjItemGroupUse", "QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal", "QuestActObjMonsterHunt", "QuestActObjItemGather", "QuestActObjItemUse", "QuestActObjTalk", "QuestActObjInteraction", "QuestActObjCraft", "QuestActObjLevel", "QuestActObjAbilityLevel", "QuestActObjItemGroupGather"):
+            if act["type"] in NO_EVENT_TYPES or act["type"] in ("QuestActObjSphere", "QuestActObjMonsterGroupHunt", "QuestActObjItemGroupUse", "QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal", "QuestActObjMonsterHunt", "QuestActObjItemGather", "QuestActObjItemUse", "QuestActObjTalk", "QuestActObjInteraction", "QuestActObjCraft", "QuestActObjLevel", "QuestActObjAbilityLevel", "QuestActObjMateLevel", "QuestActObjItemGroupGather"):
                 continue
             if event_shape(act["type"], act, cid, item_groups, npc_groups, acceptor_npc_id) is None:
                 skip_reasons.append(f"unsynthesizable event shape for {act['type']}")
@@ -518,6 +541,10 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         # M2 WI-3 (t_d5e802f5): ability-level objective - CountsAsAnObjective
         # => true (QuestActObjAbilityLevel.cs:9); credited via the rig preseed.
         "QuestActObjAbilityLevel",
+        # M2 WI-4 (t_fe93e2d8): mate-level objective - CountsAsAnObjective
+        # => true (QuestActObjMateLevel.cs:10); credited via the rig preseed
+        # (SummonMate in inventory at DetailLevel >= Level).
+        "QuestActObjMateLevel",
     }
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
@@ -894,6 +921,31 @@ def select_t10_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
+# ---- T11 (M2 WI-4, t_fe93e2d8): MateLevel objective act carriers ----
+# 6 live carriers: 5430/5464 (already in T3_PINNED_QUESTS) + 5465/5466/5812/
+# 5813 (level 50, outside the t6/t7/t8 band sweeps - they need their own
+# tier or they never reach the census, same rule as t9/t10). 6015 also has a
+# MateLevel act but NO quest_contexts row (orphaned context) - joining
+# quest_contexts excludes it so the census does not gain a NEW orphan SKIP
+# (zero-new-SKIP acceptance).
+WAVE5_ACT_TYPES = (
+    "QuestActObjMateLevel",
+)
+
+
+def select_t11_quests(c, existing_ids):
+    """All LIVE MateLevel act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE5_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        JOIN quest_contexts q ON q.id = cmp.quest_context_id
+        WHERE a.act_detail_type IN ({placeholders})
+        ORDER BY cmp.quest_context_id""", WAVE5_ACT_TYPES).fetchall()
+    return [r[0] for r in rows if r[0] not in existing_ids]
+
+
 # ---- T6/T7/T8 (M2a/M2c census): full band sweeps ----
 # Every non-dropped quest in the band, minus quests already sampled in
 # T1-T5 (each quest driven exactly once across the census).
@@ -1135,6 +1187,26 @@ def main():
         counts["t10"] = counts.get("t10", 0) + 1
     existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
 
+    # ---- T11 (M2 WI-4, t_fe93e2d8): MateLevel objective carriers ----
+    # The four level-50 carriers not sampled anywhere else (5465/5466/5812/
+    # 5813; 5430/5464 are in T3). Folded into existing_ids before the band
+    # sweeps so they stay driven exactly once.
+    t11_ids = select_t11_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t11")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t11_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t11"] = counts.get("t11", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
     # ---- T6/T7 (M2a census): full band sweeps ----
     # The band denominators (incl. dropped ids per band) and the signature
     # zone map are emitted to Manifests/census-meta.json for the tier test's
@@ -1164,6 +1236,7 @@ def main():
                       "t5_selected": len(t5_ids),
                       "t9_selected": len(t9_ids),
                       "t10_selected": len(t10_ids),
+                      "t11_selected": len(t11_ids),
                       "t6_selected": band_counts.get("t6", 0),
                       "t7_selected": band_counts.get("t7", 0)}, indent=1))
 

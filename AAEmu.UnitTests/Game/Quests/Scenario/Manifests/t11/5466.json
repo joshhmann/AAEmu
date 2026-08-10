@@ -1,6 +1,6 @@
 {
- "questId": 5464,
- "name": "잘 자란 칠흑의 릴리엇 말 납품",
+ "questId": 5466,
+ "name": "잘 자란 순백의 릴리엇 말 납품",
  "zoneId": 1,
  "categoryId": 87,
  "level": 50,
@@ -10,33 +10,33 @@
  "family": "QuestActConAcceptNpc",
  "acceptor": {
   "type": "Npc",
-  "id": 13453
+  "id": 13455
  },
  "template": {
   "level": 50,
   "components": [
    {
     "kind": "Start",
-    "id": 23634,
+    "id": 23640,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33263,
+      "actId": 33265,
       "type": "QuestActConAcceptNpc",
-      "detailId": 4205,
-      "npcId": 13453
+      "detailId": 4207,
+      "npcId": 13455
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 23635,
+    "id": 23641,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33266,
+      "actId": 33268,
       "type": "QuestActObjItemGather",
-      "detailId": 2702,
+      "detailId": 2704,
       "itemId": 28449,
       "count": 1
      }
@@ -44,43 +44,43 @@
    },
    {
     "kind": "Ready",
-    "id": 23636,
+    "id": 23642,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33276,
+      "actId": 33278,
       "type": "QuestActConReportNpc",
-      "detailId": 4522,
-      "npcId": 13453
+      "detailId": 4524,
+      "npcId": 13455
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 23643,
+    "id": 23647,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33270,
+      "actId": 33272,
       "type": "QuestActObjMateLevel",
-      "detailId": 6,
-      "itemId": 8158,
+      "detailId": 8,
+      "itemId": 8163,
       "level": 50,
       "cleanup": true,
       "useAlias": true,
-      "questActObjAliasId": 2467
+      "questActObjAliasId": 2469
      }
     ]
    },
    {
     "kind": "Reward",
-    "id": 23644,
+    "id": 23648,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 33273,
+      "actId": 33275,
       "type": "QuestActSupplyItem",
-      "detailId": 3778,
+      "detailId": 3780,
       "itemId": 28458,
       "gradeId": 0,
       "count": 1
@@ -108,7 +108,7 @@
     },
     {
      "type": "MateLevel",
-     "itemId": 8158,
+     "itemId": 8163,
      "level": 50
     }
    ],
@@ -122,7 +122,7 @@
    "events": [
     {
      "type": "ReportNpc",
-     "npcId": 13453,
+     "npcId": 13455,
      "selected": 0
     }
    ],

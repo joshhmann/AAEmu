@@ -8,7 +8,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 - **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
-- **T3 stratified act-family census (frozen M1-5c sample)**: 47 PASS / 0 FAIL / 7 SKIP
+- **T3 stratified act-family census (frozen M1-5c sample)**: 49 PASS / 0 FAIL / 5 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 32 PASS / 0 FAIL / 0 SKIP
 - **T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)**: 13 PASS / 0 FAIL / 0 SKIP
 - **T6 M2a census (band 1-10 full sweep)**: 445 PASS / 0 FAIL / 0 SKIP
@@ -16,7 +16,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 - **T8 M2c census (band 21-30 full sweep)**: 826 PASS / 0 FAIL / 0 SKIP
 - **T9 M2 WI-2 (CrimePoint supply carriers)**: 5 PASS / 0 FAIL / 0 SKIP
 - **T10 M2 WI-3 (AbilityLevel objective carriers)**: 9 PASS / 0 FAIL / 0 SKIP
-- **ALL TIERS (census)**: 2079 PASS / 0 FAIL / 13 SKIP over 2092 quests — **2079/2079 quests runnable** (13 SKIP not driven, reasons below)
+- **T11 M2 WI-4 (MateLevel objective carriers)**: 4 PASS / 0 FAIL / 0 SKIP
+- **ALL TIERS (census)**: 2085 PASS / 0 FAIL / 11 SKIP over 2096 quests — **2085/2085 quests runnable** (11 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
@@ -229,10 +230,10 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5052 | 빛을 찾아서 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 523 | 야영지의 비밀 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5263 | 너의 백일을 축하해! | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 5430 | 폭풍을 넘어 천둥을 내 손에 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjMateLevel; unsynthesizable event shape for QuestActObjMateLevel (comp 23458)) |
+| 5430 | 폭풍을 넘어 천둥을 내 손에 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5442 | [도전] 순두부 배달 | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5443 | [도전] 어둠의 경주 | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 5464 | 잘 자란 칠흑의 릴리엇 말 납품 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjMateLevel; unsynthesizable event shape for QuestActObjMateLevel (comp 23643)) |
+| 5464 | 잘 자란 칠흑의 릴리엇 말 납품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5552 | 나지막한 속삭임 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5650 | 밤의 이야기꾼 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5814 | [갈대무리 땅 더미] 일주일 그룹 | QuestActObjCompleteQuest | Skip | SKIP:Skip (unsupported act type QuestActObjCompleteQuest; unsynthesizable event shape for QuestActObjCompleteQuest (comp 25130); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25131); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25291); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25292); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25293)) |
@@ -2193,6 +2194,15 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 6081 | 낭만을 노래하는 영원한 방랑자 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6082 | 환술, 진실을 감추는 달콤한 속삭임 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 
+## T11 — per-quest verdicts
+
+| quest | name | family | verdict | detail |
+|---|---|---|---|---|
+| 5465 | 잘 자란 붉은 점박 릴리엇 말 납품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5466 | 잘 자란 순백의 릴리엇 말 납품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5812 | 잘 자란 날렵한 갈색 곰 납품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5813 | 잘 자란 날렵한 눈보라 곰 납품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+
 ## FAIL rollup (by act family — top blockers)
 
 _none — every driven quest passed._
@@ -2203,7 +2213,6 @@ _none — every driven quest passed._
 ## SKIP rollup (by reason)
 
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
-- **unsupported act type QuestActObjMateLevel** — 2 quests: 5430, 5464
 - **unsupported act type QuestActObjCompleteQuest** — 2 quests: 5814, 5815
 - **let-it-done quest with no report act (engine has no completion path)** — 1 quests: 6069
 
@@ -2219,5 +2228,4 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 | act family | gap kind | example quests | fix target |
 |---|---|---|---|
 | QuestActObjCompleteQuest | unsupported act type | 5814, 5815 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
-| QuestActObjMateLevel | unsupported act type | 5430, 5464 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 
