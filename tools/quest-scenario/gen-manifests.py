@@ -159,6 +159,18 @@ ACT_TABLES = {
         "useAlias": "use_alias",
         "questActObjAliasId": "quest_act_obj_alias_id",
     }),
+    # M2 WI-5 (t_d6516324): CompleteQuest objective act (11 live carriers:
+    # 5814-5821/5862/5868/5911, all level 50). State-check objective: RunAct
+    # checks quest.Owner.Quests.HasQuestCompleted(QuestId)
+    # (QuestActObjCompleteQuest.cs:26) - the driver's CompleteQuest event
+    # pre-marks the referenced quest as completed (SetCompletedQuestFlag,
+    # synthetic-block pattern) so the state check counts at Progress.
+    "QuestActObjCompleteQuest": ("quest_act_obj_complete_quests", {
+        "questId": "quest_id",
+        "acceptWith": "accept_with",
+        "useAlias": "use_alias",
+        "questActObjAliasId": "quest_act_obj_alias_id",
+    }),
 }
 
 # Act types that need no synthetic event but whose RunAct is drivable by quest state.
@@ -249,6 +261,15 @@ def event_shape(act_type, params, component_id, group_members, npc_groups=None, 
         # check counts at the Progress stage (cleanup acts consume it when
         # the objective is met).
         return {"type": "MateLevel", "itemId": params.get("itemId", 0), "level": params.get("level", 0)}
+    if act_type == "QuestActObjCompleteQuest":
+        # M2 WI-5 (t_d6516324): state-check objective - RunAct checks
+        # HasQuestCompleted(QuestId) (QuestActObjCompleteQuest.cs:26). The
+        # event's job is the RIG: the driver pre-marks the referenced quest
+        # as completed (SetCompletedQuestFlag, synthetic-block pattern) so
+        # the state check counts at the Progress stage. AcceptWith is
+        # unused by the engine today (TODO in the act) - the questId alone
+        # drives the objective.
+        return {"type": "CompleteQuest", "questId": params.get("questId", 0)}
     if act_type == "QuestActObjCinema":
         # M2a wave-1: two-event drive. QuestActObjCinema.OnCinemaStarted sets
         # player.CurrentlyPlayingCinemaId = CinemaId; OnCinemaEnded credits the
@@ -330,6 +351,8 @@ BOOL_COLUMNS = {
     "QuestActObjAggro": {"rank1Item", "rank2Item", "rank3Item", "useAlias"},
     "QuestActObjAbilityLevel": {"useAlias"},
     "QuestActObjMateLevel": {"cleanup", "useAlias"},
+    # M2 WI-5 (t_d6516324): acceptWith/useAlias are 't'/'f' text.
+    "QuestActObjCompleteQuest": {"acceptWith", "useAlias"},
 }
 
 
@@ -481,7 +504,7 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         for act in comp_acts:
             if act["type"] not in NO_EVENT_TYPES and act["type"] not in ACT_TABLES:
                 continue
-            if act["type"] in NO_EVENT_TYPES or act["type"] in ("QuestActObjSphere", "QuestActObjMonsterGroupHunt", "QuestActObjItemGroupUse", "QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal", "QuestActObjMonsterHunt", "QuestActObjItemGather", "QuestActObjItemUse", "QuestActObjTalk", "QuestActObjInteraction", "QuestActObjCraft", "QuestActObjLevel", "QuestActObjAbilityLevel", "QuestActObjMateLevel", "QuestActObjItemGroupGather"):
+            if act["type"] in NO_EVENT_TYPES or act["type"] in ("QuestActObjSphere", "QuestActObjMonsterGroupHunt", "QuestActObjItemGroupUse", "QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal", "QuestActObjMonsterHunt", "QuestActObjItemGather", "QuestActObjItemUse", "QuestActObjTalk", "QuestActObjInteraction", "QuestActObjCraft", "QuestActObjLevel", "QuestActObjAbilityLevel", "QuestActObjMateLevel", "QuestActObjCompleteQuest", "QuestActObjItemGroupGather"):
                 continue
             if event_shape(act["type"], act, cid, item_groups, npc_groups, acceptor_npc_id) is None:
                 skip_reasons.append(f"unsynthesizable event shape for {act['type']}")
@@ -545,6 +568,10 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         # => true (QuestActObjMateLevel.cs:10); credited via the rig preseed
         # (SummonMate in inventory at DetailLevel >= Level).
         "QuestActObjMateLevel",
+        # M2 WI-5 (t_d6516324): complete-quest objective - CountsAsAnObjective
+        # => true (QuestActObjCompleteQuest.cs:7); credited via the rig preseed
+        # (referenced quest pre-marked completed).
+        "QuestActObjCompleteQuest",
     }
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
@@ -946,6 +973,30 @@ def select_t11_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
+# ---- T12 (M2 WI-5, t_d6516324): CompleteQuest objective act carriers ----
+# 11 live carriers: 5814/5815 (already in T3_PINNED_QUESTS) + 5816-5821/5862/
+# 5868/5911 (level 50, outside the t6/t7/t8 band sweeps - they need their own
+# tier or they never reach the census, same rule as t9/t10/t11). The selector
+# joins quest_contexts so orphaned CompleteQuest act rows can't leak a new
+# orphan SKIP into the census (zero-new-SKIP acceptance).
+WAVE6_ACT_TYPES = (
+    "QuestActObjCompleteQuest",
+)
+
+
+def select_t12_quests(c, existing_ids):
+    """All LIVE CompleteQuest act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE6_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        JOIN quest_contexts q ON q.id = cmp.quest_context_id
+        WHERE a.act_detail_type IN ({placeholders})
+        ORDER BY cmp.quest_context_id""", WAVE6_ACT_TYPES).fetchall()
+    return [r[0] for r in rows if r[0] not in existing_ids]
+
+
 # ---- T6/T7/T8 (M2a/M2c census): full band sweeps ----
 # Every non-dropped quest in the band, minus quests already sampled in
 # T1-T5 (each quest driven exactly once across the census).
@@ -1207,6 +1258,26 @@ def main():
         counts["t11"] = counts.get("t11", 0) + 1
     existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
 
+    # ---- T12 (M2 WI-5, t_d6516324): CompleteQuest objective carriers ----
+    # The nine level-50 carriers not sampled anywhere else (5816-5821/5862/
+    # 5868/5911; 5814/5815 are in T3). Folded into existing_ids before the
+    # band sweeps so they stay driven exactly once.
+    t12_ids = select_t12_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t12")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t12_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t12"] = counts.get("t12", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
     # ---- T6/T7 (M2a census): full band sweeps ----
     # The band denominators (incl. dropped ids per band) and the signature
     # zone map are emitted to Manifests/census-meta.json for the tier test's
@@ -1237,6 +1308,7 @@ def main():
                       "t9_selected": len(t9_ids),
                       "t10_selected": len(t10_ids),
                       "t11_selected": len(t11_ids),
+                      "t12_selected": len(t12_ids),
                       "t6_selected": band_counts.get("t6", 0),
                       "t7_selected": band_counts.get("t7", 0)}, indent=1))
 

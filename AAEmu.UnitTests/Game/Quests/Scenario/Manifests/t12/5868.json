@@ -1,125 +1,124 @@
 {
- "questId": 5815,
- "name": "월요일의 의뢰",
+ "questId": 5868,
+ "name": "월요일의 의뢰 (2)",
  "zoneId": 200,
  "categoryId": 99,
  "level": 50,
- "letItDone": false,
+ "letItDone": true,
  "selective": false,
  "score": 0,
- "family": "QuestActConAcceptDoodad",
+ "family": "QuestActConReportNpc",
  "acceptor": {
-  "type": "Doodad",
-  "id": 7192
+  "type": "Npc",
+  "id": 0
  },
  "template": {
   "level": 50,
   "components": [
    {
     "kind": "Start",
-    "id": 25132,
+    "id": 25301,
     "nextComponent": 0,
-    "acts": [
-     {
-      "actId": 34568,
-      "type": "QuestActConAcceptDoodad",
-      "detailId": 262,
-      "doodadId": 7192
-     }
-    ]
+    "acts": []
    },
    {
     "kind": "Progress",
-    "id": 25133,
+    "id": 25302,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 34561,
+      "actId": 34662,
       "type": "QuestActObjCompleteQuest",
-      "detailId": 14,
+      "detailId": 52,
       "questId": 5822,
       "acceptWith": false,
-      "useAlias": false
+      "useAlias": true,
+      "questActObjAliasId": 2610
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 25134,
+    "id": 25303,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 34562,
+      "actId": 34663,
       "type": "QuestActObjCompleteQuest",
-      "detailId": 15,
+      "detailId": 53,
       "questId": 5823,
       "acceptWith": false,
-      "useAlias": false
+      "useAlias": true,
+      "questActObjAliasId": 2611
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 25296,
+    "id": 25372,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 34563,
+      "actId": 34664,
       "type": "QuestActObjCompleteQuest",
-      "detailId": 16,
-      "questId": 5824,
-      "acceptWith": false,
-      "useAlias": false
-     }
-    ]
-   },
-   {
-    "kind": "Progress",
-    "id": 25297,
-    "nextComponent": 0,
-    "acts": [
-     {
-      "actId": 34564,
-      "type": "QuestActObjCompleteQuest",
-      "detailId": 17,
-      "questId": 5825,
-      "acceptWith": false,
-      "useAlias": false
-     }
-    ]
-   },
-   {
-    "kind": "Progress",
-    "id": 25298,
-    "nextComponent": 0,
-    "acts": [
-     {
-      "actId": 34565,
-      "type": "QuestActObjCompleteQuest",
-      "detailId": 18,
+      "detailId": 54,
       "questId": 5826,
       "acceptWith": false,
-      "useAlias": false
+      "useAlias": true,
+      "questActObjAliasId": 2612
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25373,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34665,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 55,
+      "questId": 5857,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2613
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25374,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34666,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 56,
+      "questId": 5858,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2614
      }
     ]
    },
    {
     "kind": "Ready",
-    "id": 25299,
-    "nextComponent": 0,
-    "acts": []
-   },
-   {
-    "kind": "Reward",
-    "id": 25300,
+    "id": 25375,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 35500,
-      "type": "QuestActConAutoComplete",
-      "detailId": 1578
+      "actId": 34667,
+      "type": "QuestActConReportNpc",
+      "detailId": 4715,
+      "npcId": 13913
      }
     ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25376,
+    "nextComponent": 0,
+    "acts": []
    }
   ]
  },
@@ -145,25 +144,31 @@
     },
     {
      "type": "CompleteQuest",
-     "questId": 5824
-    },
-    {
-     "type": "CompleteQuest",
-     "questId": 5825
-    },
-    {
-     "type": "CompleteQuest",
      "questId": 5826
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5857
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5858
     }
    ],
    "expect": {
-    "step": "Ready",
+    "step": "Progress",
     "status": "Ready"
    }
   },
   {
    "name": "READY",
-   "events": [],
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13913,
+     "selected": 0
+    }
+   ],
    "expect": {
     "step": "Reward",
     "status": "Completed"

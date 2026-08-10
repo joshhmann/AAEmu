@@ -29,7 +29,11 @@
      {
       "actId": 34556,
       "type": "QuestActObjCompleteQuest",
-      "detailId": 9
+      "detailId": 9,
+      "questId": 5815,
+      "acceptWith": false,
+      "useAlias": false,
+      "questActObjAliasId": 0
      }
     ]
    },
@@ -41,7 +45,11 @@
      {
       "actId": 34557,
       "type": "QuestActObjCompleteQuest",
-      "detailId": 10
+      "detailId": 10,
+      "questId": 5816,
+      "acceptWith": false,
+      "useAlias": false,
+      "questActObjAliasId": 0
      }
     ]
    },
@@ -53,7 +61,11 @@
      {
       "actId": 34558,
       "type": "QuestActObjCompleteQuest",
-      "detailId": 11
+      "detailId": 11,
+      "questId": 5817,
+      "acceptWith": false,
+      "useAlias": false,
+      "questActObjAliasId": 0
      }
     ]
    },
@@ -65,7 +77,11 @@
      {
       "actId": 34559,
       "type": "QuestActObjCompleteQuest",
-      "detailId": 12
+      "detailId": 12,
+      "questId": 5818,
+      "acceptWith": false,
+      "useAlias": false,
+      "questActObjAliasId": 0
      }
     ]
    },
@@ -77,7 +93,11 @@
      {
       "actId": 34560,
       "type": "QuestActObjCompleteQuest",
-      "detailId": 13
+      "detailId": 13,
+      "questId": 5819,
+      "acceptWith": false,
+      "useAlias": false,
+      "questActObjAliasId": 0
      }
     ]
    },
@@ -106,7 +126,28 @@
   },
   {
    "name": "PROGRESS",
-   "events": [],
+   "events": [
+    {
+     "type": "CompleteQuest",
+     "questId": 5815
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5816
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5817
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5818
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5819
+    }
+   ],
    "expect": {
     "step": "Ready",
     "status": "Ready"
@@ -135,8 +176,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActObjCompleteQuest; unsynthesizable event shape for QuestActObjCompleteQuest (comp 25130); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25131); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25291); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25292); unsynthesizable event shape for QuestActObjCompleteQuest (comp 25293)"
- }
+ "selectedRewardIndex": 0
 }

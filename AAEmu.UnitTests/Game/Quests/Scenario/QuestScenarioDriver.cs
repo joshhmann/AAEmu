@@ -318,6 +318,22 @@ public class QuestScenarioDriver
                 UseAlias = GetBool(raw, "useAlias"),
                 QuestActObjAliasId = GetUInt(raw, "questActObjAliasId")
             },
+            // M2 WI-5 (t_d6516324): CompleteQuest objective act. RunAct checks
+            // HasQuestCompleted(QuestId) (QuestActObjCompleteQuest.cs:26) - a
+            // state check at RunAct time, like AbilityLevel/MateLevel. The
+            // driver's CompleteQuest event pre-marks the referenced quest as
+            // completed (synthetic-block pattern) so the check counts. Count
+            // must be set (default 1): GetQuestObjectiveStatus scales by
+            // Count, and 0 makes zero objectives read as Overachieved on
+            // let-it-done quests (5868) - false Ready at START.
+            nameof(QuestActObjCompleteQuest) => new QuestActObjCompleteQuest(component)
+            {
+                QuestId = GetUInt(raw, "questId"),
+                AcceptWith = GetBool(raw, "acceptWith"),
+                UseAlias = GetBool(raw, "useAlias"),
+                QuestActObjAliasId = GetUInt(raw, "questActObjAliasId"),
+                Count = count
+            },
             nameof(QuestActObjMateLevel) => new QuestActObjMateLevel(component)
             {
                 ItemId = GetUInt(raw, "itemId"),
@@ -779,6 +795,19 @@ public class QuestScenarioDriver
                     _holdingContainer = mateBag
                 };
                 mateBag.Items.Add(mate);
+                break;
+            case "CompleteQuest":
+                // M2 WI-5 (t_d6516324): QuestActObjCompleteQuest.RunAct checks
+                // HasQuestCompleted(QuestId) (QuestActObjCompleteQuest.cs:26) -
+                // a state check at RunAct time, like AbilityLevel/MateLevel.
+                // The event's job is the RIG: pre-mark the referenced quest as
+                // completed through the engine's OWN flag API
+                // (CharacterQuests.SetCompletedQuestFlag - the same method the
+                // completion path calls; synthetic-block pattern from
+                // PlayerbotPilotTests) so the Progress stage's state check
+                // counts. AcceptWith is unused by the engine today (TODO in
+                // the act) - the questId alone drives the objective.
+                ((Character)owner).Quests.SetCompletedQuestFlag(GetUInt(rawEvent, "questId"), true);
                 break;
             case "Aggro":
                 // M2a wave-2 (t_41a14bab): QuestActObjAggro subscribes OnKill
