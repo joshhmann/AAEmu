@@ -26,12 +26,12 @@
 --   unit_reqs: 123 rows owned by the 259 dropped comps (60 kind-31 chain gates,
 --     61 kind-1, 2 kind-3) — all pruned; incl. 18500 (1836's comp → 1832 external
 --     predecessor gate, pruned with its owner).
---   Skill kind-27 gate rows → dropped quests (PRUNED, rows only — skills stay):
---     11099 (skill 12050 → 5806, per register §9c), 18167 (skill 11686 → 3495),
---     21977 (skill 14353 → 3487) — 18167/21977 are drift-found same-class rows
---     (triage named only 11099; M2a precedent pruned Skill gates to dropped quests).
---     24869 (skill 12586 → 2640) LEFT per triage §3 — inert residue class, A1
---     explicitly has no downstream rows to prune.
+--   Skill kind-27 rows (11099: 12050→5806, 18167: 11686→3495, 21977: 14353→3487,
+--     24869: 12586→2640) KEPT — TargetNpc constraints, NOT quest gates (kind 27
+--     = TargetNpc per UnitReqsKindType.cs; value1 is an NPC template id; the
+--     quest-id-looking values are id-space collisions). Rei veto t_0f622b9c:
+--     M2a precedent left kind-27 rows untouched; pruning would strip live skill
+--     target-NPC requirements. Skills 12050/11686/14353/12586 stay as-is.
 --   Verified zero: external QuestComponent gates into the set (59 refs, all owned
 --     in-set), sphere_quests, items.loot_quest_id, doodad_func_quests,
 --     accept_quest_effects, sphere_accept_quest_quests, successive refs.
@@ -55,7 +55,7 @@
 --   quest_act_con_auto_completes         1,386 ->   1,383  (-3)
 --   quest_act_supply_appellations          288 ->     285  (-3)
 --   item_accept_quests                     367 ->     364  (-3)
---   unit_reqs                           13,354 ->  13,228  (-126)
+--   unit_reqs                           13,354 ->  13,231  (-123)
 
 -- ============================================================================
 -- 1. act-detail rows (33 — exclusively referenced by the 33 drop quest_acts)
@@ -170,24 +170,9 @@ WHERE "id" IN (8512, 8513, 8514, 8515, 8535, 8536, 8537, 8785,
   AND "component_kind_id" IN (2,4,6,8);
 
 -- ============================================================================
--- 5. unit_reqs (123 owned by drop comps + 3 Skill kind-27 gates to dropped quests)
+-- 5. unit_reqs (123 rows owned by the 259 dropped comps — Skill kind-27 rows
+--    KEPT: TargetNpc constraints, NOT quest gates — Rei veto t_0f622b9c)
 -- ============================================================================
-DELETE FROM "unit_reqs"
-WHERE "id" = 11099
-  AND "owner_type" = 'Skill'
-  AND "owner_id" = 12050
-  AND "kind_id" = 27
-  AND "value1" = 5806
-  AND "value2" = 0;
-
-DELETE FROM "unit_reqs"
-WHERE "id" = 18167
-  AND "owner_type" = 'Skill'
-  AND "owner_id" = 11686
-  AND "kind_id" = 27
-  AND "value1" = 3495
-  AND "value2" = 0;
-
 DELETE FROM "unit_reqs"
 WHERE "id" = 18500
   AND "owner_type" = 'QuestComponent'
@@ -202,14 +187,6 @@ WHERE "id" = 18558
   AND "owner_id" = 8785
   AND "kind_id" = 1
   AND "value1" = 8
-  AND "value2" = 0;
-
-DELETE FROM "unit_reqs"
-WHERE "id" = 21977
-  AND "owner_type" = 'Skill'
-  AND "owner_id" = 14353
-  AND "kind_id" = 27
-  AND "value1" = 3487
   AND "value2" = 0;
 
 DELETE FROM "unit_reqs"
@@ -1290,12 +1267,12 @@ WHERE "id" IN (5678)
 --     -> 1,383
 --     -> 285
 --     -> 364
---     -> 13,228
+--     -> 13,231
 -- Spot checks (post-fix):
 --   SELECT COUNT(*) FROM quest_contexts WHERE id IN (all 155);      -> 0
 --   SELECT COUNT(*) FROM quest_components WHERE quest_context_id IN (155); -> 0
 --   SELECT COUNT(*) FROM quest_acts WHERE quest_component_id IN (259);    -> 0
---   SELECT COUNT(*) FROM unit_reqs WHERE id IN (123 owned + 3 skill);     -> 0
---   SELECT COUNT(*) FROM unit_reqs WHERE id = 24869;                      -> 1 (UNCHANGED — inert A1 skill gate)
+--   SELECT COUNT(*) FROM unit_reqs WHERE id IN (123 owned);               -> 0
+--   SELECT COUNT(*) FROM unit_reqs WHERE id IN (11099,18167,21977,24869); -> 4 (UNCHANGED — Skill kind-27 TargetNpc rows, Rei veto t_0f622b9c)
 --   SELECT COUNT(*) FROM quest_contexts WHERE id IN (315,1576,1728,2046); -> 4 (UNCHANGED — Q2 KEPT)
 --   SELECT COUNT(*) FROM quest_contexts WHERE id IN (1394,1401,1404,...); -> 22 (UNCHANGED — D4 KEPT)

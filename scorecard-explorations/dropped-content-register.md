@@ -149,7 +149,7 @@ excluded); 215 live candidates → 155 dropped (this section) + 56 deferred
 | Quests | B1 (ltd, engine-stuck): **5040, 5773, 5781–5811** · D1 (placeholders): **3484–3490, 3492–3502, 3562–3563, 3565–3568, 3992, 4408, 5980** — all cat 93 메인스토리_dummy, w_gweonid_forest_1 |
 | Shape | one self-contained linear chain 5980→3484→…→5811 (59 kind-31 gates, all owners in-set); B1 half = ltd + zero report acts + Score=0 → can never leave Progress (QuestStep.cs:127-129; HackFix ineligible) |
 | Verdict | Josh 2026-08-09 — **GO drop as ONE block** (B1+D1, 60 quests) |
-| Drop action | −60 quest_contexts / −242 quest_components / −18 acts; prune 59 kind-31 unit_reqs + ~149 owned unit_reqs + skill gate (5806 ← skill 12050) |
+| Drop action | −60 quest_contexts / −242 quest_components / −18 acts; prune 123 owned unit_reqs (incl. 59+1 kind-31 chain gates). ⚠ Skill kind-27 row 11099 (skill 12050 → 5806) is NOT a quest gate — kind 27 = TargetNpc, value1 is NPC template id 5806 (id-space collision with quest 5806); KEPT, with same-class rows 18167/21977/24869 (Rei veto t_0f622b9c — the original \"skill gate 5806 ← skill 12050\" premise was wrong) |
 | Restore pointer | chain topology is the blueprint for a future real Dwarf main story (numbered dummy slots 201–605) |
 | Risk | MEDIUM — the block is self-contained, but the impl must prune the full gate set (drift-checked) |
 
