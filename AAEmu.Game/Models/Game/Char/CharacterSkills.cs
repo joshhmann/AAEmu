@@ -65,6 +65,7 @@ public class CharacterSkills(Character owner)
             Level = template.LevelStep > 0 ? (byte)((Owner.GetAbLevel(template.AbilityId) - template.AbilityLevel) / template.LevelStep + 1) : (byte)1
         };
         Skills.Add(skill.Id, skill);
+        Owner.MarkDirty();
 
         if (packet)
             Owner.SendPacket(new SCSkillLearnedPacket(skill));
@@ -105,6 +106,7 @@ public class CharacterSkills(Character owner)
         // Add Passive Buff
         var buff = new PassiveBuff { Id = buffId, Template = template };
         PassiveBuffs.Add(buff.Id, buff);
+        Owner.MarkDirty();
         Owner.BroadcastPacket(new SCBuffLearnedPacket(Owner.ObjId, buff.Id), true);
         buff.Apply(Owner);
     }
@@ -134,6 +136,7 @@ public class CharacterSkills(Character owner)
         }
 
         Owner.BroadcastPacket(new SCSkillsResetPacket(Owner.ObjId, abilityId), true);
+        Owner.MarkDirty();
     }
 
     /// <summary>

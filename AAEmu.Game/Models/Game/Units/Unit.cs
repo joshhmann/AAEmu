@@ -63,7 +63,27 @@ public class Unit : BaseUnit, IUnit
 
     public byte Level { get; set; }
 
-    public int Hp { get; set; }
+    /// <summary>
+    /// Called when save-relevant unit state (HP/MP) actually changes.
+    /// Base is a no-op; Characters override to mark themselves dirty for SaveManager.
+    /// </summary>
+    protected virtual void OnSaveRelevantChange()
+    {
+    }
+
+    private int _hp;
+
+    public int Hp
+    {
+        get => _hp;
+        set
+        {
+            if (_hp == value)
+                return;
+            _hp = value;
+            OnSaveRelevantChange();
+        }
+    }
 
     public int Hpp
     {
@@ -102,7 +122,21 @@ public class Unit : BaseUnit, IUnit
     public virtual int HpRegen { get; set; }
     [UnitAttribute(UnitAttribute.PersistentHealthRegen)]
     public virtual int PersistentHpRegen { get; set; } = 30;
-    public int Mp { get; set; }
+
+    private int _mp;
+
+    public int Mp
+    {
+        get => _mp;
+        set
+        {
+            if (_mp == value)
+                return;
+            _mp = value;
+            OnSaveRelevantChange();
+        }
+    }
+
     [UnitAttribute(UnitAttribute.MaxMana)]
     public virtual int MaxMp { get; set; }
     [UnitAttribute(UnitAttribute.ManaRegen)]

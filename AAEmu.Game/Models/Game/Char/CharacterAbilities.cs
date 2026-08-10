@@ -26,6 +26,7 @@ public class CharacterAbilities
     public void SetAbility(AbilityType id, byte order)
     {
         Abilities[id].Order = order;
+        Owner.MarkDirty();
     }
 
     public List<AbilityType> GetActiveAbilities()
@@ -46,7 +47,10 @@ public class CharacterAbilities
         // AbilityType.General (0) is never seeded by the ctor — skip any unseeded value
         // instead of throwing KeyNotFoundException
         if (type != AbilityType.None && Abilities.TryGetValue(type, out var ability))
+        {
             ability.Exp += exp;
+            Owner.MarkDirty();
+        }
     }
 
     public void AddActiveExp(int exp)
@@ -63,6 +67,8 @@ public class CharacterAbilities
             ability2.Exp = Math.Min(ability2.Exp + exp, maxLevelExp);
         if (Owner.Ability3 != AbilityType.None && Abilities.TryGetValue(Owner.Ability3, out var ability3))
             ability3.Exp = Math.Min(ability3.Exp + exp, maxLevelExp);
+        if (exp != 0)
+            Owner.MarkDirty();
     }
 
     public void Swap(AbilityType oldAbilityId, AbilityType abilityId)
@@ -108,6 +114,7 @@ public class CharacterAbilities
 
         if (oldAbilityId != AbilityType.None)
             Abilities[oldAbilityId].Order = 255;
+        Owner.MarkDirty();
         Owner.BroadcastPacket(new SCAbilitySwappedPacket(Owner.ObjId, oldAbilityId, abilityId), true);
     }
 
