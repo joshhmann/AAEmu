@@ -1,0 +1,57 @@
+using System.Text.Json.Serialization;
+
+namespace AAEmu.Commons.Utils.Gate;
+
+/// <summary>
+/// Immutable metrics snapshot collected by the gate harness for one stage
+/// window. Pure data — no game dependencies, so the budget evaluator is
+/// unit-testable from AAEmu.UnitTests without a live stack.
+/// </summary>
+public sealed record GateMetricsSnapshot
+{
+    /// <summary>Window length in minutes (wall clock, used to normalize rates).</summary>
+    public double WindowMinutes { get; init; }
+
+    /// <summary>Bots embodied in this stage (rate budgets normalize per bot).</summary>
+    public int BotCount { get; init; }
+
+    // -- TickManager (H2 metrics surface) --
+    public double TickInvokeP95Ms { get; init; }
+    public double TickInvokeMaxMs { get; init; }
+    public int TickSubscriberCount { get; init; }
+    /// <summary>True when the running server exposes H2 tick metrics (the stage-25 gate).</summary>
+    public bool TickMetricsAvailable { get; init; }
+
+    // -- ActiveRegionTick (H2 budget surface) --
+    public bool RegionTickBudgetAvailable { get; init; }
+    /// <summary>Worst ActiveRegionTick pass elapsed ms observed in the window.</summary>
+    public double RegionTickMaxElapsedMs { get; init; }
+    /// <summary>Count of ActiveRegionTick passes that overran the 100ms budget.</summary>
+    public long RegionTickOverruns { get; init; }
+
+    // -- PlayerBotScheduler --
+    public bool SchedulerStarted { get; init; }
+    public long SchedulerStepsRun { get; init; }
+    public long SchedulerStepsFailed { get; init; }
+    public double SchedulerAvgWakeLatencyMs { get; init; }
+    public double SchedulerMaxWakeLatencyMs { get; init; }
+
+    // -- DB pressure (MySQL Com_* delta over the window) --
+    public long DbWrites { get; init; }
+
+    // -- Physics warning rate (game log scan over the window) --
+    public long PhysicsWarnings { get; init; }
+
+    // -- Tick overrun warnings (game log scan over the window) --
+    public long TickOverrunWarnings { get; init; }
+
+    // -- Convenience rates --
+    [JsonIgnore]
+    public double DbWritesPerMin => WindowMinutes > 0 ? DbWrites / WindowMinutes : 0;
+    [JsonIgnore]
+    public double DbWritesPerBotPerMin => WindowMinutes > 0 && BotCount > 0 ? DbWrites / WindowMinutes / BotCount : 0;
+    [JsonIgnore]
+    public double PhysicsWarningsPerMin => WindowMinutes > 0 ? PhysicsWarnings / WindowMinutes : 0;
+    [JsonIgnore]
+    public double TickOverrunWarningsPerMin => WindowMinutes > 0 ? TickOverrunWarnings / WindowMinutes : 0;
+}

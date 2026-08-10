@@ -150,62 +150,130 @@ public class WorldManager(
     public const float DefaultCombatTimeout = 15f;
 
     /// <summary>
-    /// Called every second and forwards the tick to all live player related objects
+    /// Hard time budget for a single ActiveRegionTick pass, in milliseconds.
+    /// A pass never exceeds this budget: work beyond it is deferred to the next pass
+    /// (round-robin continuation for characters, drop/defer for mates, slaves and spawners),
+    /// so a large world can never starve the tick loop (#1491).
+    /// </summary>
+    public const int ActiveRegionTickBudgetMs = 100;
+
+    private readonly Lock _regionTickLock = new();
+    private int _regionTickCursor;
+
+    /// <summary>
+    /// Counters for the most recent ActiveRegionTick pass (diagnostics + tests).
+    /// </summary>
+    internal ActiveRegionTickStats RegionTickStats { get; } = new();
+
+    /// <summary>
+    /// Called every second and forwards the tick to all live player related objects.
+    /// Time-budgeted: at most <see cref="ActiveRegionTickBudgetMs"/> of work per pass;
+    /// characters continue round-robin from where the previous pass stopped, and any
+    /// remaining mates/slaves/spawner updates are deferred (dropped for this pass) once
+    /// the budget is spent, so no single pass can block the tick loop.
     /// </summary>
     /// <param name="delta"></param>
-    private void ActiveRegionTick(TimeSpan delta)
+    internal void ActiveRegionTick(TimeSpan delta)
     {
-        var sw = new Stopwatch();
-        sw.Start();
-
-        // Players
-        foreach (var character in GetAllCharacters())
-            character.OnActiveRegionTick(delta);
-
-        foreach (var world in _worlds.Values)
+        lock (_regionTickLock)
         {
-            // Pets
-            foreach (var mate in world.GetAllMates())
-                mate.OnActiveRegionTick(delta);
+            var sw = Stopwatch.StartNew();
+            var stats = RegionTickStats;
+            stats.CharactersTotal = 0;
+            stats.CharactersProcessed = 0;
+            stats.MatesProcessed = 0;
+            stats.SlavesProcessed = 0;
+            stats.SpawnersTotal = 0;
+            stats.SpawnersProcessed = 0;
 
-            // Vehicles
-            foreach (var slave in world.GetAllSlaves())
-                slave.OnActiveRegionTick(delta);
-
-            var npcSpawners = world.SpawnManager.GetAllSpawners();
-
-            // Spawner filtering
-            if (sw.ElapsedMilliseconds > 50)
+            // Players — chunked round-robin with continuation cursor
+            var characters = GetAllCharacters();
+            stats.CharactersTotal = characters.Count;
+            if (characters.Count > 0)
             {
-                Logger.Debug($"Processed in world {world.Template.Name} {npcSpawners.Count} spawners...");
+                var cursor = _regionTickCursor % characters.Count;
+                while (stats.CharactersProcessed < characters.Count && sw.ElapsedMilliseconds < ActiveRegionTickBudgetMs)
+                {
+                    characters[cursor].OnActiveRegionTick(delta);
+                    cursor = (cursor + 1) % characters.Count;
+                    stats.CharactersProcessed++;
+                }
+                _regionTickCursor = cursor;
             }
 
-            var activeSpawners = npcSpawners.Values.SelectMany(x => x)
-                .Where(spawner => spawner.Template != null && IsSpawnerActive(spawner))
-                .ToList();
-
-            // Consistent processing of spawners
-            if (sw.ElapsedMilliseconds > 50)
+            foreach (var world in _worlds.Values)
             {
-                Logger.Debug($"Processed {activeSpawners.Count} active spawners...");
+                if (sw.ElapsedMilliseconds >= ActiveRegionTickBudgetMs)
+                    break;
+
+                // Pets
+                foreach (var mate in world.GetAllMates())
+                {
+                    if (sw.ElapsedMilliseconds >= ActiveRegionTickBudgetMs)
+                        break;
+                    mate.OnActiveRegionTick(delta);
+                    stats.MatesProcessed++;
+                }
+
+                if (sw.ElapsedMilliseconds >= ActiveRegionTickBudgetMs)
+                    continue;
+
+                // Vehicles
+                foreach (var slave in world.GetAllSlaves())
+                {
+                    if (sw.ElapsedMilliseconds >= ActiveRegionTickBudgetMs)
+                        break;
+                    slave.OnActiveRegionTick(delta);
+                    stats.SlavesProcessed++;
+                }
+
+                if (sw.ElapsedMilliseconds >= ActiveRegionTickBudgetMs)
+                    continue;
+
+                var npcSpawners = world.SpawnManager.GetAllSpawners();
+                var activeSpawners = npcSpawners.Values.SelectMany(x => x)
+                    .Where(spawner => spawner.Template != null && IsSpawnerActive(spawner))
+                    .ToList();
+                stats.SpawnersTotal += activeSpawners.Count;
+
+                // Consistent processing of spawners — drop-oldest semantics: once the budget
+                // is spent, remaining spawner updates are deferred to the next pass.
+                foreach (var npcSpawner in activeSpawners)
+                {
+                    if (sw.ElapsedMilliseconds >= ActiveRegionTickBudgetMs)
+                        break;
+                    npcSpawner.Update();
+                    stats.SpawnersProcessed++;
+                }
             }
 
-            foreach (var npcSpawner in activeSpawners)
+            sw.Stop();
+            stats.ElapsedMs = sw.ElapsedMilliseconds;
+            if (sw.ElapsedMilliseconds > ActiveRegionTickBudgetMs)
             {
-                npcSpawner.Update();
+                Logger.Warn($"ActiveRegionTick took {sw.ElapsedMilliseconds} ms (over {ActiveRegionTickBudgetMs}ms budget); deferred {characters.Count - stats.CharactersProcessed} characters");
             }
-        }
-
-        sw.Stop();
-        if (sw.ElapsedMilliseconds > 100)
-        {
-            Logger.Warn($"ActiveRegionTick took {sw.ElapsedMilliseconds} ms");
         }
     }
 
     private bool IsSpawnerActive(NpcSpawner spawner)
     {
         return spawner.IsPlayerInSpawnRadius();
+    }
+
+    /// <summary>
+    /// Per-pass counters for ActiveRegionTick (diagnostics, WebApi, tests).
+    /// Reset at the start of every pass; written under <see cref="_regionTickLock"/>.
+    /// </summary>
+    internal sealed class ActiveRegionTickStats
+    {
+        public int CharactersTotal { get; set; }
+        public int CharactersProcessed { get; set; }
+        public int MatesProcessed { get; set; }
+        public int SlavesProcessed { get; set; }
+        public int SpawnersTotal { get; set; }
+        public int SpawnersProcessed { get; set; }
+        public long ElapsedMs { get; set; }
     }
 
     /// <summary>
@@ -362,7 +430,7 @@ public class WorldManager(
 
     public void Initialize()
     {
-        tickManager.OnTick.Subscribe(ActiveRegionTick, TimeSpan.FromSeconds(1));
+        tickManager.OnTick.Subscribe(ActiveRegionTick, TimeSpan.FromSeconds(1), useAsync: true, name: nameof(ActiveRegionTick));
         tickManager.OnTick.Subscribe(AutoWaterProbeTick, TimeSpan.FromSeconds(10));
     }
 

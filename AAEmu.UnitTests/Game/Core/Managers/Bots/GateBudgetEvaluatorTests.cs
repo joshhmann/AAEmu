@@ -1,0 +1,202 @@
+using AAEmu.Commons.Utils.Gate;
+
+namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
+
+/// <summary>
+/// Budget-check unit tests for the gate harness (ARCHITECTURE_REVIEW
+/// deliverable 8 / slice #10). Pure evaluation logic — no live stack needed.
+/// </summary>
+public class GateBudgetEvaluatorTests
+{
+    private static GateMetricsSnapshot BaseSnapshot() => new()
+    {
+        WindowMinutes = 5,
+        BotCount = 10,
+        TickMetricsAvailable = true,
+        TickInvokeP95Ms = 8,
+        TickInvokeMaxMs = 42,
+        TickSubscriberCount = 19,
+        RegionTickBudgetAvailable = true,
+        RegionTickMaxElapsedMs = 61,
+        RegionTickOverruns = 0,
+        SchedulerStarted = true,
+        SchedulerStepsRun = 120,
+        SchedulerStepsFailed = 0,
+        SchedulerAvgWakeLatencyMs = 12,
+        SchedulerMaxWakeLatencyMs = 88,
+        DbWrites = 2500,          // 50/min/bot
+        PhysicsWarnings = 0,
+        TickOverrunWarnings = 0
+    };
+
+    private static GateBudgets BaseBudgets() => new();
+
+    [Test]
+    public async Task Evaluate_HealthyWindow_AllBudgetsPass()
+    {
+        var verdicts = GateBudgetEvaluator.Evaluate(BaseSnapshot(), BaseBudgets(), requireH2: true);
+
+        await Assert.That(verdicts.All(v => v.Passed)).IsTrue();
+        await Assert.That(verdicts.Any(v => v.NotApplicable)).IsFalse();
+        await Assert.That(verdicts.Any(v => v.Name == "H2 gate" && v.Passed)).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_H2Absent_Stage25GateFailsHard()
+    {
+        var s = BaseSnapshot() with { TickMetricsAvailable = false, RegionTickBudgetAvailable = false };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var h2 = verdicts.Single(v => v.Name == "H2 gate");
+        await Assert.That(h2.Passed).IsFalse();
+        await Assert.That(h2.Detail.Contains("H2 NOT MERGED")).IsTrue();
+        // The H2-gated stage must be RED even when everything else looks fine.
+        await Assert.That(verdicts.Any(v => !v.Passed)).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_NoH2Requirement_TickBudgetsReportNotApplicable()
+    {
+        var s = BaseSnapshot() with { TickMetricsAvailable = false, RegionTickBudgetAvailable = false };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: false);
+
+        // Stage 10 (correctness) may run on a pre-H2 build, but the tick
+        // budgets must be reported as n/a, never as silent passes.
+        var tick = verdicts.Single(v => v.Name == "TickManager invoke p95");
+        await Assert.That(tick.Passed).IsTrue();
+        await Assert.That(tick.NotApplicable).IsTrue();
+        await Assert.That(tick.Detail.Contains("absent")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_TickP95OverBudget_Fails()
+    {
+        var s = BaseSnapshot() with { TickInvokeP95Ms = 140 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "TickManager invoke p95");
+        await Assert.That(v.Passed).IsFalse();
+        await Assert.That(v.Measured > v.Limit).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_TickMaxOverBudget_Fails()
+    {
+        var s = BaseSnapshot() with { TickInvokeMaxMs = 900 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "TickManager invoke max");
+        await Assert.That(v.Passed).IsFalse();
+    }
+
+    [Test]
+    public async Task Evaluate_RegionTickOverrun_Fails()
+    {
+        var s = BaseSnapshot() with { RegionTickOverruns = 3, RegionTickMaxElapsedMs = 412 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        await Assert.That(verdicts.Any(v => v.Name == "ActiveRegionTick overruns" && !v.Passed)).IsTrue();
+        await Assert.That(verdicts.Any(v => v.Name == "ActiveRegionTick worst pass" && !v.Passed)).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_SchedulerIdle_ReportedNotApplicable()
+    {
+        var s = BaseSnapshot() with { SchedulerStarted = false, SchedulerStepsRun = 0 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Scheduler wake latency");
+        await Assert.That(v.Passed).IsTrue();
+        await Assert.That(v.NotApplicable).IsTrue();
+        await Assert.That(v.Detail.Contains("not started")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_SchedulerWakeLatencyOverBudget_Fails()
+    {
+        var s = BaseSnapshot() with { SchedulerAvgWakeLatencyMs = 4800, SchedulerMaxWakeLatencyMs = 9000 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var avg = verdicts.Single(x => x.Name == "Scheduler avg wake latency");
+        var max = verdicts.Single(x => x.Name == "Scheduler max wake latency");
+        await Assert.That(avg.Passed).IsFalse();
+        await Assert.That(max.Passed).IsFalse();
+    }
+
+    [Test]
+    public async Task Evaluate_SchedulerStepFailures_Fail()
+    {
+        var s = BaseSnapshot() with { SchedulerStepsFailed = 2 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Scheduler step failures");
+        await Assert.That(v.Passed).IsFalse();
+    }
+
+    [Test]
+    public async Task Evaluate_DbWritesPerBotPerMinOverBudget_Fails()
+    {
+        // 10 bots, 5 min, 60k writes → 1200/min/bot — a write-loop signature.
+        var s = BaseSnapshot() with { DbWrites = 60000 };
+        var budgets = BaseBudgets() with { MaxDbWritesPerBotPerMin = 100 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, budgets, requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "DB writes");
+        await Assert.That(v.Passed).IsFalse();
+        await Assert.That(v.Measured).IsEqualTo(1200);
+        await Assert.That(v.Detail.Contains("write-loop")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningRateOverBudget_Fails()
+    {
+        // 5 min window, 6 warnings → 1.2/min > 0.
+        var s = BaseSnapshot() with { PhysicsWarnings = 6 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings");
+        await Assert.That(v.Passed).IsFalse();
+        await Assert.That(v.Measured).IsEqualTo(1.2);
+    }
+
+    [Test]
+    public async Task Evaluate_TickOverrunWarningsRate_Fails()
+    {
+        var s = BaseSnapshot() with { TickOverrunWarnings = 5 }; // 1/min > 0
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Tick overrun warnings");
+        await Assert.That(v.Passed).IsFalse();
+    }
+
+    [Test]
+    public async Task Evaluate_ZeroWindow_NoDivideByZero()
+    {
+        var s = BaseSnapshot() with { WindowMinutes = 0, DbWrites = 500, PhysicsWarnings = 2 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        await Assert.That(verdicts.All(v => !double.IsNaN(v.Measured) && !double.IsInfinity(v.Measured))).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_Stage10Budgets_Defaults()
+    {
+        // Stage 10 (correctness): 10 bots, 5 min, typical light questing load —
+        // must pass with default budgets.
+        var s = BaseSnapshot();
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: false);
+        await Assert.That(verdicts.All(v => v.Passed)).IsTrue();
+    }
+}
