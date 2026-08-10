@@ -15,6 +15,18 @@ public sealed record GateMetricsSnapshot
     /// <summary>Bots embodied in this stage (rate budgets normalize per bot).</summary>
     public int BotCount { get; init; }
 
+    /// <summary>
+    /// Scheduler-stepping presence-demo citizens additionally embodied in the
+    /// server (AAEMU_PRESENCE_DEMO=1 — BotPresenceCoordinator). They write to
+    /// the DB at the same save cadence as network bots, so the DB-write budget
+    /// normalizes by <see cref="EmbodiedCharacterCount"/> when they are active
+    /// (t_b4eb35e9: stage-10 presence run measured 529.06/min/bot on the old
+    /// network-bot-only denominator — a false RED; the same writes are
+    /// 264.53/min/embodied-char, inside the 266-277 calibration band). 0 = the
+    /// presence demo is not active and plain per-bot normalization applies.
+    /// </summary>
+    public int PresenceBotCount { get; init; }
+
     // -- TickManager (H2 metrics surface) --
     public double TickInvokeP95Ms { get; init; }
     public double TickInvokeMaxMs { get; init; }
@@ -46,10 +58,13 @@ public sealed record GateMetricsSnapshot
     public long TickOverrunWarnings { get; init; }
 
     // -- Convenience rates --
+    /// <summary>Total embodied characters the DB-write rate normalizes by (network bots + presence citizens).</summary>
+    [JsonIgnore]
+    public int EmbodiedCharacterCount => BotCount + PresenceBotCount;
     [JsonIgnore]
     public double DbWritesPerMin => WindowMinutes > 0 ? DbWrites / WindowMinutes : 0;
     [JsonIgnore]
-    public double DbWritesPerBotPerMin => WindowMinutes > 0 && BotCount > 0 ? DbWrites / WindowMinutes / BotCount : 0;
+    public double DbWritesPerBotPerMin => WindowMinutes > 0 && EmbodiedCharacterCount > 0 ? DbWrites / WindowMinutes / EmbodiedCharacterCount : 0;
     [JsonIgnore]
     public double PhysicsWarningsPerMin => WindowMinutes > 0 ? PhysicsWarnings / WindowMinutes : 0;
     [JsonIgnore]

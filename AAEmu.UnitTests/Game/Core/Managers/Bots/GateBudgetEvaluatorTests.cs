@@ -157,6 +157,56 @@ public class GateBudgetEvaluatorTests
     }
 
     [Test]
+    public async Task Evaluate_PresenceDemoActive_NormalizesByEmbodiedCharacters()
+    {
+        // t_b4eb35e9 evidence: stage-10 presence run (AAEMU_PRESENCE_DEMO=1,
+        // AAEMU_PRESENCE_BOT_COUNT=10) measured 15872 writes / 3.0 min across
+        // 10 network bots + 10 presence citizens. The old network-bot-only
+        // denominator gave 529.06/500 — a false RED. Per embodied character
+        // it is 15872 / 3 / 20 = 264.53 — inside the 266-277 calibration band.
+        var s = BaseSnapshot() with { WindowMinutes = 3, BotCount = 10, PresenceBotCount = 10, DbWrites = 15872 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: false);
+
+        var v = verdicts.Single(x => x.Name == "DB writes");
+        await Assert.That(v.Passed).IsTrue();
+        await Assert.That(v.Measured).IsEqualTo(264.53).Within(0.01);
+        await Assert.That(v.Detail.Contains("embodied-char")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PresenceDemoActive_WriteLoopStillFails()
+    {
+        // Presence citizens must not mask a genuine write loop: 20 embodied
+        // chars, 5 min, 300k writes → 3000/min/char — still 6× over the 500
+        // budget even with the presence-aware denominator.
+        var s = BaseSnapshot() with { BotCount = 10, PresenceBotCount = 10, DbWrites = 300000 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "DB writes");
+        await Assert.That(v.Passed).IsFalse();
+        await Assert.That(v.Measured).IsEqualTo(3000);
+        await Assert.That(v.Detail.Contains("write-loop")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PresenceBotCountZero_PlainRunNormalizationUnchanged()
+    {
+        // Plain stage-10 (no presence demo): PresenceBotCount defaults to 0,
+        // so the denominator stays the network-bot count and the calibrated
+        // 266-277/min/bot baseline vs the 500 limit is unchanged.
+        var s = BaseSnapshot() with { WindowMinutes = 3, BotCount = 10, DbWrites = 8300 }; // ≈ 276.7/min/bot
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: false);
+
+        var v = verdicts.Single(x => x.Name == "DB writes");
+        await Assert.That(v.Passed).IsTrue();
+        await Assert.That(v.Measured).IsEqualTo(276.67).Within(0.01);
+        await Assert.That(v.Detail.Contains("writes/min/bot")).IsTrue();
+    }
+
+    [Test]
     public async Task Evaluate_PhysicsWarningRateOverBudget_Fails()
     {
         // 5 min window, 6 warnings → 1.2/min > 0.
