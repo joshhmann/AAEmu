@@ -95,24 +95,43 @@ needed, never by editing the reference file.
 
 ---
 
-## 8. WI-6 band 41-50 ltd triage — DRAFT (PENDING Josh decision, 2026-08-09)
+## 8. WI-6 band 41-50 ltd triage — 6069 dropped; 3419/4967 ruled KEEP (2026-08-09)
 
-Evidence: `scorecard-explorations/band-41-50-ltd-triage-wi6.md` (card t_6f950108). Josh rules
-per G0-5; Nei prepared evidence only. Status: **BLOCKED awaiting decision** — this section is a
-draft; verdicts below are recommendations until Josh answers on the card.
+Evidence: `scorecard-explorations/band-41-50-ltd-triage-wi6.md` + attached packet on card
+t_6f950108. **Decision (G0-5): Josh, 2026-08-09 ~21:15 PDT (delegated to Kimi nightwatch —
+comment on t_6f950108):** 3419 **NO-GO** / 4967 **NO-GO** / 6069 **GO** ("Execute per M2a
+playbook: guarded SQL patch, quest-scoped rows only, shared act-detail rows untouched").
+Execution card: **t_6810ebd4** → Rei gate (filed on impl block, t_656ed5fe pattern).
 
-| Quest | Shape | Accept surface | Completion path | Recommendation | Josh's ruling |
-|---|---|---|---|---|---|
-| **3419** 의논할 수 없는 고민 | ltd, score 0, Start→Progress→Reward, no report act; zone 20, ms 5, cat 59 | **NPC 9581** (live, spawner) + gates 3370/3372 (completable) | packet path 0x0dd (reachable: 2/3 group-469 kills → CanEarlyComplete) | NO-GO drop (keep) | _pending_ |
-| **4967** 황금비늘의 후손 해방 | ltd, score 0, Start→Progress→Reward, no report act; zone 1, ms 5, cat 60 | **NPC 10089** (live, spawner) | packet path 0x0dd (1 interaction credits) | NO-GO drop (keep) | _pending_ |
-| **6069** 거침없이 춤추는 격투의 칼날 | ltd, score 0, Start(no acts)→Progress→Ready(no acts)→Reward; zone 1, ms 14, cat 55 | **NONE** (0 across all 5 accept surfaces) | none (unreachable; objective never credits) | GO drop | _pending_ |
+⚠ **3419 + 4967 are KEPT — do not re-flag as engine-stuck.** They have a live completion path
+M2a's cluster-A register line predates: the registered client packet 0x0dd
+(CSTryQuestCompleteAsLetItDone → CharacterQuests.TryCompleteQuestAsLetItDone, no report act
+needed) once objectives credit. See evidence §2 on t_6f950108 for the full path analysis.
+
+| Quest | Shape | Accept surface | Completion path | Josh's ruling |
+|---|---|---|---|---|
+| **3419** 의논할 수 없는 고민 | ltd, score 0, Start→Progress→Reward, no report act; zone 20, ms 5, cat 59 | **NPC 9581** (live, spawner) + gates 3370/3372 (completable) | packet 0x0dd (2/3 group-469 kills → CanEarlyComplete) | **NO-GO — KEEP** |
+| **4967** 황금비늘의 후손 해방 | ltd, score 0, Start→Progress→Reward, no report act; zone 1, ms 5, cat 60 | **NPC 10089** (live, spawner) | packet 0x0dd (1 interaction credits) | **NO-GO — KEEP** |
+| **6069** 거침없이 춤추는 격투의 칼날 | ltd, score 0, Start(no acts)→Progress→Ready(no acts)→Reward; zone 1, ms 14, cat 55 | **NONE** (0 across all 5 accept surfaces) | none — unreachable; objective never credits | **GO — DROP** |
+
+### 6069 drop record
+
+| Field | Value |
+|---|---|
+| Quest | 6069 거침없이 춤추는 격투의 칼날 ("The Uninhibited Dancing Blade of Combat") |
+| Shape | ltd='t', score 0, zone 1, ms 14, cat 55, lvl 50; Start comp 26119 (NO acts) → Progress 26120 (QuestActObjAbilityLevel 7, ability 1 @ lvl 50 — no event hookup, objective never credits) → Ready 26121 (no acts) → Reward 26122 (QuestActSupplyItem 4002 → item 30757). **Zero accept surfaces** (0 item_accept_quests / doodad_func_quests / accept_quest_effects / sphere_quests / con_accept_components) → unreachable in live play |
+| Verdict | Josh 2026-08-09 (t_6f950108 comment, delegated Kimi nightwatch) — **GO drop**. Consistent with M2a cluster-A precedent (register §6) + existing SKIP flags (runnability.md:245, SCORECARD.md:162) |
+| Drop action | `SQL/patches/compact/2026-08-09-drop-wi6-6069.sql` (card t_6810ebd4): quest_contexts −1 (6069) / quest_components −4 (26119/26120/26121/26122) / quest_acts −2 (35730/35732) / unit_reqs −1 (45196) / quest_component_texts −3 / quest_chat_bubbles −4. ⚠ **Shared act-detail rows 7 + 4002 UNTOUCHED** (ability 7 → 15 quests; supply 4002 → 5106). Remove 6069 from `T3_PINNED_QUESTS` (tools/quest-scenario/gen-manifests.py:797) + DROPPED_QUESTS +1 + regenerate manifests/census-meta; update runnability.md SKIP row + SCORECARD.md line; check verifier allowlist (has components — expected not listed) |
+| Execution card | t_6810ebd4 (impl) → Rei gate (filed on impl block) |
+| Rig | No dedicated rig; 5967 (all-abilities branch) remains the canonical ability-level harness carrier — 6069's single-ability variant (ability 1) loses its example, acceptable at 0 live carriers |
+| Restore pointer | Full body preserved (4 comps / 2 acts / 3 texts / 4 bubbles; act-detail rows 7 + 4002 remain shared-live). Restore only if a 1.2-era ability-gate ltd quest is rebuilt — re-add to T3_PINNED_QUESTS if restored |
 
 ---
 
 ## How to check if an id is in this register
 
 ```bash
-grep -n "745\|1421\|1391\|1533\|2140\|1954\|1867\|2148\|3748\|5575" scorecard-explorations/dropped-content-register.md
+grep -n "745\|1421\|1391\|1533\|2140\|1954\|1867\|2148\|3748\|5575\|6069" scorecard-explorations/dropped-content-register.md
 ```
 
 Before filing any future quest-defect card, check this file — a "missing"
