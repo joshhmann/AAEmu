@@ -152,14 +152,15 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M2a/M2c + WI-2 + WI-3 + WI-4 + WI-5 + WI-7, band 1-40 census 2026-08-09, post-drop on merged develop): **2727/2727 driven quests runnable, 0 FAIL** across the
-> 2735-quest scenario-harness census (118 dropped quests excluded — 117 M2a + 6069 WI-6). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
+> Quest-runnability (M2a/M2c + WI-2 + WI-3 + WI-4 + WI-5 + WI-7 + WI-8, band 1-50 census 2026-08-10, post-drop on merged develop): **4253/4253 driven quests runnable, 0 FAIL** across the
+> 4263-quest scenario-harness census (118 dropped quests excluded — 117 M2a + 6069 WI-6). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
 > 560 non-dropped (668 − 108 dropped). **Band 11-20: 609 PASS / 0 SKIP / 0 FAIL = 100.0%** of 609 non-dropped (626 − 17 dropped).
 > **Band 21-30: 847 PASS / 0 SKIP / 0 FAIL = 100.0%** of 847 non-dropped (0 dropped).
 > **Band 31-40: 643 PASS / 0 SKIP / 0 FAIL = 100.0%** of 643 non-dropped (0 dropped) — the WI-7 T13 sweep drove all 643 contexts (631 in t13, 12 sampled in earlier tiers), zero harness SKIPs as predicted.
-> All SKIPs documented-SKIP with reason (8): 8 orphaned contexts (no quest_contexts row; 6069 was the
+> **Band 41-50: 1589 PASS / 2 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of 1591 non-dropped (1592 − 1 dropped, 6069 WI-6) — the WI-8 T14 sweep drove all 1591 contexts (1528 in t14, 63 sampled in earlier tiers); the 2 SKIPs are 3419/4967 (let-it-done without report act — Josh NO-GO keep ruling, WI-6 register §8).
+> All SKIPs documented-SKIP with reason (10): 8 orphaned contexts (no quest_contexts row; 6069 was the
 > let-it-done-without-report-act SKIP but is now DROPPED — WI-6 triage ruling 2026-08-09, register §8,
-> drop execution t_6810ebd4, merged t_ec1a3326) — the WI-2
+> drop execution t_6810ebd4, merged t_ec1a3326) + 2 kept-by-ruling ltd quests (3419/4967, WI-8 census) — the WI-2
 > CrimePoint closure closed the last 2 census SKIPs (2916/2926) and added the t9 tier so the five level-41-50
 > carriers (2935/2936/5197/5198/5494) are sampled and PASS — 7/7 CrimePoint contexts driven; the WI-3 AbilityLevel
 > closure closed the AbilityLevel objective family and added the t10 tier so the nine level-50 single-ability
@@ -177,7 +178,17 @@ zones required by a milestone or an observed defect.
 > unsampled carriers → 10/10 driven (108 cumulative, 6069 dropped not counted); WI-4 MateLevel closure flipped 5430/5464 + 4 unsampled
 > carriers → 6/6 driven (114 cumulative); WI-5 CompleteQuest closure flipped 5814/5815 + 9 unsampled carriers →
 > 11/11 driven (125 cumulative); WI-7 T13 sweep drove band 31-40 643/643 PASS (631 new t13 manifests, 12 sampled
-> earlier) with zero harness SKIPs as predicted; zero PASS→SKIP regressions across every sweep.
+> earlier) with zero harness SKIPs as predicted; WI-8 T14 sweep drove band 41-50 1591/1591 PASS-or-doc-SKIP
+> (1528 new t14 manifests, 63 sampled earlier, 6069 dropped excluded) — 1589 PASS / 2 SKIP (3419/4967 kept-by-ruling) /
+> 0 FAIL; the 10 first-sweep FAILs were TWO harness expectation-model gaps + ONE real engine bug, all fixed with
+> engine-source evidence: (1) score-quest under-credit — generator fired count events but the engine score branch
+> needs Σ Count×Objective ≥ Score (MaxObjective = Score/Count+1 proves the data intends objectives beyond the
+> displayed count); now fires scaled events (7 quests: 3076/3089/3625/4343/5062/5063/5064); (2) Ready-step OR
+> semantics — QuestComponent.RunComponent ORs Start/Ready acts, so an always-true act (SupplyRemoveItem) advances
+> past Ready without the report event (5174/5722); (3) QuestActConReportJournal subscribed in InitializeAction
+> (step-entry) instead of InitializeQuest (ctor) like its ReportNpc/ReportDoodad siblings — ltd quests stuck at
+> Progress never enter Ready, so the journal report could never fire (3630); subscription moved to ctor, sibling
+> pattern. zero PASS→SKIP regressions across every sweep.
 > Census regen deterministic (byte-identical ×2); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
 > Tiger Spine/Falcony/Sunny Wilderness/Ancient Forest/Marionople/Two Crowns/White Forest/Singing Land/Sunrise
 > Peninsula) in runnability.md (census-meta.json-driven). Fail-before states on the

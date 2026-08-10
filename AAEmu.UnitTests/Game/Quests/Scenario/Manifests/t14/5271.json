@@ -1,0 +1,135 @@
+{
+ "questId": 5271,
+ "name": "바다보다 깊은 저주",
+ "zoneId": 6,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13026
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22738,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32159,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4068,
+      "npcId": 13026
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22739,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32175,
+      "type": "QuestActObjInteraction",
+      "detailId": 670,
+      "doodadId": 6411,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 32204,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 157,
+      "itemId": 27372,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22740,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32160,
+      "type": "QuestActConReportNpc",
+      "detailId": 4375,
+      "npcId": 1479
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22829,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32163,
+      "type": "QuestActObjInteraction",
+      "detailId": 669,
+      "doodadId": 6408,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6411,
+     "count": 1
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 6408,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1479,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

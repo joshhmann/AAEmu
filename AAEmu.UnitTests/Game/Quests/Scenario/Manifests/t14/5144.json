@@ -1,0 +1,110 @@
+{
+ "questId": 5144,
+ "name": "악몽의 군단 처치 2단계",
+ "zoneId": 1,
+ "categoryId": 90,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31457,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 194,
+      "questContextId": 5144
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22311,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32015,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 549,
+      "monsterGroupId": 510,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22514,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31689,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 70,
+      "point": 400
+     },
+     {
+      "actId": 31938,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1356
+     },
+     {
+      "actId": 37081,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1447,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 510,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

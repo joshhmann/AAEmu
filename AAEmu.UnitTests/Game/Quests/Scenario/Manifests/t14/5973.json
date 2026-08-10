@@ -1,0 +1,112 @@
+{
+ "questId": 5973,
+ "name": "페란 지킴이",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 29997
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25734,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35139,
+      "type": "QuestActConAcceptItem",
+      "detailId": 359,
+      "itemId": 29997
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25735,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35135,
+      "type": "QuestActSupplyExp",
+      "detailId": 801,
+      "exp": 1000
+     },
+     {
+      "actId": 35136,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1245,
+      "amount": 0
+     },
+     {
+      "actId": 35137,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 247,
+      "appellationId": 192
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25736,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35130,
+      "type": "QuestActConReportJournal",
+      "detailId": 395
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29997,
+   "count": 1
+  }
+ ]
+}

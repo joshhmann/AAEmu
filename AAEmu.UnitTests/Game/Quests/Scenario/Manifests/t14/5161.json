@@ -1,0 +1,93 @@
+{
+ "questId": 5161,
+ "name": "새 생명의 재봉사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26868
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22364,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31530,
+      "type": "QuestActConAcceptItem",
+      "detailId": 199,
+      "itemId": 26868
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22365,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31526,
+      "type": "QuestActSupplyExp",
+      "detailId": 603,
+      "exp": 1000
+     },
+     {
+      "actId": 31527,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1010,
+      "amount": 0
+     },
+     {
+      "actId": 31528,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 31,
+      "appellationId": 21
+     },
+     {
+      "actId": 31529,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1287
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26868,
+   "count": 1
+  }
+ ]
+}

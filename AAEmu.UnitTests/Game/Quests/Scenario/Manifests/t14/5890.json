@@ -1,0 +1,110 @@
+{
+ "questId": 5890,
+ "name": "광복의 기억",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 29879
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25448,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34828,
+      "type": "QuestActConAcceptItem",
+      "detailId": 357,
+      "itemId": 29879
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25450,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34826,
+      "type": "QuestActConReportNpc",
+      "detailId": 4738,
+      "npcId": 14010
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25492,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34843,
+      "type": "QuestActSupplyExp",
+      "detailId": 797,
+      "exp": 1004
+     },
+     {
+      "actId": 34844,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1233,
+      "amount": 100
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14010,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29879,
+   "count": 1
+  }
+ ]
+}

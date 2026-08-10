@@ -1,0 +1,81 @@
+{
+ "questId": 4520,
+ "name": "초승달 왕좌가 내려다보이는 언덕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1628
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19692,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26847,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 304,
+      "sphereId": 1628
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19694,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26848,
+      "type": "QuestActSupplyCopper",
+      "detailId": 586,
+      "amount": 0
+     },
+     {
+      "actId": 26851,
+      "type": "QuestActConAutoComplete",
+      "detailId": 852
+     },
+     {
+      "actId": 31103,
+      "type": "QuestActSupplyExp",
+      "detailId": 568,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

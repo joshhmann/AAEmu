@@ -1,0 +1,81 @@
+{
+ "questId": 4701,
+ "name": "밀림의 폭포 뒤편",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1751
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20376,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27775,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 413,
+      "sphereId": 1751
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20378,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27776,
+      "type": "QuestActSupplyCopper",
+      "detailId": 708,
+      "amount": 0
+     },
+     {
+      "actId": 27777,
+      "type": "QuestActSupplyExp",
+      "detailId": 259,
+      "exp": 0
+     },
+     {
+      "actId": 27779,
+      "type": "QuestActConAutoComplete",
+      "detailId": 961
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

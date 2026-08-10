@@ -1,0 +1,81 @@
+{
+ "questId": 4499,
+ "name": "수정 호수의 부러진 나무 기둥",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1611
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26735,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 287,
+      "sphereId": 1611
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26736,
+      "type": "QuestActSupplyCopper",
+      "detailId": 569,
+      "amount": 0
+     },
+     {
+      "actId": 26737,
+      "type": "QuestActSupplyExp",
+      "detailId": 125,
+      "exp": 0
+     },
+     {
+      "actId": 26739,
+      "type": "QuestActConAutoComplete",
+      "detailId": 834
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

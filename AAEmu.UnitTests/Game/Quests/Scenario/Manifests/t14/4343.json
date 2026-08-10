@@ -1,0 +1,140 @@
+{
+ "questId": 4343,
+ "name": "반인반사의 위협",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1955
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25991,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3604,
+      "npcId": 1955
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18954,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25992,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 967,
+      "npcId": 1984,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18955,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25993,
+      "type": "QuestActConReportNpc",
+      "detailId": 3875,
+      "npcId": 1955
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19213,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21277,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29554,
+      "type": "QuestActObjInteraction",
+      "detailId": 629,
+      "doodadId": 4988,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1984,
+     "count": 19
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 4988,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1955,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

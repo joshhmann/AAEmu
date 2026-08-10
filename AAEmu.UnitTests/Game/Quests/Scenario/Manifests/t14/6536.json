@@ -1,0 +1,139 @@
+{
+ "questId": 6536,
+ "name": "다루족의 은밀한 임무",
+ "zoneId": 129,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34513
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27889,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39915,
+      "type": "QuestActConAcceptItem",
+      "detailId": 534,
+      "itemId": 34513
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27890,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39973,
+      "type": "QuestActObjExpressFire",
+      "detailId": 55,
+      "expressKeyId": 227,
+      "npcGroupId": 607,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27915,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39840,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1836
+     },
+     {
+      "actId": 39862,
+      "type": "QuestActSupplyItem",
+      "detailId": 4655,
+      "itemId": 31893,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 39891,
+      "type": "QuestActSupplyExp",
+      "detailId": 1472,
+      "exp": 80000
+     },
+     {
+      "actId": 39892,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1787,
+      "amount": 10000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ExpressFire",
+     "npcId": 8962,
+     "emotionId": 227,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31893,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34513,
+   "count": 1
+  }
+ ],
+ "groups": {
+  "npcGroups": {
+   "607": [
+    8962
+   ]
+  }
+ }
+}

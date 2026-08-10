@@ -1,0 +1,152 @@
+{
+ "questId": 6036,
+ "name": "맛있을까 호박머리",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14313
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25989,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35607,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4600,
+      "npcId": 14313
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25990,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35608,
+      "type": "QuestActObjItemGather",
+      "detailId": 2874,
+      "itemId": 30509,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25991,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35615,
+      "type": "QuestActConReportNpc",
+      "detailId": 4829,
+      "npcId": 14313
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25992,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35616,
+      "type": "QuestActSupplyItem",
+      "detailId": 3997,
+      "itemId": 30508,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35671,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1286,
+      "amount": 0
+     },
+     {
+      "actId": 35672,
+      "type": "QuestActSupplyExp",
+      "detailId": 840,
+      "exp": 1004
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30509,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14313,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30508,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30509,
+   "count": 1
+  }
+ ]
+}

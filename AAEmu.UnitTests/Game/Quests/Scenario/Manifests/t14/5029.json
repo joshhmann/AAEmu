@@ -1,0 +1,81 @@
+{
+ "questId": 5029,
+ "name": "머리뼈 아래의 깊은 골짜기",
+ "zoneId": 12,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2127
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21749,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30449,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 647,
+      "sphereId": 2127
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21750,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30445,
+      "type": "QuestActSupplyCopper",
+      "detailId": 945,
+      "amount": 0
+     },
+     {
+      "actId": 30446,
+      "type": "QuestActSupplyExp",
+      "detailId": 487,
+      "exp": 0
+     },
+     {
+      "actId": 30448,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1252
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

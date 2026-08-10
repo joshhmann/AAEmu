@@ -1,0 +1,209 @@
+{
+ "questId": 5728,
+ "name": "최후의 봉인 해제",
+ "zoneId": 195,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13743
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24621,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34505,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4422,
+      "npcId": 13743
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34810,
+      "type": "QuestActObjItemGather",
+      "detailId": 2854,
+      "itemId": 29616,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34510,
+      "type": "QuestActConReportNpc",
+      "detailId": 4697,
+      "npcId": 13743
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24971,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34507,
+      "type": "QuestActSupplyItem",
+      "detailId": 3904,
+      "itemId": 29516,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24972,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34809,
+      "type": "QuestActObjItemGather",
+      "detailId": 2853,
+      "itemId": 29617,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24973,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34811,
+      "type": "QuestActObjItemGather",
+      "detailId": 2855,
+      "itemId": 27405,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24974,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34511,
+      "type": "QuestActSupplyItem",
+      "detailId": 3905,
+      "itemId": 28802,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29616,
+     "count": 100
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29617,
+     "count": 100
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 27405,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13743,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28802,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29616,
+   "count": 100
+  },
+  {
+   "itemId": 29617,
+   "count": 100
+  },
+  {
+   "itemId": 27405,
+   "count": 1
+  }
+ ]
+}

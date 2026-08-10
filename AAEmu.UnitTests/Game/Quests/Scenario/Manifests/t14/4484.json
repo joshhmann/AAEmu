@@ -1,0 +1,81 @@
+{
+ "questId": 4484,
+ "name": "낮의 눈 나무 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1596
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19576,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26655,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 273,
+      "sphereId": 1596
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19578,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26656,
+      "type": "QuestActSupplyCopper",
+      "detailId": 555,
+      "amount": 0
+     },
+     {
+      "actId": 26659,
+      "type": "QuestActConAutoComplete",
+      "detailId": 820
+     },
+     {
+      "actId": 31083,
+      "type": "QuestActSupplyExp",
+      "detailId": 548,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

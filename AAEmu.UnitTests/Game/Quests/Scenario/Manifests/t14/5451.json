@@ -1,0 +1,114 @@
+{
+ "questId": 5451,
+ "name": "어둠의 경주 초대",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23571,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33119,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 199,
+      "questContextId": 5451
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 23572,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33123,
+      "type": "QuestActSupplyItem",
+      "detailId": 3751,
+      "itemId": 28379,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23573,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33131,
+      "type": "QuestActConReportNpc",
+      "detailId": 4506,
+      "npcId": 13392
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23577,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13392,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

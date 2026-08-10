@@ -1,0 +1,141 @@
+{
+ "questId": 5351,
+ "name": "내가 바로 장인 건축가",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12505
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23131,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32719,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4151,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23132,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32716,
+      "type": "QuestActObjTalk",
+      "detailId": 1023,
+      "npcId": 5697
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23133,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32720,
+      "type": "QuestActConReportNpc",
+      "detailId": 4453,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23243,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32717,
+      "type": "QuestActObjTalk",
+      "detailId": 1024,
+      "npcId": 4291
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23244,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32721,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 160,
+      "appellationId": 64
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 5697
+    },
+    {
+     "type": "Talk",
+     "npcId": 4291
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12505,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

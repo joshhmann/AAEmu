@@ -1,0 +1,141 @@
+{
+ "questId": 3633,
+ "name": "불숨결 부락을 노리는 무리 처치",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8937
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15158,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20771,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 775,
+      "npcId": 8937
+     },
+     {
+      "actId": 20772,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 776,
+      "npcId": 1009
+     },
+     {
+      "actId": 30578,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1162,
+      "npcId": 1120
+     },
+     {
+      "actId": 30579,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1163,
+      "npcId": 1121
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15159,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20770,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 368,
+      "monsterGroupId": 331,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15160,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20768,
+      "type": "QuestActConReportJournal",
+      "detailId": 221
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15161,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20769,
+      "type": "QuestActSupplyCopper",
+      "detailId": 328,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 331,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

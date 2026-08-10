@@ -1,0 +1,119 @@
+{
+ "questId": 3969,
+ "name": "작전명, 까마귀 공습",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9591
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16861,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22277,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3156,
+      "npcId": 9591
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16862,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29881,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1070,
+      "npcId": 4563,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16863,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22282,
+      "type": "QuestActConReportNpc",
+      "detailId": 3391,
+      "npcId": 9591
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16864,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4563,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9591,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

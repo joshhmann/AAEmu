@@ -1,0 +1,81 @@
+{
+ "questId": 4761,
+ "name": "장기말 중턱",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1814
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28134,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 473,
+      "sphereId": 1814
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20585,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28135,
+      "type": "QuestActSupplyCopper",
+      "detailId": 767,
+      "amount": 0
+     },
+     {
+      "actId": 28137,
+      "type": "QuestActSupplyExp",
+      "detailId": 323,
+      "exp": 0
+     },
+     {
+      "actId": 28138,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1022
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4733,
+ "name": "빈 나무 터의 의식 제단",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1783
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20473,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27942,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 445,
+      "sphereId": 1783
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20475,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27943,
+      "type": "QuestActSupplyCopper",
+      "detailId": 740,
+      "amount": 0
+     },
+     {
+      "actId": 27944,
+      "type": "QuestActSupplyExp",
+      "detailId": 293,
+      "exp": 0
+     },
+     {
+      "actId": 27946,
+      "type": "QuestActConAutoComplete",
+      "detailId": 993
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

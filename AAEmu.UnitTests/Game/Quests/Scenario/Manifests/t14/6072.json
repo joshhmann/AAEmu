@@ -1,0 +1,118 @@
+{
+ "questId": 6072,
+ "name": "나차쉬가르 조사 준비",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14411
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26129,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35748,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4609,
+      "npcId": 14411
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26131,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35750,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1292,
+      "amount": 0
+     },
+     {
+      "actId": 35751,
+      "type": "QuestActSupplyExp",
+      "detailId": 846,
+      "exp": 0
+     },
+     {
+      "actId": 35872,
+      "type": "QuestActSupplyItem",
+      "detailId": 4028,
+      "itemId": 30782,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35834,
+      "type": "QuestActConReportNpc",
+      "detailId": 4848,
+      "npcId": 14411
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14411,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30782,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

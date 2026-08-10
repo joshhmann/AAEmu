@@ -1,0 +1,81 @@
+{
+ "questId": 4744,
+ "name": "이니스테르 망루",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1796
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20530,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28042,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 456,
+      "sphereId": 1796
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20532,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28043,
+      "type": "QuestActSupplyCopper",
+      "detailId": 750,
+      "amount": 0
+     },
+     {
+      "actId": 28044,
+      "type": "QuestActSupplyExp",
+      "detailId": 305,
+      "exp": 0
+     },
+     {
+      "actId": 28046,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1004
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

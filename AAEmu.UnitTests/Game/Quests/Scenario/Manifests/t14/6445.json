@@ -1,0 +1,130 @@
+{
+ "questId": 6445,
+ "name": "다루족의 은밀한 임무",
+ "zoneId": 129,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34444
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27539,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39461,
+      "type": "QuestActConAcceptItem",
+      "detailId": 456,
+      "itemId": 34444
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27540,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39384,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1289,
+      "npcId": 8850,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39392,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1766
+     },
+     {
+      "actId": 39442,
+      "type": "QuestActSupplyExp",
+      "detailId": 1392,
+      "exp": 80000
+     },
+     {
+      "actId": 39443,
+      "type": "QuestActSupplyItem",
+      "detailId": 4577,
+      "itemId": 31893,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40182,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1842,
+      "amount": 10000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8850,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31893,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34444,
+   "count": 1
+  }
+ ]
+}

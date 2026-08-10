@@ -1,0 +1,125 @@
+{
+ "questId": 3370,
+ "name": "당장 필요한 것은 화장실",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9580
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14475,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20329,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2768,
+      "npcId": 9580
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14476,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20229,
+      "type": "QuestActObjItemGather",
+      "detailId": 1433,
+      "itemId": 19733,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14477,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20330,
+      "type": "QuestActConReportNpc",
+      "detailId": 2999,
+      "npcId": 9580
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14478,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19733,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9580,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19733,
+   "count": 5
+  }
+ ]
+}

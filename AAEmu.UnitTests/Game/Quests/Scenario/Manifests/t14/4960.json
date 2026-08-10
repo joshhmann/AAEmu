@@ -1,0 +1,81 @@
+{
+ "questId": 4960,
+ "name": "폐허 도시가 내려다보이는 언덕",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2055
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21528,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30059,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 581,
+      "sphereId": 2055
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21529,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30055,
+      "type": "QuestActSupplyCopper",
+      "detailId": 879,
+      "amount": 0
+     },
+     {
+      "actId": 30056,
+      "type": "QuestActSupplyExp",
+      "detailId": 420,
+      "exp": 0
+     },
+     {
+      "actId": 30058,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1176
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

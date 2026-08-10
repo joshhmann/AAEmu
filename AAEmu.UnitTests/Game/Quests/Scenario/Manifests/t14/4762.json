@@ -1,0 +1,81 @@
+{
+ "questId": 4762,
+ "name": "왕의 기둥의 정상",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1815
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20586,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28139,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 474,
+      "sphereId": 1815
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20588,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28140,
+      "type": "QuestActSupplyCopper",
+      "detailId": 768,
+      "amount": 0
+     },
+     {
+      "actId": 28141,
+      "type": "QuestActSupplyExp",
+      "detailId": 324,
+      "exp": 0
+     },
+     {
+      "actId": 28143,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1023
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

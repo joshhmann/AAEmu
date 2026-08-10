@@ -1,0 +1,81 @@
+{
+ "questId": 4596,
+ "name": "누이 여신상의 머리에 오르는 불경함을 시험하다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1666
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20009,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27210,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 340,
+      "sphereId": 1666
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20011,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27211,
+      "type": "QuestActSupplyCopper",
+      "detailId": 627,
+      "amount": 0
+     },
+     {
+      "actId": 27212,
+      "type": "QuestActSupplyExp",
+      "detailId": 180,
+      "exp": 0
+     },
+     {
+      "actId": 27214,
+      "type": "QuestActConAutoComplete",
+      "detailId": 885
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

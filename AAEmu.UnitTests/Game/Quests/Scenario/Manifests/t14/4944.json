@@ -1,0 +1,119 @@
+{
+ "questId": 4944,
+ "name": "암흑 마인 베르가",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2002
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21455,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29869,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 179,
+      "questContextId": 4944
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21456,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29839,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1068,
+      "npcId": 2002,
+      "count": 1
+     },
+     {
+      "actId": 29870,
+      "type": "QuestActObjAggro",
+      "detailId": 20,
+      "range": 50,
+      "rank1": 10,
+      "rank2": 20,
+      "rank3": 50,
+      "rank1Ratio": 100,
+      "rank2Ratio": 50,
+      "rank3Ratio": 0,
+      "rank1Item": true,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2130
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21457,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29840,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1153
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2002,
+     "count": 1
+    },
+    {
+     "type": "Aggro",
+     "npcId": 2002
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

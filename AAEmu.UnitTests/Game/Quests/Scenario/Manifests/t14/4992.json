@@ -1,0 +1,81 @@
+{
+ "questId": 4992,
+ "name": "채석장의 숨겨진 지름길",
+ "zoneId": 18,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2089
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21638,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30261,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 610,
+      "sphereId": 2089
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21639,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30257,
+      "type": "QuestActSupplyCopper",
+      "detailId": 908,
+      "amount": 0
+     },
+     {
+      "actId": 30258,
+      "type": "QuestActSupplyExp",
+      "detailId": 450,
+      "exp": 0
+     },
+     {
+      "actId": 30260,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1215
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

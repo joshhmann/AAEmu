@@ -1,0 +1,164 @@
+{
+ "questId": 6633,
+ "name": "원정대의 이름을 건 사냥",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34866
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28298,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40574,
+      "type": "QuestActConAcceptItem",
+      "detailId": 565,
+      "itemId": 34866
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28299,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40594,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 705,
+      "monsterGroupId": 569,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28300,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40737,
+      "type": "QuestActConReportNpc",
+      "detailId": 5096,
+      "npcId": 14953
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40581,
+      "type": "QuestActSupplyExp",
+      "detailId": 1559,
+      "exp": 1004
+     },
+     {
+      "actId": 40582,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1904,
+      "amount": 100
+     },
+     {
+      "actId": 40589,
+      "type": "QuestActSupplyItem",
+      "detailId": 4724,
+      "itemId": 31893,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40593,
+      "type": "QuestActSupplyItem",
+      "detailId": 4728,
+      "itemId": 34880,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 569,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14953,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31893,
+      "count": 1
+     },
+     {
+      "itemId": 34880,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34866,
+   "count": 1
+  }
+ ]
+}

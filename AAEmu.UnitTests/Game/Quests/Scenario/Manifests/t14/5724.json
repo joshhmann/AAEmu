@@ -1,0 +1,217 @@
+{
+ "questId": 5724,
+ "name": "알렉산데르의 제자",
+ "zoneId": 187,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13743
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24609,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34264,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4378,
+      "npcId": 13743
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24610,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34272,
+      "type": "QuestActObjItemGather",
+      "detailId": 2810,
+      "itemId": 29496,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24611,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34266,
+      "type": "QuestActConReportNpc",
+      "detailId": 4677,
+      "npcId": 13743
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24755,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 24756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34268,
+      "type": "QuestActObjItemGather",
+      "detailId": 2806,
+      "itemId": 29484,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34271,
+      "type": "QuestActObjItemGather",
+      "detailId": 2809,
+      "itemId": 29493,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24758,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34270,
+      "type": "QuestActObjItemGather",
+      "detailId": 2808,
+      "itemId": 29489,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24759,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34269,
+      "type": "QuestActObjItemGather",
+      "detailId": 2807,
+      "itemId": 29486,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29496,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29484,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29493,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29489,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29486,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13743,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29496,
+   "count": 1
+  },
+  {
+   "itemId": 29484,
+   "count": 1
+  },
+  {
+   "itemId": 29493,
+   "count": 1
+  },
+  {
+   "itemId": 29489,
+   "count": 1
+  },
+  {
+   "itemId": 29486,
+   "count": 1
+  }
+ ]
+}

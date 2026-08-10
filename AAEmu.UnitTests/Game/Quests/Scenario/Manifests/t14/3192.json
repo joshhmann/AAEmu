@@ -1,0 +1,128 @@
+{
+ "questId": 3192,
+ "name": "나라야나 소녀 구출 작전",
+ "zoneId": 172,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8890
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13404,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19180,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2537,
+      "npcId": 8890
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13405,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21633,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 96,
+      "itemId": 19571,
+      "count": 1
+     },
+     {
+      "actId": 30503,
+      "type": "QuestActObjInteraction",
+      "detailId": 642,
+      "doodadId": 3580,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19181,
+      "type": "QuestActConReportNpc",
+      "detailId": 2767,
+      "npcId": 8890
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13407,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3580,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8890,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

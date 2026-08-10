@@ -19,7 +19,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 - **T11 M2 WI-4 (MateLevel objective carriers)**: 4 PASS / 0 FAIL / 0 SKIP
 - **T12 M2 WI-5 (CompleteQuest objective carriers)**: 9 PASS / 0 FAIL / 0 SKIP
 - **T13 M2 WI-7 census (band 31-40 full sweep)**: 631 PASS / 0 FAIL / 0 SKIP
-- **ALL TIERS (census)**: 2727 PASS / 0 FAIL / 8 SKIP over 2735 quests — **2727/2727 quests runnable** (8 SKIP not driven, reasons below)
+- **T14 M2 WI-8 census (band 41-50 full sweep)**: 1526 PASS / 0 FAIL / 2 SKIP
+- **ALL TIERS (census)**: 4253 PASS / 0 FAIL / 10 SKIP over 4263 quests — **4253/4253 quests runnable** (10 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
@@ -29,6 +30,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 11-20 | t7 | 626 | 17 | 609 | 609 | 609 | 0 | 0 | 100.0% |
 | 21-30 | t8 | 847 | 0 | 847 | 847 | 847 | 0 | 0 | 100.0% |
 | 31-40 | t13 | 643 | 0 | 643 | 643 | 643 | 0 | 0 | 100.0% |
+| 41-50 | t14 | 1592 | 1 | 1591 | 1591 | 1589 | 0 | 2 | 100.0% |
 
 ## Zone coverage (signature zones)
 
@@ -39,24 +41,33 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | Lilyut | 1-10 | 16 | 16 | 0 | 0 |
 | Lilyut | 11-20 | 74 | 74 | 0 | 0 |
 | Lilyut | 21-30 | 49 | 49 | 0 | 0 |
+| Lilyut | 41-50 | 6 | 6 | 0 | 0 |
 | Mahadevi | 11-20 | 125 | 125 | 0 | 0 |
 | Mahadevi | 21-30 | 8 | 8 | 0 | 0 |
+| Mahadevi | 41-50 | 11 | 11 | 0 | 0 |
 | Tiger Spine | 1-10 | 22 | 22 | 0 | 0 |
 | Tiger Spine | 11-20 | 100 | 100 | 0 | 0 |
 | Tiger Spine | 21-30 | 1 | 1 | 0 | 0 |
+| Tiger Spine | 41-50 | 5 | 5 | 0 | 0 |
 | Falcony | 1-10 | 85 | 85 | 0 | 0 |
 | Falcony | 31-40 | 2 | 2 | 0 | 0 |
+| Falcony | 41-50 | 5 | 5 | 0 | 0 |
 | Sunny Wilderness | 1-10 | 40 | 40 | 0 | 0 |
 | Sunny Wilderness | 11-20 | 47 | 47 | 0 | 0 |
 | Ancient Forest | 21-30 | 113 | 113 | 0 | 0 |
+| Ancient Forest | 41-50 | 3 | 3 | 0 | 0 |
 | Marionople | 21-30 | 102 | 102 | 0 | 0 |
+| Marionople | 41-50 | 10 | 10 | 0 | 0 |
 | Two Crowns | 21-30 | 91 | 91 | 0 | 0 |
 | Two Crowns | 31-40 | 5 | 5 | 0 | 0 |
+| Two Crowns | 41-50 | 4 | 4 | 0 | 0 |
 | White Forest | 11-20 | 32 | 32 | 0 | 0 |
 | White Forest | 21-30 | 90 | 90 | 0 | 0 |
+| White Forest | 41-50 | 3 | 3 | 0 | 0 |
 | Singing Land | 21-30 | 84 | 84 | 0 | 0 |
 | Sunrise Peninsula | 11-20 | 29 | 29 | 0 | 0 |
 | Sunrise Peninsula | 21-30 | 80 | 80 | 0 | 0 |
+| Sunrise Peninsula | 41-50 | 10 | 10 | 0 | 0 |
 
 ## T1 — per-quest verdicts
 
@@ -2858,6 +2869,1539 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 92 | 다후타 교단의 파멸을 위해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 937 | 루푸스의 아내 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 
+## T14 — per-quest verdicts
+
+| quest | name | family | verdict | detail |
+|---|---|---|---|---|
+| 1103 | 때늦은 후회 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1498 | 위험 경고 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2761 | 눈사람의 영혼 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2769 | 전나무 아가씨에게 전할 선물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2825 | 하리하랄라야의 폐허를 지켜라 1단계 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2826 | 하리하랄라야의 폐허를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2827 | 하리하랄라야의 폐허를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2828 | 하리하랄라야의 폐허를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2895 | (개발중)칼의 노래 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 2933 | 뒤늦은 참회 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2934 | 강제 노역 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2979 | 검은날개의 지배자 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 2998 | 납치당한 게르망을 찾아라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 2999 | 포악한 트롤 시지프 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3000 | 현상금 사냥꾼 주노 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3001 | 아삼을 찾아라 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3002 | 쇠약한 페레를 위한 보약 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3003 | 엎친 데 덮친 격 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3004 | 모험가의 유산 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3007 | 상인의 집념 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3010 | 우르톨의 양을 지켜라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3013 | 역사학자 투인비 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3014 | 로카의 전설을 아는 자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3015 | 암탉 네네의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3016 | 전염병은 독으로 다스린다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3017 | 눈사자를 유혹하려면 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3018 | 친구를 생각하는 마음 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3019 | 광폭한 바위 정령을 물리쳐라! | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3020 | 거대 거미를 물리쳐라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3021 | 아얀가의 편지 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3022 | 거미줄로 만드는 그물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3023 | 눈사자 사로잡기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3024 | 흰 유령의 전설 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3025 | 흰 유령의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3028 | 바이암이 광폭해진 까닭 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3029 | 솔롱고스(OBT삭제예정) | QuestActConReportNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3031 | 거대 땅벌레의 비밀 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3032 | 파괴의 신 키리오스의 흔적 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3033 | 불길한 기운의 원인을 밝혀라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3034 | 아카네스 학파의 증표 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3035 | 신의 권능을 내뿜는 석상 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3036 | 희소식을 전하다 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3037 | 아카네스 학파의 우두머리 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3038 | 초원의 띠로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3043 | 초원의 평화를 바라는 자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3044 | 굶주린 얼룩말을 위한 일 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3045 | 초원의 질서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3046 | 평범한 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3047 | 거꾸로 강을 거슬러 오르는 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3048 | 제사에 필요한 것 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3049 | 하리하란의 정체 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3050 | 야욜태의 도발 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3051 | 하늘의 계시 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3057 | 고고학자 제이슨의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3061 | 주술사의 우려 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3062 | 분노한 거인 잠재우기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3063 | 눈사자 검 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3064 | 실종된 왕자를 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3065 | 두 왕관의 왕자 히페리온 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3066 | 떠돌이 왕자의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3068 | 주인의 품으로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3069 | 나라야나 소녀의 행방불명 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3070 | 달려라, 야타! | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3072 | 검은상아 밀렵단 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3073 | 위협당하는 초원 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3074 | 로카 강에서 생긴 일 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3075 | 무모한 도전 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3076 | 목축장을 지켜줘 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3077 | 초원의 갈등 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3078 | 더러운 양을 깨끗이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3079 | 목축장 돌부리 제거하기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3080 | 점령당한 회합터 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3081 | 초원의 그림자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3082 | 쌍두사 접근 금지 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3083 | 초원의 시체 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3084 | 상인의 약속 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3085 | 혼란을 바라는 자 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3086 | 가르가츠가 찾아야 하는 것 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3087 | 숨겨진 발톱 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3088 | 누가 소중한 물을 오염시키는가? | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3089 | 쓰러진 눈사자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3090 | 위기감 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3091 | 옛 제국의 꿈 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3092 | 나무 위의 고집쟁이 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3093 | 초원의 법칙 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3094 | 악의에 맞서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3095 | 초원에 기계는 필요 없다 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3096 | 보고 들은 것들 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3097 | 모래늪의 무법자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3098 | 초원의 대통합을 위해 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3099 | 밀렵단 전초기지 파괴 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3100 | 가르가츠의 원한 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3101 | 습격자의 정체 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3102 | 초원의 전사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3103 | 부족의 친구 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3104 | 오아시스의 불청객 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3186 | 불길한 늑대 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3187 | 안전한 곳을 찾아야 할 때 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3188 | 도둑맞은 유품 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3189 | 우정은 목숨을 걸고 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3190 | 초원의  불꽃 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3191 | 불꽃이 말하는 것 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3192 | 나라야나 소녀 구출 작전 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3193 | 검은상아 밀렵단 소탕 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3194 | 회합이 필요할 때 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3195 | 의혹의 실마리 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3196 | 빼앗긴 땅의 기운 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3197 | 메마른 오아시스 되살리기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3198 | 배신의 대가 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3199 | 밀약의 증거 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3200 | 유령과 어둠 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3201 | 초원의 심장 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3202 | 황금바다 밀렵단의 덫 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3203 | 아기 코끼리 구출 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3204 | 카첸 마라의 제안 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3205 | 풍요의 의식 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3206 | 파괴된 바람돌 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3207 | 바람이 들려주는 이야기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3208 | 하슬라가 노리는 것 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3209 | 날렵한 뿔의 위협 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3210 | 하리하랄라야의 폐허로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3213 | 숨겨진 모래 유적 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3322 | 수영복을 입고 바다로 가자! | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3348 | 바람이 머무는 곳 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3349 | 떡 하나 주면 안 잡아 먹을까? | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3364 | 돌아오지 못하는 발굴대원 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3365 | 아우야, 우리의 인연은 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3366 | 괜한 방해자들 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3367 | 코산 마라 순수비는 실존하는가 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3368 | 동쪽 순수비를 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3369 | 서쪽 순수비를 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3370 | 당장 필요한 것은 화장실 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3371 | 아이들을 지켜주세요 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3372 | 우리 마을이 무너진다고? | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3373 | 골치 아픈 서리꾼 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3374 | 신식 비료의 재료 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3375 | 형님도 비료가 필요할 거야 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3376 | 논에 생긴 괴생명체 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3377 | 말이 통하는 자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3378 | 경작지를 뒤덮는 기형 식물들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3379 | 남편에게 다시 평범한 일상을 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3380 | 과연 효능이 있을까? | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3381 | 고이 보내 주소서 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3382 | 역병 걸린 자 추방 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3383 | 오염 주의! | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3384 | 알맞게 성장한 죽순 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3385 | 절세미인과 일곱 페피 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3386 | 놀라 자빠질 뻔 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3387 | 동생의 행방 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3388 | 의심스러운 제사장 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3389 | 뒷거래 | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3390 | 왕을 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3391 | 핑계 같은 이유 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3392 | 학 모자를 하사하는 전통 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3393 | 백일홍 한 다발 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3394 | 산양의 뿔 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3395 | 최선의 저항 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3396 | 진짜 두려운 것은 아사지 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3397 | 초야로 돌아간 대학사 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3398 | 두고 볼 수 없어 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3399 | 하늘정원 마을의 보답 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3400 | 지네 왕 껑충이 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3401 | 농사를 망치겠어! | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3402 | 그를 위한 음식 만들기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3403 | 이제 행복하게 떠나렴 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3404 | 아사지는 진상품을 좋아해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3405 | 빠른 알현을 위한 알선 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3406 | 아사지 앞에서도 당당하게 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3407 | 향기 거미 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3408 | 저주받은 숲 정화 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3409 | 묘지를 지키는 남자 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3410 | 위기의 동방 이슈바라 전기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3411 | 절실하다는데 외면할 수는 없지 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3412 | 동물을 사랑한다면 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3413 | 건강검진 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3414 | 열쇠 빼앗기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3416 | 나태한 감독관 감시 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3417 | 뻔뻔한 불청객들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3418 | 의무이자 자부심 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3419 | 의논할 수 없는 고민 | QuestActConAcceptNpc | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
+| 3420 | 궁지에 몰리다 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3421 | 추적의 덫 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3422 | 드러나는 정체 | QuestActConAcceptDoodad | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3423 | 테미캣이 만드는 치료 약 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3424 | 오염을 정화하는 간단한 방법 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3425 | 정당한 시민의 권리를 원한다 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3426 | 정직한 노력 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3427 | 단절된 통로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3428 | 비웃음에 대한 응징 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3429 | 쇠로 주고 금으로 받는 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3430 | 명상을 방해한 대가 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3431 | 하리하란을 원대륙으로 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3432 | 비취 마을의 맹수들 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3433 | 왕의 귀환 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3571 | 타양의 포효 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3572 | 진의 위엄 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3576 | 아주 오래된 전투 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3579 | 변장용 복면 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3580 | 농부로 변장한 서리꾼 두목 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3581 | 강력한 항의 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3582 | 대초원의 품으로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3583 | 거대 파리지옥 살충이 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3584 | 동물관리사의 고충 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3585 | 할아버지의 유품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3586 | 도난당한 기계 부품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3587 | 나머지 유품을 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3588 | 망령의 그림자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3589 | 의외의 답례 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3590 | 마지막 유물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3591 | 불침번 없이 잠들고 싶다 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3592 | 우선은 급한 대로 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3593 | 호랑이 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3594 | 뼈의 땅으로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3595 | 가루다 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3596 | 공동묘지의 침입자들 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3597 | 코산의 아이들 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3608 | 감춰진 송곳니가 노리는 건? | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3614 | 바람의 방향을 아는 일 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3616 | 제물 상납 | QuestActCheckTimer | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3623 | 푸른송곳니의 협박 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3624 | 점을 보기 좋은 때 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3625 | 작은 사자 이야기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3626 | 모링가 숲의 질서 바로잡기 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3627 | 검은상아 밀렵단 선발대 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3628 | 목축장의 위협자들 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3629 | 붉은발톱 부족의 적대자들 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3630 | 모래늪의 무법자들 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3631 | 불숨결 부락을 위협하는 동물들 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3632 | 검은상아 밀렵단 정예 토벌 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3633 | 불숨결 부락을 노리는 무리 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3634 | 초원의 분열을 바라는 무리 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3635 | 정복자의 초원에 부는 바람 잠재우기 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3636 | 오아시스 지켜내기 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3637 | 초원의 띠를 누비는 동물들 사냥 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3644 | 코끼리는 죽어서 뼛가루를 남긴다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3762 | 그림자 매가 좋아하는 것 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3763 | 남방 이슈바라에는 없는 것 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3764 | 죽은 자의 눈물이란 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3765 | 피 냄새나는 수집품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3766 | 실종된 동료 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3767 | 모르나가 남긴 것 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3769 | 도둑맞은 귀걸이 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3770 | 귀걸이를 제자리에 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3771 | 죽어도 계속되는 고통 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3772 | 비단 꾸러미 되찾기 | QuestActCheckCompleteComponent | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3773 | 꼬마의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3774 | 재빠른 배달 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3775 | 길들여진 운명 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3776 | 밤의 포식자들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3777 | 치료제가 효과가 있길... | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3778 | 유물을 보존하는 자들? | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3779 | 그들의 배후 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3780 | 상반신과 하반신 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3781 | 조각상 복원 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3782 | 행동 강령 해독 | QuestActCheckCompleteComponent | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3783 | 남방의 알키미 장군 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3784 | 서방의 나디르 장군 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3785 | 북방의 메레디스 장군 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3786 | 황금비늘 성역으로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3787 | 배덕자의 신 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3788 | 부관을 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3789 | 도둑맞은 푸른 병 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3790 | 시체는 남고 푸른 병은 사라지다 | QuestActConAcceptDoodad | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3792 | 전하 알현하기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3793 | 황금비늘의 흔적 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3794 | 여섯 번째 남자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3796 | 탑을 훼손하는 이유 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3797 | 페레를 인정하지 않는 자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3798 | 오지 않는 푸른 병 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3799 | 연극 준비 돕기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3800 | 효과가 없다면... | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3801 | 동방의 류이진 장군 | QuestActConAcceptNpcKill | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3802 | 전하의 탑에 새겨진 부조 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3803 | 범인은 박쥐 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3804 | 제국의 영혼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3806 | 신수에게 생긴 변화 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3807 | 석공 마을로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3808 | 조각상을 빛낼 눈 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3809 | 보물 상자에 담긴 비법 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3810 | 보물 상자 파괴하기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3811 | 야차의 비밀 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3812 | 신수 수호자들 처치 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3813 | 다미에게 물 먹이기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3814 | 두고 온 망치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3815 | 장인 정신 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3816 | 잠자는 제국의 검 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3817 | 옛 영광을 지키는 존재 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3818 | 깨어난 제국의 대형 검 | QuestActConAcceptNpcKill | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3819 | 폐허 파수꾼 처치 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3820 | 부조 탁본 뜨기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3821 | 비겁한 변명 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3822 | 황금비늘의 후손 실종 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3823 | 실험의 증거 전하기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3824 | 마법 실험서 찾기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3825 | 미쳐버린 야차들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3826 | 잠자는 제국의 도끼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3827 | 깨어난 제국의 대형 도끼 | QuestActConAcceptNpcKill | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3828 | 저주받은 운명 해제 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3829 | 검은나무 장벽으로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3830 | 정체가 드러난 유물 보존회 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3831 | 떠도는 영혼을 누이 여신의 품으로 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3832 | 악마새야, 저리 꺼져라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3833 | 불에는 불 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3834 | 안개 괴물 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3835 | 파비트라 대여제 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3836 | 제국의 망령을 저승으로 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3837 | 해독 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3838 | 마을에 경고를 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3839 | 싸우거나, 혹은 도망치거나 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3845 | 검은나무 장벽의 수호자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3846 | 야차! | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3847 | 보물이 좋아! | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3848 | 하슬라로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3849 | 약초꾼을 보호하라 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3850 | 인간에게 귀찮은 존재 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3851 | 망자여, 잠드소서 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3852 | 대제국을 어지럽히는 자들 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3853 | 폐허의 늑대들 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3854 | 오염된 신수 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3910 | 구체적인 지시 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3966 | 신식 비료 만들기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3969 | 작전명, 까마귀 공습 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3970 | 아사지의 송곳니 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3971 | 삶의 발견 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3997 | 불곰 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3998 | 하얀놀 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4000 | 광폭한 바위 정령 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4001 | 거대 거미 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4002 | 거대 바이암 무리 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4005 | 아카네스 학파 일당 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4012 | 물안개 정령을 퇴치하다! | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4013 | 분노한 거인을 퇴치하다! | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4014 | 거대 땅벌레 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4282 | 네네와 쿱네의 이루어질 수 없는 사랑 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4283 | 고대 설인의 분노 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4312 | 메마른 대지에도 꽃은 피는가 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4313 | 생명의 물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4314 | 시들어버린 꽃잎 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4315 | 포기하지 않는 자의 희망 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4316 | 고통받는 영혼의 소리 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4317 | 떠도는 영혼의 안식 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4318 | 고대의 유적 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4319 | 섬세한 작업은 양보할게요 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4320 | 화 풀고 다시 잠드세요 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4321 | 거대 붉은비늘 에키혼 퇴치 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4322 | 미안! 비구름 만드는 데 심장이 필요해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4323 | 염치없는 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4324 | 부활을 위한 기우제 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4325 | 거대 바람 정령의 분노 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4326 | 거대 물 정령의 진노 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4327 | 약이 되는 식물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4328 | 아프니까 대신해줘 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4329 | 반쯤 죽여서 납치하라 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4330 | 용의 기운 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4331 | 고대 문명의 흔적 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4332 | 위험한 작업은 타인에게 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4333 | 큰부리 황조롱이의 알 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4334 | 세월을 이겨내는 집념 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4336 | 붉은비늘 에키혼 우두머리 아슈칼툼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4337 | 반지의 주인은 누구? | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4338 | 뼈 웅덩이 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4339 | 납치당한 르델린 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4340 | 난폭한 용의 기운 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4341 | 갈색비늘 에키혼은 다르다는데 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4342 | 파수꾼을 물리쳐 주세요! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4343 | 반인반사의 위협 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4344 | 가프낙의 전언 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4345 | 석화 치료 약 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4346 | 갈색비늘 에키혼을 구하다 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4348 | 300년의 우정 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4349 | 치유의 열매 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4350 | 잔인한 현실 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4351 | 변형 식물의 꽃잎이라도 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4352 | 자유를 주다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4353 | 이프리온의 편지 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4354 | 화려하고 예쁜 불소의 가죽 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4355 | 망령이 담긴 검 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4356 | 에키혼이 싫어하는 것 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4357 | 망령이여, 이젠 안녕! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4358 | 고대의 유물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4359 | 돌 속에 유물이? | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4360 | 에키혼을 해방시켜라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4361 | 전갈 주의 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4363 | 납치당한 엘프는 어디에? | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4364 | 갈색비늘 에키혼 구출 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4365 | 긍지 있는 전사의 이름이 걸린 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4366 | 에키혼의 자유를 위하여 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4367 | 빼앗긴 유물을 찾아주세요! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4369 | 성년이 되기 전에 남긴 유서 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4370 | 소리 없는 전쟁의 승리를 위해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4371 | 어떤 상황에서도 우리의 목적은 하나! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4372 | 작은 희망 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4373 | 긍지를 잃어버린 자에게 주는 선물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4374 | 악의 축 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4375 | 자식 이기는 부모는 없다? | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4376 | 생명의 등가교환 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4377 | 대지의 기운이 필요해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4378 | 정화 의식 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4379 | 에키혼 현자 뮴뮴의 전언 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4380 | 검은발톱 대머리 독수리 퇴치 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4381 | 반인반사 우두머리 메두스 퇴치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4382 | 부담스러운 간식거리 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4383 | 흑마법사 베르가의 지팡이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4384 | 붉은발톱 대머리 독수리 퇴치 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4385 | 우두머리 독수리 퇴치 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4386 | 독수리 알만 사라진다면 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4387 | 검은비늘 에키혼을 물리쳐라 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4389 | 마법의 돌 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4390 | 여행자를 위협하는 벌레 퇴치 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4392 | 지옥불 정령 퇴치 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4445 | 무지개 벌판 첫걸음의 언덕 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4446 | 화강암 채석장 언덕 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4447 | 무지개 벌판의 큰 나무 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4448 | 마른 별 쉼터 전망대 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4449 | 마른 들판의 무지개 바위 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4450 | 바오밥 나무 사이로 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4451 | 뱀의 틈 지붕 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4452 | 뱀의 틈 숨겨진 동굴 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4453 | 너른 소매 마을 전망대 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4454 | 바이암 소굴 산등성이 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4455 | 요정의 은신처 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4456 | 요정의 나무 꼭대기 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4457 | 잊혀진 성 꼭대기 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4458 | 초승달 왕좌의 분수대 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4459 | 솔즈리언 문 정상 정복 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4460 | 촌장의 집 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4461 | 초승달 왕좌 동쪽 선착장 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4462 | 우윳빛 강 마을의 폭포 뒤편 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4463 | 폐광 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4464 | 솔즈리드 수중 동굴 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4467 | 하르파 수련장의 노래하는 바위 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4468 | 하르파 수련장의 지붕 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4469 | 숲의 인도자 나무 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4470 | 숲의 주인을 마주하는 자리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4471 | 숲의 주인의 유적지 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4472 | 그위오니드 석상 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4473 | 제식 광장의 기둥 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4474 | 잊혀진 신전 기둥 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4475 | 가시덤불 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4476 | 누온의 거리가 내려다보이는 지붕 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4480 | 파오 지붕 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4481 | 눈사자 훈련소 지붕 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4482 | 탄생의 절벽 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4483 | 시험의 봉우리 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4484 | 낮의 눈 나무 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4485 | 밤의 눈 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4486 | 안개 동굴 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4487 | 박쥐 동굴 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4488 | 낮의 눈 절벽 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4489 | 주거지역이 내려다보이는 바위산 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4491 | 남 데비강 상류 폭포 수원지 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4492 | 제련소 지붕 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4493 | 기계 제작 건물의 유독가스 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4494 | 철광산 선로의 끝 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4495 | 쇠모루 마을의 첨탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4496 | 거미 나무 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4497 | 기계 폐기장의 거대 톱니바퀴 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4498 | 침묵하는 기계를 넘어서 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4499 | 수정 호수의 부러진 나무 기둥 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4500 | 호랑이 눈의 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4501 | 호랑이 눈의 분수대 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4502 | 할 하파의 잔영을 발견하다! | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4504 | 북 데비강 상류 늪지대 나무 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4505 | 북 데비강 상류 폭포 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4506 | 코볼트 동굴의 천장 빈자리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4508 | 난파된 배 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4509 | 초승달 항구의 선착장 아래 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4510 | 바라기 마을의 망루 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4511 | 부서진 조각상에 오르다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4512 | 부러진 고목의 흔적을 살피다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4513 | 탐험은 작은 바위에 오르는 것에서 시작된다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4514 | 남의 집 지붕에 오르는 것도 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4515 | 담장의 끝 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4516 | 마른 별 쉼터가 내려다보이는 바위 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4517 | 황야가 내려다보이는 커다란 바위 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4520 | 초승달 왕좌가 내려다보이는 언덕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4521 | 초심자의 언덕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4522 | 베아르 야영지가 내려다보이는 바위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4523 | 금지된 유적의 흔적 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4524 | 결투장 성곽의 끝 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4525 | 선박의 뼈대 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4526 | 초심자의 언덕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4527 | 탄생의 절벽 외딴 바위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4528 | 탄생의 절벽 오르기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4529 | 밤의 눈 아래 서다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4530 | 시치미 약탈단 본거지 파오 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4531 | 릴리엇 강 수원지의 숨겨진 비밀 장소 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4532 | 무너진 성채의 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4533 | 무너진 성채의 성곽 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4534 | 트록스크 산의 정상을 오르다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4535 | 론반 공작 성의 첨탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4536 | 부서진 철로를 살피다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4537 | 버려진 공성병기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4538 | 바람그늘 마을의 풍차 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4539 | 동 론반 광산의 높은 자리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4540 | 서 론반 광산 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4547 | 거상의 꼭대기에 서다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4555 | 비행선 정거장 지붕에 오르다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4556 | 거석 꼭대기에 서다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4557 | 모래 먼지 마을의 거석 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4558 | 바다의 거석 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4559 | 핏빛안개 부족의 동굴 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4560 | 거석 뒤에 공간 있어요 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4561 | 모래 먼지 마을의 풍차 지붕에 오르다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4562 | 모래 먼지 마을의 숨겨진 다락방 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4563 | 거대 골렘을 발 아래에 두다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4594 | 여름잎 강의 수원지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4595 | 하얀 숲의 봉인석에 오르다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4596 | 누이 여신상의 머리에 오르는 불경함을 시험하다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4597 | 숲의 수호자 부락의 나선형 우물 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4598 | 굳게 닫힌 저승의 문 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4599 | 하얀 숲 풍차의 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4600 | 분열된 십자로의 비석 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4601 | 붉은 이끼 동굴 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4602 | 거대한 벌집에 올라가다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4603 | 크레타 바이저의 이상한 공작기계 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4604 | 오스카 극단의 서커스 천막 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4605 | 마리아노플의 하수도 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4606 | 마리안의 전당 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4607 | 수련의 탑 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4608 | 마리아노플의 별 석상 머리 위를 오르다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4609 | 마리아노플 풍차의 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4610 | 타인의 창고를 탐험(?)하다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4611 | 위어드윈드 저택의 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4612 | 전망 좋은 자리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4613 | 은밀한 장소 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4614 | 이즈나 하수도의 사자 석상 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4615 | 누이 여신을 향한 다리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4616 | 이즈나의 비밀 정원 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4619 | 이즈나 하수도 탐험 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4626 | 파괴신 석상 발견 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4627 | 초승달 바다의 작은 섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4628 | 두 개의 탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4629 | 바다에 잠긴 무너진 탑의 잔해를 살피다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4630 | 식량 창고 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4631 | 이즈나 성 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4632 | 이즈나 항구의 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4633 | 불경스러운 호기심 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4636 | 성지기 언덕의 봉우리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4637 | 일식 벌판의 봉우리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4638 | 끓어 오르는 수중 분화구 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4639 | 메마른 거목에 오르다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4640 | 타오르는 용암 연구소의 용광로 압축 제어장치 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4641 | 시차일드 부두의 등대 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4642 | 보름 분화구 용암석 채집기를 살피다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4643 | 뜨거운 용암의 중심에서 고통을 외치다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4644 | 불탄성 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4645 | 백색 군도의 부서진 잔해 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4670 | 수상 감옥 감시탑의 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4671 | 수상 감옥의 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4672 | 양조장의 거대 풍차 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4673 | 얼어붙은 군량 저장고의 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4674 | 다루의 집 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4675 | 비행선 연구소의 기중기 끝에 서보다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4676 | 석상의 머리 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4677 | 비행선의 머리끝 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4678 | 전사의 성 첨탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4679 | 폭포수의 뒤편 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4680 | 목 없는 누이 여신의 석상을 살피다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4681 | 부러진 거목 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4682 | 벌집을 살피다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4683 | 악명의 골짜기 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4684 | 거대한 늪지대 폭포 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4685 | 고대 신앙자의 성 하수도 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4686 | 고목에 핀 거대 버섯 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4687 | 트리스테 극단의 마차 안 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4688 | 오랑우탄 우리를 살피다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4689 | 늪지 거목의 줄기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4690 | 혼자 있어 외로운 자리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4691 | 비행선 바늘 꼭지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4692 | 마지막 계단 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4693 | 군주의 사냥터 초소 안 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4694 | 하늘 맞이 동굴 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4695 | 황금 혀 항구의 등대 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4696 | 황금 혀 항구의 노르예트 석상 머리 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4697 | 대부호 토루스의 저택 수영장 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4698 | 요정의 장막 나선 계단의 끝 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4699 | 성벽의 중턱 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4700 | 대부호 토루스의 저택 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4701 | 밀림의 폭포 뒤편 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4702 | 마하데비 다리 아래 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4703 | 마하데비 항구 폭포 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4704 | 마하데비 항구 육지의 섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4705 | 여왕의 궁을 발 아래에 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4706 | 둥근 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4707 | 갈색 카펫 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4708 | 아스트라 동굴의 황금 햇살 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4709 | 아스트라 동굴의 나무 위에 올라섰습니다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4710 | 아스트라 동굴의 정화수 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4711 | 마하데비 검문소 전망대 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4712 | 파비트라 대여제 전사지의 석상 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4713 | 햇무리 마을이 내려다보이는 언덕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4714 | 정령의 고원 남쪽 봉우리 섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4715 | 금지된 해안의 가장 높은 곳 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4716 | 금지된 해안의 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4717 | 금지된 해안의 뼛골 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4718 | 오스테라의 등대 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4719 | 시가지 공사장의 사자상 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4720 | 오스테라 극장의 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4721 | 비파 항구 첨탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4722 | 속삭이는 강의 뒤편 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4723 | 횃불만의 등대 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4724 | 재회의 사당 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4725 | 노래하는 계곡의 누각 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4726 | 비파 항구의 놀잇배 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4727 | 노래하는 강의 수원지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4728 | 비파 항구의 바위섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4729 | 징병소의 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4730 | 술취한 논이 내려다보이는 봉우리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4731 | 고대의 숲의 신성한 나무줄기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4732 | 봉인의 돌이 만든 줄기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4733 | 빈 나무 터의 의식 제단 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4734 | 오래된 왕릉의 부서진 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4735 | 침묵의 호수 창고 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4736 | 사냥꾼 마을의 감시탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4737 | 사냥꾼 마을의 집 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4738 | 말라붙은 거목 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4739 | 호수의 섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4740 | 오래된 왕릉 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4741 | 고대의 비문 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4743 | 오페라 극장 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4744 | 이니스테르 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4745 | 스톨텐베르그 성채의 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4747 | 염원의 강 폭포수 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4748 | 루비 광산촌의 성곽 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4749 | 루비 광산을 내려다보다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4750 | 건널 수 없는 해협의 소용돌이 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4751 | 고인돌의 머리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4752 | 의식의 탑 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4753 | 악마의 탑 위에 서다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4754 | 로카 제3봉 정복 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4755 | 로카 제2봉 정복 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4756 | 로카 제1봉 정복 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4757 | 수련의 동굴 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4758 | 암흑 갈기 오크 부락이 내려다보이는 언덕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4759 | 외딴 산봉우리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4760 | 로카의 협곡 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4761 | 장기말 중턱 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4762 | 왕의 기둥의 정상 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4763 | 장기말에 오르다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4764 | 로카강의 폭포수 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4765 | 초원의 주춧돌 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4766 | 초원의 심장 중심부 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4767 | 해그림자 회합터의 바람 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4768 | 눈사자 바위 머리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4769 | 눈사자 바위의 비밀 통로 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4770 | 눈사자 바위의 숨겨진 공간 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4771 | 뚱뚱한 바오밥 나무 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4772 | 거대 바오밥 나무의 줄기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4774 | 바람돌 위에 서다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4801 | 전설의 흔적이 남아 있는 은밀한 동굴 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4802 | 작은 섬의 오두막 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4803 | 누이 여신의 자애로움이 머무는 작은 섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4804 | 작은 바위섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4805 | 이즈나의 작은 바위섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4806 | 인적 없는 바위섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4807 | 아담한 산호섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4808 | 홀로 선 섬의 작은 이웃 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4809 | 홀로 선 섬의 정상 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4810 | 홀로 선 섬을 부정한 자들의 처형대 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4811 | 타타닉 호의 흔적 발견 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4812 | 가랑돌 평원을 바라보는 바위섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4813 | 산호섬의 높은 바위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4814 | 주상절리에 서서 대양을 바라보다 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4815 | 대양의 주상절리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4816 | 원대륙의 작은 섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4817 | 해적 소굴의 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4818 | 해적 소굴의 탑 중턱 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4819 | 모르페우스의 해적선 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4820 | 해적 소굴의 인질 감옥 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4821 | 해적 소굴의 샹드리에 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4822 | 해적 소굴의 옛 흔적 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4823 | 해적 소굴의 가로막힌 통로 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4824 | 으르렁거리는 섬을 마주하는 작은 바위섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4825 | 이니스 섬을 바라보는 작은 바위섬 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4826 | 누군가의 흔적이 느껴지는 무인도 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4827 | 자유도의 크고 아름답게 솟아오른 봉우리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4828 | 자유도의 봉우리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4829 | 수중 동굴이 있을 것 같지만 없는 바위틈 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4893 | 무스페로사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4894 | 비탄에 빠진 소녀 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4895 | 무쇠날 기사단의 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4896 | 사라진 기사단장 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4904 | 고요한 숲의 주인 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4905 | 영매의 거처 내부 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4906 | 고대 선주민의 흔적 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4907 | 푸른 소금 상회 본거지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4908 | 베어의 집 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4909 | 다후타 교단 점거지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4910 | 마른 들판의 작은 웅덩이 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4911 | 너른 소매 마을 웅덩이의 작은 돌 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4912 | 모레 일가의 야영지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4913 | 마하데비행 비행선 타는 곳 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4914 | 붉은비늘 에키혼 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4915 | 잿빛안개 부락의 굽은 나무 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4916 | 눈사자 훈련소 방문 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4917 | 공용 농장의 커다란 나무통 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4918 | 불꽃 매 협곡의 자연 굴길 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4919 | 길든 야타가 머무는 곳 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4920 | 바람 정령 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4921 | 물 정령 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4922 | 붉은비늘 에키혼 정찰병 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4923 | 바위 정령 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4924 | 흙 정령 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4925 | 붉은비늘 에키혼 전사 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4926 | 붉은비늘 에키혼 뼈화살병 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4927 | 반인반사 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4928 | 변형 식물 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4929 | 불소 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4930 | 고대 망령이 담긴 검 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4931 | 고대의 망령 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4932 | 미노타우르스 감시병 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4933 | 검은 털 전갈 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4934 | 미노타우르스 천둥노래꾼 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4935 | 미노타우르스 주술사 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4936 | 검은비늘 에키혼 전사 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4937 | 미노타우르스 광전사 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4938 | 뼈의 땅 쌍두사 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4939 | 검은발톱 대머리 독수리 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4940 | 붉은 흙 반인반사 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4941 | 붉은발톱 대머리 독수리 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4942 | 검은비늘 에키혼 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4943 | 뼈 땅 벌레 퇴치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4944 | 암흑 마인 베르가 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 4946 | 급류의 시작 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4947 | 황혼 노을 부락 아래 쌍둥이 폭포 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4948 | 아카네스 학파의 땅 벌레 양육지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4949 | 초원의 띠 비행장의 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4950 | 풀바람 초원의 한적한 큰 바위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4951 | 로카강의 맷돌 바위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4952 | 황금비늘 정원의 지붕 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4953 | 처형대 아래 좁은 틈 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4954 | 폐허 도시의 버려진 석상 어깨 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4955 | 궁전 폐허 꼭대기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4956 | 폐허에 남겨진 거대 석상 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4957 | 석공 마을의 큼직한 짐승 우리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4958 | 가루다 서식지의 뾰족 바위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4959 | 전하의 탑 지붕 모서리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4960 | 폐허 도시가 내려다보이는 언덕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4961 | 고고학자 마을의 감시탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4962 | 옛 처형터의 폭포 시작지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4963 | 연극 무대로 사용되는 옛 유적 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4964 | 옛 제국의 석상 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4966 | 그림자 악사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4967 | 황금비늘의 후손 해방 | QuestActConAcceptNpc | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
+| 4968 | 로즈엔드 삼거리 감시 초소 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4969 | 들소몰이 벌판 저수지의 메마른 나무 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4970 | 위태위태한 바위 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4971 | 돌을 위한 연회장의 돌 틈 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4972 | 과수원 오두막 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4973 | 버려진 짐수레 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4974 | 리네리프의 아늑한 이층집 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4975 | 축축한 관리인 초소의 빨래 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4976 | 정원의 아름다운 정자 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4977 | 삼거리 감시탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4978 | 악마 전쟁 종료 위령비 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4979 | 불탄성 감시 야영지의 감시탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4980 | 생명력이 끈질긴 나무 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4981 | 피 묻은 손 감독관의 숙소 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4982 | 음유시인의 집 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4983 | 해오름 마을의 곡식 저장고 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4984 | 탈환 작전지의 훈련용 공성 사다리차 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4985 | 촌장 집 내부의 수상한 얼룩 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4986 | 화장터 소각로 뒤편 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4987 | 해적선의 조타 장치 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4988 | 마틸다 트리스테의 간이 응접실 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4989 | 벤틀라의 집 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4990 | 잭 다이얼의 침대 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4991 | 떠나는 비행선을 배웅하는 곳 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4992 | 채석장의 숨겨진 지름길 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4993 | 약초 농장의 탁한 연못 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4994 | 뿜어져 나오는 온천수 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4995 | 파비트라 대여제 기념비 뒤편 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4996 | 여행자의 샘 이층집 지붕 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4997 | 콰우의 침대 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4998 | 비파 교습소 내부 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 4999 | 빈 술통 보관하는 곳 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5000 | 침묵의 호수 파비트라 대여제 기념비 뒤편 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5001 | 백작의 영애를 위한 간소한 간식상 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5002 | 리리가 점찍어둔 당신의 백합 자리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5003 | 말리카 족의 식량 창고 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5004 | 이니스테르 기념비 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5005 | 오페라 극장의 무대 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5006 | 베로에 지붕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5007 | 자연이 만들어낸 하늘 구멍 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5008 | 하슬라 폭포의 시작지 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5009 | 강이 빚어낸 구름다리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5010 | 베로에 정자 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5011 | 비취 강물이 다다르는 곳 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5012 | 버려진 훈련소의 막다른 길 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5013 | 동방 이슈바라 거대 봉분 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5014 | 테미의 흔적 솟아오른 큰 바위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5015 | 눈사자 경기장 중계석 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5016 | 하슬라로 향하는 문 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5017 | 모란농장이 한눈에 들어오는 작은 언덕 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5018 | 농경지가 한눈에 들어오는 눈사자 바위 머리 위 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5019 | 용 머리뼈의 거대한 코뿔 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5020 | 미노타우르스 힘의 상징 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5021 | 하늘에 맞닿은 용 가슴뼈의 끝 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5022 | 마주 보는 용 머리뼈 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5023 | 갈색비늘 에키혼 야영지의 망루 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5024 | 꺼지지 않는 푸른 불꽃 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5025 | 잊혀진 고대의 유적 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5026 | 라비스 마을이 내려다보이는 봉우리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5027 | 용의 꼬리뼈 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5028 | 용 가슴뼈의 버려진 제단 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5029 | 머리뼈 아래의 깊은 골짜기 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5030 | 어두운 기운의 탑 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5031 | 메마른 섬의 뿌리 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5032 | 날자, 수집기계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5033 | 저주받은 거대 돌 골렘 처치 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5036 | 뼈의 땅을 지켜라 1단계 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5037 | 뼈의 땅을 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5038 | 뼈의 땅을 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5039 | 뼈의 땅을 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5060 | 배심원은 내 운명! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5062 | 만드라고라 잡기 초급 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5063 | 만드라고라 잡기 중급 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5064 | 만드라고라 잡기 상급 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5087 | 허물을 벗는 뱀처럼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5088 | 파괴의 별 가루내기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5099 | 모든 이야기를 팝니다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5100 | 새로운 골동품 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5102 | 누구를 도울 것인가 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5103 | 로이스터 경의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5104 | 거인들을 구하자 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5105 | 새로운 나무의 길 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5113 | 불같은 사나이의 고백 | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5114 | 태양의 심장은 어디에? | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5115 | 내 집 마련의 꿈은 결국... | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5116 | 선장의 꿈 | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5117 | 돌아온 탕아 | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5118 | 숨겨왔던 수줍은 마음 | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5119 | 조금만 성격이 차분했더라면 | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5120 | 얄궂은 운명 | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5137 | 미지의 개척자 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5142 | 전장으로 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5143 | 악몽의 군단 처치 1단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5144 | 악몽의 군단 처치 2단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5148 | 로이스터 경에게로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5157 | 전장으로 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5160 | 꾸밈옷 연구가 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5161 | 새 생명의 재봉사 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5162 | 하늘을 날고 싶은 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5164 | 모험가 이요르의 발자취 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5165 | 여행자 그루달의 발자취 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5169 | 아라시 박사의 기상 예측기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5170 | 왕세자의 귀환 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5171 | 새로운 이야기는 도서관에서 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; PERSIST:Pass |
+| 5172 | 특사의 자질 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5173 | 수수께끼의 광석 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5174 | 사랑은 움직이는 거야! | QuestActConAcceptSphere | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5175 | 군자금을 지켜라! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5176 | 최초의 창 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5177 | 최초의 방패 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5178 | 앞날을 내다본 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5179 | 울쏘우 왕자를 위하여 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; PERSIST:Pass |
+| 5180 | 잉그바드 왕자의 계획 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; PERSIST:Pass |
+| 5181 | 릴리엇 말 애호가 | QuestActConAcceptSphere | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5182 | 전차 수집가 | QuestActConAcceptSphere | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5183 | 범선 수집가 | QuestActConAcceptSphere | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5184 | 더러운 수집가 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5185 | 당신은 심마니! | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5186 | 전쟁을 준비 하시나요? | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5187 | 향기로운 꽃 수집가 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5188 | 야생초 수집가 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5189 | 순도 높은 광석 수집가 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5190 | 보석 수집가 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5191 | 날틀 수집가 | QuestActConAcceptSphere | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5192 | 고기 애호가 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5193 | 흔들인형 수집가 | QuestActConAcceptSphere | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5194 | 군자금을 뺏어라! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5196 | 나무 심는 날 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5199 | 지혜의 동반자, 나무 정령 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5200 | 지혜의 동반자, 페피 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5262 | 루비 광산의 연구가 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5266 | 광석의 비밀을 풀기 위해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5268 | 백 명을 잠재운 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5269 | 피즈로로의 초대 | QuestActConReportNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5270 | 말리카족 부락의 발명가 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5271 | 바다보다 깊은 저주 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5273 | 매일 밤이 걱정되는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5274 | 새 생명을 빚어내는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5276 | 벽돌 쌓는 광부 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5278 | 오스테라의 영웅 | QuestActConAcceptSphere | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5279 | 티레나이의 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5280 | 솔깃한 제안 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5281 | 끝나지 않은 인연 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5282 | 그림자 밟기 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5283 | 쓰러진 자의 유언 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5284 | 추억을 지키는 자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5285 | 그녀를 기리며 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5286 | 찬가가 있어야 할 자리로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5287 | 진실 혹은 거짓 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5288 | 죽은 자가 남긴 단서 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5289 | 지금 만나러 갑니다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5290 | 잉그바드 왕자를 만나다 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; PERSIST:Pass |
+| 5291 | 부왕을 위한 효심 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5292 | 되살아난 무스페로사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5293 | 불사의 힘을 가진 칼레일 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5294 | 카어 노르드의 왕좌 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5295 | 울쏘우 왕자와 만나다 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; PERSIST:Pass |
+| 5296 | 큰 뜻을 이루기 위해 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5298 | 백일 상차림 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5299 | 흔적 지우기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5300 | 후일을 기약하며 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5301 | 함부로 차지 마라 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5302 | 아침을 여는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5303 | 차원을 엿본 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5304 | 도서관이 닫힌 이유 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5305 | 영혼의 안식 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5306 | 진실에 다가선 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5319 | 다루와 바다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5321 | 햇무리 언덕 선생님 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5322 | 내가 바로 장인 연금술사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5323 | 잊혀진 문명의 흔적을 찾아 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5324 | 내가 바로 장인 건축가 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5325 | 내가 바로 장인 요리사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5326 | 내가 바로 장인 공예사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5327 | 내가 바로 장인 축산업자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5328 | 내가 바로 장인 농사꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5329 | 내가 바로 장인 벌채꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5330 | 내가 바로 장인 채집꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5331 | 내가 바로 장인 기계공 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5332 | 내가 바로 장인 대장장이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5333 | 내가 바로 장인 인쇄업자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5334 | 내가 바로 장인 채광꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5335 | 내가 바로 장인 석공사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5336 | 내가 바로 장인 재봉사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5337 | 내가 바로 장인 무두장이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5338 | 내가 바로 장인 금속장 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5339 | 내가 바로 장인 목수 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5340 | 내가 바로 장인 도둑 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5341 | 내가 바로 장인 장사꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5343 | 다루와 목걸이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5344 | 다루와 반지 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5345 | 다루와 귀걸이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5346 | 루키우스의 찬가 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5347 | 아란제브의 명상 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5348 | 아란제비아의 미소 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5349 | 오키드나의 꿈 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5350 | 내가 바로 장인 연금술사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5351 | 내가 바로 장인 건축가 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5352 | 내가 바로 장인 요리사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5353 | 내가 바로 장인 공예사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5354 | 내가 바로 장인 축산업자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5355 | 내가 바로 장인 농사꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5356 | 내가 바로 장인 벌채꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5357 | 내가 바로 장인 채집꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5358 | 내가 바로 장인 기계공 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5359 | 내가 바로 장인 대장장이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5360 | 내가 바로 장인 인쇄업자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5361 | 내가 바로 장인 채광꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5362 | 내가 바로 장인 석공사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5363 | 내가 바로 장인 재봉사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5364 | 내가 바로 장인 무두장이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5365 | 내가 바로 장인 금속장 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5366 | 내가 바로 장인 목수 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5368 | 내가 바로 장인 장사꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5370 | 수중 생태계 연구가 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5371 | 무쇠 사나이 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5372 | 인형의 친구 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5373 | 아들과 함께하는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5374 | 아버지와 함께하는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5385 | 청새치보다 더 강하게 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5394 | 청새치보다 더 강하게 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5395 | 시간을 기록하는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5396 | 사랑의 공예사 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5397 | 의지의 개발자 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5398 | 태양의 심장 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5399 | 초상화의 주인공 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5400 | 불멸의 연인 | QuestActConAcceptItem | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5401 | 언제나 한결같은 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5402 | 빛나는 세계의 작가 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5405 | 황금의 폐허 물풀 모으기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5406 | 황금의 폐허 목재 모으기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5408 | 만족스러운 거래 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5409 | 만족스러운 거래 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5410 | 만족스러운 거래 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5411 | 세계의 작가 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5412 | 빛나는 세기의 화가 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5413 | 세기의 화가 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5414 | 빛나는 날개옷 재단사 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5415 | 날개옷 재단사 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5416 | 잠재된 예능인 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5419 | 월간 낚시 편집장 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5420 | 상상의 나래를 펼친 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5421 | 낭만의 지휘자 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5422 | 빠르게 올라선 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5423 | 성실한 배심원 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5424 | 모두에게 관심받는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5425 | 우물의 정령 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5426 | 흩날리는 벚꽃잎 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5427 | 벼락부자 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5428 | 손대면 뜨거운 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5429 | 오이처럼 촉촉한 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5432 | 불멸의 사랑 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5433 | 사랑의 조련사 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5434 | 도시 멋쟁이 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5435 | 누이 여신의 재단사 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5436 | 심연의 입구로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5437 | 나차쉬가르 입장 준비 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5438 | 나차쉬가르 입장을 위해 필요한 것 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5439 | 길 잃은 여신의 침소에 잠든 유물을 찾아라! | QuestActConAutoComplete | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5441 | 황금의 폐허 석재 모으기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5448 | 난파선의 유물 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5449 | [도전] 내리막길의 전설 | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5450 | 순두부 한정 판매 | QuestActConAcceptItemGain | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5451 | 어둠의 경주 초대 | QuestActConAcceptComponent | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5452 | 별무리의 도전장 | QuestActConAcceptComponent | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5453 | 가라앉은 섬나라 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5458 | 부활하는 황금유적 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5460 | 하슬라를 지켜라 1단계 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5461 | 하슬라를 지켜라 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5462 | 하슬라를 지켜라 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5463 | 하슬라를 지켜라 4단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5467 | 달콤하게 빛나는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5468 | 솜씨 좋은 역습의 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5469 | 멋을 아는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5470 | 누이 여신 바라기 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5471 | 실천하는 양심 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5472 | 신선함이 살아있는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5473 | 동물 영양사 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5474 | 꽃들에게 희망을 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5475 | 변덕쟁이 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5476 | 반반 무 많이 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5477 | 모루가 닳도록 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5478 | 장비 파괴자 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5479 | 명예 추구자 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5480 | 깃발 애호가 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5481 | 불굴의 도전자 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5482 | 저승행 급행마차 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5483 | 벼농사의 달인 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5484 | 신들린 춤사위 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5485 | 습관적인 속임수 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5486 | 떠돌이들의 공통점 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5487 | 맹약의 수호자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5488 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5491 | 나차쉬가르_에픽 퀘스트_시작 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5492 | 아주 특별한 외출 | QuestActObjItemGather | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5493 | 아주 특별한 외출 | QuestActObjItemGather | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5495 | 폼에 살고 폼에 죽는 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5496 | 역사를 연구하는 자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5497 | 예상치 못한 일 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5498 | 해결책은 초원에 있다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5499 | 환심을 사는 방법 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5501 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5502 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5503 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5504 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5505 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5506 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5507 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5508 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5509 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5510 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5511 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5512 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5513 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5514 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5515 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5516 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5517 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5518 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5519 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5520 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5521 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5522 | 불한당들의 관심사 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5523 | 노래의 혼 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5526 | 동생을 걱정하는 누나의 마음 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5528 | 길 잃은 바다의 난파선 | QuestActConAutoComplete | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5529 | 특별한 거래 | QuestActConReportNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5530 | 특별한 거래 | QuestActConReportNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5531 | ability check test | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5532 | 흥미로운 제안 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; PERSIST:Pass |
+| 5533 | 왕궁을 노리는 자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5534 | 두 개의 신분 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5535 | 가슴에 사무친 원한 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5537 | 나츠빌 마라의 소개서 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5538 | 시선 돌리기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5539 | 점괘를 얻으려면 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5540 | 주술사의 전언 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5541 | 거짓된 초원의 불꽃 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5542 | 사랑과 증오 사이 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5543 | 망자의 눈물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5544 | 애증을 담은 특별한 봉제인형 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5545 | 시공을 거스르는 불길 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5546 | 천명을 받들어 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5547 | 비밀 상단의 위기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5548 | 대통합의 길 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5549 | 대의보다 소중한 물건 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5550 | 귀족들의 외유 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5551 | 불편한 섶에 몸을 눕히고 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5648 | 날개의 약속 | QuestActConAcceptItemGain | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5652 | 초원에서 돌아온 자 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5656 | 들통난 계략 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5671 | 따스한 햇살 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5672 | 화합의 연주가 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5673 | 도깨비 공예사 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5674 | 모링가 중독자 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5679 | 한없이 투명한 눈물 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5680 | 왕녀의 꿈 반지 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5681 | 불길한 침몰 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5682 | 마녀의 노래 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5685 | [TEST] AA포인트 테스트 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5691 | 고요한 위협 | QuestActConAcceptSphere | Pass | START:Pass; READY:Pass; PERSIST:Pass |
+| 5695 | 붉은 그림자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5700 | 5급 병사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5701 | 4급 병사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5702 | 3급 병사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5703 | 2급 병사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5704 | 1급 병사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5705 | 3급 기사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5706 | 2급 기사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5707 | 1급 기사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5708 | 기사단장 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5709 | 장군 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5711 | 해적의 또 다른 이름, 사막여우 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5712 | 해적의 또 다른 이름, 백상아리 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5714 | 용을 적대하는 자 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5715 | 고대의 힘이 담긴 반지 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5716 | 세상에 공짜는 없다! | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5717 | 영혼조차 녹여버리는 강력한 불길 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5718 | 타오르는 겁화의 심장 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5720 | 정당한 거래 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5721 | 죽은 왕녀의 열쇠 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5722 | 델피나드의 보물 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5723 | 왕녀의 반지 복원 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5724 | 알렉산데르의 제자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5725 | 매혹을 이겨내는 방법 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5726 | 알렉산데르의 지팡이 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5727 | 강력한 마법을 위해 필요한 것 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5728 | 최후의 봉인 해제 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5729 | 바다 여신의 감시자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5730 | 운명의 이끌림 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
+| 5760 | 밀밭 파수꾼의 훈장 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5761 | 밀밭 사령관의 명예 훈장 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5762 | 용 사냥꾼의 유산 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; PERSIST:Pass |
+| 5764 | 다후타의 거울 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5766 | 버려진 고대의 잔해를 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5767 | 나이마의 춤 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5768 | 멜리사라의 그림자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5769 | 올로의 풍요 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5770 | 하늘 정원사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5771 | 투철한 신고정신 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5772 | 동글동글 한입 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5774 | 이녹의 신념 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5777 | 밀밭을 흔드는 바람 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5778 | 밀밭을 흔드는 바람 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5779 | 거울 속의 아란제비아 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5780 | 다후타 권능의 가면 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5822 | [월요일] 전우의 시체 수습 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5823 | [월요일] 되살아난 자들 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5824 | [월요일] 조약돌의 의뢰 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5825 | [월요일] 몬스터 100마리 처치 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5826 | 하제의 탑 건설 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5827 | [갈대무리 땅 더미] 화요일 1 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5828 | [화요일] 전염병을 퍼트리는 시체 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5829 | [갈대무리 땅 더미] 화요일 3 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5830 | [갈대무리 땅 더미] 화요일 4 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5831 | [갈대무리 땅 더미] 화요일 5 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5832 | [갈대무리 땅 더미] 수요일 1 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5833 | [수요일] 속박당한 신녀 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5834 | [갈대무리 땅 더미] 수요일 3 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5835 | [갈대무리 땅 더미] 수요일 4 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5836 | [갈대무리 땅 더미] 수요일 5 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5837 | [갈대무리 땅 더미] 목요일 1 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5838 | [목요일] 인간이 아닌 자들 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5839 | [갈대무리 땅 더미] 목요일 3 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5840 | [갈대무리 땅 더미] 목요일 4 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5841 | [갈대무리 땅 더미] 목요일 5 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5842 | [갈대무리 땅 더미] 금요일 1 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5843 | [금요일] 독수리의 배다른 자식들 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5844 | [갈대무리 땅 더미] 금요일 3 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5845 | [갈대무리 땅 더미] 금요일 4 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5846 | [갈대무리 땅 더미] 금요일 5 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5847 | [갈대무리 땅 더미] 토요일 1 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5848 | [갈대무리 땅 더미] 토요일 2 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5849 | [갈대무리 땅 더미] 토요일 3 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5850 | [갈대무리 땅 더미] 토요일 4 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5851 | [갈대무리 땅 더미] 토요일 5 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5852 | [갈대무리 땅 더미] 일요일 1 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5853 | [갈대무리 땅 더미] 일요일 2 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5854 | [갈대무리 땅 더미] 일요일 3 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5855 | [갈대무리 땅 더미] 일요일 4 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5856 | [갈대무리 땅 더미] 일요일 5 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5857 | 붉은 용군단 처치 1단계 | QuestActObjMonsterHunt | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5858 | 붉은 용군단 처치 2단계 | QuestActObjMonsterHunt | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5859 | 붉은 용군단 처치 3단계 | QuestActObjMonsterHunt | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5860 | [갈대무리 땅 더미] 매일 이벤트 4 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5861 | [갈대무리 땅 더미] 매일 이벤트 5 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5863 | 하제의 탑 건설 10번 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5864 | 하제의 탑 건설 50번 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5865 | 하제의 탑 건설 100번 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5866 | 하제의 탑 건설 1000번 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5867 | [갈대무리 땅 더미] 연출 이벤트 5 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5871 | 태극기 휘날리며 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5872 | 낚시의 틈 : 철갑상어 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5873 | 낚시의 틈 : 돛새치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5874 | 낚시의 틈 : 참다랑어 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5875 | 낚시의 틈 : 청새치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5876 | 모르페우스를 물리쳐라! | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5877 | 꿈꾸는 당근 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5878 | 이럇! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5879 | 매혹의 약탈자 제누트를 물리쳐라! | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5880 | 파열의 연금술 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5881 | 기계 인형의 동력기관 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5882 | 생명체가 들 수 없는 무기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5883 | 크라켄을 물리쳐라! | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5884 | 한우레를 물리쳐라! | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5885 | 안탈론을 물리쳐라! | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5886 | 파괴신의 돌격대장을 물리쳐라! | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5887 | 겁화에 휩싸인 바이라바를 물리쳐라! | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5888 | 휴가 파괴자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5889 | 최초의 길잡이 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5890 | 광복의 기억 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5891 | 황금의 폐허 공중 징조의 틈 1단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5892 | 황금의 폐허 공중 징조의 틈 2단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5893 | 황금의 폐허 공중 징조의 틈 3단계 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5894 | 월요일 폐허를 탐하는 도굴꾼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5895 | 월요일 폐허를 지키는 골렘 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5896 | 월요일 왕국을 재건하라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5897 | 화요일 폐허를 뒤덮는 괴식물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5898 | 화요일 정체불명의 눈알 | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5899 | 화요일 왕국을 재건하라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5901 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 500 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5902 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5903 | 수요일 폐허의 괴식물 조사하기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5912 | 화요일의 의뢰 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5913 | 수요일의 의뢰 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5914 | 목요일의 의뢰 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5915 | 금요일의 의뢰 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5916 | 토요일의 의뢰 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5917 | 일요일의 의뢰 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5918 | 에페리움 선봉대 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5919 | 잔다나 족 처치 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5920 | 잔다나 족 주술 준비 돕기 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5921 | 에페리움 진지 설치 돕기 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5922 | 시공의 잔상 잔여물 수집 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5925 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 2000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5926 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(33)의 명령: 명예점수 200 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5927 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(33)의 명령: 명예점수 500 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5928 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(33)의 명령: 명예점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5929 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(33)의 명령: 생활점수 400 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5930 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(33)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5931 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(33)의 명령: 생활점수 2000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5932 | 밀밭을 흔드는 바람 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5933 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(44)의 명령: 명예점수 200 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5934 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(44)의 명령: 명예점수 500 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5935 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(44)의 명령: 명예점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5936 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(44)의 명령: 생활점수 400 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5937 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(44)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5938 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(44)의 명령: 생활점수 2000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5939 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(43)의 명령: 명예점수 200 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5940 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(43)의 명령: 명예점수 500 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5941 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(43)의 명령: 명예점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5942 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(43)의 명령: 생활점수 400 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5943 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(43)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5944 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(43)의 명령: 생활점수 2000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5945 | 동맹군이 되어 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5949 | 도굴꾼 처치 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5950 | 폐허의 유물 수집 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5951 | 도굴꾼 두목 처치 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5952 | 도굴꾼의 상자 회수 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5953 | 오스트 가신단 퇴치 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5957 | 아주 오래된 전쟁 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5958 | 신성한 기운이 담긴 나무 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5959 | 풍요로운 대지를 위한 첫걸음 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5960 | 신성한 기운이 담긴 철광석 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5961 | 청결한 대지 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5962 | 신성한 기운이 담긴 암석 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5963 | 정화의 힘을 지닌 순수한 물의 기운 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5964 | 에페리움 망령 군단의 진격을 막아라! | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5965 | 에페리움 망령 군단 대장 할 처치! | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5966 | 송편. 강도. 호랑이. | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5968 | 추적자의 제안 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5969 | 영생을 갈구하는 레이나 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5970 | 고뇌하는 글렌 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5971 | 차원을 일그러트리는 자 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5972 | 예언의 도래 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5973 | 페란 지킴이 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5974 | 칭호 당첨자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5976 | 추적자의 자객으로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5977 | 동심 파괴자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5978 | 경비병 매수 | QuestActConReportNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5979 | 명예로운 전사의 길에 서는 첫걸음 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5981 | 전래동화 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5982 | 명예로운 전사의 길 1단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5983 | 명예로운 전사의 길 2단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5984 | 명예로운 전사의 길 3단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5985 | 명예로운 전사의 길 4단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5986 | 명예로운 전사의 길 5단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5987 | 명예로운 전사의 길 6단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5988 | 명예로운 전사의 길 7단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5989 | 명예로운 전사의 길 8단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5990 | 명예로운 전사의 길 9단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5991 | 명예로운 전사의 길 10단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5992 | 우아자태 한복 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5994 | 상속자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5995 | 잔다니지 기둥 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5996 | 여왕의 목걸이 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5997 | 혼령 소환하기 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5998 | 여왕 혼령 지키기 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 6000 | 여왕의 딸 명복 빌어주기 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 6001 | 예언 훔쳐보기 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 6004 | 전장의 노예 제압 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6005 | 전장의 노예 압살 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6006 | 전장의 노예 멸절 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6007 | 전장 방어 대포 파괴 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6008 | 전장 방어 대포 제거 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6009 | 전장 방어 대포 분쇄 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6012 | 전장의 폭풍 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6013 | 전장의 지배자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6016 | 무사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6017 | 세월을 낚은 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6018 | 질주의 화신 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6020 | 생명의 기운 흡수 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6021 | 고통의 기운 흡수 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6022 | 불꽃의 기운 흡수 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6026 | 승리의 길로 인도하는 생명의 기운 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6027 | 승리의 길로 인도하는 고통의 인내 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6028 | 승리의 길로 인도하는 강력한 불꽃 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6032 | 언어왕 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6033 | 언어의 마술사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6034 | 겨울 나라의 특제 우유 | QuestActObjItemGather | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6035 | 겨울 나라의 명품 포도주 | QuestActObjItemGather | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6036 | 맛있을까 호박머리 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6057 | [테스트 서버] 낚시 대회 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6061 | 최초의 낚시꾼 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6062 | 최초의 전장지배자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6065 | 여신의 인도자 | QuestActObjItemGather | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6066 | 나차쉬가르 조사 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6067 | 상속받으려는 자, 고난을 견뎌라 | QuestActObjItemGather | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6068 | 신과 영웅의 유산 | QuestActObjItemGather | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6071 | 원활한 조사를 위한 살생 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6072 | 나차쉬가르 조사 준비 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6073 | 영원의 섬 조사 준비 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6074 | 논리적인 진상규명을 위한 절차 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6086 | 낚시왕이 되어보자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6158 | 반짝이는 재치 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6159 | 뛰어난 영감 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6165 | 전나무 아가씨 축제 즐기기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6170 | 별이 빛나는 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6171 | 응급구조대원 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6172 | 도살자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6173 | 밀밭 파수꾼 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6174 | 어장관리사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6175 | 대어 낚시광 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6176 | 흑심 가득 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6177 | 끈적끈적 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6178 | 황금의 손 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6179 | 무한의 화포 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6180 | 대식가 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6181 | 유행의 선두 주자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6182 | 유혹의 장미 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6183 | 복주머니 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6184 | 돌부처 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6185 | 늘 새로운 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6186 | 말랑말랑 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6187 | 큰 힘 가득한 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6188 | 가을 정원사 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6189 | 심마니 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6190 | 고고학자 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6191 | 무적의 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6192 | 책벌레 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6193 | 커다란 호박 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6202 | 첫 번째 변화의 징조 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6203 | 두 번째 변화의 징조 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6204 | 세 번째 변화의 징조 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6205 | 네 번째 변화의 징조 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6206 | 다섯 번째 변화의 징조 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6207 | 여섯 번째 변화의 징조 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6208 | 일곱 번째 변화의 징조 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6238 | 모퉁이의 함정 1단계 보상 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6239 | 모퉁이의 함정 2단계 보상 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6240 | 모퉁이의 함정 3단계 보상 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6241 | 모퉁이의 함정 4단계 보상 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6242 | 모퉁이의 함정 5단계 보상 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6252 | 액운을 막는 부적 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6253 | 행운 증명 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6281 | 정착의 속삭임 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6360 | 우르나의 행방 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6361 | 아레나의 안부 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6362 | 유령 동물원에 나타난 수상한 존재 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6363 | 불안한 그녀의 임무상황 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6364 | 신성한 거래 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6365 | 아레나의 요청 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6366 | 든든한 지원군으로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6372 | 유령 동물원으로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6373 | 루키우스의 새 얼굴 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6377 | 가격 보다 중요한 것은 정성 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6378 | 사랑 받는 당신을 위한 선물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6379 | 추파를 던지기 위한 준비 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6380 | 용기 있는 남자가 미인을 얻는다. | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6387 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6388 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6389 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6390 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6391 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6392 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6393 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6394 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6395 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6396 | 다시 할 수 없는 의뢰 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6440 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6441 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6442 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6443 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6444 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6445 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6446 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6447 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6448 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6449 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6450 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6451 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6452 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6453 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6454 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6455 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6456 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6457 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6458 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6459 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6460 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6461 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6462 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6463 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6464 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6465 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6466 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6467 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6468 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6469 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6470 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6471 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6472 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6473 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6474 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6475 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6476 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6477 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6478 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6479 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6480 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6481 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6482 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6483 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6484 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6485 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6486 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6487 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6488 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6489 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6490 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6491 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6492 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6493 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6494 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6495 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6496 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6497 | 잊혀진 자들이 보내온 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6498 | 가축 상인 휘영에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6499 | 마구간지기 명석몽에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6500 | 대장장이 미야에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6501 | 여관주인 진설휘에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6502 | 대장장이 모히무에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6503 | 씨앗 상인 뮤닉에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6504 | 가축 상인 볼리베어에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6505 | 마구간지기 피비에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6506 | 묘목 상인 블랑에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6507 | 대장장이 워터에게 보내는 편지 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6519 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6520 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6521 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6522 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6523 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6524 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6525 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6526 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6527 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6528 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6529 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6530 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6531 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6532 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6533 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6534 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6535 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6536 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6537 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6538 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6543 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6544 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6545 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6546 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6547 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6548 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6549 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6550 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6551 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6552 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6553 | 다루족의 은밀한 임무 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6568 | 잊혀진 사람들에게 보내는 편지 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6569 | 긴급 호출 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6570 | 빼앗은 염원 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6571 | 붉게 물드는 이슬 평원 | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6572 | 타양의 쐐기 | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6573 | 다루족의 은밀한 제안 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6574 | 임무의 자격 증명 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6575 | 안탈론의 족쇄 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 6621 | 원정대장 퀘스트 테스트 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6622 | 울부짖는 구렁텅이의 음모 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6627 | 연습을 실전처럼, 실전을 연습처럼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6628 | 검투장으로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6629 | 요람의 마법사들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 6630 | 원정대의 이름을 건 무역 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6631 | 원정대의 이름을 건 납품 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6632 | 원정대의 이름을 건 결투 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6633 | 원정대의 이름을 건 사냥 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6634 | 원정대장의 권한 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6636 | 원정대의 이름을 건 무역 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6650 | 신화가 된 소년소녀 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6651 | 의리가 넘치는 원정대의 첫 번째 증거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6652 | 의리가 넘치는 원정대의 두 번째 증거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6653 | 의리가 넘치는 원정대의 세 번째 증거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6654 | 믿음, 강화, 그리고 신화 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6655 | 신화의 첫걸음 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+
 ## FAIL rollup (by act family — top blockers)
 
 _none — every driven quest passed._
@@ -2868,6 +4412,7 @@ _none — every driven quest passed._
 ## SKIP rollup (by reason)
 
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
+- **let-it-done quest with no report act (engine has no completion path)** — 2 quests: 3419, 4967
 
 ## Recommended fix-card queue
 

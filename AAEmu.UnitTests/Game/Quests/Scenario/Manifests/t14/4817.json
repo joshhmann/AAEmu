@@ -1,0 +1,81 @@
+{
+ "questId": 4817,
+ "name": "해적 소굴의 꼭대기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1865
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28409,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 503,
+      "sphereId": 1865
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20783,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28410,
+      "type": "QuestActSupplyCopper",
+      "detailId": 795,
+      "amount": 0
+     },
+     {
+      "actId": 28411,
+      "type": "QuestActSupplyExp",
+      "detailId": 355,
+      "exp": 0
+     },
+     {
+      "actId": 28413,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1058
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

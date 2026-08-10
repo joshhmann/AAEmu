@@ -1,0 +1,120 @@
+{
+ "questId": 5400,
+ "name": "불멸의 연인",
+ "zoneId": 27,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28086
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23342,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32822,
+      "type": "QuestActConAcceptItem",
+      "detailId": 288,
+      "itemId": 28086
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23343,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 23344,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33028,
+      "type": "QuestActConReportNpc",
+      "detailId": 4490,
+      "npcId": 13288
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 23479,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33027,
+      "type": "QuestActSupplyItem",
+      "detailId": 3736,
+      "itemId": 28331,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13288,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28086,
+   "count": 1
+  }
+ ]
+}

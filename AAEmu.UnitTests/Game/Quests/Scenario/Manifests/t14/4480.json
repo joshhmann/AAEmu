@@ -1,0 +1,81 @@
+{
+ "questId": 4480,
+ "name": "파오 지붕 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1592
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19564,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26635,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 269,
+      "sphereId": 1592
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19566,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26636,
+      "type": "QuestActConAutoComplete",
+      "detailId": 816
+     },
+     {
+      "actId": 26637,
+      "type": "QuestActSupplyCopper",
+      "detailId": 551,
+      "amount": 0
+     },
+     {
+      "actId": 31087,
+      "type": "QuestActSupplyExp",
+      "detailId": 552,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

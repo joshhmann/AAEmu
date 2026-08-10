@@ -1,0 +1,147 @@
+{
+ "questId": 5876,
+ "name": "모르페우스를 물리쳐라!",
+ "zoneId": 196,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8766
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25378,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34676,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 260,
+      "questContextId": 5876
+     },
+     {
+      "actId": 34692,
+      "type": "QuestActCheckTimer",
+      "detailId": 143,
+      "limitTime": 14400000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25379,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38833,
+      "type": "QuestActObjAggro",
+      "detailId": 65,
+      "range": 150,
+      "rank1": 100,
+      "rank2": 0,
+      "rank3": 0,
+      "rank1Ratio": 100,
+      "rank2Ratio": 0,
+      "rank3Ratio": 0,
+      "rank1Item": true,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 3295
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25380,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34681,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1506
+     },
+     {
+      "actId": 34682,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1222,
+      "amount": 0
+     },
+     {
+      "actId": 34683,
+      "type": "QuestActSupplyExp",
+      "detailId": 787,
+      "exp": 0
+     },
+     {
+      "actId": 34684,
+      "type": "QuestActSupplyItem",
+      "detailId": 3919,
+      "itemId": 28874,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 25387,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 8766
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28874,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

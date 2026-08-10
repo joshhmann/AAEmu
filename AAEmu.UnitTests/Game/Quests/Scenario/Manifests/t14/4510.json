@@ -1,0 +1,81 @@
+{
+ "questId": 4510,
+ "name": "바라기 마을의 망루 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1620
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19658,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26783,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 296,
+      "sphereId": 1620
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19660,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26784,
+      "type": "QuestActSupplyCopper",
+      "detailId": 578,
+      "amount": 0
+     },
+     {
+      "actId": 26787,
+      "type": "QuestActConAutoComplete",
+      "detailId": 843
+     },
+     {
+      "actId": 31112,
+      "type": "QuestActSupplyExp",
+      "detailId": 576,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

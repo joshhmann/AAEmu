@@ -1,0 +1,140 @@
+{
+ "questId": 4337,
+ "name": "반지의 주인은 누구?",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1956
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18935,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30598,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3935,
+      "npcId": 1956
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18936,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25976,
+      "type": "QuestActObjTalk",
+      "detailId": 968,
+      "npcId": 1931
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18937,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25977,
+      "type": "QuestActConReportNpc",
+      "detailId": 3871,
+      "npcId": 1934
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19208,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 19280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26167,
+      "type": "QuestActSupplyItem",
+      "detailId": 2824,
+      "itemId": 24287,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 1931
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1934,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

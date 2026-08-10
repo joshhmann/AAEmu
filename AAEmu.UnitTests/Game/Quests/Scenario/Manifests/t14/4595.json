@@ -1,0 +1,81 @@
+{
+ "questId": 4595,
+ "name": "하얀 숲의 봉인석에 오르다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1665
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20006,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27204,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 339,
+      "sphereId": 1665
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20008,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27205,
+      "type": "QuestActSupplyCopper",
+      "detailId": 626,
+      "amount": 0
+     },
+     {
+      "actId": 27208,
+      "type": "QuestActSupplyExp",
+      "detailId": 179,
+      "exp": 0
+     },
+     {
+      "actId": 27209,
+      "type": "QuestActConAutoComplete",
+      "detailId": 884
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

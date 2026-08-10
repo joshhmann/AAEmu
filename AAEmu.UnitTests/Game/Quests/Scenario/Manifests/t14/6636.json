@@ -1,0 +1,181 @@
+{
+ "questId": 6636,
+ "name": "원정대의 이름을 건 무역",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34885
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40617,
+      "type": "QuestActConAcceptItem",
+      "detailId": 566,
+      "itemId": 34885
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28314,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40634,
+      "type": "QuestActObjCraft",
+      "detailId": 351,
+      "craftId": 6233,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40736,
+      "type": "QuestActConReportNpc",
+      "detailId": 5095,
+      "npcId": 14953
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28316,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40613,
+      "type": "QuestActSupplyExp",
+      "detailId": 1563,
+      "exp": 1004
+     },
+     {
+      "actId": 40614,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1908,
+      "amount": 100
+     },
+     {
+      "actId": 40615,
+      "type": "QuestActSupplyItem",
+      "detailId": 4737,
+      "itemId": 31893,
+      "gradeId": 0,
+      "count": 2
+     },
+     {
+      "actId": 40616,
+      "type": "QuestActSupplyItem",
+      "detailId": 4738,
+      "itemId": 34880,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28319,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40633,
+      "type": "QuestActObjSphere",
+      "detailId": 705,
+      "sphereId": 2292
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6233,
+     "count": 1
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 28319
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14953,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31893,
+      "count": 2
+     },
+     {
+      "itemId": 34880,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34885,
+   "count": 1
+  }
+ ]
+}

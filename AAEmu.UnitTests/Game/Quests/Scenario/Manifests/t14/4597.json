@@ -1,0 +1,81 @@
+{
+ "questId": 4597,
+ "name": "숲의 수호자 부락의 나선형 우물",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1667
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20012,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27215,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 341,
+      "sphereId": 1667
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20014,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27216,
+      "type": "QuestActSupplyCopper",
+      "detailId": 628,
+      "amount": 0
+     },
+     {
+      "actId": 27217,
+      "type": "QuestActSupplyExp",
+      "detailId": 181,
+      "exp": 0
+     },
+     {
+      "actId": 27219,
+      "type": "QuestActConAutoComplete",
+      "detailId": 886
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

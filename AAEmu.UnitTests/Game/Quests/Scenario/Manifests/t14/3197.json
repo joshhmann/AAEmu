@@ -1,0 +1,144 @@
+{
+ "questId": 3197,
+ "name": "메마른 오아시스 되살리기",
+ "zoneId": 172,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8908
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13424,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19191,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2541,
+      "npcId": 8908
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20098,
+      "type": "QuestActObjInteraction",
+      "detailId": 482,
+      "doodadId": 3582,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13426,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19192,
+      "type": "QuestActConReportNpc",
+      "detailId": 2772,
+      "npcId": 8908
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13427,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 15417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21080,
+      "type": "QuestActSupplyItem",
+      "detailId": 2104,
+      "itemId": 19678,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3582,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8908,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,136 @@
+{
+ "questId": 5516,
+ "name": "불한당들의 관심사",
+ "zoneId": 1,
+ "categoryId": 48,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8761
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23811,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33498,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4229,
+      "npcId": 8761
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23812,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33536,
+      "type": "QuestActObjInteraction",
+      "detailId": 693,
+      "doodadId": 6942,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23813,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33499,
+      "type": "QuestActConReportNpc",
+      "detailId": 4555,
+      "npcId": 8761
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33500,
+      "type": "QuestActSupplyItem",
+      "detailId": 3805,
+      "itemId": 28521,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6942,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8761,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28521,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

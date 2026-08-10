@@ -1,0 +1,81 @@
+{
+ "questId": 4605,
+ "name": "마리아노플의 하수도 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1675
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20036,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27251,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 348,
+      "sphereId": 1675
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20038,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27252,
+      "type": "QuestActSupplyCopper",
+      "detailId": 635,
+      "amount": 0
+     },
+     {
+      "actId": 27253,
+      "type": "QuestActSupplyExp",
+      "detailId": 189,
+      "exp": 0
+     },
+     {
+      "actId": 27256,
+      "type": "QuestActConAutoComplete",
+      "detailId": 893
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

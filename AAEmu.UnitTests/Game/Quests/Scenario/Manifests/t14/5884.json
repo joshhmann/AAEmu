@@ -1,0 +1,159 @@
+{
+ "questId": 5884,
+ "name": "한우레를 물리쳐라!",
+ "zoneId": 188,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11180
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34730,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 263,
+      "questContextId": 5884
+     },
+     {
+      "actId": 34732,
+      "type": "QuestActCheckTimer",
+      "detailId": 146,
+      "limitTime": 14400000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25419,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38526,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1278,
+      "npcId": 11180,
+      "count": 1
+     },
+     {
+      "actId": 38838,
+      "type": "QuestActObjAggro",
+      "detailId": 66,
+      "range": 150,
+      "rank1": 100,
+      "rank2": 0,
+      "rank3": 0,
+      "rank1Ratio": 100,
+      "rank2Ratio": 0,
+      "rank3Ratio": 0,
+      "rank1Item": true,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 3296
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 25420,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 25421,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34733,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1225,
+      "amount": 0
+     },
+     {
+      "actId": 34734,
+      "type": "QuestActSupplyExp",
+      "detailId": 790,
+      "exp": 0
+     },
+     {
+      "actId": 34735,
+      "type": "QuestActSupplyItem",
+      "detailId": 3922,
+      "itemId": 29512,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 34736,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1509
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 11180,
+     "count": 1
+    },
+    {
+     "type": "Aggro",
+     "npcId": 11180
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29512,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

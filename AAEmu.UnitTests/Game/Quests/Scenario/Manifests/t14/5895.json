@@ -1,0 +1,119 @@
+{
+ "questId": 5895,
+ "name": "월요일 폐허를 지키는 골렘",
+ "zoneId": 198,
+ "categoryId": 102,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14163
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35339,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4561,
+      "npcId": 14163
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35340,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1169,
+      "npcId": 13855,
+      "count": 60
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25466,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35341,
+      "type": "QuestActConReportNpc",
+      "detailId": 4787,
+      "npcId": 14163
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25812,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 13855,
+     "count": 60
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14163,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

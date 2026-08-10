@@ -1,0 +1,81 @@
+{
+ "questId": 4535,
+ "name": "론반 공작 성의 첨탑",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1643
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19737,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26927,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 322,
+      "sphereId": 1643
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19739,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26928,
+      "type": "QuestActSupplyCopper",
+      "detailId": 601,
+      "amount": 0
+     },
+     {
+      "actId": 26929,
+      "type": "QuestActSupplyExp",
+      "detailId": 160,
+      "exp": 0
+     },
+     {
+      "actId": 26931,
+      "type": "QuestActConAutoComplete",
+      "detailId": 867
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

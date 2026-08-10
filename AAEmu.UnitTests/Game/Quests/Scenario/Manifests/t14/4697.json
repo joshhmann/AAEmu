@@ -1,0 +1,81 @@
+{
+ "questId": 4697,
+ "name": "대부호 토루스의 저택 수영장",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1746
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20362,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27727,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 407,
+      "sphereId": 1746
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20364,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27728,
+      "type": "QuestActSupplyCopper",
+      "detailId": 701,
+      "amount": 0
+     },
+     {
+      "actId": 27729,
+      "type": "QuestActSupplyExp",
+      "detailId": 251,
+      "exp": 0
+     },
+     {
+      "actId": 27731,
+      "type": "QuestActConAutoComplete",
+      "detailId": 951
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

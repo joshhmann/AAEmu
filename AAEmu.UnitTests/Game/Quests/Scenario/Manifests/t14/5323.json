@@ -1,0 +1,169 @@
+{
+ "questId": 5323,
+ "name": "잊혀진 문명의 흔적을 찾아",
+ "zoneId": 195,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8249
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22982,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32423,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4104,
+      "npcId": 8249
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22983,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32430,
+      "type": "QuestActObjItemGather",
+      "detailId": 2588,
+      "itemId": 27916,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22984,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32441,
+      "type": "QuestActConReportNpc",
+      "detailId": 4408,
+      "npcId": 8249
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 23062,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32428,
+      "type": "QuestActSupplyItem",
+      "detailId": 3701,
+      "itemId": 27915,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23063,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32444,
+      "type": "QuestActSupplyItem",
+      "detailId": 3703,
+      "itemId": 27917,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 32450,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 139,
+      "appellationId": 106
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27916,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8249,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 27917,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27916,
+   "count": 1
+  }
+ ]
+}

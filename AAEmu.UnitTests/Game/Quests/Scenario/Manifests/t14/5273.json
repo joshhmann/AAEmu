@@ -1,0 +1,93 @@
+{
+ "questId": 5273,
+ "name": "매일 밤이 걱정되는",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 27161
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22745,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32059,
+      "type": "QuestActConAcceptItem",
+      "detailId": 267,
+      "itemId": 27161
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22747,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32055,
+      "type": "QuestActSupplyExp",
+      "detailId": 677,
+      "exp": 1000
+     },
+     {
+      "actId": 32056,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1094,
+      "amount": 0
+     },
+     {
+      "actId": 32057,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 101,
+      "appellationId": 89
+     },
+     {
+      "actId": 32058,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1358
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27161,
+   "count": 1
+  }
+ ]
+}

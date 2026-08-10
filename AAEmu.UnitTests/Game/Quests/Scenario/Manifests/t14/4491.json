@@ -1,0 +1,81 @@
+{
+ "questId": 4491,
+ "name": "남 데비강 상류 폭포 수원지 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1603
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19599,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26695,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 279,
+      "sphereId": 1603
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19601,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26696,
+      "type": "QuestActSupplyCopper",
+      "detailId": 561,
+      "amount": 0
+     },
+     {
+      "actId": 26697,
+      "type": "QuestActSupplyExp",
+      "detailId": 117,
+      "exp": 0
+     },
+     {
+      "actId": 26699,
+      "type": "QuestActConAutoComplete",
+      "detailId": 826
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

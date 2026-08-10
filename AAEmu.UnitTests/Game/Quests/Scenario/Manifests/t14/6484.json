@@ -1,0 +1,130 @@
+{
+ "questId": 6484,
+ "name": "다루족의 은밀한 임무",
+ "zoneId": 129,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34483
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27656,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39656,
+      "type": "QuestActConAcceptItem",
+      "detailId": 494,
+      "itemId": 34483
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27657,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39655,
+      "type": "QuestActObjCraft",
+      "detailId": 320,
+      "craftId": 6454,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39693,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1806
+     },
+     {
+      "actId": 39695,
+      "type": "QuestActSupplyItem",
+      "detailId": 4620,
+      "itemId": 31893,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 39696,
+      "type": "QuestActSupplyExp",
+      "detailId": 1433,
+      "exp": 80000
+     },
+     {
+      "actId": 39698,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1742,
+      "amount": 10000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6454,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31893,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34483,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,166 @@
+{
+ "questId": 5541,
+ "name": "거짓된 초원의 불꽃",
+ "zoneId": 3,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1123
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23916,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33632,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4256,
+      "npcId": 1123
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23917,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33661,
+      "type": "QuestActObjInteraction",
+      "detailId": 702,
+      "doodadId": 6987,
+      "count": 10,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23918,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33633,
+      "type": "QuestActConReportNpc",
+      "detailId": 4581,
+      "npcId": 1123
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23928,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33641,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 222,
+      "appellationId": 141
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23931,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33635,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1134,
+      "npcId": 13354,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23947,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33656,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1135,
+      "npcId": 13300,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6987,
+     "count": 10
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 13354,
+     "count": 20
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 13300,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1123,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

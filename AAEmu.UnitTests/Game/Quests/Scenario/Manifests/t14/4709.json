@@ -1,0 +1,81 @@
+{
+ "questId": 4709,
+ "name": "아스트라 동굴의 나무 위에 올라섰습니다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1759
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20400,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27819,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 421,
+      "sphereId": 1759
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20402,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27820,
+      "type": "QuestActSupplyCopper",
+      "detailId": 716,
+      "amount": 0
+     },
+     {
+      "actId": 27821,
+      "type": "QuestActSupplyExp",
+      "detailId": 268,
+      "exp": 0
+     },
+     {
+      "actId": 27823,
+      "type": "QuestActConAutoComplete",
+      "detailId": 969
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

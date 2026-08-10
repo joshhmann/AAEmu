@@ -1,0 +1,81 @@
+{
+ "questId": 4769,
+ "name": "눈사자 바위의 비밀 통로",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1822
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28175,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 481,
+      "sphereId": 1822
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20609,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28176,
+      "type": "QuestActSupplyCopper",
+      "detailId": 775,
+      "amount": 0
+     },
+     {
+      "actId": 28177,
+      "type": "QuestActSupplyExp",
+      "detailId": 332,
+      "exp": 0
+     },
+     {
+      "actId": 28179,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1030
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

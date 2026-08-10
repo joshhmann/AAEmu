@@ -1,0 +1,81 @@
+{
+ "questId": 5028,
+ "name": "용 가슴뼈의 버려진 제단",
+ "zoneId": 12,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2126
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21746,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30444,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 646,
+      "sphereId": 2126
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21747,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30440,
+      "type": "QuestActSupplyCopper",
+      "detailId": 944,
+      "amount": 0
+     },
+     {
+      "actId": 30441,
+      "type": "QuestActSupplyExp",
+      "detailId": 486,
+      "exp": 0
+     },
+     {
+      "actId": 30443,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1251
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

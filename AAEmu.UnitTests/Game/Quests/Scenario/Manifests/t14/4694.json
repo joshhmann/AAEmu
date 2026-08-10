@@ -1,0 +1,81 @@
+{
+ "questId": 4694,
+ "name": "하늘 맞이 동굴",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1743
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20353,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27711,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 404,
+      "sphereId": 1743
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20355,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27712,
+      "type": "QuestActSupplyCopper",
+      "detailId": 698,
+      "amount": 0
+     },
+     {
+      "actId": 27714,
+      "type": "QuestActSupplyExp",
+      "detailId": 248,
+      "exp": 0
+     },
+     {
+      "actId": 27716,
+      "type": "QuestActConAutoComplete",
+      "detailId": 948
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

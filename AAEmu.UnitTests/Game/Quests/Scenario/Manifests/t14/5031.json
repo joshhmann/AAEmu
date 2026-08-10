@@ -1,0 +1,81 @@
+{
+ "questId": 5031,
+ "name": "메마른 섬의 뿌리",
+ "zoneId": 12,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2129
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21755,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30459,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 649,
+      "sphereId": 2129
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30455,
+      "type": "QuestActSupplyCopper",
+      "detailId": 947,
+      "amount": 0
+     },
+     {
+      "actId": 30456,
+      "type": "QuestActSupplyExp",
+      "detailId": 489,
+      "exp": 0
+     },
+     {
+      "actId": 30458,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1254
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

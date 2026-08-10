@@ -1,0 +1,152 @@
+{
+ "questId": 5966,
+ "name": "송편. 강도. 호랑이.",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14086
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25703,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35102,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4504,
+      "npcId": 14086
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 25704,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35191,
+      "type": "QuestActSupplyItem",
+      "detailId": 3957,
+      "itemId": 29996,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25705,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35502,
+      "type": "QuestActObjItemGather",
+      "detailId": 2868,
+      "itemId": 30320,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25760,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35295,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1251,
+      "amount": 100
+     },
+     {
+      "actId": 35296,
+      "type": "QuestActSupplyExp",
+      "detailId": 805,
+      "exp": 815
+     },
+     {
+      "actId": 35501,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1579
+     },
+     {
+      "actId": 35503,
+      "type": "QuestActSupplyItem",
+      "detailId": 3980,
+      "itemId": 30112,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30320,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30112,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30320,
+   "count": 1
+  }
+ ]
+}

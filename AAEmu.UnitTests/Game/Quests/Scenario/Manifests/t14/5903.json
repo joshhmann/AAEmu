@@ -1,0 +1,148 @@
+{
+ "questId": 5903,
+ "name": "수요일 폐허의 괴식물 조사하기",
+ "zoneId": 198,
+ "categoryId": 102,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14217
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25489,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35406,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4578,
+      "npcId": 14217
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25490,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35414,
+      "type": "QuestActObjItemGather",
+      "detailId": 2867,
+      "itemId": 30207,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25491,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35408,
+      "type": "QuestActConReportNpc",
+      "detailId": 4796,
+      "npcId": 14217
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25866,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 25868,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35413,
+      "type": "QuestActSupplyItem",
+      "detailId": 3973,
+      "itemId": 30206,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30207,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14217,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30207,
+   "count": 3
+  }
+ ]
+}

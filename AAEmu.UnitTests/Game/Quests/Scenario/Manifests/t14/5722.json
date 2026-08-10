@@ -1,0 +1,131 @@
+{
+ "questId": 5722,
+ "name": "델피나드의 보물",
+ "zoneId": 201,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7110
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24603,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34252,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 261,
+      "doodadId": 7110
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24604,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34253,
+      "type": "QuestActObjItemGather",
+      "detailId": 2799,
+      "itemId": 29481,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24605,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34256,
+      "type": "QuestActConReportNpc",
+      "detailId": 4675,
+      "npcId": 13726
+     },
+     {
+      "actId": 34500,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 223,
+      "itemId": 29480,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24749,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29481,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13726,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29481,
+   "count": 1
+  }
+ ]
+}

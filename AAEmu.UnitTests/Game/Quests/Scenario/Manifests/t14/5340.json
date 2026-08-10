@@ -1,0 +1,126 @@
+{
+ "questId": 5340,
+ "name": "내가 바로 장인 도둑",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8249
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23033,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32603,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4132,
+      "npcId": 8249
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23034,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32514,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 550,
+      "monsterGroupId": 517,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23035,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32515,
+      "type": "QuestActConReportNpc",
+      "detailId": 4423,
+      "npcId": 8249
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23059,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32446,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 136,
+      "appellationId": 80
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 517,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8249,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

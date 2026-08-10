@@ -1,0 +1,93 @@
+{
+ "questId": 5477,
+ "name": "모루가 닳도록",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28504
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23682,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33315,
+      "type": "QuestActConAcceptItem",
+      "detailId": 321,
+      "itemId": 28504
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23684,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33351,
+      "type": "QuestActSupplyExp",
+      "detailId": 746,
+      "exp": 1000
+     },
+     {
+      "actId": 33352,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1171,
+      "amount": 0
+     },
+     {
+      "actId": 33353,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 210,
+      "appellationId": 155
+     },
+     {
+      "actId": 33354,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1418
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28504,
+   "count": 1
+  }
+ ]
+}

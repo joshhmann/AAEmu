@@ -1,0 +1,119 @@
+{
+ "questId": 2999,
+ "name": "포악한 트롤 시지프",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12019
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13113,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28316,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3800,
+      "npcId": 12019
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13114,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18830,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 674,
+      "npcId": 1261,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18831,
+      "type": "QuestActConReportNpc",
+      "detailId": 2659,
+      "npcId": 1259
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13116,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1261,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1259,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

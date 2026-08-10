@@ -1,0 +1,97 @@
+{
+ "questId": 5685,
+ "name": "[TEST] AA포인트 테스트",
+ "zoneId": 112,
+ "categoryId": 50,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13632
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24413,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35702,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4605,
+      "npcId": 13632
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35932,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1614
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26415,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35931,
+      "type": "QuestActConReportNpc",
+      "detailId": 4855,
+      "npcId": 13632
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13632,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

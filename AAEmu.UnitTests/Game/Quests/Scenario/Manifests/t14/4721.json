@@ -1,0 +1,81 @@
+{
+ "questId": 4721,
+ "name": "비파 항구 첨탑",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1771
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27880,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 433,
+      "sphereId": 1771
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20438,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27881,
+      "type": "QuestActSupplyCopper",
+      "detailId": 728,
+      "amount": 0
+     },
+     {
+      "actId": 27882,
+      "type": "QuestActSupplyExp",
+      "detailId": 280,
+      "exp": 0
+     },
+     {
+      "actId": 27884,
+      "type": "QuestActConAutoComplete",
+      "detailId": 981
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

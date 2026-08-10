@@ -1,0 +1,77 @@
+{
+ "questId": 5691,
+ "name": "고요한 위협",
+ "zoneId": 25,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2232
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24442,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33942,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 671,
+      "sphereId": 2232
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33943,
+      "type": "QuestActConReportNpc",
+      "detailId": 4621,
+      "npcId": 13479
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13479,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

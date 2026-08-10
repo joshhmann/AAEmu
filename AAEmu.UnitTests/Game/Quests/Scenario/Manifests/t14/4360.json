@@ -1,0 +1,98 @@
+{
+ "questId": 4360,
+ "name": "에키혼을 해방시켜라",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1960
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19004,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26047,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3621,
+      "npcId": 1960
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26049,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 969,
+      "npcId": 1989,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19236,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29630,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1133
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1989,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

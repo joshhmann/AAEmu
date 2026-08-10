@@ -1,0 +1,81 @@
+{
+ "questId": 4983,
+ "name": "해오름 마을의 곡식 저장고",
+ "zoneId": 17,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2080
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21609,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30216,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 601,
+      "sphereId": 2080
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21610,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30212,
+      "type": "QuestActSupplyCopper",
+      "detailId": 899,
+      "amount": 0
+     },
+     {
+      "actId": 30213,
+      "type": "QuestActSupplyExp",
+      "detailId": 441,
+      "exp": 0
+     },
+     {
+      "actId": 30215,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1206
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

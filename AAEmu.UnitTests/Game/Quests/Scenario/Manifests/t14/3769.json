@@ -1,0 +1,148 @@
+{
+ "questId": 3769,
+ "name": "도둑맞은 귀걸이",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10319
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15778,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21723,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3063,
+      "npcId": 10319
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15779,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21724,
+      "type": "QuestActSupplyItem",
+      "detailId": 2168,
+      "itemId": 21163,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15780,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21725,
+      "type": "QuestActObjItemGather",
+      "detailId": 1621,
+      "itemId": 21163,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21726,
+      "type": "QuestActConReportNpc",
+      "detailId": 3281,
+      "npcId": 10316
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15782,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21163,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10316,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21163,
+   "count": 1
+  }
+ ]
+}

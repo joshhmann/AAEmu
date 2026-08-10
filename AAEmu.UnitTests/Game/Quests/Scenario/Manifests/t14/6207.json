@@ -1,0 +1,218 @@
+{
+ "questId": 6207,
+ "name": "여섯 번째 변화의 징조",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14723
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26601,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36561,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4690,
+      "npcId": 14723
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26602,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36462,
+      "type": "QuestActObjItemGather",
+      "detailId": 2905,
+      "itemId": 19972,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26603,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36562,
+      "type": "QuestActConReportNpc",
+      "detailId": 4885,
+      "npcId": 14723
+     },
+     {
+      "actId": 36643,
+      "type": "QuestActConReportNpc",
+      "detailId": 4897,
+      "npcId": 14718
+     },
+     {
+      "actId": 36649,
+      "type": "QuestActConReportNpc",
+      "detailId": 4903,
+      "npcId": 14719
+     },
+     {
+      "actId": 36655,
+      "type": "QuestActConReportNpc",
+      "detailId": 4909,
+      "npcId": 14720
+     },
+     {
+      "actId": 36661,
+      "type": "QuestActConReportNpc",
+      "detailId": 4915,
+      "npcId": 14721
+     },
+     {
+      "actId": 36667,
+      "type": "QuestActConReportNpc",
+      "detailId": 4921,
+      "npcId": 14722
+     },
+     {
+      "actId": 36673,
+      "type": "QuestActConReportNpc",
+      "detailId": 4927,
+      "npcId": 14724
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26611,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36469,
+      "type": "QuestActSupplyItem",
+      "detailId": 4050,
+      "itemId": 26058,
+      "gradeId": 0,
+      "count": 75
+     },
+     {
+      "actId": 36577,
+      "type": "QuestActSupplyExp",
+      "detailId": 959,
+      "exp": 1004
+     },
+     {
+      "actId": 36578,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1366,
+      "amount": 1000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19972,
+     "count": 4
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14723,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14718,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14719,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14720,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14721,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14722,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14724,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26058,
+      "count": 75
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19972,
+   "count": 4
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4601,
+ "name": "붉은 이끼 동굴 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1671
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20024,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27236,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 345,
+      "sphereId": 1671
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20026,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27237,
+      "type": "QuestActSupplyCopper",
+      "detailId": 632,
+      "amount": 0
+     },
+     {
+      "actId": 27238,
+      "type": "QuestActSupplyExp",
+      "detailId": 186,
+      "exp": 0
+     },
+     {
+      "actId": 27240,
+      "type": "QuestActConAutoComplete",
+      "detailId": 890
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

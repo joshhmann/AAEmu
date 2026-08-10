@@ -1,0 +1,81 @@
+{
+ "questId": 4915,
+ "name": "잿빛안개 부락의 굽은 나무",
+ "zoneId": 21,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2035
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29715,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 562,
+      "sphereId": 2035
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21344,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29711,
+      "type": "QuestActSupplyCopper",
+      "detailId": 828,
+      "amount": 0
+     },
+     {
+      "actId": 29714,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1148
+     },
+     {
+      "actId": 31116,
+      "type": "QuestActSupplyExp",
+      "detailId": 580,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

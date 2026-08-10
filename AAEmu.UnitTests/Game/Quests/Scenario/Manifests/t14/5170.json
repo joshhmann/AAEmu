@@ -1,0 +1,128 @@
+{
+ "questId": 5170,
+ "name": "왕세자의 귀환",
+ "zoneId": 190,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2174
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22400,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31575,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 653,
+      "sphereId": 2174
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22401,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31576,
+      "type": "QuestActObjInteraction",
+      "detailId": 660,
+      "doodadId": 6258,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22402,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31577,
+      "type": "QuestActConReportNpc",
+      "detailId": 4330,
+      "npcId": 12856
+     },
+     {
+      "actId": 31580,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 217,
+      "itemId": 26639,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22412,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6258,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12856,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

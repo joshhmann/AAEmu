@@ -1,0 +1,81 @@
+{
+ "questId": 4958,
+ "name": "가루다 서식지의 뾰족 바위",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2053
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21522,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30049,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 579,
+      "sphereId": 2053
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21523,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30045,
+      "type": "QuestActSupplyCopper",
+      "detailId": 877,
+      "amount": 0
+     },
+     {
+      "actId": 30046,
+      "type": "QuestActSupplyExp",
+      "detailId": 418,
+      "exp": 0
+     },
+     {
+      "actId": 30048,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1174
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

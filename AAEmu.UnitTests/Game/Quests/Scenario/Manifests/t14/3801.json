@@ -1,0 +1,91 @@
+{
+ "questId": 3801,
+ "name": "동방의 류이진 장군",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 10358
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15938,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21959,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 840,
+      "npcId": 10358
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15941,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21965,
+      "type": "QuestActConReportNpc",
+      "detailId": 3343,
+      "npcId": 10393
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15942,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10393,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

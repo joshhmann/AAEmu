@@ -1,0 +1,81 @@
+{
+ "questId": 4970,
+ "name": "위태위태한 바위 위",
+ "zoneId": 7,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2067
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21570,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30150,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 588,
+      "sphereId": 2067
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21571,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30146,
+      "type": "QuestActSupplyCopper",
+      "detailId": 886,
+      "amount": 0
+     },
+     {
+      "actId": 30147,
+      "type": "QuestActSupplyExp",
+      "detailId": 427,
+      "exp": 0
+     },
+     {
+      "actId": 30149,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1193
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

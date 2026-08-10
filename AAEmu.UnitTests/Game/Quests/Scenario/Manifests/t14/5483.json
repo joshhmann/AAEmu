@@ -1,0 +1,93 @@
+{
+ "questId": 5483,
+ "name": "벼농사의 달인",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28510
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33321,
+      "type": "QuestActConAcceptItem",
+      "detailId": 327,
+      "itemId": 28510
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23702,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33375,
+      "type": "QuestActSupplyExp",
+      "detailId": 752,
+      "exp": 1000
+     },
+     {
+      "actId": 33376,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1177,
+      "amount": 0
+     },
+     {
+      "actId": 33377,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 216,
+      "appellationId": 161
+     },
+     {
+      "actId": 33378,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1424
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28510,
+   "count": 1
+  }
+ ]
+}

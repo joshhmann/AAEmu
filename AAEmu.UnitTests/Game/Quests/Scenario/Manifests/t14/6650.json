@@ -1,0 +1,129 @@
+{
+ "questId": 6650,
+ "name": "신화가 된 소년소녀",
+ "zoneId": 1,
+ "categoryId": 44,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28359,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40763,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5120,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28360,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40764,
+      "type": "QuestActSupplyItem",
+      "detailId": 4748,
+      "itemId": 27278,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 40765,
+      "type": "QuestActSupplyItem",
+      "detailId": 4749,
+      "itemId": 28175,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40761,
+      "type": "QuestActConReportNpc",
+      "detailId": 5100,
+      "npcId": 14986
+     },
+     {
+      "actId": 40762,
+      "type": "QuestActConReportNpc",
+      "detailId": 5101,
+      "npcId": 14987
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14986,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14987,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 27278,
+      "count": 10
+     },
+     {
+      "itemId": 28175,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

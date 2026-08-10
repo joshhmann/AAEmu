@@ -1,0 +1,93 @@
+{
+ "questId": 5421,
+ "name": "낭만의 지휘자",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28192
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23427,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32923,
+      "type": "QuestActConAcceptItem",
+      "detailId": 297,
+      "itemId": 28192
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23429,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32926,
+      "type": "QuestActSupplyExp",
+      "detailId": 722,
+      "exp": 1000
+     },
+     {
+      "actId": 32934,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1140,
+      "amount": 0
+     },
+     {
+      "actId": 32935,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 183,
+      "appellationId": 128
+     },
+     {
+      "actId": 32936,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1390
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28192,
+   "count": 1
+  }
+ ]
+}

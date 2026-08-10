@@ -1,0 +1,81 @@
+{
+ "questId": 4951,
+ "name": "로카강의 맷돌 바위",
+ "zoneId": 3,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2046
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30014,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 572,
+      "sphereId": 2046
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21502,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30009,
+      "type": "QuestActSupplyCopper",
+      "detailId": 870,
+      "amount": 0
+     },
+     {
+      "actId": 30010,
+      "type": "QuestActSupplyExp",
+      "detailId": 411,
+      "exp": 0
+     },
+     {
+      "actId": 30013,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1167
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

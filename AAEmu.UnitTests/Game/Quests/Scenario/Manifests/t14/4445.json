@@ -1,0 +1,81 @@
+{
+ "questId": 4445,
+ "name": "무지개 벌판 첫걸음의 언덕 탐험",
+ "zoneId": 133,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1557
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26569,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 258,
+      "sphereId": 1557
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26443,
+      "type": "QuestActSupplyCopper",
+      "detailId": 519,
+      "amount": 0
+     },
+     {
+      "actId": 26448,
+      "type": "QuestActConAutoComplete",
+      "detailId": 785
+     },
+     {
+      "actId": 31046,
+      "type": "QuestActSupplyExp",
+      "detailId": 513,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

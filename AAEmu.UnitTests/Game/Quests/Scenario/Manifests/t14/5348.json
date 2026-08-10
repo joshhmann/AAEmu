@@ -1,0 +1,180 @@
+{
+ "questId": 5348,
+ "name": "아란제비아의 미소",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13245
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23118,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32575,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4119,
+      "npcId": 13245
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23119,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32576,
+      "type": "QuestActObjItemGather",
+      "detailId": 2616,
+      "itemId": 27982,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23120,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32577,
+      "type": "QuestActObjExpressFire",
+      "detailId": 41,
+      "expressKeyId": 306,
+      "npcGroupId": 520,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32578,
+      "type": "QuestActConReportNpc",
+      "detailId": 4435,
+      "npcId": 13245
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23122,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32579,
+      "type": "QuestActSupplyExp",
+      "detailId": 698,
+      "exp": 0
+     },
+     {
+      "actId": 32580,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1115,
+      "amount": 0
+     },
+     {
+      "actId": 32581,
+      "type": "QuestActSupplyItem",
+      "detailId": 3712,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27982,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 13245,
+     "emotionId": 306,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13245,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27982,
+   "count": 1
+  }
+ ],
+ "groups": {
+  "npcGroups": {
+   "520": [
+    13245
+   ]
+  }
+ }
+}

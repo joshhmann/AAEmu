@@ -1,0 +1,174 @@
+{
+ "questId": 3582,
+ "name": "대초원의 품으로",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9598
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14758,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29880,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3902,
+      "npcId": 9598
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14759,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30278,
+      "type": "QuestActObjTalk",
+      "detailId": 996,
+      "npcId": 12318
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14761,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 15051,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20616,
+      "type": "QuestActSupplyItem",
+      "detailId": 2061,
+      "itemId": 26017,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21469,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29879,
+      "type": "QuestActConReportNpc",
+      "detailId": 4196,
+      "npcId": 9598
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21633,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30273,
+      "type": "QuestActObjTalk",
+      "detailId": 995,
+      "npcId": 9763
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21634,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30267,
+      "type": "QuestActObjTalk",
+      "detailId": 994,
+      "npcId": 9762
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 12318
+    },
+    {
+     "type": "Talk",
+     "npcId": 9763
+    },
+    {
+     "type": "Talk",
+     "npcId": 9762
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9598,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

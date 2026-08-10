@@ -1,0 +1,112 @@
+{
+ "questId": 5487,
+ "name": "맹약의 수호자",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28541
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23714,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33387,
+      "type": "QuestActConAcceptItem",
+      "detailId": 329,
+      "itemId": 28541
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23716,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33388,
+      "type": "QuestActSupplyExp",
+      "detailId": 754,
+      "exp": 1000
+     },
+     {
+      "actId": 33389,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1179,
+      "amount": 0
+     },
+     {
+      "actId": 33390,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 218,
+      "appellationId": 163
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24770,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34297,
+      "type": "QuestActConReportJournal",
+      "detailId": 369
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28541,
+   "count": 1
+  }
+ ]
+}

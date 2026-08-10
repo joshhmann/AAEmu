@@ -1,0 +1,81 @@
+{
+ "questId": 4749,
+ "name": "루비 광산을 내려다보다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1801
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20545,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28067,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 461,
+      "sphereId": 1801
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20547,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28068,
+      "type": "QuestActSupplyCopper",
+      "detailId": 755,
+      "amount": 0
+     },
+     {
+      "actId": 28069,
+      "type": "QuestActSupplyExp",
+      "detailId": 310,
+      "exp": 0
+     },
+     {
+      "actId": 28071,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1009
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,107 @@
+{
+ "questId": 3583,
+ "name": "거대 파리지옥 살충이",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9705
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14762,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29852,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 173,
+      "questContextId": 3583
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29853,
+      "type": "QuestActObjAggro",
+      "detailId": 14,
+      "range": 50,
+      "rank1": 50,
+      "rank2": 70,
+      "rank3": 90,
+      "rank1Ratio": 100,
+      "rank2Ratio": 60,
+      "rank3Ratio": 40,
+      "rank1Item": false,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2123
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14765,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29854,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1156
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 9705
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

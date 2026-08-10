@@ -1,0 +1,81 @@
+{
+ "questId": 4953,
+ "name": "처형대 아래 좁은 틈",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2048
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21507,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30024,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 574,
+      "sphereId": 2048
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21508,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30020,
+      "type": "QuestActSupplyCopper",
+      "detailId": 872,
+      "amount": 0
+     },
+     {
+      "actId": 30021,
+      "type": "QuestActSupplyExp",
+      "detailId": 413,
+      "exp": 0
+     },
+     {
+      "actId": 30023,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1169
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

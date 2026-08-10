@@ -1,0 +1,81 @@
+{
+ "questId": 4606,
+ "name": "마리안의 전당 꼭대기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1676
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20039,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27257,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 349,
+      "sphereId": 1676
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20041,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27258,
+      "type": "QuestActSupplyCopper",
+      "detailId": 636,
+      "amount": 0
+     },
+     {
+      "actId": 27259,
+      "type": "QuestActSupplyExp",
+      "detailId": 190,
+      "exp": 0
+     },
+     {
+      "actId": 27261,
+      "type": "QuestActConAutoComplete",
+      "detailId": 894
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

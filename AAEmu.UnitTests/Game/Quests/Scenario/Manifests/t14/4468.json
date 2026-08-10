@@ -1,0 +1,81 @@
+{
+ "questId": 4468,
+ "name": "하르파 수련장의 지붕 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1582
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19518,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26588,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 260,
+      "sphereId": 1582
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19520,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26589,
+      "type": "QuestActSupplyCopper",
+      "detailId": 542,
+      "amount": 0
+     },
+     {
+      "actId": 26592,
+      "type": "QuestActConAutoComplete",
+      "detailId": 808
+     },
+     {
+      "actId": 31053,
+      "type": "QuestActSupplyExp",
+      "detailId": 518,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

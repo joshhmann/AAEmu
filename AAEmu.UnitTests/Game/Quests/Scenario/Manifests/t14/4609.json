@@ -1,0 +1,81 @@
+{
+ "questId": 4609,
+ "name": "마리아노플 풍차의 꼭대기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1679
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20048,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27272,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 352,
+      "sphereId": 1679
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20050,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27273,
+      "type": "QuestActSupplyCopper",
+      "detailId": 639,
+      "amount": 0
+     },
+     {
+      "actId": 27274,
+      "type": "QuestActSupplyExp",
+      "detailId": 193,
+      "exp": 0
+     },
+     {
+      "actId": 27276,
+      "type": "QuestActConAutoComplete",
+      "detailId": 897
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

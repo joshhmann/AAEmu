@@ -1,0 +1,142 @@
+{
+ "questId": 3580,
+ "name": "농부로 변장한 서리꾼 두목",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9576
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14750,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20688,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2867,
+      "npcId": 9576
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14751,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21906,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 838,
+      "npcId": 9713,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14752,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20689,
+      "type": "QuestActConReportNpc",
+      "detailId": 3097,
+      "npcId": 9576
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14753,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 16594,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21915,
+      "type": "QuestActSupplyItem",
+      "detailId": 2190,
+      "itemId": 21255,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9713,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9576,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

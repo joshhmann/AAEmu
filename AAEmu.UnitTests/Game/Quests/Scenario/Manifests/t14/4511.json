@@ -1,0 +1,81 @@
+{
+ "questId": 4511,
+ "name": "부서진 조각상에 오르다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1621
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19661,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26788,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 297,
+      "sphereId": 1621
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26789,
+      "type": "QuestActSupplyCopper",
+      "detailId": 579,
+      "amount": 0
+     },
+     {
+      "actId": 26792,
+      "type": "QuestActConAutoComplete",
+      "detailId": 844
+     },
+     {
+      "actId": 31111,
+      "type": "QuestActSupplyExp",
+      "detailId": 575,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

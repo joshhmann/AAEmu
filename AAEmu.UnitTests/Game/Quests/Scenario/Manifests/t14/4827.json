@@ -1,0 +1,81 @@
+{
+ "questId": 4827,
+ "name": "자유도의 크고 아름답게 솟아오른 봉우리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1875
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20811,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28463,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 513,
+      "sphereId": 1875
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20813,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28464,
+      "type": "QuestActSupplyCopper",
+      "detailId": 805,
+      "amount": 0
+     },
+     {
+      "actId": 28465,
+      "type": "QuestActSupplyExp",
+      "detailId": 365,
+      "exp": 0
+     },
+     {
+      "actId": 28467,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1068
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4472,
+ "name": "그위오니드 석상 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1586
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19530,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26607,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 264,
+      "sphereId": 1586
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19532,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26608,
+      "type": "QuestActSupplyCopper",
+      "detailId": 546,
+      "amount": 0
+     },
+     {
+      "actId": 26611,
+      "type": "QuestActConAutoComplete",
+      "detailId": 811
+     },
+     {
+      "actId": 31048,
+      "type": "QuestActSupplyExp",
+      "detailId": 515,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

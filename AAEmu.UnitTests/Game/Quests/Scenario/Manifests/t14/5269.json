@@ -1,0 +1,120 @@
+{
+ "questId": 5269,
+ "name": "피즈로로의 초대",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22727,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 22729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32043,
+      "type": "QuestActConReportNpc",
+      "detailId": 4357,
+      "npcId": 10856
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22730,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32044,
+      "type": "QuestActSupplyExp",
+      "detailId": 676,
+      "exp": 1000
+     },
+     {
+      "actId": 32045,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1093,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22734,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32050,
+      "type": "QuestActSupplyItem",
+      "detailId": 3643,
+      "itemId": 25295,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10856,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

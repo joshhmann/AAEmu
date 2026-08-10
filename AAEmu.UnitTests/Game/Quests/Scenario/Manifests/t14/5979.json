@@ -1,0 +1,148 @@
+{
+ "questId": 5979,
+ "name": "명예로운 전사의 길에 서는 첫걸음",
+ "zoneId": 6,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13389
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35187,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4515,
+      "npcId": 13389
+     },
+     {
+      "actId": 35188,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4516,
+      "npcId": 13792
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35301,
+      "type": "QuestActObjSphere",
+      "detailId": 677,
+      "sphereId": 2252
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25758,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35186,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 97,
+      "point": 50
+     },
+     {
+      "actId": 35522,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 337,
+      "questContextId": 6020
+     },
+     {
+      "actId": 35523,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 338,
+      "questContextId": 6021
+     },
+     {
+      "actId": 35524,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 339,
+      "questContextId": 6022
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25815,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35348,
+      "type": "QuestActConReportNpc",
+      "detailId": 4789,
+      "npcId": 14168
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 25757
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14168,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

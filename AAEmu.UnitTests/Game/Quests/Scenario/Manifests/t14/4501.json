@@ -1,0 +1,81 @@
+{
+ "questId": 4501,
+ "name": "호랑이 눈의 분수대 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1613
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19629,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26745,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 289,
+      "sphereId": 1613
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19631,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26746,
+      "type": "QuestActSupplyCopper",
+      "detailId": 571,
+      "amount": 0
+     },
+     {
+      "actId": 26748,
+      "type": "QuestActSupplyExp",
+      "detailId": 128,
+      "exp": 0
+     },
+     {
+      "actId": 26750,
+      "type": "QuestActConAutoComplete",
+      "detailId": 836
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

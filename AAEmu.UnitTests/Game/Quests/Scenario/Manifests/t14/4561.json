@@ -1,0 +1,81 @@
+{
+ "questId": 4561,
+ "name": "모래 먼지 마을의 풍차 지붕에 오르다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1656
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19860,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27065,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 335,
+      "sphereId": 1656
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19862,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27066,
+      "type": "QuestActSupplyCopper",
+      "detailId": 614,
+      "amount": 0
+     },
+     {
+      "actId": 27067,
+      "type": "QuestActSupplyExp",
+      "detailId": 174,
+      "exp": 0
+     },
+     {
+      "actId": 27069,
+      "type": "QuestActConAutoComplete",
+      "detailId": 880
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

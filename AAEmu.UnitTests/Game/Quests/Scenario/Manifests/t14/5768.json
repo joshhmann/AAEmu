@@ -1,0 +1,180 @@
+{
+ "questId": 5768,
+ "name": "멜리사라의 그림자",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13788
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24828,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34481,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4418,
+      "npcId": 13788
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24829,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34483,
+      "type": "QuestActObjItemGather",
+      "detailId": 2834,
+      "itemId": 29706,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24830,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34480,
+      "type": "QuestActConReportNpc",
+      "detailId": 4693,
+      "npcId": 13788
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24843,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34513,
+      "type": "QuestActObjExpressFire",
+      "detailId": 45,
+      "expressKeyId": 555,
+      "npcGroupId": 534,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24844,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34470,
+      "type": "QuestActSupplyExp",
+      "detailId": 783,
+      "exp": 0
+     },
+     {
+      "actId": 34472,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1219,
+      "amount": 0
+     },
+     {
+      "actId": 34477,
+      "type": "QuestActSupplyItem",
+      "detailId": 3900,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29706,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 13788,
+     "emotionId": 555,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13788,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29706,
+   "count": 1
+  }
+ ],
+ "groups": {
+  "npcGroups": {
+   "534": [
+    13788
+   ]
+  }
+ }
+}

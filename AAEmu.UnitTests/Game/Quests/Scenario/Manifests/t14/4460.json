@@ -1,0 +1,81 @@
+{
+ "questId": 4460,
+ "name": "촌장의 집 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1573
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19489,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26522,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 253,
+      "sphereId": 1573
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19491,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26523,
+      "type": "QuestActConAutoComplete",
+      "detailId": 801
+     },
+     {
+      "actId": 26525,
+      "type": "QuestActSupplyCopper",
+      "detailId": 536,
+      "amount": 0
+     },
+     {
+      "actId": 31061,
+      "type": "QuestActSupplyExp",
+      "detailId": 526,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

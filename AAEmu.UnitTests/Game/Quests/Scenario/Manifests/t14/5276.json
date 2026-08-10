@@ -1,0 +1,93 @@
+{
+ "questId": 5276,
+ "name": "벽돌 쌓는 광부",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 27165
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22755,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32073,
+      "type": "QuestActConAcceptItem",
+      "detailId": 269,
+      "itemId": 27165
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32068,
+      "type": "QuestActSupplyExp",
+      "detailId": 679,
+      "exp": 1000
+     },
+     {
+      "actId": 32069,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1096,
+      "amount": 0
+     },
+     {
+      "actId": 32070,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 103,
+      "appellationId": 91
+     },
+     {
+      "actId": 32072,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1360
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27165,
+   "count": 1
+  }
+ ]
+}

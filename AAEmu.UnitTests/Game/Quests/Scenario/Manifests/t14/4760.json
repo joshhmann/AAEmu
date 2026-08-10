@@ -1,0 +1,81 @@
+{
+ "questId": 4760,
+ "name": "로카의 협곡",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1813
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20580,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28129,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 472,
+      "sphereId": 1813
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28130,
+      "type": "QuestActSupplyCopper",
+      "detailId": 766,
+      "amount": 0
+     },
+     {
+      "actId": 28131,
+      "type": "QuestActSupplyExp",
+      "detailId": 322,
+      "exp": 0
+     },
+     {
+      "actId": 28133,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1021
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

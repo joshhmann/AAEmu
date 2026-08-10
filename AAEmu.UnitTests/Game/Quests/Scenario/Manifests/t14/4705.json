@@ -1,0 +1,81 @@
+{
+ "questId": 4705,
+ "name": "여왕의 궁을 발 아래에",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1755
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20388,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27796,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 417,
+      "sphereId": 1755
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20390,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27797,
+      "type": "QuestActSupplyCopper",
+      "detailId": 712,
+      "amount": 0
+     },
+     {
+      "actId": 27798,
+      "type": "QuestActSupplyExp",
+      "detailId": 264,
+      "exp": 0
+     },
+     {
+      "actId": 27801,
+      "type": "QuestActConAutoComplete",
+      "detailId": 965
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

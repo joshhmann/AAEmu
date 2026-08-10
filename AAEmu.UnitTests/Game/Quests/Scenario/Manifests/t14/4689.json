@@ -1,0 +1,81 @@
+{
+ "questId": 4689,
+ "name": "늪지 거목의 줄기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1738
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20338,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27686,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 399,
+      "sphereId": 1738
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20340,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27687,
+      "type": "QuestActSupplyCopper",
+      "detailId": 693,
+      "amount": 0
+     },
+     {
+      "actId": 27688,
+      "type": "QuestActSupplyExp",
+      "detailId": 242,
+      "exp": 0
+     },
+     {
+      "actId": 27690,
+      "type": "QuestActConAutoComplete",
+      "detailId": 943
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

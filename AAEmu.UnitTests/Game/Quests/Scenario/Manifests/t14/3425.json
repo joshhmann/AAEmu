@@ -1,0 +1,114 @@
+{
+ "questId": 3425,
+ "name": "정당한 시민의 권리를 원한다",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9737
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20431,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2818,
+      "npcId": 9737
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20432,
+      "type": "QuestActConReportNpc",
+      "detailId": 3045,
+      "npcId": 9620
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14701,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 14933,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20312,
+      "type": "QuestActSupplyItem",
+      "detailId": 2032,
+      "itemId": 19783,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9620,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

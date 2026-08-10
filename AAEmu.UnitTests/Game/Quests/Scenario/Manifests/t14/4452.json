@@ -1,0 +1,81 @@
+{
+ "questId": 4452,
+ "name": "뱀의 틈 숨겨진 동굴 탐험",
+ "zoneId": 13,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1565
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26476,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 244,
+      "sphereId": 1565
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19467,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26477,
+      "type": "QuestActSupplyCopper",
+      "detailId": 527,
+      "amount": 0
+     },
+     {
+      "actId": 26480,
+      "type": "QuestActConAutoComplete",
+      "detailId": 792
+     },
+     {
+      "actId": 31069,
+      "type": "QuestActSupplyExp",
+      "detailId": 534,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

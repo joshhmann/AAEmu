@@ -1,0 +1,125 @@
+{
+ "questId": 3392,
+ "name": "학 모자를 하사하는 전통",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9600
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14563,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20386,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2796,
+      "npcId": 9600
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14564,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29632,
+      "type": "QuestActObjItemGather",
+      "detailId": 2392,
+      "itemId": 26004,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14565,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20387,
+      "type": "QuestActConReportNpc",
+      "detailId": 3023,
+      "npcId": 9600
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14566,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26004,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9600,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26004,
+   "count": 15
+  }
+ ]
+}

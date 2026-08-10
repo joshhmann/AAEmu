@@ -1,0 +1,81 @@
+{
+ "questId": 4801,
+ "name": "전설의 흔적이 남아 있는 은밀한 동굴",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1849
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20733,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28326,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 486,
+      "sphereId": 1849
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20735,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28327,
+      "type": "QuestActSupplyCopper",
+      "detailId": 780,
+      "amount": 0
+     },
+     {
+      "actId": 28328,
+      "type": "QuestActSupplyExp",
+      "detailId": 337,
+      "exp": 0
+     },
+     {
+      "actId": 28330,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1042
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

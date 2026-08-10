@@ -1,0 +1,91 @@
+{
+ "questId": 3790,
+ "name": "시체는 남고 푸른 병은 사라지다",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4301
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15883,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25689,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 139,
+      "doodadId": 4301
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15886,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25690,
+      "type": "QuestActConReportNpc",
+      "detailId": 3833,
+      "npcId": 10293
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15887,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10293,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

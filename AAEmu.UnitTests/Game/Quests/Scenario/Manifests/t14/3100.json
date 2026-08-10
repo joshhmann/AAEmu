@@ -1,0 +1,119 @@
+{
+ "questId": 3100,
+ "name": "가르가츠의 원한",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 364
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13362,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19135,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2520,
+      "npcId": 364
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13363,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19137,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 696,
+      "npcId": 1041,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13364,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19136,
+      "type": "QuestActConReportNpc",
+      "detailId": 2752,
+      "npcId": 9366
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13365,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1041,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9366,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

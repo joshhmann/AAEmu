@@ -1,0 +1,81 @@
+{
+ "questId": 4628,
+ "name": "두 개의 탑",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1690
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20106,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27329,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 363,
+      "sphereId": 1690
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20108,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27330,
+      "type": "QuestActSupplyCopper",
+      "detailId": 650,
+      "amount": 0
+     },
+     {
+      "actId": 27331,
+      "type": "QuestActSupplyExp",
+      "detailId": 205,
+      "exp": 0
+     },
+     {
+      "actId": 27333,
+      "type": "QuestActConAutoComplete",
+      "detailId": 908
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

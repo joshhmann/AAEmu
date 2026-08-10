@@ -1,0 +1,104 @@
+{
+ "questId": 6569,
+ "name": "긴급 호출",
+ "zoneId": 196,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14918
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39994,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5016,
+      "npcId": 14918
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28023,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39997,
+      "type": "QuestActConReportNpc",
+      "detailId": 5042,
+      "npcId": 8730
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28051,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40000,
+      "type": "QuestActSupplyExp",
+      "detailId": 1477,
+      "exp": 1004
+     },
+     {
+      "actId": 40001,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1792,
+      "amount": 100
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8730,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

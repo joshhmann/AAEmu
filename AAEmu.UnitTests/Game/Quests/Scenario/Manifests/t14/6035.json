@@ -1,0 +1,131 @@
+{
+ "questId": 6035,
+ "name": "겨울 나라의 명품 포도주",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjItemGather",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25984,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 25985,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35606,
+      "type": "QuestActObjItemGather",
+      "detailId": 2873,
+      "itemId": 30434,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25986,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 25988,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35600,
+      "type": "QuestActSupplyItem",
+      "detailId": 3996,
+      "itemId": 30438,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35603,
+      "type": "QuestActSupplyExp",
+      "detailId": 819,
+      "exp": 1004
+     },
+     {
+      "actId": 35604,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1265,
+      "amount": 100
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30434,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30438,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30434,
+   "count": 40
+  }
+ ]
+}

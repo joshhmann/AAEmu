@@ -1,0 +1,91 @@
+{
+ "questId": 3396,
+ "name": "진짜 두려운 것은 아사지",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9601
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14579,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20394,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2800,
+      "npcId": 9601
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14581,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20395,
+      "type": "QuestActConReportNpc",
+      "detailId": 3027,
+      "npcId": 9596
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14582,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9596,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

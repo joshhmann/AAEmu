@@ -1,0 +1,112 @@
+{
+ "questId": 5545,
+ "name": "시공을 거스르는 불길",
+ "zoneId": 149,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28915
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23949,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33665,
+      "type": "QuestActConAcceptItem",
+      "detailId": 333,
+      "itemId": 28915
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23950,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33669,
+      "type": "QuestActSupplyItem",
+      "detailId": 3837,
+      "itemId": 28986,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23951,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33666,
+      "type": "QuestActConReportNpc",
+      "detailId": 4585,
+      "npcId": 13562
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13562,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28986,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28915,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 6021,
+ "name": "고통의 기운 흡수",
+ "zoneId": 144,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25928,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35526,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 341,
+      "questContextId": 6021
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25929,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35531,
+      "type": "QuestActObjInteraction",
+      "detailId": 724,
+      "doodadId": 6693,
+      "count": 30,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25930,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35530,
+      "type": "QuestActConReportJournal",
+      "detailId": 412
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25935,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35611,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 124,
+      "point": 100
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6693,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

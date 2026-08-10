@@ -1,0 +1,121 @@
+{
+ "questId": 3399,
+ "name": "하늘정원 마을의 보답",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9585
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14591,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20400,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2803,
+      "npcId": 9585
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14592,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29602,
+      "type": "QuestActObjItemUse",
+      "detailId": 684,
+      "itemId": 21325,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14594,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29603,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1130
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21295,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29601,
+      "type": "QuestActSupplyItem",
+      "detailId": 3384,
+      "itemId": 21325,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 21325,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

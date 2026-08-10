@@ -1,0 +1,81 @@
+{
+ "questId": 4527,
+ "name": "탄생의 절벽 외딴 바위",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1635
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19713,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26883,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 312,
+      "sphereId": 1635
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19715,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26884,
+      "type": "QuestActSupplyCopper",
+      "detailId": 593,
+      "amount": 0
+     },
+     {
+      "actId": 26887,
+      "type": "QuestActConAutoComplete",
+      "detailId": 859
+     },
+     {
+      "actId": 31095,
+      "type": "QuestActSupplyExp",
+      "detailId": 560,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

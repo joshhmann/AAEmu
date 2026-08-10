@@ -1,0 +1,140 @@
+{
+ "questId": 5766,
+ "name": "버려진 고대의 잔해를 찾아서",
+ "zoneId": 12,
+ "categoryId": 98,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1938
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24819,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34440,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4414,
+      "npcId": 1938
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24820,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34441,
+      "type": "QuestActObjItemGather",
+      "detailId": 2830,
+      "itemId": 18968,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24821,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34439,
+      "type": "QuestActConReportNpc",
+      "detailId": 4689,
+      "npcId": 13752
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24823,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34435,
+      "type": "QuestActSupplyItem",
+      "detailId": 3895,
+      "itemId": 29612,
+      "gradeId": 2,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18968,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13752,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29612,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18968,
+   "count": 1
+  }
+ ]
+}

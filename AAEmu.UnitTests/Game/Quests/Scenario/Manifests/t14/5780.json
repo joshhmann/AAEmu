@@ -1,0 +1,168 @@
+{
+ "questId": 5780,
+ "name": "다후타 권능의 가면",
+ "zoneId": 202,
+ "categoryId": 100,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13770
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24985,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34524,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4425,
+      "npcId": 13770
+     },
+     {
+      "actId": 34525,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4426,
+      "npcId": 13786
+     },
+     {
+      "actId": 35029,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4491,
+      "npcId": 14078
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24986,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34526,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1155,
+      "npcId": 13712,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24987,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34527,
+      "type": "QuestActConReportNpc",
+      "detailId": 4700,
+      "npcId": 13770
+     },
+     {
+      "actId": 34528,
+      "type": "QuestActConReportNpc",
+      "detailId": 4701,
+      "npcId": 13786
+     },
+     {
+      "actId": 35032,
+      "type": "QuestActConReportNpc",
+      "detailId": 4745,
+      "npcId": 14078
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24988,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34529,
+      "type": "QuestActSupplyItem",
+      "detailId": 3907,
+      "itemId": 28979,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 13712,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13770,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 13786,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14078,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28979,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

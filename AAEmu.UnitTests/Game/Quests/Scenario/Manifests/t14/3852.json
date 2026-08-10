@@ -1,0 +1,141 @@
+{
+ "questId": 3852,
+ "name": "대제국을 어지럽히는 자들",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3706
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16195,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22942,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 986,
+      "npcId": 3706
+     },
+     {
+      "actId": 22943,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 987,
+      "npcId": 3707
+     },
+     {
+      "actId": 22944,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 988,
+      "npcId": 3712
+     },
+     {
+      "actId": 22945,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 989,
+      "npcId": 3713
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16197,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22946,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 443,
+      "monsterGroupId": 405,
+      "count": 45
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22947,
+      "type": "QuestActConReportJournal",
+      "detailId": 300
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16199,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22948,
+      "type": "QuestActSupplyCopper",
+      "detailId": 391,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 405,
+     "count": 45
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

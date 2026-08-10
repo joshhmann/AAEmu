@@ -1,0 +1,110 @@
+{
+ "questId": 6242,
+ "name": "모퉁이의 함정 5단계 보상",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14619
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26755,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37233,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 424,
+      "questContextId": 6242
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37234,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1206,
+      "npcId": 14619,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37235,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1699
+     },
+     {
+      "actId": 37236,
+      "type": "QuestActSupplyExp",
+      "detailId": 1132,
+      "exp": 628223
+     },
+     {
+      "actId": 37237,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1453,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14619,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

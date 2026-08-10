@@ -1,0 +1,148 @@
+{
+ "questId": 5717,
+ "name": "영혼조차 녹여버리는 강력한 불길",
+ "zoneId": 4,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13726
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24588,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34142,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4370,
+      "npcId": 13726
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24589,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34144,
+      "type": "QuestActObjItemGather",
+      "detailId": 2782,
+      "itemId": 3332,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24590,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34143,
+      "type": "QuestActConReportNpc",
+      "detailId": 4670,
+      "npcId": 13726
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24631,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 24633,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34148,
+      "type": "QuestActObjItemGather",
+      "detailId": 2786,
+      "itemId": 29278,
+      "count": 15
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3332,
+     "count": 100
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29278,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13726,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3332,
+   "count": 100
+  },
+  {
+   "itemId": 29278,
+   "count": 15
+  }
+ ]
+}

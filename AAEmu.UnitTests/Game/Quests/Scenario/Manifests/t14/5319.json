@@ -1,0 +1,154 @@
+{
+ "questId": 5319,
+ "name": "다루와 바다",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13160
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22948,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32330,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4085,
+      "npcId": 13160
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22949,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32527,
+      "type": "QuestActObjItemGather",
+      "detailId": 2610,
+      "itemId": 27807,
+      "count": 600
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22950,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32331,
+      "type": "QuestActConReportNpc",
+      "detailId": 4399,
+      "npcId": 13160
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22951,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32530,
+      "type": "QuestActSupplyExp",
+      "detailId": 692,
+      "exp": 0
+     },
+     {
+      "actId": 32531,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1109,
+      "amount": 0
+     },
+     {
+      "actId": 35863,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2393,
+      "itemId": 30774,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35864,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2394,
+      "itemId": 27882,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27807,
+     "count": 600
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13160,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 27807,
+   "count": 600
+  }
+ ]
+}

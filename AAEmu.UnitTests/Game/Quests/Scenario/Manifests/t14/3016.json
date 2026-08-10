@@ -1,0 +1,126 @@
+{
+ "questId": 3016,
+ "name": "전염병은 독으로 다스린다",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1284
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13547,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18984,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2466,
+      "npcId": 1284
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18988,
+      "type": "QuestActObjItemUse",
+      "detailId": 489,
+      "itemId": 18987,
+      "count": 3
+     },
+     {
+      "actId": 30604,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 139,
+      "itemId": 18987,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13550,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18992,
+      "type": "QuestActConReportNpc",
+      "detailId": 2702,
+      "npcId": 1284
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13551,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 18987,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1284,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

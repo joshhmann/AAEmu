@@ -42,7 +42,8 @@ public class QuestScenarioTierTests
         ("t10", "T10 M2 WI-3 (AbilityLevel objective carriers)"),
         ("t11", "T11 M2 WI-4 (MateLevel objective carriers)"),
         ("t12", "T12 M2 WI-5 (CompleteQuest objective carriers)"),
-        ("t13", "T13 M2 WI-7 census (band 31-40 full sweep)")
+        ("t13", "T13 M2 WI-7 census (band 31-40 full sweep)"),
+        ("t14", "T14 M2 WI-8 census (band 41-50 full sweep)")
     ];
 
     private static string RepoRoot()

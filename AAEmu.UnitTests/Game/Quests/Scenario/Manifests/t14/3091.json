@@ -1,0 +1,125 @@
+{
+ "questId": 3091,
+ "name": "옛 제국의 꿈",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8872
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13317,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20084,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2722,
+      "npcId": 8872
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13642,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20205,
+      "type": "QuestActObjItemGather",
+      "detailId": 1430,
+      "itemId": 19773,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13643,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 14823,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20168,
+      "type": "QuestActConReportNpc",
+      "detailId": 2962,
+      "npcId": 8869
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19773,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8869,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19773,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,119 @@
+{
+ "questId": 3208,
+ "name": "하슬라가 노리는 것",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8918
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13467,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19214,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2552,
+      "npcId": 8918
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13468,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19215,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 703,
+      "npcId": 8936,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13470,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 13678,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19265,
+      "type": "QuestActConReportNpc",
+      "detailId": 2792,
+      "npcId": 8918
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8936,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8918,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

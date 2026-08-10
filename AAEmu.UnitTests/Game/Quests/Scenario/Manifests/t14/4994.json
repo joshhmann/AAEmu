@@ -1,0 +1,81 @@
+{
+ "questId": 4994,
+ "name": "뿜어져 나오는 온천수",
+ "zoneId": 8,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2091
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21644,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30272,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 612,
+      "sphereId": 2091
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21645,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30268,
+      "type": "QuestActSupplyCopper",
+      "detailId": 910,
+      "amount": 0
+     },
+     {
+      "actId": 30269,
+      "type": "QuestActSupplyExp",
+      "detailId": 452,
+      "exp": 0
+     },
+     {
+      "actId": 30271,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1217
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

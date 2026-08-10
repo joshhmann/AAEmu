@@ -1,0 +1,123 @@
+{
+ "questId": 4926,
+ "name": "붉은비늘 에키혼 뼈화살병 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 10993
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21383,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29762,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1103,
+      "npcId": 10993
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21384,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29763,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1049,
+      "npcId": 10993,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21385,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29764,
+      "type": "QuestActConReportJournal",
+      "detailId": 331
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21386,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29765,
+      "type": "QuestActSupplyCopper",
+      "detailId": 839,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10993,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

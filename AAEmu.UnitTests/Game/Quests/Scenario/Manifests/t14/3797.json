@@ -1,0 +1,91 @@
+{
+ "questId": 3797,
+ "name": "페레를 인정하지 않는 자",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10460
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15918,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22225,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3143,
+      "npcId": 10460
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15921,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22226,
+      "type": "QuestActConReportNpc",
+      "detailId": 3374,
+      "npcId": 10284
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15922,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10284,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

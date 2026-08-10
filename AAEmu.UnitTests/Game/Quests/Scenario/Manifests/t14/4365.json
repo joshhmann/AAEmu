@@ -1,0 +1,119 @@
+{
+ "questId": 4365,
+ "name": "긍지 있는 전사의 이름이 걸린 부탁",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1962
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19019,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26062,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3626,
+      "npcId": 1962
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19020,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26064,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 971,
+      "npcId": 1923,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26063,
+      "type": "QuestActConReportNpc",
+      "detailId": 3897,
+      "npcId": 1962
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19241,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1923,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1962,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

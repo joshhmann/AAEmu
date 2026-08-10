@@ -1,0 +1,147 @@
+{
+ "questId": 5886,
+ "name": "파괴신의 돌격대장을 물리쳐라!",
+ "zoneId": 149,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8850
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25430,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34778,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 265,
+      "questContextId": 5886
+     },
+     {
+      "actId": 34779,
+      "type": "QuestActCheckTimer",
+      "detailId": 148,
+      "limitTime": 14400000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25431,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38830,
+      "type": "QuestActObjAggro",
+      "detailId": 62,
+      "range": 150,
+      "rank1": 100,
+      "rank2": 0,
+      "rank3": 0,
+      "rank1Ratio": 100,
+      "rank2Ratio": 0,
+      "rank3Ratio": 0,
+      "rank1Item": true,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 3292
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 25432,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 25433,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34781,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1228,
+      "amount": 0
+     },
+     {
+      "actId": 34782,
+      "type": "QuestActSupplyExp",
+      "detailId": 792,
+      "exp": 0
+     },
+     {
+      "actId": 34783,
+      "type": "QuestActSupplyItem",
+      "detailId": 3925,
+      "itemId": 29514,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 34784,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1511
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 8850
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29514,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

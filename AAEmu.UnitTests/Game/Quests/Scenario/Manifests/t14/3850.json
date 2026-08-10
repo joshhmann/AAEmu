@@ -1,0 +1,123 @@
+{
+ "questId": 3850,
+ "name": "인간에게 귀찮은 존재",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 980
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16185,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22926,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 983,
+      "npcId": 980
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16187,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22928,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 903,
+      "npcId": 980,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22929,
+      "type": "QuestActConReportJournal",
+      "detailId": 298
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16189,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22930,
+      "type": "QuestActSupplyCopper",
+      "detailId": 389,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 980,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

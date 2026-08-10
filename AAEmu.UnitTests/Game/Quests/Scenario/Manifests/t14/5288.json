@@ -1,0 +1,114 @@
+{
+ "questId": 5288,
+ "name": "죽은 자가 남긴 단서",
+ "zoneId": 23,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 6413
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22794,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32128,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 241,
+      "doodadId": 6413
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22795,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 22796,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32110,
+      "type": "QuestActConReportNpc",
+      "detailId": 4365,
+      "npcId": 13028
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22806,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32131,
+      "type": "QuestActSupplyItem",
+      "detailId": 3649,
+      "itemId": 27303,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13028,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

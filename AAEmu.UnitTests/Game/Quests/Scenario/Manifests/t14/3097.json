@@ -1,0 +1,98 @@
+{
+ "questId": 3097,
+ "name": "모래늪의 무법자",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9366
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19152,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2526,
+      "npcId": 9366
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13344,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19153,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 698,
+      "npcId": 1055,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13345,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19154,
+      "type": "QuestActConAutoComplete",
+      "detailId": 640
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1055,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

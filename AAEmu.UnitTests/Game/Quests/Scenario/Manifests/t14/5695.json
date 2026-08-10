@@ -1,0 +1,140 @@
+{
+ "questId": 5695,
+ "name": "붉은 그림자",
+ "zoneId": 12,
+ "categoryId": 98,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13718
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24466,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34116,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4365,
+      "npcId": 13718
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24467,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34118,
+      "type": "QuestActObjItemGather",
+      "detailId": 2776,
+      "itemId": 29258,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24468,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34117,
+      "type": "QuestActConReportNpc",
+      "detailId": 4665,
+      "npcId": 13718
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24476,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34161,
+      "type": "QuestActSupplyItem",
+      "detailId": 3884,
+      "itemId": 29294,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29258,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13718,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29294,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29258,
+   "count": 1
+  }
+ ]
+}

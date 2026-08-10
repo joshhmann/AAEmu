@@ -1,0 +1,104 @@
+{
+ "questId": 4384,
+ "name": "붉은발톱 대머리 독수리 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5832
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19076,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29609,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 210,
+      "doodadId": 5832
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19077,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26131,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 980,
+      "npcId": 1999,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29610,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1131
+     },
+     {
+      "actId": 37042,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1431,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1999,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

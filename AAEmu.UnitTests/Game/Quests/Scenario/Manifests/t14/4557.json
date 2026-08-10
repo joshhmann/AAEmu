@@ -1,0 +1,81 @@
+{
+ "questId": 4557,
+ "name": "모래 먼지 마을의 거석 꼭대기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1652
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19848,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27045,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 331,
+      "sphereId": 1652
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27046,
+      "type": "QuestActSupplyCopper",
+      "detailId": 610,
+      "amount": 0
+     },
+     {
+      "actId": 27047,
+      "type": "QuestActSupplyExp",
+      "detailId": 170,
+      "exp": 0
+     },
+     {
+      "actId": 27049,
+      "type": "QuestActConAutoComplete",
+      "detailId": 876
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

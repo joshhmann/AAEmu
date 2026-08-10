@@ -1,0 +1,81 @@
+{
+ "questId": 4911,
+ "name": "너른 소매 마을 웅덩이의 작은 돌 위",
+ "zoneId": 13,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2032
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21330,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29696,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 559,
+      "sphereId": 2032
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21331,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29692,
+      "type": "QuestActSupplyCopper",
+      "detailId": 824,
+      "amount": 0
+     },
+     {
+      "actId": 29695,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1145
+     },
+     {
+      "actId": 31119,
+      "type": "QuestActSupplyExp",
+      "detailId": 583,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

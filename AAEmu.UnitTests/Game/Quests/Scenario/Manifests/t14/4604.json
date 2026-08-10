@@ -1,0 +1,81 @@
+{
+ "questId": 4604,
+ "name": "오스카 극단의 서커스 천막",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1674
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20033,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27246,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 347,
+      "sphereId": 1674
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20035,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27247,
+      "type": "QuestActSupplyCopper",
+      "detailId": 634,
+      "amount": 0
+     },
+     {
+      "actId": 27248,
+      "type": "QuestActSupplyExp",
+      "detailId": 188,
+      "exp": 0
+     },
+     {
+      "actId": 27250,
+      "type": "QuestActConAutoComplete",
+      "detailId": 892
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

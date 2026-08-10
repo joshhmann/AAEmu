@@ -1,0 +1,81 @@
+{
+ "questId": 4734,
+ "name": "오래된 왕릉의 부서진 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1784
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20476,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27947,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 446,
+      "sphereId": 1784
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20478,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27948,
+      "type": "QuestActSupplyCopper",
+      "detailId": 741,
+      "amount": 0
+     },
+     {
+      "actId": 27949,
+      "type": "QuestActSupplyExp",
+      "detailId": 294,
+      "exp": 0
+     },
+     {
+      "actId": 27951,
+      "type": "QuestActConAutoComplete",
+      "detailId": 994
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

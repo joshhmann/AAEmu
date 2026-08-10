@@ -1,0 +1,104 @@
+{
+ "questId": 3420,
+ "name": "궁지에 몰리다",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5814
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14678,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29570,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 205,
+      "doodadId": 5814
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14679,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29571,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 512,
+      "monsterGroupId": 465,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14681,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29572,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1123
+     },
+     {
+      "actId": 37028,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1418,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 465,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

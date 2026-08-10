@@ -1,0 +1,93 @@
+{
+ "questId": 5371,
+ "name": "무쇠 사나이",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28024
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32651,
+      "type": "QuestActConAcceptItem",
+      "detailId": 276,
+      "itemId": 28024
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23210,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32642,
+      "type": "QuestActSupplyExp",
+      "detailId": 701,
+      "exp": 1000
+     },
+     {
+      "actId": 32643,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1118,
+      "amount": 0
+     },
+     {
+      "actId": 32644,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 146,
+      "appellationId": 108
+     },
+     {
+      "actId": 32645,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1369
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28024,
+   "count": 1
+  }
+ ]
+}

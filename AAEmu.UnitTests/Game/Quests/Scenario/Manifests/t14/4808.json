@@ -1,0 +1,81 @@
+{
+ "questId": 4808,
+ "name": "홀로 선 섬의 작은 이웃",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1856
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28362,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 494,
+      "sphereId": 1856
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28363,
+      "type": "QuestActSupplyCopper",
+      "detailId": 786,
+      "amount": 0
+     },
+     {
+      "actId": 28364,
+      "type": "QuestActSupplyExp",
+      "detailId": 345,
+      "exp": 0
+     },
+     {
+      "actId": 28366,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1049
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,98 @@
+{
+ "questId": 5193,
+ "name": "흔들인형 수집가",
+ "zoneId": 1,
+ "categoryId": 87,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2181
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31661,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 659,
+      "sphereId": 2181
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22473,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32082,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 108,
+      "appellationId": 96
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31665,
+      "type": "QuestActConReportNpc",
+      "detailId": 4348,
+      "npcId": 9007
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9007,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

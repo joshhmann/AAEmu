@@ -1,0 +1,104 @@
+{
+ "questId": 3019,
+ "name": "광폭한 바위 정령을 물리쳐라!",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5882
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13561,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30098,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 216,
+      "doodadId": 5882
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13562,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19007,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 685,
+      "npcId": 1288,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15040,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30099,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1183
+     },
+     {
+      "actId": 36994,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1402,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1288,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

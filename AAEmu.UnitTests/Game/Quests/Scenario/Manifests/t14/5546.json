@@ -1,0 +1,230 @@
+{
+ "questId": 5546,
+ "name": "천명을 받들어",
+ "zoneId": 1,
+ "categoryId": 96,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13559
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33889,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4309,
+      "npcId": 13559
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23954,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33681,
+      "type": "QuestActObjItemGather",
+      "detailId": 2733,
+      "itemId": 28945,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23955,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33680,
+      "type": "QuestActConReportNpc",
+      "detailId": 4587,
+      "npcId": 13559
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23975,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33682,
+      "type": "QuestActObjItemGather",
+      "detailId": 2734,
+      "itemId": 28946,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23976,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33683,
+      "type": "QuestActObjItemGather",
+      "detailId": 2735,
+      "itemId": 28947,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23977,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33684,
+      "type": "QuestActObjItemGather",
+      "detailId": 2736,
+      "itemId": 28948,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23978,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33685,
+      "type": "QuestActObjItemGather",
+      "detailId": 2737,
+      "itemId": 28952,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23979,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33709,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1189,
+      "amount": 0
+     },
+     {
+      "actId": 33710,
+      "type": "QuestActSupplyExp",
+      "detailId": 759,
+      "exp": 1000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28945,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28946,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28947,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28948,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28952,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13559,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28945,
+   "count": 1
+  },
+  {
+   "itemId": 28946,
+   "count": 1
+  },
+  {
+   "itemId": 28947,
+   "count": 1
+  },
+  {
+   "itemId": 28948,
+   "count": 1
+  },
+  {
+   "itemId": 28952,
+   "count": 1
+  }
+ ]
+}

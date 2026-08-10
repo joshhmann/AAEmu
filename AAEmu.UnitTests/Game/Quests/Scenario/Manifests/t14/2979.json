@@ -1,0 +1,107 @@
+{
+ "questId": 2979,
+ "name": "검은날개의 지배자",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1343
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30661,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 184,
+      "questContextId": 2979
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13653,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29900,
+      "type": "QuestActObjAggro",
+      "detailId": 21,
+      "range": 50,
+      "rank1": 10,
+      "rank2": 30,
+      "rank3": 50,
+      "rank1Ratio": 100,
+      "rank2Ratio": 70,
+      "rank3Ratio": 50,
+      "rank1Item": false,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2135
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13655,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29903,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1159
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 1343
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

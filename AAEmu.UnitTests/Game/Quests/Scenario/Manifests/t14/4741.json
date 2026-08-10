@@ -1,0 +1,81 @@
+{
+ "questId": 4741,
+ "name": "고대의 비문",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1791
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20497,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27984,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 454,
+      "sphereId": 1791
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27985,
+      "type": "QuestActSupplyCopper",
+      "detailId": 748,
+      "amount": 0
+     },
+     {
+      "actId": 27986,
+      "type": "QuestActSupplyExp",
+      "detailId": 302,
+      "exp": 0
+     },
+     {
+      "actId": 27988,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1001
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

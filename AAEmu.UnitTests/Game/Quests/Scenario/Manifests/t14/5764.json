@@ -1,0 +1,152 @@
+{
+ "questId": 5764,
+ "name": "다후타의 거울",
+ "zoneId": 1,
+ "categoryId": 100,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13770
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24810,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34419,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4410,
+      "npcId": 13770
+     },
+     {
+      "actId": 34433,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4413,
+      "npcId": 13786
+     },
+     {
+      "actId": 35027,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4489,
+      "npcId": 14078
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24813,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34523,
+      "type": "QuestActSupplyItem",
+      "detailId": 3906,
+      "itemId": 29768,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 34569,
+      "type": "QuestActSupplyExp",
+      "detailId": 786,
+      "exp": 0
+     },
+     {
+      "actId": 34570,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1221,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24992,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34542,
+      "type": "QuestActConReportNpc",
+      "detailId": 4704,
+      "npcId": 13770
+     },
+     {
+      "actId": 34543,
+      "type": "QuestActConReportNpc",
+      "detailId": 4705,
+      "npcId": 13786
+     },
+     {
+      "actId": 35030,
+      "type": "QuestActConReportNpc",
+      "detailId": 4743,
+      "npcId": 14078
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13770,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 13786,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14078,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29768,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

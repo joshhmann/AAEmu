@@ -1,0 +1,81 @@
+{
+ "questId": 4908,
+ "name": "베어의 집",
+ "zoneId": 11,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2029
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21321,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29681,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 556,
+      "sphereId": 2029
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21322,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29677,
+      "type": "QuestActSupplyCopper",
+      "detailId": 821,
+      "amount": 0
+     },
+     {
+      "actId": 29678,
+      "type": "QuestActSupplyExp",
+      "detailId": 395,
+      "exp": 0
+     },
+     {
+      "actId": 29680,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1142
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

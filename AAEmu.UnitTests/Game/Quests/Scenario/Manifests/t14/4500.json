@@ -1,0 +1,81 @@
+{
+ "questId": 4500,
+ "name": "호랑이 눈의 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1612
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19626,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26740,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 288,
+      "sphereId": 1612
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19628,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26741,
+      "type": "QuestActConAutoComplete",
+      "detailId": 835
+     },
+     {
+      "actId": 26742,
+      "type": "QuestActSupplyCopper",
+      "detailId": 570,
+      "amount": 0
+     },
+     {
+      "actId": 26743,
+      "type": "QuestActSupplyExp",
+      "detailId": 126,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,114 @@
+{
+ "questId": 5452,
+ "name": "별무리의 도전장",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23574,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33120,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 200,
+      "questContextId": 5452
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 23575,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33142,
+      "type": "QuestActSupplyItem",
+      "detailId": 3753,
+      "itemId": 28383,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23576,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33141,
+      "type": "QuestActConReportNpc",
+      "detailId": 4509,
+      "npcId": 13394
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23585,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13394,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

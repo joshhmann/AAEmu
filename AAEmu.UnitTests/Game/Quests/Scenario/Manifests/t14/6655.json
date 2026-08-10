@@ -1,0 +1,189 @@
+{
+ "questId": 6655,
+ "name": "신화의 첫걸음",
+ "zoneId": 1,
+ "categoryId": 44,
+ "level": 50,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14986
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28377,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40774,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5123,
+      "npcId": 14986
+     },
+     {
+      "actId": 40775,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5124,
+      "npcId": 14987
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28378,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40776,
+      "type": "QuestActObjCraft",
+      "detailId": 353,
+      "craftId": 5623,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28379,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40779,
+      "type": "QuestActConReportNpc",
+      "detailId": 5104,
+      "npcId": 14986
+     },
+     {
+      "actId": 40780,
+      "type": "QuestActConReportNpc",
+      "detailId": 5105,
+      "npcId": 14987
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28384,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40781,
+      "type": "QuestActSupplyItem",
+      "detailId": 4750,
+      "itemId": 15761,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28385,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40777,
+      "type": "QuestActObjCraft",
+      "detailId": 354,
+      "craftId": 5624,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28386,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40778,
+      "type": "QuestActObjCraft",
+      "detailId": 355,
+      "craftId": 6785,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 5623,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 5624,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 6785,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14986,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14987,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 15761,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

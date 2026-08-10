@@ -1,0 +1,127 @@
+{
+ "questId": 5937,
+ "name": "@EXPEDITION_LEADER_NAME_BY_ZONEGROUP(44)의 명령: 생활점수 1000",
+ "zoneId": 167,
+ "categoryId": 76,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7282
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25604,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34985,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 293,
+      "doodadId": 7282
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25605,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34986,
+      "type": "QuestActObjZoneKill",
+      "detailId": 76,
+      "zoneId": 44,
+      "countNpc": 200,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 2665,
+      "lvMin": 50,
+      "lvMax": 50,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionId": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionId": 0,
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25606,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34987,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1534
+     },
+     {
+      "actId": 34988,
+      "type": "QuestActSupplyLivingPoint",
+      "detailId": 55,
+      "point": 1000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 44,
+     "count": 200,
+     "countNpc": 200,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 50,
+     "lvMax": 50
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

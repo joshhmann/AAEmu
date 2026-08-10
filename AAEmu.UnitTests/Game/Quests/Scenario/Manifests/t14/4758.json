@@ -1,0 +1,81 @@
+{
+ "questId": 4758,
+ "name": "암흑 갈기 오크 부락이 내려다보이는 언덕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1811
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20574,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28118,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 470,
+      "sphereId": 1811
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20576,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28119,
+      "type": "QuestActSupplyCopper",
+      "detailId": 764,
+      "amount": 0
+     },
+     {
+      "actId": 28121,
+      "type": "QuestActSupplyExp",
+      "detailId": 320,
+      "exp": 0
+     },
+     {
+      "actId": 28123,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1019
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

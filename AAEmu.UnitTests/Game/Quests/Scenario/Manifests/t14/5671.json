@@ -1,0 +1,93 @@
+{
+ "questId": 5671,
+ "name": "따스한 햇살",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 29127
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24355,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33797,
+      "type": "QuestActConAcceptItem",
+      "detailId": 336,
+      "itemId": 29127
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24357,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33802,
+      "type": "QuestActSupplyExp",
+      "detailId": 761,
+      "exp": 1000
+     },
+     {
+      "actId": 33803,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1197,
+      "amount": 0
+     },
+     {
+      "actId": 33804,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 223,
+      "appellationId": 167
+     },
+     {
+      "actId": 33805,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1445
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29127,
+   "count": 1
+  }
+ ]
+}

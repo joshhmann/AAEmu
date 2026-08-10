@@ -1,0 +1,91 @@
+{
+ "questId": 5278,
+ "name": "오스테라의 영웅",
+ "zoneId": 18,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2193
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22764,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32200,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 660,
+      "sphereId": 2193
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22765,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 22766,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32199,
+      "type": "QuestActConReportNpc",
+      "detailId": 4383,
+      "npcId": 2678
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2678,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

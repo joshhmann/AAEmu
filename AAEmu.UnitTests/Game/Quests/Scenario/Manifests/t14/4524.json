@@ -1,0 +1,81 @@
+{
+ "questId": 4524,
+ "name": "결투장 성곽의 끝",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1632
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19704,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26867,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 308,
+      "sphereId": 1632
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26869,
+      "type": "QuestActSupplyCopper",
+      "detailId": 590,
+      "amount": 0
+     },
+     {
+      "actId": 26872,
+      "type": "QuestActConAutoComplete",
+      "detailId": 856
+     },
+     {
+      "actId": 31099,
+      "type": "QuestActSupplyExp",
+      "detailId": 564,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

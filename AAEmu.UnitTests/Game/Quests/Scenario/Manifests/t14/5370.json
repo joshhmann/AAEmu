@@ -1,0 +1,93 @@
+{
+ "questId": 5370,
+ "name": "수중 생태계 연구가",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28022
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23205,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32650,
+      "type": "QuestActConAcceptItem",
+      "detailId": 275,
+      "itemId": 28022
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32638,
+      "type": "QuestActSupplyExp",
+      "detailId": 700,
+      "exp": 1000
+     },
+     {
+      "actId": 32639,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1117,
+      "amount": 0
+     },
+     {
+      "actId": 32640,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 145,
+      "appellationId": 107
+     },
+     {
+      "actId": 32641,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1368
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28022,
+   "count": 1
+  }
+ ]
+}

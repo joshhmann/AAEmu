@@ -1,0 +1,106 @@
+{
+ "questId": 5682,
+ "name": "마녀의 노래",
+ "zoneId": 1,
+ "categoryId": 95,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13144
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24399,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33861,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4301,
+      "npcId": 13144
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24401,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33864,
+      "type": "QuestActConReportNpc",
+      "detailId": 4606,
+      "npcId": 13144
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24402,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33863,
+      "type": "QuestActSupplyItem",
+      "detailId": 3858,
+      "itemId": 29168,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13144,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29168,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

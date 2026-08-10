@@ -1,0 +1,273 @@
+{
+ "questId": 6202,
+ "name": "첫 번째 변화의 징조",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 41,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14718
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26586,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36502,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4684,
+      "npcId": 14718
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26587,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36456,
+      "type": "QuestActObjZoneKill",
+      "detailId": 95,
+      "zoneId": 12,
+      "countNpc": 30,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 3199,
+      "lvMin": 20,
+      "lvMax": 50,
+      "isParty": "t",
+      "lvMinNpc": 20,
+      "lvMaxNpc": 50,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26588,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36457,
+      "type": "QuestActObjZoneKill",
+      "detailId": 96,
+      "zoneId": 2,
+      "countNpc": 30,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 3200,
+      "lvMin": 20,
+      "lvMax": 50,
+      "isParty": "t",
+      "lvMinNpc": 20,
+      "lvMaxNpc": 50,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36501,
+      "type": "QuestActConReportNpc",
+      "detailId": 4880,
+      "npcId": 14718
+     },
+     {
+      "actId": 36631,
+      "type": "QuestActConReportNpc",
+      "detailId": 4887,
+      "npcId": 14719
+     },
+     {
+      "actId": 36632,
+      "type": "QuestActConReportNpc",
+      "detailId": 4888,
+      "npcId": 14720
+     },
+     {
+      "actId": 36633,
+      "type": "QuestActConReportNpc",
+      "detailId": 4889,
+      "npcId": 14721
+     },
+     {
+      "actId": 36634,
+      "type": "QuestActConReportNpc",
+      "detailId": 4890,
+      "npcId": 14722
+     },
+     {
+      "actId": 36635,
+      "type": "QuestActConReportNpc",
+      "detailId": 4891,
+      "npcId": 14723
+     },
+     {
+      "actId": 36636,
+      "type": "QuestActConReportNpc",
+      "detailId": 4892,
+      "npcId": 14724
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26608,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36458,
+      "type": "QuestActSupplyItem",
+      "detailId": 4045,
+      "itemId": 26053,
+      "gradeId": 0,
+      "count": 75
+     },
+     {
+      "actId": 36567,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1361,
+      "amount": 1000
+     },
+     {
+      "actId": 36568,
+      "type": "QuestActSupplyExp",
+      "detailId": 954,
+      "exp": 1004
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 12,
+     "count": 30,
+     "countNpc": 30,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 20,
+     "lvMaxNpc": 50,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 20,
+     "lvMax": 50
+    },
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 2,
+     "count": 30,
+     "countNpc": 30,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 20,
+     "lvMaxNpc": 50,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 20,
+     "lvMax": 50
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14718,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14719,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14720,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14721,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14722,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14723,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14724,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26053,
+      "count": 75
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

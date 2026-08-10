@@ -1,0 +1,93 @@
+{
+ "questId": 5434,
+ "name": "도시 멋쟁이",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28336
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23490,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33041,
+      "type": "QuestActConAcceptItem",
+      "detailId": 307,
+      "itemId": 28336
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23492,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33045,
+      "type": "QuestActSupplyExp",
+      "detailId": 732,
+      "exp": 1000
+     },
+     {
+      "actId": 33046,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1151,
+      "amount": 0
+     },
+     {
+      "actId": 33051,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 193,
+      "appellationId": 138
+     },
+     {
+      "actId": 33052,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1401
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28336,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4731,
+ "name": "고대의 숲의 신성한 나무줄기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1781
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20467,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27932,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 443,
+      "sphereId": 1781
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20469,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27933,
+      "type": "QuestActSupplyCopper",
+      "detailId": 738,
+      "amount": 0
+     },
+     {
+      "actId": 27934,
+      "type": "QuestActSupplyExp",
+      "detailId": 291,
+      "exp": 0
+     },
+     {
+      "actId": 27936,
+      "type": "QuestActConAutoComplete",
+      "detailId": 991
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

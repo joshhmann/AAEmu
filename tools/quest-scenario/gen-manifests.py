@@ -44,6 +44,7 @@ Quests whose shapes the harness cannot synthesize are emitted with a "skip"
 block (broken refs, unsupported act types) - reported, never faked.
 """
 import json
+import math
 import os
 import sqlite3
 import sys
@@ -403,6 +404,11 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     # the real value; the manifest fields were already parse_bool'd (14c78c94).
     let_it_done = parse_bool(let_it_done)
     selective = parse_bool(selective)
+    # WI-8 (t_fc85a317): score can be NULL in sqlite (quest 3806 is the only
+    # one in the corpus) - the engine reads GetInt32("score", 0)
+    # (QuestManager.cs:578), so NULL == 0. Never pass None downstream.
+    if score is None:
+        score = 0
 
     comps = c.execute("SELECT id, component_kind_id, next_component FROM quest_components WHERE quest_context_id = ? ORDER BY id",
                       (quest_id,)).fetchall()
@@ -576,6 +582,36 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
 
+    # WI-8 (t_fc85a317): score-quest event scaling. The engine's score branch
+    # (QuestStep.RunComponents, Score>0) passes when score >= Template.Score,
+    # score = Σ Count×Objective over objective acts. MaxObjective() =
+    # Score/Count+1 (ltd: ceil(×1.5)) shows the data intends objectives to
+    # EXCEED the displayed count (each kill is worth Count score points).
+    # Fire the first event-credited objective act enough times to close the
+    # deficit, so the engine can actually reach the score target instead of
+    # stalling at Progress (7 band-41-50 quests: 3076/3089/3625/4343/5062/
+    # 5063/5064 - e.g. 3076 score=100 with 5×5+3×3=34 credited).
+    scaled_events = {}
+    if score > 0:
+        s_now = sum((a.get("count", 1) ** 2) for comp in components
+                    if comp["kind"] == "Progress"
+                    for a in comp["acts"] if a["type"] in OBJECTIVE_TYPES)
+        if s_now < score:
+            deficit = score - s_now
+            for comp in components:
+                if comp["kind"] != "Progress":
+                    continue
+                for a in comp["acts"]:
+                    if a["type"] not in OBJECTIVE_TYPES or a["type"] in HYDRATED_TYPES:
+                        continue  # event acts only; hydrated acts credit from preseed
+                    base = a.get("count", 1)
+                    if base <= 0:
+                        continue
+                    scaled_events[a["actId"]] = base + math.ceil(deficit / base)
+                    break
+                if scaled_events:
+                    break
+
     events_by_kind = {}
     reward_items = []
     for comp in components:
@@ -585,7 +621,11 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
                 continue
             if act["type"] in NO_EVENT_TYPES:
                 continue
-            shape = event_shape(act["type"], act, comp["id"], item_groups, npc_groups, acceptor_npc_id)
+            shape_act = act
+            if act["actId"] in scaled_events:
+                shape_act = dict(act)
+                shape_act["count"] = scaled_events[act["actId"]]
+            shape = event_shape(act["type"], shape_act, comp["id"], item_groups, npc_groups, acceptor_npc_id)
             if shape is not None:
                 # Multi-event shapes (e.g. cinema started->ended) come as lists.
                 shapes = shape if isinstance(shape, list) else [shape]
@@ -629,12 +669,16 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         """Mimics the engine's Progress+Score>0 branch (QuestStep.RunComponents):
         res = score >= Template.Score where score = sum(Count * Objective) over
         objective acts; hydrated gather objectives carry their full count from
-        accept time."""
+        accept time. WI-8: score quests fire scaled event counts (scaled_events)
+        so the credited objective can exceed the displayed count (the engine's
+        MaxObjective = Score/Count+1 proves the data intends that)."""
+        def credited(a):
+            if not (events_credited or a["type"] in HYDRATED_TYPES):
+                return 0
+            return scaled_events.get(a["actId"], a.get("count", 1))
         acts = [a for comp in components if comp["kind"] == "Progress" for a in comp["acts"]]
         obj_acts = [a for a in acts if a["type"] in OBJECTIVE_TYPES]
-        s = sum(a.get("count", 1) * (a.get("count", 1)
-                                     if (events_credited or a["type"] in HYDRATED_TYPES) else 0)
-                for a in obj_acts)
+        s = sum(a.get("count", 1) * credited(a) for a in obj_acts)
         return s >= score
 
     def kind_is_auto(kind_name):
@@ -652,6 +696,14 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
             # engine: Progress + Score>0 -> res = score >= Score; hydrated
             # gather objectives credit at accept, event acts credit later
             return progress_score_met(False)
+        if kind_name in ("Start", "Ready"):
+            # Engine ORs Start/Ready acts (QuestComponent.RunComponent:
+            # actsOrCheck = ThisStep is Start or Ready && Acts.Count > 0) -
+            # ANY always-true act (e.g. SupplyRemoveItem) passes the step.
+            # WI-8: 5174/5722 have Ready = ReportNpc + SupplyRemoveItem; the
+            # supply act returns true unconditionally, so the engine advances
+            # past Ready WITHOUT the report event (probe: START -> Reward).
+            return any(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
         if selective:
             # Selective quests pass the Progress step when ANY active component passes
             return any(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
@@ -1011,6 +1063,7 @@ BAND_TIERS = [
     ("t7", "band 11-20", 11, 20),
     ("t8", "band 21-30", 21, 30),
     ("t13", "band 31-40", 31, 40),
+    ("t14", "band 41-50", 41, 50),
 ]
 
 # Dropped content (scorecard-explorations/dropped-content-register.md):
@@ -1333,7 +1386,8 @@ def main():
                       "t6_selected": band_counts.get("t6", 0),
                       "t7_selected": band_counts.get("t7", 0),
                       "t8_selected": band_counts.get("t8", 0),
-                      "t13_selected": band_counts.get("t13", 0)}, indent=1))
+                      "t13_selected": band_counts.get("t13", 0),
+                      "t14_selected": band_counts.get("t14", 0)}, indent=1))
 
 
 if __name__ == "__main__":

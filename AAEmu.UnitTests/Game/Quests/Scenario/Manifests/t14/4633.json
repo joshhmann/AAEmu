@@ -1,0 +1,81 @@
+{
+ "questId": 4633,
+ "name": "불경스러운 호기심",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1695
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27354,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 368,
+      "sphereId": 1695
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20123,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27355,
+      "type": "QuestActSupplyCopper",
+      "detailId": 655,
+      "amount": 0
+     },
+     {
+      "actId": 27356,
+      "type": "QuestActSupplyExp",
+      "detailId": 210,
+      "exp": 0
+     },
+     {
+      "actId": 27358,
+      "type": "QuestActConAutoComplete",
+      "detailId": 913
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

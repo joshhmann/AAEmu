@@ -1,0 +1,93 @@
+{
+ "questId": 5397,
+ "name": "의지의 개발자",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28076
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23333,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32790,
+      "type": "QuestActConAcceptItem",
+      "detailId": 283,
+      "itemId": 28076
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23335,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32784,
+      "type": "QuestActSupplyExp",
+      "detailId": 705,
+      "exp": 1000
+     },
+     {
+      "actId": 32789,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1125,
+      "amount": 0
+     },
+     {
+      "actId": 32794,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 166,
+      "appellationId": 116
+     },
+     {
+      "actId": 32795,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1376
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28076,
+   "count": 1
+  }
+ ]
+}

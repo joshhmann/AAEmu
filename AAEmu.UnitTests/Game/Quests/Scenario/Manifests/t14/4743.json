@@ -1,0 +1,81 @@
+{
+ "questId": 4743,
+ "name": "오페라 극장",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1795
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20527,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28036,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 455,
+      "sphereId": 1795
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20529,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28037,
+      "type": "QuestActSupplyCopper",
+      "detailId": 749,
+      "amount": 0
+     },
+     {
+      "actId": 28039,
+      "type": "QuestActSupplyExp",
+      "detailId": 304,
+      "exp": 0
+     },
+     {
+      "actId": 28041,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1003
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

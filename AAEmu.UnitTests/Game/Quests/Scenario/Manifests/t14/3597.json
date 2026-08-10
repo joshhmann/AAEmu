@@ -1,0 +1,165 @@
+{
+ "questId": 3597,
+ "name": "코산의 아이들 처치",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 4553
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14818,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29949,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1141,
+      "npcId": 4553
+     },
+     {
+      "actId": 29950,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1142,
+      "npcId": 4554
+     },
+     {
+      "actId": 29951,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1143,
+      "npcId": 4555
+     },
+     {
+      "actId": 29952,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1144,
+      "npcId": 4567
+     },
+     {
+      "actId": 29953,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1145,
+      "npcId": 4568
+     },
+     {
+      "actId": 29954,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1146,
+      "npcId": 4569
+     },
+     {
+      "actId": 29955,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1147,
+      "npcId": 4570
+     },
+     {
+      "actId": 29956,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1148,
+      "npcId": 9752
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14819,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29957,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 526,
+      "monsterGroupId": 481,
+      "count": 50
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14820,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29958,
+      "type": "QuestActConReportJournal",
+      "detailId": 356
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14821,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29959,
+      "type": "QuestActSupplyCopper",
+      "detailId": 864,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 481,
+     "count": 50
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

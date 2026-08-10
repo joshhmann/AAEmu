@@ -1,0 +1,81 @@
+{
+ "questId": 4700,
+ "name": "대부호 토루스의 저택 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1749
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20371,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27742,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 410,
+      "sphereId": 1749
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20373,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27743,
+      "type": "QuestActSupplyCopper",
+      "detailId": 704,
+      "amount": 0
+     },
+     {
+      "actId": 27744,
+      "type": "QuestActSupplyExp",
+      "detailId": 254,
+      "exp": 0
+     },
+     {
+      "actId": 27746,
+      "type": "QuestActConAutoComplete",
+      "detailId": 954
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

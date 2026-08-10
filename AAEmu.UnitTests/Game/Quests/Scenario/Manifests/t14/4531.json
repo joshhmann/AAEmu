@@ -1,0 +1,81 @@
+{
+ "questId": 4531,
+ "name": "릴리엇 강 수원지의 숨겨진 비밀 장소 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1639
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26905,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 316,
+      "sphereId": 1639
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26906,
+      "type": "QuestActSupplyCopper",
+      "detailId": 597,
+      "amount": 0
+     },
+     {
+      "actId": 26908,
+      "type": "QuestActSupplyExp",
+      "detailId": 156,
+      "exp": 0
+     },
+     {
+      "actId": 26909,
+      "type": "QuestActConAutoComplete",
+      "detailId": 863
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

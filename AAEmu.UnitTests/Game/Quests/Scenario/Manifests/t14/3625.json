@@ -1,0 +1,144 @@
+{
+ "questId": 3625,
+ "name": "작은 사자 이야기",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1128
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15112,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20705,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2873,
+      "npcId": 1128
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15113,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20707,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 786,
+      "npcId": 985,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15114,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20706,
+      "type": "QuestActConReportNpc",
+      "detailId": 3103,
+      "npcId": 1128
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15116,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21484,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29980,
+      "type": "QuestActObjItemGather",
+      "detailId": 2408,
+      "itemId": 19848,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 985,
+     "count": 19
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 19848,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1128,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19848,
+   "count": 3
+  }
+ ]
+}

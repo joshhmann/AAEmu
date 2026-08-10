@@ -1,0 +1,81 @@
+{
+ "questId": 5024,
+ "name": "꺼지지 않는 푸른 불꽃",
+ "zoneId": 12,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2122
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21734,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30424,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 642,
+      "sphereId": 2122
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21735,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30420,
+      "type": "QuestActSupplyCopper",
+      "detailId": 940,
+      "amount": 0
+     },
+     {
+      "actId": 30421,
+      "type": "QuestActSupplyExp",
+      "detailId": 482,
+      "exp": 0
+     },
+     {
+      "actId": 30423,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1247
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4987,
+ "name": "해적선의 조타 장치",
+ "zoneId": 26,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2084
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21621,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30236,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 605,
+      "sphereId": 2084
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30232,
+      "type": "QuestActSupplyCopper",
+      "detailId": 903,
+      "amount": 0
+     },
+     {
+      "actId": 30233,
+      "type": "QuestActSupplyExp",
+      "detailId": 445,
+      "exp": 0
+     },
+     {
+      "actId": 30235,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1210
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

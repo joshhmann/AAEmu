@@ -1,0 +1,81 @@
+{
+ "questId": 4948,
+ "name": "아카네스 학파의 땅 벌레 양육지",
+ "zoneId": 5,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2043
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21492,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29998,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 569,
+      "sphereId": 2043
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21493,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29994,
+      "type": "QuestActSupplyCopper",
+      "detailId": 867,
+      "amount": 0
+     },
+     {
+      "actId": 29995,
+      "type": "QuestActSupplyExp",
+      "detailId": 408,
+      "exp": 0
+     },
+     {
+      "actId": 29997,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1164
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

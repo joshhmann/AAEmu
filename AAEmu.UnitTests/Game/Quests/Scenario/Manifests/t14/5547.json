@@ -1,0 +1,146 @@
+{
+ "questId": 5547,
+ "name": "비밀 상단의 위기",
+ "zoneId": 1,
+ "categoryId": 96,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9015
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33675,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4262,
+      "npcId": 9015
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23957,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33676,
+      "type": "QuestActObjItemGather",
+      "detailId": 2732,
+      "itemId": 13711,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23958,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33677,
+      "type": "QuestActConReportNpc",
+      "detailId": 4586,
+      "npcId": 9015
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23974,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33678,
+      "type": "QuestActSupplyItem",
+      "detailId": 3840,
+      "itemId": 28945,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33715,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1194,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13711,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9015,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28945,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13711,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 5899,
+ "name": "화요일 왕국을 재건하라",
+ "zoneId": 198,
+ "categoryId": 102,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14203
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25476,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35379,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4576,
+      "npcId": 14203
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25477,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35382,
+      "type": "QuestActObjItemGather",
+      "detailId": 2866,
+      "itemId": 29774,
+      "count": 60
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25478,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35381,
+      "type": "QuestActConReportNpc",
+      "detailId": 4795,
+      "npcId": 14203
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25845,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35380,
+      "type": "QuestActSupplyItem",
+      "detailId": 3969,
+      "itemId": 29794,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29774,
+     "count": 60
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14203,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29794,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29774,
+   "count": 60
+  }
+ ]
+}

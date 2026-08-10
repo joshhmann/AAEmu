@@ -1,0 +1,81 @@
+{
+ "questId": 4677,
+ "name": "비행선의 머리끝",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1726
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20302,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27631,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 386,
+      "sphereId": 1726
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20304,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27753,
+      "type": "QuestActSupplyCopper",
+      "detailId": 706,
+      "amount": 0
+     },
+     {
+      "actId": 27754,
+      "type": "QuestActSupplyExp",
+      "detailId": 256,
+      "exp": 0
+     },
+     {
+      "actId": 27756,
+      "type": "QuestActConAutoComplete",
+      "detailId": 956
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

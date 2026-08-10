@@ -1,0 +1,123 @@
+{
+ "questId": 6005,
+ "name": "전장의 노예 압살",
+ "zoneId": 144,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35400,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 329,
+      "questContextId": 6005
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25858,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35401,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 564,
+      "monsterGroupId": 553,
+      "count": 500
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25859,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35407,
+      "type": "QuestActConReportJournal",
+      "detailId": 402
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25865,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35483,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 114,
+      "point": 1000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 553,
+     "count": 500
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,161 @@
+{
+ "questId": 6573,
+ "name": "다루족의 은밀한 제안",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14921
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28065,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40139,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5020,
+      "npcId": 14921
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28066,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40140,
+      "type": "QuestActObjItemGather",
+      "detailId": 3025,
+      "itemId": 4053,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28067,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40141,
+      "type": "QuestActConReportNpc",
+      "detailId": 5045,
+      "npcId": 14921
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28068,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40149,
+      "type": "QuestActSupplyExp",
+      "detailId": 1503,
+      "exp": 1004
+     },
+     {
+      "actId": 40150,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1818,
+      "amount": 100
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28069,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40142,
+      "type": "QuestActObjItemGather",
+      "detailId": 3026,
+      "itemId": 27278,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4053,
+     "count": 2
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 27278,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14921,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4053,
+   "count": 2
+  },
+  {
+   "itemId": 27278,
+   "count": 1
+  }
+ ]
+}

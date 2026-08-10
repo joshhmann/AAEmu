@@ -1,0 +1,81 @@
+{
+ "questId": 4740,
+ "name": "오래된 왕릉",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1790
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20494,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27979,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 453,
+      "sphereId": 1790
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20496,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27980,
+      "type": "QuestActSupplyCopper",
+      "detailId": 747,
+      "amount": 0
+     },
+     {
+      "actId": 27981,
+      "type": "QuestActSupplyExp",
+      "detailId": 301,
+      "exp": 0
+     },
+     {
+      "actId": 27983,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,128 @@
+{
+ "questId": 5486,
+ "name": "떠돌이들의 공통점",
+ "zoneId": 150,
+ "categoryId": 48,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8709
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23709,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33401,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4208,
+      "npcId": 8709
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23710,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33398,
+      "type": "QuestActObjInteraction",
+      "detailId": 676,
+      "doodadId": 6883,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23711,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33400,
+      "type": "QuestActConReportNpc",
+      "detailId": 4527,
+      "npcId": 8761
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33399,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1181,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6883,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8761,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

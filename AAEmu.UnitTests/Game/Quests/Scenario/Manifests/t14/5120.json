@@ -1,0 +1,135 @@
+{
+ "questId": 5120,
+ "name": "얄궂은 운명",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26661
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31242,
+      "type": "QuestActConAcceptItem",
+      "detailId": 191,
+      "itemId": 26661
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31275,
+      "type": "QuestActSupplyItem",
+      "detailId": 3582,
+      "itemId": 26697,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22176,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31276,
+      "type": "QuestActConReportNpc",
+      "detailId": 4284,
+      "npcId": 1259
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22187,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31408,
+      "type": "QuestActSupplyItem",
+      "detailId": 3599,
+      "itemId": 26645,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1259,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26645,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26661,
+   "count": 1
+  }
+ ]
+}

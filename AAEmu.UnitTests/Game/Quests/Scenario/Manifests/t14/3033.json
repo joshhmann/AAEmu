@@ -1,0 +1,125 @@
+{
+ "questId": 3033,
+ "name": "불길한 기운의 원인을 밝혀라",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1300
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19089,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2503,
+      "npcId": 1300
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19090,
+      "type": "QuestActObjItemGather",
+      "detailId": 1312,
+      "itemId": 19003,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19091,
+      "type": "QuestActConReportNpc",
+      "detailId": 2735,
+      "npcId": 1300
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13625,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19003,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1300,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19003,
+   "count": 8
+  }
+ ]
+}

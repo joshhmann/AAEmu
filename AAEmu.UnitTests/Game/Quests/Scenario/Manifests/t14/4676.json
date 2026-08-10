@@ -1,0 +1,81 @@
+{
+ "questId": 4676,
+ "name": "석상의 머리 위",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1725
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20299,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27626,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 385,
+      "sphereId": 1725
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20301,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27627,
+      "type": "QuestActSupplyCopper",
+      "detailId": 682,
+      "amount": 0
+     },
+     {
+      "actId": 27628,
+      "type": "QuestActSupplyExp",
+      "detailId": 229,
+      "exp": 0
+     },
+     {
+      "actId": 27630,
+      "type": "QuestActConAutoComplete",
+      "detailId": 932
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

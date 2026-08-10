@@ -1,0 +1,81 @@
+{
+ "questId": 4447,
+ "name": "무지개 벌판의 큰 나무 오르기",
+ "zoneId": 133,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1559
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19450,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26453,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 239,
+      "sphereId": 1559
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19452,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26451,
+      "type": "QuestActSupplyCopper",
+      "detailId": 521,
+      "amount": 0
+     },
+     {
+      "actId": 26466,
+      "type": "QuestActConAutoComplete",
+      "detailId": 789
+     },
+     {
+      "actId": 31075,
+      "type": "QuestActSupplyExp",
+      "detailId": 540,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

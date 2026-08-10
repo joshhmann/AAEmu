@@ -1,0 +1,130 @@
+{
+ "questId": 5497,
+ "name": "예상치 못한 일",
+ "zoneId": 2,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13333
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23753,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33425,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4211,
+      "npcId": 13333
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33659,
+      "type": "QuestActObjInteraction",
+      "detailId": 701,
+      "doodadId": 6990,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23755,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33427,
+      "type": "QuestActConReportNpc",
+      "detailId": 4535,
+      "npcId": 13333
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 23948,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33660,
+      "type": "QuestActSupplyItem",
+      "detailId": 3835,
+      "itemId": 28409,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6990,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13333,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

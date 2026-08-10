@@ -1,0 +1,81 @@
+{
+ "questId": 4513,
+ "name": "탐험은 작은 바위에 오르는 것에서 시작된다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1623
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19667,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26798,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 299,
+      "sphereId": 1623
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19669,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26799,
+      "type": "QuestActSupplyCopper",
+      "detailId": 581,
+      "amount": 0
+     },
+     {
+      "actId": 26802,
+      "type": "QuestActConAutoComplete",
+      "detailId": 846
+     },
+     {
+      "actId": 31109,
+      "type": "QuestActSupplyExp",
+      "detailId": 573,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

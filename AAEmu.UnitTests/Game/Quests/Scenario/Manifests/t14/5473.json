@@ -1,0 +1,93 @@
+{
+ "questId": 5473,
+ "name": "동물 영양사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28498
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23670,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33311,
+      "type": "QuestActConAcceptItem",
+      "detailId": 317,
+      "itemId": 28498
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23672,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33335,
+      "type": "QuestActSupplyExp",
+      "detailId": 742,
+      "exp": 1000
+     },
+     {
+      "actId": 33336,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1167,
+      "amount": 0
+     },
+     {
+      "actId": 33337,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 206,
+      "appellationId": 151
+     },
+     {
+      "actId": 33338,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1414
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28498,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 6572,
+ "name": "타양의 쐐기",
+ "zoneId": 218,
+ "categoryId": 113,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14879
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28059,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40132,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5019,
+      "npcId": 14879
+     },
+     {
+      "actId": 40138,
+      "type": "QuestActCheckTimer",
+      "detailId": 182,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28060,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 28061,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40134,
+      "type": "QuestActConReportNpc",
+      "detailId": 5044,
+      "npcId": 14872
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28062,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40135,
+      "type": "QuestActSupplyItem",
+      "detailId": 4695,
+      "itemId": 29730,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 28064,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14872,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29730,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

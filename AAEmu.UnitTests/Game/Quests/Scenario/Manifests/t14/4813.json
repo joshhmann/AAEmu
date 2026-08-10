@@ -1,0 +1,81 @@
+{
+ "questId": 4813,
+ "name": "산호섬의 높은 바위",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1861
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20769,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28389,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 499,
+      "sphereId": 1861
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20771,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28390,
+      "type": "QuestActSupplyCopper",
+      "detailId": 791,
+      "amount": 0
+     },
+     {
+      "actId": 28391,
+      "type": "QuestActSupplyExp",
+      "detailId": 351,
+      "exp": 0
+     },
+     {
+      "actId": 28393,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1054
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

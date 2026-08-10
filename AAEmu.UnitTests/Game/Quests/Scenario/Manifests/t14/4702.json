@@ -1,0 +1,81 @@
+{
+ "questId": 4702,
+ "name": "마하데비 다리 아래",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1752
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20379,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27780,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 414,
+      "sphereId": 1752
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20381,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27781,
+      "type": "QuestActSupplyCopper",
+      "detailId": 709,
+      "amount": 0
+     },
+     {
+      "actId": 27782,
+      "type": "QuestActSupplyExp",
+      "detailId": 260,
+      "exp": 0
+     },
+     {
+      "actId": 27784,
+      "type": "QuestActConAutoComplete",
+      "detailId": 962
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

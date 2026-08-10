@@ -1,0 +1,81 @@
+{
+ "questId": 5021,
+ "name": "하늘에 맞닿은 용 가슴뼈의 끝",
+ "zoneId": 12,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2118
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30409,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 639,
+      "sphereId": 2118
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30405,
+      "type": "QuestActSupplyCopper",
+      "detailId": 937,
+      "amount": 0
+     },
+     {
+      "actId": 30406,
+      "type": "QuestActSupplyExp",
+      "detailId": 479,
+      "exp": 0
+     },
+     {
+      "actId": 30408,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1244
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,121 @@
+{
+ "questId": 5656,
+ "name": "들통난 계략",
+ "zoneId": 3,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1123
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24306,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33768,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4284,
+      "npcId": 1123
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33775,
+      "type": "QuestActObjItemUse",
+      "detailId": 738,
+      "itemId": 29108,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24308,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33891,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1451
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33838,
+      "type": "QuestActSupplyItem",
+      "detailId": 3855,
+      "itemId": 29108,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 29108,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

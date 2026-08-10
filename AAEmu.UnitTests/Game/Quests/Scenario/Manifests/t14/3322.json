@@ -1,0 +1,166 @@
+{
+ "questId": 3322,
+ "name": "수영복을 입고 바다로 가자!",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9324
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14337,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19856,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2678,
+      "npcId": 9324
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14338,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19857,
+      "type": "QuestActConReportNpc",
+      "detailId": 2914,
+      "npcId": 9324
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14339,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19858,
+      "type": "QuestActSupplyItem",
+      "detailId": 1983,
+      "itemId": 15863,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 19859,
+      "type": "QuestActSupplyItem",
+      "detailId": 1984,
+      "itemId": 19553,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 19860,
+      "type": "QuestActSupplyItem",
+      "detailId": 1985,
+      "itemId": 19555,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 19861,
+      "type": "QuestActSupplyItem",
+      "detailId": 1986,
+      "itemId": 19556,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 19862,
+      "type": "QuestActSupplyItem",
+      "detailId": 1987,
+      "itemId": 19558,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 25900,
+      "type": "QuestActSupplyCopper",
+      "detailId": 507,
+      "amount": 0
+     },
+     {
+      "actId": 25901,
+      "type": "QuestActSupplyExp",
+      "detailId": 74,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9324,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 15863,
+      "count": 10
+     },
+     {
+      "itemId": 19553,
+      "count": 1
+     },
+     {
+      "itemId": 19555,
+      "count": 1
+     },
+     {
+      "itemId": 19556,
+      "count": 1
+     },
+     {
+      "itemId": 19558,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

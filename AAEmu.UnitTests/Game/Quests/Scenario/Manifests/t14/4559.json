@@ -1,0 +1,81 @@
+{
+ "questId": 4559,
+ "name": "핏빛안개 부족의 동굴 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1654
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19854,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27055,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 333,
+      "sphereId": 1654
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19856,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27056,
+      "type": "QuestActSupplyCopper",
+      "detailId": 612,
+      "amount": 0
+     },
+     {
+      "actId": 27058,
+      "type": "QuestActSupplyExp",
+      "detailId": 172,
+      "exp": 0
+     },
+     {
+      "actId": 27059,
+      "type": "QuestActConAutoComplete",
+      "detailId": 878
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

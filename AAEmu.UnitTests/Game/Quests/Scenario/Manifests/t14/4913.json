@@ -1,0 +1,81 @@
+{
+ "questId": 4913,
+ "name": "마하데비행 비행선 타는 곳",
+ "zoneId": 21,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2034
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21336,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29706,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 561,
+      "sphereId": 2034
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21337,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29702,
+      "type": "QuestActSupplyCopper",
+      "detailId": 826,
+      "amount": 0
+     },
+     {
+      "actId": 29705,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1147
+     },
+     {
+      "actId": 31117,
+      "type": "QuestActSupplyExp",
+      "detailId": 581,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

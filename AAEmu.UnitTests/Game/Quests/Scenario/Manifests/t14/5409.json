@@ -1,0 +1,152 @@
+{
+ "questId": 5409,
+ "name": "만족스러운 거래",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2202
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23371,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32824,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 663,
+      "sphereId": 2202
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23372,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32830,
+      "type": "QuestActSupplyItem",
+      "detailId": 3724,
+      "itemId": 28134,
+      "gradeId": 0,
+      "count": 2
+     },
+     {
+      "actId": 32837,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1129,
+      "amount": 0
+     },
+     {
+      "actId": 32838,
+      "type": "QuestActSupplyExp",
+      "detailId": 711,
+      "exp": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23373,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32828,
+      "type": "QuestActConReportNpc",
+      "detailId": 4468,
+      "npcId": 13290
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23377,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33104,
+      "type": "QuestActObjItemGather",
+      "detailId": 2690,
+      "itemId": 28068,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28068,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13290,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28134,
+      "count": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28068,
+   "count": 1
+  }
+ ]
+}

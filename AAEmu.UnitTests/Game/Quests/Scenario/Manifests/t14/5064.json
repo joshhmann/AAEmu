@@ -1,0 +1,151 @@
+{
+ "questId": 5064,
+ "name": "만드라고라 잡기 상급",
+ "zoneId": 183,
+ "categoryId": 94,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 50,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21923,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30856,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 191,
+      "questContextId": 5064
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21924,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30858,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1103,
+      "npcId": 12446,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21925,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30855,
+      "type": "QuestActSupplyCopper",
+      "detailId": 954,
+      "amount": 10000
+     },
+     {
+      "actId": 31197,
+      "type": "QuestActSupplyExp",
+      "detailId": 597,
+      "exp": 1000
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21928,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30864,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1109,
+      "npcId": 12473,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21929,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31190,
+      "type": "QuestActConReportNpc",
+      "detailId": 4265,
+      "npcId": 12451
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12446,
+     "count": 13
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 12473,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12451,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

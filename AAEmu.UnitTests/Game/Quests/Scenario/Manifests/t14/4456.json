@@ -1,0 +1,81 @@
+{
+ "questId": 4456,
+ "name": "요정의 나무 꼭대기 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1569
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19477,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26502,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 249,
+      "sphereId": 1569
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19479,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26503,
+      "type": "QuestActSupplyCopper",
+      "detailId": 532,
+      "amount": 0
+     },
+     {
+      "actId": 26505,
+      "type": "QuestActConAutoComplete",
+      "detailId": 797
+     },
+     {
+      "actId": 31065,
+      "type": "QuestActSupplyExp",
+      "detailId": 530,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

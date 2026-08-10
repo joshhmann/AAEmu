@@ -1,0 +1,182 @@
+{
+ "questId": 6074,
+ "name": "논리적인 진상규명을 위한 절차",
+ "zoneId": 199,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14412
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26135,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35786,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4612,
+      "npcId": 14412
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26136,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35763,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1173,
+      "npcId": 13310,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26137,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35866,
+      "type": "QuestActSupplyItem",
+      "detailId": 4023,
+      "itemId": 14700,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35867,
+      "type": "QuestActSupplyItem",
+      "detailId": 4024,
+      "itemId": 14724,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35868,
+      "type": "QuestActSupplyItem",
+      "detailId": 4025,
+      "itemId": 14733,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35869,
+      "type": "QuestActSupplyItem",
+      "detailId": 4026,
+      "itemId": 14763,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35870,
+      "type": "QuestActSupplyItem",
+      "detailId": 4027,
+      "itemId": 14773,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26190,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35837,
+      "type": "QuestActConReportNpc",
+      "detailId": 4850,
+      "npcId": 14412
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 13310,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14412,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 14700,
+      "count": 1
+     },
+     {
+      "itemId": 14724,
+      "count": 1
+     },
+     {
+      "itemId": 14733,
+      "count": 1
+     },
+     {
+      "itemId": 14763,
+      "count": 1
+     },
+     {
+      "itemId": 14773,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4952,
+ "name": "황금비늘 정원의 지붕 위",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2047
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21504,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30019,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 573,
+      "sphereId": 2047
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21505,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30015,
+      "type": "QuestActSupplyCopper",
+      "detailId": 871,
+      "amount": 0
+     },
+     {
+      "actId": 30016,
+      "type": "QuestActSupplyExp",
+      "detailId": 412,
+      "exp": 0
+     },
+     {
+      "actId": 30018,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1168
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

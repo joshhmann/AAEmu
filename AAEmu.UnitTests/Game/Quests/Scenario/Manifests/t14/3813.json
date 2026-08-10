@@ -1,0 +1,140 @@
+{
+ "questId": 3813,
+ "name": "다미에게 물 먹이기",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10304
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16000,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22375,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3173,
+      "npcId": 10304
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 16001,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22743,
+      "type": "QuestActSupplyItem",
+      "detailId": 2252,
+      "itemId": 21576,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16002,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22744,
+      "type": "QuestActObjTalk",
+      "detailId": 947,
+      "npcId": 10312
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16003,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22376,
+      "type": "QuestActConReportNpc",
+      "detailId": 3409,
+      "npcId": 10304
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16004,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 10312
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10304,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

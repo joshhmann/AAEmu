@@ -1,0 +1,142 @@
+{
+ "questId": 3088,
+ "name": "누가 소중한 물을 오염시키는가?",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1034
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13304,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19126,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2516,
+      "npcId": 1034
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13305,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19640,
+      "type": "QuestActObjItemUse",
+      "detailId": 496,
+      "itemId": 19562,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13306,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19127,
+      "type": "QuestActConReportNpc",
+      "detailId": 2748,
+      "npcId": 1034
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13307,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 14263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19642,
+      "type": "QuestActSupplyItem",
+      "detailId": 1958,
+      "itemId": 19562,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 19562,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1034,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4695,
+ "name": "황금 혀 항구의 등대",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1744
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20356,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27717,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 405,
+      "sphereId": 1744
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20358,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27718,
+      "type": "QuestActSupplyCopper",
+      "detailId": 699,
+      "amount": 0
+     },
+     {
+      "actId": 27719,
+      "type": "QuestActSupplyExp",
+      "detailId": 249,
+      "exp": 0
+     },
+     {
+      "actId": 27721,
+      "type": "QuestActConAutoComplete",
+      "detailId": 949
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4602,
+ "name": "거대한 벌집에 올라가다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1672
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20027,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27241,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 346,
+      "sphereId": 1672
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20029,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27242,
+      "type": "QuestActSupplyCopper",
+      "detailId": 633,
+      "amount": 0
+     },
+     {
+      "actId": 27243,
+      "type": "QuestActSupplyExp",
+      "detailId": 187,
+      "exp": 0
+     },
+     {
+      "actId": 27245,
+      "type": "QuestActConAutoComplete",
+      "detailId": 891
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

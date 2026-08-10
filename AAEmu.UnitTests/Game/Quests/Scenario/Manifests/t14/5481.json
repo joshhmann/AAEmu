@@ -1,0 +1,93 @@
+{
+ "questId": 5481,
+ "name": "불굴의 도전자",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28508
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23694,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33319,
+      "type": "QuestActConAcceptItem",
+      "detailId": 325,
+      "itemId": 28508
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23696,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33367,
+      "type": "QuestActSupplyExp",
+      "detailId": 750,
+      "exp": 1000
+     },
+     {
+      "actId": 33368,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1175,
+      "amount": 0
+     },
+     {
+      "actId": 33369,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 214,
+      "appellationId": 159
+     },
+     {
+      "actId": 33370,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1422
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28508,
+   "count": 1
+  }
+ ]
+}

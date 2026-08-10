@@ -1,0 +1,81 @@
+{
+ "questId": 4603,
+ "name": "크레타 바이저의 이상한 공작기계",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1673
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20030,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27748,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 411,
+      "sphereId": 1673
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20032,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27749,
+      "type": "QuestActSupplyCopper",
+      "detailId": 705,
+      "amount": 0
+     },
+     {
+      "actId": 27750,
+      "type": "QuestActSupplyExp",
+      "detailId": 255,
+      "exp": 0
+     },
+     {
+      "actId": 27752,
+      "type": "QuestActConAutoComplete",
+      "detailId": 955
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

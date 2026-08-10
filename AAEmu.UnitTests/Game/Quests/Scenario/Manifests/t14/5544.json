@@ -1,0 +1,140 @@
+{
+ "questId": 5544,
+ "name": "애증을 담은 특별한 봉제인형",
+ "zoneId": 6,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13554
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23942,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33652,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4260,
+      "npcId": 13554
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23943,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33654,
+      "type": "QuestActObjItemGather",
+      "detailId": 2729,
+      "itemId": 28874,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23944,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33655,
+      "type": "QuestActConReportNpc",
+      "detailId": 4584,
+      "npcId": 13554
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23945,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33653,
+      "type": "QuestActSupplyItem",
+      "detailId": 3833,
+      "itemId": 28571,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28874,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13554,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28571,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28874,
+   "count": 1
+  }
+ ]
+}

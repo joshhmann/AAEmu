@@ -1,0 +1,77 @@
+{
+ "questId": 5180,
+ "name": "잉그바드 왕자의 계획",
+ "zoneId": 6,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8861
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22432,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31608,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4033,
+      "npcId": 8861
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22434,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32203,
+      "type": "QuestActConReportNpc",
+      "detailId": 4384,
+      "npcId": 13107
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13107,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

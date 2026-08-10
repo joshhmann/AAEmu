@@ -1,0 +1,151 @@
+{
+ "questId": 5362,
+ "name": "내가 바로 장인 석공사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12505
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23164,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32673,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4144,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23165,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32674,
+      "type": "QuestActObjCraft",
+      "detailId": 233,
+      "craftId": 118,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23166,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32678,
+      "type": "QuestActConReportNpc",
+      "detailId": 4446,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23222,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32675,
+      "type": "QuestActObjItemGather",
+      "detailId": 2635,
+      "itemId": 16323,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23223,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32677,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 153,
+      "appellationId": 75
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 118,
+     "count": 3
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 16323,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12505,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16323,
+   "count": 3
+  }
+ ]
+}

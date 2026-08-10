@@ -1,0 +1,146 @@
+{
+ "questId": 5551,
+ "name": "불편한 섶에 몸을 눕히고",
+ "zoneId": 1,
+ "categoryId": 96,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13561
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23968,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33702,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4267,
+      "npcId": 13561
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23969,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33704,
+      "type": "QuestActObjItemGather",
+      "detailId": 2745,
+      "itemId": 25116,
+      "count": 5000
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23970,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33703,
+      "type": "QuestActConReportNpc",
+      "detailId": 4591,
+      "npcId": 13561
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23990,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33705,
+      "type": "QuestActSupplyItem",
+      "detailId": 3844,
+      "itemId": 28952,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33711,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1190,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 25116,
+     "count": 5000
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13561,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28952,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25116,
+   "count": 5000
+  }
+ ]
+}

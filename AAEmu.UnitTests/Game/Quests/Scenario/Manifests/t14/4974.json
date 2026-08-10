@@ -1,0 +1,81 @@
+{
+ "questId": 4974,
+ "name": "리네리프의 아늑한 이층집",
+ "zoneId": 2,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2071
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30170,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 592,
+      "sphereId": 2071
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30166,
+      "type": "QuestActSupplyCopper",
+      "detailId": 890,
+      "amount": 0
+     },
+     {
+      "actId": 30167,
+      "type": "QuestActSupplyExp",
+      "detailId": 431,
+      "exp": 0
+     },
+     {
+      "actId": 30169,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1197
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

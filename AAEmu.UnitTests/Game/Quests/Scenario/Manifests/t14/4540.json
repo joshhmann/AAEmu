@@ -1,0 +1,81 @@
+{
+ "questId": 4540,
+ "name": "서 론반 광산 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1648
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19752,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26953,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 327,
+      "sphereId": 1648
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26954,
+      "type": "QuestActSupplyCopper",
+      "detailId": 606,
+      "amount": 0
+     },
+     {
+      "actId": 26955,
+      "type": "QuestActSupplyExp",
+      "detailId": 166,
+      "exp": 0
+     },
+     {
+      "actId": 26957,
+      "type": "QuestActConAutoComplete",
+      "detailId": 872
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

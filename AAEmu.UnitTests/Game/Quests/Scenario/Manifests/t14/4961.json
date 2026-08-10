@@ -1,0 +1,81 @@
+{
+ "questId": 4961,
+ "name": "고고학자 마을의 감시탑",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2056
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21531,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30064,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 582,
+      "sphereId": 2056
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21532,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30060,
+      "type": "QuestActSupplyCopper",
+      "detailId": 880,
+      "amount": 0
+     },
+     {
+      "actId": 30061,
+      "type": "QuestActSupplyExp",
+      "detailId": 421,
+      "exp": 0
+     },
+     {
+      "actId": 30063,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1177
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

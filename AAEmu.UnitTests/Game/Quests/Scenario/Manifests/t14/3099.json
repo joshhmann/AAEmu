@@ -1,0 +1,98 @@
+{
+ "questId": 3099,
+ "name": "밀렵단 전초기지 파괴",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8869
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13358,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19140,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2522,
+      "npcId": 8869
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13359,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19141,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 697,
+      "npcId": 1099,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29972,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1160
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1099,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

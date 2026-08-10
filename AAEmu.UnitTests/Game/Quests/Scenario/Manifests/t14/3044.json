@@ -1,0 +1,150 @@
+{
+ "questId": 3044,
+ "name": "굶주린 얼룩말을 위한 일",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 976
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18989,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2468,
+      "npcId": 976
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13189,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19628,
+      "type": "QuestActObjItemUse",
+      "detailId": 494,
+      "itemId": 19546,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13190,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18991,
+      "type": "QuestActConReportNpc",
+      "detailId": 2701,
+      "npcId": 976
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13191,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 14107,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21334,
+      "type": "QuestActSupplyItem",
+      "detailId": 2128,
+      "itemId": 19545,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 30463,
+      "type": "QuestActSupplyItem",
+      "detailId": 3501,
+      "itemId": 19546,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 19546,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 976,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

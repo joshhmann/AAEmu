@@ -1,0 +1,81 @@
+{
+ "questId": 4512,
+ "name": "부러진 고목의 흔적을 살피다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1622
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19664,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26793,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 298,
+      "sphereId": 1622
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19666,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26794,
+      "type": "QuestActSupplyCopper",
+      "detailId": 580,
+      "amount": 0
+     },
+     {
+      "actId": 26797,
+      "type": "QuestActConAutoComplete",
+      "detailId": 845
+     },
+     {
+      "actId": 31110,
+      "type": "QuestActSupplyExp",
+      "detailId": 574,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

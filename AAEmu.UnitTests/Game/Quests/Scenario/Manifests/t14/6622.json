@@ -1,0 +1,112 @@
+{
+ "questId": 6622,
+ "name": "울부짖는 구렁텅이의 음모",
+ "zoneId": 194,
+ "categoryId": 89,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12202
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28241,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40506,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5061,
+      "npcId": 12202
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28242,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40512,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 702,
+      "monsterGroupId": 621,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28262,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40554,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1893
+     },
+     {
+      "actId": 40600,
+      "type": "QuestActSupplyItem",
+      "detailId": 4732,
+      "itemId": 27735,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 621,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 27735,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

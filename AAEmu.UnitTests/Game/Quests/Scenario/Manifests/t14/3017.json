@@ -1,0 +1,125 @@
+{
+ "questId": 3017,
+ "name": "눈사자를 유혹하려면",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1285
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13552,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18995,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2470,
+      "npcId": 1285
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13553,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18996,
+      "type": "QuestActObjItemGather",
+      "detailId": 1304,
+      "itemId": 18988,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13554,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18997,
+      "type": "QuestActConReportNpc",
+      "detailId": 2704,
+      "npcId": 1285
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13555,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18988,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1285,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18988,
+   "count": 5
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4494,
+ "name": "철광산 선로의 끝",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1606
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19608,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26710,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 282,
+      "sphereId": 1606
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19610,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26711,
+      "type": "QuestActSupplyCopper",
+      "detailId": 564,
+      "amount": 0
+     },
+     {
+      "actId": 26712,
+      "type": "QuestActSupplyExp",
+      "detailId": 120,
+      "exp": 0
+     },
+     {
+      "actId": 26714,
+      "type": "QuestActConAutoComplete",
+      "detailId": 829
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4803,
+ "name": "누이 여신의 자애로움이 머무는 작은 섬",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1851
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20739,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28336,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 488,
+      "sphereId": 1851
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20741,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28337,
+      "type": "QuestActSupplyCopper",
+      "detailId": 782,
+      "amount": 0
+     },
+     {
+      "actId": 28338,
+      "type": "QuestActSupplyExp",
+      "detailId": 339,
+      "exp": 0
+     },
+     {
+      "actId": 28340,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1044
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

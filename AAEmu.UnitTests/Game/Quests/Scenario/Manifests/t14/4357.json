@@ -1,0 +1,119 @@
+{
+ "questId": 4357,
+ "name": "망령이여, 이젠 안녕!",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1944
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18995,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26038,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3618,
+      "npcId": 1944
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18996,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26040,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 968,
+      "npcId": 1988,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18997,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26039,
+      "type": "QuestActConReportNpc",
+      "detailId": 3889,
+      "npcId": 1944
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19233,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1988,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1944,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

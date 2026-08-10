@@ -1,0 +1,126 @@
+{
+ "questId": 5358,
+ "name": "내가 바로 장인 기계공",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12505
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32658,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4141,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23153,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32659,
+      "type": "QuestActObjCraft",
+      "detailId": 230,
+      "craftId": 5539,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23154,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32660,
+      "type": "QuestActConReportNpc",
+      "detailId": 4443,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23216,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32661,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 149,
+      "appellationId": 71
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 5539,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12505,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

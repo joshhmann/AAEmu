@@ -1,0 +1,81 @@
+{
+ "questId": 4810,
+ "name": "홀로 선 섬을 부정한 자들의 처형대",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1858
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20760,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28372,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 496,
+      "sphereId": 1858
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20762,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28373,
+      "type": "QuestActSupplyCopper",
+      "detailId": 788,
+      "amount": 0
+     },
+     {
+      "actId": 28374,
+      "type": "QuestActSupplyExp",
+      "detailId": 347,
+      "exp": 0
+     },
+     {
+      "actId": 28376,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1051
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

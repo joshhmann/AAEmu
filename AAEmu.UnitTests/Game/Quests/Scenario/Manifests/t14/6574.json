@@ -1,0 +1,175 @@
+{
+ "questId": 6574,
+ "name": "임무의 자격 증명",
+ "zoneId": 6,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14921
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28070,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40143,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5021,
+      "npcId": 14921
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28072,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40145,
+      "type": "QuestActConReportNpc",
+      "detailId": 5046,
+      "npcId": 14922
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28073,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40144,
+      "type": "QuestActSupplyItem",
+      "detailId": 4697,
+      "itemId": 34319,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40151,
+      "type": "QuestActSupplyExp",
+      "detailId": 1504,
+      "exp": 1004
+     },
+     {
+      "actId": 40152,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1819,
+      "amount": 100
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28074,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40148,
+      "type": "QuestActObjItemGather",
+      "detailId": 3027,
+      "itemId": 34564,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 28075,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40147,
+      "type": "QuestActSupplyItem",
+      "detailId": 4699,
+      "itemId": 34564,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34564,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14922,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34319,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34564,
+   "count": 1
+  }
+ ]
+}

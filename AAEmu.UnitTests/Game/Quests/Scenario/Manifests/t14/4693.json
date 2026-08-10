@@ -1,0 +1,81 @@
+{
+ "questId": 4693,
+ "name": "군주의 사냥터 초소 안",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1742
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20350,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27706,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 403,
+      "sphereId": 1742
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20352,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27707,
+      "type": "QuestActSupplyCopper",
+      "detailId": 697,
+      "amount": 0
+     },
+     {
+      "actId": 27708,
+      "type": "QuestActSupplyExp",
+      "detailId": 246,
+      "exp": 0
+     },
+     {
+      "actId": 27710,
+      "type": "QuestActConAutoComplete",
+      "detailId": 947
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

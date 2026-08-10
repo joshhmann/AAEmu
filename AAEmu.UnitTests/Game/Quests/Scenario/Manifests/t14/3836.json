@@ -1,0 +1,98 @@
+{
+ "questId": 3836,
+ "name": "제국의 망령을 저승으로",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1480
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24951,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 232,
+      "sphereId": 1480
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22735,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 884,
+      "npcId": 3720,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16119,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23119,
+      "type": "QuestActConAutoComplete",
+      "detailId": 739
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3720,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

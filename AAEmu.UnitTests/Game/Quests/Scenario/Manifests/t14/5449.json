@@ -1,0 +1,234 @@
+{
+ "questId": 5449,
+ "name": "[도전] 내리막길의 전설",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13394
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23565,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33139,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4192,
+      "npcId": 13394
+     },
+     {
+      "actId": 33153,
+      "type": "QuestActCheckTimer",
+      "detailId": 138,
+      "limitTime": 90000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23566,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33125,
+      "type": "QuestActObjItemGather",
+      "detailId": 2693,
+      "itemId": 28378,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23567,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33138,
+      "type": "QuestActConReportNpc",
+      "detailId": 4508,
+      "npcId": 13393
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23578,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33126,
+      "type": "QuestActObjSphere",
+      "detailId": 667,
+      "sphereId": 2217
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23579,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33127,
+      "type": "QuestActObjSphere",
+      "detailId": 668,
+      "sphereId": 2218
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23580,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33128,
+      "type": "QuestActObjSphere",
+      "detailId": 669,
+      "sphereId": 2219
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23581,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33129,
+      "type": "QuestActObjSphere",
+      "detailId": 670,
+      "sphereId": 2220
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 23582,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 23583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33169,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 197,
+      "appellationId": 144
+     },
+     {
+      "actId": 33184,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1156,
+      "amount": 10000
+     },
+     {
+      "actId": 33262,
+      "type": "QuestActSupplyItem",
+      "detailId": 3777,
+      "itemId": 26548,
+      "gradeId": 0,
+      "count": 12
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28378,
+     "count": 1
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 23578
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 23579
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 23580
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 23581
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13393,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26548,
+      "count": 12
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28378,
+   "count": 1
+  }
+ ]
+}

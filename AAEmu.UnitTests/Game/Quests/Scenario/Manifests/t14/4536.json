@@ -1,0 +1,81 @@
+{
+ "questId": 4536,
+ "name": "부서진 철로를 살피다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1644
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19740,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26932,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 323,
+      "sphereId": 1644
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19742,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26933,
+      "type": "QuestActSupplyCopper",
+      "detailId": 602,
+      "amount": 0
+     },
+     {
+      "actId": 26935,
+      "type": "QuestActSupplyExp",
+      "detailId": 162,
+      "exp": 0
+     },
+     {
+      "actId": 26937,
+      "type": "QuestActConAutoComplete",
+      "detailId": 868
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

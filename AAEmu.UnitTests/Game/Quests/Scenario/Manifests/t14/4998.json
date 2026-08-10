@@ -1,0 +1,81 @@
+{
+ "questId": 4998,
+ "name": "비파 교습소 내부",
+ "zoneId": 25,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2095
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21656,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30294,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 616,
+      "sphereId": 2095
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21657,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30290,
+      "type": "QuestActSupplyCopper",
+      "detailId": 914,
+      "amount": 0
+     },
+     {
+      "actId": 30291,
+      "type": "QuestActSupplyExp",
+      "detailId": 456,
+      "exp": 0
+     },
+     {
+      "actId": 30293,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1221
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,93 @@
+{
+ "questId": 5415,
+ "name": "날개옷 재단사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28133
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23393,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32869,
+      "type": "QuestActConAcceptItem",
+      "detailId": 293,
+      "itemId": 28133
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23394,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32870,
+      "type": "QuestActSupplyExp",
+      "detailId": 718,
+      "exp": 1000
+     },
+     {
+      "actId": 32871,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1136,
+      "amount": 0
+     },
+     {
+      "actId": 32872,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 175,
+      "appellationId": 124
+     },
+     {
+      "actId": 32873,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1386
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28133,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4747,
+ "name": "염원의 강 폭포수",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1798
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20539,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28057,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 459,
+      "sphereId": 1798
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20541,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28058,
+      "type": "QuestActSupplyCopper",
+      "detailId": 753,
+      "amount": 0
+     },
+     {
+      "actId": 28060,
+      "type": "QuestActSupplyExp",
+      "detailId": 308,
+      "exp": 0
+     },
+     {
+      "actId": 28061,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1007
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

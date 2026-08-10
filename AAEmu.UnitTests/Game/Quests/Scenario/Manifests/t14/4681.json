@@ -1,0 +1,81 @@
+{
+ "questId": 4681,
+ "name": "부러진 거목",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1730
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20314,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27649,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 392,
+      "sphereId": 1730
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20316,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27650,
+      "type": "QuestActSupplyCopper",
+      "detailId": 686,
+      "amount": 0
+     },
+     {
+      "actId": 27652,
+      "type": "QuestActSupplyExp",
+      "detailId": 234,
+      "exp": 0
+     },
+     {
+      "actId": 27654,
+      "type": "QuestActConAutoComplete",
+      "detailId": 936
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

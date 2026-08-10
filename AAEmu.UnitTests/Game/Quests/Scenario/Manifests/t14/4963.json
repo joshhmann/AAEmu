@@ -1,0 +1,81 @@
+{
+ "questId": 4963,
+ "name": "연극 무대로 사용되는 옛 유적 지붕",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2058
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21537,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30075,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 584,
+      "sphereId": 2058
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21538,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30070,
+      "type": "QuestActSupplyCopper",
+      "detailId": 882,
+      "amount": 0
+     },
+     {
+      "actId": 30071,
+      "type": "QuestActSupplyExp",
+      "detailId": 423,
+      "exp": 0
+     },
+     {
+      "actId": 30073,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1179
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

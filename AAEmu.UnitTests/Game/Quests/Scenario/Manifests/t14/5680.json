@@ -1,0 +1,140 @@
+{
+ "questId": 5680,
+ "name": "왕녀의 꿈 반지",
+ "zoneId": 1,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1148
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24392,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33855,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4299,
+      "npcId": 1148
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24393,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33856,
+      "type": "QuestActObjItemGather",
+      "detailId": 2756,
+      "itemId": 29166,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24394,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33857,
+      "type": "QuestActConReportNpc",
+      "detailId": 4604,
+      "npcId": 1148
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33858,
+      "type": "QuestActSupplyItem",
+      "detailId": 3857,
+      "itemId": 28799,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29166,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1148,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28799,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29166,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4996,
+ "name": "여행자의 샘 이층집 지붕 위",
+ "zoneId": 8,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2093
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21650,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30284,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 614,
+      "sphereId": 2093
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21651,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30280,
+      "type": "QuestActSupplyCopper",
+      "detailId": 912,
+      "amount": 0
+     },
+     {
+      "actId": 30281,
+      "type": "QuestActSupplyExp",
+      "detailId": 454,
+      "exp": 0
+     },
+     {
+      "actId": 30283,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1219
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

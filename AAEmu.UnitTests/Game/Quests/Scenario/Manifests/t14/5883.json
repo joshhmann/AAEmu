@@ -1,0 +1,147 @@
+{
+ "questId": 5883,
+ "name": "크라켄을 물리쳐라!",
+ "zoneId": 151,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7607
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25413,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34719,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 262,
+      "questContextId": 5883
+     },
+     {
+      "actId": 34721,
+      "type": "QuestActCheckTimer",
+      "detailId": 145,
+      "limitTime": 14400000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25414,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38828,
+      "type": "QuestActObjAggro",
+      "detailId": 60,
+      "range": 150,
+      "rank1": 100,
+      "rank2": 0,
+      "rank3": 0,
+      "rank1Ratio": 100,
+      "rank2Ratio": 0,
+      "rank3Ratio": 0,
+      "rank1Item": true,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 3290
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 25415,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 25416,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34722,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1508
+     },
+     {
+      "actId": 34723,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1224,
+      "amount": 0
+     },
+     {
+      "actId": 34724,
+      "type": "QuestActSupplyExp",
+      "detailId": 789,
+      "exp": 0
+     },
+     {
+      "actId": 34726,
+      "type": "QuestActSupplyItem",
+      "detailId": 3921,
+      "itemId": 29511,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 7607
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29511,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

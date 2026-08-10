@@ -1,0 +1,81 @@
+{
+ "questId": 4730,
+ "name": "술취한 논이 내려다보이는 봉우리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1780
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27926,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 442,
+      "sphereId": 1780
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20466,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27927,
+      "type": "QuestActSupplyCopper",
+      "detailId": 737,
+      "amount": 0
+     },
+     {
+      "actId": 27929,
+      "type": "QuestActSupplyExp",
+      "detailId": 290,
+      "exp": 0
+     },
+     {
+      "actId": 27931,
+      "type": "QuestActConAutoComplete",
+      "detailId": 990
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

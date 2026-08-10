@@ -1,0 +1,112 @@
+{
+ "questId": 6158,
+ "name": "반짝이는 재치",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 30839
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35950,
+      "type": "QuestActConAcceptItem",
+      "detailId": 376,
+      "itemId": 30839
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35947,
+      "type": "QuestActConReportJournal",
+      "detailId": 420
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26419,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35948,
+      "type": "QuestActSupplyExp",
+      "detailId": 852,
+      "exp": 1000
+     },
+     {
+      "actId": 35949,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1297,
+      "amount": 0
+     },
+     {
+      "actId": 35951,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 264,
+      "appellationId": 207
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30839,
+   "count": 1
+  }
+ ]
+}

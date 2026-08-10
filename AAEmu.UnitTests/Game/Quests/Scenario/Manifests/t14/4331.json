@@ -1,0 +1,125 @@
+{
+ "questId": 4331,
+ "name": "고대 문명의 흔적",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1932
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18917,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25957,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3594,
+      "npcId": 1932
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18918,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25959,
+      "type": "QuestActObjItemGather",
+      "detailId": 2068,
+      "itemId": 24280,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18919,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25958,
+      "type": "QuestActConReportNpc",
+      "detailId": 3865,
+      "npcId": 1932
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19202,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24280,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1932,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24280,
+   "count": 8
+  }
+ ]
+}

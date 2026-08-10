@@ -1,0 +1,202 @@
+{
+ "questId": 5365,
+ "name": "내가 바로 장인 금속장",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12505
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23173,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32695,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4147,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32696,
+      "type": "QuestActObjCraft",
+      "detailId": 244,
+      "craftId": 4752,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32701,
+      "type": "QuestActConReportNpc",
+      "detailId": 4449,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23234,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32697,
+      "type": "QuestActObjCraft",
+      "detailId": 245,
+      "craftId": 4779,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23235,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32698,
+      "type": "QuestActObjCraft",
+      "detailId": 246,
+      "craftId": 4806,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23236,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32699,
+      "type": "QuestActObjCraft",
+      "detailId": 247,
+      "craftId": 4833,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23237,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32700,
+      "type": "QuestActObjCraft",
+      "detailId": 248,
+      "craftId": 4860,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23238,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32702,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 156,
+      "appellationId": 72
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 4752,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 4779,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 4806,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 4833,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 4860,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12505,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

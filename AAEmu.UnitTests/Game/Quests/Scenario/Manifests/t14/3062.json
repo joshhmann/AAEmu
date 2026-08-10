@@ -1,0 +1,98 @@
+{
+ "questId": 3062,
+ "name": "분노한 거인 잠재우기",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1299
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13521,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30491,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3929,
+      "npcId": 1299
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13522,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18965,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 683,
+      "npcId": 1208,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30660,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1258
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1208,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

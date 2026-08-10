@@ -1,0 +1,134 @@
+{
+ "questId": 5172,
+ "name": "특사의 자질",
+ "zoneId": 143,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13068
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32196,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4075,
+      "npcId": 13068
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32197,
+      "type": "QuestActObjItemGather",
+      "detailId": 2534,
+      "itemId": 27497,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22408,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31579,
+      "type": "QuestActConReportNpc",
+      "detailId": 4331,
+      "npcId": 13068
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22853,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32198,
+      "type": "QuestActSupplyItem",
+      "detailId": 3662,
+      "itemId": 27500,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27497,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13068,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27497,
+   "count": 1
+  }
+ ]
+}

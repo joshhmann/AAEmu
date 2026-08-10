@@ -1,0 +1,81 @@
+{
+ "questId": 4949,
+ "name": "초원의 띠 비행장의 지붕",
+ "zoneId": 3,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2044
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21495,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30003,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 570,
+      "sphereId": 2044
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21496,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29999,
+      "type": "QuestActSupplyCopper",
+      "detailId": 868,
+      "amount": 0
+     },
+     {
+      "actId": 30000,
+      "type": "QuestActSupplyExp",
+      "detailId": 409,
+      "exp": 0
+     },
+     {
+      "actId": 30002,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1165
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

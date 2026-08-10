@@ -1,0 +1,93 @@
+{
+ "questId": 5428,
+ "name": "손대면 뜨거운",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28200
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23448,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32943,
+      "type": "QuestActConAcceptItem",
+      "detailId": 304,
+      "itemId": 28200
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23450,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32969,
+      "type": "QuestActSupplyExp",
+      "detailId": 729,
+      "exp": 1000
+     },
+     {
+      "actId": 32970,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1147,
+      "amount": 0
+     },
+     {
+      "actId": 32971,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 190,
+      "appellationId": 135
+     },
+     {
+      "actId": 32972,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1397
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28200,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 5897,
+ "name": "화요일 폐허를 뒤덮는 괴식물",
+ "zoneId": 198,
+ "categoryId": 102,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14202
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25470,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35375,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4575,
+      "npcId": 14202
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35376,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1170,
+      "npcId": 13906,
+      "count": 60
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35377,
+      "type": "QuestActConReportNpc",
+      "detailId": 4794,
+      "npcId": 14202
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25844,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35378,
+      "type": "QuestActSupplyItem",
+      "detailId": 3968,
+      "itemId": 29794,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 13906,
+     "count": 60
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14202,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29794,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

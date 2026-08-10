@@ -1,0 +1,81 @@
+{
+ "questId": 4905,
+ "name": "영매의 거처 내부",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2025
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21312,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29666,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 553,
+      "sphereId": 2025
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29662,
+      "type": "QuestActSupplyCopper",
+      "detailId": 818,
+      "amount": 0
+     },
+     {
+      "actId": 29665,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1139
+     },
+     {
+      "actId": 31122,
+      "type": "QuestActSupplyExp",
+      "detailId": 586,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

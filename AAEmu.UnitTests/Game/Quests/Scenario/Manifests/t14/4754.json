@@ -1,0 +1,81 @@
+{
+ "questId": 4754,
+ "name": "로카 제3봉 정복",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1807
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20562,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28095,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 466,
+      "sphereId": 1807
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20564,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28096,
+      "type": "QuestActSupplyCopper",
+      "detailId": 760,
+      "amount": 0
+     },
+     {
+      "actId": 28097,
+      "type": "QuestActSupplyExp",
+      "detailId": 315,
+      "exp": 0
+     },
+     {
+      "actId": 28100,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1014
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

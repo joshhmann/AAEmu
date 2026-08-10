@@ -1,0 +1,81 @@
+{
+ "questId": 4599,
+ "name": "하얀 숲 풍차의 꼭대기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1669
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20018,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27225,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 343,
+      "sphereId": 1669
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20020,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27226,
+      "type": "QuestActSupplyCopper",
+      "detailId": 630,
+      "amount": 0
+     },
+     {
+      "actId": 27227,
+      "type": "QuestActSupplyExp",
+      "detailId": 183,
+      "exp": 0
+     },
+     {
+      "actId": 27229,
+      "type": "QuestActConAutoComplete",
+      "detailId": 888
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

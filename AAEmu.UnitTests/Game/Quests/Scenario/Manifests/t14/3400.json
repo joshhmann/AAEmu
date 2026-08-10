@@ -1,0 +1,107 @@
+{
+ "questId": 3400,
+ "name": "지네 왕 껑충이",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9568
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14595,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29608,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 172,
+      "questContextId": 3400
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14596,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29611,
+      "type": "QuestActObjAggro",
+      "detailId": 13,
+      "range": 50,
+      "rank1": 50,
+      "rank2": 70,
+      "rank3": 90,
+      "rank1Ratio": 100,
+      "rank2Ratio": 60,
+      "rank3Ratio": 40,
+      "rank1Item": false,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2111
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14598,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29612,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1132
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 9568
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

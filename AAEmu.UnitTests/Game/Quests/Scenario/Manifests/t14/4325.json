@@ -1,0 +1,107 @@
+{
+ "questId": 4325,
+ "name": "거대 바람 정령의 분노",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1977
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18899,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29860,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 175,
+      "questContextId": 4325
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18900,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29861,
+      "type": "QuestActObjAggro",
+      "detailId": 16,
+      "range": 50,
+      "rank1": 10,
+      "rank2": 20,
+      "rank3": 50,
+      "rank1Ratio": 100,
+      "rank2Ratio": 50,
+      "rank3Ratio": 30,
+      "rank1Item": true,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2125
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19194,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26163,
+      "type": "QuestActConAutoComplete",
+      "detailId": 778
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 1977
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

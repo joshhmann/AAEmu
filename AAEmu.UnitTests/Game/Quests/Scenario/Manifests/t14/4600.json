@@ -1,0 +1,81 @@
+{
+ "questId": 4600,
+ "name": "분열된 십자로의 비석",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1670
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27230,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 344,
+      "sphereId": 1670
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20023,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27231,
+      "type": "QuestActSupplyCopper",
+      "detailId": 631,
+      "amount": 0
+     },
+     {
+      "actId": 27233,
+      "type": "QuestActSupplyExp",
+      "detailId": 185,
+      "exp": 0
+     },
+     {
+      "actId": 27235,
+      "type": "QuestActConAutoComplete",
+      "detailId": 889
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

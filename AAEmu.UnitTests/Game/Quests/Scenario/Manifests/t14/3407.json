@@ -1,0 +1,123 @@
+{
+ "questId": 3407,
+ "name": "향기 거미 처치",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9712
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29891,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1121,
+      "npcId": 9712
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29892,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1072,
+      "npcId": 9712,
+      "count": 18
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29893,
+      "type": "QuestActConReportJournal",
+      "detailId": 349
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14626,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29894,
+      "type": "QuestActSupplyCopper",
+      "detailId": 857,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9712,
+     "count": 18
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4728,
+ "name": "비파 항구의 바위섬",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1778
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20458,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27916,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 440,
+      "sphereId": 1778
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20460,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27917,
+      "type": "QuestActSupplyCopper",
+      "detailId": 735,
+      "amount": 0
+     },
+     {
+      "actId": 27918,
+      "type": "QuestActSupplyExp",
+      "detailId": 287,
+      "exp": 0
+     },
+     {
+      "actId": 27920,
+      "type": "QuestActConAutoComplete",
+      "detailId": 988
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,180 @@
+{
+ "questId": 5767,
+ "name": "나이마의 춤",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13787
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24825,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34475,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4417,
+      "npcId": 13787
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24826,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34482,
+      "type": "QuestActObjItemGather",
+      "detailId": 2833,
+      "itemId": 29705,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24827,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34468,
+      "type": "QuestActSupplyExp",
+      "detailId": 782,
+      "exp": 0
+     },
+     {
+      "actId": 34469,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1218,
+      "amount": 0
+     },
+     {
+      "actId": 34476,
+      "type": "QuestActSupplyItem",
+      "detailId": 3899,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24955,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34512,
+      "type": "QuestActObjExpressFire",
+      "detailId": 44,
+      "expressKeyId": 557,
+      "npcGroupId": 533,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34479,
+      "type": "QuestActConReportNpc",
+      "detailId": 4692,
+      "npcId": 13787
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29705,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 13787,
+     "emotionId": 557,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13787,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29705,
+   "count": 1
+  }
+ ],
+ "groups": {
+  "npcGroups": {
+   "533": [
+    13787
+   ]
+  }
+ }
+}

@@ -1,0 +1,180 @@
+{
+ "questId": 5774,
+ "name": "이녹의 신념",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13789
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24949,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34464,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4416,
+      "npcId": 13789
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24950,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34484,
+      "type": "QuestActObjItemGather",
+      "detailId": 2835,
+      "itemId": 29707,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24951,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34466,
+      "type": "QuestActConReportNpc",
+      "detailId": 4691,
+      "npcId": 13789
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24952,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34515,
+      "type": "QuestActObjExpressFire",
+      "detailId": 47,
+      "expressKeyId": 554,
+      "npcGroupId": 536,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34473,
+      "type": "QuestActSupplyExp",
+      "detailId": 785,
+      "exp": 0
+     },
+     {
+      "actId": 34474,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1220,
+      "amount": 0
+     },
+     {
+      "actId": 34478,
+      "type": "QuestActSupplyItem",
+      "detailId": 3901,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29707,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 13789,
+     "emotionId": 554,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13789,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29707,
+   "count": 1
+  }
+ ],
+ "groups": {
+  "npcGroups": {
+   "536": [
+    13789
+   ]
+  }
+ }
+}

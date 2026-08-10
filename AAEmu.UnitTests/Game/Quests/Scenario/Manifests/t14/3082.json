@@ -1,0 +1,104 @@
+{
+ "questId": 3082,
+ "name": "쌍두사 접근 금지",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5895
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30120,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 219,
+      "doodadId": 5895
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30125,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1080,
+      "npcId": 1005,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13284,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30126,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1187
+     },
+     {
+      "actId": 36998,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1405,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1005,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

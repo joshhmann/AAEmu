@@ -1,0 +1,81 @@
+{
+ "questId": 4770,
+ "name": "눈사자 바위의 숨겨진 공간",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1823
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20610,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28180,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 482,
+      "sphereId": 1823
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20612,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28181,
+      "type": "QuestActSupplyCopper",
+      "detailId": 776,
+      "amount": 0
+     },
+     {
+      "actId": 28182,
+      "type": "QuestActSupplyExp",
+      "detailId": 333,
+      "exp": 0
+     },
+     {
+      "actId": 28184,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1031
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,144 @@
+{
+ "questId": 4374,
+ "name": "악의 축",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1925
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19046,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26097,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3635,
+      "npcId": 1925
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19047,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26098,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 976,
+      "npcId": 1994,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19048,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26099,
+      "type": "QuestActConReportNpc",
+      "detailId": 3908,
+      "npcId": 1925
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19254,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38492,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2731,
+      "itemId": 33911,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38493,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2732,
+      "itemId": 33912,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38494,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2733,
+      "itemId": 33913,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1994,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1925,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

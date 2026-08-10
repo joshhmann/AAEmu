@@ -1,0 +1,81 @@
+{
+ "questId": 4706,
+ "name": "둥근 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1756
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20391,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27802,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 418,
+      "sphereId": 1756
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20393,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27803,
+      "type": "QuestActSupplyCopper",
+      "detailId": 713,
+      "amount": 0
+     },
+     {
+      "actId": 27804,
+      "type": "QuestActSupplyExp",
+      "detailId": 265,
+      "exp": 0
+     },
+     {
+      "actId": 27806,
+      "type": "QuestActConAutoComplete",
+      "detailId": 966
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

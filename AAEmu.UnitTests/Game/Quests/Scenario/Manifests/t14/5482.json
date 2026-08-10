@@ -1,0 +1,93 @@
+{
+ "questId": 5482,
+ "name": "저승행 급행마차",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28509
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23697,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33320,
+      "type": "QuestActConAcceptItem",
+      "detailId": 326,
+      "itemId": 28509
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23699,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33371,
+      "type": "QuestActSupplyExp",
+      "detailId": 751,
+      "exp": 1000
+     },
+     {
+      "actId": 33372,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1176,
+      "amount": 0
+     },
+     {
+      "actId": 33373,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 215,
+      "appellationId": 160
+     },
+     {
+      "actId": 33374,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1423
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28509,
+   "count": 1
+  }
+ ]
+}

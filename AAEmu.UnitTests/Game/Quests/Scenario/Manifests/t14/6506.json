@@ -1,0 +1,156 @@
+{
+ "questId": 6506,
+ "name": "묘목 상인 블랑에게 보내는 편지",
+ "zoneId": 145,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34524
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27743,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39780,
+      "type": "QuestActConAcceptItem",
+      "detailId": 514,
+      "itemId": 34524
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27745,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39781,
+      "type": "QuestActConReportNpc",
+      "detailId": 5027,
+      "npcId": 2156
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27804,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39782,
+      "type": "QuestActSupplyExp",
+      "detailId": 1453,
+      "exp": 1004
+     },
+     {
+      "actId": 39783,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1763,
+      "amount": 100
+     },
+     {
+      "actId": 39962,
+      "type": "QuestActSupplyItem",
+      "detailId": 4664,
+      "itemId": 34575,
+      "gradeId": 2,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28248,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40503,
+      "type": "QuestActObjItemGather",
+      "detailId": 3039,
+      "itemId": 34524,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34524,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2156,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34575,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34524,
+   "count": 1
+  },
+  {
+   "itemId": 34524,
+   "count": 1
+  }
+ ]
+}

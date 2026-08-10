@@ -1,0 +1,146 @@
+{
+ "questId": 5543,
+ "name": "망자의 눈물",
+ "zoneId": 6,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1547
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23938,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33645,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4259,
+      "npcId": 1547
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23939,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33649,
+      "type": "QuestActObjItemGather",
+      "detailId": 2727,
+      "itemId": 28869,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23940,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33646,
+      "type": "QuestActConReportNpc",
+      "detailId": 4583,
+      "npcId": 1547
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23941,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33647,
+      "type": "QuestActSupplyExp",
+      "detailId": 758,
+      "exp": 2000
+     },
+     {
+      "actId": 33648,
+      "type": "QuestActSupplyItem",
+      "detailId": 3831,
+      "itemId": 28868,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28869,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1547,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28868,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28869,
+   "count": 3
+  }
+ ]
+}

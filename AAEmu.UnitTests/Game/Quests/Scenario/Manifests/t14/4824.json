@@ -1,0 +1,81 @@
+{
+ "questId": 4824,
+ "name": "으르렁거리는 섬을 마주하는 작은 바위섬",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1872
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20802,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28448,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 510,
+      "sphereId": 1872
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20804,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28449,
+      "type": "QuestActSupplyCopper",
+      "detailId": 802,
+      "amount": 0
+     },
+     {
+      "actId": 28450,
+      "type": "QuestActSupplyExp",
+      "detailId": 362,
+      "exp": 0
+     },
+     {
+      "actId": 28452,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1065
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

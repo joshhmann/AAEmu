@@ -1,0 +1,156 @@
+{
+ "questId": 6502,
+ "name": "대장장이 모히무에게 보내는 편지",
+ "zoneId": 3,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34520
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27731,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39761,
+      "type": "QuestActConAcceptItem",
+      "detailId": 510,
+      "itemId": 34520
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27733,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39764,
+      "type": "QuestActConReportNpc",
+      "detailId": 5022,
+      "npcId": 11688
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27797,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39765,
+      "type": "QuestActSupplyExp",
+      "detailId": 1449,
+      "exp": 1004
+     },
+     {
+      "actId": 39766,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1759,
+      "amount": 100
+     },
+     {
+      "actId": 39959,
+      "type": "QuestActSupplyItem",
+      "detailId": 4661,
+      "itemId": 34571,
+      "gradeId": 2,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28252,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40499,
+      "type": "QuestActObjItemGather",
+      "detailId": 3035,
+      "itemId": 34520,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34520,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11688,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34571,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34520,
+   "count": 1
+  },
+  {
+   "itemId": 34520,
+   "count": 1
+  }
+ ]
+}

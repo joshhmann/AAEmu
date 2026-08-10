@@ -1,0 +1,81 @@
+{
+ "questId": 4954,
+ "name": "폐허 도시의 버려진 석상 어깨 위",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2049
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21510,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30029,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 575,
+      "sphereId": 2049
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21511,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30025,
+      "type": "QuestActSupplyCopper",
+      "detailId": 873,
+      "amount": 0
+     },
+     {
+      "actId": 30026,
+      "type": "QuestActSupplyExp",
+      "detailId": 414,
+      "exp": 0
+     },
+     {
+      "actId": 30028,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1170
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

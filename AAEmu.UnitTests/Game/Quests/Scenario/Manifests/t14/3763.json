@@ -1,0 +1,119 @@
+{
+ "questId": 3763,
+ "name": "남방 이슈바라에는 없는 것",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 984
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21397,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3004,
+      "npcId": 984
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15750,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21396,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 813,
+      "npcId": 980,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15751,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21398,
+      "type": "QuestActConReportNpc",
+      "detailId": 3230,
+      "npcId": 984
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15752,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 980,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 984,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

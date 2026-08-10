@@ -1,0 +1,97 @@
+{
+ "questId": 5174,
+ "name": "사랑은 움직이는 거야!",
+ "zoneId": 5,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2175
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22413,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31582,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 654,
+      "sphereId": 2175
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22414,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31586,
+      "type": "QuestActConReportNpc",
+      "detailId": 4333,
+      "npcId": 12861
+     },
+     {
+      "actId": 31587,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 219,
+      "itemId": 17695,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22416,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12861,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

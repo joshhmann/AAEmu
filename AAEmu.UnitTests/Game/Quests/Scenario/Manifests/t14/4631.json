@@ -1,0 +1,81 @@
+{
+ "questId": 4631,
+ "name": "이즈나 성 꼭대기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1693
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27344,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 366,
+      "sphereId": 1693
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27345,
+      "type": "QuestActSupplyCopper",
+      "detailId": 653,
+      "amount": 0
+     },
+     {
+      "actId": 27346,
+      "type": "QuestActSupplyExp",
+      "detailId": 208,
+      "exp": 0
+     },
+     {
+      "actId": 27348,
+      "type": "QuestActConAutoComplete",
+      "detailId": 911
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4517,
+ "name": "황야가 내려다보이는 커다란 바위 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1627
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19679,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26818,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 303,
+      "sphereId": 1627
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19681,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26819,
+      "type": "QuestActSupplyCopper",
+      "detailId": 585,
+      "amount": 0
+     },
+     {
+      "actId": 26822,
+      "type": "QuestActConAutoComplete",
+      "detailId": 850
+     },
+     {
+      "actId": 31104,
+      "type": "QuestActSupplyExp",
+      "detailId": 569,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

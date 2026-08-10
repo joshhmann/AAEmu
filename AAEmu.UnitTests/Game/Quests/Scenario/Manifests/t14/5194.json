@@ -1,0 +1,111 @@
+{
+ "questId": 5194,
+ "name": "군자금을 뺏어라!",
+ "zoneId": 6,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1396
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22485,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31628,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4036,
+      "npcId": 1396
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22486,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31635,
+      "type": "QuestActObjItemGather",
+      "detailId": 2523,
+      "itemId": 26960,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22487,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31629,
+      "type": "QuestActConReportNpc",
+      "detailId": 4340,
+      "npcId": 13104
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26960,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13104,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26960,
+   "count": 3
+  }
+ ]
+}

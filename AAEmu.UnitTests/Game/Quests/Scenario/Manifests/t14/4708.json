@@ -1,0 +1,81 @@
+{
+ "questId": 4708,
+ "name": "아스트라 동굴의 황금 햇살",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1758
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20397,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27814,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 420,
+      "sphereId": 1758
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20399,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27815,
+      "type": "QuestActSupplyCopper",
+      "detailId": 715,
+      "amount": 0
+     },
+     {
+      "actId": 27816,
+      "type": "QuestActSupplyExp",
+      "detailId": 267,
+      "exp": 0
+     },
+     {
+      "actId": 27818,
+      "type": "QuestActConAutoComplete",
+      "detailId": 968
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

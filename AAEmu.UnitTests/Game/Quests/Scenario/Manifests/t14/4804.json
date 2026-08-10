@@ -1,0 +1,81 @@
+{
+ "questId": 4804,
+ "name": "작은 바위섬",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1852
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20742,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28341,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 489,
+      "sphereId": 1852
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20744,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28342,
+      "type": "QuestActSupplyCopper",
+      "detailId": 783,
+      "amount": 0
+     },
+     {
+      "actId": 28343,
+      "type": "QuestActSupplyExp",
+      "detailId": 340,
+      "exp": 0
+     },
+     {
+      "actId": 28345,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1045
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

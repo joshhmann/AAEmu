@@ -1,0 +1,125 @@
+{
+ "questId": 3804,
+ "name": "제국의 영혼",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10345
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22351,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3165,
+      "npcId": 10345
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15955,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22353,
+      "type": "QuestActObjItemGather",
+      "detailId": 1675,
+      "itemId": 15554,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22352,
+      "type": "QuestActConReportNpc",
+      "detailId": 3402,
+      "npcId": 10345
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15957,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15554,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10345,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15554,
+   "count": 5
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4916,
+ "name": "눈사자 훈련소 방문",
+ "zoneId": 21,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2036
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21347,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29722,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 563,
+      "sphereId": 2036
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21348,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29717,
+      "type": "QuestActSupplyCopper",
+      "detailId": 829,
+      "amount": 0
+     },
+     {
+      "actId": 29720,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1149
+     },
+     {
+      "actId": 31115,
+      "type": "QuestActSupplyExp",
+      "detailId": 579,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

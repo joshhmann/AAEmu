@@ -1,0 +1,104 @@
+{
+ "questId": 3209,
+ "name": "날렵한 뿔의 위협",
+ "zoneId": 172,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5898
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30135,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 222,
+      "doodadId": 5898
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30133,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1083,
+      "npcId": 8932,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30134,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1190
+     },
+     {
+      "actId": 37018,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1411,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8932,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

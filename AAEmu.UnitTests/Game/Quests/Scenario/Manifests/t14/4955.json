@@ -1,0 +1,81 @@
+{
+ "questId": 4955,
+ "name": "궁전 폐허 꼭대기",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2050
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21513,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30034,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 576,
+      "sphereId": 2050
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21514,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30030,
+      "type": "QuestActSupplyCopper",
+      "detailId": 874,
+      "amount": 0
+     },
+     {
+      "actId": 30031,
+      "type": "QuestActSupplyExp",
+      "detailId": 415,
+      "exp": 0
+     },
+     {
+      "actId": 30033,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1171
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

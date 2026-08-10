@@ -1,0 +1,93 @@
+{
+ "questId": 5162,
+ "name": "하늘을 날고 싶은",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26869
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22367,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31535,
+      "type": "QuestActConAcceptItem",
+      "detailId": 200,
+      "itemId": 26869
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22368,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31531,
+      "type": "QuestActSupplyExp",
+      "detailId": 604,
+      "exp": 1000
+     },
+     {
+      "actId": 31532,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1011,
+      "amount": 0
+     },
+     {
+      "actId": 31533,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 32,
+      "appellationId": 23
+     },
+     {
+      "actId": 31534,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1288
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26869,
+   "count": 1
+  }
+ ]
+}

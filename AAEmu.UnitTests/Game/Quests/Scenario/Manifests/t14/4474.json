@@ -1,0 +1,81 @@
+{
+ "questId": 4474,
+ "name": "잊혀진 신전 기둥 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1588
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19536,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26617,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 266,
+      "sphereId": 1588
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19538,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26618,
+      "type": "QuestActSupplyCopper",
+      "detailId": 548,
+      "amount": 0
+     },
+     {
+      "actId": 26621,
+      "type": "QuestActConAutoComplete",
+      "detailId": 813
+     },
+     {
+      "actId": 31090,
+      "type": "QuestActSupplyExp",
+      "detailId": 555,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

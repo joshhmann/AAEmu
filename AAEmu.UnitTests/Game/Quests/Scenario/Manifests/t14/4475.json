@@ -1,0 +1,81 @@
+{
+ "questId": 4475,
+ "name": "가시덤불 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1589
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19539,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26622,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 267,
+      "sphereId": 1589
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19541,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26623,
+      "type": "QuestActConAutoComplete",
+      "detailId": 814
+     },
+     {
+      "actId": 26626,
+      "type": "QuestActSupplyCopper",
+      "detailId": 549,
+      "amount": 0
+     },
+     {
+      "actId": 31089,
+      "type": "QuestActSupplyExp",
+      "detailId": 554,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

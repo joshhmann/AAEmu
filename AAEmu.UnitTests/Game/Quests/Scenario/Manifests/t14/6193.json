@@ -1,0 +1,112 @@
+{
+ "questId": 6193,
+ "name": "커다란 호박",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 31687
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26552,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36335,
+      "type": "QuestActConAcceptItem",
+      "detailId": 434,
+      "itemId": 31687
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26553,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36310,
+      "type": "QuestActConReportJournal",
+      "detailId": 444
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26554,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36307,
+      "type": "QuestActSupplyExp",
+      "detailId": 881,
+      "exp": 1000
+     },
+     {
+      "actId": 36308,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1326,
+      "amount": 0
+     },
+     {
+      "actId": 36309,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 289,
+      "appellationId": 232
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31687,
+   "count": 1
+  }
+ ]
+}

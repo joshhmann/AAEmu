@@ -1,0 +1,81 @@
+{
+ "questId": 4918,
+ "name": "불꽃 매 협곡의 자연 굴길",
+ "zoneId": 23,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2038
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21353,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29732,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 565,
+      "sphereId": 2038
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21354,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29728,
+      "type": "QuestActSupplyCopper",
+      "detailId": 831,
+      "amount": 0
+     },
+     {
+      "actId": 29729,
+      "type": "QuestActSupplyExp",
+      "detailId": 404,
+      "exp": 0
+     },
+     {
+      "actId": 29731,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1151
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

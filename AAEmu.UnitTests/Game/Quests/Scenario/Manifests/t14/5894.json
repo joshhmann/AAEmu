@@ -1,0 +1,134 @@
+{
+ "questId": 5894,
+ "name": "월요일 폐허를 탐하는 도굴꾼",
+ "zoneId": 198,
+ "categoryId": 102,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14162
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25461,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35335,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4560,
+      "npcId": 14162
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25462,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35336,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 561,
+      "monsterGroupId": 552,
+      "count": 60
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35337,
+      "type": "QuestActConReportNpc",
+      "detailId": 4786,
+      "npcId": 14162
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25811,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35338,
+      "type": "QuestActSupplyItem",
+      "detailId": 3964,
+      "itemId": 29794,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 552,
+     "count": 60
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14162,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29794,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

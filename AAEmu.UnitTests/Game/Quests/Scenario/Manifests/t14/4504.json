@@ -1,0 +1,81 @@
+{
+ "questId": 4504,
+ "name": "북 데비강 상류 늪지대 나무 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1615
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19638,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26756,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 291,
+      "sphereId": 1615
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19640,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26757,
+      "type": "QuestActSupplyCopper",
+      "detailId": 573,
+      "amount": 0
+     },
+     {
+      "actId": 26758,
+      "type": "QuestActSupplyExp",
+      "detailId": 130,
+      "exp": 0
+     },
+     {
+      "actId": 26760,
+      "type": "QuestActConAutoComplete",
+      "detailId": 838
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

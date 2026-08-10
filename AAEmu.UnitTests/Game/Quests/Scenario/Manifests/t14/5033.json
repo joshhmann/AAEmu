@@ -1,0 +1,121 @@
+{
+ "questId": 5033,
+ "name": "저주받은 거대 돌 골렘 처치",
+ "zoneId": 1,
+ "categoryId": 59,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12327
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21770,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30485,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 183,
+      "questContextId": 5033
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21771,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30486,
+      "type": "QuestActObjAggro",
+      "detailId": 24,
+      "range": 50,
+      "rank1": 30,
+      "rank2": 60,
+      "rank3": 90,
+      "rank1Ratio": 100,
+      "rank2Ratio": 50,
+      "rank3Ratio": 10,
+      "rank1Item": true,
+      "rank2Item": true,
+      "rank3Item": true,
+      "useAlias": true,
+      "questActObjAliasId": 2182
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21772,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30487,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1255
+     },
+     {
+      "actId": 30500,
+      "type": "QuestActSupplyItem",
+      "detailId": 3507,
+      "itemId": 26059,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 12327
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26059,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

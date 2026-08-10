@@ -1,0 +1,121 @@
+{
+ "questId": 5971,
+ "name": "차원을 일그러트리는 자",
+ "zoneId": 191,
+ "categoryId": 92,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12649
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25721,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35147,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 294,
+      "questContextId": 5971
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35153,
+      "type": "QuestActObjAggro",
+      "detailId": 42,
+      "range": 50,
+      "rank1": 10,
+      "rank2": 50,
+      "rank3": 40,
+      "rank1Ratio": 100,
+      "rank2Ratio": 50,
+      "rank3Ratio": 20,
+      "rank1Item": true,
+      "rank2Item": true,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2714
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35154,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1559
+     },
+     {
+      "actId": 35169,
+      "type": "QuestActSupplyItem",
+      "detailId": 3956,
+      "itemId": 30004,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 12649
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30004,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

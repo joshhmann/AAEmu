@@ -1,0 +1,121 @@
+{
+ "questId": 5865,
+ "name": "하제의 탑 건설 100번",
+ "zoneId": 200,
+ "categoryId": 99,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13912
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34699,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4451,
+      "npcId": 13912
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25283,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34704,
+      "type": "QuestActObjInteraction",
+      "detailId": 715,
+      "doodadId": 7203,
+      "count": 100,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25284,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34700,
+      "type": "QuestActConReportNpc",
+      "detailId": 4726,
+      "npcId": 13912
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25390,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7203,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13912,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

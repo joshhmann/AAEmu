@@ -1,0 +1,81 @@
+{
+ "questId": 4461,
+ "name": "초승달 왕좌 동쪽 선착장 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1574
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19492,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26527,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 254,
+      "sphereId": 1574
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19494,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26528,
+      "type": "QuestActConAutoComplete",
+      "detailId": 802
+     },
+     {
+      "actId": 26529,
+      "type": "QuestActSupplyCopper",
+      "detailId": 537,
+      "amount": 0
+     },
+     {
+      "actId": 31060,
+      "type": "QuestActSupplyExp",
+      "detailId": 525,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

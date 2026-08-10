@@ -1,0 +1,147 @@
+{
+ "questId": 3408,
+ "name": "저주받은 숲 정화",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9561
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14627,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29909,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1122,
+      "npcId": 9561
+     },
+     {
+      "actId": 29910,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1123,
+      "npcId": 9562
+     },
+     {
+      "actId": 29911,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1124,
+      "npcId": 9563
+     },
+     {
+      "actId": 29912,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1125,
+      "npcId": 9564
+     },
+     {
+      "actId": 29913,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1126,
+      "npcId": 9565
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14628,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29914,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 521,
+      "monsterGroupId": 476,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14629,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29915,
+      "type": "QuestActConReportJournal",
+      "detailId": 350
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14630,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29916,
+      "type": "QuestActSupplyCopper",
+      "detailId": 858,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 476,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

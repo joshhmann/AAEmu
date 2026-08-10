@@ -1,0 +1,124 @@
+{
+ "questId": 5333,
+ "name": "내가 바로 장인 인쇄업자",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12504
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23012,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32596,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4125,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23013,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32519,
+      "type": "QuestActObjTalk",
+      "detailId": 1021,
+      "npcId": 12454
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23014,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32520,
+      "type": "QuestActConReportNpc",
+      "detailId": 4425,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32436,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 129,
+      "appellationId": 73
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 12454
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12504,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

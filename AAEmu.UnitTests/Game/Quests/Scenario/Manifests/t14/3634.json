@@ -1,0 +1,159 @@
+{
+ "questId": 3634,
+ "name": "초원의 분열을 바라는 무리 처치",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8933
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15162,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20775,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 777,
+      "npcId": 8933
+     },
+     {
+      "actId": 20776,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 778,
+      "npcId": 8936
+     },
+     {
+      "actId": 20779,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 780,
+      "npcId": 8935
+     },
+     {
+      "actId": 30582,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1164,
+      "npcId": 8931
+     },
+     {
+      "actId": 30583,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1165,
+      "npcId": 8930
+     },
+     {
+      "actId": 30584,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1166,
+      "npcId": 8926
+     },
+     {
+      "actId": 30585,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1167,
+      "npcId": 8927
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15163,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20777,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 369,
+      "monsterGroupId": 332,
+      "count": 36
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15164,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20774,
+      "type": "QuestActConReportJournal",
+      "detailId": 222
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15165,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20773,
+      "type": "QuestActSupplyCopper",
+      "detailId": 329,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 332,
+     "count": 36
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

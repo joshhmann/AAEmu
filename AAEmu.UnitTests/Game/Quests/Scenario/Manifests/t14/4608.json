@@ -1,0 +1,81 @@
+{
+ "questId": 4608,
+ "name": "마리아노플의 별 석상 머리 위를 오르다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1678
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20045,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27267,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 351,
+      "sphereId": 1678
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20047,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27268,
+      "type": "QuestActSupplyCopper",
+      "detailId": 638,
+      "amount": 0
+     },
+     {
+      "actId": 27269,
+      "type": "QuestActSupplyExp",
+      "detailId": 192,
+      "exp": 0
+     },
+     {
+      "actId": 27271,
+      "type": "QuestActConAutoComplete",
+      "detailId": 896
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

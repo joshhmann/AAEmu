@@ -1,0 +1,121 @@
+{
+ "questId": 5970,
+ "name": "고뇌하는 글렌",
+ "zoneId": 193,
+ "categoryId": 91,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13279
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25718,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35146,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 293,
+      "questContextId": 5970
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25719,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35151,
+      "type": "QuestActObjAggro",
+      "detailId": 41,
+      "range": 50,
+      "rank1": 10,
+      "rank2": 50,
+      "rank3": 40,
+      "rank1Ratio": 100,
+      "rank2Ratio": 50,
+      "rank3Ratio": 20,
+      "rank1Item": true,
+      "rank2Item": true,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2711
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35152,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1558
+     },
+     {
+      "actId": 35166,
+      "type": "QuestActSupplyItem",
+      "detailId": 3955,
+      "itemId": 30003,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 13279
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30003,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

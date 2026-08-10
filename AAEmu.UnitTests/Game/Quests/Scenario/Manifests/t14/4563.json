@@ -1,0 +1,81 @@
+{
+ "questId": 4563,
+ "name": "거대 골렘을 발 아래에 두다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1658
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19866,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27076,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 337,
+      "sphereId": 1658
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19868,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27077,
+      "type": "QuestActSupplyCopper",
+      "detailId": 616,
+      "amount": 0
+     },
+     {
+      "actId": 27078,
+      "type": "QuestActSupplyExp",
+      "detailId": 176,
+      "exp": 0
+     },
+     {
+      "actId": 27080,
+      "type": "QuestActConAutoComplete",
+      "detailId": 882
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

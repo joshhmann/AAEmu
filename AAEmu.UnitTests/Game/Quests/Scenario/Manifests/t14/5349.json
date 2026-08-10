@@ -1,0 +1,180 @@
+{
+ "questId": 5349,
+ "name": "오키드나의 꿈",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13246
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23123,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32582,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4120,
+      "npcId": 13246
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23124,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32584,
+      "type": "QuestActObjItemGather",
+      "detailId": 2617,
+      "itemId": 27983,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32586,
+      "type": "QuestActObjExpressFire",
+      "detailId": 42,
+      "expressKeyId": 312,
+      "npcGroupId": 521,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23126,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32583,
+      "type": "QuestActConReportNpc",
+      "detailId": 4436,
+      "npcId": 13246
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23127,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32587,
+      "type": "QuestActSupplyExp",
+      "detailId": 699,
+      "exp": 0
+     },
+     {
+      "actId": 32588,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1116,
+      "amount": 0
+     },
+     {
+      "actId": 32589,
+      "type": "QuestActSupplyItem",
+      "detailId": 3713,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27983,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 13246,
+     "emotionId": 312,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13246,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27983,
+   "count": 1
+  }
+ ],
+ "groups": {
+  "npcGroups": {
+   "521": [
+    13246
+   ]
+  }
+ }
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4767,
+ "name": "해그림자 회합터의 바람 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1820
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20601,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28165,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 479,
+      "sphereId": 1820
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20603,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28166,
+      "type": "QuestActSupplyCopper",
+      "detailId": 773,
+      "amount": 0
+     },
+     {
+      "actId": 28167,
+      "type": "QuestActSupplyExp",
+      "detailId": 330,
+      "exp": 0
+     },
+     {
+      "actId": 28169,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1028
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

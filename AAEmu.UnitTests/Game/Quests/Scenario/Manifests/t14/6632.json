@@ -1,0 +1,185 @@
+{
+ "questId": 6632,
+ "name": "원정대의 이름을 건 결투",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34865
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28295,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40573,
+      "type": "QuestActConAcceptItem",
+      "detailId": 564,
+      "itemId": 34865
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28296,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40595,
+      "type": "QuestActObjZoneKill",
+      "detailId": 130,
+      "zoneId": 77,
+      "countNpc": 0,
+      "countPk": 3,
+      "teamShare": "f",
+      "useAlias": "t",
+      "questActObjAliasId": 3364,
+      "lvMin": 50,
+      "lvMax": 55,
+      "isParty": "f",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28297,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40735,
+      "type": "QuestActConReportNpc",
+      "detailId": 5094,
+      "npcId": 14953
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28306,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40579,
+      "type": "QuestActSupplyExp",
+      "detailId": 1558,
+      "exp": 1004
+     },
+     {
+      "actId": 40580,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1903,
+      "amount": 100
+     },
+     {
+      "actId": 40588,
+      "type": "QuestActSupplyItem",
+      "detailId": 4723,
+      "itemId": 31893,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40592,
+      "type": "QuestActSupplyItem",
+      "detailId": 4727,
+      "itemId": 34880,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 77,
+     "count": 3,
+     "countNpc": 0,
+     "countPk": 3,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 50,
+     "lvMax": 55
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14953,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31893,
+      "count": 1
+     },
+     {
+      "itemId": 34880,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34865,
+   "count": 1
+  }
+ ]
+}

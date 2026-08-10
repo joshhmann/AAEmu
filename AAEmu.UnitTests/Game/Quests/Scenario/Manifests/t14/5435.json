@@ -1,0 +1,93 @@
+{
+ "questId": 5435,
+ "name": "누이 여신의 재단사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28337
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23493,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33042,
+      "type": "QuestActConAcceptItem",
+      "detailId": 308,
+      "itemId": 28337
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23495,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33047,
+      "type": "QuestActSupplyExp",
+      "detailId": 733,
+      "exp": 1000
+     },
+     {
+      "actId": 33048,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1152,
+      "amount": 0
+     },
+     {
+      "actId": 33053,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 194,
+      "appellationId": 139
+     },
+     {
+      "actId": 33054,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1402
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28337,
+   "count": 1
+  }
+ ]
+}

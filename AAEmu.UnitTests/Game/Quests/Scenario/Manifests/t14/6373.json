@@ -1,0 +1,112 @@
+{
+ "questId": 6373,
+ "name": "루키우스의 새 얼굴",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34077
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27296,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38823,
+      "type": "QuestActConAcceptItem",
+      "detailId": 447,
+      "itemId": 34077
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27297,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38824,
+      "type": "QuestActConReportJournal",
+      "detailId": 547
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27298,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38825,
+      "type": "QuestActSupplyExp",
+      "detailId": 1343,
+      "exp": 1000
+     },
+     {
+      "actId": 38826,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1654,
+      "amount": 0
+     },
+     {
+      "actId": 38827,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 292,
+      "appellationId": 435
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34077,
+   "count": 1
+  }
+ ]
+}

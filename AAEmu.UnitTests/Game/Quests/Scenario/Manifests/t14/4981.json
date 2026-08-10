@@ -1,0 +1,81 @@
+{
+ "questId": 4981,
+ "name": "피 묻은 손 감독관의 숙소",
+ "zoneId": 14,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2078
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21603,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30205,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 599,
+      "sphereId": 2078
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21604,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30201,
+      "type": "QuestActSupplyCopper",
+      "detailId": 897,
+      "amount": 0
+     },
+     {
+      "actId": 30202,
+      "type": "QuestActSupplyExp",
+      "detailId": 438,
+      "exp": 0
+     },
+     {
+      "actId": 30204,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1204
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

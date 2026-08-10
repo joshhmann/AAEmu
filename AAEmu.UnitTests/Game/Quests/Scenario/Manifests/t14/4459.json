@@ -1,0 +1,81 @@
+{
+ "questId": 4459,
+ "name": "솔즈리언 문 정상 정복",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1572
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19486,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26517,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 252,
+      "sphereId": 1572
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19488,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26518,
+      "type": "QuestActSupplyCopper",
+      "detailId": 535,
+      "amount": 0
+     },
+     {
+      "actId": 26519,
+      "type": "QuestActConAutoComplete",
+      "detailId": 800
+     },
+     {
+      "actId": 31062,
+      "type": "QuestActSupplyExp",
+      "detailId": 527,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

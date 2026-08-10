@@ -1,0 +1,112 @@
+{
+ "questId": 5485,
+ "name": "습관적인 속임수",
+ "zoneId": 150,
+ "categoryId": 48,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8761
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33547,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4238,
+      "npcId": 8761
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23708,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33397,
+      "type": "QuestActConReportNpc",
+      "detailId": 4526,
+      "npcId": 8709
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33395,
+      "type": "QuestActSupplyItem",
+      "detailId": 3784,
+      "itemId": 26704,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33396,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1180,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8709,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26704,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

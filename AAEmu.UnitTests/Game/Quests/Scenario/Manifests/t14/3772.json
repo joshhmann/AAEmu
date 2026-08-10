@@ -1,0 +1,185 @@
+{
+ "questId": 3772,
+ "name": "비단 꾸러미 되찾기",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckCompleteComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15793,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30713,
+      "type": "QuestActCheckTimer",
+      "detailId": 130,
+      "limitTime": 300000,
+      "nextComponent": 0
+     },
+     {
+      "actId": 30736,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 223,
+      "doodadId": 4361
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15795,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30737,
+      "type": "QuestActSupplyItem",
+      "detailId": 3529,
+      "itemId": 21253,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15796,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21909,
+      "type": "QuestActConReportNpc",
+      "detailId": 3333,
+      "npcId": 10349
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15797,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Fail",
+    "id": 21814,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Drop",
+    "id": 21815,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21816,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30718,
+      "type": "QuestActObjSphere",
+      "detailId": 646,
+      "sphereId": 1368
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21817,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30715,
+      "type": "QuestActCheckCompleteComponent",
+      "detailId": 1006,
+      "completeComponent": 21816
+     },
+     {
+      "actId": 30717,
+      "type": "QuestActObjItemUse",
+      "detailId": 695,
+      "itemId": 21253,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 21816
+    },
+    {
+     "type": "ItemUse",
+     "itemId": 21253,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10349,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

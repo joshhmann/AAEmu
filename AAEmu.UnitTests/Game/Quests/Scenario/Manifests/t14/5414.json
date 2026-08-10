@@ -1,0 +1,93 @@
+{
+ "questId": 5414,
+ "name": "빛나는 날개옷 재단사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28131
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23390,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32864,
+      "type": "QuestActConAcceptItem",
+      "detailId": 292,
+      "itemId": 28131
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23391,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32865,
+      "type": "QuestActSupplyExp",
+      "detailId": 717,
+      "exp": 1000
+     },
+     {
+      "actId": 32866,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1135,
+      "amount": 0
+     },
+     {
+      "actId": 32867,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 174,
+      "appellationId": 123
+     },
+     {
+      "actId": 32868,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1385
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28131,
+   "count": 1
+  }
+ ]
+}

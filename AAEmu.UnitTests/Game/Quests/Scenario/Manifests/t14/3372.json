@@ -1,0 +1,150 @@
+{
+ "questId": 3372,
+ "name": "우리 마을이 무너진다고?",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9581
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14483,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20333,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2770,
+      "npcId": 9581
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14484,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20230,
+      "type": "QuestActObjItemGather",
+      "detailId": 1434,
+      "itemId": 19734,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14485,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20334,
+      "type": "QuestActConReportNpc",
+      "detailId": 3001,
+      "npcId": 9581
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14486,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38486,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2725,
+      "itemId": 33914,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38487,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2726,
+      "itemId": 33915,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38488,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2727,
+      "itemId": 33916,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19734,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9581,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 19734,
+   "count": 8
+  }
+ ]
+}

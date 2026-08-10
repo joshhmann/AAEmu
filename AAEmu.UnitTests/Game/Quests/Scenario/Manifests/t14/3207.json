@@ -1,0 +1,142 @@
+{
+ "questId": 3207,
+ "name": "바람이 들려주는 이야기",
+ "zoneId": 172,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8920
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19212,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2551,
+      "npcId": 8920
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19998,
+      "type": "QuestActObjItemUse",
+      "detailId": 508,
+      "itemId": 19665,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19213,
+      "type": "QuestActConReportNpc",
+      "detailId": 2782,
+      "npcId": 8920
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13466,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 14383,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19997,
+      "type": "QuestActSupplyItem",
+      "detailId": 2003,
+      "itemId": 19665,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 19665,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8920,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

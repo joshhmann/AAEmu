@@ -1,0 +1,81 @@
+{
+ "questId": 4489,
+ "name": "주거지역이 내려다보이는 바위산 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1601
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19591,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26680,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 278,
+      "sphereId": 1601
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19593,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26681,
+      "type": "QuestActConAutoComplete",
+      "detailId": 825
+     },
+     {
+      "actId": 26682,
+      "type": "QuestActSupplyCopper",
+      "detailId": 560,
+      "amount": 0
+     },
+     {
+      "actId": 31078,
+      "type": "QuestActSupplyExp",
+      "detailId": 543,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

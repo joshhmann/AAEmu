@@ -1,0 +1,121 @@
+{
+ "questId": 4359,
+ "name": "돌 속에 유물이?",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1947
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19001,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26044,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3620,
+      "npcId": 1947
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19002,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26046,
+      "type": "QuestActObjInteraction",
+      "detailId": 591,
+      "doodadId": 4993,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19003,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26045,
+      "type": "QuestActConReportNpc",
+      "detailId": 3891,
+      "npcId": 1947
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19235,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4993,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1947,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 5438,
+ "name": "나차쉬가르 입장을 위해 필요한 것",
+ "zoneId": 191,
+ "categoryId": 92,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13386
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23502,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33058,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4182,
+      "npcId": 13386
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23503,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33059,
+      "type": "QuestActObjItemGather",
+      "detailId": 2683,
+      "itemId": 28317,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23504,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33060,
+      "type": "QuestActConReportNpc",
+      "detailId": 4493,
+      "npcId": 13386
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23505,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33064,
+      "type": "QuestActSupplyItem",
+      "detailId": 3741,
+      "itemId": 28333,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28317,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13386,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28333,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28317,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,120 @@
+{
+ "questId": 5878,
+ "name": "이럇!",
+ "zoneId": 1,
+ "categoryId": 33,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13649
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34737,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4455,
+      "npcId": 13649
+     },
+     {
+      "actId": 34738,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4456,
+      "npcId": 13663
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25396,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34739,
+      "type": "QuestActObjInteraction",
+      "detailId": 719,
+      "doodadId": 7077,
+      "count": 5,
+      "wiId": 19,
+      "phase": 19926
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25422,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35050,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1546
+     },
+     {
+      "actId": 38876,
+      "type": "QuestActSupplyItem",
+      "detailId": 4542,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7077,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

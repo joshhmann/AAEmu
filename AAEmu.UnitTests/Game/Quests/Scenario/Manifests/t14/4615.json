@@ -1,0 +1,81 @@
+{
+ "questId": 4615,
+ "name": "누이 여신을 향한 다리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1685
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20066,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27302,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 358,
+      "sphereId": 1685
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20068,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27303,
+      "type": "QuestActSupplyCopper",
+      "detailId": 645,
+      "amount": 0
+     },
+     {
+      "actId": 27304,
+      "type": "QuestActSupplyExp",
+      "detailId": 199,
+      "exp": 0
+     },
+     {
+      "actId": 27306,
+      "type": "QuestActConAutoComplete",
+      "detailId": 903
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}
