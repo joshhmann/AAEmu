@@ -551,6 +551,19 @@ profiling. M6.6 shipped consumables without currency — the exception is
 recorded here; either Josh approves it standing or a follow-up card seeds
 currency.
 
+**Physics slow-thread budget recalibrated (2026-08-10, t_18fccd09):** the gate's
+physics-warning budget is now ≤0.1/min + a no-sustained-slow clause (≤2
+warnings on the SAME world within any 60s window; 3+ = hard fail). Rationale:
+the detector (upstream stock, PR #1253) measures wall-clock inter-iteration
+gap on a thread that sleeps ~40ms and steps a zero-body world, so boot GC +
+host scheduling jitter trip it regardless of physics load. Measured 0.031/min
+(11 warnings / 6h soak, pre-GC-fix) and 0.067/min (4 warnings / 60 min,
+post-fix, one 3s background-GC burst) with 0 crash/disconnect/region-overrun
+— 0.1 gives ~1.5-3.3× headroom while a real overload (10-100× the measured
+rate) still fails. In-code rationale mirrors the DB-write budget precedent
+(t_2006451f / t_b4eb35e9). Fix attempt first (GC latency tuning, t_eecc5604,
+merged) per Josh's ruling; recalibration is the recorded fallback.
+
 **Detail (2026-08-09 audit):** M6 exit is blocked on **A1** (execution
 boundary — bot steps off the game loop violate M5's core rule). Added exit
 requirements: (a) restart-persistence scenario per the standing rule —

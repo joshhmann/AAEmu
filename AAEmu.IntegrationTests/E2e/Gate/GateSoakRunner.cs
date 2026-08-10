@@ -197,6 +197,7 @@ public static class GateSoakRunner
                 SchedulerMaxWakeLatencyMs = tickWorst.SchedulerMaxWakeLatencyMs,
                 DbWrites = Math.Max(0, dbWritesEnd - dbWritesStart),
                 PhysicsWarnings = logTail.PhysicsWarnings,
+                MaxSameWorldPhysicsWarningsPer60s = logTail.MaxSameWorldPhysicsWarningsPer60s,
                 TickOverrunWarnings = logTail.TickOverrunWarnings
             };
 
@@ -348,26 +349,55 @@ public static class GateSoakRunner
         return total;
     }
 
-    private sealed record LogTail(long PhysicsWarnings, long TickOverrunWarnings);
+    private sealed record LogTail(long PhysicsWarnings, long TickOverrunWarnings, long MaxSameWorldPhysicsWarningsPer60s);
+
+    private static readonly System.Text.RegularExpressions.Regex PhysicsWarningRegex = new(
+        @"^(\d{2}):(\d{2}):(\d{2}) .*?in (.+?) at ",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static LogTail ReadGameLogTail(long startOffset)
     {
         long physics = 0, overruns = 0;
+        // Per-world warning times (seconds-of-day, adjusted across midnight
+        // wraps) for the no-sustained-slow clause: the most warnings any ONE
+        // world logged within a 60s window.
+        var worldTimes = new Dictionary<string, List<long>>();
         try
         {
             if (!File.Exists(GameLogPath))
-                return new LogTail(0, 0);
+                return new LogTail(0, 0, 0);
 
             using var fs = File.OpenRead(GameLogPath);
             if (fs.Length <= startOffset)
-                return new LogTail(0, 0);
+                return new LogTail(0, 0, 0);
 
             fs.Seek(startOffset, SeekOrigin.Begin);
             using var reader = new StreamReader(fs, Encoding.UTF8, false, 4096, leaveOpen: true);
+            var dayOffset = 0L;
+            long lastSec = -1;
             while (reader.ReadLine() is { } line)
             {
                 if (line.Contains("Physics thread is running slow", StringComparison.Ordinal))
+                {
                     physics++;
+                    var m = PhysicsWarningRegex.Match(line);
+                    if (m.Success)
+                    {
+                        var sec = int.Parse(m.Groups[1].Value) * 3600
+                                  + int.Parse(m.Groups[2].Value) * 60
+                                  + int.Parse(m.Groups[3].Value);
+                        // Log timestamps are HH:mm:ss only — carry a day
+                        // offset forward when the clock wraps (6h soak can
+                        // cross midnight).
+                        if (lastSec >= 0 && sec < lastSec)
+                            dayOffset += 86400;
+                        lastSec = sec;
+                        var world = m.Groups[4].Value;
+                        if (!worldTimes.TryGetValue(world, out var times))
+                            worldTimes[world] = times = [];
+                        times.Add(sec + dayOffset);
+                    }
+                }
                 if (line.Contains("Tick took ", StringComparison.Ordinal) ||
                     line.Contains("over 100ms budget", StringComparison.Ordinal) ||
                     line.Contains("ActiveRegionTick took", StringComparison.Ordinal))
@@ -379,7 +409,22 @@ public static class GateSoakRunner
             Console.WriteLine($"[gate] game log scan failed: {ex.GetType().Name}: {ex.Message}");
         }
 
-        return new LogTail(physics, overruns);
+        // Sliding 60s window per world: max count of warnings on one world
+        // within any 60s span.
+        long maxSameWorld60s = 0;
+        foreach (var times in worldTimes.Values)
+        {
+            times.Sort();
+            var head = 0;
+            for (var tail = 0; tail < times.Count; tail++)
+            {
+                while (times[tail] - times[head] > 60)
+                    head++;
+                maxSameWorld60s = Math.Max(maxSameWorld60s, tail - head + 1);
+            }
+        }
+
+        return new LogTail(physics, overruns, maxSameWorld60s);
     }
 
     // ------------------------------------------------------------------ evidence

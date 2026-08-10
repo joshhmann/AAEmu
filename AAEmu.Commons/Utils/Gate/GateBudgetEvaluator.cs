@@ -44,8 +44,25 @@ public sealed record GateBudgets
     /// only; 264.53/500 per embodied char — t_b4eb35e9, 2026-08-09).</summary>
     public double MaxDbWritesPerBotPerMin { get; init; } = 500;
 
-    /// <summary>Max physics warnings per minute (physics thread running slow = overload signal).</summary>
-    public double MaxPhysicsWarningsPerMin { get; init; } = 0;
+    /// <summary>Max physics warnings per minute (physics thread running slow = overload signal).
+    /// Calibrated to the 2026-08-10 soak measurements (t_eecc5604 RCA): the detector is
+    /// upstream stock (PR #1253) measuring the WALL-CLOCK inter-iteration gap on a physics
+    /// thread that sleeps ~40ms and steps a zero-body world — any >65ms deschedule (GC pause,
+    /// host CPU contention, timer jitter) trips it regardless of physics load. Measured 0.031/min
+    /// on the 6h soak (11 warnings, pre-GC-fix) and 0.067/min post-fix (4 warnings / 60 min, one
+    /// 3s background-GC burst) with 0 crash/disconnect/region-overrun in both windows, so 0.1
+    /// gives ~1.5-3.3× headroom; a genuine overload fires 10-100× the measured rate and is
+    /// still caught. The same-world 60s clause below catches sustained slow (a world that
+    /// cannot keep up logs consecutive-iteration warnings). Tighten only when ship-heavy
+    /// milestones make physics latency a real gate signal.</summary>
+    public double MaxPhysicsWarningsPerMin { get; init; } = 0.1;
+
+    /// <summary>No-sustained-slow clause: max warnings on the SAME world within any 60s window.
+    /// A process-wide pause (GC STW, host steal) hits all worlds at once but usually lands
+    /// ≤2 warnings per world per window (observed clusters: 2-in-3s and 2-in-40s on the
+    /// 2026-08-10 soaks) — a world whose physics thread genuinely cannot keep up logs
+    /// consecutive-iteration warnings and trips 3+ in 60s. Hard fail at 3+.</summary>
+    public long MaxPhysicsWarningsSameWorldPer60s { get; init; } = 2;
 
     /// <summary>Max tick-overrun warnings per minute ("Tick took Xms" + ActiveRegionTick overruns).</summary>
     public double MaxTickOverrunWarningsPerMin { get; init; } = 0;
@@ -169,6 +186,9 @@ public static class GateBudgetEvaluator
         verdicts.Add(s.PhysicsWarningsPerMin <= b.MaxPhysicsWarningsPerMin
             ? BudgetVerdict.Ok("Physics warnings", s.PhysicsWarningsPerMin, b.MaxPhysicsWarningsPerMin, "warnings/min")
             : BudgetVerdict.Over("Physics warnings", s.PhysicsWarningsPerMin, b.MaxPhysicsWarningsPerMin, "warnings/min — physics thread running slow"));
+        verdicts.Add(s.MaxSameWorldPhysicsWarningsPer60s <= b.MaxPhysicsWarningsSameWorldPer60s
+            ? BudgetVerdict.Ok("Physics warnings same-world", s.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s, "warnings in 60s on one world")
+            : BudgetVerdict.Over("Physics warnings same-world", s.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s, "warnings in 60s on one world — physics thread cannot keep up (no-sustained-slow)"));
         verdicts.Add(s.TickOverrunWarningsPerMin <= b.MaxTickOverrunWarningsPerMin
             ? BudgetVerdict.Ok("Tick overrun warnings", s.TickOverrunWarningsPerMin, b.MaxTickOverrunWarningsPerMin, "warnings/min")
             : BudgetVerdict.Over("Tick overrun warnings", s.TickOverrunWarningsPerMin, b.MaxTickOverrunWarningsPerMin, "warnings/min — world tick over budget"));

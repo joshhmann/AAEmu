@@ -54,6 +54,9 @@ public sealed record GateMetricsSnapshot
     // -- Physics warning rate (game log scan over the window) --
     public long PhysicsWarnings { get; init; }
 
+    /// <summary>Most warnings on a single world within any 60s window (no-sustained-slow clause).</summary>
+    public long MaxSameWorldPhysicsWarningsPer60s { get; init; }
+
     // -- Tick overrun warnings (game log scan over the window) --
     public long TickOverrunWarnings { get; init; }
 
