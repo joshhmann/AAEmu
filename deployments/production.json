@@ -8,13 +8,13 @@
   "source": {
     "commit": "960ef8479",
     "branch": "develop (fork joshhmann/AAEmu)",
-    "lineage": "fork develop b8afe2097 + merge of fix/adopt-heal-keeps-factory-look @ cdf6d4a62 (Rei gate PASS t_c310b5ce) — adopt-heal keeps stored factory look; demo-blob force-stamp removed",
+    "lineage": "fork develop b8afe2097 + merge of fix/adopt-heal-keeps-factory-look @ cdf6d4a62 (Rei gate PASS t_c310b5ce) \u2014 adopt-heal keeps stored factory look; demo-blob force-stamp removed",
     "verified": "merge commit 960ef8479 = fork develop HEAD; cdf6d4a62 lineage on top of fd4ab6eea confirmed via GitHub compare (merge base fd4ab6eea704, 2026-08-10, t_26a0ef77)"
   },
-  "git_sha": "960ef847902d1090537b971afbe9889eafc23573",
-  "git_sha_note": "current prod git HEAD after ff-only merge of fork/develop (deploy t_26a0ef77, 2026-08-10).",
+  "git_sha": "a6a2f3459dc7df551a8dcca950a055fc827b1e00",
+  "git_sha_note": "current prod tree HEAD (deploy t_26a0ef77 + wi-9 census sweep + manifest commit). Runtime image built from source.commit 960ef8479; the later commits are non-runtime (census manifests + this manifest file).",
   "deployed_at": "2026-08-10T04:03:00-07:00",
-  "milestone": "M6 adopt-heal fix deploy (t_26a0ef77) — demo-blob force-stamp removed; Citizen rows re-provisioned to 3 distinct factory looks",
+  "milestone": "M6 adopt-heal fix deploy (t_26a0ef77) \u2014 demo-blob force-stamp removed; Citizen rows re-provisioned to 3 distinct factory looks",
   "database_backup": "none_required_no_schema_change (bot rows additive; accounts reused idempotently by BotAccountProvisioningService; box compact.sqlite3 pristine per read-only reference rule 3)",
   "services": {
     "db": "Up (healthy)",
@@ -23,5 +23,5 @@
     "adminer": "Up"
   },
   "build_path": "in-repo overlay recipe (docker-compose.presence.yaml now tracked in repo, captured by 615c3719cc5d): `cd /root/AAEmu && git merge --ff-only fork/develop && docker compose -f docker-compose.yaml -f docker-compose.presence.yaml up -d --build game`. Rollback tags retained: pre-adoptheal=ebe809a0ec5b / pre-gm=af96b0f3bbd6 / pre-parity-seeding=037dcfa2803c / pre-hotfix5=a6f6631c1835 / pre-hotfix4=280df55c585d / pre-hotfix3=b43277edf887 / pre-hotfix2=eae06dc172ac.",
-  "notes": "Deploy t_26a0ef77 (2026-08-10): merge of the Rei-gate-passed adopt-heal fix was performed by Mai (deploy lane rescue) because Tai's card t_555ed207 was orphaned blocked (review-required unblock unavailable from worker session). Re-provision of collapsed Citizen rows required deleting orphaned items too (DELETE FROM items WHERE owner IN (citizen ids)) — the documented t_506a9acb workaround only deleted item_containers + characters, which leaves 42 orphaned item rows that crash LoadUserItems (ContainerIdManager bitset NRE) on next boot. Skill pitfall updated. Presence overlay on prod now carries the P0 home override (15572/15364/126.5) via the tracked in-repo overlay. No upstream PRs (lane gate)."
+  "notes": "Deploy t_26a0ef77 (2026-08-10): merge of the Rei-gate-passed adopt-heal fix was performed by Mai (deploy lane rescue) because Tai's card t_555ed207 was orphaned blocked (review-required unblock unavailable from worker session). Re-provision of collapsed Citizen rows required deleting orphaned items too (DELETE FROM items WHERE owner IN (citizen ids)) \u2014 the documented t_506a9acb workaround only deleted item_containers + characters, which leaves 42 orphaned item rows that crash LoadUserItems (ContainerIdManager bitset NRE) on next boot. Skill pitfall updated. Presence overlay on prod now carries the P0 home override (15572/15364/126.5) via the tracked in-repo overlay. No upstream PRs (lane gate)."
 }
