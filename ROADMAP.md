@@ -262,14 +262,18 @@ the route depends on.
 **Depends on:** M1 (done). **Feeds:** M3/M4 (route + blocker backlog); M4's
 gate chains to M2's reset/seed procedure.
 
-**Detail (2026-08-09 audit):** M2 was silently redefined in practice into the
+**Detail (2026-08-10 audit):** M2 was silently redefined in practice into the
 quest-census sweep (M2a–M2d) — the band tables and ≥95% gates live only in
 progression-board.md and are adopted here by reference. Census reality:
-2,016/4,735 live contexts proven PASS (42.6%). The detailed remaining work
-list is **G1 WI-1..12** (4 harness-family closures → band sweeps 31-40/41-50/
-51-55/0-null → final census). The inherited harness track (t_f198bb0e) exits
-via WI-2..5. Census credit counts only once merged to develop (rule G0-1);
-deletion is never "fixed" — drops require register entry + Josh decision.
+**G1 GATE PASSED 2026-08-10** — 4,579 live contexts = 4,573 PASS + 6
+kept-by-ruling doc-SKIP + 0 FAIL, zero unexplained (4,876 rows − 297
+registered drops; full gate 1495/0/1 on merged develop @ 7f5c179f7). The
+detailed work list was **G1 WI-1..12** (4 harness-family closures → band
+sweeps 31-40/41-50/51-55/0-null → final census) — all landed; see the G1
+section for per-item status and kept-by-ruling SKIPs. The inherited harness
+track (t_f198bb0e) exits via WI-2..5. Census credit counts only once merged
+to develop (rule G0-1); deletion is never "fixed" — drops require register
+entry + Josh decision.
 The reset-procedure exit test is strengthened: a third party (or clean host)
 must run the reset/seed procedure from the docs — the manifest may not
 validate itself. If two humans are unavailable for the baseline, M5-contract
@@ -978,35 +982,46 @@ as *procedures* but never as *gates*. New standing rules:
 6. Merge-first execution: t_0fda3cd3 (merge M6 chain + record prod SHA)
    gates all new feature work.
 
-### G1 — Quest coverage to 100% (4,735 live contexts; 2,016 proven PASS = 42.6%)
+### G1 — Quest coverage to 100% ✅ GATE PASSED 2026-08-10 (4,579 live contexts; 4,573 PASS / 0 FAIL / 14 documented SKIP = 100.0% PASS-or-doc-SKIP, zero unexplained)
 
-No known engine gap blocks any live context — remaining work is 4 harness
-family closures + band sweeps + data triage. Single-threaded estimate
-7–10 working days at demonstrated cadence (family closure ≈ 4/day,
-band sweep ≈ 1/day at 600–850 quests).
+No engine gap blocked any live context — 4 harness family closures + band
+sweeps + data triage all landed 2026-08-05 → 08-10. Final census on merged
+develop @ 7f5c179f7: 4,573/4,573 runnable; full gate 1495 total / 0 failed /
+1 env-gated skip (bar ≥1473 MET).
 
-- WI-1 Push/merge M2c census to origin/develop (local aa2ef5f6d).
-- WI-2 CrimePoint closure (7 ctxs): gen-manifests ACT_TABLES + driver
-  factory case (QuestScenarioDriver.cs:284); rig asserts CrimePoint delta.
-- WI-3 AbilityLevel closure (11): rig preseeds ability exp; cover
-  AbilityId=0 all-abilities branch.
-- WI-4 MateLevel closure (6): preseed SummonMate at DetailLevel ≥ Level;
-  assert Cleanup-consume path (5464).
-- WI-5 CompleteQuest closure (11): rig pre-marks referenced quest completed
-  (synthetic-block pattern from CharacterQuestsDailyResetTests).
-- WI-6 Band 41-50 ltd triage (3419, 4967, 6069): drop-decision cards or
-  content-fix; register §8.
-- WI-7 T9 sweep band 31-40 (643; model predicts zero harness SKIPs).
-- WI-8 T10 sweep band 41-50 (1,592) — after WI-2..6.
-- WI-9 T11 sweep band 51-55 (268) + lvl-99 straggler 3465.
-- WI-10 Driver fidelity stages: TIMEOUT (fire OnTimerExpired; 45 CheckTimer
-  quests), RESET (ResetDailyQuests + re-accept; ~321 daily + 63 repeatable),
-  GUARD_DIED negative path (6 escort quests).
-- WI-11 Band 0/null triage (231; 147 modeled dead: 92 no-components /
-  52 ltd-no-report / 15 no-Start) — M2a purge playbook, Josh decision, then
-  sweep remaining ~81.
-- WI-12 Final census + denominator reconciliation: every live context PASS
-  or registered-drop, zero unexplained FAIL/SKIP across 4,735.
+- ✅ WI-1 Push/merge M2c census to origin/develop (local aa2ef5f6d) — merged.
+- ✅ WI-2 CrimePoint closure (7 ctxs) — closed the last 2 census SKIPs
+  (2916/2926); added the t9 tier.
+- ✅ WI-3 AbilityLevel closure (11) — rig preseeds ability exp; AbilityId=0
+  all-abilities branch covered.
+- ✅ WI-4 MateLevel closure (6) — SummonMate preseed + Cleanup-consume path
+  (5464) covered.
+- ✅ WI-5 CompleteQuest closure (11) — synthetic-block pattern from
+  CharacterQuestsDailyResetTests.
+- ✅ WI-6 Band 41-50 ltd triage — Josh rulings 2026-08-09: 6069 DROP
+  (executed t_6810ebd4, merged t_ec1a3326); 3419/4967 NO-GO keep
+  (register §8).
+- ✅ WI-7 T9 sweep band 31-40 (t_eb2556c3) — 643/643 PASS, zero harness
+  SKIPs as predicted.
+- ✅ WI-8 T10 sweep band 41-50 (t_fc85a317) — 1,589 PASS / 2 doc-SKIP
+  (3419/4967) / 0 FAIL.
+- ✅ WI-9 T11 sweep band 51-55 (t_867af9e4) + lvl-99 straggler 3465 —
+  269/269 PASS-or-doc-SKIP.
+- ✅ WI-10 Driver fidelity stages (t_abafd918 @ 9f785d430) — TIMEOUT /
+  RESET / GUARD_DIED, 642 probe stages, 0 new FAIL.
+- ✅ WI-11 Band 0/null — WI-11a triage (t_724ccab2; Josh Q2 ruling: 4
+  no-components NO-GO keep) + WI-11b sweep (t_8ec705f0 @ e4dcc22c7):
+  60/60 accounted, 56 PASS / 4 doc-SKIP; BUG-014 found → fixed
+  (t_8b47a3bf @ 4b73b63ac, Rei gate PASS).
+- ✅ WI-12 Final census + denominator reconciliation (t_971d275b @
+  7f5c179f7) — **G1 GATE PASS**: 4,876 rows − 297 registered drops = 4,579
+  live = 4,573 PASS + 6 doc-SKIP, zero unexplained; gate 1495/0/1.
+
+**Deferred / kept-by-ruling (documented SKIP — not actionable without Josh
+overturning):** 6 live contexts — 3419/4967 (ltd no-report, WI-6 register §8)
+and 315/1576/1728/2046 (no-components, WI-11a A2) — plus 8 orphaned contexts
+with no quest_contexts row (745/1421/1954–1958/2140, register §3,
+census-SKIP).
 
 Purged-content policy (settled by audit): the 26 engine-stuck (zone 22
 A-cluster) have no completion path in canonical 1.2 data — restoring them is
