@@ -34,7 +34,7 @@ public class HomesteadPlacementScenarioTests
     // --- 1.2-shaped fixture data -------------------------------------------------------
 
     private static HousingGroup Group(uint id, bool houseless = false)
-        => new() { Id = id, Name = $"group_{id}", HouselessOnly = houseless, CanExtend = true };
+        => new() { Id = id, Name = $"group_{id}", Houseless = houseless, CanExtend = true };
 
     private static Dictionary<uint, HousingGroup> DefaultGroups() => new()
     {
