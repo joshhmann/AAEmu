@@ -66,6 +66,7 @@ services:
                 max-file: "3"
         volumes:
           - "./.server_files/AAEmu.Login/Config.json:/app/Config.json:ro"
+          - "./.server_files/AAEmu.Login/NLog.config:/app/NLog.config:ro"
         environment:
             DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 1
             GameServers__0__ID: 1
@@ -113,6 +114,7 @@ services:
           - "./.server_files/AAEmu.Game/Data:/app/Data:ro"
           - "./.server_files/AAEmu.Game/Configurations:/app/Configurations:ro"
           - "./.server_files/AAEmu.Game/Config.json:/app/Config.json:ro"
+          - "./.server_files/AAEmu.Game/NLog.config:/app/NLog.config:ro"
         environment:
             DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 1
         ports:

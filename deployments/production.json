@@ -1,14 +1,27 @@
 {
   "environment": "aaemu-.165",
-  "git_sha": "b1e2231c868511c0f17dbd4e6c5c2eceaf9dbb12",
-  "deployed_at": "2026-08-05T19:10:00-07:00",
-  "milestone": "M1 widened-backlog batch (overlay 776/777 + prune 2145/1960 + drops cluster/1391/orphans + register)",
-  "database_backup": "none_required_no_schema_change (box compact.sqlite3 pristine, md5 78b3bdbf - read-only reference rule 3)",
-  "services": {
-    "db": "Up 2 days (healthy)",
-    "login": "Up (healthy)",
-    "game": "Up (healthy) - 0 FATAL in boot log",
-    "adminer": "Up 3 days"
+  "image": {
+    "tag": "aaemu-game:presence-demo",
+    "digest": "sha256:ebe809a0ec5b0666e69ab8d92648414a3a6f08b6309fce89a6c199d43bb35a9d",
+    "built_at": "2026-08-09T13:34:09-07:00 (PDT)"
   },
-  "notes": "Census: [QuestSanity] SUMMARY OK - 0 errors, 35 warnings, 112 info across 4775 quests / 17720 components / 19047 acts (was 14 WARN at Round-2; +21 = dead shells now honestly reported after allowlist removals, per drop register). Josh GO 2026-08-05 (msg 1534739409876942979); all changes Rei-gated; no upstream PRs (lane gate)."
+  "source": {
+    "commit": "fd4ab6eea",
+    "branch": "origin/fix/gm-bot-commands",
+    "lineage": "fix/gm-bot-commands rebased onto the full presence-demo hotfix chain — base de95d53c1 + terrain z-wedge (05652e0c5/2ff6f19f3/8e4b2b6b0/a32ee64d2) + home override + 300s poll (c22575d9d/96e45252a) + model params (d0e5feb9) + body equipment (bd023bb4c) + M6.6 parity seeding (45cd3f3a9) + appearance factory (91b308d71) + GM bot commands (fd4ab6eea)",
+    "verified": "all 16 lineage commits confirmed ancestors of fd4ab6eea via git merge-base --is-ancestor (2026-08-09, t_0fda3cd3)"
+  },
+  "git_sha": "b1e2231c868511c0f17dbd4e6c5c2eceaf9dbb12",
+  "git_sha_note": "STALE — records the last plain-compose deploy (2026-08-05); the running game container is the presence-demo image above, built from fd4ab6eea, NOT from this sha. develop now contains the full lineage (merge chain t_0fda3cd3, tip 5d30a810e) so a rebuild from repo develop reproduces prod.",
+  "deployed_at": "2026-08-09T13:34:00-07:00",
+  "milestone": "M6 presence-demo hotfix chain (GM commands /bot add|remove|list|here|go LIVE; parity seeding; body equipment; appearance factory)",
+  "database_backup": "none_required_no_schema_change (bot rows additive; accounts reused idempotently by BotAccountProvisioningService; box compact.sqlite3 pristine per read-only reference rule 3)",
+  "services": {
+    "db": "Up (healthy)",
+    "login": "Up (healthy)",
+    "game": "Up (healthy) - presence-demo image ebe809a0ec5b, 3 citizen bots embodied+roaming",
+    "adminer": "Up"
+  },
+  "build_path": "worktree recipe (documented in aaemu-fork-workflow skill, PRESENCE demo deploy): in /root/AAEmu (prod), `git worktree add /root/aaemu-deploy-<tag> <sha>`; `ln -s /root/AAEmu/.server_files /root/aaemu-deploy-<tag>/.server_files`; copy docker-compose.presence.yaml in; build with `--env-file /root/AAEmu/.env`; deploy `docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml up -d --no-deps --force-recreate game`. Rollback tags retained: pre-gm=af96b0f3bbd6 / pre-parity-seeding=037dcfa2803c / pre-hotfix5=a6f6631c1835 / pre-hotfix4=280df55c585d / pre-hotfix3=b43277edf887 / pre-hotfix2=eae06dc172ac.",
+  "notes": "Manifest corrected 2026-08-09 by t_0fda3cd3 after Kimi audit flagged it 4 days / ~10 rebuilds stale. GM-commands rebase WAS committed on the fork (fd4ab6eea, origin/fix/gm-bot-commands) — the audit's 'never committed' claim is superseded. bd023bb4c (body equipment) was NOT orphaned: it lives on origin/fix/gm-bot-commands and is now merged into develop. Uncommitted docker-compose.yaml NLog.config mounts captured into repo (compose commit on develop). Census truth carried by M2c branch (2062/2062 runnable, band 1-30). Josh GO 2026-08-08/09 deploy chain; no upstream PRs (lane gate)."
 }
