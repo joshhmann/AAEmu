@@ -1,7 +1,7 @@
 {
- "questId": 2926,
- "name": "마리아노플 정원 관리",
- "zoneId": 2,
+ "questId": 2935,
+ "name": "공사장 자재 철거",
+ "zoneId": 8,
  "categoryId": 49,
  "level": 50,
  "letItDone": false,
@@ -10,34 +10,34 @@
  "family": "QuestActConAcceptNpc",
  "acceptor": {
   "type": "Npc",
-  "id": 8823
+  "id": 8821
  },
  "template": {
   "level": 50,
   "components": [
    {
     "kind": "Start",
-    "id": 12552,
+    "id": 12613,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18328,
+      "actId": 18356,
       "type": "QuestActConAcceptNpc",
-      "detailId": 2359,
-      "npcId": 8823
+      "detailId": 2365,
+      "npcId": 8821
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 12553,
+    "id": 12614,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18345,
+      "actId": 18358,
       "type": "QuestActObjInteraction",
-      "detailId": 439,
-      "doodadId": 3449,
+      "detailId": 441,
+      "doodadId": 3457,
       "count": 15,
       "wiId": 19,
       "phase": 0
@@ -46,38 +46,38 @@
    },
    {
     "kind": "Ready",
-    "id": 12554,
+    "id": 12615,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18329,
+      "actId": 18357,
       "type": "QuestActConReportNpc",
-      "detailId": 2580,
-      "npcId": 8823
+      "detailId": 2585,
+      "npcId": 8821
      }
     ]
    },
    {
     "kind": "Reward",
-    "id": 12555,
+    "id": 12616,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18346,
+      "actId": 18359,
       "type": "QuestActSupplyExp",
-      "detailId": 53,
+      "detailId": 55,
       "exp": 0
      },
      {
-      "actId": 18347,
+      "actId": 18360,
       "type": "QuestActSupplyCopper",
-      "detailId": 277,
+      "detailId": 279,
       "amount": 10
      },
      {
-      "actId": 18348,
+      "actId": 18361,
       "type": "QuestActSupplyCrimePoint",
-      "detailId": 2,
+      "detailId": 4,
       "point": -20
      }
     ]
@@ -98,7 +98,7 @@
    "events": [
     {
      "type": "Interaction",
-     "doodadId": 3449,
+     "doodadId": 3457,
      "count": 15
     }
    ],
@@ -112,7 +112,7 @@
    "events": [
     {
      "type": "ReportNpc",
-     "npcId": 8823,
+     "npcId": 8821,
      "selected": 0
     }
    ],

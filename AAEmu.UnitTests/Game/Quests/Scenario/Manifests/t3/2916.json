@@ -65,7 +65,8 @@
      {
       "actId": 18207,
       "type": "QuestActSupplyCrimePoint",
-      "detailId": 1
+      "detailId": 1,
+      "point": -20
      },
      {
       "actId": 18208,
@@ -135,8 +136,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActSupplyCrimePoint; unsynthesizable event shape for QuestActSupplyCrimePoint (comp 12369)"
- }
+ "selectedRewardIndex": 0
 }

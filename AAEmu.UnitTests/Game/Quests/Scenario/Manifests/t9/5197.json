@@ -1,0 +1,215 @@
+{
+ "questId": 5197,
+ "name": "구도자에게 절하기",
+ "zoneId": 176,
+ "categoryId": 49,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12995
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22497,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32088,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4049,
+      "npcId": 12995
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32134,
+      "type": "QuestActObjItemUse",
+      "detailId": 725,
+      "itemId": 27306,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31658,
+      "type": "QuestActSupplyExp",
+      "detailId": 609,
+      "exp": 0
+     },
+     {
+      "actId": 31662,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1027,
+      "amount": 10
+     },
+     {
+      "actId": 31664,
+      "type": "QuestActSupplyCrimePoint",
+      "detailId": 7,
+      "point": -30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22503,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32054,
+      "type": "QuestActConReportNpc",
+      "detailId": 4358,
+      "npcId": 12995
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22719,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32130,
+      "type": "QuestActObjItemUse",
+      "detailId": 723,
+      "itemId": 27304,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32133,
+      "type": "QuestActObjItemUse",
+      "detailId": 724,
+      "itemId": 27305,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22808,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32129,
+      "type": "QuestActSupplyItem",
+      "detailId": 3648,
+      "itemId": 27304,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 32132,
+      "type": "QuestActSupplyItem",
+      "detailId": 3650,
+      "itemId": 27305,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 32135,
+      "type": "QuestActSupplyItem",
+      "detailId": 3651,
+      "itemId": 27306,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 27306,
+     "count": 1
+    },
+    {
+     "type": "ItemUse",
+     "itemId": 27304,
+     "count": 1
+    },
+    {
+     "type": "ItemUse",
+     "itemId": 27305,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12995,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

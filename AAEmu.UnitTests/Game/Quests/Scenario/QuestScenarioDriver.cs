@@ -349,6 +349,10 @@ public class QuestScenarioDriver
             // M2c wave-3: LivingPoint supply the expedition dailies carry at
             // Reward (5923/5924) - without it the dailies stay SKIP.
             nameof(QuestActSupplyLivingPoint) => new QuestActSupplyLivingPoint(component) { Point = GetInt(raw, "point") },
+            // M2 WI-2 (t_f42b9ae3): CrimePoint supply act (7 live carriers) -
+            // RunAct -> Character.AddCrime (null-safe SendPacket), mirrors the
+            // point-supply family.
+            nameof(QuestActSupplyCrimePoint) => new QuestActSupplyCrimePoint(component) { Point = (short)GetInt(raw, "point") },
             nameof(QuestActCheckGuard) => new QuestActCheckGuard(component) { NpcId = GetUInt(raw, "npcId") },
             nameof(QuestActCheckSphere) => new QuestActCheckSphere(component) { SphereId = GetUInt(raw, "sphereId") },
             nameof(QuestActCheckTimer) => new QuestActCheckTimer(component) { LimitTime = GetInt(raw, "limitTime"), NextComponent = GetUInt(raw, "nextComponent") },

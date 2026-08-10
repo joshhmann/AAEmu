@@ -1,7 +1,7 @@
 {
- "questId": 2926,
- "name": "마리아노플 정원 관리",
- "zoneId": 2,
+ "questId": 2936,
+ "name": "부두 하역 작업",
+ "zoneId": 8,
  "categoryId": 49,
  "level": 50,
  "letItDone": false,
@@ -10,74 +10,79 @@
  "family": "QuestActConAcceptNpc",
  "acceptor": {
   "type": "Npc",
-  "id": 8823
+  "id": 8824
  },
  "template": {
   "level": 50,
   "components": [
    {
     "kind": "Start",
-    "id": 12552,
+    "id": 12609,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18328,
+      "actId": 18350,
       "type": "QuestActConAcceptNpc",
-      "detailId": 2359,
-      "npcId": 8823
+      "detailId": 2364,
+      "npcId": 8824
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 12553,
+    "id": 12610,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18345,
-      "type": "QuestActObjInteraction",
-      "detailId": 439,
-      "doodadId": 3449,
-      "count": 15,
-      "wiId": 19,
-      "phase": 0
+      "actId": 30680,
+      "type": "QuestActObjItemUse",
+      "detailId": 693,
+      "itemId": 18704,
+      "count": 3
+     },
+     {
+      "actId": 30681,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 141,
+      "itemId": 18704,
+      "count": 1
      }
     ]
    },
    {
     "kind": "Ready",
-    "id": 12554,
+    "id": 12611,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18329,
+      "actId": 18351,
       "type": "QuestActConReportNpc",
-      "detailId": 2580,
-      "npcId": 8823
+      "detailId": 2584,
+      "npcId": 8833
      }
     ]
    },
    {
     "kind": "Reward",
-    "id": 12555,
+    "id": 12612,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18346,
+      "actId": 18352,
       "type": "QuestActSupplyExp",
-      "detailId": 53,
+      "detailId": 54,
       "exp": 0
      },
      {
-      "actId": 18347,
+      "actId": 18353,
       "type": "QuestActSupplyCopper",
-      "detailId": 277,
+      "detailId": 278,
       "amount": 10
      },
      {
-      "actId": 18348,
+      "actId": 18354,
       "type": "QuestActSupplyCrimePoint",
-      "detailId": 2,
+      "detailId": 3,
       "point": -20
      }
     ]
@@ -97,9 +102,9 @@
    "name": "PROGRESS",
    "events": [
     {
-     "type": "Interaction",
-     "doodadId": 3449,
-     "count": 15
+     "type": "ItemUse",
+     "itemId": 18704,
+     "count": 3
     }
    ],
    "expect": {
@@ -112,7 +117,7 @@
    "events": [
     {
      "type": "ReportNpc",
-     "npcId": 8823,
+     "npcId": 8833,
      "selected": 0
     }
    ],

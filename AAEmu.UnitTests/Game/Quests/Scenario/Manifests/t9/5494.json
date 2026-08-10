@@ -1,84 +1,76 @@
 {
- "questId": 2926,
- "name": "마리아노플 정원 관리",
- "zoneId": 2,
- "categoryId": 49,
- "level": 50,
+ "questId": 5494,
+ "name": "뒤늦은 후회",
+ "zoneId": 1,
+ "categoryId": 48,
+ "level": 41,
  "letItDone": false,
  "selective": false,
  "score": 0,
  "family": "QuestActConAcceptNpc",
  "acceptor": {
   "type": "Npc",
-  "id": 8823
+  "id": 8706
  },
  "template": {
-  "level": 50,
+  "level": 41,
   "components": [
    {
     "kind": "Start",
-    "id": 12552,
+    "id": 23742,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18328,
+      "actId": 33554,
       "type": "QuestActConAcceptNpc",
-      "detailId": 2359,
-      "npcId": 8823
+      "detailId": 4241,
+      "npcId": 8706
      }
     ]
    },
    {
     "kind": "Progress",
-    "id": 12553,
+    "id": 23743,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18345,
-      "type": "QuestActObjInteraction",
-      "detailId": 439,
-      "doodadId": 3449,
-      "count": 15,
-      "wiId": 19,
-      "phase": 0
+      "actId": 33418,
+      "type": "QuestActObjItemGather",
+      "detailId": 2710,
+      "itemId": 28521,
+      "count": 8
      }
     ]
    },
    {
     "kind": "Ready",
-    "id": 12554,
+    "id": 23744,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18329,
+      "actId": 33421,
       "type": "QuestActConReportNpc",
-      "detailId": 2580,
-      "npcId": 8823
+      "detailId": 4532,
+      "npcId": 8706
      }
     ]
    },
    {
     "kind": "Reward",
-    "id": 12555,
+    "id": 23745,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 18346,
-      "type": "QuestActSupplyExp",
-      "detailId": 53,
-      "exp": 0
-     },
-     {
-      "actId": 18347,
+      "actId": 33419,
       "type": "QuestActSupplyCopper",
-      "detailId": 277,
-      "amount": 10
+      "detailId": 1183,
+      "amount": 0
      },
      {
-      "actId": 18348,
+      "actId": 33420,
       "type": "QuestActSupplyCrimePoint",
-      "detailId": 2,
-      "point": -20
+      "detailId": 9,
+      "point": -100
      }
     ]
    }
@@ -89,17 +81,17 @@
    "name": "START",
    "events": [],
    "expect": {
-    "step": "Progress",
-    "status": "Progress"
+    "step": "Ready",
+    "status": "Ready"
    }
   },
   {
    "name": "PROGRESS",
    "events": [
     {
-     "type": "Interaction",
-     "doodadId": 3449,
-     "count": 15
+     "type": "ItemGather",
+     "itemId": 28521,
+     "count": 8
     }
    ],
    "expect": {
@@ -112,7 +104,7 @@
    "events": [
     {
      "type": "ReportNpc",
-     "npcId": 8823,
+     "npcId": 8706,
      "selected": 0
     }
    ],
@@ -136,5 +128,11 @@
    }
   }
  ],
- "selectedRewardIndex": 0
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28521,
+   "count": 8
+  }
+ ]
 }

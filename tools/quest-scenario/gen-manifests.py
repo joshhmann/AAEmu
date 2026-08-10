@@ -131,6 +131,10 @@ ACT_TABLES = {
     # wave-2) - without this entry the dailies stay SKIP after the ZoneKill
     # closure.
     "QuestActSupplyLivingPoint": ("quest_act_supply_living_points", {"point": "point"}),
+    # M2 WI-2 (t_f42b9ae3): CrimePoint supply act (7 live carriers:
+    # 2916/2926/2935/2936/5197/5198/5494). Same shape as the JuryPoint/LivingPoint
+    # closures - point-only detail table, RunAct->true.
+    "QuestActSupplyCrimePoint": ("quest_act_supply_crime_points", {"point": "point"}),
 }
 
 # Act types that need no synthetic event but whose RunAct is drivable by quest state.
@@ -148,6 +152,9 @@ NO_EVENT_TYPES = {
     "QuestActSupplyHonorPoint",
     # M2c wave-3: supply acts RunAct->true (ChangeGamePoints), zero-wired domain.
     "QuestActSupplyLivingPoint",
+    # M2 WI-2 (t_f42b9ae3): CrimePoint supply act - RunAct->true (AddCrime),
+    # no synthetic event (mirrors JuryPoint/LivingPoint).
+    "QuestActSupplyCrimePoint",
 }
 
 # Act types -> synthetic event shape builder. Returns None when the shape is
@@ -470,6 +477,9 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         # rig satisfies the condition; cinema needs events and is NOT here).
         "QuestActEtcItemObtain", "QuestActConAcceptItemGain", "QuestActSupplyLp",
         "QuestActSupplyHonorPoint",
+        # M2 WI-2 (t_f42b9ae3): CrimePoint supply act - auto-pass like the other
+        # point-supply acts.
+        "QuestActSupplyCrimePoint",
     }
 
     # Act types that pass without events because the generator pre-stocks the inventory
@@ -818,6 +828,28 @@ def select_t5_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
+# ---- T9 (M2 WI-2, t_f42b9ae3): CrimePoint supply act carriers ----
+# All 7 live carriers (2916/2926/2935/2936/5197/5198/5494). 2916/2926 are
+# already sampled in T3 (T3_PINNED_QUESTS); the other five are level 41-50,
+# outside the t6/t7/t8 band sweeps - they need their own tier or they never
+# reach the census. No level filter: the family's carriers are all high-level.
+WAVE3_ACT_TYPES = (
+    "QuestActSupplyCrimePoint",
+)
+
+
+def select_t9_quests(c, existing_ids):
+    """All CrimePoint act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE3_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        WHERE a.act_detail_type IN ({placeholders})
+        ORDER BY cmp.quest_context_id""", WAVE3_ACT_TYPES).fetchall()
+    return [r[0] for r in rows if r[0] not in existing_ids]
+
+
 # ---- T6/T7/T8 (M2a/M2c census): full band sweeps ----
 # Every non-dropped quest in the band, minus quests already sampled in
 # T1-T5 (each quest driven exactly once across the census).
@@ -1018,6 +1050,27 @@ def main():
     # too (each quest driven exactly once across the census).
     existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t5")) if f.endswith(".json")}
 
+    # ---- T9 (M2 WI-2, t_f42b9ae3): CrimePoint supply act carriers ----
+    # The five level-41-50 carriers not sampled anywhere else (2916/2926 are
+    # already in T3). Folded into existing_ids before the band sweeps so they
+    # stay driven exactly once.
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t3")) if f.endswith(".json")}
+    t9_ids = select_t9_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t9")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t9_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t9"] = counts.get("t9", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
     # ---- T6/T7 (M2a census): full band sweeps ----
     # The band denominators (incl. dropped ids per band) and the signature
     # zone map are emitted to Manifests/census-meta.json for the tier test's
@@ -1045,6 +1098,7 @@ def main():
                       "t1_total": len(t1_ids), "t2_total": len(t2_ids),
                       "t3_selected": len(t3_ids), "t4_selected": len(t4_ids),
                       "t5_selected": len(t5_ids),
+                      "t9_selected": len(t9_ids),
                       "t6_selected": band_counts.get("t6", 0),
                       "t7_selected": band_counts.get("t7", 0)}, indent=1))
 

@@ -8,13 +8,14 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 - **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
-- **T3 stratified act-family census (frozen M1-5c sample)**: 44 PASS / 0 FAIL / 10 SKIP
+- **T3 stratified act-family census (frozen M1-5c sample)**: 46 PASS / 0 FAIL / 8 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 32 PASS / 0 FAIL / 0 SKIP
 - **T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)**: 13 PASS / 0 FAIL / 0 SKIP
 - **T6 M2a census (band 1-10 full sweep)**: 445 PASS / 0 FAIL / 0 SKIP
 - **T7 M2a census (band 11-20 full sweep)**: 576 PASS / 0 FAIL / 0 SKIP
 - **T8 M2c census (band 21-30 full sweep)**: 826 PASS / 0 FAIL / 0 SKIP
-- **ALL TIERS (census)**: 2062 PASS / 0 FAIL / 16 SKIP over 2078 quests — **2062/2062 quests runnable** (16 SKIP not driven, reasons below)
+- **T9 M2 WI-2 (CrimePoint supply carriers)**: 5 PASS / 0 FAIL / 0 SKIP
+- **ALL TIERS (census)**: 2069 PASS / 0 FAIL / 14 SKIP over 2083 quests — **2069/2069 quests runnable** (14 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
@@ -212,8 +213,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2108 | 수호자의 숲을 떠도는 도깨비불 처지 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2301 | 죽일 자와 구할 자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2717 | 자유도! | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 2916 | 마리아노플 하수도 청소 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActSupplyCrimePoint; unsynthesizable event shape for QuestActSupplyCrimePoint (comp 12369)) |
-| 2926 | 마리아노플 정원 관리 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActSupplyCrimePoint; unsynthesizable event shape for QuestActSupplyCrimePoint (comp 12555)) |
+| 2916 | 마리아노플 하수도 청소 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2926 | 마리아노플 정원 관리 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3006 | 당신의 모험을 응원합니다 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3026 | 거대 바이암의 횡포 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3569 | 키프로사의 빛 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2167,6 +2168,16 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 955 | 연습을 돕는 방법 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 963 | 떠도는 혼 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 
+## T9 — per-quest verdicts
+
+| quest | name | family | verdict | detail |
+|---|---|---|---|---|
+| 2935 | 공사장 자재 철거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2936 | 부두 하역 작업 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5197 | 구도자에게 절하기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5198 | 바다 쓰레기 수거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5494 | 뒤늦은 후회 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+
 ## FAIL rollup (by act family — top blockers)
 
 _none — every driven quest passed._
@@ -2177,7 +2188,6 @@ _none — every driven quest passed._
 ## SKIP rollup (by reason)
 
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
-- **unsupported act type QuestActSupplyCrimePoint** — 2 quests: 2916, 2926
 - **unsupported act type QuestActObjMateLevel** — 2 quests: 5430, 5464
 - **unsupported act type QuestActObjCompleteQuest** — 2 quests: 5814, 5815
 - **unsupported act type QuestActObjAbilityLevel** — 1 quests: 5967
@@ -2197,5 +2207,4 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 | QuestActObjAbilityLevel | unsupported act type | 5967, 6069 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjCompleteQuest | unsupported act type | 5814, 5815 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjMateLevel | unsupported act type | 5430, 5464 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
-| QuestActSupplyCrimePoint | unsupported act type | 2916, 2926 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 
