@@ -11,17 +11,17 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 - **T3 stratified act-family census (frozen M1-5c sample)**: 44 PASS / 0 FAIL / 10 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 32 PASS / 0 FAIL / 0 SKIP
 - **T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)**: 13 PASS / 0 FAIL / 0 SKIP
-- **T6 M2a census (band 1-10 full sweep)**: 445 PASS / 0 FAIL / 100 SKIP
-- **T7 M2a census (band 11-20 full sweep)**: 576 PASS / 0 FAIL / 17 SKIP
+- **T6 M2a census (band 1-10 full sweep)**: 445 PASS / 0 FAIL / 0 SKIP
+- **T7 M2a census (band 11-20 full sweep)**: 576 PASS / 0 FAIL / 0 SKIP
 - **T8 M2c census (band 21-30 full sweep)**: 826 PASS / 0 FAIL / 0 SKIP
-- **ALL TIERS (census)**: 2062 PASS / 0 FAIL / 133 SKIP over 2195 quests — **2062/2062 quests runnable** (133 SKIP not driven, reasons below)
+- **ALL TIERS (census)**: 2062 PASS / 0 FAIL / 16 SKIP over 2078 quests — **2062/2062 quests runnable** (16 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
 | band | tier | total | dropped | non-dropped | driven | PASS | FAIL | SKIP | PASS-or-doc-SKIP |
 |---|---|---|---|---|---|---|---|---|---|
-| 1-10 | t6 | 668 | 8 | 660 | 660 | 560 | 0 | 100 | 100.0% |
-| 11-20 | t7 | 626 | 0 | 626 | 626 | 609 | 0 | 17 | 100.0% |
+| 1-10 | t6 | 668 | 108 | 560 | 560 | 560 | 0 | 0 | 100.0% |
+| 11-20 | t7 | 626 | 17 | 609 | 609 | 609 | 0 | 0 | 100.0% |
 | 21-30 | t8 | 847 | 0 | 847 | 847 | 847 | 0 | 0 | 100.0% |
 
 ## Zone coverage (signature zones)
@@ -38,8 +38,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | Tiger Spine | 11-20 | 100 | 100 | 0 | 0 |
 | Tiger Spine | 21-30 | 1 | 1 | 0 | 0 |
 | Falcony | 1-10 | 85 | 85 | 0 | 0 |
-| Sunny Wilderness | 1-10 | 49 | 40 | 0 | 9 |
-| Sunny Wilderness | 11-20 | 64 | 47 | 0 | 17 |
+| Sunny Wilderness | 1-10 | 40 | 40 | 0 | 0 |
+| Sunny Wilderness | 11-20 | 47 | 47 | 0 | 0 |
 | Ancient Forest | 21-30 | 113 | 113 | 0 | 0 |
 | Marionople | 21-30 | 102 | 102 | 0 | 0 |
 | Two Crowns | 21-30 | 91 | 91 | 0 | 0 |
@@ -480,7 +480,6 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1940 | 아키움으로 만든 보석 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1963 | 기억을 찾아온 팔루한 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 20 | 사라세니아에 관한 문제 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2054 | (구 불볕황야)가려움의 원인 | QuestActObjItemGather | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 2055 | 쇠의 문으로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2056 | (구 불볕황야)보답의 마음 | QuestActObjItemGather | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2059 | 은의 배 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -497,88 +496,6 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2104 | 보리를 홈치러 온 서리꾼들 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2105 | 폭주하는 쇠 골렘 처치하라 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 213 | 원로원의 진상 조사 위원 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2148 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2149 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2150 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2151 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2152 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2153 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2154 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2155 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2156 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2157 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2158 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2159 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2160 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2161 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2162 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2163 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2164 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2165 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2166 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2167 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2168 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2169 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2170 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2171 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2172 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2173 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2174 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2175 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2176 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2177 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2178 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2179 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2180 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2181 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2182 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2183 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2184 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2185 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2186 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2187 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2188 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2189 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2190 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2191 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2192 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2193 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2194 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2195 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2196 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2197 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2198 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2199 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2200 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2201 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2202 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2203 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2204 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2205 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2206 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2207 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2208 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2209 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2210 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2211 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2212 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2213 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2214 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2215 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2216 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2217 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2218 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2219 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2220 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2221 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2222 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2223 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2224 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2225 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2226 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2227 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2228 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
-| 2229 | 하다보니(reserve) | no-acts | Skip | SKIP:Skip (no components) |
 | 2230 | Quest 2230 | no-acts | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2231 | Quest 2231 | no-acts | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2233 | Quest 2233 | no-acts | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -688,16 +605,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3520 | 그림자 매의 바그바트 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3521 | 그림자 매 속으로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 37 | 부리부리 새 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3748 | 수상한 농장 | no-acts | Skip | SKIP:Skip (no components) |
 | 3749 | 하디르의 농장 인던연출2 | QuestActConAcceptSphere | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
-| 3750 | 하디르의 농장 인던연출3 | no-acts | Skip | SKIP:Skip (no components) |
-| 3751 | 하디르의 농장 인던연출4 | no-acts | Skip | SKIP:Skip (no components) |
-| 3752 | 하디르의 농장 인던연출5 | no-acts | Skip | SKIP:Skip (no components) |
-| 3753 | 하디르의 농장 인던연출6 | no-acts | Skip | SKIP:Skip (no components) |
-| 3754 | 하디르의 농장 인던연출7 | no-acts | Skip | SKIP:Skip (no components) |
-| 3755 | 하디르의 농장 인던연출8 | no-acts | Skip | SKIP:Skip (no components) |
-| 3756 | 하디르의 농장 인던연출9 | no-acts | Skip | SKIP:Skip (no components) |
-| 3757 | 하디르의 농장 인던연출10 | no-acts | Skip | SKIP:Skip (no components) |
 | 38 | 엘프의 셈법 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3840 | 에오카드의 엘크 | QuestActCheckTimer | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3842 | 엘크가 좋아하는 건? | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -774,33 +682,25 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5572 | 마을 방역 활동 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5573 | 의식을 거행한다 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5574 | 폭주를 진정시켜라 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5575 | 어둠의 눈을 멀게하라 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5576 | 황야의 습격자 도마뱀 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5577 | 좋은 소식 있어요 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5578 | 선인장 농사 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
-| 5579 | 해충 박멸 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5580 | 함께 땅을 파볼래? | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5581 | 조심 또 조심 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5582 | 이상한 움직임 발견 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5583 | 전망대 알림 종 수리 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5584 | 나쁜 놈 조사 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path); score quest with no Progress objectives (score can never be met)) |
 | 5585 | 드리워지는 어둠 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5586 | 주술을 방해하라 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5587 | 편히 잠드소서 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5588 | 이상해서 더 위험해 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5589 | 세뇌된 자들에게 안식을 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5590 | 피 묻은 손 수장 처치 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5591 | 억제기 설치 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5592 | 피부에 위험한 단백질 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5593 | 통행 재개 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5594 | 목 좀 축이게 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5595 | 새 일을 찾아서 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5596 | 풀이라도 뽑아줄래? | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
-| 5597 | 기분 나쁜 슬라임 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5598 | 삼거리의 불청객 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5599 | 광부를 모집합니다 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5600 | 힘 좀 쓰나 볼까? | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5601 | 광산의 골칫덩이 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5653 | 골렘 재활용 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5654 | 황당한 도둑 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5684 | 깔끔하고 멋진 남자 여름옷을 위해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1005,15 +905,11 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1720 | 농땡이 치는 광부 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1730 | 키리오스의 이름 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1731 | 유적지의 애주가에게 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1867 | (구 불볕황야)용의 틈 연구 | QuestActObjItemGather | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 1873 | UI 테스트 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1885 | (구 불볕황야)부상을 입은 몸 | no-acts | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1889 | (구 불볕황야)땅벌레의 위협 | QuestActObjMonsterHunt | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1898 | (구 불볕황야)폐광 속에서 들려오는 소리 | QuestActObjMonsterHunt | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 1899 | (구 불볕황야)두려운 사실 | no-acts | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1903 | (구 불볕황야)성실함을 증명하는 길 | QuestActObjInteraction | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1904 | (구 불볕황야)먼지가 쌓인 광석 | QuestActObjItemGather | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
-| 1908 | (구 불볕황야)마을 확장의 걸림돌 | QuestActObjMonsterHunt | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 1910 | (구 불볕황야)서쪽 마을의 위기 | QuestActObjInteraction | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1923 | (구 불볕황야)암구호는 구름 과자 | no-acts | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1941 | 추격자의 벌판을 위협하는 사자 무리 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1285,12 +1181,9 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 54 | 제어 받은 흔적 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 55 | 위기감 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5602 | 광부가 아닌 해결사! | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5603 | 정신을 차려야 해 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path); score quest with no Progress objectives (score can never be met)) |
-| 5604 | 광부의 반란 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5605 | 가면 아래 진실 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5606 | 수습이 필요해 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5607 | 급한 연기부터 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5608 | 감시자에게 안식을 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5609 | 슬라임 억제 돕기 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5610 | 최고의 요원 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5611 | 구석 구석 깨끗이 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
@@ -1301,7 +1194,6 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5616 | 주의! 고물상 가는 길 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5617 | 단서를 찾아서 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5618 | 증기를 뿜어내도록 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5619 | 죽지도 않고 돌아온 기계 새 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5620 | 이미 떠나간 기계 혼 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5621 | 냄새 맡는 괴물 상자 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5622 | 폭주한 폐기물 처리반 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
@@ -1312,22 +1204,13 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5627 | 42호 파괴 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5628 | 작전명 가시에 갇힌 양 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5629 | 전사의 가시밭 길 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5630 | 마을까지 나타난 바이암 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5631 | 잠입한 요원은 어디에? | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5632 | 모방의 원인을 찾아라 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path); score quest with no Progress objectives (score can never be met)) |
 | 5633 | 바이암 처치 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5634 | 35호 섬멸 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5635 | 지원 요청 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5636 | 죽음을 부르는 목소리 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
-| 5637 | 하피 몸에 깃든 악마 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 5638 | 놀 주의! | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5639 | 안심하세요 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5640 | 공격적인 개미들 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path); score quest with no Progress objectives (score can never be met)) |
-| 5641 | 신속하고 조용하게 | no-acts | Skip | SKIP:Skip (score quest with no Progress objectives (score can never be met)) |
 | 5642 | 확인 또 확인 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5643 | 달을 낚는 자와 함께 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
-| 5644 | 나는 놈 밑에 뛰는 놈 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
-| 5645 | 호수를 오염시키려는 자들 | no-acts | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path); score quest with no Progress objectives (score can never be met)) |
 | 5646 | 마하데비로 가는 문 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
 | 5655 | 순록 부족의 전통 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5657 | 즐거운 노동을 위해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2293,15 +2176,12 @@ _none — every driven quest passed._
 
 ## SKIP rollup (by reason)
 
-- **no components** — 91 quests: 2148, 2149, 2150, 2151, 2152, 2153, 2154, 2155, 2156, 2157, 2158, 2159, 2160, 2161, 2162, 2163, 2164, 2165, 2166, 2167, 2168, 2169, 2170, 2171, 2172, 2173, 2174, 2175, 2176, 2177, 2178, 2179, 2180, 2181, 2182, 2183, 2184, 2185, 2186, 2187, 2188, 2189, 2190, 2191, 2192, 2193, 2194, 2195, 2196, 2197, 2198, 2199, 2200, 2201, 2202, 2203, 2204, 2205, 2206, 2207, 2208, 2209, 2210, 2211, 2212, 2213, 2214, 2215, 2216, 2217, 2218, 2219, 2220, 2221, 2222, 2223, 2224, 2225, 2226, 2227, 2228, 2229, 3748, 3750, 3751, 3752, 3753, 3754, 3755, 3756, 3757
-- **let-it-done quest with no report act (engine has no completion path)** — 20 quests: 2054, 5575, 5578, 5579, 5589, 5596, 5597, 5601, 1867, 1898, 1904, 1908, 5604, 5608, 5619, 5630, 5636, 5637, 5643, 5644
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
-- **let-it-done quest with no report act (engine has no completion path** — 6 quests: 6069, 5584, 5603, 5632, 5640, 5645
 - **unsupported act type QuestActSupplyCrimePoint** — 2 quests: 2916, 2926
 - **unsupported act type QuestActObjMateLevel** — 2 quests: 5430, 5464
 - **unsupported act type QuestActObjCompleteQuest** — 2 quests: 5814, 5815
 - **unsupported act type QuestActObjAbilityLevel** — 1 quests: 5967
-- **score quest with no Progress objectives (score can never be met)** — 1 quests: 5641
+- **let-it-done quest with no report act (engine has no completion path** — 1 quests: 6069
 
 ## Recommended fix-card queue
 
