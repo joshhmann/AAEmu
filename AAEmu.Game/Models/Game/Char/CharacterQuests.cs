@@ -26,6 +26,16 @@ public class CharacterQuests(Character owner)
     // ushort key wrapped for quest ids >= 4,194,304 and ResetQuests recomputed a
     // wrapped quest id that never resolved to a template (bit never cleared).
     private Dictionary<uint, CompletedQuest> CompletedQuests { get; } = [];
+    // t_ca4683e1: per-character lock over the completed-quests surface. The
+    // completion path (GoToNextStep Reward case) is drivable concurrently — the
+    // game tick's quest-evaluation queue and any other thread that drives
+    // RunCurrentStep (the E2E bridge) — and SetCompletedQuestFlag's check-then-act
+    // block-add (TryGetValue miss -> new CompletedQuest -> Dictionary.Add) threw
+    // `ArgumentException: An item with the same key has already been added`
+    // (live: quest 330, block key 5, game-restart.log:600-609). The same lock
+    // makes DropQuest's lookup+remove atomic so the Reward case is idempotent
+    // under double-entry (no double cleanup / double quest-id release).
+    private readonly object _questsLock = new();
 
     public bool HasQuest(uint questId)
     {
@@ -36,7 +46,10 @@ public class CharacterQuests(Character owner)
     {
         var questBlockId = questId / 64;
         var questBlockIndex = (int)(questId % 64);
-        return CompletedQuests.TryGetValue(questBlockId, out var questBlock) && questBlock.Body.Get(questBlockIndex);
+        lock (_questsLock)
+        {
+            return CompletedQuests.TryGetValue(questBlockId, out var questBlock) && questBlock.Body.Get(questBlockIndex);
+        }
     }
 
     private bool CanAcceptSupplyItems(QuestTemplate template)
@@ -240,13 +253,21 @@ public class CharacterQuests(Character owner)
     /// <param name="forcibly"></param>
     public void DropQuest(uint questId, bool update, bool forcibly = false)
     {
-        if (!ActiveQuests.TryGetValue(questId, out var quest)) { return; }
+        Quest quest;
+        lock (_questsLock)
+        {
+            if (!ActiveQuests.TryGetValue(questId, out quest)) { return; }
+            // Remove BEFORE the drop work: two threads can drive the Reward case
+            // concurrently (eval queue + bridge), and a double-entry must see an
+            // empty lookup and no-op instead of double-cleaning the quest and
+            // double-releasing its id (QuestIdManager.ReleaseId is not idempotent).
+            ActiveQuests.Remove(questId);
+        }
 
         quest.SkipUpdatePackets(); // make sure no further "update packets" are send to the player
         quest.Cleanup();
         quest.Drop(update);
         quest.FinalizeQuestActs();
-        ActiveQuests.Remove(questId);
         _removed.Add(questId);
 
         if (forcibly)
@@ -387,18 +408,21 @@ public class CharacterQuests(Character owner)
     /// <returns>Returns the CompletedQuest block that was changed</returns>
     public CompletedQuest SetCompletedQuestFlag(uint questId, bool isCompleted)
     {
-        // Calculate block and index
-        var completedQuestBlockId = questId / 64;
-        var completedQuestBlockIndex = (ushort)(questId % 64);
-        // Grab or create block
-        if (!CompletedQuests.TryGetValue(completedQuestBlockId, out var completedBlock))
+        lock (_questsLock)
         {
-            completedBlock = new CompletedQuest(completedQuestBlockId);
-            CompletedQuests.Add(completedQuestBlockId, completedBlock);
+            // Calculate block and index
+            var completedQuestBlockId = questId / 64;
+            var completedQuestBlockIndex = (ushort)(questId % 64);
+            // Grab or create block (check-then-act is atomic under the lock)
+            if (!CompletedQuests.TryGetValue(completedQuestBlockId, out var completedBlock))
+            {
+                completedBlock = new CompletedQuest(completedQuestBlockId);
+                CompletedQuests.Add(completedQuestBlockId, completedBlock);
+            }
+            // Set quest flag to (not) completed (idempotent under double-entry)
+            completedBlock.Body.Set(completedQuestBlockIndex, isCompleted);
+            return completedBlock;
         }
-        // Set quest flag to (not) completed
-        completedBlock.Body.Set(completedQuestBlockIndex, isCompleted);
-        return completedBlock;
     }
 
     /// <summary>
@@ -409,9 +433,12 @@ public class CharacterQuests(Character owner)
     public bool IsQuestComplete(uint questId)
     {
         var completeId = questId / 64;
-        if (!CompletedQuests.TryGetValue(completeId, out var completedQuest))
-            return false;
-        return completedQuest.Body[(int)(questId % 64)];
+        lock (_questsLock)
+        {
+            if (!CompletedQuests.TryGetValue(completeId, out var completedQuest))
+                return false;
+            return completedQuest.Body[(int)(questId % 64)];
+        }
     }
 
     /// <summary>
@@ -442,7 +469,11 @@ public class CharacterQuests(Character owner)
     public void SendCompleted()
     {
         const int MaxEntriesPerPacket = 200;
-        var completedQuests = CompletedQuests.Values.ToArray();
+        CompletedQuest[] completedQuests;
+        lock (_questsLock)
+        {
+            completedQuests = CompletedQuests.Values.ToArray();
+        }
         if (completedQuests.Length <= MaxEntriesPerPacket)
         {
             Owner.SendPacket(new SCCompletedQuestsPacket(completedQuests));
@@ -465,30 +496,33 @@ public class CharacterQuests(Character owner)
     /// <param name="sendIfChanged"></param>
     private void ResetQuests(QuestDetail[] questDetail, bool sendIfChanged = true)
     {
-        foreach (var (completeBlockId, completeBlock) in CompletedQuests)
+        lock (_questsLock)
         {
-            for (var blockIndex = 0; blockIndex < 64; blockIndex++)
+            foreach (var (completeBlockId, completeBlock) in CompletedQuests)
             {
-                var questId = (uint)(completeBlockId * 64) + (uint)blockIndex;
-                var q = QuestManager.Instance.GetTemplate(questId);
-                // Skip unused Ids
-                if (q == null)
-                    continue;
-                // Skip if quest still active
-                if (HasQuest(questId))
-                    continue;
-
-                foreach (var qd in questDetail)
+                for (var blockIndex = 0; blockIndex < 64; blockIndex++)
                 {
-                    if (q.DetailId == qd && completeBlock.Body[blockIndex])
+                    var questId = (uint)(completeBlockId * 64) + (uint)blockIndex;
+                    var q = QuestManager.Instance.GetTemplate(questId);
+                    // Skip unused Ids
+                    if (q == null)
+                        continue;
+                    // Skip if quest still active
+                    if (HasQuest(questId))
+                        continue;
+
+                    foreach (var qd in questDetail)
                     {
-                        completeBlock.Body.Set(blockIndex, false);
-                        Logger.Info($"QuestReset by {Owner.Name}, reset {questId}");
-                        if (sendIfChanged)
+                        if (q.DetailId == qd && completeBlock.Body[blockIndex])
                         {
-                            var body = new byte[8];
-                            completeBlock.Body.CopyTo(body, 0);
-                            Owner.SendPacket(new SCQuestContextResetPacket(questId, body, completeBlockId));
+                            completeBlock.Body.Set(blockIndex, false);
+                            Logger.Info($"QuestReset by {Owner.Name}, reset {questId}");
+                            if (sendIfChanged)
+                            {
+                                var body = new byte[8];
+                                completeBlock.Body.CopyTo(body, 0);
+                                Owner.SendPacket(new SCQuestContextResetPacket(questId, body, completeBlockId));
+                            }
                         }
                     }
                 }
@@ -585,7 +619,15 @@ public class CharacterQuests(Character owner)
             command.Transaction = transaction;
 
             command.CommandText = "REPLACE INTO completed_quests(`id`,`data`,`owner`) VALUES(@id,@data,@owner)";
-            foreach (var quest in CompletedQuests.Values)
+            CompletedQuest[] completedBlocks;
+            lock (_questsLock)
+            {
+                // Snapshot under the lock: a concurrent SetCompletedQuestFlag would
+                // otherwise throw "Collection was modified" mid-iteration (t_ca4683e1
+                // race class).
+                completedBlocks = CompletedQuests.Values.ToArray();
+            }
+            foreach (var quest in completedBlocks)
             {
                 command.Parameters.AddWithValue("@id", quest.Id);
                 var body = new byte[8];
