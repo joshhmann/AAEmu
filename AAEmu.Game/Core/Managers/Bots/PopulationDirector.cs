@@ -73,6 +73,20 @@ public sealed class PopulationDirector : IPopulationDirector
 
     /// <inheritdoc />
     public int EmbodiedInZone(uint zoneId)
+        => ScanEmbodiedInZone(zoneId, int.MaxValue);
+
+    /// <inheritdoc />
+    public int EmbodiedOnActivity(string activity)
+        => ScanEmbodiedOnActivity(activity, int.MaxValue);
+
+    /// <summary>
+    /// Budgeted embodied-bot scan for a zone: breaks early once <paramref name="budget"/>
+    /// matching bots are found. The density gate only needs "at or above cap?", so the
+    /// saturated case (a wake storm into a capped zone) costs O(budget) instead of O(N)
+    /// per wake — the wake-storm path is O(N·cap) overall, not O(N²). Non-dormant
+    /// entries are the only ones resolved against the manager registry.
+    /// </summary>
+    private int ScanEmbodiedInZone(uint zoneId, int budget)
     {
         var count = 0;
         foreach (var (botId, fidelity) in _fidelity)
@@ -80,14 +94,18 @@ public sealed class PopulationDirector : IPopulationDirector
             if (fidelity == BotFidelity.Dormant)
                 continue;
             if (_manager.TryGet(botId, out var runtime) && _zoneResolver(runtime!.Character) == zoneId)
+            {
                 count++;
+                if (count >= budget)
+                    break;
+            }
         }
 
         return count;
     }
 
-    /// <inheritdoc />
-    public int EmbodiedOnActivity(string activity)
+    /// <summary>Budgeted embodied-bot scan for an activity (see <see cref="ScanEmbodiedInZone"/>).</summary>
+    private int ScanEmbodiedOnActivity(string activity, int budget)
     {
         var count = 0;
         foreach (var (botId, fidelity) in _fidelity)
@@ -95,7 +113,11 @@ public sealed class PopulationDirector : IPopulationDirector
             if (fidelity == BotFidelity.Dormant)
                 continue;
             if (_manager.TryGet(botId, out var runtime) && _activityResolver(runtime!.Character) == activity)
+            {
                 count++;
+                if (count >= budget)
+                    break;
+            }
         }
 
         return count;
@@ -324,7 +346,7 @@ public sealed class PopulationDirector : IPopulationDirector
         var zoneCap = _options.ZoneDensityCaps.TryGetValue(zoneId, out var zc)
             ? zc
             : _options.DefaultZoneCap;
-        if (zoneCap >= 0 && EmbodiedInZone(zoneId) >= zoneCap)
+        if (zoneCap >= 0 && ScanEmbodiedInZone(zoneId, zoneCap) >= zoneCap)
             return FidelityTransitionResult.DensityCapZoneReached;
 
         var activity = _activityResolver(character);
@@ -333,7 +355,7 @@ public sealed class PopulationDirector : IPopulationDirector
             var activityCap = _options.ActivityDensityCaps.TryGetValue(activity, out var ac)
                 ? ac
                 : _options.DefaultActivityCap;
-            if (activityCap >= 0 && EmbodiedOnActivity(activity) >= activityCap)
+            if (activityCap >= 0 && ScanEmbodiedOnActivity(activity, activityCap) >= activityCap)
                 return FidelityTransitionResult.DensityCapActivityReached;
         }
 

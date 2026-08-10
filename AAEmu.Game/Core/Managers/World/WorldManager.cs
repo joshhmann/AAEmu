@@ -1151,13 +1151,24 @@ public class WorldManager(
     public static List<T> GetAround<T>(GameObject obj) where T : class
     {
         var result = new List<T>();
+        GetAround(obj, result);
+        return result;
+    }
+
+    /// <summary>
+    /// Allocation-free neighbourhood scan: fills <paramref name="result"/> (cleared
+    /// first) with all T GameObjects around <paramref name="obj"/>. Use from hot
+    /// paths (broadcast at ~5k/sec with roaming bots) to avoid per-call
+    /// <see cref="List{T}"/> allocations and per-region array copies.
+    /// </summary>
+    public static void GetAround<T>(GameObject obj, List<T> result) where T : class
+    {
+        result.Clear();
         if (obj?.Region == null)
-            return result;
+            return;
 
         foreach (var neighbor in obj.Region.GetNeighbors())
             neighbor?.GetList(result, obj.ObjId);
-
-        return result;
     }
 
     /// <summary>

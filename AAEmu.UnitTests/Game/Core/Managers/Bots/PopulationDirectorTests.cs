@@ -90,6 +90,12 @@ public class PopulationDirectorTests
         /// <summary>Activity per bot id (resolver seam).</summary>
         public Dictionary<uint, string?> Activities { get; } = [];
 
+        /// <summary>Counts zone-resolver invocations (scan-work measurement seam).</summary>
+        public long ZoneResolverCalls { get; set; }
+
+        /// <summary>Counts activity-resolver invocations (scan-work measurement seam).</summary>
+        public long ActivityResolverCalls { get; set; }
+
         public Rig(Action<PopulationDirectorOptions>? configureOptions = null)
         {
             Manager = new PlayerBotManager(new RecordingLifecycle());
@@ -110,8 +116,16 @@ public class PopulationDirectorTests
                 Safety,
                 PressureProbe,
                 directorOptions,
-                zoneResolver: c => Zones.TryGetValue(c.Id, out var z) ? z : 0,
-                activityResolver: c => Activities.TryGetValue(c.Id, out var a) ? a : null);
+                zoneResolver: c =>
+                {
+                    ZoneResolverCalls++;
+                    return Zones.TryGetValue(c.Id, out var z) ? z : 0;
+                },
+                activityResolver: c =>
+                {
+                    ActivityResolverCalls++;
+                    return Activities.TryGetValue(c.Id, out var a) ? a : null;
+                });
         }
 
         /// <summary>Spawns + activates a bot through the real manager registry.</summary>
@@ -547,6 +561,117 @@ public class PopulationDirectorTests
         await Assert.That(m.TotalTransitionsApplied).IsEqualTo(3);
         await Assert.That(m.TotalTransitionsRejected).IsEqualTo(1);
         await Assert.That(m.Pressure).IsEqualTo(ServerPressure.Healthy);
+    }
+
+    #endregion
+
+    #region Wake-storm scan budget (O(N²) → O(N·cap))
+
+    [Test]
+    public async Task WakeStormIntoCappedZone_ScanIsBudgeted_NotQuadratic()
+    {
+        const int zoneCap = 25;
+        const int otherZoneBots = 200;
+        const int wakeAttempts = 200;
+        using var rig = new Rig(cfg =>
+        {
+            cfg.ZoneDensityCaps[101] = zoneCap;
+        });
+
+        // Seed 25 embodied bots IN zone 101 (zone is exactly at cap) with the
+        // lowest ids — ConcurrentDictionary enumerates in bucket order, so the
+        // matching entries cluster at the front of the scan.
+        for (uint id = 1; id <= zoneCap; id++)
+        {
+            var bot = rig.AddActiveBot(id);
+            rig.Zones[bot] = 101;
+            rig.Director.TrySetFidelity(bot, BotFidelity.Reduced, "seed");
+        }
+        // 200 embodied bots in OTHER zones — an unbudgeted scan must walk past
+        // every one of them per wake.
+        for (uint id = 101; id < 101 + otherZoneBots; id++)
+        {
+            var bot = rig.AddActiveBot(id);
+            rig.Zones[bot] = 999;
+            rig.Director.TrySetFidelity(bot, BotFidelity.Reduced, "seed");
+        }
+
+        rig.ZoneResolverCalls = 0;
+
+        // Wake storm: every attempt fails (zone at cap). Each blocked wake runs
+        // the density scan; with break-early the scan stops at the cap-th in-zone
+        // bot instead of walking all N non-dormant entries.
+        for (uint id = 10001; id < 10001 + wakeAttempts; id++)
+        {
+            var bot = rig.AddActiveBot(id);
+            rig.Zones[bot] = 101;
+            await Assert.That(rig.Director.TrySetFidelity(bot, BotFidelity.Reduced, "storm"))
+                .IsEqualTo(FidelityTransitionResult.DensityCapZoneReached);
+        }
+
+        var totalResolverCalls = rig.ZoneResolverCalls;
+        var unbudgetedSignature = (long)wakeAttempts * (zoneCap + otherZoneBots);
+
+        // O(N²) signature would be one full scan per wake (225 resolver calls ×
+        // 200 wakes = 45,000); the budgeted scan must stay well below half of that.
+        await Assert.That(totalResolverCalls < unbudgetedSignature / 2)
+            .IsTrue()
+            .Because($"wake-storm density scan must be < O(N²) (< {unbudgetedSignature / 2} resolver calls, saw {totalResolverCalls})");
+
+        // Per-wake scan work is bounded by O(cap), not O(N): with the cap at 25,
+        // one wake must not cost more than ~3× cap resolver calls (bucket-order
+        // collisions with non-matching bots included).
+        await Assert.That(totalResolverCalls <= wakeAttempts * (zoneCap * 3))
+            .IsTrue()
+            .Because($"per-wake scan work must be O(cap) (≤ {wakeAttempts * (zoneCap * 3)}, saw {totalResolverCalls})");
+    }
+
+    [Test]
+    public async Task WakeStormIntoCappedActivity_ScanIsBudgeted_NotQuadratic()
+    {
+        const int activityCap = 20;
+        const int otherActivityBots = 150;
+        const int wakeAttempts = 150;
+        using var rig = new Rig(cfg =>
+        {
+            cfg.ActivityDensityCaps["trade"] = activityCap;
+        });
+
+        // Zone caps are uncapped here so only the ACTIVITY gate can reject — this
+        // isolates the activity scan as the measured path.
+        for (uint id = 1; id <= activityCap; id++)
+        {
+            var bot = rig.AddActiveBot(id);
+            rig.Activities[bot] = "trade";
+            rig.Director.TrySetFidelity(bot, BotFidelity.Reduced, "seed");
+        }
+        for (uint id = 101; id < 101 + otherActivityBots; id++)
+        {
+            var bot = rig.AddActiveBot(id);
+            rig.Activities[bot] = "harvest";
+            rig.Director.TrySetFidelity(bot, BotFidelity.Reduced, "seed");
+        }
+
+        rig.ZoneResolverCalls = 0;
+        rig.ActivityResolverCalls = 0;
+
+        for (uint id = 10001; id < 10001 + wakeAttempts; id++)
+        {
+            var bot = rig.AddActiveBot(id);
+            rig.Activities[bot] = "trade";
+            await Assert.That(rig.Director.TrySetFidelity(bot, BotFidelity.Reduced, "storm"))
+                .IsEqualTo(FidelityTransitionResult.DensityCapActivityReached);
+        }
+
+        var totalResolverCalls = rig.ActivityResolverCalls;
+        var unbudgetedSignature = (long)wakeAttempts * (activityCap + otherActivityBots);
+
+        await Assert.That(totalResolverCalls < unbudgetedSignature / 2)
+            .IsTrue()
+            .Because($"activity wake-storm scan must be < O(N²) (< {unbudgetedSignature / 2} resolver calls, saw {totalResolverCalls})");
+        await Assert.That(totalResolverCalls <= wakeAttempts * (activityCap * 3))
+            .IsTrue()
+            .Because($"per-wake activity scan work must be O(cap) (≤ {wakeAttempts * (activityCap * 3)}, saw {totalResolverCalls})");
     }
 
     #endregion
