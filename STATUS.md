@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-09 14:45 PDT · by Nei
-Branch of record: develop @ d1899128 · active work branch: feat/bot-appearance-factory @ 615c3719c
+Updated: 2026-08-09 17:58 PDT · by Nei
+Branch of record: develop @ d1899128 · active work branch: feat/bot-appearance-factory @ a71ad030f
 
 ## Milestone state
 
@@ -33,7 +33,10 @@ BotAppearanceFactory — randomized player-like looks + per-class starting
 equipment (91b308d71, t_61814965). M6.6 player-parity requirements
 landed in ROADMAP.md (74151e060). E2E harness committed (Scripts/e2e);
 presence-demo compose overlay captured in-repo
-(docker-compose.presence.yaml).
+(docker-compose.presence.yaml). GM bot commands deployed P0
+(t_7b4f9423). **6h/10-bot soak RUNNING** (t_1ed9881f, started 15:26 PDT
+08-09; exit report due ~21:26 PDT) — 1h40m in: RSS flat, 0 FATAL/NRE,
+0 disconnects.
 
 **E2E gates (GateSoakRunner, real Login+Game+MySQL, canonical data — evidence /root/aaemu-e2e/logs/):**
 - **10-bot correctness: PASS** (2026-08-09) — tick invoke p95 0.014ms /
@@ -50,15 +53,14 @@ presence-demo compose overlay captured in-repo
 | Builds | Tai | presence-demo image aaemu-game:presence-demo live via hotfix3 overlay; overlay now in-repo | ✅ deployed |
 | Verifies | Rei | e2e gates 10-bot correctness + 25-bot stability PASS (2026-08-09) | ✅ done |
 | Dispatches | Mai | presence-demo hotfix chain deployed (hotfix3 overlay) | ✅ done |
-| Tracks | Nei | STATUS.md M6 presence-demo refresh; e2e harness + overlay committed | ✅ this commit |
+| Tracks | Nei | progression-board refresh 08-09 (M1 closed, M2b-E2E done, M2c fixes landed, M6 chain + soak running) + STATUS.md drift fix | ✅ this commit |
 
 ## Open tasks (kanban, AAEmu lane)
 
 | ID | Title | Lane | Status |
 |----|-------|------|--------|
-| t_98415169 | M6.6 parity audit remainder: seed real skills + actabilities (bots 0/0 vs human 34) + bag supplies | hx-coder | ⏳ ready |
-| — | In-client visual confirmation of distinct bot bodies (acceptance for any "bots visible" claim — ROADMAP 6.6) | Josh | ⏳ pending |
-| — | M6 exit test: staged soak up to 10 bots × 6 hours (no-bot baseline + numeric budgets first) — not yet run | hx-coder | ⏳ pending |
+| — | In-client bot sighting | Josh / Rei | ✅ **ACCEPTED** 08-09 — Josh saw bots; Rei wire-confirmed 3 distinct bodies (t_509ef8c2) |
+| t_1ed9881f | M6 exit test: 6h/10-bot soak (numeric budgets) | hx-coder | 🔶 **running** — 0 disconnects, RSS flat; report due ~21:26 PDT |
 | t_f198bb0e | M1-5d: harness extension — 14 unsupported act families (T3 SKIPs) | hx-coder | ⏳ ready |
 | t_913c1d4a | verifier stale stub-registry false positives (CheckGuard/ItemGroup — the 3 WARNs) | hx-coder | ⏳ ready |
 | t_bcf976ad | Wiki M0/M1 update — implement wiki-audit.md proposals | hx-researcher | blocked |
@@ -71,9 +73,13 @@ presence-demo compose overlay captured in-repo
 
 ## Last scorecard update
 
-- 2026-08-09 — this commit: STATUS.md M6 presence-demo refresh (M1 closed,
-  hotfix chain + e2e gates 10-bot/25-bot PASS, M6.6 open items); e2e harness
-  + presence overlay committed (06e6fcb4a, 615c3719c).
+- 2026-08-09 — this commit: progression-board.md refresh (M1 CLOSED,
+  M2b-E2E DONE, M2c kill-acceptor + ZoneKill landed, M6 hotfix chain done
+  + 6h soak running) and STATUS.md drift fix (parity audit t_98415169
+  done, in-client sighting ACCEPTED, soak running t_1ed9881f).
+- 2026-08-09 — earlier: STATUS.md M6 presence-demo refresh (M1 closed,
+  hotfix chain + e2e gates 10-bot/25-bot PASS, M6.6 open items); e2e
+  harness + presence overlay committed (06e6fcb4a, 615c3719c).
 - 2026-08-04 — M1-5c closeout (t_cb64d872, 6e367585 on feat/quest-scenario-harness):
   SCORECARD.md quests-row runnability note 153/153 + M1-5 entry.
 
