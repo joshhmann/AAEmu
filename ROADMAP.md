@@ -44,6 +44,19 @@
 - **The golden path is the product.** All work is judged against:
   level with friends, get mounts, claim land, grow things, craft packs,
   ride carts, sail and trade.
+- **M5-stand-in rule (locked 2026-08-09 — bots as the test force):** the
+  roadmap's human gates assume 2–4 testers; there is one human. Once the M5
+  actor contract + A1 execution boundary land, scripted M5 actors are the
+  default testers for the H (human) dimension of Lane D mechanics and for
+  milestone functional gates — a bot completing the scenario end-to-end
+  through real gameplay services IS the functional evidence. Two limits:
+  ① bots prove function, never feel — Josh still gates experience verdicts
+  (does it look right, is it fun, does the village feel alive); ② bot-passed
+  evidence must survive independent audit (the Rei/auditor lane reviews the
+  trace, not the claim) — a bot can pass broken content if the harness can't
+  see the failure (the runnable-≠-playable lesson). This rule is why the bot
+  track and Lane D run in parallel: M5 isn't a detour from feature
+  completeness, it's the staffing plan for it.
 - **THREE TIERS OF INTELLIGENCE (never mix them):**
   - **Game AI (deterministic):** combat, farming, crafting, trade packs,
     navigation, prison, juries, schedules, economy, recovery, parties —
@@ -246,6 +259,22 @@ M2 closes when the route and backlog are reproducible. The first integrated
 playable release gate occurs at M4, after M3 and M4 have repaired the systems
 the route depends on.
 
+**Depends on:** M1 (done). **Feeds:** M3/M4 (route + blocker backlog); M4's
+gate chains to M2's reset/seed procedure.
+
+**Detail (2026-08-09 audit):** M2 was silently redefined in practice into the
+quest-census sweep (M2a–M2d) — the band tables and ≥95% gates live only in
+progression-board.md and are adopted here by reference. Census reality:
+2,016/4,735 live contexts proven PASS (42.6%). The detailed remaining work
+list is **G1 WI-1..12** (4 harness-family closures → band sweeps 31-40/41-50/
+51-55/0-null → final census). The inherited harness track (t_f198bb0e) exits
+via WI-2..5. Census credit counts only once merged to develop (rule G0-1);
+deletion is never "fixed" — drops require register entry + Josh decision.
+The reset-procedure exit test is strengthened: a third party (or clean host)
+must run the reset/seed procedure from the docs — the manifest may not
+validate itself. If two humans are unavailable for the baseline, M5-contract
+bots may stand in once M5 lands (human-capacity rule, G0).
+
 ---
 
 ## M3 — Homestead integrity (two gates, M3a then M3b)
@@ -278,6 +307,22 @@ curated homestead at M3a; `PROPERTY-01` and the same curated objects reach
 `R = 2` with recovery/load evidence at M3b. No percentage substitutes for a
 missing scenario dimension.
 
+**Depends on:** M2 (route + blocker backlog). **A4 (SaveManager dirty
+tracking) is a hard prerequisite for M3b** — the single-sync-transaction save
+is exactly where homestead persistence breaks at scale; M3b owns auditing it
+for property objects. **Feeds:** M4, M8 (farmer/crafter bots need real
+homesteads).
+
+**Detail (2026-08-09 audit):** both exits were human-only prose — the standing
+three-scenario rule now applies: add an automated homestead-persistence
+scenario (place → decorate → plant → harvest → restart → assert) to the
+integration harness before M3b can close. "Repeated logout, restart,
+crash-recovery" is quantified: N≥3 cycles, crash method = kill -9 mid-save
+and container kill during harvest, both defined in the scenario. Add a
+save-duration budget at gate scale (autosave p95 < 2s with the two
+homesteads + 25 bots embodied) so M3b can't pass on a save path that kills
+M8 later. M3a's two-player gate may use the M5-stand-in rule.
+
 ---
 
 ## M4 — Trade, crafting and transport integrity
@@ -298,6 +343,20 @@ restart. Then run the M2 release validation: four players complete one
 integrated session from a clean reset state without GM repair. **This is the
 first integrated playable release; the server becomes recognizably classic
 ArcheAge here.**
+
+**Depends on:** M3b (property persistence), M2's reset/seed procedure
+validated by the third-party check, **A2 (broadcast economics)** — vehicle +
+pack + group movement is where allocation churn first becomes visible; M4
+owns confirming the short-circuit works for convoy traffic. **Feeds:** M8
+(hauler/trader bots), M9 (trade economy).
+
+**Detail (2026-08-09 audit):** persistence criteria are per-object-type, not
+one "repeats after restart" line: Slave/vehicle attachment, pack maturation
+timers, cargo ownership each get a restart assertion in the automated
+scenario. The four-player gate gets an automated fallback: the full
+integrated session scripted through M5.1 economic actions (B2) — humans
+confirm feel, not function. "Clean reset state" chains to the M2 deliverable
+by name.
 
 ---
 
@@ -364,6 +423,23 @@ M8 economic audit.
 - Actor contract tests (server executes/observes a command correctly) pass
   independent of any controller; retry tests prove non-idempotent actions do
   not execute twice.
+
+**Depends on:** G0 merge discipline (the contract branch
+`origin/feat/m5-actor-contract` is unmerged today). The architecture spike
+(threading boundary + one vertical action) is a recorded gate, not a
+suggestion — M6 proceeded without it; that violation is now on the record.
+**Feeds:** M6 exit, M7, M4's automated fallback, M8's auditable economy.
+
+**Detail (2026-08-09 audit):** the detailed work list is **B1** (core action
+surface: Interact · Loot · UseItem · Mount/Dismount · AcceptQuest ·
+TurnInQuest — each through the real engine path) and **B2** (M5.1 economic
+actions). New exit test, non-negotiable: **threading-boundary verification** —
+a debug thread-affinity assertion proves zero Character/world mutation off
+the single execution boundary. Trace-based exit tests alone do NOT satisfy
+this: the current bot layer (8 unsynchronized worker threads,
+PlayerBotScheduler.cs:84) would pass the trace tests while violating the
+rule at L332-333. **A1 (marshal bot steps onto the game loop) is the
+retroactive fix and is M6-exit-blocking.**
 
 ---
 
@@ -456,6 +532,30 @@ for p95/p99 world-tick time, memory, database writes, action-queue backlog, and
 recovery rate. Gate in stages: one bot for 30 minutes → 10 bots for one hour →
 10 bots for six hours. A qualitative "no overrun" is not sufficient evidence.
 
+**Depends on:** M5 (violated in practice — recorded; exit evidence must be
+re-run against the merged contract) and **t_0fda3cd3** (merge M6 chain +
+record prod SHA). **Feeds:** M7, M8, and the G2 scale ladder.
+
+**Status reconciliation (2026-08-09):** 3 citizens on prod; 3-minute 10/25-bot
+gates PASS (these substitute for the stated 1-bot/30-min and 10-bot/1h stages
+— substitution recorded here, or re-run the stated stages); 6h soak attempt 1
+crashed at 19 min with no RCA — **soak-failure semantics now defined: any
+crash = automatic fail + RCA card + the 6h clock restarts only after the fix
+lands.** The staged-ladder contradiction is resolved in favor of the Resolved
+Decisions ladder: 10 correctness → 25 village → 50 soak → 100 only after
+profiling. M6.6 shipped consumables without currency — the exception is
+recorded here; either Josh approves it standing or a follow-up card seeds
+currency.
+
+**Detail (2026-08-09 audit):** M6 exit is blocked on **A1** (execution
+boundary — bot steps off the game loop violate M5's core rule). Added exit
+requirements: (a) restart-persistence scenario per the standing rule —
+bots survive server restart with identity/inventory/position/schedule intact
+(B4 store); (b) observability — the silent catches in BotAppearanceFactory
+(:212/:225) and BotE2EBridgeBootstrap (:32-35) must log before any 25+-bot
+gate; a silently gearless or bridge-dead bot population is a failed gate;
+(c) merge-to-develop is a closing condition (G0-1).
+
 ---
 
 ## M7 — Adventurer and party bots (Playerbots Alpha)
@@ -471,6 +571,19 @@ Split by archetype, not one universal mind.
 
 **Exit test:** one human + three bots complete the curated leveling route
 and a selected group encounter.
+
+**Depends on:** M6 exit (including A1) and B1 (combat/quest actor actions).
+**M7 is the largest unestimated chunk on the roadmap** — there is no combat
+AI today beyond Cast/SetTarget — so a scoped spike (one adventurer clearing
+a short quest chain end-to-end) gates scheduling. **Feeds:** M8 (3 of the 8
+villagers are adventurers), M9 convoys/pirates.
+
+**Detail (2026-08-09 audit):** select the "selected group encounter" at spike
+time and record it; per-feature acceptance for roles, avoid-extra-pulls,
+death recovery, and mount-together (each demonstrable via M5 trace); the
+one-human gate may use the M5-stand-in rule but Josh confirms feel; add a
+restart-persistence scenario (party mid-route → restart → resume) per the
+standing rule.
 
 ---
 
@@ -494,6 +607,22 @@ Sequenced carefully — tasks BEFORE talk.
 **Exit test:** a village with 2 farmers, 1 crafter, 2 haulers, 3 adventurers
 + human-owned homes/farms operates a full day across multiple restarts with
 an auditable economy.
+
+**Depends on (previously unstated, now explicit):** M3b + M4 (farmers/
+crafters/haulers require housing, farming, crafting, pack, and vehicle
+integrity), M7 (adventurers), **A5 true dormancy + gate G1** (scale
+budgets), **B3 goal arbitration** (behavior modules), **B4 metadata
+persistence** (schedules/homes/professions survive restart).
+**Feeds:** M8.5, M9.
+
+**Detail (2026-08-09 audit):** the detailed work list is **C1–C5** (G4):
+C1 schedules v1, C2 social v1 (= 8.5, deduplicated with M8.5a), C3 farmer
+v1, C4 hauler/trader v1 (crafter follows B2), C5 village integration.
+"Auditable economy" is now defined: the M5 audit trail flushed per B4, with
+an economy-ledger reconciliation assertion in the 2-checkpoint bot-world
+restart test. "Multiple restarts" = ≥3, with state-fidelity criteria
+(schedule phase, home, profession, inventory, ledger) asserted after each.
+The exit test runs at 25 embodied concurrent within G1's numeric budgets.
 
 ---
 
@@ -582,6 +711,19 @@ the dependency cost.
 - **8.5c Grounded guide:** `.guide` commands querying live character state,
   quest/recipe/NPC/housing tables, server-known-issue awareness
 
+**Depends on:** M8 (8.5a is the same work as C2 social v1 — deduplicated;
+it lands there), B3 module system, and C2's chat-emission spike (the
+legitimate service path — no packet fabrication). **Feeds:** M9 rumors.
+
+**Detail (2026-08-09 audit):** 8.5b must stay async/queue-based — an LLM
+call may never sit in a gameplay path (tick or step); degradation rule:
+bridge down ⇒ bots fall back to canned lines, never silence-critical
+behavior. 8.5c queries live state only through the M5 observation snapshot,
+not DB reads. **Exit test (new):** village social layer active ≥ 1 full
+day — ≥ 3 distinct contextual greetings per visitor, cooldown metrics show
+zero spam, and the server passes all M8 scenarios with the social module
+disabled (config flag proves isolation).
+
 ---
 
 ## M9 — Emergent world systems (the "world simulator" layer)
@@ -613,6 +755,22 @@ TELL the story, never what happens.
   produces excess lumber → trades with village B (ore) → guilds form →
   taxes matter → castles become infrastructure, not just PvP objectives.
 
+**Depends on:** M8 (working economy + schedules + ledger), B4 (traits/
+personality persistence), M8.5 (rumor narration surface). Emergence is a
+product of incentives + traits + propagation — it is not buildable directly.
+
+**Detail (2026-08-09 audit):** M9 had no gates at all; until each system
+below has an exit test it is a **vision section, not a milestone**. Required
+substrate work before any M9 credit: (a) **needs/incentives layer** — the
+reason a bot farms or steals (food/gold/lumber demand signals), which today
+does not exist in any form; (b) **crime/justice substrate** — SCORECARD
+shows CRIME-01/TRIAL-01 as W=1 stubs and PRISON-01 with no PrisonManager at
+all; card the engine substrate first; (c) **rumor propagation store** —
+event → witness → hearsay graph with imperfect information, persisted per
+B4. Per-system exit tests follow the standing three-scenario rule; each
+must demonstrate propagation evidence (system A's output observably changes
+system B's behavior), not just the mechanic existing.
+
 ---
 
 ## M9.5 — Activities and world events
@@ -622,6 +780,16 @@ Contests fit here — they now have actual residents to participate.
 Candidates: fishing contest, race-track time trials, scheduled trade
 caravans, bot-organized fishing trips, regional monster hunts, community
 construction events, simple festival schedule. Music/FX wiring → Lane C.
+
+**Depends on:** M8 (residents exist), B3 module system (an activity is a
+module). **Feeds:** M10 (organized groups), retention texture.
+
+**Detail (2026-08-09 audit):** "Candidates" is a wish list, not a milestone —
+**the fishing contest is the locked launch activity**; everything else stays
+a candidate until it has a card. **Exit test:** one scheduled event runs
+start → finish with bot participants and at least one human (or M5 stand-in),
+auditable results (entries, scores, winner, rewards settled in the ledger),
+and the world outside the event keeps running within gate G1 budgets.
 
 ---
 
@@ -635,6 +803,20 @@ generates something worth controlling.
 - **Slice 2 (combat-lite):** attacker/defender registration, bot squads,
   objectives, structure health, victory state, reward settlement
 
+**Depends on:** M9 (an economy worth controlling), M7 (stable group combat),
+guild substrate (Lane B/FC — see feature-completeness track). **Feeds:**
+endgame loop.
+
+**Detail (2026-08-09 audit):** the prose preconditions are replaced with
+measurable ones — "guilds work" = guild create/invite/rank/bank scenarios
+pass; "combat stable" = M7 exit passed; "bots form groups" = party module in
+production; "economy worth controlling" = M9 trade ledger shows inter-village
+trade volume > 0 for 7 consecutive days. **Slice 1 exit test:** ownership +
+tax state survive ≥3 restarts with zero loss/duplication (persistence is the
+entire point of Slice 1 — evidence = restart scenario, not prose).
+**Slice 2 exit test:** a scripted siege with bot squads completes with
+victory state + reward settlement reconciled in the audit trail.
+
 ---
 
 ## Work lanes (permanent, parallel)
@@ -646,6 +828,32 @@ generates something worth controlling.
 - **Lane C — Quick wins:** music wiring, premium labor data, FX groups,
   small packet completions, low-risk data imports. Completed between larger
   tasks; never delays the golden path.
+- **Lane D — 1.2 feature completeness (parallel with playerbots; locked
+  2026-08-09):** bring every player-facing 1.2 mechanic to its required
+  evidence grade while the bot track runs. **Scope:** the SCORECARD global
+  mechanic ledger (PROG, CTRL, COMBAT, ABILITY, ITEM, LABOR, MATE, HOUSING,
+  FARM, PROPERTY, CRAFT, PACK, SLAVE, TRADE, MERCHANT, AUCTION, ECON, MAIL,
+  TRANSFER, INDUN, FISH, PVP, DUEL, CRIME, TRIAL, PRISON, PARTY, EXPEDITION,
+  CHAT, ZONE) — currently ~28 mechanics, nearly all `U` (unassessed).
+  **Exclusions (Josh):** cash shop / marketplace / credits, monetization
+  systems, post-1.2 expansion content.
+  - **First deliverable:** a C-dimension (canonical) audit sweep of every
+    ledger row — identify intended 1.2 behavior + required data per mechanic,
+    so the lane has a real, sized backlog instead of 28 `U`s.
+  - **Order:** ① golden-path-adjacent breadth (PROG/CTRL/ITEM/MERCHANT/MAIL/
+    AUCTION/TRADE/PARTY/CHAT + the curated-scope remainder of LABOR/CRAFT/
+    PACK/SLAVE — the milestones own the curated scenario, Lane D owns the
+    breadth beyond it); ② world systems (ZONE war/peace transitions, PVP,
+    DUEL, INDUN, TRANSFER, FISH); ③ **M9/M10 substrate early as spikes** —
+    CRIME/TRIAL/PRISON/EXPEDITION gate M9 and M10, so their C/W audits start
+    now even though the milestones are late.
+  - **Rules:** grades promote only with linked evidence (C/W/H/A/R/S per the
+    mechanic model); H may use the M5-stand-in rule once M5 lands; nothing
+    lands unmerged (G0-1); Lane D never breaks an active Lane A gate —
+    shared engine fixes route through Lane B; upstream-sourced fixes follow
+    the upstream alignment rules.
+  - **Done when:** zero `U` rows remain and every mechanic sits at the grade
+    its consuming milestone requires (weakest-dimension-wins).
 
 ## Resolved planning decisions
 
@@ -741,3 +949,136 @@ and vehicle attachment may reveal deeper work.
   not assumed to reverse schema or data changes.
 - **Bot audit trail** (M5+): structured trace records support debugging AND
   economic auditing — see M5.
+
+## Gap audit 2026-08-09 (Kimi deep-dive — detailed work breakdowns)
+
+Full audit evidence on card t_0fda3cd3. This section is the detailed "what
+should be done" layer the milestones lacked. Three tracks: discipline fixes,
+quest coverage to 100%, and the scale/behavior ladder to Living Village.
+
+### G0 — Discipline fixes (precondition for milestone credit)
+
+Root cause of the 2026-08 pile-ups: the roadmap regulates merges and deploys
+as *procedures* but never as *gates*. New standing rules:
+
+1. **No milestone credit until merged.** Claimed status requires evidence on
+   `develop`. (Today: entire M6 chain 47 commits unmerged; M2c band 21-30
+   sweep merged to local develop but unpushed; M5 contract branch unmerged.)
+2. **No deployment except from a recorded, manifest-attested SHA** — manifest
+   extended with Docker image digest + compose overlays in use. (Today: prod
+   runs image ebe809a0ec5b built from a deleted context; production.json
+   claims b1e2231c — false.)
+3. **Hotfix lane:** mid-milestone deploys are allowed only as governed
+   exceptions — carded, SHA recorded, manifest updated, merged within 48h.
+4. **Failed gate ⇒ RCA card + retrial rule** (6h soak attempt 1 crashed at
+   19 min, no RCA filed; the 6h clock restarts only after RCA lands).
+5. **Evidence contracts:** PASS/SKIP/FAIL definitions; deletion is never
+   "fix"; drops require register entry + Josh decision (already the norm —
+   now it's written down).
+6. Merge-first execution: t_0fda3cd3 (merge M6 chain + record prod SHA)
+   gates all new feature work.
+
+### G1 — Quest coverage to 100% (4,735 live contexts; 2,016 proven PASS = 42.6%)
+
+No known engine gap blocks any live context — remaining work is 4 harness
+family closures + band sweeps + data triage. Single-threaded estimate
+7–10 working days at demonstrated cadence (family closure ≈ 4/day,
+band sweep ≈ 1/day at 600–850 quests).
+
+- WI-1 Push/merge M2c census to origin/develop (local aa2ef5f6d).
+- WI-2 CrimePoint closure (7 ctxs): gen-manifests ACT_TABLES + driver
+  factory case (QuestScenarioDriver.cs:284); rig asserts CrimePoint delta.
+- WI-3 AbilityLevel closure (11): rig preseeds ability exp; cover
+  AbilityId=0 all-abilities branch.
+- WI-4 MateLevel closure (6): preseed SummonMate at DetailLevel ≥ Level;
+  assert Cleanup-consume path (5464).
+- WI-5 CompleteQuest closure (11): rig pre-marks referenced quest completed
+  (synthetic-block pattern from CharacterQuestsDailyResetTests).
+- WI-6 Band 41-50 ltd triage (3419, 4967, 6069): drop-decision cards or
+  content-fix; register §8.
+- WI-7 T9 sweep band 31-40 (643; model predicts zero harness SKIPs).
+- WI-8 T10 sweep band 41-50 (1,592) — after WI-2..6.
+- WI-9 T11 sweep band 51-55 (268) + lvl-99 straggler 3465.
+- WI-10 Driver fidelity stages: TIMEOUT (fire OnTimerExpired; 45 CheckTimer
+  quests), RESET (ResetDailyQuests + re-accept; ~321 daily + 63 repeatable),
+  GUARD_DIED negative path (6 escort quests).
+- WI-11 Band 0/null triage (231; 147 modeled dead: 92 no-components /
+  52 ltd-no-report / 15 no-Start) — M2a purge playbook, Josh decision, then
+  sweep remaining ~81.
+- WI-12 Final census + denominator reconciliation: every live context PASS
+  or registered-drop, zero unexplained FAIL/SKIP across 4,735.
+
+Purged-content policy (settled by audit): the 26 engine-stuck (zone 22
+A-cluster) have no completion path in canonical 1.2 data — restoring them is
+content authoring, not engine work, and is out of scope unless a future
+"rebuild old Sunny Wilderness" content milestone wants the A1 dialogue seed
+(27 chat_bubbles preserved in register §6). The 91 shells: never restore.
+
+### G2 — Scale ladder (order of failure: threading → broadcast GC →
+density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
+
+- A1 (L) Execution boundary: bot steps marshalled onto the game-loop thread;
+  scheduler stays a pure wake producer. Acceptance: thread-affinity assert
+  proves zero Transform writes off the tick thread; 25-bot 6h soak, tick
+  invoke p95 < 50ms, zero position-tear in wire capture.
+- A2 (S) Broadcast economics: humans-nearby short-circuit + allocation-free
+  GetAround overload (WorldManager.cs:1113) + kill Region.GetList array
+  copies on the hot path. Acceptance: 100 bots 0 humans ⇒ zero bot-originated
+  packets; gen0 GC < 1/min.
+- A3 (M) PopulationDirector O(1): incremental per-zone/per-activity counters;
+  RefreshPressure on a 5s timer (never called today); human-proximity wake
+  trigger. Acceptance: 1,000-bot wake storm transition p99 < 100ms.
+- A4 (M) Save scalability: per-character dirty tracking + batching.
+  Acceptance: autosave p95 < 2s at 250 characters; zero _isSaving skips.
+- A5 (L) TRUE DORMANCY — the pivotal item: Dormant = DB row + metadata only,
+  no Character materialized, no region presence, no per-second tick; Tier 3 =
+  DB-driven scheduled simulation (harvest/travel timers advance while nobody
+  is embodied). Acceptance: 1,000 registered / ≤50 embodied, RSS within 15%
+  of the 50-only baseline; wake-to-visible p95 < 3s; dormant timers advance
+  over 6h.
+- A6 (M) Manifest-driven mass provisioning (citizen manifest as data;
+  replaces hardcoded CitizenNN + 10-bot clamp). Acceptance: cold boot →
+  100 citizens on schedule < 60s.
+- Gate G1: 50-bot 6h soak with numeric budgets → 100 profiling → 250 staged.
+
+### G3 — Behavior foundation
+
+- B1 (M) Complete M5 actor surface: Interact, Loot, UseItem, Mount/Dismount,
+  AcceptQuest, TurnInQuest — real engine paths, retry/idempotency tests.
+- B2 (M) M5.1 economic actions: Plant, Harvest, Craft, PackPickup/PutDown,
+  BoardVehicle, Buy/Sell, Deposit/Withdraw; exit = scripted farm→craft→pack→
+  sell loop with full trace.
+- B3 (M) Goal arbitration + module contract (IBotActivityModule): re-implement
+  roam as a module with zero scheduler changes; delete/absorb the dead
+  PlayerBotBehaviorController stack; new module = one file + one config line.
+- B4 (S-M) playerbot_metadata store (personality, schedule, profession, home,
+  planner state — the M6.0 list that has no table today) + audit-trace flush;
+  2-checkpoint bot-world restart test.
+
+### G4 — Living Village content (M8)
+
+- C1 (M) Schedules v1: game-time clock, home/work/social/rest anchors.
+- C2 (S-M) Social v1 (pre-LLM): chat emission path, proximity greet, canned
+  contextual lines, cooldowns. (Small spike: legitimate chat service path.)
+- C3 (M) Farmer v1 (real plot, harvest→deposit→replant, shortage report).
+- C4 (M) Hauler/trader v1 (pack→route→sell→proceeds); crafter follows B2.
+- C5 (M) Village integration + M8 exit: 2 farmers/1 crafter/2 haulers/
+  3 adventurers, full day, multiple restarts, auditable economy, 25 embodied.
+- M7 caveat: adventurer/party bots are the largest unestimated chunk (no
+  combat AI beyond Cast/SetTarget today) — spike before scheduling Phase C.
+
+### Roadmap self-fixes
+
+- M2: record that it was redefined into the census sweep; adopt the board's
+  ≥95% gates + band tables; add "merged to develop" as closing condition.
+- M6: resolve the staged-ladder contradiction (L456-457 1→10→10 vs L658
+  10→25→50→100); record the 3-min gate substitution or re-run the stated
+  stages; add soak-failure semantics (any crash = RCA + clock restart).
+- M3b/M4: add SaveManager dependency (A4) + quantified crash-injection
+  method; M8: state dependencies on M3/M4 and on A5/G1.
+- M9/M9.5/M10: add exit tests per the standing three-scenario rule or mark
+  explicitly as vision sections.
+- Timeline: rebaseline around the real order (M1 → M2 census → M6 framework →
+  G0/G2 hardening → M3/M4 → M7 spike → M8) or enforce the written order.
+- Human-capacity realism: M3a/M3b/M4/M7 gates assume 2-4 humans; define the
+  automated fallback (M5 contract bots as stand-ins) or name the humans.
