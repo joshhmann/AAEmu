@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using AAEmu.Commons.Utils;
+using NLog;
 
 namespace AAEmu.Game.Models.Game.Bots;
 
@@ -16,23 +17,39 @@ namespace AAEmu.Game.Models.Game.Bots;
 /// </summary>
 internal static class BotE2EBridgeBootstrap
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     [ModuleInitializer]
     internal static void Init()
     {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                for (var i = 0; i < 600 && SingletonContainer.ServiceProvider == null; i++)
-                    await Task.Delay(100).ConfigureAwait(false);
+        _ = Task.Run(() => RunBridgeStartupAsync(
+            () => SingletonContainer.ServiceProvider != null,
+            () => BotDriveBridge.Instance.TryStart()));
+    }
 
-                if (SingletonContainer.ServiceProvider != null)
-                    BotDriveBridge.Instance.TryStart();
-            }
-            catch
-            {
-                // Bridge startup must never take the server down.
-            }
-        });
+    /// <summary>
+    /// Polls for the DI container, then starts the bridge when it is ready.
+    /// Any failure is logged at error level — the bridge must never take the
+    /// server down, and it must never die silently (Kimi audit 2026-08-09).
+    /// <paramref name="maxPolls"/> and <paramref name="pollDelay"/> are test
+    /// seams; production uses the defaults (600 × 100ms = 60s budget).
+    /// </summary>
+    internal static async Task RunBridgeStartupAsync(Func<bool> isReady, Action startBridge, int maxPolls = 600, TimeSpan pollDelay = default)
+    {
+        if (pollDelay == default)
+            pollDelay = TimeSpan.FromMilliseconds(100);
+
+        try
+        {
+            for (var i = 0; i < maxPolls && !isReady(); i++)
+                await Task.Delay(pollDelay).ConfigureAwait(false);
+
+            if (isReady())
+                startBridge();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "E2E bridge bootstrap failed while waiting for DI or starting the bridge");
+        }
     }
 }
