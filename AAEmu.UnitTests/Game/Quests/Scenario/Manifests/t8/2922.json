@@ -1,0 +1,155 @@
+{
+ "questId": 2922,
+ "name": "슬픈 진실",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10826
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12483,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18303,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2355,
+      "npcId": 10826
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12484,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18212,
+      "type": "QuestActObjItemGather",
+      "detailId": 1239,
+      "itemId": 17434,
+      "count": 1
+     },
+     {
+      "actId": 18215,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 64,
+      "itemId": 18668,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12485,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18213,
+      "type": "QuestActConReportNpc",
+      "detailId": 2554,
+      "npcId": 1456
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12486,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 12487,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18214,
+      "type": "QuestActSupplyItem",
+      "detailId": 1833,
+      "itemId": 18670,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17434,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1456,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17434,
+   "count": 1
+  }
+ ]
+}

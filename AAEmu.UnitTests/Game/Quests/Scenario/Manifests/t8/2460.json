@@ -1,0 +1,125 @@
+{
+ "questId": 2460,
+ "name": "염불보단 잿밥?",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1835
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10620,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23785,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3409,
+      "npcId": 1835
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10621,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23786,
+      "type": "QuestActObjItemGather",
+      "detailId": 1951,
+      "itemId": 23432,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10623,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 11424,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16519,
+      "type": "QuestActConReportNpc",
+      "detailId": 2356,
+      "npcId": 7770
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23432,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7770,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23432,
+   "count": 5
+  }
+ ]
+}

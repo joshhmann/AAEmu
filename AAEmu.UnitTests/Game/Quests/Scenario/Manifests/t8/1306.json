@@ -1,0 +1,152 @@
+{
+ "questId": 1306,
+ "name": "정체성을 잃고",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3131
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6438,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9183,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1118,
+      "npcId": 3131
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12311,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 91,
+      "monsterGroupId": 94,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9194,
+      "type": "QuestActConReportNpc",
+      "detailId": 1281,
+      "npcId": 3131
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6451,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38368,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2616,
+      "itemId": 33712,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38369,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2617,
+      "itemId": 33713,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38370,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2618,
+      "itemId": 33714,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000164,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 8000015,
+      "itemId": 35840,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 94,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3131,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

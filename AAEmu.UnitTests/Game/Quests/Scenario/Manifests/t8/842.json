@@ -1,0 +1,134 @@
+{
+ "questId": 842,
+ "name": "여우 인간의 변신",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7141
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3229,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4690,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 544,
+      "npcId": 7141
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3231,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17451,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 633,
+      "npcId": 5012,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3232,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4694,
+      "type": "QuestActConReportNpc",
+      "detailId": 626,
+      "npcId": 7141
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3233,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38663,
+      "type": "QuestActSupplyItem",
+      "detailId": 4412,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 5012,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7141,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

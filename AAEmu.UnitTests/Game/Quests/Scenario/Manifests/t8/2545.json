@@ -1,0 +1,123 @@
+{
+ "questId": 2545,
+ "name": "강을 건너지 못한 영혼 정화",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2028
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11056,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15646,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 220,
+      "npcId": 2028
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11057,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15647,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 597,
+      "npcId": 2028,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11058,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15648,
+      "type": "QuestActConReportJournal",
+      "detailId": 46
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11059,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15649,
+      "type": "QuestActSupplyCopper",
+      "detailId": 136,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2028,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

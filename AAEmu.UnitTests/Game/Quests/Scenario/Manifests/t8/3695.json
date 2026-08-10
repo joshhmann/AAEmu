@@ -1,0 +1,129 @@
+{
+ "questId": 3695,
+ "name": "오크의 주술도구",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 19998
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15432,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21092,
+      "type": "QuestActConAcceptItem",
+      "detailId": 113,
+      "itemId": 19998
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15434,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21093,
+      "type": "QuestActConReportNpc",
+      "detailId": 3160,
+      "npcId": 9927
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15435,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 16229,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21392,
+      "type": "QuestActObjItemGather",
+      "detailId": 1586,
+      "itemId": 19998,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19998,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9927,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19998,
+   "count": 1
+  },
+  {
+   "itemId": 19998,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,127 @@
+{
+ "questId": 6516,
+ "name": "여신을 위하여",
+ "zoneId": 1,
+ "categoryId": 81,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 502
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27825,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40564,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5082,
+      "npcId": 502
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27826,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40757,
+      "type": "QuestActObjExpressFire",
+      "detailId": 70,
+      "expressKeyId": 230,
+      "npcGroupId": 625,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27835,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39811,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1767,
+      "amount": 10000
+     },
+     {
+      "actId": 39812,
+      "type": "QuestActSupplyItem",
+      "detailId": 4635,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40760,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1909
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ExpressFire",
+     "npcId": 502,
+     "emotionId": 230,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "groups": {
+  "npcGroups": {
+   "625": [
+    502
+   ]
+  }
+ }
+}

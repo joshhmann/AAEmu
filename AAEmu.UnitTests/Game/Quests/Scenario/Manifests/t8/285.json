@@ -1,0 +1,91 @@
+{
+ "questId": 285,
+ "name": "분노가 필요해!",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 456
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16528,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21827,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3083,
+      "npcId": 456
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16529,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21828,
+      "type": "QuestActConReportNpc",
+      "detailId": 3313,
+      "npcId": 458
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16530,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 458,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

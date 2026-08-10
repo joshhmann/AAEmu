@@ -1,0 +1,181 @@
+{
+ "questId": 604,
+ "name": "하피 마녀의 둥지",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4350
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2508,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21888,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 123,
+      "doodadId": 4350
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3373,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21889,
+      "type": "QuestActConReportNpc",
+      "detailId": 3328,
+      "npcId": 903
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38641,
+      "type": "QuestActSupplyItem",
+      "detailId": 4390,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "None",
+    "id": 17065,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22507,
+      "type": "QuestActSupplyItem",
+      "detailId": 2226,
+      "itemId": 21343,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17090,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22569,
+      "type": "QuestActObjSphere",
+      "detailId": 612,
+      "sphereId": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22570,
+      "type": "QuestActObjSphere",
+      "detailId": 613,
+      "sphereId": 12
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17092,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22568,
+      "type": "QuestActObjSphere",
+      "detailId": 611,
+      "sphereId": 18
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 17090
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 17091
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 17092
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 903,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

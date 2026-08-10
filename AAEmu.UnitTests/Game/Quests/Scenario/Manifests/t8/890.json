@@ -1,0 +1,91 @@
+{
+ "questId": 890,
+ "name": "세르잔과 함께 집으로",
+ "zoneId": 143,
+ "categoryId": 17,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5230
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 4155,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15036,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2064,
+      "npcId": 5230
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4156,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31538,
+      "type": "QuestActConReportNpc",
+      "detailId": 4324,
+      "npcId": 5229
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4157,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5229,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

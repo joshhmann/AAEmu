@@ -1,0 +1,196 @@
+{
+ "questId": 4240,
+ "name": "분실한 세 가지 물건",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10615
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18642,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24263,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3500,
+      "npcId": 10615
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18643,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24267,
+      "type": "QuestActObjItemGather",
+      "detailId": 1995,
+      "itemId": 23410,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18644,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24265,
+      "type": "QuestActObjItemGather",
+      "detailId": 1993,
+      "itemId": 23408,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18645,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24266,
+      "type": "QuestActObjItemGather",
+      "detailId": 1994,
+      "itemId": 23409,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18646,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24264,
+      "type": "QuestActConReportNpc",
+      "detailId": 3765,
+      "npcId": 10615
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18647,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38380,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2626,
+      "itemId": 33513,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38381,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2627,
+      "itemId": 33517,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38382,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2628,
+      "itemId": 33534,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23410,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 23408,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 23409,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10615,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 23410,
+   "count": 1
+  },
+  {
+   "itemId": 23408,
+   "count": 1
+  },
+  {
+   "itemId": 23409,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,144 @@
+{
+ "questId": 1704,
+ "name": "내 무덤 앞에서 울지 말라",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2124
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8187,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11909,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1523,
+      "npcId": 2124
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11910,
+      "type": "QuestActSupplyItem",
+      "detailId": 1129,
+      "itemId": 15684,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8265,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11911,
+      "type": "QuestActObjInteraction",
+      "detailId": 282,
+      "doodadId": 2154,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26548,
+      "type": "QuestActConReportNpc",
+      "detailId": 3982,
+      "npcId": 2124
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8268,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2154,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2124,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

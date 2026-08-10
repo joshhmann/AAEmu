@@ -1,0 +1,140 @@
+{
+ "questId": 4647,
+ "name": "강도 높은 주괴 납품",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11086
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20187,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27481,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3764,
+      "npcId": 11086
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27482,
+      "type": "QuestActObjItemGather",
+      "detailId": 2192,
+      "itemId": 8319,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20189,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27483,
+      "type": "QuestActConReportNpc",
+      "detailId": 4045,
+      "npcId": 11086
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20191,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27484,
+      "type": "QuestActSupplyItem",
+      "detailId": 3024,
+      "itemId": 24886,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8319,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11086,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24886,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8319,
+   "count": 3
+  }
+ ]
+}

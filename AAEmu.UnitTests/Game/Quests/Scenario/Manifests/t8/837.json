@@ -1,0 +1,136 @@
+{
+ "questId": 837,
+ "name": "현혹의 비파",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5048
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3184,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4643,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 533,
+      "npcId": 5048
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3186,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13184,
+      "type": "QuestActObjInteraction",
+      "detailId": 317,
+      "doodadId": 1065,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4649,
+      "type": "QuestActConReportNpc",
+      "detailId": 616,
+      "npcId": 5048
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3189,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38676,
+      "type": "QuestActSupplyItem",
+      "detailId": 4425,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1065,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5048,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

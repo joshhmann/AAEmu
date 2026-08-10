@@ -1,0 +1,129 @@
+{
+ "questId": 2727,
+ "name": "날뛰는 불 정령 소멸시키기",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1620
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11456,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16571,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 399,
+      "npcId": 1620
+     },
+     {
+      "actId": 16572,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 400,
+      "npcId": 1621
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11457,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16573,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 239,
+      "monsterGroupId": 165,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11458,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16574,
+      "type": "QuestActConReportJournal",
+      "detailId": 129
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11459,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16575,
+      "type": "QuestActSupplyCopper",
+      "detailId": 212,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 165,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

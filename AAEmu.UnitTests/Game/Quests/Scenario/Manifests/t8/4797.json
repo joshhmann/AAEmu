@@ -1,0 +1,163 @@
+{
+ "questId": 4797,
+ "name": "그리운 바다 축제",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11074
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20716,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28544,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3815,
+      "npcId": 11074
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20717,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28541,
+      "type": "QuestActObjItemGather",
+      "detailId": 2246,
+      "itemId": 18937,
+      "count": 50
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20718,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28546,
+      "type": "QuestActConReportNpc",
+      "detailId": 4092,
+      "npcId": 11074
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20837,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28545,
+      "type": "QuestActObjItemGather",
+      "detailId": 2248,
+      "itemId": 18940,
+      "count": 25
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20838,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28547,
+      "type": "QuestActSupplyItem",
+      "detailId": 3236,
+      "itemId": 24877,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18937,
+     "count": 50
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 18940,
+     "count": 25
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11074,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24877,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18937,
+   "count": 50
+  },
+  {
+   "itemId": 18940,
+   "count": 25
+  }
+ ]
+}

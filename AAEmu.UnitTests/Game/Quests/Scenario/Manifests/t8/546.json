@@ -1,0 +1,142 @@
+{
+ "questId": 546,
+ "name": "음유시인의 옛날이야기",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2432
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2157,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3291,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 346,
+      "npcId": 2432
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2158,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3292,
+      "type": "QuestActObjItemUse",
+      "detailId": 63,
+      "itemId": 15964,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2159,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3293,
+      "type": "QuestActConReportNpc",
+      "detailId": 411,
+      "npcId": 2432
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2160,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 2421,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6581,
+      "type": "QuestActSupplyItem",
+      "detailId": 392,
+      "itemId": 15964,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 15964,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2432,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

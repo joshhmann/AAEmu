@@ -1,0 +1,121 @@
+{
+ "questId": 1489,
+ "name": "이토록 가혹한 속박",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3298
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7078,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9786,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1234,
+      "npcId": 3298
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7097,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9787,
+      "type": "QuestActObjInteraction",
+      "detailId": 237,
+      "doodadId": 1575,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7098,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9788,
+      "type": "QuestActConReportNpc",
+      "detailId": 1403,
+      "npcId": 3298
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7099,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1575,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3298,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

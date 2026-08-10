@@ -1,0 +1,171 @@
+{
+ "questId": 4569,
+ "name": "잔뿌리 염료의 재료",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11085
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19889,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27101,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3730,
+      "npcId": 11085
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19890,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27102,
+      "type": "QuestActObjItemGather",
+      "detailId": 2162,
+      "itemId": 3685,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19891,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27104,
+      "type": "QuestActConReportNpc",
+      "detailId": 4012,
+      "npcId": 11085
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19900,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27103,
+      "type": "QuestActObjItemGather",
+      "detailId": 2163,
+      "itemId": 3711,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19901,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 27190,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38138,
+      "type": "QuestActObjItemGather",
+      "detailId": 2932,
+      "itemId": 32103,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3685,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 3711,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 32103,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11085,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3685,
+   "count": 20
+  },
+  {
+   "itemId": 3711,
+   "count": 20
+  },
+  {
+   "itemId": 32103,
+   "count": 3
+  }
+ ]
+}

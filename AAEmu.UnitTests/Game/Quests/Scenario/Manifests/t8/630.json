@@ -1,0 +1,91 @@
+{
+ "questId": 630,
+ "name": "백사장의 혈전",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1727
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2708,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23621,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3393,
+      "npcId": 1727
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2710,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 17955,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23635,
+      "type": "QuestActConReportNpc",
+      "detailId": 3650,
+      "npcId": 1662
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1662,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

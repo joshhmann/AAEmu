@@ -1,0 +1,132 @@
+{
+ "questId": 2754,
+ "name": "여신의 야광화",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2109
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16882,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2157,
+      "npcId": 2109
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11584,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16883,
+      "type": "QuestActObjItemGather",
+      "detailId": 1082,
+      "itemId": 24399,
+      "count": 1
+     },
+     {
+      "actId": 17009,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 45,
+      "itemId": 18057,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11585,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16884,
+      "type": "QuestActConReportNpc",
+      "detailId": 2368,
+      "npcId": 2108
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11586,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24399,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2108,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24399,
+   "count": 1
+  }
+ ]
+}

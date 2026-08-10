@@ -1,0 +1,140 @@
+{
+ "questId": 4866,
+ "name": "칠면조 키우기",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11073
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21034,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28838,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3860,
+      "npcId": 11073
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21035,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28836,
+      "type": "QuestActObjItemGather",
+      "detailId": 2310,
+      "itemId": 19945,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21036,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28837,
+      "type": "QuestActConReportNpc",
+      "detailId": 4137,
+      "npcId": 11073
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21068,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28842,
+      "type": "QuestActSupplyItem",
+      "detailId": 3262,
+      "itemId": 24864,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19945,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11073,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24864,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19945,
+   "count": 20
+  }
+ ]
+}

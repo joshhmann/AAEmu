@@ -1,0 +1,128 @@
+{
+ "questId": 4248,
+ "name": "빛나던 옛 전당",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2064
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18617,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24240,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3496,
+      "npcId": 2064
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25873,
+      "type": "QuestActObjInteraction",
+      "detailId": 586,
+      "doodadId": 4558,
+      "count": 1,
+      "wiId": 19,
+      "phase": 11292
+     },
+     {
+      "actId": 25875,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 117,
+      "itemId": 23411,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18620,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 19105,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25876,
+      "type": "QuestActConReportNpc",
+      "detailId": 3843,
+      "npcId": 2064
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4558,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2064,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

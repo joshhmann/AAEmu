@@ -1,0 +1,91 @@
+{
+ "questId": 2439,
+ "name": "집행자 바스코는 어디에?",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7799
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10510,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14739,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1992,
+      "npcId": 7799
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10511,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14740,
+      "type": "QuestActConReportNpc",
+      "detailId": 2207,
+      "npcId": 5466
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10512,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5466,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

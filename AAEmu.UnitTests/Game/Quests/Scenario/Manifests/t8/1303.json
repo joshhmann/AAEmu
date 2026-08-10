@@ -1,0 +1,136 @@
+{
+ "questId": 1303,
+ "name": "고대의 숲에 대한 예의",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3128
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6415,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9164,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1113,
+      "npcId": 3128
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6416,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9165,
+      "type": "QuestActObjInteraction",
+      "detailId": 216,
+      "doodadId": 1509,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9166,
+      "type": "QuestActConReportNpc",
+      "detailId": 1274,
+      "npcId": 3128
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38697,
+      "type": "QuestActSupplyItem",
+      "detailId": 4446,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1509,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3128,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,148 @@
+{
+ "questId": 2289,
+ "name": "녹색 옷을 입은 여인의 향기",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1401
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12326,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18112,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2307,
+      "npcId": 1401
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12394,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18113,
+      "type": "QuestActSupplyItem",
+      "detailId": 1825,
+      "itemId": 18634,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18115,
+      "type": "QuestActObjItemGather",
+      "detailId": 1227,
+      "itemId": 17428,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12396,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18116,
+      "type": "QuestActConReportNpc",
+      "detailId": 2530,
+      "npcId": 1493
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12397,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17428,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1493,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17428,
+   "count": 1
+  }
+ ]
+}

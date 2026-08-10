@@ -1,0 +1,129 @@
+{
+ "questId": 2947,
+ "name": "국경 지대의 야생동물 사냥",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8041
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12896,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18659,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 656,
+      "npcId": 8041
+     },
+     {
+      "actId": 18660,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 657,
+      "npcId": 8021
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12935,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18658,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 324,
+      "monsterGroupId": 291,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12936,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18597,
+      "type": "QuestActConReportJournal",
+      "detailId": 186
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12937,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18598,
+      "type": "QuestActSupplyCopper",
+      "detailId": 284,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 291,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

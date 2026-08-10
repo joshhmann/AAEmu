@@ -1,0 +1,106 @@
+{
+ "questId": 3504,
+ "name": "왕성 앞에서 기다리는 사람",
+ "zoneId": 2,
+ "categoryId": 8,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11965
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28032,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3783,
+      "npcId": 11965
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20525,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28033,
+      "type": "QuestActConReportNpc",
+      "detailId": 4067,
+      "npcId": 11574
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20526,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40901,
+      "type": "QuestActSupplyItem",
+      "detailId": 4868,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11574,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

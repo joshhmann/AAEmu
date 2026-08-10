@@ -1,0 +1,142 @@
+{
+ "questId": 843,
+ "name": "연인을 잃은 남자",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5086
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3235,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4695,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 545,
+      "npcId": 5086
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3236,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16380,
+      "type": "QuestActObjItemUse",
+      "detailId": 438,
+      "itemId": 5137,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3237,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4697,
+      "type": "QuestActConReportNpc",
+      "detailId": 627,
+      "npcId": 5074
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3238,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 8709,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12431,
+      "type": "QuestActSupplyItem",
+      "detailId": 1203,
+      "itemId": 5137,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 5137,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5074,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

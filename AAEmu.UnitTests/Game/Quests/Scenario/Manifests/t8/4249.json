@@ -1,0 +1,121 @@
+{
+ "questId": 4249,
+ "name": "잊혀진 무덤 손질",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10628
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18613,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24237,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3495,
+      "npcId": 10628
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18614,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24239,
+      "type": "QuestActObjInteraction",
+      "detailId": 575,
+      "doodadId": 2147,
+      "count": 3,
+      "wiId": 19,
+      "phase": 11288
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18615,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24238,
+      "type": "QuestActConReportNpc",
+      "detailId": 3759,
+      "npcId": 10628
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18616,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2147,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10628,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

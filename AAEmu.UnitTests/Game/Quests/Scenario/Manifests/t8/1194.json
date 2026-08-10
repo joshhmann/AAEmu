@@ -1,0 +1,141 @@
+{
+ "questId": 1194,
+ "name": "성지기 언덕의 골칫거리 퇴치",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2315
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6079,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17836,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 536,
+      "npcId": 2315
+     },
+     {
+      "actId": 17837,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 537,
+      "npcId": 2316
+     },
+     {
+      "actId": 17838,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 538,
+      "npcId": 2317
+     },
+     {
+      "actId": 17839,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 539,
+      "npcId": 2318
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6083,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17840,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 279,
+      "monsterGroupId": 248,
+      "count": 24
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6084,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17841,
+      "type": "QuestActConReportJournal",
+      "detailId": 169
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6085,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17842,
+      "type": "QuestActSupplyCopper",
+      "detailId": 252,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 248,
+     "count": 24
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

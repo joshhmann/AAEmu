@@ -1,0 +1,119 @@
+{
+ "questId": 147,
+ "name": "화훼밭과 멧돼지",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2095
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 887,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2403,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 284,
+      "npcId": 2095
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1494,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2404,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 79,
+      "npcId": 2016,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1496,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2406,
+      "type": "QuestActConReportNpc",
+      "detailId": 321,
+      "npcId": 2095
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1497,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2016,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2095,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

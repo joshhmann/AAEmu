@@ -1,0 +1,104 @@
+{
+ "questId": 4114,
+ "name": "탈출한 사자들",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5586
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17797,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29242,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 193,
+      "doodadId": 5586
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17798,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23933,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 459,
+      "monsterGroupId": 412,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17800,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29301,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1110
+     },
+     {
+      "actId": 37037,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1426,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 412,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,163 @@
+{
+ "questId": 353,
+ "name": "거대 거미 파라노 처치 의뢰",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4347
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16580,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21879,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 120,
+      "doodadId": 4347
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16581,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21881,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 837,
+      "npcId": 8171,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21882,
+      "type": "QuestActConReportNpc",
+      "detailId": 3325,
+      "npcId": 902
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25709,
+      "type": "QuestActSupplyCopper",
+      "detailId": 498,
+      "amount": 7000
+     },
+     {
+      "actId": 38642,
+      "type": "QuestActSupplyItem",
+      "detailId": 4391,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 17218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22724,
+      "type": "QuestActSupplyItem",
+      "detailId": 2248,
+      "itemId": 21570,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8171,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 902,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

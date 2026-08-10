@@ -1,0 +1,121 @@
+{
+ "questId": 1147,
+ "name": "귀걸이를 잃어버린 자",
+ "zoneId": 134,
+ "categoryId": 23,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 1446
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 5862,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12999,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 57,
+      "doodadId": 1446
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 5863,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13000,
+      "type": "QuestActSupplyItem",
+      "detailId": 1238,
+      "itemId": 13996,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 5864,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13001,
+      "type": "QuestActObjItemUse",
+      "detailId": 361,
+      "itemId": 13996,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9390,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13002,
+      "type": "QuestActConAutoComplete",
+      "detailId": 373
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 13996,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

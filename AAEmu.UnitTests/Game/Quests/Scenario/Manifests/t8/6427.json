@@ -1,0 +1,105 @@
+{
+ "questId": 6427,
+ "name": "갈색 곡물 수프 만들기",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11071
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27470,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39315,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4988,
+      "npcId": 11071
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39316,
+      "type": "QuestActObjCraft",
+      "detailId": 306,
+      "craftId": 6758,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39317,
+      "type": "QuestActConReportNpc",
+      "detailId": 5004,
+      "npcId": 11071
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6758,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11071,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

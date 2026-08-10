@@ -1,0 +1,129 @@
+{
+ "questId": 3654,
+ "name": "맥반석 까마귀 알",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 25850
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15262,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29478,
+      "type": "QuestActConAcceptItem",
+      "detailId": 172,
+      "itemId": 25850
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20894,
+      "type": "QuestActObjItemGather",
+      "detailId": 1515,
+      "itemId": 19879,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20892,
+      "type": "QuestActConReportNpc",
+      "detailId": 3126,
+      "npcId": 2980
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15265,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19879,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2980,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25850,
+   "count": 1
+  },
+  {
+   "itemId": 19879,
+   "count": 1
+  }
+ ]
+}

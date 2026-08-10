@@ -1,0 +1,148 @@
+{
+ "questId": 143,
+ "name": "이도 저도 못하는 신세",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2094
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 883,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4657,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 536,
+      "npcId": 2094
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3197,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4775,
+      "type": "QuestActObjItemGather",
+      "detailId": 236,
+      "itemId": 3604,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4658,
+      "type": "QuestActConReportNpc",
+      "detailId": 618,
+      "npcId": 2094
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3199,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 3825,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5441,
+      "type": "QuestActObjItemGather",
+      "detailId": 267,
+      "itemId": 3516,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 3604,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 3516,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2094,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 3604,
+   "count": 1
+  },
+  {
+   "itemId": 3516,
+   "count": 2
+  }
+ ]
+}

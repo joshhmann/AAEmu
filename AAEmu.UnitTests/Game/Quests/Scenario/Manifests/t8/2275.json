@@ -1,0 +1,144 @@
+{
+ "questId": 2275,
+ "name": "성스러운 숲의 침입자",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1435
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18021,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2286,
+      "npcId": 1435
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12265,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18022,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 641,
+      "npcId": 8038,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18023,
+      "type": "QuestActConReportNpc",
+      "detailId": 2514,
+      "npcId": 7735
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12267,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38429,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2668,
+      "itemId": 33818,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38430,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2669,
+      "itemId": 33819,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38431,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2670,
+      "itemId": 33820,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8038,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7735,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

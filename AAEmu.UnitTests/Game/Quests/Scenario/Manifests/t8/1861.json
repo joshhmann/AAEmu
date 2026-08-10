@@ -1,0 +1,173 @@
+{
+ "questId": 1861,
+ "name": "칼을 들이대며",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7140
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8635,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12492,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1624,
+      "npcId": 7140
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8636,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12356,
+      "type": "QuestActSupplyItem",
+      "detailId": 1191,
+      "itemId": 5122,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8637,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12357,
+      "type": "QuestActObjItemGather",
+      "detailId": 791,
+      "itemId": 5123,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8638,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12493,
+      "type": "QuestActConReportNpc",
+      "detailId": 1830,
+      "npcId": 7140
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8639,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29074,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2133,
+      "itemId": 25253,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29080,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2137,
+      "itemId": 25256,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29081,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2138,
+      "itemId": 25257,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5123,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7140,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 5123,
+   "count": 1
+  }
+ ]
+}

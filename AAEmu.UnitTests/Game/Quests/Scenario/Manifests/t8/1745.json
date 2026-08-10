@@ -1,0 +1,125 @@
+{
+ "questId": 1745,
+ "name": "형제에게 줄 선물",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3316
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8451,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12255,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1564,
+      "npcId": 3316
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8452,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12256,
+      "type": "QuestActObjItemGather",
+      "detailId": 785,
+      "itemId": 15713,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8453,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12257,
+      "type": "QuestActConReportNpc",
+      "detailId": 1759,
+      "npcId": 3316
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8454,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15713,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3316,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15713,
+   "count": 3
+  }
+ ]
+}

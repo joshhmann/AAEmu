@@ -1,0 +1,159 @@
+{
+ "questId": 4617,
+ "name": "주목과 나뭇잎",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11075
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20073,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27359,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3753,
+      "npcId": 11075
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20074,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27360,
+      "type": "QuestActObjItemUse",
+      "detailId": 659,
+      "itemId": 14903,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20075,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27368,
+      "type": "QuestActConReportNpc",
+      "detailId": 4035,
+      "npcId": 11075
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20124,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27361,
+      "type": "QuestActObjItemGather",
+      "detailId": 2181,
+      "itemId": 33284,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27416,
+      "type": "QuestActSupplyItem",
+      "detailId": 3008,
+      "itemId": 24874,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14903,
+     "count": 5
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 33284,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11075,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24874,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33284,
+   "count": 2
+  }
+ ]
+}

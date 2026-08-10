@@ -1,0 +1,134 @@
+{
+ "questId": 642,
+ "name": "울부짖는 짐승의 숲",
+ "zoneId": 132,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7931
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2779,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15023,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2061,
+      "npcId": 7931
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2780,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24040,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 928,
+      "npcId": 8085,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4119,
+      "type": "QuestActConReportNpc",
+      "detailId": 545,
+      "npcId": 7931
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2782,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38691,
+      "type": "QuestActSupplyItem",
+      "detailId": 4440,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8085,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7931,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,140 @@
+{
+ "questId": 1709,
+ "name": "도둑맞은 샤프란",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 22,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3018
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8241,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11815,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1519,
+      "npcId": 3018
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8242,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11816,
+      "type": "QuestActObjItemGather",
+      "detailId": 748,
+      "itemId": 15285,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8243,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11817,
+      "type": "QuestActConReportNpc",
+      "detailId": 1706,
+      "npcId": 3018
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8244,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38330,
+      "type": "QuestActSupplyItem",
+      "detailId": 4282,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15285,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3018,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15285,
+   "count": 30
+  }
+ ]
+}

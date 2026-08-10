@@ -1,0 +1,145 @@
+{
+ "questId": 4518,
+ "name": "아란제브를 계승하는 자",
+ "zoneId": 132,
+ "categoryId": 8,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9921
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19682,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28034,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3784,
+      "npcId": 9921
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19683,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28035,
+      "type": "QuestActObjExpressFire",
+      "detailId": 20,
+      "expressKeyId": 121,
+      "npcGroupId": 442,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19684,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29234,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1107
+     },
+     {
+      "actId": 29260,
+      "type": "QuestActSupplyItem",
+      "detailId": 3325,
+      "itemId": 24085,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 30595,
+      "type": "QuestActSupplyItem",
+      "detailId": 3518,
+      "itemId": 26108,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40903,
+      "type": "QuestActSupplyItem",
+      "detailId": 4870,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ExpressFire",
+     "npcId": 9921,
+     "emotionId": 121,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24085,
+      "count": 1
+     },
+     {
+      "itemId": 26108,
+      "count": 1
+     },
+     {
+      "itemId": 23633,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "groups": {
+  "npcGroups": {
+   "442": [
+    9921
+   ]
+  }
+ }
+}

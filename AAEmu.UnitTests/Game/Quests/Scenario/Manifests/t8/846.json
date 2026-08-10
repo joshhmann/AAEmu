@@ -1,0 +1,106 @@
+{
+ "questId": 846,
+ "name": "징병소를 향한 날개",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7144
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3248,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4707,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 548,
+      "npcId": 7144
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9377,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12946,
+      "type": "QuestActConReportNpc",
+      "detailId": 1946,
+      "npcId": 5054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9378,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24557,
+      "type": "QuestActSupplyItem",
+      "detailId": 2405,
+      "itemId": 23663,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5054,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23663,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

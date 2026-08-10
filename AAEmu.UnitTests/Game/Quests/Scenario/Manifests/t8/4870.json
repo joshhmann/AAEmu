@@ -1,0 +1,140 @@
+{
+ "questId": 4870,
+ "name": "돼지 키우기",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11073
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21046,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28921,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3866,
+      "npcId": 11073
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21047,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28922,
+      "type": "QuestActObjItemGather",
+      "detailId": 2316,
+      "itemId": 7747,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21048,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28923,
+      "type": "QuestActConReportNpc",
+      "detailId": 4142,
+      "npcId": 11073
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21083,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28924,
+      "type": "QuestActSupplyItem",
+      "detailId": 3279,
+      "itemId": 24863,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 7747,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11073,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24863,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 7747,
+   "count": 15
+  }
+ ]
+}

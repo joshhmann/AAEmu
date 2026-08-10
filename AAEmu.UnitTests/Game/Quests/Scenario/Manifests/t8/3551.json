@@ -1,0 +1,125 @@
+{
+ "questId": 3551,
+ "name": "제단의 재 속에서",
+ "zoneId": 25,
+ "categoryId": 62,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9916
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17097,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22578,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3223,
+      "npcId": 9916
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17098,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22579,
+      "type": "QuestActConReportNpc",
+      "detailId": 3458,
+      "npcId": 9916
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17099,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 17100,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22582,
+      "type": "QuestActObjItemGather",
+      "detailId": 1700,
+      "itemId": 21540,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21540,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9916,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21540,
+   "count": 1
+  }
+ ]
+}

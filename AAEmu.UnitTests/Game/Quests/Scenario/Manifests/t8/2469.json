@@ -1,0 +1,125 @@
+{
+ "questId": 2469,
+ "name": "파디메르의 행방",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1817
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10671,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14888,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2028,
+      "npcId": 1817
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10673,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24374,
+      "type": "QuestActObjItemGather",
+      "detailId": 2006,
+      "itemId": 8125,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10674,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14891,
+      "type": "QuestActConReportNpc",
+      "detailId": 2238,
+      "npcId": 1679
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10675,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8125,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1679,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8125,
+   "count": 1
+  }
+ ]
+}

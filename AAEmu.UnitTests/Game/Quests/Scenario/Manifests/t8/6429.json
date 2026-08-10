@@ -1,0 +1,162 @@
+{
+ "questId": 6429,
+ "name": "고기 구이 만들기",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11071
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27476,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39321,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4990,
+      "npcId": 11071
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27477,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39326,
+      "type": "QuestActObjCraft",
+      "detailId": 308,
+      "craftId": 6735,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27478,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39325,
+      "type": "QuestActConReportNpc",
+      "detailId": 5006,
+      "npcId": 11071
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39327,
+      "type": "QuestActObjCraft",
+      "detailId": 309,
+      "craftId": 6739,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27481,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39328,
+      "type": "QuestActObjCraft",
+      "detailId": 310,
+      "craftId": 6743,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27482,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39329,
+      "type": "QuestActObjCraft",
+      "detailId": 311,
+      "craftId": 6747,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6735,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 6739,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 6743,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 6747,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11071,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,142 @@
+{
+ "questId": 522,
+ "name": "잃어버릴지도 모르는 말",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2391
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3536,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 390,
+      "npcId": 2391
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2576,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13302,
+      "type": "QuestActObjItemUse",
+      "detailId": 387,
+      "itemId": 15970,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9525,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13216,
+      "type": "QuestActConReportNpc",
+      "detailId": 2000,
+      "npcId": 2391
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9526,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 9580,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13303,
+      "type": "QuestActSupplyItem",
+      "detailId": 1284,
+      "itemId": 15970,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 15970,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2391,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

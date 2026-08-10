@@ -1,0 +1,147 @@
+{
+ "questId": 2724,
+ "name": "광산의 탄압자에게 복수하기",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1782
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16551,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 390,
+      "npcId": 1782
+     },
+     {
+      "actId": 16552,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 391,
+      "npcId": 1579
+     },
+     {
+      "actId": 24604,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1065,
+      "npcId": 1580
+     },
+     {
+      "actId": 24605,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1066,
+      "npcId": 1581
+     },
+     {
+      "actId": 27807,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1078,
+      "npcId": 7955
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11445,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16556,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 236,
+      "monsterGroupId": 226,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16554,
+      "type": "QuestActConReportJournal",
+      "detailId": 126
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16553,
+      "type": "QuestActSupplyCopper",
+      "detailId": 209,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 226,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

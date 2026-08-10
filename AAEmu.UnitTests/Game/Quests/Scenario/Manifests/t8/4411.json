@@ -1,0 +1,130 @@
+{
+ "questId": 4411,
+ "name": "재회의 약속",
+ "zoneId": 15,
+ "categoryId": 3,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10798
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19169,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26427,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3702,
+      "npcId": 10798
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19170,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26428,
+      "type": "QuestActConReportNpc",
+      "detailId": 3979,
+      "npcId": 11283
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19171,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28268,
+      "type": "QuestActSupplyItem",
+      "detailId": 3180,
+      "itemId": 25076,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29261,
+      "type": "QuestActSupplyItem",
+      "detailId": 3326,
+      "itemId": 24087,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40873,
+      "type": "QuestActSupplyItem",
+      "detailId": 4840,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11283,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 25076,
+      "count": 1
+     },
+     {
+      "itemId": 24087,
+      "count": 1
+     },
+     {
+      "itemId": 23633,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

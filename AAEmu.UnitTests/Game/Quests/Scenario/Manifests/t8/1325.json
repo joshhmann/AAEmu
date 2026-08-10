@@ -1,0 +1,121 @@
+{
+ "questId": 1325,
+ "name": "돌아온 그라베센의 아내",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 470
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6642,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9341,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 132,
+      "sphereId": 470
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6643,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13158,
+      "type": "QuestActObjInteraction",
+      "detailId": 316,
+      "doodadId": 1515,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6645,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 9490,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13160,
+      "type": "QuestActConReportNpc",
+      "detailId": 1985,
+      "npcId": 3149
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1515,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3149,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

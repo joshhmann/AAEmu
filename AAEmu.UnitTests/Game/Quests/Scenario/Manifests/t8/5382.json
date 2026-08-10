@@ -1,0 +1,163 @@
+{
+ "questId": 5382,
+ "name": "빙산을 헤치고",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9786
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32803,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4161,
+      "npcId": 9786
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23275,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32771,
+      "type": "QuestActObjItemGather",
+      "detailId": 2642,
+      "itemId": 27246,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32773,
+      "type": "QuestActConReportNpc",
+      "detailId": 4462,
+      "npcId": 9786
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23323,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32772,
+      "type": "QuestActObjItemGather",
+      "detailId": 2643,
+      "itemId": 27229,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23324,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32774,
+      "type": "QuestActSupplyItem",
+      "detailId": 3719,
+      "itemId": 28079,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27246,
+     "count": 3
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 27229,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9786,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28079,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27246,
+   "count": 3
+  },
+  {
+   "itemId": 27229,
+   "count": 10
+  }
+ ]
+}

@@ -1,0 +1,117 @@
+{
+ "questId": 2286,
+ "name": "장미의 비밀",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3346
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12300,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18055,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 86,
+      "doodadId": 3346
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12301,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18939,
+      "type": "QuestActObjTalk",
+      "detailId": 887,
+      "npcId": 1398
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12302,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18715,
+      "type": "QuestActConReportNpc",
+      "detailId": 2633,
+      "npcId": 8791
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13003,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 1398
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8791,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

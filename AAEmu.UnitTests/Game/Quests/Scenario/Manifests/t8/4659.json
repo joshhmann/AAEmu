@@ -1,0 +1,163 @@
+{
+ "questId": 4659,
+ "name": "농부의 달력, 고추와 콩",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11082
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20231,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28295,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3798,
+      "npcId": 11082
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20232,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28296,
+      "type": "QuestActObjItemGather",
+      "detailId": 2226,
+      "itemId": 19915,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20233,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28298,
+      "type": "QuestActConReportNpc",
+      "detailId": 4079,
+      "npcId": 11082
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20664,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28297,
+      "type": "QuestActObjItemGather",
+      "detailId": 2227,
+      "itemId": 19896,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20665,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28299,
+      "type": "QuestActSupplyItem",
+      "detailId": 3186,
+      "itemId": 24866,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19915,
+     "count": 2
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 19896,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11082,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24866,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19915,
+   "count": 2
+  },
+  {
+   "itemId": 19896,
+   "count": 2
+  }
+ ]
+}

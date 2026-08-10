@@ -1,0 +1,163 @@
+{
+ "questId": 1305,
+ "name": "숲의 정령 페피를 달래라",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3129
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9172,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1115,
+      "npcId": 3129
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6426,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13755,
+      "type": "QuestActObjItemGather",
+      "detailId": 902,
+      "itemId": 16164,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6434,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9181,
+      "type": "QuestActConReportNpc",
+      "detailId": 1278,
+      "npcId": 3129
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38707,
+      "type": "QuestActSupplyItem",
+      "detailId": 4456,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 6453,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9196,
+      "type": "QuestActSupplyItem",
+      "detailId": 734,
+      "itemId": 14098,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16164,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3129,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16164,
+   "count": 5
+  }
+ ]
+}

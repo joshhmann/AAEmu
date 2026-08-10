@@ -1,0 +1,136 @@
+{
+ "questId": 4410,
+ "name": "기적에 거는 희망",
+ "zoneId": 15,
+ "categoryId": 3,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11282
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19166,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26424,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3701,
+      "npcId": 11282
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19167,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26426,
+      "type": "QuestActObjInteraction",
+      "detailId": 596,
+      "doodadId": 5057,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19168,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26425,
+      "type": "QuestActConReportNpc",
+      "detailId": 3978,
+      "npcId": 10798
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19438,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40871,
+      "type": "QuestActSupplyItem",
+      "detailId": 4838,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 5057,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10798,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

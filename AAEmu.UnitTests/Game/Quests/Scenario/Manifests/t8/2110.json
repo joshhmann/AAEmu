@@ -1,0 +1,129 @@
+{
+ "questId": 2110,
+ "name": "고대의 숲에 사는 독사를 물리쳐라!",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3330
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13643,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 91,
+      "npcId": 3330
+     },
+     {
+      "actId": 13644,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 92,
+      "npcId": 3331
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13645,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 131,
+      "monsterGroupId": 135,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13647,
+      "type": "QuestActSupplyCopper",
+      "detailId": 67,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11327,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16406,
+      "type": "QuestActConReportJournal",
+      "detailId": 94
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 135,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

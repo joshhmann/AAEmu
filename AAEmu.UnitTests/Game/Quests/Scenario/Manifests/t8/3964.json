@@ -1,0 +1,104 @@
+{
+ "questId": 3964,
+ "name": "도마뱀의 짜증 나는 습성",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5697
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16791,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29292,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 195,
+      "doodadId": 5697
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16792,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29293,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1019,
+      "npcId": 2310,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16794,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29294,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1109
+     },
+     {
+      "actId": 37035,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1424,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2310,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

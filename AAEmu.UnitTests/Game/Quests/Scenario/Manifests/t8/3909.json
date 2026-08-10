@@ -1,0 +1,104 @@
+{
+ "questId": 3909,
+ "name": "사라세니아 퇴치",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5709
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16519,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29405,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 199,
+      "doodadId": 5709
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21818,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 833,
+      "npcId": 8606,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16526,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29403,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1114
+     },
+     {
+      "actId": 37034,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1423,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8606,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

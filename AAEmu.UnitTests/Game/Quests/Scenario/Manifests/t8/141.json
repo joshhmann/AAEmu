@@ -1,0 +1,163 @@
+{
+ "questId": 141,
+ "name": "돌아가지 못한 척후병",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 22,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2092
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 881,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4284,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 487,
+      "npcId": 2092
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2929,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4464,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 175,
+      "npcId": 2049,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2994,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4465,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 176,
+      "npcId": 2051,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2995,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4466,
+      "type": "QuestActConReportNpc",
+      "detailId": 575,
+      "npcId": 2092
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2996,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38383,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2629,
+      "itemId": 33541,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38384,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2630,
+      "itemId": 33547,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38385,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2631,
+      "itemId": 33551,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2049,
+     "count": 5
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 2051,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2092,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

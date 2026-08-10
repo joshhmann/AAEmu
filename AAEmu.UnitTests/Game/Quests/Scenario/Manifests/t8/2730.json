@@ -1,0 +1,135 @@
+{
+ "questId": 2730,
+ "name": "검은 쇠고리 오크 부족 소탕하기",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1765
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11468,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16591,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 411,
+      "npcId": 1765
+     },
+     {
+      "actId": 16592,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 412,
+      "npcId": 1766
+     },
+     {
+      "actId": 16593,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 413,
+      "npcId": 1767
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11469,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16595,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 242,
+      "monsterGroupId": 173,
+      "count": 32
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11470,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16597,
+      "type": "QuestActConReportJournal",
+      "detailId": 131
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16598,
+      "type": "QuestActSupplyCopper",
+      "detailId": 215,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 173,
+     "count": 32
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

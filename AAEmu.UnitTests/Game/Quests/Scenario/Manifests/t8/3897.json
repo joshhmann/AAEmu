@@ -1,0 +1,114 @@
+{
+ "questId": 3897,
+ "name": "에노이르에게 닥친 위험",
+ "zoneId": 2,
+ "categoryId": 8,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9853
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18590,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24555,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3527,
+      "npcId": 9853
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18592,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24564,
+      "type": "QuestActConReportNpc",
+      "detailId": 3787,
+      "npcId": 3670
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18593,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 21021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28748,
+      "type": "QuestActSupplyItem",
+      "detailId": 3255,
+      "itemId": 5005,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3670,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

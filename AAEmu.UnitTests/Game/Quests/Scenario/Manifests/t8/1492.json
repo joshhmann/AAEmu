@@ -1,0 +1,148 @@
+{
+ "questId": 1492,
+ "name": "만월의 숨결",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3163
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7081,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9803,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1237,
+      "npcId": 3163
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 7109,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9804,
+      "type": "QuestActSupplyItem",
+      "detailId": 783,
+      "itemId": 14321,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7112,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9809,
+      "type": "QuestActObjItemGather",
+      "detailId": 560,
+      "itemId": 14320,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7113,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9810,
+      "type": "QuestActConReportNpc",
+      "detailId": 1405,
+      "npcId": 3163
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7114,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14320,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3163,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14320,
+   "count": 1
+  }
+ ]
+}

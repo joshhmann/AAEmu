@@ -1,0 +1,155 @@
+{
+ "questId": 524,
+ "name": "수상한 사령관",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2422
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2040,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3186,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 325,
+      "npcId": 2422
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 2041,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13229,
+      "type": "QuestActSupplyItem",
+      "detailId": 1271,
+      "itemId": 15950,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2042,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13230,
+      "type": "QuestActObjItemGather",
+      "detailId": 864,
+      "itemId": 24548,
+      "count": 1
+     },
+     {
+      "actId": 25667,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 110,
+      "itemId": 15949,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2044,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3194,
+      "type": "QuestActConReportNpc",
+      "detailId": 389,
+      "npcId": 2422
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2045,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24548,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2422,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24548,
+   "count": 1
+  }
+ ]
+}

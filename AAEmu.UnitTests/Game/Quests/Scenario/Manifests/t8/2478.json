@@ -1,0 +1,104 @@
+{
+ "questId": 2478,
+ "name": "저수지를 보호하라",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5698
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10711,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29303,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 197,
+      "doodadId": 5698
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10712,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24039,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 927,
+      "npcId": 8089,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10715,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29304,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1111
+     },
+     {
+      "actId": 36990,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1398,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8089,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,119 @@
+{
+ "questId": 3990,
+ "name": "마리안을 위해",
+ "zoneId": 15,
+ "categoryId": 3,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10560
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24706,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3542,
+      "npcId": 10560
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17199,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24713,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 954,
+      "npcId": 10886,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17200,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 18817,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25169,
+      "type": "QuestActConReportNpc",
+      "detailId": 3827,
+      "npcId": 10560
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10886,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10560,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,148 @@
+{
+ "questId": 621,
+ "name": "최고급 포도주",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1779
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3995,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 445,
+      "npcId": 1779
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2653,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14614,
+      "type": "QuestActObjItemGather",
+      "detailId": 975,
+      "itemId": 16410,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2654,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3997,
+      "type": "QuestActConReportNpc",
+      "detailId": 518,
+      "npcId": 1713
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2655,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 10403,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14613,
+      "type": "QuestActSupplyItem",
+      "detailId": 1385,
+      "itemId": 16410,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16410,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1713,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16410,
+   "count": 1
+  }
+ ]
+}

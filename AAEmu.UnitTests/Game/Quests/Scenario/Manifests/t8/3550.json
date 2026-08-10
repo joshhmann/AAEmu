@@ -1,0 +1,91 @@
+{
+ "questId": 3550,
+ "name": "빈센시오의 집으로",
+ "zoneId": 25,
+ "categoryId": 62,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10323
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17094,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22575,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3222,
+      "npcId": 10323
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17095,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22674,
+      "type": "QuestActConReportNpc",
+      "detailId": 3480,
+      "npcId": 9916
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17096,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9916,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

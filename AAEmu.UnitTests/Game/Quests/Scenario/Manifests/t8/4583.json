@@ -1,0 +1,140 @@
+{
+ "questId": 4583,
+ "name": "구리 주괴 납품",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11086
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19951,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27155,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3744,
+      "npcId": 11086
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19952,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27156,
+      "type": "QuestActObjItemGather",
+      "detailId": 2175,
+      "itemId": 8320,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27157,
+      "type": "QuestActConReportNpc",
+      "detailId": 4026,
+      "npcId": 11086
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19969,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27487,
+      "type": "QuestActSupplyItem",
+      "detailId": 3027,
+      "itemId": 24890,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8320,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11086,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24890,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8320,
+   "count": 3
+  }
+ ]
+}

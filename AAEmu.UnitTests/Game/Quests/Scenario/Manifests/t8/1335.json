@@ -1,0 +1,142 @@
+{
+ "questId": 1335,
+ "name": "돈이 되는 물고기",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3154
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6685,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9377,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1158,
+      "npcId": 3154
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9378,
+      "type": "QuestActObjItemUse",
+      "detailId": 227,
+      "itemId": 14115,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6687,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9379,
+      "type": "QuestActConReportNpc",
+      "detailId": 1322,
+      "npcId": 3154
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6688,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 6693,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9383,
+      "type": "QuestActSupplyItem",
+      "detailId": 741,
+      "itemId": 14115,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14115,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3154,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

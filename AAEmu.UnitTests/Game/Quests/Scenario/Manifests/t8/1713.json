@@ -1,0 +1,97 @@
+{
+ "questId": 1713,
+ "name": "거인의 핵 조각",
+ "zoneId": 108,
+ "categoryId": 29,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 15357
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11932,
+      "type": "QuestActConAcceptItem",
+      "detailId": 84,
+      "itemId": 15357
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11938,
+      "type": "QuestActConReportNpc",
+      "detailId": 1717,
+      "npcId": 754
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8283,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 754,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15357,
+   "count": 1
+  }
+ ]
+}

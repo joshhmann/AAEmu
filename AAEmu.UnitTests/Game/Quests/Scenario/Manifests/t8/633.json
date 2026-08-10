@@ -1,0 +1,140 @@
+{
+ "questId": 633,
+ "name": "여신의 버섯",
+ "zoneId": 132,
+ "categoryId": 15,
+ "level": 28,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7924
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4068,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 459,
+      "npcId": 7924
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2724,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4070,
+      "type": "QuestActObjItemGather",
+      "detailId": 206,
+      "itemId": 5035,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2725,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4072,
+      "type": "QuestActConReportNpc",
+      "detailId": 533,
+      "npcId": 7924
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38681,
+      "type": "QuestActSupplyItem",
+      "detailId": 4430,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5035,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7924,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5035,
+   "count": 5
+  }
+ ]
+}

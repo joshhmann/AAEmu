@@ -1,0 +1,121 @@
+{
+ "questId": 1742,
+ "name": "신성한 샘물",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3312
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8438,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12242,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1561,
+      "npcId": 3312
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8439,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12243,
+      "type": "QuestActSupplyItem",
+      "detailId": 1182,
+      "itemId": 15708,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8440,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12244,
+      "type": "QuestActObjItemUse",
+      "detailId": 332,
+      "itemId": 15708,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8443,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12248,
+      "type": "QuestActConAutoComplete",
+      "detailId": 324
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 15708,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

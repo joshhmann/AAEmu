@@ -1,0 +1,123 @@
+{
+ "questId": 2773,
+ "name": "빈민가 얼룩 슬라임 퇴치",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2927
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11676,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17127,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 516,
+      "npcId": 2927
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11677,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17128,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 630,
+      "npcId": 2927,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11678,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17126,
+      "type": "QuestActConReportJournal",
+      "detailId": 162
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11679,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17124,
+      "type": "QuestActSupplyCopper",
+      "detailId": 246,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2927,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

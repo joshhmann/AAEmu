@@ -1,0 +1,141 @@
+{
+ "questId": 2778,
+ "name": "검은돛 해적 처치하기",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2921
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11696,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17157,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 529,
+      "npcId": 2921
+     },
+     {
+      "actId": 17158,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 530,
+      "npcId": 2922
+     },
+     {
+      "actId": 17159,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 531,
+      "npcId": 2923
+     },
+     {
+      "actId": 17160,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 532,
+      "npcId": 2924
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11697,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17164,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 271,
+      "monsterGroupId": 46,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17163,
+      "type": "QuestActConReportJournal",
+      "detailId": 167
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11699,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17161,
+      "type": "QuestActSupplyCopper",
+      "detailId": 251,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 46,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

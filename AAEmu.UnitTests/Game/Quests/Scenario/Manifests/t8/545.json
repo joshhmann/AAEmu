@@ -1,0 +1,121 @@
+{
+ "questId": 545,
+ "name": "부두의 흐느낌",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2431
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3286,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 345,
+      "npcId": 2431
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2153,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3287,
+      "type": "QuestActObjInteraction",
+      "detailId": 70,
+      "doodadId": 924,
+      "count": 1,
+      "wiId": 0,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2155,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3290,
+      "type": "QuestActConReportNpc",
+      "detailId": 410,
+      "npcId": 2430
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2156,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 924,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2430,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

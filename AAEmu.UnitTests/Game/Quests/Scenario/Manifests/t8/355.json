@@ -1,0 +1,91 @@
+{
+ "questId": 355,
+ "name": "트리스테 극단으로",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 877
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2626,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3965,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 440,
+      "npcId": 877
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2629,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3969,
+      "type": "QuestActConReportNpc",
+      "detailId": 513,
+      "npcId": 643
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2630,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 643,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

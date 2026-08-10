@@ -1,0 +1,91 @@
+{
+ "questId": 3660,
+ "name": "공사장의 이상한 현상",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2962
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15291,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20969,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2899,
+      "npcId": 2962
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15292,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20970,
+      "type": "QuestActConReportNpc",
+      "detailId": 3132,
+      "npcId": 2992
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15293,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2992,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

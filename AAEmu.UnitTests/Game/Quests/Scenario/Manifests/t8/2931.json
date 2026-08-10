@@ -1,0 +1,132 @@
+{
+ "questId": 2931,
+ "name": "의문의 미인",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8815
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12580,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18315,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2357,
+      "npcId": 8815
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12581,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18308,
+      "type": "QuestActObjItemGather",
+      "detailId": 1247,
+      "itemId": 18690,
+      "count": 1
+     },
+     {
+      "actId": 18309,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 67,
+      "itemId": 18692,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18310,
+      "type": "QuestActConReportNpc",
+      "detailId": 2577,
+      "npcId": 8816
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12583,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18690,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8816,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18690,
+   "count": 1
+  }
+ ]
+}

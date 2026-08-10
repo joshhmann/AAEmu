@@ -1,0 +1,140 @@
+{
+ "questId": 801,
+ "name": "유언비어 유포의 죄",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7143
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3019,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4490,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 500,
+      "npcId": 7143
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3020,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4491,
+      "type": "QuestActObjItemGather",
+      "detailId": 218,
+      "itemId": 5119,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4492,
+      "type": "QuestActConReportNpc",
+      "detailId": 580,
+      "npcId": 5063
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3022,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38667,
+      "type": "QuestActSupplyItem",
+      "detailId": 4416,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5119,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5063,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5119,
+   "count": 5
+  }
+ ]
+}

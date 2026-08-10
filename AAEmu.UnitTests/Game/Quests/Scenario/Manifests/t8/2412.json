@@ -1,0 +1,125 @@
+{
+ "questId": 2412,
+ "name": "다후타 여신의 저주",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1727
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10389,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14599,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1960,
+      "npcId": 1727
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10390,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14602,
+      "type": "QuestActObjItemGather",
+      "detailId": 972,
+      "itemId": 16406,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10398,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14608,
+      "type": "QuestActConReportNpc",
+      "detailId": 2175,
+      "npcId": 1727
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10399,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16406,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1727,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16406,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,110 @@
+{
+ "questId": 3482,
+ "name": "빈 나무터의 자줏빛 하늘",
+ "zoneId": 24,
+ "categoryId": 61,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10367
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17160,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22636,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3238,
+      "npcId": 10367
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17161,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22634,
+      "type": "QuestActObjSphere",
+      "detailId": 618,
+      "sphereId": 1364
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17162,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22635,
+      "type": "QuestActConAutoComplete",
+      "detailId": 729
+     },
+     {
+      "actId": 40812,
+      "type": "QuestActSupplyItem",
+      "detailId": 4779,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 17161
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

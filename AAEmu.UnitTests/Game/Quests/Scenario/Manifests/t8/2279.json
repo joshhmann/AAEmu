@@ -1,0 +1,170 @@
+{
+ "questId": 2279,
+ "name": "카어 노르드로의 초대",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1452
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12320,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18143,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2316,
+      "npcId": 1452
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12423,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18144,
+      "type": "QuestActObjExpressFire",
+      "detailId": 6,
+      "expressKeyId": 124,
+      "npcGroupId": 265,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12424,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18145,
+      "type": "QuestActObjExpressFire",
+      "detailId": 7,
+      "expressKeyId": 75,
+      "npcGroupId": 265,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18146,
+      "type": "QuestActConReportNpc",
+      "detailId": 2537,
+      "npcId": 1428
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12426,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 17512,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23172,
+      "type": "QuestActObjExpressFire",
+      "detailId": 18,
+      "expressKeyId": 74,
+      "npcGroupId": 265,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ExpressFire",
+     "npcId": 1405,
+     "emotionId": 124,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 1405,
+     "emotionId": 75,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 1405,
+     "emotionId": 74,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1428,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "groups": {
+  "npcGroups": {
+   "265": [
+    1405
+   ]
+  }
+ }
+}

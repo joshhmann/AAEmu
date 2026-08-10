@@ -1,0 +1,129 @@
+{
+ "questId": 6083,
+ "name": "숙련자와 함께 오카페 처치",
+ "zoneId": 184,
+ "categoryId": 77,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14422
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26171,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35807,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4620,
+      "npcId": 14422
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35809,
+      "type": "QuestActObjItemGather",
+      "detailId": 2879,
+      "itemId": 30763,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35817,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1596
+     },
+     {
+      "actId": 36369,
+      "type": "QuestActSupplyExp",
+      "detailId": 887,
+      "exp": 9450
+     },
+     {
+      "actId": 36370,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1334,
+      "amount": 0
+     },
+     {
+      "actId": 37082,
+      "type": "QuestActSupplyItem",
+      "detailId": 4108,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30763,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30763,
+   "count": 1
+  }
+ ]
+}

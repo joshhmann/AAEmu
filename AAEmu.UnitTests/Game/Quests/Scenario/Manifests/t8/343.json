@@ -1,0 +1,148 @@
+{
+ "questId": 343,
+ "name": "거미에게 빼앗긴 유품",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5157
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 1603,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2770,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 300,
+      "npcId": 5157
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1604,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2769,
+      "type": "QuestActObjItemGather",
+      "detailId": 146,
+      "itemId": 5057,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1605,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2791,
+      "type": "QuestActConReportNpc",
+      "detailId": 354,
+      "npcId": 5157
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1606,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 16597,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21931,
+      "type": "QuestActSupplyItem",
+      "detailId": 2194,
+      "itemId": 14921,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5057,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5157,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5057,
+   "count": 1
+  }
+ ]
+}

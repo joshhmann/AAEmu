@@ -1,0 +1,121 @@
+{
+ "questId": 3699,
+ "name": "해안 대포 파괴",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3052
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21106,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2931,
+      "npcId": 3052
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15448,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21428,
+      "type": "QuestActObjInteraction",
+      "detailId": 525,
+      "doodadId": 4178,
+      "count": 3,
+      "wiId": 19,
+      "phase": 10360
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15449,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21107,
+      "type": "QuestActConReportNpc",
+      "detailId": 3164,
+      "npcId": 3052
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15450,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4178,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3052,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

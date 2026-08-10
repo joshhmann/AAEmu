@@ -1,0 +1,119 @@
+{
+ "questId": 4193,
+ "name": "하얀 털 폭군",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10716
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23779,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3407,
+      "npcId": 10716
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23781,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 911,
+      "npcId": 10715,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18209,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23780,
+      "type": "QuestActConReportNpc",
+      "detailId": 3680,
+      "npcId": 10716
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18210,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10715,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10716,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

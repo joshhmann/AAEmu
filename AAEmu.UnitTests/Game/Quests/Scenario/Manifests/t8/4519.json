@@ -1,0 +1,106 @@
+{
+ "questId": 4519,
+ "name": "꿈 사냥자가 닿은 곳",
+ "zoneId": 132,
+ "categoryId": 8,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11574
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19685,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26823,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3709,
+      "npcId": 11574
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19687,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26824,
+      "type": "QuestActConReportNpc",
+      "detailId": 3989,
+      "npcId": 585
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19688,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40902,
+      "type": "QuestActSupplyItem",
+      "detailId": 4869,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 4
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 585,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

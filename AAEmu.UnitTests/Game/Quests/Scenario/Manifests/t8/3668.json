@@ -1,0 +1,134 @@
+{
+ "questId": 3668,
+ "name": "검붉은 얼룩 슬라임의 위협",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9861
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15321,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20991,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2906,
+      "npcId": 9861
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15322,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20990,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 795,
+      "npcId": 2927,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15323,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20992,
+      "type": "QuestActConReportNpc",
+      "detailId": 3139,
+      "npcId": 9861
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15324,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38327,
+      "type": "QuestActSupplyItem",
+      "detailId": 4279,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2927,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9861,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

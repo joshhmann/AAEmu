@@ -1,0 +1,124 @@
+{
+ "questId": 6439,
+ "name": "벌꿀 음료 만들기",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11080
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27518,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39370,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4999,
+      "npcId": 11080
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27519,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39371,
+      "type": "QuestActObjCraft",
+      "detailId": 318,
+      "craftId": 6764,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27520,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39373,
+      "type": "QuestActConReportNpc",
+      "detailId": 5012,
+      "npcId": 11080
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27521,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39372,
+      "type": "QuestActObjCraft",
+      "detailId": 319,
+      "craftId": 6768,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6764,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 6768,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11080,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

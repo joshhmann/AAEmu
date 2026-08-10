@@ -1,0 +1,159 @@
+{
+ "questId": 754,
+ "name": "고릴라의 영향",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2972
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3337,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4782,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 561,
+      "npcId": 2972
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3339,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29469,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1029,
+      "npcId": 2900,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3340,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4786,
+      "type": "QuestActConReportNpc",
+      "detailId": 645,
+      "npcId": 2972
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3341,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38326,
+      "type": "QuestActSupplyItem",
+      "detailId": 4278,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21232,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29468,
+      "type": "QuestActObjItemGather",
+      "detailId": 2373,
+      "itemId": 5085,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2900,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 5085,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2972,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5085,
+   "count": 5
+  }
+ ]
+}

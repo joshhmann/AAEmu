@@ -1,0 +1,91 @@
+{
+ "questId": 795,
+ "name": "노래의 땅으로",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3050
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3611,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5129,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 610,
+      "npcId": 3050
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3615,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5132,
+      "type": "QuestActConReportNpc",
+      "detailId": 695,
+      "npcId": 7139
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3616,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7139,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

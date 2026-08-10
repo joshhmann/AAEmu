@@ -1,0 +1,140 @@
+{
+ "questId": 830,
+ "name": "비파 대결에 필요한 것",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5043
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3151,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4609,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 526,
+      "npcId": 5043
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4611,
+      "type": "QuestActObjItemGather",
+      "detailId": 226,
+      "itemId": 5131,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3153,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4610,
+      "type": "QuestActConReportNpc",
+      "detailId": 608,
+      "npcId": 5043
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3154,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38658,
+      "type": "QuestActSupplyItem",
+      "detailId": 4407,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5131,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5043,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5131,
+   "count": 8
+  }
+ ]
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 4064,
+ "name": "피난처의 이동수단",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 27,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1729
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17559,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23774,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3406,
+      "npcId": 1729
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17560,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23211,
+      "type": "QuestActObjItemGather",
+      "detailId": 1796,
+      "itemId": 17273,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17561,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24256,
+      "type": "QuestActConReportNpc",
+      "detailId": 3763,
+      "npcId": 1729
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17562,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17273,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1729,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17273,
+   "count": 3
+  }
+ ]
+}

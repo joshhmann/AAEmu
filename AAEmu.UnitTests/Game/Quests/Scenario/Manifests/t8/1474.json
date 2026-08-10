@@ -1,0 +1,125 @@
+{
+ "questId": 1474,
+ "name": "살리움 왕가의 유물",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1679
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6889,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9622,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1201,
+      "npcId": 1679
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6958,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9624,
+      "type": "QuestActObjItemGather",
+      "detailId": 540,
+      "itemId": 14181,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6959,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9625,
+      "type": "QuestActConReportNpc",
+      "detailId": 1372,
+      "npcId": 7796
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6960,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 14181,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7796,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14181,
+   "count": 1
+  }
+ ]
+}

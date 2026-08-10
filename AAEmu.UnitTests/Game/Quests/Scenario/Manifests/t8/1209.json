@@ -1,0 +1,153 @@
+{
+ "questId": 1209,
+ "name": "일곱다리 마을의 무례한 자들 처치",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 5000
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6187,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13581,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 75,
+      "npcId": 5000
+     },
+     {
+      "actId": 13582,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 76,
+      "npcId": 5001
+     },
+     {
+      "actId": 13583,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 77,
+      "npcId": 5078
+     },
+     {
+      "actId": 13584,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 78,
+      "npcId": 5080
+     },
+     {
+      "actId": 13585,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 79,
+      "npcId": 5013
+     },
+     {
+      "actId": 21715,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 838,
+      "npcId": 5004
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13586,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 127,
+      "monsterGroupId": 130,
+      "count": 32
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6189,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13588,
+      "type": "QuestActSupplyCopper",
+      "detailId": 60,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11010,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15514,
+      "type": "QuestActConReportJournal",
+      "detailId": 30
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 130,
+     "count": 32
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

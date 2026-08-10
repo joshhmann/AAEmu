@@ -1,0 +1,129 @@
+{
+ "questId": 3698,
+ "name": "발이 묶인 해적단",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 20001
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21104,
+      "type": "QuestActConAcceptItem",
+      "detailId": 114,
+      "itemId": 20001
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15445,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21105,
+      "type": "QuestActConReportNpc",
+      "detailId": 3163,
+      "npcId": 3050
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15446,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 16228,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21390,
+      "type": "QuestActObjItemGather",
+      "detailId": 1584,
+      "itemId": 20001,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20001,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3050,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20001,
+   "count": 1
+  },
+  {
+   "itemId": 20001,
+   "count": 1
+  }
+ ]
+}

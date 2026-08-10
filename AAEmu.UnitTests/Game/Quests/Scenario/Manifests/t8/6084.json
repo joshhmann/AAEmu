@@ -1,0 +1,123 @@
+{
+ "questId": 6084,
+ "name": "초심자와 함께 오카페 처치",
+ "zoneId": 184,
+ "categoryId": 77,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14422
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35811,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4621,
+      "npcId": 14422
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26176,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35810,
+      "type": "QuestActObjItemGather",
+      "detailId": 2880,
+      "itemId": 30762,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26178,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35818,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1597
+     },
+     {
+      "actId": 36368,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1333,
+      "amount": 0
+     },
+     {
+      "actId": 37083,
+      "type": "QuestActSupplyItem",
+      "detailId": 4109,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30762,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30762,
+   "count": 1
+  }
+ ]
+}

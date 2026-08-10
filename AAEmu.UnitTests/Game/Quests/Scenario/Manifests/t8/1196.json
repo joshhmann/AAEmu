@@ -1,0 +1,141 @@
+{
+ "questId": 1196,
+ "name": "일식 벌판의 포식자들 물리치기",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2310
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17852,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 545,
+      "npcId": 2310
+     },
+     {
+      "actId": 17853,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 546,
+      "npcId": 2308
+     },
+     {
+      "actId": 17856,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 548,
+      "npcId": 2306
+     },
+     {
+      "actId": 17859,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 551,
+      "npcId": 2307
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6092,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17860,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 282,
+      "monsterGroupId": 253,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6093,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17861,
+      "type": "QuestActConReportJournal",
+      "detailId": 172
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6094,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17862,
+      "type": "QuestActSupplyCopper",
+      "detailId": 254,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 253,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

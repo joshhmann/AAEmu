@@ -1,0 +1,97 @@
+{
+ "questId": 1859,
+ "name": "협박 편지",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 5148
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8627,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12350,
+      "type": "QuestActConAcceptItem",
+      "detailId": 85,
+      "itemId": 5148
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8629,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12351,
+      "type": "QuestActConReportNpc",
+      "detailId": 1795,
+      "npcId": 5077
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8630,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5077,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5148,
+   "count": 1
+  }
+ ]
+}

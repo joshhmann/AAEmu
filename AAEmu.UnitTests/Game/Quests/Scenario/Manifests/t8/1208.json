@@ -1,0 +1,135 @@
+{
+ "questId": 1208,
+ "name": "횃불만 소란의 주범자들 처치",
+ "zoneId": 140,
+ "categoryId": 16,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 5006
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6180,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13589,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 80,
+      "npcId": 5006
+     },
+     {
+      "actId": 13590,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 81,
+      "npcId": 5007
+     },
+     {
+      "actId": 13591,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 82,
+      "npcId": 5008
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6181,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13592,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 128,
+      "monsterGroupId": 131,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6186,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13594,
+      "type": "QuestActSupplyCopper",
+      "detailId": 61,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11013,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15517,
+      "type": "QuestActConReportJournal",
+      "detailId": 33
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 131,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

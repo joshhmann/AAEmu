@@ -1,0 +1,117 @@
+{
+ "questId": 2346,
+ "name": "환락가의 소문",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1488
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12337,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18196,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2330,
+      "npcId": 1488
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18198,
+      "type": "QuestActObjSphere",
+      "detailId": 564,
+      "sphereId": 1157
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18197,
+      "type": "QuestActConReportNpc",
+      "detailId": 2550,
+      "npcId": 1456
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12473,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 12471
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1456,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

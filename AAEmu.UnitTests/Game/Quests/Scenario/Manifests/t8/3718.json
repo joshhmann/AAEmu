@@ -1,0 +1,123 @@
+{
+ "questId": 3718,
+ "name": "다급한 구조 요청",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4302
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21133,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 107,
+      "doodadId": 4302
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15533,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21141,
+      "type": "QuestActSupplyItem",
+      "detailId": 2108,
+      "itemId": 19991,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15534,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21143,
+      "type": "QuestActObjInteraction",
+      "detailId": 509,
+      "doodadId": 4094,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15536,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21343,
+      "type": "QuestActConAutoComplete",
+      "detailId": 689
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4094,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

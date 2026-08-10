@@ -1,0 +1,167 @@
+{
+ "questId": 533,
+ "name": "절벽 위의 꽃",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2425
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2100,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3232,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 334,
+      "npcId": 2425
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 2101,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3233,
+      "type": "QuestActSupplyItem",
+      "detailId": 200,
+      "itemId": 14182,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2102,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3234,
+      "type": "QuestActObjItemUse",
+      "detailId": 61,
+      "itemId": 14182,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2104,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3238,
+      "type": "QuestActConReportNpc",
+      "detailId": 399,
+      "npcId": 2425
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2105,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 9565,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13259,
+      "type": "QuestActObjItemGather",
+      "detailId": 869,
+      "itemId": 4989,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14182,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 4989,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2425,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4989,
+   "count": 1
+  }
+ ]
+}

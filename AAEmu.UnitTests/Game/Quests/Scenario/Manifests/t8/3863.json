@@ -1,0 +1,123 @@
+{
+ "questId": 3863,
+ "name": "시가지 공사장의 유령 퇴치",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2916
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16278,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21480,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 816,
+      "npcId": 2916
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16279,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21481,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 818,
+      "npcId": 2916,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21482,
+      "type": "QuestActConReportJournal",
+      "detailId": 230
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21483,
+      "type": "QuestActSupplyCopper",
+      "detailId": 337,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2916,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

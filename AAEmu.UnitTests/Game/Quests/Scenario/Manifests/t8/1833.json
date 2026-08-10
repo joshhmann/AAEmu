@@ -1,0 +1,191 @@
+{
+ "questId": 1833,
+ "name": "그란비스트의 고독",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 2364
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12292,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 51,
+      "doodadId": 2364
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12293,
+      "type": "QuestActObjItemGather",
+      "detailId": 789,
+      "itemId": 15777,
+      "count": 1
+     },
+     {
+      "actId": 13745,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 6,
+      "itemId": 15773,
+      "count": 1
+     },
+     {
+      "actId": 13746,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 7,
+      "itemId": 15774,
+      "count": 1
+     },
+     {
+      "actId": 13747,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 8,
+      "itemId": 15775,
+      "count": 1
+     },
+     {
+      "actId": 13748,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 9,
+      "itemId": 15776,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8502,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12291,
+      "type": "QuestActConReportNpc",
+      "detailId": 1769,
+      "npcId": 3262
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8503,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38699,
+      "type": "QuestActSupplyItem",
+      "detailId": 4448,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 20652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28256,
+      "type": "QuestActSupplyItem",
+      "detailId": 3177,
+      "itemId": 25071,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15777,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3262,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15777,
+   "count": 1
+  }
+ ]
+}

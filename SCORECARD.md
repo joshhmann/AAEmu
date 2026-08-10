@@ -152,18 +152,25 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M2a, band 1-20 census 2026-08-06 + M2a data drop 2026-08-08): **1233/1233 driven quests runnable, 0 FAIL** across the
-> 1252-quest scenario-harness census (117 dead templates dropped 2026-08-08 — register §6/§7, t_e5deb128). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
-> 560 non-dropped (668 − 108 dropped). **Band 11-20: 609 PASS / 0 SKIP / 0 FAIL = 100.0%** of 609 non-dropped.
-> All SKIPs documented-SKIP with reason (19): 8 orphaned contexts (no quest_contexts row),
-> 10 unsupported-act-type (ZoneKill 3 / CrimePoint 2 / MateLevel 2 / CompleteQuest 2 / AbilityLevel 1),
-> 1 let-it-done-without-report-act (6069). Wave-1+2 closures
-> flipped 73 SKIP→PASS cumulative (36 wave-1 + 37 merged-line incl. 1702 multi-gap); zero PASS→SKIP regressions.
+> Quest-runnability (M2a/M2c, band 1-30 census 2026-08-08): **2062/2062 driven quests runnable, 0 FAIL** across the
+> 2195-quest scenario-harness census. **Band 1-10: 560 PASS / 100 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
+> 660 non-dropped (668 − 8 dropped). **Band 11-20: 609 PASS / 17 SKIP / 0 FAIL = 100.0%** of 626 non-dropped.
+> **Band 21-30: 826 PASS / 0 SKIP / 0 FAIL = 100.0%** of 847 non-dropped (0 dropped).
+> All SKIPs documented-SKIP with reason (133): 91 no-components reserve/cutscene shells (2148–2229, 3748, 3750–3757),
+> 26 let-it-done-without-report-act (20 + 6 — old Sunny Wilderness 1867/1898/1904/1908/2054 + act-less
+> 5575–5645 cluster + 6069 — no engine completion path), 8 orphaned contexts (no quest_contexts row),
+> 8 unsupported-act-type (CrimePoint 2 / MateLevel 2 / CompleteQuest 2 / AbilityLevel 1 — the Wave-3
+> ZoneKill closure closed 23 SKIP→PASS: 20 band-21-30 2794–2822 + frozen-sample 5900/5923/5924),
+> 1 score-without-objectives (5641). Band-21-30 sweep calibration: kind_id-1 None components (legacy task-board
+> step, engine walks Start→None→Supply) now emitted as "None" — 5 quests flipped FAIL→PASS (275/281/305/371/604).
+> Wave-1+2 closures flipped 73 SKIP→PASS cumulative (36 wave-1 + 37 merged-line incl. 1702 multi-gap); wave-3
+> ZoneKill closure flipped 23 more (73 + 23 = 96 cumulative); zero PASS→SKIP regressions.
 > Census regen deterministic (byte-identical); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
-> Tiger Spine/Falcony/Sunny Wilderness) in runnability.md (census-meta.json-driven). Fail-before states on the
+> Tiger Spine/Falcony/Sunny Wilderness/Ancient Forest/Marionople/Two Crowns/White Forest/Singing Land/Sunrise
+> Peninsula) in runnability.md (census-meta.json-driven). Fail-before states on the
 > wave-1/wave-2 rig commits (2283c0df/7a1145be). Watch items: EtcItemObtain engine no-op, cinema zero-wired,
-> honor zero-wired (zero-wired-domains.md).
-> See scorecard-explorations/runnability.md + zero-wired-domains.md §8.
+> honor zero-wired (zero-wired-domains.md), ZoneKill ZoneId unenforced (§2.4, zero-wired-domains.md §9).
+> See scorecard-explorations/runnability.md + zero-wired-domains.md §8/§9.
 
 ## Zero-data-wired domains (data exists, server ignores it)
 

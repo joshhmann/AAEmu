@@ -1,0 +1,138 @@
+{
+ "questId": 4226,
+ "name": "저승의 문을 여는 자들",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10630
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18529,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24231,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3494,
+      "npcId": 10630
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18530,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24233,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 941,
+      "npcId": 10605,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18531,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24232,
+      "type": "QuestActConReportNpc",
+      "detailId": 3758,
+      "npcId": 2064
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18532,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24235,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 942,
+      "npcId": 10634,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18611,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10605,
+     "count": 8
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 10634,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2064,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

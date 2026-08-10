@@ -1,0 +1,91 @@
+{
+ "questId": 4236,
+ "name": "하얀 숲의 마녀",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10622
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24120,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3469,
+      "npcId": 10622
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24119,
+      "type": "QuestActConReportNpc",
+      "detailId": 3734,
+      "npcId": 10633
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18448,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10633,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

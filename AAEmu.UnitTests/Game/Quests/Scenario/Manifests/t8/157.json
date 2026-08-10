@@ -1,0 +1,91 @@
+{
+ "questId": 157,
+ "name": "괴물을 불러들이는 수정",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 711
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 897,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3103,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 12,
+      "doodadId": 711
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1512,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24268,
+      "type": "QuestActConReportNpc",
+      "detailId": 3766,
+      "npcId": 10537
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1515,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10537,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

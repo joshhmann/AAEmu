@@ -1,0 +1,129 @@
+{
+ "questId": 4407,
+ "name": "집결지를 향해서",
+ "zoneId": 2,
+ "categoryId": 3,
+ "level": 26,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11280
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19157,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26413,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3698,
+      "npcId": 11280
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19159,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26416,
+      "type": "QuestActConReportNpc",
+      "detailId": 3975,
+      "npcId": 10563
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19434,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40869,
+      "type": "QuestActSupplyItem",
+      "detailId": 4836,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 20666,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28310,
+      "type": "QuestActSupplyItem",
+      "detailId": 3197,
+      "itemId": 25077,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10563,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

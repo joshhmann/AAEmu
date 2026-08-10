@@ -1,0 +1,112 @@
+{
+ "questId": 653,
+ "name": "공동묘지의 마법사",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7798
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15147,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2074,
+      "npcId": 7798
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2858,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4183,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 169,
+      "npcId": 1761,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2859,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24341,
+      "type": "QuestActConAutoComplete",
+      "detailId": 759
+     },
+     {
+      "actId": 38684,
+      "type": "QuestActSupplyItem",
+      "detailId": 4433,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1761,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

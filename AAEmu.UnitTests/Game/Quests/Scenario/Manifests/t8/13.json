@@ -1,0 +1,177 @@
+{
+ "questId": 13,
+ "name": "요셉 상단의 부탁",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 444
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 6,
+      "npcId": 444
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29173,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1018,
+      "npcId": 532,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 1984,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3112,
+      "type": "QuestActConReportNpc",
+      "detailId": 377,
+      "npcId": 629
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1985,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38338,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2586,
+      "itemId": 33579,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38339,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2587,
+      "itemId": 33586,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38340,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2588,
+      "itemId": 33590,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000161,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 8000012,
+      "itemId": 35837,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21149,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29174,
+      "type": "QuestActObjItemGather",
+      "detailId": 2346,
+      "itemId": 14877,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 532,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 14877,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 629,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 14877,
+   "count": 5
+  }
+ ]
+}

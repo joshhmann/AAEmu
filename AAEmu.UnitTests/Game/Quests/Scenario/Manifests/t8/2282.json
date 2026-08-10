@@ -1,0 +1,125 @@
+{
+ "questId": 2282,
+ "name": "천하진미는 바다에서",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1428
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12322,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18103,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2304,
+      "npcId": 1428
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12402,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18124,
+      "type": "QuestActObjItemGather",
+      "detailId": 1228,
+      "itemId": 17268,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12403,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18120,
+      "type": "QuestActConReportNpc",
+      "detailId": 2532,
+      "npcId": 1428
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12404,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17268,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1428,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17268,
+   "count": 1
+  }
+ ]
+}

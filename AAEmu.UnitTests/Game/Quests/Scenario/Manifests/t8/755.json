@@ -1,0 +1,134 @@
+{
+ "questId": 755,
+ "name": "큰금니 부족 고블린 처치",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3061
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3360,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4794,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 563,
+      "npcId": 3061
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4795,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 42,
+      "monsterGroupId": 40,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3362,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4796,
+      "type": "QuestActConReportNpc",
+      "detailId": 647,
+      "npcId": 3061
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3363,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38329,
+      "type": "QuestActSupplyItem",
+      "detailId": 4281,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 40,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3061,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

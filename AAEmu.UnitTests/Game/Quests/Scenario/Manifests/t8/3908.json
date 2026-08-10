@@ -1,0 +1,112 @@
+{
+ "questId": 3908,
+ "name": "죽음을 앞둔 자의 복수",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8604
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16518,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21846,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3088,
+      "npcId": 8604
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16548,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21847,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 397,
+      "monsterGroupId": 363,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21848,
+      "type": "QuestActConAutoComplete",
+      "detailId": 711
+     },
+     {
+      "actId": 38712,
+      "type": "QuestActSupplyItem",
+      "detailId": 4461,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 363,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

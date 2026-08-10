@@ -1,0 +1,142 @@
+{
+ "questId": 1737,
+ "name": "카론의 추억",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3310
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8415,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12224,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1556,
+      "npcId": 3310
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 8416,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12225,
+      "type": "QuestActSupplyItem",
+      "detailId": 1179,
+      "itemId": 15703,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12226,
+      "type": "QuestActObjItemUse",
+      "detailId": 329,
+      "itemId": 15703,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12227,
+      "type": "QuestActConReportNpc",
+      "detailId": 1753,
+      "npcId": 3310
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8419,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 15703,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3310,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

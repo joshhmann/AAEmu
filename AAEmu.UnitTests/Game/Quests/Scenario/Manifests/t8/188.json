@@ -1,0 +1,91 @@
+{
+ "questId": 188,
+ "name": "노르예트 가문의 정원",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 24,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 903
+ },
+ "template": {
+  "level": 24,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2364,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3494,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 387,
+      "npcId": 903
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2365,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3495,
+      "type": "QuestActConReportNpc",
+      "detailId": 452,
+      "npcId": 458
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2366,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 458,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

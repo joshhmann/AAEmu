@@ -1,0 +1,123 @@
+{
+ "questId": 4262,
+ "name": "푸른 영혼의 불",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 10592
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18352,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24003,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1030,
+      "npcId": 10592
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18353,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24004,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 922,
+      "npcId": 10592,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18354,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24005,
+      "type": "QuestActConReportJournal",
+      "detailId": 310
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18355,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24006,
+      "type": "QuestActSupplyCopper",
+      "detailId": 448,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10592,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

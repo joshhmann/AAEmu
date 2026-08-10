@@ -1,0 +1,144 @@
+{
+ "questId": 190,
+ "name": "벌거숭이 파수꾼",
+ "zoneId": 2,
+ "categoryId": 10,
+ "level": 26,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5193
+ },
+ "template": {
+  "level": 26,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4093,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 465,
+      "npcId": 5193
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2749,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12111,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 89,
+      "monsterGroupId": 4,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2751,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4094,
+      "type": "QuestActConReportNpc",
+      "detailId": 539,
+      "npcId": 5193
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38344,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2592,
+      "itemId": 33772,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 39282,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2740,
+      "itemId": 33773,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 39283,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2741,
+      "itemId": 33774,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 4,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5193,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

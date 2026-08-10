@@ -1,0 +1,129 @@
+{
+ "questId": 2944,
+ "name": "장미 장원 농경지의 위험 처치",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8024
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12893,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18662,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 658,
+      "npcId": 8024
+     },
+     {
+      "actId": 18663,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 659,
+      "npcId": 8042
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12929,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18661,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 325,
+      "monsterGroupId": 292,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12930,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18591,
+      "type": "QuestActConReportJournal",
+      "detailId": 183
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12931,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18592,
+      "type": "QuestActSupplyCopper",
+      "detailId": 281,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 292,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

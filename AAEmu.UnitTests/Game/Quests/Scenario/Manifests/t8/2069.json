@@ -1,0 +1,157 @@
+{
+ "questId": 2069,
+ "name": "레안데르 왕세자의 사랑",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3339
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9551,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13245,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1783,
+      "npcId": 3339
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9552,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13246,
+      "type": "QuestActSupplyItem",
+      "detailId": 1272,
+      "itemId": 15922,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9553,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13247,
+      "type": "QuestActObjItemUse",
+      "detailId": 374,
+      "itemId": 15922,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9554,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13248,
+      "type": "QuestActConReportNpc",
+      "detailId": 2010,
+      "npcId": 3339
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9555,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38705,
+      "type": "QuestActSupplyItem",
+      "detailId": 4454,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 15922,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3339,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

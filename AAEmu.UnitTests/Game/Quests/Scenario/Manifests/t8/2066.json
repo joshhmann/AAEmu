@@ -1,0 +1,125 @@
+{
+ "questId": 2066,
+ "name": "큰나무 버섯",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3336
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9539,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13234,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1780,
+      "npcId": 3336
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9540,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13235,
+      "type": "QuestActObjItemGather",
+      "detailId": 866,
+      "itemId": 15919,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9541,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13236,
+      "type": "QuestActConReportNpc",
+      "detailId": 2006,
+      "npcId": 3336
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9542,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15919,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3336,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15919,
+   "count": 3
+  }
+ ]
+}

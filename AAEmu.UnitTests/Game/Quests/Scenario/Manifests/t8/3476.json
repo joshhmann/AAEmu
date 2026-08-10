@@ -1,0 +1,117 @@
+{
+ "questId": 3476,
+ "name": "빛에 비친 그렐의 그림자",
+ "zoneId": 25,
+ "categoryId": 61,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10338
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17139,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22709,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3258,
+      "npcId": 10338
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17141,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 17214,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22715,
+      "type": "QuestActObjTalk",
+      "detailId": 945,
+      "npcId": 10339
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21818,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30719,
+      "type": "QuestActConReportNpc",
+      "detailId": 4219,
+      "npcId": 10340
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 10339
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10340,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

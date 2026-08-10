@@ -1,0 +1,157 @@
+{
+ "questId": 1317,
+ "name": "숲의 저주에서 벗어나기",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3142
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6573,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9293,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1141,
+      "npcId": 3142
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6579,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9296,
+      "type": "QuestActObjItemUse",
+      "detailId": 224,
+      "itemId": 14112,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12489,
+      "type": "QuestActSupplyItem",
+      "detailId": 1210,
+      "itemId": 15822,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 6836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9544,
+      "type": "QuestActSupplyItem",
+      "detailId": 753,
+      "itemId": 14112,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8795,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12488,
+      "type": "QuestActConReportNpc",
+      "detailId": 1829,
+      "npcId": 3142
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14112,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3142,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 15822,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

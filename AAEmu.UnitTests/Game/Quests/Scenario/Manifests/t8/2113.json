@@ -1,0 +1,129 @@
+{
+ "questId": 2113,
+ "name": "저주받은 늑대 인간 퇴치!",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 7550
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9734,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13663,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 99,
+      "npcId": 7550
+     },
+     {
+      "actId": 13664,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 100,
+      "npcId": 7551
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9735,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13665,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 135,
+      "monsterGroupId": 134,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9736,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13667,
+      "type": "QuestActSupplyCopper",
+      "detailId": 70,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11335,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16412,
+      "type": "QuestActConReportJournal",
+      "detailId": 97
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 134,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 2467,
+ "name": "떠내려온 시체",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7800
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 10662,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24440,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3509,
+      "npcId": 7800
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 10664,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24438,
+      "type": "QuestActObjItemGather",
+      "detailId": 2012,
+      "itemId": 17712,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 10665,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 14882,
+      "type": "QuestActConReportNpc",
+      "detailId": 2237,
+      "npcId": 7800
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 10666,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17712,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7800,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17712,
+   "count": 1
+  }
+ ]
+}

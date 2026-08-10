@@ -1,0 +1,142 @@
+{
+ "questId": 4246,
+ "name": "독 백합의 꽃말은 저주",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10625
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18449,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24121,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3470,
+      "npcId": 10625
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 18450,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24124,
+      "type": "QuestActSupplyItem",
+      "detailId": 2321,
+      "itemId": 23415,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18452,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25687,
+      "type": "QuestActObjItemUse",
+      "detailId": 634,
+      "itemId": 23415,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18453,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24123,
+      "type": "QuestActConReportNpc",
+      "detailId": 3736,
+      "npcId": 10625
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18454,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 23415,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10625,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,135 @@
+{
+ "questId": 1744,
+ "name": "인간으로 남고 싶은 자의 부탁",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3315
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8448,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12252,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1563,
+      "npcId": 3315
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8449,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12253,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 487,
+      "npcId": 3315,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8450,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12254,
+      "type": "QuestActConAutoComplete",
+      "detailId": 325
+     },
+     {
+      "actId": 38704,
+      "type": "QuestActSupplyItem",
+      "detailId": 4453,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 11727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17224,
+      "type": "QuestActSupplyItem",
+      "detailId": 1737,
+      "itemId": 18428,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 3315,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

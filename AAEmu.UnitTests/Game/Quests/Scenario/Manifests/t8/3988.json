@@ -1,0 +1,106 @@
+{
+ "questId": 3988,
+ "name": "자신을 증명하는 법",
+ "zoneId": 2,
+ "categoryId": 3,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4617
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Ready",
+    "id": 17192,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24221,
+      "type": "QuestActConReportNpc",
+      "detailId": 3754,
+      "npcId": 10559
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17193,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40868,
+      "type": "QuestActSupplyItem",
+      "detailId": 4835,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Start",
+    "id": 18815,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28523,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 161,
+      "doodadId": 4617
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10559,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

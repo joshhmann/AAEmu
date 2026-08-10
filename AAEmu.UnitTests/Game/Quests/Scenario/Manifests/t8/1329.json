@@ -1,0 +1,117 @@
+{
+ "questId": 1329,
+ "name": "클리페의 두 번째 실종",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3148
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6660,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9357,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1152,
+      "npcId": 3148
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6662,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30580,
+      "type": "QuestActObjTalk",
+      "detailId": 1001,
+      "npcId": 3301
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9361,
+      "type": "QuestActConReportNpc",
+      "detailId": 1316,
+      "npcId": 3148
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6664,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 3301
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3148,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

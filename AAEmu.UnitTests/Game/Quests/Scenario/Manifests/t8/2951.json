@@ -1,0 +1,148 @@
+{
+ "questId": 2951,
+ "name": "윈란드의 연애편지",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3339
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12900,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18903,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2449,
+      "npcId": 3339
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12913,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18576,
+      "type": "QuestActSupplyItem",
+      "detailId": 1865,
+      "itemId": 24531,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12914,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18577,
+      "type": "QuestActObjItemGather",
+      "detailId": 1266,
+      "itemId": 24531,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12915,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18578,
+      "type": "QuestActConReportNpc",
+      "detailId": 2624,
+      "npcId": 1432
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12917,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24531,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1432,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24531,
+   "count": 1
+  }
+ ]
+}

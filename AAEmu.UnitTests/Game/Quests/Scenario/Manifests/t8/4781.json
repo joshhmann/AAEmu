@@ -1,0 +1,114 @@
+{
+ "questId": 4781,
+ "name": "배심원자격1단계:추천서",
+ "zoneId": 2,
+ "categoryId": 5,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20668,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28323,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3803,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 20669,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28916,
+      "type": "QuestActSupplyItem",
+      "detailId": 3277,
+      "itemId": 25098,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 20670,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28324,
+      "type": "QuestActConReportNpc",
+      "detailId": 4081,
+      "npcId": 10894
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20730,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10894,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

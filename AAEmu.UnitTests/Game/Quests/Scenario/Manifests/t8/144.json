@@ -1,0 +1,134 @@
+{
+ "questId": 144,
+ "name": "자작나무 숲의 도망자",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2109
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8192,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 11845,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1521,
+      "npcId": 2109
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 8248,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12197,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 481,
+      "npcId": 2122,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 8250,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16891,
+      "type": "QuestActConReportNpc",
+      "detailId": 2371,
+      "npcId": 2109
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 8252,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38621,
+      "type": "QuestActSupplyItem",
+      "detailId": 4370,
+      "itemId": 34001,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2122,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2109,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34001,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

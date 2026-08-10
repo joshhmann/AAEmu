@@ -1,0 +1,114 @@
+{
+ "questId": 1358,
+ "name": "생존자를 구하라",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 481
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6782,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9485,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 138,
+      "sphereId": 481
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6783,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9486,
+      "type": "QuestActObjInteraction",
+      "detailId": 234,
+      "doodadId": 1523,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6784,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9487,
+      "type": "QuestActConAutoComplete",
+      "detailId": 229
+     },
+     {
+      "actId": 38716,
+      "type": "QuestActSupplyItem",
+      "detailId": 4465,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1523,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

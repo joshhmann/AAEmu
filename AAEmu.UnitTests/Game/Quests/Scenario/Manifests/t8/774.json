@@ -1,0 +1,159 @@
+{
+ "questId": 774,
+ "name": "파도를 따라 건너온 그늘",
+ "zoneId": 8,
+ "categoryId": 14,
+ "level": 22,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10443
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 3463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4910,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 587,
+      "npcId": 10443
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 3465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4912,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 43,
+      "monsterGroupId": 41,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 3468,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 4916,
+      "type": "QuestActConReportNpc",
+      "detailId": 673,
+      "npcId": 10443
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 3470,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38331,
+      "type": "QuestActSupplyItem",
+      "detailId": 4283,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21237,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29476,
+      "type": "QuestActObjItemGather",
+      "detailId": 2375,
+      "itemId": 5095,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 41,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 5095,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10443,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5095,
+   "count": 5
+  }
+ ]
+}

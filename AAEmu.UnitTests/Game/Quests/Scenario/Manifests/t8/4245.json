@@ -1,0 +1,112 @@
+{
+ "questId": 4245,
+ "name": "배신의 칼날",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 22,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10629
+ },
+ "template": {
+  "level": 22,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24155,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3474,
+      "npcId": 10629
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18473,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24157,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 933,
+      "npcId": 10596,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24156,
+      "type": "QuestActConAutoComplete",
+      "detailId": 752
+     },
+     {
+      "actId": 38626,
+      "type": "QuestActSupplyItem",
+      "detailId": 4375,
+      "itemId": 34005,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10596,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34005,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,123 @@
+{
+ "questId": 2950,
+ "name": "아름다운 청학 사냥",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8013
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12899,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18652,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 652,
+      "npcId": 8013
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12941,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18653,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 670,
+      "npcId": 8013,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12942,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18601,
+      "type": "QuestActConReportJournal",
+      "detailId": 188
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12943,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18602,
+      "type": "QuestActSupplyCopper",
+      "detailId": 286,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8013,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

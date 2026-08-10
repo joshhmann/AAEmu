@@ -1,0 +1,123 @@
+{
+ "questId": 2553,
+ "name": "영혼을 잃은 숲지기 잠재우기",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 21,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2122
+ },
+ "template": {
+  "level": 21,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11089,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15718,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 249,
+      "npcId": 2122
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11090,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15720,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 604,
+      "npcId": 2122,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15725,
+      "type": "QuestActConReportJournal",
+      "detailId": 61
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11092,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15732,
+      "type": "QuestActSupplyCopper",
+      "detailId": 151,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2122,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

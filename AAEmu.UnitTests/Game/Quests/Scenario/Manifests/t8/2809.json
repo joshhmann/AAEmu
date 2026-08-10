@@ -1,0 +1,147 @@
+{
+ "questId": 2809,
+ "name": "고요한 바다를 지켜라 4단계",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 30,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1026
+ },
+ "template": {
+  "level": 30,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12134,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17608,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2253,
+      "npcId": 1026
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12135,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17610,
+      "type": "QuestActObjZoneKill",
+      "detailId": 30,
+      "zoneId": 36,
+      "countNpc": 200,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 790,
+      "lvMin": 26,
+      "lvMax": 55,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12136,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17609,
+      "type": "QuestActConReportNpc",
+      "detailId": 2479,
+      "npcId": 1026
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12137,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28785,
+      "type": "QuestActSupplyExp",
+      "detailId": 376,
+      "exp": 7170
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 36,
+     "count": 200,
+     "countNpc": 200,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 26,
+     "lvMax": 55
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1026,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,175 @@
+{
+ "questId": 4874,
+ "name": "염소 키우기",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11073
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21058,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28939,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3870,
+      "npcId": 11073
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21059,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28944,
+      "type": "QuestActObjItemGather",
+      "detailId": 2322,
+      "itemId": 16221,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21060,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28946,
+      "type": "QuestActConReportNpc",
+      "detailId": 4146,
+      "npcId": 11073
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21090,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28945,
+      "type": "QuestActObjItemGather",
+      "detailId": 2323,
+      "itemId": 19951,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28947,
+      "type": "QuestActSupplyItem",
+      "detailId": 3285,
+      "itemId": 24861,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29151,
+      "type": "QuestActSupplyItem",
+      "detailId": 3297,
+      "itemId": 25255,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16221,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 19951,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11073,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24861,
+      "count": 1
+     },
+     {
+      "itemId": 25255,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16221,
+   "count": 10
+  },
+  {
+   "itemId": 19951,
+   "count": 2
+  }
+ ]
+}

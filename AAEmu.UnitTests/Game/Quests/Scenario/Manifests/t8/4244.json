@@ -1,0 +1,121 @@
+{
+ "questId": 4244,
+ "name": "방화범 뉴캐스트 처치",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3088
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18539,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24215,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 137,
+      "doodadId": 3088
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18540,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24217,
+      "type": "QuestActObjItemUse",
+      "detailId": 609,
+      "itemId": 17800,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18541,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24216,
+      "type": "QuestActConAutoComplete",
+      "detailId": 757
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 18837,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25693,
+      "type": "QuestActSupplyItem",
+      "detailId": 2687,
+      "itemId": 17800,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 17800,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

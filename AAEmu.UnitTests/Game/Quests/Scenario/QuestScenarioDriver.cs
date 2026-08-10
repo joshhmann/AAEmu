@@ -11,6 +11,7 @@ using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Containers;
@@ -23,6 +24,7 @@ using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.UnitTests.Utils.Mocks;
 
 namespace AAEmu.UnitTests.Game.Quests.Scenario;
@@ -304,7 +306,25 @@ public class QuestScenarioDriver
             nameof(QuestActObjSphere) => new QuestActObjSphere(component) { SphereId = GetUInt(raw, "sphereId"), Count = count },
             nameof(QuestActObjCraft) => new QuestActObjCraft(component) { CraftId = GetUInt(raw, "craftId"), Count = count },
             nameof(QuestActObjLevel) => new QuestActObjLevel(component) { Level = GetByte(raw, "level"), Count = count },
-            nameof(QuestActObjZoneMonsterHunt) => new QuestActObjZoneMonsterHunt(component) { ZoneId = GetUInt(raw, "zoneId"), Count = count },
+            nameof(QuestActObjZoneKill) => new QuestActObjZoneKill(component)
+            {
+                ZoneId = GetUInt(raw, "zoneId"),
+                CountNpc = GetInt(raw, "countNpc"),
+                CountPlayerKill = GetInt(raw, "countPk"),
+                Count = Math.Max(GetInt(raw, "countNpc"), GetInt(raw, "countPk")),
+                TeamShare = GetBool(raw, "teamShare", true),
+                UseAlias = GetBool(raw, "useAlias", true),
+                QuestActObjAliasId = GetUInt(raw, "questActObjAliasId"),
+                LvlMin = GetInt(raw, "lvMin"),
+                LvlMax = GetInt(raw, "lvMax"),
+                IsParty = GetBool(raw, "isParty", true),
+                LvlMinNpc = GetInt(raw, "lvMinNpc"),
+                LvlMaxNpc = GetInt(raw, "lvMaxNpc"),
+                PcFactionId = (FactionsEnum)GetUInt(raw, "pcFactionId"),
+                PcFactionExclusive = GetBool(raw, "pcFactionExclusive", true),
+                NpcFactionId = (FactionsEnum)GetUInt(raw, "npcFactionId"),
+                NpcFactionExclusive = GetBool(raw, "npcFactionExclusive", true),
+            },
             nameof(QuestActObjExpressFire) => new QuestActObjExpressFire(component) { ExpressKeyId = GetUInt(raw, "expressKeyId"), NpcGroupId = GetUInt(raw, "npcGroupId"), Count = count },
             nameof(QuestActObjAggro) => new QuestActObjAggro(component)
             {
@@ -326,6 +346,9 @@ public class QuestScenarioDriver
                 CompleteComponent = GetUInt(raw, "completeComponent")
             },
             nameof(QuestActSupplyHonorPoint) => new QuestActSupplyHonorPoint(component) { Point = GetInt(raw, "point") },
+            // M2c wave-3: LivingPoint supply the expedition dailies carry at
+            // Reward (5923/5924) - without it the dailies stay SKIP.
+            nameof(QuestActSupplyLivingPoint) => new QuestActSupplyLivingPoint(component) { Point = GetInt(raw, "point") },
             nameof(QuestActCheckGuard) => new QuestActCheckGuard(component) { NpcId = GetUInt(raw, "npcId") },
             nameof(QuestActCheckSphere) => new QuestActCheckSphere(component) { SphereId = GetUInt(raw, "sphereId") },
             nameof(QuestActCheckTimer) => new QuestActCheckTimer(component) { LimitTime = GetInt(raw, "limitTime"), NextComponent = GetUInt(raw, "nextComponent") },
@@ -712,7 +735,13 @@ public class QuestScenarioDriver
                 owner.Events.OnKill(owner, new OnKillArgs { Target = aggroNpc, Killer = (Unit)owner, Victim = aggroNpc });
                 break;
             case "ZoneKill":
-                owner.Events.OnZoneKill(owner, new OnZoneKillArgs { ZoneGroupId = GetUInt(rawEvent, "zoneGroupId"), Killer = owner, Victim = (Unit)owner });
+                // M2c wave-3 (t_64d13ee4): QuestActObjZoneKill.OnZoneKill
+                // rejects Victim=owner (self-kill guard, QuestActObjZoneKill.cs:70-71)
+                // and only credits a victim satisfying the act's faction/level
+                // filters (lines 83-96). Build a NON-OWNER victim compliant
+                // with the filters and fire 'count' times (AddObjective credits
+                // +1 per valid event, mirroring the ItemUse RC-4 pattern).
+                FireZoneKillEvents(owner, rawEvent);
                 break;
             case "CinemaStarted":
                 // M2a wave-1: QuestActObjCinema.OnCinemaStarted sets
@@ -727,6 +756,95 @@ public class QuestScenarioDriver
             default:
                 throw new NotSupportedException($"Unsupported event type '{type}' in scenario manifest (quest {quest.TemplateId})");
         }
+    }
+
+    /// <summary>
+    /// M2c wave-3 (t_64d13ee4): victim rig for QuestActObjZoneKill. Fires the
+    /// ZoneKill event 'count' times with a NON-OWNER victim Unit built to
+    /// satisfy the act's faction/level filters. The manifest event shape
+    /// carries the act's filter params (generator emits them from
+    /// quest_act_obj_zone_kills). Victim selection:
+    ///   - NPC-kill acts (countNpc &gt; 0): Npc with Faction.Id matching the
+    ///     npcFactionId filter (or any faction when the filter is 0 - the
+    ///     faction-0 credit path was engine-fixed in t_497b51d8) and Level
+    ///     inside [lvMinNpc, lvMaxNpc] (0..0 bounds = any level - pick the
+    ///     floor).
+    ///   - PK-kill acts (countPk &gt; 0): Character victim with Faction.Id
+    ///     matching the pcFactionId filter and Level inside [lvMin, lvMax].
+    /// The victim's ObjId is distinct from the owner's (owner ObjId=1) so the
+    /// act's victim==killer guard passes.
+    /// </summary>
+    private static void FireZoneKillEvents(ICharacter owner, JsonElement rawEvent)
+    {
+        var count = Math.Max(GetInt(rawEvent, "count", 1), 1);
+        var countNpc = GetInt(rawEvent, "countNpc", 0);
+        var countPk = GetInt(rawEvent, "countPk", 0);
+        var zoneGroupId = GetUInt(rawEvent, "zoneGroupId", 0);
+        var npcFactionId = (FactionsEnum)GetUInt(rawEvent, "npcFactionId", 0);
+        var npcFactionExclusive = GetBool(rawEvent, "npcFactionExclusive", false);
+        var lvMinNpc = GetInt(rawEvent, "lvMinNpc", 0);
+        var lvMaxNpc = GetInt(rawEvent, "lvMaxNpc", 0);
+        var pcFactionId = (FactionsEnum)GetUInt(rawEvent, "pcFactionId", 0);
+        var pcFactionExclusive = GetBool(rawEvent, "pcFactionExclusive", false);
+        var lvMin = GetInt(rawEvent, "lvMin", 0);
+        var lvMax = GetInt(rawEvent, "lvMax", 0);
+
+        if (countNpc > 0)
+        {
+            // NPC kill: victim faction matches the act's filter. Exclusive =>
+            // any faction EXCEPT the filter; non-exclusive => the filter itself;
+            // filter 0 => any faction (engine-fixed: credits since t_497b51d8).
+            var victimFaction = npcFactionId > 0
+                ? npcFactionExclusive
+                    ? (npcFactionId == FactionsEnum.Neutral ? FactionsEnum.Friendly : FactionsEnum.Neutral)
+                    : npcFactionId
+                : FactionsEnum.Neutral;
+            var victimLevel = (byte)(lvMaxNpc > 0 ? lvMinNpc : 0);
+            var victim = new Npc
+            {
+                ObjId = 9001,
+                TemplateId = 1,
+                Level = victimLevel,
+                Faction = new SystemFaction { Id = victimFaction }
+            };
+            for (var i = 0; i < count; i++)
+                owner.Events.OnZoneKill(owner, new OnZoneKillArgs { ZoneGroupId = zoneGroupId, Killer = owner, Victim = victim });
+            return;
+        }
+
+        if (countPk > 0)
+        {
+            // PK kill: victim is a Character (player kill) matching the act's
+            // PC faction filter and level range.
+            var victimFaction = pcFactionId > 0
+                ? pcFactionExclusive
+                    ? (pcFactionId == FactionsEnum.Neutral ? FactionsEnum.Friendly : FactionsEnum.Neutral)
+                    : pcFactionId
+                : FactionsEnum.Neutral;
+            var victimLevel = (byte)(lvMax > 0 ? Math.Max(lvMin, 1) : 1);
+            var victim = new Character(new UnitCustomModelParams())
+            {
+                ObjId = 9002,
+                Id = 9002,
+                Name = "ZoneKillVictim",
+                Level = victimLevel,
+                Faction = new SystemFaction { Id = victimFaction }
+            };
+            for (var i = 0; i < count; i++)
+                owner.Events.OnZoneKill(owner, new OnZoneKillArgs { ZoneGroupId = zoneGroupId, Killer = owner, Victim = victim });
+            return;
+        }
+
+        // No quota (degenerate act): fire once with a neutral NPC victim so the
+        // event path is still exercised; RunAct will fail on count anyway.
+        var fallback = new Npc
+        {
+            ObjId = 9003,
+            TemplateId = 1,
+            Level = 1,
+            Faction = new SystemFaction { Id = FactionsEnum.Neutral }
+        };
+        owner.Events.OnZoneKill(owner, new OnZoneKillArgs { ZoneGroupId = zoneGroupId, Killer = owner, Victim = fallback });
     }
 
     #endregion

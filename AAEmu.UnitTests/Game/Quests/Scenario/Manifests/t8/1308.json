@@ -1,0 +1,148 @@
+{
+ "questId": 1308,
+ "name": "그린드 헤임의 서신",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 27,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 3131
+ },
+ "template": {
+  "level": 27,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6478,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9202,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1121,
+      "npcId": 3131
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 6480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9203,
+      "type": "QuestActSupplyItem",
+      "detailId": 736,
+      "itemId": 24528,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6481,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9204,
+      "type": "QuestActObjItemGather",
+      "detailId": 512,
+      "itemId": 24528,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6482,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9205,
+      "type": "QuestActConReportNpc",
+      "detailId": 1283,
+      "npcId": 3139
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6483,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24528,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3139,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24528,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,157 @@
+{
+ "questId": 6512,
+ "name": "나지막한 별의 목소리 재료",
+ "zoneId": 11,
+ "categoryId": 70,
+ "level": 25,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11072
+ },
+ "template": {
+  "level": 25,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27809,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39788,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5005,
+      "npcId": 11072
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27810,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39789,
+      "type": "QuestActObjItemGather",
+      "detailId": 3018,
+      "itemId": 15580,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27811,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39792,
+      "type": "QuestActConReportNpc",
+      "detailId": 5029,
+      "npcId": 11072
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27812,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39790,
+      "type": "QuestActObjItemGather",
+      "detailId": 3019,
+      "itemId": 30903,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27813,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39791,
+      "type": "QuestActObjItemGather",
+      "detailId": 3020,
+      "itemId": 3627,
+      "count": 20
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15580,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 30903,
+     "count": 8
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 3627,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11072,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15580,
+   "count": 10
+  },
+  {
+   "itemId": 30903,
+   "count": 8
+  },
+  {
+   "itemId": 3627,
+   "count": 20
+  }
+ ]
+}

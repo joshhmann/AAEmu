@@ -1,0 +1,114 @@
+{
+ "questId": 1354,
+ "name": "헬마이어의 죽음",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 29,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 1540
+ },
+ "template": {
+  "level": 29,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6764,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17809,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 85,
+      "doodadId": 1540
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6766,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9466,
+      "type": "QuestActConReportNpc",
+      "detailId": 1337,
+      "npcId": 3292
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6767,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 11649,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17063,
+      "type": "QuestActSupplyItem",
+      "detailId": 1719,
+      "itemId": 17698,
+      "gradeId": 0,
+      "count": 2
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 3292,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,171 @@
+{
+ "questId": 2563,
+ "name": "아무것도 아닌 자의 소원",
+ "zoneId": 10,
+ "categoryId": 6,
+ "level": 23,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3016
+ },
+ "template": {
+  "level": 23,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11134,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29908,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 215,
+      "doodadId": 3016
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11135,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15885,
+      "type": "QuestActObjItemGather",
+      "detailId": 1044,
+      "itemId": 17641,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11136,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15886,
+      "type": "QuestActObjItemGather",
+      "detailId": 1045,
+      "itemId": 17640,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11137,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15887,
+      "type": "QuestActObjItemGather",
+      "detailId": 1046,
+      "itemId": 17639,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11138,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 15884,
+      "type": "QuestActConReportDoodad",
+      "detailId": 34,
+      "doodadId": 3020
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11139,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17641,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 17640,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 17639,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 3020,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17641,
+   "count": 1
+  },
+  {
+   "itemId": 17640,
+   "count": 1
+  },
+  {
+   "itemId": 17639,
+   "count": 1
+  }
+ ]
+}

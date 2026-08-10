@@ -1,0 +1,129 @@
+{
+ "questId": 2112,
+ "name": "달 그림자 마을에 가득한 거미 인간을 물리쳐라!",
+ "zoneId": 24,
+ "categoryId": 26,
+ "level": 28,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3103
+ },
+ "template": {
+  "level": 28,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9731,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13656,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 96,
+      "npcId": 3103
+     },
+     {
+      "actId": 13658,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 97,
+      "npcId": 3307
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9732,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13660,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 134,
+      "monsterGroupId": 137,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9733,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13662,
+      "type": "QuestActSupplyCopper",
+      "detailId": 69,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11334,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 16411,
+      "type": "QuestActConReportJournal",
+      "detailId": 96
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 137,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}
