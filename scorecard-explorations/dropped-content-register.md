@@ -11,7 +11,7 @@ Drop = data-level deletion / prune via SQL patches + verifier allowlist
 removal. No code written to keep dead content alive.
 
 All ids reference the canonical `compact.sqlite3` (md5
-`78b3bdbf0383db3b927056106efdf91af`) — READ-ONLY reference; drops are applied
+`78b3bdbf038db3b927056106efdf91af`) — READ-ONLY reference; drops are applied
 via `SQL/patches/compact/*.sql` guarded DELETEs + in-memory overlay where
 needed, never by editing the reference file.
 
@@ -125,8 +125,92 @@ needed) once objectives credit. See evidence §2 on t_6f950108 for the full path
 | Execution card | t_6810ebd4 (impl) → Rei gate (filed on impl block) |
 | Rig | No dedicated rig; 5967 (all-abilities branch) remains the canonical ability-level harness carrier — 6069's single-ability variant (ability 1) loses its example, acceptable at 0 live carriers |
 | Restore pointer | Full body preserved (4 comps / 2 acts / 3 texts / 4 bubbles; act-detail rows 7 + 4002 remain shared-live). Restore only if a 1.2-era ability-gate ltd quest is rebuilt — re-add to T3_PINNED_QUESTS if restored |
+## 9. WI-11a band-0/null — 155 dropped; 4 KEPT; 56 deferred to WI-11b (2026-08-09)
 
----
+**Decision (G0-5): Josh, 2026-08-09 ~21:15 PDT (delegated to Kimi nightwatch —
+comment on t_724ccab2):** Q1 **GO** / Q2 **NO-GO** / Q3 **GO** / Q4 **GO** /
+Q5 **GO** / Q6 **GO** / Q7-Q10 **DEFER** to WI-11b (t_8ec705f0).
+"Execute per M2a playbook: guarded patches, register §8 [sic — this §9] with
+provenance per set." Execution card: **t_267a3279** (impl, hyrax-os) → Rei
+gate (filed on impl block, t_656ed5fe pattern). Reversible via restore
+pointers below. Evidence packet:
+`scorecard-explorations/wi-11a-band0-null-triage.md` (t_724ccab2, Nei).
+Population: 231 LEVEL-0/NULL contexts; 16 already in this register (§1/§2,
+excluded); 215 live candidates → 155 dropped (this section) + 56 deferred
+(§9g) + 4 kept (Q2, §9b).
+
+### 9a. A1 tutorial stubs — 88 (ask: GO)
+
+| Field | Value |
+|---|---|
+| Quests | **2584, 2586, 2589–2606, 2609, 2612, 2614, 2616, 2620–2683** (튜토리얼 1–100, cat 45, w_gweonid_forest_1) |
+| Shape | zero quest_components / zero acts / zero accept surfaces / zero refs; same legacy tutorial stub family as §2 |
+| Verdict | Josh 2026-08-09 (delegated Kimi nightwatch, t_724ccab2 comment) — **GO drop** (M2a §7 zero-component-shell pattern) |
+| Drop action | delete 88 quest_contexts (0 comps, 0 acts — no downstream rows); remove nothing from allowlist (never allowlisted) |
+| Restore pointer | legacy tutorial skeleton — rebuild target if a 1.2-era tutorial line is re-added |
+| Risk | LOW; sole ref = skill 12586 kind-27 → 2640 (inert after drop) |
+
+### 9b. A2 unit-req/dummy specials — 4 (ask: NO-GO keep)
+
+| Field | Value |
+|---|---|
+| Quests | **315** (스킬 연결용 — "do not delete"), **1728** (두다드 스킬 사용전용 — "do not delete"), **2046** (Unit Req Dummy), **1576** (dummy) |
+| Shape | zero components; allowlist-masked (QuestSanityVerifier.cs:87-93 documents 315/1728 as client-side skill/doodad link hooks); 1728 ← sphere 567; 2046 ← spheres 595/721/770/780/1096/1172 |
+| Verdict | Josh 2026-08-09 — **NO-GO (KEEP)** — allowlist hooks + live sphere accepts |
+| If dropped anyway | +7 sphere_quests rows pruned; 4 ids removed from allowlist (regressions re-report at WARN) |
+| Restore pointer | n/a if kept |
+
+### 9c. B1+D1 Dwarf main-story skeleton — 60 (ask: GO, one block)
+
+| Field | Value |
+|---|---|
+| Quests | B1 (ltd, engine-stuck): **5040, 5773, 5781–5811** · D1 (placeholders): **3484–3490, 3492–3502, 3562–3563, 3565–3568, 3992, 4408, 5980** — all cat 93 메인스토리_dummy, w_gweonid_forest_1 |
+| Shape | one self-contained linear chain 5980→3484→…→5811 (59 kind-31 gates, all owners in-set); B1 half = ltd + zero report acts + Score=0 → can never leave Progress (QuestStep.cs:127-129; HackFix ineligible) |
+| Verdict | Josh 2026-08-09 — **GO drop as ONE block** (B1+D1, 60 quests) |
+| Drop action | −60 quest_contexts / −242 quest_components / −18 acts; prune 59 kind-31 unit_reqs + ~149 owned unit_reqs + skill gate (5806 ← skill 12050) |
+| Restore pointer | chain topology is the blueprint for a future real Dwarf main story (numbered dummy slots 201–605) |
+| Risk | MEDIUM — the block is self-contained, but the impl must prune the full gate set (drift-checked) |
+
+### 9d. B2 title quests — 3 (ask: GO)
+
+| Field | Value |
+|---|---|
+| Quests | **8000001 설립자 / 8000002 여행자 / 8000003 선구자** (cat 82, ms 8000001) |
+| Shape | ltd='t', Score=0, 6 comps / 15 Supply-family acts, zero report acts → engine-stuck; titles unobtainable |
+| Verdict | Josh 2026-08-09 — **GO drop** |
+| Restore pointer | title grants must be rebuilt via another surface if ever wanted |
+| Risk | LOW |
+
+### 9e. B3 cat-1 test/unused — 3 (ask: GO)
+
+| Field | Value |
+|---|---|
+| Quests | **1835 (테스트), 1836 미사용, 1895 미사용** |
+| Shape | ltd, Score=0, 8 comps / 0 acts; 1836 gates on 1832 (external) — dependent, not depended-on |
+| Verdict | Josh 2026-08-09 — **GO drop** |
+| Risk | LOW |
+
+### 9f. B4 Cradle act-less — 1 (ask: GO)
+
+| Field | Value |
+|---|---|
+| Quest | **5678** 골치 아픈 주문서 (cat 27, 태초의 요람) |
+| Shape | Start/Progress/Ready comps, zero acts, ltd, Score=0 → engine-stuck (M2a §6 A2 shape) |
+| Verdict | Josh 2026-08-09 — **GO drop** |
+| Risk | LOW |
+
+### 9g. NOT dropped — WI-11b sweep population (56)
+
+D1 was folded into the Q3 drop (§9c), so the deferred sweep population is
+**56** (was 83 pre-ruling). D4 must NOT be dropped (live external gate
+1405→1404; 8 loot_quest_id refs).
+
+- **D2 old-Sunny (13):** 1883–1884, 1886–1887, 1912–1919, 1922
+- **D3 tutorial sphere steps (12):** 2585, 2587–2588, 2607–2608, 2610–2611, 2613, 2615, 2617–2619
+- **D4 real content (22):** 1394, 1397, 1401–1402, 1404, 1485, 5307–5308, 5313–5314, 5459, 5698–5699, 5999, 6222–6223, 6229, 6250–6251, 6314, 6355, 8000004
+- **D5 test/dummy (9):** 1097, 1101, 1128, 1132, 1148, 1204, 2971, 4897, 5649
+
+Sweep card: t_8ec705f0 (Tai). D2/D3/D5 = drop candidates pending WI-11b checks.
 
 ## How to check if an id is in this register
 
