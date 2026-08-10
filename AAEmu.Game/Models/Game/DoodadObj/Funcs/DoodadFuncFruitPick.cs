@@ -10,5 +10,10 @@ public class DoodadFuncFruitPick : DoodadFuncTemplate
     {
         Logger.Trace("DoodadFuncFruitPick");
 
+        // Advance the fruit tree to its picking/looting phase, matching
+        // DoodadFuncHarvest / DoodadFuncCropHarvest. The fruit yield comes from
+        // the loot funcs on the next phase group (M3a-3 crop loop fix — fruit
+        // trees are plantable via item_spawn_doodads, e.g. items 13925/14829).
+        owner.ToNextPhase = true;
     }
 }
