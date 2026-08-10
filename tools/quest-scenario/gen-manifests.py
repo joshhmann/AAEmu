@@ -977,6 +977,16 @@ DROPPED_QUESTS = {
     # --- M2a drop cluster B (91 zero-component shells) ---
     *range(2148, 2230),  # 2148-2229 reserve block
     3748, *range(3750, 3758),  # Hadir-farm cutscenes
+    # --- WI-11a drop (2026-08-09, register §9, t_267a3279): 155 band-0/null contexts ---
+    # A1 tutorial stubs (88, cat 45): 2584, 2586, 2589-2606, 2609, 2612, 2614, 2616, 2620-2683
+    2584, 2586, *range(2589, 2607), 2609, 2612, 2614, 2616, *range(2620, 2684),
+    # B1+D1 Dwarf main-story skeleton (60, cat 93, one kind-31 chain 5980→…→5811):
+    5040, 5773, *range(5781, 5812),  # B1 (33 ltd)
+    *range(3484, 3491), *range(3492, 3503), 3562, 3563, *range(3565, 3569), 3992, 4408, 5980,  # D1 (27)
+    # B2 title quests (3, cat 82): 8000001-8000003
+    *range(8000001, 8000004),
+    # B3 cat-1 test/unused (3) + B4 Cradle act-less (1)
+    1835, 1836, 1895, 5678,
 }
 
 # Signature zones for the M2a/M2c zone-coverage rows (M2_PLAN.md zone map):
