@@ -153,27 +153,28 @@ zones required by a milestone or an observed defect.
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
 > Quest-runnability (M2a/M2c + WI-2 + WI-3 + WI-4 + WI-5 + WI-7, band 1-40 census 2026-08-09, post-drop on merged develop): **2727/2727 driven quests runnable, 0 FAIL** across the
-> 2736-quest scenario-harness census (117 M2a-dropped quests excluded — 26 engine-stuck + 91 shells). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
+> 2735-quest scenario-harness census (118 dropped quests excluded — 117 M2a + 6069 WI-6). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
 > 560 non-dropped (668 − 108 dropped). **Band 11-20: 609 PASS / 0 SKIP / 0 FAIL = 100.0%** of 609 non-dropped (626 − 17 dropped).
 > **Band 21-30: 847 PASS / 0 SKIP / 0 FAIL = 100.0%** of 847 non-dropped (0 dropped).
 > **Band 31-40: 643 PASS / 0 SKIP / 0 FAIL = 100.0%** of 643 non-dropped (0 dropped) — the WI-7 T13 sweep drove all 643 contexts (631 in t13, 12 sampled in earlier tiers), zero harness SKIPs as predicted.
-> All SKIPs documented-SKIP with reason (9): 8 orphaned contexts (no quest_contexts row),
-> plus 1 let-it-done-without-report-act (6069, engine completion-path class; WI-6 triage
-> ruled DROP 2026-08-09 — register §8, drop execution t_6810ebd4) — the WI-2
+> All SKIPs documented-SKIP with reason (8): 8 orphaned contexts (no quest_contexts row; 6069 was the
+> let-it-done-without-report-act SKIP but is now DROPPED — WI-6 triage ruling 2026-08-09, register §8,
+> drop execution t_6810ebd4, merged t_ec1a3326) — the WI-2
 > CrimePoint closure closed the last 2 census SKIPs (2916/2926) and added the t9 tier so the five level-41-50
 > carriers (2935/2936/5197/5198/5494) are sampled and PASS — 7/7 CrimePoint contexts driven; the WI-3 AbilityLevel
 > closure closed the AbilityLevel objective family and added the t10 tier so the nine level-50 single-ability
-> carriers (6070/6075-6082) are sampled and PASS — 10/11 AbilityLevel contexts driven, 5967 (all-abilities branch)
-> flipped SKIP→PASS; the WI-4 MateLevel closure added the t11 tier so the four level-50 carriers (5465/5466/5812/5813)
-> are sampled and PASS — 6/6 MateLevel contexts driven (5430/5464 flipped SKIP→PASS in T3; 6015 is an orphaned
-> context, excluded from t11 so the census gains no new orphan SKIP); the WI-5 CompleteQuest closure added the t12
-> tier so the nine level-50 carriers (5816-5821/5862/5868/5911) are sampled and PASS — 11/11 CompleteQuest contexts
-> driven (5814/5815 flipped SKIP→PASS in T3, 6069 remains SKIP for let-it-done-without-report-act, an engine completion-path class). Band-21-30 sweep calibration: kind_id-1 None components (legacy task-board
+> carriers (6070/6075-6082) are sampled and PASS — 10/10 AbilityLevel contexts driven (6069 dropped, not counted),
+> 5967 (all-abilities branch) flipped SKIP→PASS; the WI-4 MateLevel closure added the t11 tier so the four level-50
+> carriers (5465/5466/5812/5813) are sampled and PASS — 6/6 MateLevel contexts driven (5430/5464 flipped
+> SKIP→PASS in T3; 6015 is an orphaned context, excluded from t11 so the census gains no new orphan SKIP); the
+> WI-5 CompleteQuest closure added the t12 tier so the nine level-50 carriers (5816-5821/5862/5868/5911) are
+> sampled and PASS — 11/11 CompleteQuest contexts driven (5814/5815 flipped SKIP→PASS in T3). Band-21-30 sweep
+> calibration: kind_id-1 None components (legacy task-board
 > step, engine walks Start→None→Supply) now emitted as "None" — 5 quests flipped FAIL→PASS (275/281/305/371/604).
 > Wave-1+2 closures flipped 73 SKIP→PASS cumulative (36 wave-1 + 37 merged-line incl. 1702 multi-gap); wave-3
 > ZoneKill closure flipped 23 more (73 + 23 = 96 cumulative); WI-2 CrimePoint closure flipped 2 more census SKIP→PASS
 > (2916/2926) + 5 unsampled carriers → 7/7 driven (98 cumulative); WI-3 AbilityLevel closure flipped 5967 + 9
-> unsampled carriers → 10/11 driven (108 cumulative); WI-4 MateLevel closure flipped 5430/5464 + 4 unsampled
+> unsampled carriers → 10/10 driven (108 cumulative, 6069 dropped not counted); WI-4 MateLevel closure flipped 5430/5464 + 4 unsampled
 > carriers → 6/6 driven (114 cumulative); WI-5 CompleteQuest closure flipped 5814/5815 + 9 unsampled carriers →
 > 11/11 driven (125 cumulative); WI-7 T13 sweep drove band 31-40 643/643 PASS (631 new t13 manifests, 12 sampled
 > earlier) with zero harness SKIPs as predicted; zero PASS→SKIP regressions across every sweep.
