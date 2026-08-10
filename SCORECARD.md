@@ -55,7 +55,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | ITEM-01 | Inventory, equipment, stacking, split/move, full-inventory errors | M2 | U | 1 | U | U | U | U | `ItemManager`; inventory conservation audit |
 | LABOR-01 | Labor consume/regenerate/cap/persist | M3/M4 | U | U | U | U | U | U | Labor/ActAbility audit |
 | MATE-01 | Obtain, summon, mount, dismount, persist a mount | M2 | U | 1 | U | U | U | N/A | `MateManager`; golden-route mount scenario |
-| HOUSING-01 | Claim land, construct, own, permit, demolish | M3 | U | 1 | U | U | U | N/A | `HousingManager`; homestead audit |
+| HOUSING-01 | Claim land, construct, own, permit, demolish | M3 | 1 | 1 | U | U | U | N/A | `HousingManager`; homestead audit; dossier `scorecard-explorations/mechanics/housing-placement.md` (canonical 1.2 zones = pak `housing_area.xml` polygons + `housing_areas`/`housing_groups`/`housing_group_categories` matrix; overlap/terrain/zone/race checks absent in `Build` — fork == upstream develop) |
 | FARM-01 | Place, grow, harvest, and recover curated crops/livestock | M3 | U | 1 | U | U | U | U | `PublicFarmManager` + Doodad paths; farming audit |
 | PROPERTY-01 | Furniture/storage/phase/attachment persistence | M3b | U | 1 | U | U | U | U | Housing/Doodad persistence audit |
 | CRAFT-01 | Recipe prerequisites, labor/material consume, output | M4 | U | 1 | U | U | U | N/A | `CraftManager`; selected pack recipe |
