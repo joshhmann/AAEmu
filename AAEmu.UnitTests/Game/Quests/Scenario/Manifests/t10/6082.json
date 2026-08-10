@@ -1,10 +1,10 @@
 {
- "questId": 6069,
- "name": "거침없이 춤추는 격투의 칼날",
+ "questId": 6082,
+ "name": "환술, 진실을 감추는 달콤한 속삭임",
  "zoneId": 1,
  "categoryId": 55,
  "level": 50,
- "letItDone": true,
+ "letItDone": false,
  "selective": false,
  "score": 0,
  "family": "QuestActObjAbilityLevel",
@@ -17,40 +17,41 @@
   "components": [
    {
     "kind": "Start",
-    "id": 26119,
+    "id": 26167,
     "nextComponent": 0,
     "acts": []
    },
    {
     "kind": "Progress",
-    "id": 26120,
+    "id": 26168,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 35730,
+      "actId": 35793,
       "type": "QuestActObjAbilityLevel",
-      "detailId": 7,
-      "abilityId": 1,
+      "detailId": 18,
+      "abilityId": 2,
       "level": 50,
-      "useAlias": false
+      "useAlias": false,
+      "questActObjAliasId": 0
      }
     ]
    },
    {
     "kind": "Ready",
-    "id": 26121,
+    "id": 26169,
     "nextComponent": 0,
     "acts": []
    },
    {
     "kind": "Reward",
-    "id": 26122,
+    "id": 26170,
     "nextComponent": 0,
     "acts": [
      {
-      "actId": 35732,
+      "actId": 35794,
       "type": "QuestActSupplyItem",
-      "detailId": 4002,
+      "detailId": 4016,
       "itemId": 30757,
       "gradeId": 0,
       "count": 1
@@ -73,12 +74,12 @@
    "events": [
     {
      "type": "AbilityLevel",
-     "abilityId": 1,
+     "abilityId": 2,
      "level": 50
     }
    ],
    "expect": {
-    "step": "Progress",
+    "step": "Ready",
     "status": "Ready"
    }
   },
@@ -111,8 +112,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "let-it-done quest with no report act (engine has no completion path)"
- }
+ "selectedRewardIndex": 0
 }

@@ -8,14 +8,15 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 - **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
-- **T3 stratified act-family census (frozen M1-5c sample)**: 46 PASS / 0 FAIL / 8 SKIP
+- **T3 stratified act-family census (frozen M1-5c sample)**: 47 PASS / 0 FAIL / 7 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 32 PASS / 0 FAIL / 0 SKIP
 - **T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)**: 13 PASS / 0 FAIL / 0 SKIP
 - **T6 M2a census (band 1-10 full sweep)**: 445 PASS / 0 FAIL / 0 SKIP
 - **T7 M2a census (band 11-20 full sweep)**: 576 PASS / 0 FAIL / 0 SKIP
 - **T8 M2c census (band 21-30 full sweep)**: 826 PASS / 0 FAIL / 0 SKIP
 - **T9 M2 WI-2 (CrimePoint supply carriers)**: 5 PASS / 0 FAIL / 0 SKIP
-- **ALL TIERS (census)**: 2069 PASS / 0 FAIL / 14 SKIP over 2083 quests — **2069/2069 quests runnable** (14 SKIP not driven, reasons below)
+- **T10 M2 WI-3 (AbilityLevel objective carriers)**: 9 PASS / 0 FAIL / 0 SKIP
+- **ALL TIERS (census)**: 2079 PASS / 0 FAIL / 13 SKIP over 2092 quests — **2079/2079 quests runnable** (13 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
@@ -239,11 +240,11 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5900 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 200 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5923 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 400 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5924 | @EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 생활점수 1000 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 5967 | 신과 영웅의 발자취 | QuestActConAcceptNpc | Skip | SKIP:Skip (unsupported act type QuestActObjAbilityLevel; unsynthesizable event shape for QuestActObjAbilityLevel (comp 25707)) |
+| 5967 | 신과 영웅의 발자취 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6003 | 전장의 노예 퇴치 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6037 | 프롤로그01 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6040 | 프롤로그04 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 6069 | 거침없이 춤추는 격투의 칼날 | QuestActSupplyItem | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path); unsupported act type QuestActObjAbilityLevel; unsynthesizable event shape for QuestActObjAbilityLevel (comp 26120)) |
+| 6069 | 거침없이 춤추는 격투의 칼날 | QuestActObjAbilityLevel | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 6095 | [1층]도서관 열람실 정리 의뢰 1단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6250 | 새로운 당신을 위한 선물 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6282 | 시련을 부르는 선택 | QuestActConAcceptLevelUp | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2178,6 +2179,20 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5198 | 바다 쓰레기 수거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5494 | 뒤늦은 후회 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 
+## T10 — per-quest verdicts
+
+| quest | name | family | verdict | detail |
+|---|---|---|---|---|
+| 6070 | 고요할수록 진실된 이름, 마법 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6075 | 드넓은 초원을 질주하는 야성 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6076 | 그대, 사랑으로 치유하라 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6077 | 죽음의 손길은 자비롭고 공평하게 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6078 | 삶과 목숨, 모든 것은 주어진 사명을 위해 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6079 | 풍요와 번성의 철옹성, 철벽 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6080 | 올곧은 의지는 커다란 힘이 되리라 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6081 | 낭만을 노래하는 영원한 방랑자 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6082 | 환술, 진실을 감추는 달콤한 속삭임 | QuestActObjAbilityLevel | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+
 ## FAIL rollup (by act family — top blockers)
 
 _none — every driven quest passed._
@@ -2190,8 +2205,7 @@ _none — every driven quest passed._
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
 - **unsupported act type QuestActObjMateLevel** — 2 quests: 5430, 5464
 - **unsupported act type QuestActObjCompleteQuest** — 2 quests: 5814, 5815
-- **unsupported act type QuestActObjAbilityLevel** — 1 quests: 5967
-- **let-it-done quest with no report act (engine has no completion path** — 1 quests: 6069
+- **let-it-done quest with no report act (engine has no completion path)** — 1 quests: 6069
 
 ## Recommended fix-card queue
 
@@ -2204,7 +2218,6 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 
 | act family | gap kind | example quests | fix target |
 |---|---|---|---|
-| QuestActObjAbilityLevel | unsupported act type | 5967, 6069 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjCompleteQuest | unsupported act type | 5814, 5815 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 | QuestActObjMateLevel | unsupported act type | 5430, 5464 | tools/quest-scenario/gen-manifests.py (ACT_TABLES + event_shape) |
 

@@ -38,7 +38,8 @@ public class QuestScenarioTierTests
         ("t6", "T6 M2a census (band 1-10 full sweep)"),
         ("t7", "T7 M2a census (band 11-20 full sweep)"),
         ("t8", "T8 M2c census (band 21-30 full sweep)"),
-        ("t9", "T9 M2 WI-2 (CrimePoint supply carriers)")
+        ("t9", "T9 M2 WI-2 (CrimePoint supply carriers)"),
+        ("t10", "T10 M2 WI-3 (AbilityLevel objective carriers)")
     ];
 
     private static string RepoRoot()

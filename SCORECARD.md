@@ -152,18 +152,22 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M2a/M2c + WI-2, band 1-30 census 2026-08-09, post-drop on merged develop): **2069/2069 driven quests runnable, 0 FAIL** across the
-> 2083-quest scenario-harness census (117 M2a-dropped quests excluded — 26 engine-stuck + 91 shells). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
+> Quest-runnability (M2a/M2c + WI-2 + WI-3, band 1-30 census 2026-08-09, post-drop on merged develop): **2079/2079 driven quests runnable, 0 FAIL** across the
+> 2092-quest scenario-harness census (117 M2a-dropped quests excluded — 26 engine-stuck + 91 shells). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
 > 560 non-dropped (668 − 108 dropped). **Band 11-20: 609 PASS / 0 SKIP / 0 FAIL = 100.0%** of 609 non-dropped (626 − 17 dropped).
 > **Band 21-30: 847 PASS / 0 SKIP / 0 FAIL = 100.0%** of 847 non-dropped (0 dropped).
-> All SKIPs documented-SKIP with reason (14): 8 orphaned contexts (no quest_contexts row),
-> 6 unsupported-act-type (MateLevel 2 / CompleteQuest 2 / AbilityLevel 1 — the WI-2
+> All SKIPs documented-SKIP with reason (13): 8 orphaned contexts (no quest_contexts row),
+> 4 unsupported-act-type (MateLevel 2 / CompleteQuest 2 — the WI-2
 > CrimePoint closure closed the last 2 census SKIPs (2916/2926) and added the t9 tier so the five level-41-50
-> carriers (2935/2936/5197/5198/5494) are sampled and PASS — 7/7 CrimePoint contexts driven), plus 1 let-it-done-without-report-act (6069). Band-21-30 sweep calibration: kind_id-1 None components (legacy task-board
+> carriers (2935/2936/5197/5198/5494) are sampled and PASS — 7/7 CrimePoint contexts driven; the WI-3 AbilityLevel
+> closure closed the last unsupported-objective family and added the t10 tier so the nine level-50 single-ability
+> carriers (6070/6075-6082) are sampled and PASS — 10/11 AbilityLevel contexts driven, 5967 (all-abilities branch)
+> flipped SKIP→PASS, 6069 remains SKIP for let-it-done-without-report-act, an engine completion-path class), plus 1 let-it-done-without-report-act (6069). Band-21-30 sweep calibration: kind_id-1 None components (legacy task-board
 > step, engine walks Start→None→Supply) now emitted as "None" — 5 quests flipped FAIL→PASS (275/281/305/371/604).
 > Wave-1+2 closures flipped 73 SKIP→PASS cumulative (36 wave-1 + 37 merged-line incl. 1702 multi-gap); wave-3
 > ZoneKill closure flipped 23 more (73 + 23 = 96 cumulative); WI-2 CrimePoint closure flipped 2 more census SKIP→PASS
-> (2916/2926) + 5 unsampled carriers → 7/7 driven (98 cumulative); zero PASS→SKIP regressions.
+> (2916/2926) + 5 unsampled carriers → 7/7 driven (98 cumulative); WI-3 AbilityLevel closure flipped 5967 + 9
+> unsampled carriers → 10/11 driven (108 cumulative); zero PASS→SKIP regressions.
 > Census regen deterministic (byte-identical); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
 > Tiger Spine/Falcony/Sunny Wilderness/Ancient Forest/Marionople/Two Crowns/White Forest/Singing Land/Sunrise
 > Peninsula) in runnability.md (census-meta.json-driven). Fail-before states on the

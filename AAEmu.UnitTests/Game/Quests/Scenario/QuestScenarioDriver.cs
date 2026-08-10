@@ -306,6 +306,13 @@ public class QuestScenarioDriver
             nameof(QuestActObjSphere) => new QuestActObjSphere(component) { SphereId = GetUInt(raw, "sphereId"), Count = count },
             nameof(QuestActObjCraft) => new QuestActObjCraft(component) { CraftId = GetUInt(raw, "craftId"), Count = count },
             nameof(QuestActObjLevel) => new QuestActObjLevel(component) { Level = GetByte(raw, "level"), Count = count },
+            nameof(QuestActObjAbilityLevel) => new QuestActObjAbilityLevel(component)
+            {
+                AbilityId = (AbilityType)GetUInt(raw, "abilityId"),
+                Level = GetByte(raw, "level"),
+                UseAlias = GetBool(raw, "useAlias"),
+                QuestActObjAliasId = GetUInt(raw, "questActObjAliasId")
+            },
             nameof(QuestActObjZoneKill) => new QuestActObjZoneKill(component)
             {
                 ZoneId = GetUInt(raw, "zoneId"),
@@ -716,6 +723,27 @@ public class QuestScenarioDriver
                 if (requiredLevel > owner.Level)
                     owner.Level = requiredLevel;
                 owner.Events.OnLevelUp(owner, new OnLevelUpArgs());
+                break;
+            case "AbilityLevel":
+                // M2 WI-3 (t_d5e802f5): QuestActObjAbilityLevel.RunAct is a
+                // pure state check on ability exp (no event subscription, no
+                // SetObjective - QuestComponent.RunComponent passes on the
+                // RunAct return). The rig presees exp so the objective's
+                // state check counts: abilityId 0 = the all-abilities branch
+                // (every ability 1..10 must meet Level). CharacterAbilities
+                // seeds 1..10 only - AddExp's TryGetValue guard skips the
+                // unseeded General(0)/None(11) keys (BUG-012 semantics).
+                // Saturation: the rigged exp curve (level * 100M) wraps int32
+                // past level 21, so GetExpForLevel is unreliable there -
+                // int.MaxValue falls off the binary search's top end and
+                // GetLevelFromExp returns MaxPlayerLevel (55) >= any
+                // requirement in the corpus (all carriers demand 50).
+                var abilityId = GetUInt(rawEvent, "abilityId");
+                if (abilityId == 0)
+                    for (var i = AbilityType.General + 1; i < AbilityType.None; i++)
+                        owner.Abilities.AddExp((AbilityType)i, int.MaxValue);
+                else
+                    owner.Abilities.AddExp((AbilityType)abilityId, int.MaxValue);
                 break;
             case "Aggro":
                 // M2a wave-2 (t_41a14bab): QuestActObjAggro subscribes OnKill
