@@ -1,0 +1,130 @@
+{
+ "questId": 6587,
+ "name": "강인한 정신력을 얻기 위해",
+ "zoneId": 193,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14927
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28112,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40236,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5030,
+      "npcId": 14927
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28113,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40237,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1303,
+      "npcId": 14909,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28114,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40238,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 532,
+      "questContextId": 6588
+     },
+     {
+      "actId": 40243,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1870
+     },
+     {
+      "actId": 40427,
+      "type": "QuestActSupplyExp",
+      "detailId": 1524,
+      "exp": 65480
+     },
+     {
+      "actId": 40428,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1867,
+      "amount": 45000
+     },
+     {
+      "actId": 40567,
+      "type": "QuestActSupplyItem",
+      "detailId": 4715,
+      "itemId": 417,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14909,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 417,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

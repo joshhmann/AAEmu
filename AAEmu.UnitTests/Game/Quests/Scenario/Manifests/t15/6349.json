@@ -1,0 +1,129 @@
+{
+ "questId": 6349,
+ "name": "서고 붉은 강철 골렘 학살",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27181,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37905,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 520,
+      "questContextId": 6349
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27182,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37906,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1273,
+      "npcId": 14378,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27183,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37907,
+      "type": "QuestActConReportJournal",
+      "detailId": 543
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27185,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37908,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1585,
+      "amount": 0
+     },
+     {
+      "actId": 38099,
+      "type": "QuestActSupplyExp",
+      "detailId": 1314,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14378,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

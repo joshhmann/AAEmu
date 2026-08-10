@@ -1,0 +1,135 @@
+{
+ "questId": 6328,
+ "name": "망령의 도감 퇴치",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14368
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27098,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37799,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1277,
+      "npcId": 14368
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27099,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37800,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1254,
+      "npcId": 14368,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27100,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37801,
+      "type": "QuestActConReportJournal",
+      "detailId": 522
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27104,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37802,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 499,
+      "questContextId": 6329
+     },
+     {
+      "actId": 37803,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1563,
+      "amount": 0
+     },
+     {
+      "actId": 38078,
+      "type": "QuestActSupplyExp",
+      "detailId": 1293,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14368,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

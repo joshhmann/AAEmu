@@ -1,0 +1,135 @@
+{
+ "questId": 6340,
+ "name": "비명서고 양피지 병장 퇴치",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14717
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27146,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37857,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1284,
+      "npcId": 14717
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27147,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37858,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1266,
+      "npcId": 14717,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27148,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37859,
+      "type": "QuestActConReportJournal",
+      "detailId": 534
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37860,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1576,
+      "amount": 0
+     },
+     {
+      "actId": 37861,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 511,
+      "questContextId": 6341
+     },
+     {
+      "actId": 38090,
+      "type": "QuestActSupplyExp",
+      "detailId": 1305,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14717,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

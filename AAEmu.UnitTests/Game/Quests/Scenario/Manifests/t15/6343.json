@@ -1,0 +1,129 @@
+{
+ "questId": 6343,
+ "name": "비명서고 도플갱어 학살",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27157,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37870,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 514,
+      "questContextId": 6343
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27158,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37871,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1269,
+      "npcId": 14375,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27159,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37872,
+      "type": "QuestActConReportJournal",
+      "detailId": 537
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27161,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37873,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1578,
+      "amount": 0
+     },
+     {
+      "actId": 38093,
+      "type": "QuestActSupplyExp",
+      "detailId": 1308,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14375,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

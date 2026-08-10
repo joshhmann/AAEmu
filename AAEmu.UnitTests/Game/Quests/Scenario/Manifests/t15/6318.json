@@ -1,0 +1,129 @@
+{
+ "questId": 6318,
+ "name": "휴식하는 마법사 학살",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27058,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37754,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 490,
+      "questContextId": 6318
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27059,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37755,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1247,
+      "npcId": 14634,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27060,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37756,
+      "type": "QuestActConReportJournal",
+      "detailId": 513
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27062,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37757,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1554,
+      "amount": 0
+     },
+     {
+      "actId": 38068,
+      "type": "QuestActSupplyExp",
+      "detailId": 1283,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14634,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,153 @@
+{
+ "questId": 6270,
+ "name": "키리오스 암살자 처치",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14343
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26861,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37436,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1232,
+      "npcId": 14343
+     },
+     {
+      "actId": 37438,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1233,
+      "npcId": 14344
+     },
+     {
+      "actId": 37440,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1235,
+      "npcId": 14434
+     },
+     {
+      "actId": 37441,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1236,
+      "npcId": 14435
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26862,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37442,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 651,
+      "monsterGroupId": 588,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26863,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37443,
+      "type": "QuestActConReportJournal",
+      "detailId": 465
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26867,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37444,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 445,
+      "questContextId": 6271
+     },
+     {
+      "actId": 37445,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1477,
+      "amount": 0
+     },
+     {
+      "actId": 38017,
+      "type": "QuestActSupplyExp",
+      "detailId": 1233,
+      "exp": 30600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 588,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

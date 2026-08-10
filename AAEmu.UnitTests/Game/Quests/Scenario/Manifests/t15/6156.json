@@ -1,0 +1,162 @@
+{
+ "questId": 6156,
+ "name": "찬란한 영광의 광휘",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 30888
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26409,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36395,
+      "type": "QuestActConAcceptItem",
+      "detailId": 437,
+      "itemId": 30888
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26410,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36396,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1181,
+      "npcId": 14364,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26411,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36397,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1182,
+      "npcId": 14360,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26570,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36398,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1183,
+      "npcId": 14330,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26571,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36399,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1689
+     },
+     {
+      "actId": 37990,
+      "type": "QuestActSupplyExp",
+      "detailId": 1212,
+      "exp": 379200
+     },
+     {
+      "actId": 37992,
+      "type": "QuestActSupplyItem",
+      "detailId": 4163,
+      "itemId": 33171,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14364,
+     "count": 5
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 14360,
+     "count": 5
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 14330,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33171,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30888,
+   "count": 1
+  }
+ ]
+}

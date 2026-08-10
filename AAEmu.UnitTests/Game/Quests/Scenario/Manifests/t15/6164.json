@@ -1,0 +1,126 @@
+{
+ "questId": 6164,
+ "name": "[3층]사서장 티레네프 처치",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14316
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36102,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 395,
+      "questContextId": 6164
+     },
+     {
+      "actId": 36103,
+      "type": "QuestActCheckTimer",
+      "detailId": 163,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 26447,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 26448,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36104,
+      "type": "QuestActConReportDoodad",
+      "detailId": 59,
+      "doodadId": 7601
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26449,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37999,
+      "type": "QuestActSupplyExp",
+      "detailId": 1216,
+      "exp": 758400
+     },
+     {
+      "actId": 38257,
+      "type": "QuestActSupplyItem",
+      "detailId": 4249,
+      "itemId": 32062,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 7601,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32062,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

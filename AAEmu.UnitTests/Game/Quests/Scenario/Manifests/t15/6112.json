@@ -1,0 +1,118 @@
+{
+ "questId": 6112,
+ "name": "[2층]폭주하는 마력의 부작용",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14457
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26277,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36116,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4647,
+      "npcId": 14457
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26278,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36847,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 623,
+      "monsterGroupId": 572,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26279,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36119,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1660
+     },
+     {
+      "actId": 36832,
+      "type": "QuestActSupplyItem",
+      "detailId": 4063,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37942,
+      "type": "QuestActSupplyExp",
+      "detailId": 1188,
+      "exp": 140000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 572,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

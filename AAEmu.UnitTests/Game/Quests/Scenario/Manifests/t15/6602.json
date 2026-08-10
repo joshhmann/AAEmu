@@ -1,0 +1,122 @@
+{
+ "questId": 6602,
+ "name": "사악한 기운을 이겨내라! 2단계",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28157,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40301,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 549,
+      "questContextId": 6602
+     },
+     {
+      "actId": 40302,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5044,
+      "npcId": 14930
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28158,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40303,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1308,
+      "npcId": 12620,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28159,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40304,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1879
+     },
+     {
+      "actId": 40305,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 550,
+      "questContextId": 6603
+     },
+     {
+      "actId": 40447,
+      "type": "QuestActSupplyExp",
+      "detailId": 1534,
+      "exp": 65480
+     },
+     {
+      "actId": 40448,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1877,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12620,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

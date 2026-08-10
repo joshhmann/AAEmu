@@ -1,0 +1,138 @@
+{
+ "questId": 6581,
+ "name": "키리오스를 섬기는 자들 2단계",
+ "zoneId": 197,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28094,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40210,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 529,
+      "questContextId": 6581
+     },
+     {
+      "actId": 40211,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5026,
+      "npcId": 14926
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28095,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40212,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 686,
+      "monsterGroupId": 614,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28096,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40213,
+      "type": "QuestActConReportNpc",
+      "detailId": 5050,
+      "npcId": 14926
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28215,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40415,
+      "type": "QuestActSupplyExp",
+      "detailId": 1518,
+      "exp": 65480
+     },
+     {
+      "actId": 40416,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1861,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 614,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14926,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

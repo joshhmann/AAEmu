@@ -1,0 +1,132 @@
+{
+ "questId": 6369,
+ "name": "길다론의 심장",
+ "zoneId": 197,
+ "categoryId": 111,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14748
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27272,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38782,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4756,
+      "npcId": 14748
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38783,
+      "type": "QuestActObjItemGather",
+      "detailId": 2956,
+      "itemId": 34052,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38784,
+      "type": "QuestActConReportNpc",
+      "detailId": 4988,
+      "npcId": 14748
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27293,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38819,
+      "type": "QuestActSupplyExp",
+      "detailId": 1341,
+      "exp": 140000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34052,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14748,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34052,
+   "count": 1
+  }
+ ]
+}

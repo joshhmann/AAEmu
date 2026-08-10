@@ -1,0 +1,123 @@
+{
+ "questId": 6136,
+ "name": "[3층]마력이 깃든 양피지",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14564
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26349,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36173,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4658,
+      "npcId": 14564
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26350,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36175,
+      "type": "QuestActObjItemGather",
+      "detailId": 2892,
+      "itemId": 30875,
+      "count": 50
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36176,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1674
+     },
+     {
+      "actId": 36854,
+      "type": "QuestActSupplyItem",
+      "detailId": 4069,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37972,
+      "type": "QuestActSupplyExp",
+      "detailId": 1203,
+      "exp": 252800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30875,
+     "count": 50
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30875,
+   "count": 50
+  }
+ ]
+}

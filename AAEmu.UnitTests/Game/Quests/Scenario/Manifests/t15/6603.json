@@ -1,0 +1,138 @@
+{
+ "questId": 6603,
+ "name": "작은 시련",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28160,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40306,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 551,
+      "questContextId": 6603
+     },
+     {
+      "actId": 40307,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5045,
+      "npcId": 14930
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28161,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40308,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1309,
+      "npcId": 12620,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28162,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40309,
+      "type": "QuestActConReportNpc",
+      "detailId": 5059,
+      "npcId": 14930
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28225,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40478,
+      "type": "QuestActSupplyExp",
+      "detailId": 1550,
+      "exp": 40000
+     },
+     {
+      "actId": 40479,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1892,
+      "amount": 10500
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12620,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14930,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

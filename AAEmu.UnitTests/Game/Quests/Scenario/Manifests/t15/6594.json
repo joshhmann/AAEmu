@@ -1,0 +1,122 @@
+{
+ "questId": 6594,
+ "name": "이끼 슬라임 퇴치 1단계",
+ "zoneId": 193,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 12666
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28133,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40266,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1301,
+      "npcId": 12666
+     },
+     {
+      "actId": 40267,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1302,
+      "npcId": 12667
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28134,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40268,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 693,
+      "monsterGroupId": 617,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28221,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40269,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1874
+     },
+     {
+      "actId": 40270,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 540,
+      "questContextId": 6595
+     },
+     {
+      "actId": 40435,
+      "type": "QuestActSupplyExp",
+      "detailId": 1528,
+      "exp": 65480
+     },
+     {
+      "actId": 40436,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1871,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 617,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

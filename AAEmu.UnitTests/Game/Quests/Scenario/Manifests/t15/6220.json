@@ -1,0 +1,175 @@
+{
+ "questId": 6220,
+ "name": "유령 상인의 욕심",
+ "zoneId": 217,
+ "categoryId": 106,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14819
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26659,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37023,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4710,
+      "npcId": 14819
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26660,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37029,
+      "type": "QuestActObjItemGather",
+      "detailId": 2914,
+      "itemId": 32569,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26661,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37025,
+      "type": "QuestActConReportNpc",
+      "detailId": 4941,
+      "npcId": 14819
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26676,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37057,
+      "type": "QuestActSupplyItem",
+      "detailId": 4095,
+      "itemId": 32219,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38303,
+      "type": "QuestActSupplyItem",
+      "detailId": 4272,
+      "itemId": 31778,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26678,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37056,
+      "type": "QuestActObjItemGather",
+      "detailId": 2915,
+      "itemId": 32218,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 32569,
+     "count": 15
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 32218,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14819,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32219,
+      "count": 1
+     },
+     {
+      "itemId": 31778,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 32569,
+   "count": 15
+  },
+  {
+   "itemId": 32218,
+   "count": 5
+  }
+ ]
+}

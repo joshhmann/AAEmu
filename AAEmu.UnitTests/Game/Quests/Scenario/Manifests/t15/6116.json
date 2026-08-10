@@ -1,0 +1,123 @@
+{
+ "questId": 6116,
+ "name": "[2층]거인의 핵",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14495
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26289,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36132,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4651,
+      "npcId": 14495
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26290,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36134,
+      "type": "QuestActObjItemGather",
+      "detailId": 2890,
+      "itemId": 30869,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26455,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36135,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1664
+     },
+     {
+      "actId": 36828,
+      "type": "QuestActSupplyItem",
+      "detailId": 4059,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37950,
+      "type": "QuestActSupplyExp",
+      "detailId": 1192,
+      "exp": 140000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30869,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30869,
+   "count": 5
+  }
+ ]
+}

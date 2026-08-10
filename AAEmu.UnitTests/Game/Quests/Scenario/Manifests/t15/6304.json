@@ -1,0 +1,129 @@
+{
+ "questId": 6304,
+ "name": "에아나드 감시자 학살",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27001,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37620,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 476,
+      "questContextId": 6304
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27002,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37748,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 664,
+      "monsterGroupId": 595,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27003,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37622,
+      "type": "QuestActConReportJournal",
+      "detailId": 499
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37623,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1509,
+      "amount": 0
+     },
+     {
+      "actId": 38052,
+      "type": "QuestActSupplyExp",
+      "detailId": 1267,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 595,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

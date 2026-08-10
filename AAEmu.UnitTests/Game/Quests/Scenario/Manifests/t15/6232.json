@@ -1,0 +1,104 @@
+{
+ "questId": 6232,
+ "name": "알 수 없는 구슬",
+ "zoneId": 205,
+ "categoryId": 111,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 32581
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26719,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37171,
+      "type": "QuestActConAcceptItem",
+      "detailId": 439,
+      "itemId": 32581
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38806,
+      "type": "QuestActSupplyExp",
+      "detailId": 1334,
+      "exp": 83600
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26721,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37172,
+      "type": "QuestActConReportNpc",
+      "detailId": 4952,
+      "npcId": 14523
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14523,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 32581,
+   "count": 1
+  }
+ ]
+}
