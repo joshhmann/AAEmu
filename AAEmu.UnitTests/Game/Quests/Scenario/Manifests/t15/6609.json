@@ -1,0 +1,116 @@
+{
+ "questId": 6609,
+ "name": "심연에서 깨어난 베히모스 처치",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 12619
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28178,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40331,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1305,
+      "npcId": 12619
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40332,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1315,
+      "npcId": 12619,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28180,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40333,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1883
+     },
+     {
+      "actId": 40334,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 558,
+      "questContextId": 6610
+     },
+     {
+      "actId": 40456,
+      "type": "QuestActSupplyExp",
+      "detailId": 1539,
+      "exp": 65480
+     },
+     {
+      "actId": 40457,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1881,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12619,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

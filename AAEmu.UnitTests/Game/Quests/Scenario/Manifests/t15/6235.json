@@ -1,0 +1,146 @@
+{
+ "questId": 6235,
+ "name": "구슬의 정체",
+ "zoneId": 197,
+ "categoryId": 111,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14748
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37181,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4721,
+      "npcId": 14748
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37183,
+      "type": "QuestActObjItemGather",
+      "detailId": 2922,
+      "itemId": 31972,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26730,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37182,
+      "type": "QuestActConReportNpc",
+      "detailId": 4956,
+      "npcId": 14748
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26734,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38100,
+      "type": "QuestActSupplyItem",
+      "detailId": 4164,
+      "itemId": 33150,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38813,
+      "type": "QuestActSupplyExp",
+      "detailId": 1338,
+      "exp": 83600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 31972,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14748,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33150,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31972,
+   "count": 30
+  }
+ ]
+}

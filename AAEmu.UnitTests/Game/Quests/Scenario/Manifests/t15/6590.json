@@ -1,0 +1,122 @@
+{
+ "questId": 6590,
+ "name": "들녘뿌리 퇴치 2단계",
+ "zoneId": 193,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14927
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40249,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5032,
+      "npcId": 14927
+     },
+     {
+      "actId": 40250,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 535,
+      "questContextId": 6590
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28122,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40251,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 691,
+      "monsterGroupId": 618,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28123,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40252,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1872
+     },
+     {
+      "actId": 40253,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 536,
+      "questContextId": 6591
+     },
+     {
+      "actId": 40431,
+      "type": "QuestActSupplyExp",
+      "detailId": 1526,
+      "exp": 65480
+     },
+     {
+      "actId": 40432,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1869,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 618,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

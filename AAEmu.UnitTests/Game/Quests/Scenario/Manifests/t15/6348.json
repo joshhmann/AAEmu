@@ -1,0 +1,135 @@
+{
+ "questId": 6348,
+ "name": "서고 붉은 강철 골렘 퇴치",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14378
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27178,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37900,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1289,
+      "npcId": 14378
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37901,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1272,
+      "npcId": 14378,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27180,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37902,
+      "type": "QuestActConReportJournal",
+      "detailId": 542
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27184,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37903,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 519,
+      "questContextId": 6349
+     },
+     {
+      "actId": 37904,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1584,
+      "amount": 0
+     },
+     {
+      "actId": 38098,
+      "type": "QuestActSupplyExp",
+      "detailId": 1313,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14378,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

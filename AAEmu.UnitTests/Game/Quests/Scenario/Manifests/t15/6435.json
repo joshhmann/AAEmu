@@ -1,0 +1,178 @@
+{
+ "questId": 6435,
+ "name": "왜곡된 영생의 굴레",
+ "zoneId": 210,
+ "categoryId": 111,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14911
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39367,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4998,
+      "npcId": 14911
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39374,
+      "type": "QuestActObjItemGather",
+      "detailId": 3011,
+      "itemId": 34318,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39368,
+      "type": "QuestActConReportNpc",
+      "detailId": 5010,
+      "npcId": 14911
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27515,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39376,
+      "type": "QuestActObjItemGather",
+      "detailId": 3013,
+      "itemId": 33072,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27516,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39375,
+      "type": "QuestActObjItemGather",
+      "detailId": 3012,
+      "itemId": 34317,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27517,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40388,
+      "type": "QuestActSupplyExp",
+      "detailId": 1507,
+      "exp": 196400
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34318,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 33072,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 34317,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14911,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34318,
+   "count": 1
+  },
+  {
+   "itemId": 33072,
+   "count": 10
+  },
+  {
+   "itemId": 34317,
+   "count": 1
+  }
+ ]
+}

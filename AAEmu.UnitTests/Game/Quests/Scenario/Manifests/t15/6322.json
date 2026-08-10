@@ -1,0 +1,129 @@
+{
+ "questId": 6322,
+ "name": "에아나드 정원 불곰 학살",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27074,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37772,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 494,
+      "questContextId": 6322
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27075,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37773,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1251,
+      "npcId": 14662,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27076,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37774,
+      "type": "QuestActConReportJournal",
+      "detailId": 517
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27078,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37775,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1558,
+      "amount": 0
+     },
+     {
+      "actId": 38072,
+      "type": "QuestActSupplyExp",
+      "detailId": 1287,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14662,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

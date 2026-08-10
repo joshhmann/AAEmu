@@ -1,0 +1,130 @@
+{
+ "questId": 6617,
+ "name": "고대의 신비한 힘 3단계",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28202,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40369,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 565,
+      "questContextId": 6617
+     },
+     {
+      "actId": 40370,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5057,
+      "npcId": 14934
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28203,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40372,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1318,
+      "npcId": 14936,
+      "count": 50
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28204,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40373,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1887
+     },
+     {
+      "actId": 40378,
+      "type": "QuestActSupplyItem",
+      "detailId": 4703,
+      "itemId": 34723,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40400,
+      "type": "QuestActSupplyExp",
+      "detailId": 1510,
+      "exp": 70000
+     },
+     {
+      "actId": 40753,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 581,
+      "questContextId": 6618
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14936,
+     "count": 50
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34723,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

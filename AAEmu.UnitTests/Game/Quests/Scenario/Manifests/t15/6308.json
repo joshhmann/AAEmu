@@ -1,0 +1,129 @@
+{
+ "questId": 6308,
+ "name": "난폭한 가시주걱 학살",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27017,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37639,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 480,
+      "questContextId": 6308
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27018,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37640,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1237,
+      "npcId": 14389,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27019,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37641,
+      "type": "QuestActConReportJournal",
+      "detailId": 503
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37642,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1513,
+      "amount": 0
+     },
+     {
+      "actId": 38056,
+      "type": "QuestActSupplyExp",
+      "detailId": 1271,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14389,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

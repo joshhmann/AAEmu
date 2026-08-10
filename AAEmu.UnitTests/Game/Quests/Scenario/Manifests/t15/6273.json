@@ -1,0 +1,129 @@
+{
+ "questId": 6273,
+ "name": "열람실 마법사 학살",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26872,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37458,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 448,
+      "questContextId": 6273
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26873,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37459,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 654,
+      "monsterGroupId": 589,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26874,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37460,
+      "type": "QuestActConReportJournal",
+      "detailId": 468
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26876,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37461,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1480,
+      "amount": 0
+     },
+     {
+      "actId": 38021,
+      "type": "QuestActSupplyExp",
+      "detailId": 1237,
+      "exp": 30600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 589,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

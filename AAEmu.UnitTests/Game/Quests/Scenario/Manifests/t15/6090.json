@@ -1,0 +1,123 @@
+{
+ "questId": 6090,
+ "name": "[1층]도서관의 비품",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14452
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26202,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35935,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4639,
+      "npcId": 14452
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26203,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35967,
+      "type": "QuestActObjItemGather",
+      "detailId": 2883,
+      "itemId": 30824,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26223,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35970,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1619
+     },
+     {
+      "actId": 36822,
+      "type": "QuestActSupplyItem",
+      "detailId": 4054,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37913,
+      "type": "QuestActSupplyExp",
+      "detailId": 1174,
+      "exp": 83600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30824,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30824,
+   "count": 8
+  }
+ ]
+}

@@ -163,6 +163,13 @@
     6069
    ],
    "nonDropped": 1591
+  },
+  "51-55": {
+   "label": "band 51-55",
+   "tier": "t15",
+   "total": 268,
+   "dropped": [],
+   "nonDropped": 268
   }
  },
  "signatureZones": [
@@ -244,6 +251,14 @@
    "zoneIds": [
     8
    ]
+  }
+ ],
+ "stragglers": [
+  {
+   "questId": 3465,
+   "level": 99,
+   "tier": "t15",
+   "label": "lvl-99 straggler (top-level quest)"
   }
  ]
 }

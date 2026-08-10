@@ -1,0 +1,129 @@
+{
+ "questId": 6331,
+ "name": "기생당한 도깨비 학살",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27109,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37817,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 502,
+      "questContextId": 6331
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27110,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37818,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1257,
+      "npcId": 14370,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27111,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37819,
+      "type": "QuestActConReportJournal",
+      "detailId": 525
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27112,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37820,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1567,
+      "amount": 0
+     },
+     {
+      "actId": 38081,
+      "type": "QuestActSupplyExp",
+      "detailId": 1296,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14370,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

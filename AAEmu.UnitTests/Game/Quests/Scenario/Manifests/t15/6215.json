@@ -1,0 +1,184 @@
+{
+ "questId": 6215,
+ "name": "첫 임무",
+ "zoneId": 217,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14925
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26642,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38146,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4732,
+      "npcId": 14925
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26643,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38112,
+      "type": "QuestActSupplyItem",
+      "detailId": 4166,
+      "itemId": 31778,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 40625,
+      "type": "QuestActSupplyExp",
+      "detailId": 1564,
+      "exp": 65480
+     },
+     {
+      "actId": 40626,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1909,
+      "amount": 45000
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26644,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36874,
+      "type": "QuestActConReportNpc",
+      "detailId": 4929,
+      "npcId": 14353
+     },
+     {
+      "actId": 36875,
+      "type": "QuestActConReportNpc",
+      "detailId": 4930,
+      "npcId": 14451
+     },
+     {
+      "actId": 36876,
+      "type": "QuestActConReportNpc",
+      "detailId": 4931,
+      "npcId": 14452
+     },
+     {
+      "actId": 36877,
+      "type": "QuestActConReportNpc",
+      "detailId": 4932,
+      "npcId": 14453
+     },
+     {
+      "actId": 36878,
+      "type": "QuestActConReportNpc",
+      "detailId": 4933,
+      "npcId": 14454
+     },
+     {
+      "actId": 36879,
+      "type": "QuestActConReportNpc",
+      "detailId": 4934,
+      "npcId": 14455
+     },
+     {
+      "actId": 36880,
+      "type": "QuestActConReportNpc",
+      "detailId": 4935,
+      "npcId": 14456
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14353,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14451,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14452,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14453,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14454,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14455,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14456,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31778,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

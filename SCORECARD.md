@@ -152,12 +152,14 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M2a/M2c + WI-2 + WI-3 + WI-4 + WI-5 + WI-7 + WI-8, band 1-50 census 2026-08-10, post-drop on merged develop): **4253/4253 driven quests runnable, 0 FAIL** across the
-> 4263-quest scenario-harness census (118 dropped quests excluded — 117 M2a + 6069 WI-6). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
+> Quest-runnability (M2a/M2c + WI-2 + WI-3 + WI-4 + WI-5 + WI-7 + WI-8 + WI-9, band 1-55 + lvl-99 straggler census 2026-08-10, post-drop on merged develop): **4518/4518 driven quests runnable, 0 FAIL** across the
+> 4528-quest scenario-harness census (118 dropped quests excluded — 117 M2a + 6069 WI-6). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
 > 560 non-dropped (668 − 108 dropped). **Band 11-20: 609 PASS / 0 SKIP / 0 FAIL = 100.0%** of 609 non-dropped (626 − 17 dropped).
 > **Band 21-30: 847 PASS / 0 SKIP / 0 FAIL = 100.0%** of 847 non-dropped (0 dropped).
 > **Band 31-40: 643 PASS / 0 SKIP / 0 FAIL = 100.0%** of 643 non-dropped (0 dropped) — the WI-7 T13 sweep drove all 643 contexts (631 in t13, 12 sampled in earlier tiers), zero harness SKIPs as predicted.
 > **Band 41-50: 1589 PASS / 2 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of 1591 non-dropped (1592 − 1 dropped, 6069 WI-6) — the WI-8 T14 sweep drove all 1591 contexts (1528 in t14, 63 sampled in earlier tiers); the 2 SKIPs are 3419/4967 (let-it-done without report act — Josh NO-GO keep ruling, WI-6 register §8).
+> **Band 51-55: 268 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of 268 non-dropped (0 dropped) — the WI-9 T15 sweep drove all 268 contexts (264 in t15, 4 sampled in earlier tiers: 6095 t3 / 6578 t2 / 6600 t2 / 6615 t2).
+> **Lvl-99 straggler 3465: 1 PASS / 0 SKIP / 0 FAIL = 100.0%** (1 non-dropped) — top-level quest outside every banded tier; a no-acts shell (4 components, 0 acts) that the harness walks Start→Progress→Ready→Reward→Persist via the empty-comp auto-pass path, verdict PASS.
 > All SKIPs documented-SKIP with reason (10): 8 orphaned contexts (no quest_contexts row; 6069 was the
 > let-it-done-without-report-act SKIP but is now DROPPED — WI-6 triage ruling 2026-08-09, register §8,
 > drop execution t_6810ebd4, merged t_ec1a3326) + 2 kept-by-ruling ltd quests (3419/4967, WI-8 census) — the WI-2
@@ -180,7 +182,10 @@ zones required by a milestone or an observed defect.
 > 11/11 driven (125 cumulative); WI-7 T13 sweep drove band 31-40 643/643 PASS (631 new t13 manifests, 12 sampled
 > earlier) with zero harness SKIPs as predicted; WI-8 T14 sweep drove band 41-50 1591/1591 PASS-or-doc-SKIP
 > (1528 new t14 manifests, 63 sampled earlier, 6069 dropped excluded) — 1589 PASS / 2 SKIP (3419/4967 kept-by-ruling) /
-> 0 FAIL; the 10 first-sweep FAILs were TWO harness expectation-model gaps + ONE real engine bug, all fixed with
+> 0 FAIL; WI-9 T15 sweep drove band 51-55 268/268 + the lvl-99 straggler 3465 = 269/269 PASS-or-doc-SKIP
+> (264 new t15 manifests + 3465, 4 band contexts sampled earlier: 6095/6578/6600/6615) — 265 PASS / 0 SKIP / 0 FAIL,
+> zero first-sweep FAILs and zero new SKIPs (3465 is a no-acts shell; the band's 6 CheckTimer carriers 6108/6131/6154/
+> 6162-6164 PASS via the auto-pass kind — WI-10 owns driver-fidelity for that family); the 10 first-sweep FAILs were TWO harness expectation-model gaps + ONE real engine bug, all fixed with
 > engine-source evidence: (1) score-quest under-credit — generator fired count events but the engine score branch
 > needs Σ Count×Objective ≥ Score (MaxObjective = Score/Count+1 proves the data intends objectives beyond the
 > displayed count); now fires scaled events (7 quests: 3076/3089/3625/4343/5062/5063/5064); (2) Ready-step OR

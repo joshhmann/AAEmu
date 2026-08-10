@@ -1,0 +1,130 @@
+{
+ "questId": 6130,
+ "name": "[2층]벨시온의 의뢰 정원 정리 10단계",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 30849
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26331,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36036,
+      "type": "QuestActConAcceptItem",
+      "detailId": 396,
+      "itemId": 30849
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26332,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36037,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 593,
+      "monsterGroupId": 562,
+      "count": 10000
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26333,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36038,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1642
+     },
+     {
+      "actId": 37212,
+      "type": "QuestActSupplyItem",
+      "detailId": 4146,
+      "itemId": 32787,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37693,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1536,
+      "amount": 0
+     },
+     {
+      "actId": 37694,
+      "type": "QuestActSupplyExp",
+      "detailId": 1159,
+      "exp": 1120000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 562,
+     "count": 10000
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32787,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30849,
+   "count": 1
+  }
+ ]
+}

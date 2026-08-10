@@ -1,0 +1,138 @@
+{
+ "questId": 6584,
+ "name": "누이 여신의 품으로 돌아가거라 2단계",
+ "zoneId": 197,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28103,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40221,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 531,
+      "questContextId": 6584
+     },
+     {
+      "actId": 40222,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5028,
+      "npcId": 14933
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28104,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40223,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 688,
+      "monsterGroupId": 615,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28105,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40224,
+      "type": "QuestActConReportNpc",
+      "detailId": 5051,
+      "npcId": 14933
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28216,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40421,
+      "type": "QuestActSupplyExp",
+      "detailId": 1521,
+      "exp": 65480
+     },
+     {
+      "actId": 40422,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1864,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 615,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14933,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

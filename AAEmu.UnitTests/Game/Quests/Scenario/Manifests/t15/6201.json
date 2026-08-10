@@ -1,0 +1,172 @@
+{
+ "questId": 6201,
+ "name": "빛나는 해안 해변 정화",
+ "zoneId": 197,
+ "categoryId": 106,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14700
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36453,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4679,
+      "npcId": 14700
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26583,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37058,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1203,
+      "npcId": 14697,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26584,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36454,
+      "type": "QuestActConReportNpc",
+      "detailId": 4875,
+      "npcId": 14688
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26585,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38304,
+      "type": "QuestActSupplyItem",
+      "detailId": 4273,
+      "itemId": 31778,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26679,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37061,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1204,
+      "npcId": 14698,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26680,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37062,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1205,
+      "npcId": 14699,
+      "count": 8
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14697,
+     "count": 8
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 14698,
+     "count": 8
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 14699,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14688,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31778,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

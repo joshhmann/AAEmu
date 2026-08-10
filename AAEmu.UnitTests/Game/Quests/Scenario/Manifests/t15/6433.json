@@ -1,0 +1,132 @@
+{
+ "questId": 6433,
+ "name": "빠른 회복을 위해",
+ "zoneId": 210,
+ "categoryId": 111,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14861
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27492,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39359,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4995,
+      "npcId": 14861
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27493,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39361,
+      "type": "QuestActObjItemGather",
+      "detailId": 3010,
+      "itemId": 33073,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27494,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39360,
+      "type": "QuestActConReportNpc",
+      "detailId": 5008,
+      "npcId": 14861
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27513,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40386,
+      "type": "QuestActSupplyExp",
+      "detailId": 1505,
+      "exp": 196400
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 33073,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14861,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33073,
+   "count": 3
+  }
+ ]
+}

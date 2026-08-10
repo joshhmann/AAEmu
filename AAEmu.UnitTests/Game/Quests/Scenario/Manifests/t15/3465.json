@@ -1,0 +1,84 @@
+{
+ "questId": 3465,
+ "name": "Quest 3465",
+ "zoneId": 137,
+ "categoryId": 1,
+ "level": 99,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "no-acts",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 99,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17025,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 17026,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 17027,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 17029,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

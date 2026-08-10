@@ -1,0 +1,129 @@
+{
+ "questId": 6302,
+ "name": "실험당한 요정 학살",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26992,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37611,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 474,
+      "questContextId": 6302
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26993,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37612,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1231,
+      "npcId": 14393,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26994,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37613,
+      "type": "QuestActConReportJournal",
+      "detailId": 497
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26997,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37614,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1507,
+      "amount": 0
+     },
+     {
+      "actId": 38050,
+      "type": "QuestActSupplyExp",
+      "detailId": 1265,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14393,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 6228,
+ "name": "굶주린 신수들 찾기",
+ "zoneId": 217,
+ "categoryId": 106,
+ "level": 52,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14825
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37119,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4716,
+      "npcId": 14825
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26702,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37120,
+      "type": "QuestActConReportNpc",
+      "detailId": 4948,
+      "npcId": 14825
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26703,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38278,
+      "type": "QuestActSupplyItem",
+      "detailId": 4262,
+      "itemId": 31778,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26705,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37123,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 628,
+      "monsterGroupId": 576,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 576,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14825,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31778,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

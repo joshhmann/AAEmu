@@ -1,0 +1,138 @@
+{
+ "questId": 6610,
+ "name": "여자의 직감",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28181,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40335,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 559,
+      "questContextId": 6610
+     },
+     {
+      "actId": 40336,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5049,
+      "npcId": 14931
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28182,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40337,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1316,
+      "npcId": 12619,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28183,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40338,
+      "type": "QuestActConReportNpc",
+      "detailId": 5062,
+      "npcId": 14931
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28228,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40484,
+      "type": "QuestActSupplyExp",
+      "detailId": 1553,
+      "exp": 40000
+     },
+     {
+      "actId": 40485,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1895,
+      "amount": 10500
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12619,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14931,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

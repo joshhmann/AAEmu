@@ -1,0 +1,140 @@
+{
+ "questId": 6200,
+ "name": "오스트 가신단 연락책 제거",
+ "zoneId": 197,
+ "categoryId": 106,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14693
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26577,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36442,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4678,
+      "npcId": 14693
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26578,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36443,
+      "type": "QuestActObjItemGather",
+      "detailId": 2902,
+      "itemId": 31726,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26579,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36444,
+      "type": "QuestActConReportNpc",
+      "detailId": 4874,
+      "npcId": 14688
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26580,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38305,
+      "type": "QuestActSupplyItem",
+      "detailId": 4274,
+      "itemId": 31778,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 31726,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14688,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31778,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31726,
+   "count": 1
+  }
+ ]
+}

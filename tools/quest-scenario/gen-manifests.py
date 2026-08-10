@@ -1064,7 +1064,25 @@ BAND_TIERS = [
     ("t8", "band 21-30", 21, 30),
     ("t13", "band 31-40", 31, 40),
     ("t14", "band 41-50", 41, 50),
+    ("t15", "band 51-55", 51, 55),
 ]
+
+# ---- Stragglers (WI-9, t_867af9e4): quests above the top band ----
+# LEVEL > 55 contexts sit outside every banded tier (lvl-99 quest 3465 is
+# the only live one). They ride the t15 tier alongside band 51-55 so the
+# acceptance table can hold a dedicated row per straggler (the band table
+# keys parse as lo-hi, so stragglers get their own census-meta key instead).
+STRAGGLER_MIN_LEVEL = 56  # one past the top band's hi
+
+
+def select_stragglers(c, existing_ids):
+    """Live quest_contexts with LEVEL >= STRAGGLER_MIN_LEVEL, minus dropped +
+    already-sampled, ordered by id. Returns (quest_id, level) pairs."""
+    rows = c.execute(
+        "SELECT id, LEVEL FROM quest_contexts WHERE LEVEL >= ? ORDER BY id",
+        (STRAGGLER_MIN_LEVEL,)).fetchall()
+    return [(qid, lvl) for qid, lvl in rows
+            if qid not in DROPPED_QUESTS and qid not in existing_ids]
 
 # Dropped content (scorecard-explorations/dropped-content-register.md):
 # dummy shell 1391 + 23 no-start tutorial shells + 8 orphaned contexts
@@ -1151,6 +1169,13 @@ def emit_census_meta(c, out_root):
             "label": label, "tier": tier, "total": len(ids),
             "dropped": dropped, "nonDropped": len(ids) - len(dropped),
         }
+    # Stragglers (WI-9): top-level quests above the top band get dedicated
+    # acceptance-table rows (rendered by the tier test after the band rows).
+    meta["stragglers"] = [
+        {"questId": qid, "level": lvl, "tier": "t15",
+         "label": f"lvl-{lvl} straggler (top-level quest)"}
+        for qid, lvl in select_stragglers(c, set())
+    ]
     for name, zone_ids in SIGNATURE_ZONES.items():
         meta["signatureZones"].append({"name": name, "zoneIds": zone_ids})
     with open(os.path.join(out_root, "census-meta.json"), "w") as f:
@@ -1375,6 +1400,24 @@ def main():
             counts[tier] = counts.get(tier, 0) + 1
         band_counts[tier] = len(band_ids)
 
+    # ---- Stragglers (WI-9, t_867af9e4): quests above the top band ride the
+    # t15 tier (band 51-55 + lvl-99 straggler 3465 = 269 manifests). Folded
+    # into existing_ids so each quest stays driven exactly once. ----
+    straggler_ids = select_stragglers(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t15")
+    for qid, _lvl in straggler_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t15"] = counts.get("t15", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
                       "t1_total": len(t1_ids), "t2_total": len(t2_ids),
                       "t3_selected": len(t3_ids), "t4_selected": len(t4_ids),
@@ -1387,7 +1430,9 @@ def main():
                       "t7_selected": band_counts.get("t7", 0),
                       "t8_selected": band_counts.get("t8", 0),
                       "t13_selected": band_counts.get("t13", 0),
-                      "t14_selected": band_counts.get("t14", 0)}, indent=1))
+                      "t14_selected": band_counts.get("t14", 0),
+                      "t15_selected": band_counts.get("t15", 0),
+                      "stragglers_selected": len(straggler_ids)}, indent=1))
 
 
 if __name__ == "__main__":

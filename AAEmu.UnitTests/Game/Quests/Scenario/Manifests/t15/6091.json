@@ -1,0 +1,127 @@
+{
+ "questId": 6091,
+ "name": "[1층]도서관을 밝히는 정화의 불꽃",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14453
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26205,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35936,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4640,
+      "npcId": 14453
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26206,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35968,
+      "type": "QuestActObjInteraction",
+      "detailId": 734,
+      "doodadId": 7581,
+      "count": 12,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 38261,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 173,
+      "itemId": 30825,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26224,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35971,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1620
+     },
+     {
+      "actId": 36823,
+      "type": "QuestActSupplyItem",
+      "detailId": 4055,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37915,
+      "type": "QuestActSupplyExp",
+      "detailId": 1175,
+      "exp": 83600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7581,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

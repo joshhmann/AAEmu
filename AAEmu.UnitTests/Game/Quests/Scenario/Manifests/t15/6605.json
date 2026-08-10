@@ -1,0 +1,122 @@
+{
+ "questId": 6605,
+ "name": "심연에서 깨어난 재버워키 퇴치 2단계",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28166,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40314,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 553,
+      "questContextId": 6605
+     },
+     {
+      "actId": 40315,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5046,
+      "npcId": 14930
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28167,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40316,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1311,
+      "npcId": 12922,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28168,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40317,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1881
+     },
+     {
+      "actId": 40318,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 554,
+      "questContextId": 6606
+     },
+     {
+      "actId": 40451,
+      "type": "QuestActSupplyExp",
+      "detailId": 1536,
+      "exp": 65480
+     },
+     {
+      "actId": 40452,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1879,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12922,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

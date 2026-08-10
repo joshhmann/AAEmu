@@ -1,0 +1,141 @@
+{
+ "questId": 6303,
+ "name": "에아나드 감시자 퇴치",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14574
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26998,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37615,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1261,
+      "npcId": 14574
+     },
+     {
+      "actId": 37746,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1269,
+      "npcId": 14390
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26999,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37747,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 663,
+      "monsterGroupId": 595,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27000,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37617,
+      "type": "QuestActConReportJournal",
+      "detailId": 498
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27004,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37618,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 475,
+      "questContextId": 6304
+     },
+     {
+      "actId": 37619,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1508,
+      "amount": 0
+     },
+     {
+      "actId": 38051,
+      "type": "QuestActSupplyExp",
+      "detailId": 1266,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 595,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

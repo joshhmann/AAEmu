@@ -1,0 +1,116 @@
+{
+ "questId": 6611,
+ "name": "햇병아리가 아니랍니다! 1단계",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14932
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28184,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40339,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5050,
+      "npcId": 14932
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28185,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40340,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 699,
+      "monsterGroupId": 620,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28186,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40341,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1884
+     },
+     {
+      "actId": 40342,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 560,
+      "questContextId": 6612
+     },
+     {
+      "actId": 40458,
+      "type": "QuestActSupplyExp",
+      "detailId": 1540,
+      "exp": 65480
+     },
+     {
+      "actId": 40459,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1882,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 620,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

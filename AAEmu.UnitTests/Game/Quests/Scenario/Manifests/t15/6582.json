@@ -1,0 +1,110 @@
+{
+ "questId": 6582,
+ "name": "오스트 가신단의 기워 붙인 살덩이 퇴치",
+ "zoneId": 197,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 13768
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28097,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40214,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1293,
+      "npcId": 13768
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28098,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40215,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1302,
+      "npcId": 13768,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28099,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40216,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1866
+     },
+     {
+      "actId": 40417,
+      "type": "QuestActSupplyExp",
+      "detailId": 1519,
+      "exp": 65480
+     },
+     {
+      "actId": 40418,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1862,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 13768,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

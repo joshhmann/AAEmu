@@ -1,0 +1,160 @@
+{
+ "questId": 6620,
+ "name": "종말을 막기 위한 용기",
+ "zoneId": 197,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14833
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28231,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40357,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5055,
+      "npcId": 14833
+     },
+     {
+      "actId": 40514,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5062,
+      "npcId": 14834
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28232,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40466,
+      "type": "QuestActSupplyExp",
+      "detailId": 1544,
+      "exp": 65480
+     },
+     {
+      "actId": 40467,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1886,
+      "amount": 45000
+     },
+     {
+      "actId": 40628,
+      "type": "QuestActSupplyItem",
+      "detailId": 4739,
+      "itemId": 31783,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 40629,
+      "type": "QuestActSupplyItem",
+      "detailId": 4740,
+      "itemId": 31781,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 40630,
+      "type": "QuestActSupplyItem",
+      "detailId": 4741,
+      "itemId": 31782,
+      "gradeId": 0,
+      "count": 5
+     },
+     {
+      "actId": 40631,
+      "type": "QuestActSupplyItem",
+      "detailId": 4742,
+      "itemId": 31780,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28233,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40515,
+      "type": "QuestActConReportNpc",
+      "detailId": 5078,
+      "npcId": 14925
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14925,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31783,
+      "count": 5
+     },
+     {
+      "itemId": 31781,
+      "count": 5
+     },
+     {
+      "itemId": 31782,
+      "count": 5
+     },
+     {
+      "itemId": 31780,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

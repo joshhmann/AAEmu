@@ -1,0 +1,141 @@
+{
+ "questId": 6256,
+ "name": "금서 퇴치",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14336
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26805,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37346,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1212,
+      "npcId": 14336
+     },
+     {
+      "actId": 37347,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1213,
+      "npcId": 14444
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26806,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37348,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 635,
+      "monsterGroupId": 581,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26807,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37352,
+      "type": "QuestActConReportJournal",
+      "detailId": 452
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26811,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37349,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 431,
+      "questContextId": 6257
+     },
+     {
+      "actId": 37354,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1461,
+      "amount": 0
+     },
+     {
+      "actId": 38003,
+      "type": "QuestActSupplyExp",
+      "detailId": 1219,
+      "exp": 30600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 581,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}
