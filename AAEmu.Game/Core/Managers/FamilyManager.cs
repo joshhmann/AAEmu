@@ -355,6 +355,15 @@ public class FamilyManager(IWorldManager worldManager, IChatManager chatManager,
     }
 
     /// <summary>
+    /// Get Family by Id, or null when the id is not registered (safe lookup for
+    /// permission checks — GetFamily throws KeyNotFoundException on unknown ids).
+    /// </summary>
+    public Family GetFamilyOrDefault(uint id)
+    {
+        return _families.TryGetValue(id, out var family) ? family : null;
+    }
+
+    /// <summary>
     /// Creates a Member object from a Character
     /// </summary>
     /// <param name="character"></param>

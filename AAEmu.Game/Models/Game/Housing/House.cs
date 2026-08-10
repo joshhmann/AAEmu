@@ -373,25 +373,7 @@ public sealed class House : Unit
 
     public override bool AllowedToInteract(Character player)
     {
-        if (Template.AlwaysPublic)
-            return base.AllowedToInteract(player);
-        if (CurrentStep != -1) // unfinished houses can't be used to private store, so always true
-            return base.AllowedToInteract(player);
-        switch (Permission)
-        {
-            case HousingPermission.Private:
-                if (player.Id == OwnerId)
-                    return base.AllowedToInteract(player);
-                var ownerAccount = NameManager.Instance.GetCharacterAccount(OwnerId);
-                return player.AccountId == ownerAccount && base.AllowedToInteract(player);
-            case HousingPermission.Family when player.Family > 0:
-                return FamilyManager.Instance.GetFamily(player.Family).Members.Any(x => x.Id == OwnerId);
-            case HousingPermission.Guild when (player.Expedition?.Id > 0):
-                return player.Expedition.Members.Any(x => x.CharacterId == OwnerId);
-            case HousingPermission.Public:
-            default:
-                return base.AllowedToInteract(player);
-        }
+        return HousingPlacementValidator.CanInteract(this, player, NameManager.Instance, FamilyManager.Instance.GetFamilyOrDefault);
     }
 
     public override Character GetOwnerCharacter()
