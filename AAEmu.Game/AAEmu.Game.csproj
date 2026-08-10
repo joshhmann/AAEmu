@@ -5,17 +5,19 @@
     <UserSecretsId>426ad5c3-9a72-44e9-88f5-4b5940b98c28</UserSecretsId>
     <ApplicationIcon>Resources\icon_game.ico</ApplicationIcon>
     <!-- GC tuning (t_eecc5604, M6 soak regression): workstation GC + background
-         concurrent GC + SustainedLowLatency. The M6 10-bot soak ran stock
-         workstation GC: blocking single-threaded full-GC compactions on the
-         3.4-5.2GB heap paused 70-459ms, tripping the physics slow-thread
-         detector (fires at >65ms inter-iteration gap) 11x over 6h. Server GC
-         was tried first and made the load/provisioning phase WORSE (17
-         warnings in 14 min on this 24-core dev host: per-heap ephemeral
-         pressure + cross-heap STW sync), so it was dropped. SustainedLowLatency
-         keeps full GCs on the background (concurrent) path: blocking
-         compactions are deferred (the heap grows instead of pausing; the
-         32GB host has headroom), keeping STW in the 2-10ms background-GC
-         class — below the 65ms detector threshold. -->
+         concurrent GC + SustainedLowLatency (set in Program.cs — the
+         runtimeconfig key System.GC.LatencyLevel is NOT honored by the
+         runtime, verified 2026-08-10). The M6 10-bot soak ran stock
+         Interactive latency: blocking full-GC compactions on the 3.4-5.2GB
+         heap paused 70-459ms, tripping the physics slow-thread detector
+         (fires at >65ms inter-iteration gap) 11x over 6h. Server GC was tried
+         first and made the load/provisioning phase WORSE (14-17 warnings in
+         10-14 min on this 24-core dev host: per-heap ephemeral pressure +
+         cross-heap STW sync), so it was dropped. SustainedLowLatency keeps
+         full GCs on the background (concurrent) path: blocking compactions
+         are deferred (the heap grows instead of pausing; the 32GB host has
+         headroom), keeping STW in the 2-10ms background-GC class — below the
+         65ms detector threshold. -->
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
   </PropertyGroup>
 
@@ -23,10 +25,6 @@
     <ProjectReference Include="..\AAEmu.Commons\AAEmu.Commons.csproj" />
     <InternalsVisibleTo Include="AAEmu.IntegrationTests" />
     <InternalsVisibleTo Include="AAEmu.UnitTests" />
-    <!-- SustainedLowLatency (2): defer blocking full-GC compactions — gen2
-         stays on the background-GC path so STW stays in the 2-10ms class
-         (physics slow-thread detector threshold is 65ms). -->
-    <RuntimeHostConfigurationOption Include="System.GC.LatencyLevel" Value="2" />
   </ItemGroup>
 
   <ItemGroup>
