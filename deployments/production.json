@@ -2,26 +2,26 @@
   "environment": "aaemu-.165",
   "image": {
     "tag": "aaemu-game:presence-demo",
-    "digest": "sha256:ebe809a0ec5b0666e69ab8d92648414a3a6f08b6309fce89a6c199d43bb35a9d",
-    "built_at": "2026-08-09T13:34:09-07:00 (PDT)"
+    "digest": "sha256:096593111afc011f80fe57e9b20dc0c268b70779fbea3169485846baeb8e2d4e",
+    "built_at": "2026-08-10T04:03:00-07:00 (PDT)"
   },
   "source": {
-    "commit": "fd4ab6eea",
-    "branch": "origin/fix/gm-bot-commands",
-    "lineage": "fix/gm-bot-commands rebased onto the full presence-demo hotfix chain — base de95d53c1 + terrain z-wedge (05652e0c5/2ff6f19f3/8e4b2b6b0/a32ee64d2) + home override + 300s poll (c22575d9d/96e45252a) + model params (d0e5feb9) + body equipment (bd023bb4c) + M6.6 parity seeding (45cd3f3a9) + appearance factory (91b308d71) + GM bot commands (fd4ab6eea)",
-    "verified": "all 16 lineage commits confirmed ancestors of fd4ab6eea via git merge-base --is-ancestor (2026-08-09, t_0fda3cd3)"
+    "commit": "960ef8479",
+    "branch": "develop (fork joshhmann/AAEmu)",
+    "lineage": "fork develop b8afe2097 + merge of fix/adopt-heal-keeps-factory-look @ cdf6d4a62 (Rei gate PASS t_c310b5ce) — adopt-heal keeps stored factory look; demo-blob force-stamp removed",
+    "verified": "merge commit 960ef8479 = fork develop HEAD; cdf6d4a62 lineage on top of fd4ab6eea confirmed via GitHub compare (merge base fd4ab6eea704, 2026-08-10, t_26a0ef77)"
   },
-  "git_sha": "b1e2231c868511c0f17dbd4e6c5c2eceaf9dbb12",
-  "git_sha_note": "STALE — records the last plain-compose deploy (2026-08-05); the running game container is the presence-demo image above, built from fd4ab6eea, NOT from this sha. develop now contains the full lineage (merge chain t_0fda3cd3, tip 5d30a810e) so a rebuild from repo develop reproduces prod.",
-  "deployed_at": "2026-08-09T13:34:00-07:00",
-  "milestone": "M6 presence-demo hotfix chain (GM commands /bot add|remove|list|here|go LIVE; parity seeding; body equipment; appearance factory)",
+  "git_sha": "960ef847902d1090537b971afbe9889eafc23573",
+  "git_sha_note": "current prod git HEAD after ff-only merge of fork/develop (deploy t_26a0ef77, 2026-08-10).",
+  "deployed_at": "2026-08-10T04:03:00-07:00",
+  "milestone": "M6 adopt-heal fix deploy (t_26a0ef77) — demo-blob force-stamp removed; Citizen rows re-provisioned to 3 distinct factory looks",
   "database_backup": "none_required_no_schema_change (bot rows additive; accounts reused idempotently by BotAccountProvisioningService; box compact.sqlite3 pristine per read-only reference rule 3)",
   "services": {
     "db": "Up (healthy)",
     "login": "Up (healthy)",
-    "game": "Up (healthy) - presence-demo image ebe809a0ec5b, 3 citizen bots embodied+roaming",
+    "game": "Up (healthy) - presence-demo image 096593111afc, 3 citizen bots embodied+roaming, 0 NRE",
     "adminer": "Up"
   },
-  "build_path": "worktree recipe (documented in aaemu-fork-workflow skill, PRESENCE demo deploy): in /root/AAEmu (prod), `git worktree add /root/aaemu-deploy-<tag> <sha>`; `ln -s /root/AAEmu/.server_files /root/aaemu-deploy-<tag>/.server_files`; copy docker-compose.presence.yaml in; build with `--env-file /root/AAEmu/.env`; deploy `docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml up -d --no-deps --force-recreate game`. Rollback tags retained: pre-gm=af96b0f3bbd6 / pre-parity-seeding=037dcfa2803c / pre-hotfix5=a6f6631c1835 / pre-hotfix4=280df55c585d / pre-hotfix3=b43277edf887 / pre-hotfix2=eae06dc172ac.",
-  "notes": "Manifest corrected 2026-08-09 by t_0fda3cd3 after Kimi audit flagged it 4 days / ~10 rebuilds stale. GM-commands rebase WAS committed on the fork (fd4ab6eea, origin/fix/gm-bot-commands) — the audit's 'never committed' claim is superseded. bd023bb4c (body equipment) was NOT orphaned: it lives on origin/fix/gm-bot-commands and is now merged into develop. Uncommitted docker-compose.yaml NLog.config mounts captured into repo (compose commit on develop). Census truth carried by M2c branch (2062/2062 runnable, band 1-30). Josh GO 2026-08-08/09 deploy chain; no upstream PRs (lane gate)."
+  "build_path": "in-repo overlay recipe (docker-compose.presence.yaml now tracked in repo, captured by 615c3719cc5d): `cd /root/AAEmu && git merge --ff-only fork/develop && docker compose -f docker-compose.yaml -f docker-compose.presence.yaml up -d --build game`. Rollback tags retained: pre-adoptheal=ebe809a0ec5b / pre-gm=af96b0f3bbd6 / pre-parity-seeding=037dcfa2803c / pre-hotfix5=a6f6631c1835 / pre-hotfix4=280df55c585d / pre-hotfix3=b43277edf887 / pre-hotfix2=eae06dc172ac.",
+  "notes": "Deploy t_26a0ef77 (2026-08-10): merge of the Rei-gate-passed adopt-heal fix was performed by Mai (deploy lane rescue) because Tai's card t_555ed207 was orphaned blocked (review-required unblock unavailable from worker session). Re-provision of collapsed Citizen rows required deleting orphaned items too (DELETE FROM items WHERE owner IN (citizen ids)) — the documented t_506a9acb workaround only deleted item_containers + characters, which leaves 42 orphaned item rows that crash LoadUserItems (ContainerIdManager bitset NRE) on next boot. Skill pitfall updated. Presence overlay on prod now carries the P0 home override (15572/15364/126.5) via the tracked in-repo overlay. No upstream PRs (lane gate)."
 }
