@@ -490,7 +490,6 @@ public class HousingManager(
     public void Build(GameConnection connection, uint designId, float posX, float posY, float posZ, float zRot,
         ulong itemId, int moneyAmount, int ht, bool autoUseAaPoint)
     {
-        // TODO validate house by range...
         // TODO remove itemId
         // TODO minus moneyAmount
 
