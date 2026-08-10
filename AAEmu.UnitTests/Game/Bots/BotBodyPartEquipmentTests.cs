@@ -84,24 +84,29 @@ public class BotBodyPartEquipmentTests
         await Assert.That(EquipmentSectionHasCanonicalIds(wire)).IsFalse();
     }
 
-    // ------------------------------------------------------------------ pass-after: demo blob (Asssaa)
+    // ------------------------------------------------------------------ pass-after: canonical default (t_555ed207 class fix)
 
     [Test]
-    public async Task BuildDefault_Model10_SerializesExactAsssaaBlob()
+    public async Task BuildDefault_Model10_SerializesCanonicalFace_NotDemoBlob()
     {
-        // Demo body source: the blob must be byte-identical to Asssaa's
-        // prod blob — head `03 DD020000 01000000` (hair/model 733, skin 1),
-        // 231 bytes total, round-trip Read/Write stable.
+        // t_555ed207 class fix: BuildDefault(modelId==10) must return the
+        // canonical per-model builder — NOT Asssaa's embedded demo blob.
+        // The old demo special case collapsed every Nuian-male bot to one
+        // identical look whenever any code path called BuildDefault. The
+        // canonical default keeps the render-proven 231-byte type=Face
+        // structure with the canonical first hair/skin ids (compact.sqlite3).
         var modelParams = BotAppearanceDefaults.BuildDefault(Race.Nuian, Gender.Male, 10);
 
         var bytes = modelParams.Write(new PacketStream()).GetBytes();
 
         await Assert.That(bytes.Length).IsEqualTo(231);
         await Assert.That(bytes[0]).IsEqualTo((byte)UnitCustomModelType.Face);
-        // bytes 2-5 = 733 (0x2DD) little-endian — the Asssaa demo marker
-        await Assert.That(BitConverter.ToUInt32(bytes, 1)).IsEqualTo(733u);
-        // skin (bytes 6-9) = 1
-        await Assert.That(BitConverter.ToUInt32(bytes, 5)).IsEqualTo(1u);
+        // Canonical hair/skin (1/1 per compact.sqlite3 MIN(id) for model 10)
+        // — NOT the demo marker 733 (0x2DD) at bytes 2-5.
+        var (hair, skin) = BotAppearanceDefaults.CanonicalColorsFor(10);
+        await Assert.That(BitConverter.ToUInt32(bytes, 1)).IsEqualTo(hair);
+        await Assert.That(BitConverter.ToUInt32(bytes, 5)).IsEqualTo(skin);
+        await Assert.That(BitConverter.ToUInt32(bytes, 1)).IsNotEqualTo(733u);
 
         // Round-trip: Read(Write(x)) == x (DB blob path uses Read()).
         var stream = (PacketStream)bytes;
@@ -129,20 +134,27 @@ public class BotBodyPartEquipmentTests
     }
 
     [Test]
-    public async Task IsDemoAppearance_DemoBlob_True_OtherBlob_False()
+    public async Task ValidDistinctBlob_IsNotDegenerate_AdoptPathLeavesItAlone()
     {
-        // The adopt-heal detects pre-demo rows (231B but hair 1) via the
-        // demo-bytes comparison — the degenerate check alone would miss them.
-        var demo = BotAppearanceDefaults.BuildDefault(Race.Nuian, Gender.Male, 10);
-        var preDemo = new UnitCustomModelParams(UnitCustomModelType.Face)
-            .SetHairColorId(1)
-            .SetSkinColorId(1)
+        // t_555ed207 regression: the adopt path's ONLY blob heal is the
+        // IsDegenerate check (1-byte type=None). A valid 231-byte blob —
+        // whether the canonical default or a factory-distinct look — must
+        // NOT be flagged, so adopted rows keep their stored look across
+        // reboots. The old `needDemoBlob` guard failed exactly here: it
+        // replaced ANY non-demo blob (including valid distinct ones) with
+        // the demo appearance on every boot.
+        var canonical = BotAppearanceDefaults.BuildDefault(Race.Nuian, Gender.Male, 10);
+        var factoryLike = new UnitCustomModelParams(UnitCustomModelType.Face)
+            .SetHairColorId(42)
+            .SetSkinColorId(7)
             .SetModelId(0)
             .SetFace(new FaceModel { NormalMapWeight = 1.0f });
 
-        await Assert.That(BotAppearanceDefaults.IsDemoAppearance(demo)).IsTrue();
-        await Assert.That(BotAppearanceDefaults.IsDemoAppearance(preDemo)).IsFalse();
-        await Assert.That(BotAppearanceDefaults.IsDegenerate(preDemo)).IsFalse(); // structure OK, not demo
+        await Assert.That(BotAppearanceDefaults.IsDegenerate(canonical)).IsFalse();
+        await Assert.That(BotAppearanceDefaults.IsDegenerate(factoryLike)).IsFalse();
+
+        // Sanity: the degenerate shape itself still trips the heal.
+        await Assert.That(BotAppearanceDefaults.IsDegenerate(new UnitCustomModelParams())).IsTrue();
     }
 
     // ------------------------------------------------------------------ pass-after: equip helper
