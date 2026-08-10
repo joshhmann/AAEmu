@@ -29,12 +29,19 @@ public sealed record GateBudgets
     /// <summary>Failed scheduler steps allowed in a window (any failure is a red flag).</summary>
     public long MaxSchedulerStepFailures { get; init; } = 0;
 
-    /// <summary>Max DB writes per minute per embodied bot (catch AI-step-loop writes).
+    /// <summary>Max DB writes per minute per embodied character (catch AI-step-loop writes).
     /// Calibrated to the E2E rig's AutoSaveInterval 0.2 (12s saves): measured
     /// 277 writes/min/bot on the stage-10 golden-route run (2026-08-08), so 500
     /// gives ~2× headroom while a step-loop (per-step writes) lands 10-100×
     /// above. Prod cadence (AutoSaveInterval 5.0) is ~10× lower — tighten at
-    /// the 100-bot profiling stage, not before.</summary>
+    /// the 100-bot profiling stage, not before.
+    /// The denominator is the snapshot's embodied-character count, not the
+    /// stage's network-bot count: when the presence demo is active
+    /// (AAEMU_PRESENCE_DEMO=1), BotPresenceCoordinator adds scheduler-stepping
+    /// citizens that persist at the SAME save cadence, so their writes are
+    /// normal, load — not a write loop. Without the presence-aware denominator
+    /// a stage-10 presence run false-REDs (measured 529.06/500 on network bots
+    /// only; 264.53/500 per embodied char — t_b4eb35e9, 2026-08-09).</summary>
     public double MaxDbWritesPerBotPerMin { get; init; } = 500;
 
     /// <summary>Max physics warnings per minute (physics thread running slow = overload signal).</summary>
@@ -150,10 +157,13 @@ public static class GateBudgetEvaluator
                 "scheduler not started / no steps in window (citizen path not wired) — budget not exercisable"));
         }
 
-        // DB pressure: normalized per bot per minute.
+        // DB pressure: normalized per embodied character per minute (network
+        // bots + presence-demo citizens — both persist at the same save
+        // cadence; presence citizens are load, not a write loop, t_b4eb35e9).
+        var writesUnit = s.PresenceBotCount > 0 ? "writes/min/embodied-char" : "writes/min/bot";
         verdicts.Add(s.DbWritesPerBotPerMin <= b.MaxDbWritesPerBotPerMin
-            ? BudgetVerdict.Ok("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, "writes/min/bot")
-            : BudgetVerdict.Over("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, "writes/min/bot — write-loop risk"));
+            ? BudgetVerdict.Ok("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit)
+            : BudgetVerdict.Over("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit + " — write-loop risk"));
 
         // Warning rates from the game log.
         verdicts.Add(s.PhysicsWarningsPerMin <= b.MaxPhysicsWarningsPerMin
