@@ -22,7 +22,10 @@ public class CharacterQuests(Character owner)
 
     private Character Owner { get; set; } = owner;
     public Dictionary<uint, Quest> ActiveQuests { get; } = [];
-    private Dictionary<ushort, CompletedQuest> CompletedQuests { get; } = [];
+    // BUG-014: completed blocks are keyed by uint (block id = questId / 64) — a
+    // ushort key wrapped for quest ids >= 4,194,304 and ResetQuests recomputed a
+    // wrapped quest id that never resolved to a template (bit never cleared).
+    private Dictionary<uint, CompletedQuest> CompletedQuests { get; } = [];
 
     public bool HasQuest(uint questId)
     {
@@ -31,7 +34,7 @@ public class CharacterQuests(Character owner)
 
     public bool HasQuestCompleted(uint questId)
     {
-        var questBlockId = (ushort)(questId / 64);
+        var questBlockId = questId / 64;
         var questBlockIndex = (int)(questId % 64);
         return CompletedQuests.TryGetValue(questBlockId, out var questBlock) && questBlock.Body.Get(questBlockIndex);
     }
@@ -385,7 +388,7 @@ public class CharacterQuests(Character owner)
     public CompletedQuest SetCompletedQuestFlag(uint questId, bool isCompleted)
     {
         // Calculate block and index
-        var completedQuestBlockId = (ushort)(questId / 64);
+        var completedQuestBlockId = questId / 64;
         var completedQuestBlockIndex = (ushort)(questId % 64);
         // Grab or create block
         if (!CompletedQuests.TryGetValue(completedQuestBlockId, out var completedBlock))
@@ -405,7 +408,7 @@ public class CharacterQuests(Character owner)
     /// <returns></returns>
     public bool IsQuestComplete(uint questId)
     {
-        var completeId = (ushort)(questId / 64);
+        var completeId = questId / 64;
         if (!CompletedQuests.TryGetValue(completeId, out var completedQuest))
             return false;
         return completedQuest.Body[(int)(questId % 64)];
@@ -509,7 +512,7 @@ public class CharacterQuests(Character owner)
                 {
                     var quest = new CompletedQuest
                     {
-                        Id = reader.GetUInt16("id"),
+                        Id = reader.GetUInt32("id"),
                         Body = new BitArray((byte[])reader.GetValue("data"))
                     };
                     CompletedQuests.Add(quest.Id, quest);

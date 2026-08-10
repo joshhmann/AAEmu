@@ -1,6 +1,6 @@
 # BUG-014 — quest completed-block id wraps for quest ids >= 4,194,304
 
-**Status:** OPEN (found by WI-11b census sweep t_8ec705f0, 2026-08-10)
+**Status:** FIXED (branch `fix/bug-014-quest-completed-block-uint`, 2026-08-10)
 **Severity:** HIGH for the 8,000,000-series quests (live: 8000004 할로윈 축제 준비)
 **Affected:** any quest whose id >= 65536 × 64 = 4,194,304 (the 8,000,000-series
 event/anniversary quests; B2 title quests 8000001-8000003 were dropped by the

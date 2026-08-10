@@ -60,6 +60,32 @@ public class QuestDailyResetRigTests
     }
     """;
 
+    private const string HighIdDailyManifestJson = """
+    {
+      "questId": 8000004,
+      "name": "BUG-014 high-id daily reset shape rig (detail 7, non-repeatable)",
+      "acceptor": { "type": "Npc", "id": 13453 },
+      "template": {
+        "level": 5,
+        "detailId": 7,
+        "repeatable": false,
+        "components": [
+          { "kind": "Start", "id": 92041, "acts": [ { "type": "QuestActConAcceptNpc", "npcId": 13453, "detailId": 9241 } ] },
+          { "kind": "Progress", "id": 92042, "acts": [ { "type": "QuestActObjTalk", "npcId": 13453, "count": 1, "detailId": 9242 } ] },
+          { "kind": "Ready", "id": 92043, "acts": [ { "type": "QuestActConReportNpc", "npcId": 13453, "detailId": 9243 } ] },
+          { "kind": "Reward", "id": 92044, "acts": [ { "type": "QuestActSupplyItem", "itemId": 30012, "gradeId": 0, "count": 1, "detailId": 9244 } ] }
+        ]
+      },
+      "stages": [
+        { "name": "START", "events": [], "expect": { "step": "Progress", "status": "Progress" } },
+        { "name": "PROGRESS", "events": [ { "type": "Talk", "npcId": 13453 } ], "expect": { "step": "Ready", "status": "Ready" } },
+        { "name": "READY", "events": [ { "type": "ReportNpc", "npcId": 13453, "selected": 0 } ], "expect": { "step": "Reward", "status": "Completed" } },
+        { "name": "REWARD", "events": [], "expect": { "completed": true } },
+        { "name": "PERSIST", "events": [], "expect": { "persistRoundTrip": true } }
+      ]
+    }
+    """;
+
     private const string DailyManifestWithResetJson = """
     {
       "questId": 9202,
@@ -190,6 +216,44 @@ public class QuestDailyResetRigTests
         var accepted = character.Quests.AddQuest(9202);
         await Assert.That(accepted).IsTrue();
         await Assert.That(character.Quests.ActiveQuests.ContainsKey(9202)).IsTrue();
+    }
+
+    /// <summary>
+    /// BUG-014 engine-level pin (high-id daily): a quest whose id >= 4,194,304
+    /// (block id = questId / 64 overflows ushort — 8000004 / 64 = 125000 wraps to
+    /// 59464) is completed, then ResetDailyQuests must clear its completed flag
+    /// and the engine AddQuest re-accepts. Pre-fix, ResetQuests recomputed
+    /// completeBlockId * 64 + blockIndex = 3,805,700 (wrapped), GetTemplate
+    /// returned null, the bit was never cleared, and re-accept stayed refused
+    /// with QuestDailyLimit forever (CharacterQuests.cs:463-501).
+    /// </summary>
+    [Test]
+    public async Task HighIdDailyQuest_Completed_ResetDailyQuests_ClearsFlag_And_Reaccepts()
+    {
+        const uint highQuestId = 8000004; // 할로윈 축제 준비 — the live >4M carrier
+        var manifest = LoadManifest(HighIdDailyManifestJson);
+        var verdict = new QuestScenarioDriver().Run(manifest);
+        if (verdict.Overall != StageOutcome.Pass)
+            throw new Exception("DIAGNOSTIC VERDICT (main run):\n" + verdict);
+
+        var character = (Character)verdict.QuestRef.Owner;
+        RegisterTemplate(manifest);
+
+        // Completed flag set by the main run; re-accept refused (daily limit).
+        await Assert.That(character.Quests.HasQuestCompleted(highQuestId)).IsTrue();
+        var refused = character.Quests.AddQuest(highQuestId);
+        await Assert.That(refused).IsFalse();
+
+        // The daily reset task's body: ResetDailyQuests(true) -> flag cleared
+        // (BUG-014: must clear the block at 8000004/64 = 125000, not the wrapped
+        // 59464 that pre-fix storage used).
+        character.Quests.ResetDailyQuests(true);
+        await Assert.That(character.Quests.HasQuestCompleted(highQuestId)).IsFalse();
+
+        // Re-accept through the engine: AddQuest -> StartQuest -> first step.
+        var accepted = character.Quests.AddQuest(highQuestId);
+        await Assert.That(accepted).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(highQuestId)).IsTrue();
     }
 
     /// <summary>

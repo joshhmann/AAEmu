@@ -21,8 +21,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 - **T13 M2 WI-7 census (band 31-40 full sweep)**: 631 PASS / 0 FAIL / 0 SKIP
 - **T14 M2 WI-8 census (band 41-50 full sweep)**: 1526 PASS / 0 FAIL / 2 SKIP
 - **T15 M2 WI-9 census (band 51-55 + lvl-99 straggler sweep)**: 265 PASS / 0 FAIL / 0 SKIP
-- **T16 M2 WI-11b census (band 0/null sweep)**: 54 PASS / 1 FAIL / 4 SKIP
-- **ALL TIERS (census)**: 4572 PASS / 1 FAIL / 14 SKIP over 4587 quests — **4572/4573 quests runnable** (14 SKIP not driven, reasons below)
+- **T16 M2 WI-11b census (band 0/null sweep)**: 55 PASS / 0 FAIL / 4 SKIP
+- **ALL TIERS (census)**: 4573 PASS / 0 FAIL / 14 SKIP over 4587 quests — **4573/4573 quests runnable** (14 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
@@ -37,7 +37,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3465 (lvl-99 straggler (top-level quest)) | t15 | 1 | 0 | 1 | 1 | 1 | 0 | 0 | 100.0% |
 | D2 old Sunny Wilderness (구 불볕황야) - superseded pre-1.2 line | t16 | 13 | 0 | 13 | 13 | 13 | 0 | 0 | 100.0% |
 | D3 tutorial sphere steps (cat 45) | t16 | 12 | 0 | 12 | 12 | 12 | 0 | 0 | 100.0% |
-| D4 real content - must NOT be dropped | t16 | 22 | 0 | 22 | 22 | 21 | 1 | 0 | 95.5% |
+| D4 real content - must NOT be dropped | t16 | 22 | 0 | 22 | 22 | 22 | 0 | 0 | 100.0% |
 | D5 test/dummy-named (cat 1/12/45/50) | t16 | 9 | 0 | 9 | 9 | 9 | 0 | 0 | 100.0% |
 | A2 unit-req/dummy specials - kept by Q2 NO-GO ruling (zero components) | t16 | 4 | 0 | 4 | 4 | 0 | 0 | 4 | 100.0% |
 
@@ -4743,20 +4743,14 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 6251 | 50레벨 달성 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6314 | 갈색 날개 하피 학살 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6355 | 푸른 기운을 가진 청마 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 8000004 | 할로윈 축제 준비 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Fail (InvalidOperationException: re-accept refused by engine AddQuest after ResetDailyQuests    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 1108) |
+| 8000004 | 할로윈 축제 준비 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 
 ## FAIL rollup (by act family — top blockers)
 
-- **QuestActConAcceptNpc** — 1 failing quest occurrence(s)
-- **QuestActConReportNpc** — 1 failing quest occurrence(s)
-- **QuestActObjItemGather** — 1 failing quest occurrence(s)
-- **QuestActSupplyCopper** — 1 failing quest occurrence(s)
-- **QuestActSupplyExp** — 1 failing quest occurrence(s)
-- **QuestActSupplyItem** — 1 failing quest occurrence(s)
+_none — every driven quest passed._
 
 ## FAIL rollup (by stage reason)
 
-- **START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Fail** — 1 quests: 8000004
 
 ## SKIP rollup (by reason)
 
@@ -4770,5 +4764,4 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 
 | quest | name | family | failing stage | act families | file:line | reason |
 |---|---|---|---|---|---|---|
-| 8000004 | 할로윈 축제 준비 | QuestActConAcceptNpc | RESET | QuestActConAcceptNpc+QuestActObjItemGather+QuestActConReportNpc+QuestActSupplyItem | QuestScenarioDriver.cs:1108 | RESET:Fail (InvalidOperationException: re-accept refused by engine AddQuest after ResetDailyQuests    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDrive… |
 
