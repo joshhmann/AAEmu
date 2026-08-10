@@ -1,0 +1,134 @@
+{
+ "questId": 1807,
+ "name": "공동묘지 정화",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2871
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12854,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18545,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2392,
+      "npcId": 2871
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12855,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18544,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 303,
+      "monsterGroupId": 278,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12856,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18546,
+      "type": "QuestActConReportNpc",
+      "detailId": 2617,
+      "npcId": 2871
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38742,
+      "type": "QuestActSupplyItem",
+      "detailId": 4491,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 278,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2871,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

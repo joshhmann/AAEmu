@@ -1,0 +1,157 @@
+{
+ "questId": 92,
+ "name": "다후타 교단의 파멸을 위해",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 40,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 6488
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 839,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 1036,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 207,
+      "npcId": 6488
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 7523,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10590,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 411,
+      "npcId": 614,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 10589,
+      "type": "QuestActConReportNpc",
+      "detailId": 1534,
+      "npcId": 6488
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7525,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 20560,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28089,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 992,
+      "npcId": 6529,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 20561,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28090,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 488,
+      "monsterGroupId": 8,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 614,
+     "count": 20
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 6529,
+     "count": 20
+    },
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 8,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 6488,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

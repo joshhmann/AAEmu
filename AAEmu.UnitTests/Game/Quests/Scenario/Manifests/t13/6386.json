@@ -1,0 +1,124 @@
+{
+ "questId": 6386,
+ "name": "살아있는 시체들의 농가",
+ "zoneId": 6,
+ "categoryId": 63,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10851
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27340,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38940,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4767,
+      "npcId": 10851
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27341,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38943,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 677,
+      "monsterGroupId": 604,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27342,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38937,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1726
+     },
+     {
+      "actId": 38938,
+      "type": "QuestActSupplyItem",
+      "detailId": 4565,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 38939,
+      "type": "QuestActSupplyItem",
+      "detailId": 4566,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 604,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 10
+     },
+     {
+      "itemId": 34009,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

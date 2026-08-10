@@ -1,0 +1,103 @@
+{
+ "questId": 5067,
+ "name": "연금술의 새로운 장을 열다",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21954,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 21956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30911,
+      "type": "QuestActConReportNpc",
+      "detailId": 4234,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21957,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30912,
+      "type": "QuestActSupplyCopper",
+      "detailId": 961,
+      "amount": 0
+     },
+     {
+      "actId": 30913,
+      "type": "QuestActSupplyExp",
+      "detailId": 496,
+      "exp": 1000
+     },
+     {
+      "actId": 30914,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 7,
+      "appellationId": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12504,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,153 @@
+{
+ "questId": 3185,
+ "name": "고대 신앙자들 배격",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9240
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14416,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20062,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 749,
+      "npcId": 9240
+     },
+     {
+      "actId": 20063,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 750,
+      "npcId": 9241
+     },
+     {
+      "actId": 20064,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 751,
+      "npcId": 9242
+     },
+     {
+      "actId": 20065,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 752,
+      "npcId": 9243
+     },
+     {
+      "actId": 20816,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 801,
+      "npcId": 9277
+     },
+     {
+      "actId": 20817,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 802,
+      "npcId": 9302
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20066,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 351,
+      "monsterGroupId": 313,
+      "count": 32
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14418,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20068,
+      "type": "QuestActConReportJournal",
+      "detailId": 213
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14419,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20067,
+      "type": "QuestActSupplyCopper",
+      "detailId": 320,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 313,
+     "count": 32
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

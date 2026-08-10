@@ -1,0 +1,134 @@
+{
+ "questId": 1754,
+ "name": "보급관의 고민",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2802
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 8463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17831,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2276,
+      "npcId": 2802
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9458,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18527,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 302,
+      "monsterGroupId": 277,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9459,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17832,
+      "type": "QuestActConReportNpc",
+      "detailId": 2503,
+      "npcId": 2802
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12237,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38729,
+      "type": "QuestActSupplyItem",
+      "detailId": 4478,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 277,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2802,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

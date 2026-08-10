@@ -997,13 +997,14 @@ def select_t12_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
-# ---- T6/T7/T8 (M2a/M2c census): full band sweeps ----
+# ---- T6/T7/T8/T13 (M2a/M2c/WI-7 census): full band sweeps ----
 # Every non-dropped quest in the band, minus quests already sampled in
-# T1-T5 (each quest driven exactly once across the census).
+# T1-T5/T9-T12 (each quest driven exactly once across the census).
 BAND_TIERS = [
     ("t6", "band 1-10", 1, 10),
     ("t7", "band 11-20", 11, 20),
     ("t8", "band 21-30", 21, 30),
+    ("t13", "band 31-40", 31, 40),
 ]
 
 # Dropped content (scorecard-explorations/dropped-content-register.md):
@@ -1310,7 +1311,9 @@ def main():
                       "t11_selected": len(t11_ids),
                       "t12_selected": len(t12_ids),
                       "t6_selected": band_counts.get("t6", 0),
-                      "t7_selected": band_counts.get("t7", 0)}, indent=1))
+                      "t7_selected": band_counts.get("t7", 0),
+                      "t8_selected": band_counts.get("t8", 0),
+                      "t13_selected": band_counts.get("t13", 0)}, indent=1))
 
 
 if __name__ == "__main__":

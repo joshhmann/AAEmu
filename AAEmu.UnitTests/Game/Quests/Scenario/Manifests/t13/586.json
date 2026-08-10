@@ -1,0 +1,125 @@
+{
+ "questId": 586,
+ "name": "그리핀의 알",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2428
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2298,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3415,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 376,
+      "npcId": 2428
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2299,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3416,
+      "type": "QuestActObjItemGather",
+      "detailId": 181,
+      "itemId": 4976,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2300,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3417,
+      "type": "QuestActConReportNpc",
+      "detailId": 438,
+      "npcId": 2428
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2301,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4976,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2428,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4976,
+   "count": 1
+  }
+ ]
+}

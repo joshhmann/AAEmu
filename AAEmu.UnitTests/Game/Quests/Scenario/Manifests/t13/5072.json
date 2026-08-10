@@ -1,0 +1,167 @@
+{
+ "questId": 5072,
+ "name": "백향나무와 삼나무 원목",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11084
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21975,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30944,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3968,
+      "npcId": 11084
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21976,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30945,
+      "type": "QuestActObjItemGather",
+      "detailId": 2447,
+      "itemId": 15740,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21977,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30947,
+      "type": "QuestActConReportNpc",
+      "detailId": 4239,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21978,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30946,
+      "type": "QuestActObjItemGather",
+      "detailId": 2448,
+      "itemId": 3426,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21979,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30941,
+      "type": "QuestActSupplyCopper",
+      "detailId": 966,
+      "amount": 0
+     },
+     {
+      "actId": 30942,
+      "type": "QuestActSupplyExp",
+      "detailId": 501,
+      "exp": 1000
+     },
+     {
+      "actId": 30943,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 12,
+      "appellationId": 7
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15740,
+     "count": 2
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 3426,
+     "count": 2
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12505,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15740,
+   "count": 2
+  },
+  {
+   "itemId": 3426,
+   "count": 2
+  }
+ ]
+}

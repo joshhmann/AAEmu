@@ -1,0 +1,119 @@
+{
+ "questId": 2325,
+ "name": "피 묻은 손 섬멸",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1468
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12358,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18301,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2354,
+      "npcId": 1468
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18210,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 650,
+      "npcId": 8014,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12481,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18211,
+      "type": "QuestActConReportNpc",
+      "detailId": 2553,
+      "npcId": 1469
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12482,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8014,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1469,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

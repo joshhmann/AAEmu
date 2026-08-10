@@ -1,0 +1,104 @@
+{
+ "questId": 6246,
+ "name": "박쥐 동굴 깊숙한 곳엔",
+ "zoneId": 21,
+ "categoryId": 22,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 8021
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26770,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37294,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 308,
+      "doodadId": 8021
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26771,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37435,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 650,
+      "monsterGroupId": 587,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26772,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37295,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1708
+     },
+     {
+      "actId": 37437,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1476,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 587,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,155 @@
+{
+ "questId": 2294,
+ "name": "땅의 눈물",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1445
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12330,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18258,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2341,
+      "npcId": 1445
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12531,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18259,
+      "type": "QuestActSupplyItem",
+      "detailId": 1836,
+      "itemId": 17346,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12532,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18260,
+      "type": "QuestActObjItemGather",
+      "detailId": 1243,
+      "itemId": 17349,
+      "count": 1
+     },
+     {
+      "actId": 18261,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 66,
+      "itemId": 17341,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12533,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18262,
+      "type": "QuestActConReportNpc",
+      "detailId": 2564,
+      "npcId": 1446
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12534,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17349,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1446,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17349,
+   "count": 1
+  }
+ ]
+}

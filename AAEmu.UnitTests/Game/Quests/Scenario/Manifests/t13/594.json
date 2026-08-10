@@ -1,0 +1,97 @@
+{
+ "questId": 594,
+ "name": "피 묻은 손의 관리대장",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 5049
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2331,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3794,
+      "type": "QuestActConAcceptItem",
+      "detailId": 42,
+      "itemId": 5049
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2338,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3454,
+      "type": "QuestActConReportNpc",
+      "detailId": 446,
+      "npcId": 4971
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2339,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4971,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5049,
+   "count": 1
+  }
+ ]
+}

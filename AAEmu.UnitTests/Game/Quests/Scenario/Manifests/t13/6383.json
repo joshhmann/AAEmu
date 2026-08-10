@@ -1,0 +1,124 @@
+{
+ "questId": 6383,
+ "name": "불탄 성 무기고의 비밀",
+ "zoneId": 180,
+ "categoryId": 56,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9180
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27331,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38926,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4765,
+      "npcId": 9180
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27332,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38933,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 675,
+      "monsterGroupId": 603,
+      "count": 35
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27333,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38924,
+      "type": "QuestActSupplyItem",
+      "detailId": 4559,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 38925,
+      "type": "QuestActSupplyItem",
+      "detailId": 4560,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 38927,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1723
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 603,
+     "count": 35
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 10
+     },
+     {
+      "itemId": 34009,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

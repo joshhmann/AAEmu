@@ -1,0 +1,142 @@
+{
+ "questId": 1991,
+ "name": "마법진을 파괴하라",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9055
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9158,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12812,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1688,
+      "npcId": 9055
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9159,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13258,
+      "type": "QuestActObjItemUse",
+      "detailId": 376,
+      "itemId": 20148,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9160,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12813,
+      "type": "QuestActConReportNpc",
+      "detailId": 1894,
+      "npcId": 9055
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9161,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 9564,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13257,
+      "type": "QuestActSupplyItem",
+      "detailId": 1274,
+      "itemId": 20148,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 20148,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9055,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

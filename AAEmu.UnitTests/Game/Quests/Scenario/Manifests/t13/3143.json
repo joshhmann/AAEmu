@@ -1,0 +1,91 @@
+{
+ "questId": 3143,
+ "name": "노래의 끝은 어떻게 되었나",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 36,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9257
+ },
+ "template": {
+  "level": 36,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14129,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19842,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2674,
+      "npcId": 9257
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14130,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19843,
+      "type": "QuestActConReportNpc",
+      "detailId": 2910,
+      "npcId": 9268
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14131,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9268,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

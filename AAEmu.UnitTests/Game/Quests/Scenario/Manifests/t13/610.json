@@ -1,0 +1,142 @@
+{
+ "questId": 610,
+ "name": "집정관의 계획 저지",
+ "zoneId": 15,
+ "categoryId": 15,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7944
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2550,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24518,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3524,
+      "npcId": 7944
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2554,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3880,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 135,
+      "npcId": 1765,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2555,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3881,
+      "type": "QuestActConReportNpc",
+      "detailId": 498,
+      "npcId": 7944
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2556,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 18510,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24222,
+      "type": "QuestActSupplyItem",
+      "detailId": 2326,
+      "itemId": 23620,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1765,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7944,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

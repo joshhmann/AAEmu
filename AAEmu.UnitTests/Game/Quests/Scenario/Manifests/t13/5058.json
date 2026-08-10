@@ -1,0 +1,188 @@
+{
+ "questId": 5058,
+ "name": "야생 엘크 길들이기",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12480
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21901,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30885,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3960,
+      "npcId": 12480
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21902,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30887,
+      "type": "QuestActObjItemUse",
+      "detailId": 702,
+      "itemId": 26600,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21903,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30889,
+      "type": "QuestActConReportNpc",
+      "detailId": 4231,
+      "npcId": 12480
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21938,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30886,
+      "type": "QuestActSupplyItem",
+      "detailId": 3550,
+      "itemId": 26600,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21939,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30888,
+      "type": "QuestActObjItemGather",
+      "detailId": 2440,
+      "itemId": 26439,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21940,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30890,
+      "type": "QuestActSupplyCopper",
+      "detailId": 958,
+      "amount": 3000
+     },
+     {
+      "actId": 31468,
+      "type": "QuestActSupplyItem",
+      "detailId": 3609,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 26600,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26439,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12480,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26439,
+   "count": 1
+  }
+ ]
+}

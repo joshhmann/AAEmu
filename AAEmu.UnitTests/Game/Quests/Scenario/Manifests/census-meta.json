@@ -147,6 +147,13 @@
    "total": 847,
    "dropped": [],
    "nonDropped": 847
+  },
+  "31-40": {
+   "label": "band 31-40",
+   "tier": "t13",
+   "total": 643,
+   "dropped": [],
+   "nonDropped": 643
   }
  },
  "signatureZones": [

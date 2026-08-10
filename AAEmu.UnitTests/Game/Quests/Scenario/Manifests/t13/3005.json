@@ -1,0 +1,201 @@
+{
+ "questId": 3005,
+ "name": "켄타우로스 부락의 말발굽",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1279
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13139,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18849,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2434,
+      "npcId": 1279
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13140,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21101,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 378,
+      "monsterGroupId": 483,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13141,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18851,
+      "type": "QuestActConReportNpc",
+      "detailId": 2665,
+      "npcId": 1366
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13142,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21460,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29931,
+      "type": "QuestActObjInteraction",
+      "detailId": 636,
+      "doodadId": 3549,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21461,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29836,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1067,
+      "npcId": 1375,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 21479,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29971,
+      "type": "QuestActSupplyItem",
+      "detailId": 3413,
+      "itemId": 19044,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29973,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1076,
+      "npcId": 1281,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 483,
+     "count": 5
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 3549,
+     "count": 3
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 1375,
+     "count": 10
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 1281,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1366,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

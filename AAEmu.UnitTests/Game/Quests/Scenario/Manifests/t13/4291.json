@@ -1,0 +1,149 @@
+{
+ "questId": 4291,
+ "name": "토벌대 사망자의 유품 수집",
+ "zoneId": 168,
+ "categoryId": 56,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjItemGather",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18728,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 18729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24661,
+      "type": "QuestActObjItemGather",
+      "detailId": 2025,
+      "itemId": 23746,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18730,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 18731,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24914,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1341,
+      "itemId": 24061,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 24915,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1342,
+      "itemId": 24062,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 24916,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1343,
+      "itemId": 24063,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 24917,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1344,
+      "itemId": 24064,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 25661,
+      "type": "QuestActSupplyCopper",
+      "detailId": 494,
+      "amount": 0
+     },
+     {
+      "actId": 25662,
+      "type": "QuestActSupplyExp",
+      "detailId": 73,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23746,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 23746,
+   "count": 10
+  }
+ ]
+}

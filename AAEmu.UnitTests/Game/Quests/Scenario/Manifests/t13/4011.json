@@ -1,0 +1,123 @@
+{
+ "questId": 4011,
+ "name": "고산 순록 퇴치",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1315
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17292,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22848,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 962,
+      "npcId": 1315
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17293,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22849,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 898,
+      "npcId": 1315,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17294,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22850,
+      "type": "QuestActConReportJournal",
+      "detailId": 291
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17295,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23138,
+      "type": "QuestActSupplyCopper",
+      "detailId": 417,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1315,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

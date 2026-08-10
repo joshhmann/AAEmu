@@ -1,0 +1,114 @@
+{
+ "questId": 2924,
+ "name": "왕가의 검은 장미",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10757
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12526,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18254,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2340,
+      "npcId": 10757
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12527,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24620,
+      "type": "QuestActSupplyItem",
+      "detailId": 2423,
+      "itemId": 23728,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12529,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18257,
+      "type": "QuestActConReportNpc",
+      "detailId": 2563,
+      "npcId": 8861
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12530,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8861,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

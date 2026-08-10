@@ -1,0 +1,148 @@
+{
+ "questId": 1815,
+ "name": "해를 품은 새의 알 구하기",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3494
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12881,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19455,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 98,
+      "doodadId": 3494
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12882,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18559,
+      "type": "QuestActObjItemGather",
+      "detailId": 1265,
+      "itemId": 18784,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 13778,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19456,
+      "type": "QuestActSupplyItem",
+      "detailId": 1932,
+      "itemId": 18784,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13779,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19457,
+      "type": "QuestActConReportNpc",
+      "detailId": 2825,
+      "npcId": 1135
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13780,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18784,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1135,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18784,
+   "count": 1
+  }
+ ]
+}

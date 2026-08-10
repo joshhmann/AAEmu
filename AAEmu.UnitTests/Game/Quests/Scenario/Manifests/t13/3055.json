@@ -1,0 +1,98 @@
+{
+ "questId": 3055,
+ "name": "저거너트의 자유를 위하여!",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1310
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13350,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18911,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2451,
+      "npcId": 1310
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13351,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18912,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 680,
+      "npcId": 1311,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13353,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21438,
+      "type": "QuestActConAutoComplete",
+      "detailId": 694
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1311,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

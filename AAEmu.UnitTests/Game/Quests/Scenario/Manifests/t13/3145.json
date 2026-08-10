@@ -1,0 +1,125 @@
+{
+ "questId": 3145,
+ "name": "모자란 붉은색",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 36,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9264
+ },
+ "template": {
+  "level": 36,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14137,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19848,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2676,
+      "npcId": 9264
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14139,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20090,
+      "type": "QuestActObjItemGather",
+      "detailId": 1416,
+      "itemId": 13982,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14140,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19849,
+      "type": "QuestActConReportNpc",
+      "detailId": 2912,
+      "npcId": 9269
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14141,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 13982,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9269,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 13982,
+   "count": 5
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+ "questId": 3977,
+ "name": "외딴 섬마을",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1377
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16935,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22320,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 221,
+      "sphereId": 1377
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16936,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22671,
+      "type": "QuestActConReportNpc",
+      "detailId": 3478,
+      "npcId": 10505
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16937,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10505,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

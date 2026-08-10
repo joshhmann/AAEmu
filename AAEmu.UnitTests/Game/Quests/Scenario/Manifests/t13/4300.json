@@ -1,0 +1,144 @@
+{
+ "questId": 4300,
+ "name": "불길한 농장",
+ "zoneId": 169,
+ "categoryId": 63,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1482
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18773,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24788,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 231,
+      "sphereId": 1482
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18774,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24791,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 956,
+      "npcId": 9798,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18775,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24795,
+      "type": "QuestActConReportNpc",
+      "detailId": 3811,
+      "npcId": 10850
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18798,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24792,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1328,
+      "itemId": 23792,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 24793,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1329,
+      "itemId": 23793,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 24794,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1330,
+      "itemId": 23794,
+      "gradeId": 2,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9798,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10850,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

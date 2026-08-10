@@ -1,0 +1,107 @@
+{
+ "questId": 3930,
+ "name": "변절자의 최후",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10489
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16967,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29006,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 169,
+      "questContextId": 3930
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16968,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29007,
+      "type": "QuestActObjAggro",
+      "detailId": 10,
+      "range": 50,
+      "rank1": 55,
+      "rank2": 70,
+      "rank3": 90,
+      "rank1Ratio": 100,
+      "rank2Ratio": 50,
+      "rank3Ratio": 10,
+      "rank1Item": false,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2035
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16969,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29004,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1097
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 10489
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

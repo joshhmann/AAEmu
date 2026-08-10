@@ -1,0 +1,178 @@
+{
+ "questId": 2295,
+ "name": "고인 물도 다시 보자",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1446
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12331,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18295,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2352,
+      "npcId": 1446
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12574,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18296,
+      "type": "QuestActObjInteraction",
+      "detailId": 432,
+      "doodadId": 3616,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12575,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18720,
+      "type": "QuestActObjInteraction",
+      "detailId": 448,
+      "doodadId": 3514,
+      "count": 1,
+      "wiId": 103,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12576,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18721,
+      "type": "QuestActObjInteraction",
+      "detailId": 449,
+      "doodadId": 3515,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13009,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18722,
+      "type": "QuestActConReportNpc",
+      "detailId": 2635,
+      "npcId": 1491
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13010,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38724,
+      "type": "QuestActSupplyItem",
+      "detailId": 4473,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3616,
+     "count": 1
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 3514,
+     "count": 1
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 3515,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1491,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

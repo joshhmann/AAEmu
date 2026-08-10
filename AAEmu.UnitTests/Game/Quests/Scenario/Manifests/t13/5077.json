@@ -1,0 +1,146 @@
+{
+ "questId": 5077,
+ "name": "향기를 손에 쥐는 법",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12479
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21999,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30979,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3974,
+      "npcId": 12479
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22000,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30974,
+      "type": "QuestActObjItemGather",
+      "detailId": 2455,
+      "itemId": 26505,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22001,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30980,
+      "type": "QuestActConReportNpc",
+      "detailId": 4245,
+      "npcId": 12479
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22014,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31147,
+      "type": "QuestActSupplyCopper",
+      "detailId": 980,
+      "amount": 3000
+     },
+     {
+      "actId": 37106,
+      "type": "QuestActSupplyItem",
+      "detailId": 4119,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26505,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12479,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26505,
+   "count": 1
+  }
+ ]
+}

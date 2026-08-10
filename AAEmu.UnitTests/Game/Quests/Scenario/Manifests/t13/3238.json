@@ -1,0 +1,129 @@
+{
+ "questId": 3238,
+ "name": "피 묻은 손의 방어구: 머리",
+ "zoneId": 168,
+ "categoryId": 56,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjItemGather",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13831,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 13838,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19535,
+      "type": "QuestActObjItemGather",
+      "detailId": 1346,
+      "itemId": 19505,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13845,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 13852,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19537,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1130,
+      "itemId": 19483,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 19538,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1131,
+      "itemId": 19490,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 19539,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1132,
+      "itemId": 19497,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19505,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 19505,
+   "count": 5
+  }
+ ]
+}

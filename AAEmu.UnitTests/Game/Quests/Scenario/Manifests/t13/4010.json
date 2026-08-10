@@ -1,0 +1,177 @@
+{
+ "questId": 4010,
+ "name": "암흑갈기 오크 부락 토벌",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1229
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17288,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22838,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 954,
+      "npcId": 1229
+     },
+     {
+      "actId": 22839,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 955,
+      "npcId": 1311
+     },
+     {
+      "actId": 22840,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 956,
+      "npcId": 1325
+     },
+     {
+      "actId": 22841,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 957,
+      "npcId": 1329
+     },
+     {
+      "actId": 22842,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 958,
+      "npcId": 1330
+     },
+     {
+      "actId": 22843,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 959,
+      "npcId": 1331
+     },
+     {
+      "actId": 22844,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 960,
+      "npcId": 1334
+     },
+     {
+      "actId": 22845,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 961,
+      "npcId": 1335
+     },
+     {
+      "actId": 30706,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1191,
+      "npcId": 1309
+     },
+     {
+      "actId": 30707,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1192,
+      "npcId": 1372
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17289,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22846,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 438,
+      "monsterGroupId": 342,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17290,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22847,
+      "type": "QuestActConReportJournal",
+      "detailId": 290
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17291,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23137,
+      "type": "QuestActSupplyCopper",
+      "detailId": 416,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 342,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

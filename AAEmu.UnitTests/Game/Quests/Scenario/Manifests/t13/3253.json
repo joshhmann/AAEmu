@@ -1,0 +1,150 @@
+{
+ "questId": 3253,
+ "name": "피 묻은 손의 방어구: 다리",
+ "zoneId": 168,
+ "categoryId": 56,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9180
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19581,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2616,
+      "npcId": 9180
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13843,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19589,
+      "type": "QuestActObjItemGather",
+      "detailId": 1363,
+      "itemId": 19505,
+      "count": 7
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19582,
+      "type": "QuestActConReportNpc",
+      "detailId": 2852,
+      "npcId": 9180
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19603,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1145,
+      "itemId": 19488,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 19604,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1146,
+      "itemId": 19495,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 19605,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1147,
+      "itemId": 19502,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19505,
+     "count": 7
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9180,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 19505,
+   "count": 7
+  }
+ ]
+}

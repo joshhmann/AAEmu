@@ -1,0 +1,124 @@
+{
+ "questId": 6625,
+ "name": "울부짖는 구렁텅이의 속삭임",
+ "zoneId": 185,
+ "categoryId": 78,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12202
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40521,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5064,
+      "npcId": 12202
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40522,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 703,
+      "monsterGroupId": 622,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40555,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1894
+     },
+     {
+      "actId": 40597,
+      "type": "QuestActSupplyItem",
+      "detailId": 4729,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 10
+     },
+     {
+      "actId": 40598,
+      "type": "QuestActSupplyItem",
+      "detailId": 4730,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 622,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 10
+     },
+     {
+      "itemId": 34009,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

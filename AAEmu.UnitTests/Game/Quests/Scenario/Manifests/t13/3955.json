@@ -1,0 +1,129 @@
+{
+ "questId": 3955,
+ "name": "해변의 검은 마법진",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9442
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16685,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22051,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 851,
+      "npcId": 9442
+     },
+     {
+      "actId": 22052,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 852,
+      "npcId": 9443
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22053,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 402,
+      "monsterGroupId": 377,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16687,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22012,
+      "type": "QuestActConReportJournal",
+      "detailId": 259
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16688,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22013,
+      "type": "QuestActSupplyCopper",
+      "detailId": 370,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 377,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

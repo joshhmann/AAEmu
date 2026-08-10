@@ -1,0 +1,135 @@
+{
+ "questId": 3949,
+ "name": "진주바다의 전설",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9431
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16665,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22069,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 863,
+      "npcId": 9431
+     },
+     {
+      "actId": 22070,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 864,
+      "npcId": 9429
+     },
+     {
+      "actId": 22071,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 865,
+      "npcId": 9430
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16666,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22068,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 406,
+      "monsterGroupId": 374,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16667,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22000,
+      "type": "QuestActConReportJournal",
+      "detailId": 252
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16668,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22001,
+      "type": "QuestActSupplyCopper",
+      "detailId": 365,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 374,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

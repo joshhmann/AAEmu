@@ -1,0 +1,129 @@
+{
+ "questId": 3941,
+ "name": "사냥터의 왕들",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9378
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16632,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22093,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 880,
+      "npcId": 9378
+     },
+     {
+      "actId": 22094,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 881,
+      "npcId": 9379
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16633,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22092,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 411,
+      "monsterGroupId": 371,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16634,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21983,
+      "type": "QuestActConReportJournal",
+      "detailId": 244
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16635,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21984,
+      "type": "QuestActSupplyCopper",
+      "detailId": 356,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 371,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

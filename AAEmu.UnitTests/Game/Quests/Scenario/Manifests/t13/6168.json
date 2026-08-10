@@ -1,0 +1,123 @@
+{
+ "questId": 6168,
+ "name": "초심자와 함께 마르마스 처치",
+ "zoneId": 169,
+ "categoryId": 63,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14423
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26470,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36217,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4665,
+      "npcId": 14423
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36211,
+      "type": "QuestActObjItemGather",
+      "detailId": 2900,
+      "itemId": 31594,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36208,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1681
+     },
+     {
+      "actId": 36212,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1302,
+      "amount": 0
+     },
+     {
+      "actId": 37087,
+      "type": "QuestActSupplyItem",
+      "detailId": 4113,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 31594,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31594,
+   "count": 1
+  }
+ ]
+}

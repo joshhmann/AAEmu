@@ -1,0 +1,96 @@
+{
+ "questId": 577,
+ "name": "테세나의 행방",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2433
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3431,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 380,
+      "npcId": 2433
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2316,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6380,
+      "type": "QuestActObjSphere",
+      "detailId": 256,
+      "sphereId": 148
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2318,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6381,
+      "type": "QuestActConAutoComplete",
+      "detailId": 163
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 2316
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

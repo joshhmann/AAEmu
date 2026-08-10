@@ -1,0 +1,132 @@
+{
+ "questId": 5393,
+ "name": "철갑상어보다 더 빠르게",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9788
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32895,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4167,
+      "npcId": 9788
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23308,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32896,
+      "type": "QuestActObjItemGather",
+      "detailId": 2659,
+      "itemId": 28035,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32897,
+      "type": "QuestActConReportNpc",
+      "detailId": 4474,
+      "npcId": 9788
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32898,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 178,
+      "appellationId": 119
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28035,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9788,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28035,
+   "count": 1
+  }
+ ]
+}

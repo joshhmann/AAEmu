@@ -1,0 +1,104 @@
+{
+ "questId": 3052,
+ "name": "불온한 연합세력을 격퇴하라!",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5848
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13334,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29849,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 212,
+      "doodadId": 5848
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13335,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21110,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 379,
+      "monsterGroupId": 342,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13337,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29850,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1155
+     },
+     {
+      "actId": 36996,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1404,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 342,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

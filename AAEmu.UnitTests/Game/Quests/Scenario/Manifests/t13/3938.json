@@ -1,0 +1,125 @@
+{
+ "questId": 3938,
+ "name": "요정호수의 수호자들",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9391
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16620,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22113,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 893,
+      "npcId": 9391
+     },
+     {
+      "actId": 22114,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 894,
+      "npcId": 9392
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16621,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22112,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 415,
+      "monsterGroupId": 370,
+      "count": 18
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16622,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21977,
+      "type": "QuestActConAutoComplete",
+      "detailId": 714
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21976,
+      "type": "QuestActSupplyCopper",
+      "detailId": 353,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 370,
+     "count": 18
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

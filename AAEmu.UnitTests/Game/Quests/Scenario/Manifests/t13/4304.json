@@ -1,0 +1,149 @@
+{
+ "questId": 4304,
+ "name": "deprecated_푸른 피 일족의 강령술서 수집",
+ "zoneId": 169,
+ "categoryId": 63,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjItemGather",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18799,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 18800,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24798,
+      "type": "QuestActObjItemGather",
+      "detailId": 2038,
+      "itemId": 23843,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18801,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 18802,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24799,
+      "type": "QuestActSupplyExp",
+      "detailId": 71,
+      "exp": 0
+     },
+     {
+      "actId": 24800,
+      "type": "QuestActSupplyCopper",
+      "detailId": 485,
+      "amount": 0
+     },
+     {
+      "actId": 24853,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1331,
+      "itemId": 24066,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 24854,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1332,
+      "itemId": 24067,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 24862,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1333,
+      "itemId": 24068,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 24863,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 1334,
+      "itemId": 24069,
+      "gradeId": 2,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23843,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 23843,
+   "count": 10
+  }
+ ]
+}

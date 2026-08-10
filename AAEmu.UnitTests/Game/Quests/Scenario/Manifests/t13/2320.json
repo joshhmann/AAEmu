@@ -1,0 +1,96 @@
+{
+ "questId": 2320,
+ "name": "피 묻은 손 전진기지 침입!",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10742
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12356,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18203,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2332,
+      "npcId": 10742
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12478,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18204,
+      "type": "QuestActObjSphere",
+      "detailId": 565,
+      "sphereId": 1164
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12479,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18202,
+      "type": "QuestActConAutoComplete",
+      "detailId": 609
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 12478
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

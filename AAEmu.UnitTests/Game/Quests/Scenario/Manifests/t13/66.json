@@ -1,0 +1,104 @@
+{
+ "questId": 66,
+ "name": "지배당하고 있는 정령들",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5310
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 826,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28191,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 153,
+      "doodadId": 5310
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 1050,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37325,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 631,
+      "monsterGroupId": 6,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 1052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28190,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1033
+     },
+     {
+      "actId": 36958,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1370,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 6,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

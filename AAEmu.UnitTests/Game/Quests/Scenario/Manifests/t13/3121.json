@@ -1,0 +1,121 @@
+{
+ "questId": 3121,
+ "name": "무서운 재료",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 36,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9250
+ },
+ "template": {
+  "level": 36,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14029,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19758,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2650,
+      "npcId": 9250
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14031,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19761,
+      "type": "QuestActObjInteraction",
+      "detailId": 472,
+      "doodadId": 3752,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14032,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19759,
+      "type": "QuestActConReportNpc",
+      "detailId": 2886,
+      "npcId": 9250
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14033,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3752,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9250,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

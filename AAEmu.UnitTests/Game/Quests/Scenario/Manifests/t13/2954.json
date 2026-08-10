@@ -1,0 +1,129 @@
+{
+ "questId": 2954,
+ "name": "하디르의 농장을 지키는 문지기들",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8027
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12903,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18647,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 648,
+      "npcId": 8027
+     },
+     {
+      "actId": 18650,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 651,
+      "npcId": 1474
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12944,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18651,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 322,
+      "monsterGroupId": 288,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12945,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18603,
+      "type": "QuestActConReportJournal",
+      "detailId": 189
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12946,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18604,
+      "type": "QuestActSupplyCopper",
+      "detailId": 287,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 288,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

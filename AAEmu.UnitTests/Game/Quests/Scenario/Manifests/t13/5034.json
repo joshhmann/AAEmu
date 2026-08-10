@@ -1,0 +1,196 @@
+{
+ "questId": 5034,
+ "name": "(사용 안함) 집행자의 길",
+ "zoneId": 1,
+ "categoryId": 18,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActObjItemGather",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21773,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 21775,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21780,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30670,
+      "type": "QuestActObjItemGather",
+      "detailId": 2418,
+      "itemId": 26162,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30671,
+      "type": "QuestActObjItemGather",
+      "detailId": 2419,
+      "itemId": 26163,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21782,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21786,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30672,
+      "type": "QuestActObjItemGather",
+      "detailId": 2420,
+      "itemId": 26164,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21807,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30673,
+      "type": "QuestActObjItemGather",
+      "detailId": 2421,
+      "itemId": 26165,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21810,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30674,
+      "type": "QuestActObjItemGather",
+      "detailId": 2422,
+      "itemId": 26166,
+      "count": 100
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26162,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26163,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26164,
+     "count": 5
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26165,
+     "count": 20
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26166,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26162,
+   "count": 1
+  },
+  {
+   "itemId": 26163,
+   "count": 1
+  },
+  {
+   "itemId": 26164,
+   "count": 5
+  },
+  {
+   "itemId": 26165,
+   "count": 20
+  },
+  {
+   "itemId": 26166,
+   "count": 100
+  }
+ ]
+}

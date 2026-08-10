@@ -1,0 +1,154 @@
+{
+ "questId": 3919,
+ "name": "뱀비늘 부족장 로가르의 목",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 21305
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16760,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22161,
+      "type": "QuestActConAcceptItem",
+      "detailId": 119,
+      "itemId": 21305
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16761,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22162,
+      "type": "QuestActObjItemGather",
+      "detailId": 1661,
+      "itemId": 21305,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16762,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22163,
+      "type": "QuestActConReportNpc",
+      "detailId": 3352,
+      "npcId": 2855
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38447,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2686,
+      "itemId": 33842,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38448,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2687,
+      "itemId": 33843,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38449,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2688,
+      "itemId": 33844,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21305,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2855,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 21305,
+   "count": 1
+  },
+  {
+   "itemId": 21305,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 3982,
+ "name": "정화의 파편",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10507
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17055,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22678,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3249,
+      "npcId": 10507
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17056,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22660,
+      "type": "QuestActObjTalk",
+      "detailId": 943,
+      "npcId": 4965
+     },
+     {
+      "actId": 22677,
+      "type": "QuestActSupplyItem",
+      "detailId": 2241,
+      "itemId": 21509,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17057,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22680,
+      "type": "QuestActConReportNpc",
+      "detailId": 3483,
+      "npcId": 10507
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17058,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 4965
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10507,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

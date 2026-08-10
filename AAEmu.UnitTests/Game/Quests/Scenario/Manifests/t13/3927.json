@@ -1,0 +1,107 @@
+{
+ "questId": 3927,
+ "name": "황금의 잔 지도자 덴슬로 처치",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10491
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16977,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29008,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 170,
+      "questContextId": 3927
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16978,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29009,
+      "type": "QuestActObjAggro",
+      "detailId": 11,
+      "range": 50,
+      "rank1": 55,
+      "rank2": 70,
+      "rank3": 90,
+      "rank1Ratio": 100,
+      "rank2Ratio": 50,
+      "rank3Ratio": 10,
+      "rank1Item": false,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 2036
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16980,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29010,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1098
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 10491
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

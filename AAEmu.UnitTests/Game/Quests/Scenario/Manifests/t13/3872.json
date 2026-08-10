@@ -1,0 +1,151 @@
+{
+ "questId": 3872,
+ "name": "멋진 남자",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8972
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16332,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21649,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3046,
+      "npcId": 8972
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16333,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21650,
+      "type": "QuestActObjSphere",
+      "detailId": 601,
+      "sphereId": 1335
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16334,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21651,
+      "type": "QuestActObjSphere",
+      "detailId": 602,
+      "sphereId": 1336
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16335,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21652,
+      "type": "QuestActObjSphere",
+      "detailId": 603,
+      "sphereId": 1337
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16336,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21648,
+      "type": "QuestActConReportNpc",
+      "detailId": 3272,
+      "npcId": 8972
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16337,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 16333
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 16334
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 16335
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8972,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

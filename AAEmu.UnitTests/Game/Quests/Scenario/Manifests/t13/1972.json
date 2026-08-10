@@ -1,0 +1,134 @@
+{
+ "questId": 1972,
+ "name": "눈사자 유령",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 37,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8979
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9083,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12745,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1671,
+      "npcId": 8979
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9084,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13186,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 518,
+      "npcId": 9384,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9085,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13187,
+      "type": "QuestActConReportNpc",
+      "detailId": 1992,
+      "npcId": 8984
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9503,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38759,
+      "type": "QuestActSupplyItem",
+      "detailId": 4508,
+      "itemId": 34002,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9384,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8984,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34002,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

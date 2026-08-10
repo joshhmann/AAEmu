@@ -1,0 +1,91 @@
+{
+ "questId": 2975,
+ "name": "은퇴한 전사 바투",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1235
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13017,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18753,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2406,
+      "npcId": 1235
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13018,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18754,
+      "type": "QuestActConReportNpc",
+      "detailId": 2638,
+      "npcId": 1236
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13019,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1236,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

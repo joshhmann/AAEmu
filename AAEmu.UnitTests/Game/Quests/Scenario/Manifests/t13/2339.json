@@ -1,0 +1,112 @@
+{
+ "questId": 2339,
+ "name": "스톨텐베르그",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3371
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12344,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18230,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 87,
+      "doodadId": 3371
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18231,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 651,
+      "npcId": 8040,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12502,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18232,
+      "type": "QuestActConAutoComplete",
+      "detailId": 612
+     },
+     {
+      "actId": 38725,
+      "type": "QuestActSupplyItem",
+      "detailId": 4474,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8040,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

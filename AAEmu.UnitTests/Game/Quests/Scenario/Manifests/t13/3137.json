@@ -1,0 +1,97 @@
+{
+ "questId": 3137,
+ "name": "제물 의식",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 14110
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14101,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20683,
+      "type": "QuestActConAcceptItem",
+      "detailId": 111,
+      "itemId": 14110
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14104,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19822,
+      "type": "QuestActConReportNpc",
+      "detailId": 2905,
+      "npcId": 9279
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14105,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9279,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 14110,
+   "count": 1
+  }
+ ]
+}

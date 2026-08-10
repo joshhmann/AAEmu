@@ -1,0 +1,148 @@
+{
+ "questId": 3175,
+ "name": "트리스테 극단의 방문",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 36,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3883
+ },
+ "template": {
+  "level": 36,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14257,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20179,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 102,
+      "doodadId": 3883
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14258,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19867,
+      "type": "QuestActConReportNpc",
+      "detailId": 2916,
+      "npcId": 9267
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14259,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 14829,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20180,
+      "type": "QuestActSupplyItem",
+      "detailId": 2013,
+      "itemId": 5117,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14830,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20181,
+      "type": "QuestActObjItemGather",
+      "detailId": 1428,
+      "itemId": 5117,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5117,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9267,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5117,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,148 @@
+{
+ "questId": 2298,
+ "name": "루이비의 최후",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1459
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12334,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18338,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2362,
+      "npcId": 1459
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12458,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18183,
+      "type": "QuestActSupplyItem",
+      "detailId": 1831,
+      "itemId": 18656,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12459,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18184,
+      "type": "QuestActObjItemGather",
+      "detailId": 1236,
+      "itemId": 18657,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12460,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18181,
+      "type": "QuestActConReportNpc",
+      "detailId": 2547,
+      "npcId": 1459
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12461,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18657,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1459,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18657,
+   "count": 1
+  }
+ ]
+}

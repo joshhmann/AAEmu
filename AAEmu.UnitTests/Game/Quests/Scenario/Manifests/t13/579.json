@@ -1,0 +1,125 @@
+{
+ "questId": 579,
+ "name": "속죄의 길",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 33,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2439
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3400,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 372,
+      "npcId": 2439
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3401,
+      "type": "QuestActObjItemGather",
+      "detailId": 179,
+      "itemId": 5295,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2283,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3404,
+      "type": "QuestActConReportNpc",
+      "detailId": 434,
+      "npcId": 2439
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2284,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5295,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2439,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5295,
+   "count": 3
+  }
+ ]
+}

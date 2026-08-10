@@ -1,0 +1,128 @@
+{
+ "questId": 1823,
+ "name": "잡은 물고기가 상하는 시간",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3567
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13659,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19253,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 96,
+      "doodadId": 3567
+     },
+     {
+      "actId": 19257,
+      "type": "QuestActCheckTimer",
+      "detailId": 97,
+      "limitTime": 300000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 13672,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19252,
+      "type": "QuestActSupplyItem",
+      "detailId": 1917,
+      "itemId": 19113,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13674,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19254,
+      "type": "QuestActConReportNpc",
+      "detailId": 2791,
+      "npcId": 2803
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13675,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Fail",
+    "id": 13676,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2803,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

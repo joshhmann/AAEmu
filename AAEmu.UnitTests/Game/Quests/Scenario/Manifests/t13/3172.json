@@ -1,0 +1,91 @@
+{
+ "questId": 3172,
+ "name": "엄마를 부탁해",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9274
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14248,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19940,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2706,
+      "npcId": 9274
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14250,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19942,
+      "type": "QuestActConReportNpc",
+      "detailId": 2941,
+      "npcId": 9272
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14251,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9272,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

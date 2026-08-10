@@ -1,0 +1,125 @@
+{
+ "questId": 3058,
+ "name": "수행에도 영양이 중요해",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9938
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13509,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18955,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2457,
+      "npcId": 9938
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13510,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18956,
+      "type": "QuestActObjItemGather",
+      "detailId": 1300,
+      "itemId": 19038,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13511,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18957,
+      "type": "QuestActConReportNpc",
+      "detailId": 2691,
+      "npcId": 1253
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13512,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19038,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1253,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19038,
+   "count": 12
+  }
+ ]
+}

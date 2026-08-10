@@ -1,0 +1,142 @@
+{
+ "questId": 2983,
+ "name": "너트르의 치매약",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1240
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13047,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18776,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2412,
+      "npcId": 1240
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 13048,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18777,
+      "type": "QuestActSupplyItem",
+      "detailId": 1888,
+      "itemId": 18965,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13049,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18778,
+      "type": "QuestActObjItemUse",
+      "detailId": 484,
+      "itemId": 18965,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13050,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18779,
+      "type": "QuestActConReportNpc",
+      "detailId": 2645,
+      "npcId": 1240
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13051,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 18965,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1240,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

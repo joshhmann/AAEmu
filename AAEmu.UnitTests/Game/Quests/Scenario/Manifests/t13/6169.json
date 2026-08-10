@@ -1,0 +1,129 @@
+{
+ "questId": 6169,
+ "name": "숙련자와 함께 마르마스 처치",
+ "zoneId": 169,
+ "categoryId": 63,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14423
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26473,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36218,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4666,
+      "npcId": 14423
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36210,
+      "type": "QuestActObjItemGather",
+      "detailId": 2899,
+      "itemId": 31593,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26475,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36209,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1682
+     },
+     {
+      "actId": 36213,
+      "type": "QuestActSupplyExp",
+      "detailId": 857,
+      "exp": 26350
+     },
+     {
+      "actId": 36375,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1338,
+      "amount": 0
+     },
+     {
+      "actId": 37086,
+      "type": "QuestActSupplyItem",
+      "detailId": 4112,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 31593,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31593,
+   "count": 1
+  }
+ ]
+}

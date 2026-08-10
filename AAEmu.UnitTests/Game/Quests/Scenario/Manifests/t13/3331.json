@@ -1,0 +1,148 @@
+{
+ "questId": 3331,
+ "name": "진귀한 애완동물",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9005
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15073,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20669,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2864,
+      "npcId": 9005
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15074,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20672,
+      "type": "QuestActSupplyItem",
+      "detailId": 2068,
+      "itemId": 19843,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15075,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20671,
+      "type": "QuestActObjItemGather",
+      "detailId": 1500,
+      "itemId": 19613,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15076,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20670,
+      "type": "QuestActConReportNpc",
+      "detailId": 3093,
+      "npcId": 9005
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15077,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19613,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9005,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19613,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,106 @@
+{
+ "questId": 4965,
+ "name": "진정한 은거자",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2134
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21544,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30611,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 651,
+      "sphereId": 2134
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21808,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30658,
+      "type": "QuestActSupplyItem",
+      "detailId": 3527,
+      "itemId": 23616,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21809,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30659,
+      "type": "QuestActConReportNpc",
+      "detailId": 4218,
+      "npcId": 1369
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1369,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23616,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

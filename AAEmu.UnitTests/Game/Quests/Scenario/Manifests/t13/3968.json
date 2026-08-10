@@ -1,0 +1,119 @@
+{
+ "questId": 3968,
+ "name": "드워프 배신자",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2434
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16853,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22547,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3216,
+      "npcId": 2434
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16854,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22227,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 855,
+      "npcId": 2385,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16855,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22228,
+      "type": "QuestActConReportNpc",
+      "detailId": 3375,
+      "npcId": 4966
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16856,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2385,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4966,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

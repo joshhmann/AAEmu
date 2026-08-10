@@ -1,0 +1,140 @@
+{
+ "questId": 1768,
+ "name": "피난민을 위한 음식 준비",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2798
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12643,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18382,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2372,
+      "npcId": 2798
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12644,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18383,
+      "type": "QuestActObjItemGather",
+      "detailId": 1251,
+      "itemId": 8505,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12645,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18384,
+      "type": "QuestActConReportNpc",
+      "detailId": 2591,
+      "npcId": 2798
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12646,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38736,
+      "type": "QuestActSupplyItem",
+      "detailId": 4485,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8505,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2798,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8505,
+   "count": 1
+  }
+ ]
+}

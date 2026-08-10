@@ -1,0 +1,123 @@
+{
+ "questId": 4003,
+ "name": "붉은날개 하피 퇴치",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1250
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17258,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30695,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1181,
+      "npcId": 1250
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17259,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22806,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 893,
+      "npcId": 1250,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17260,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22808,
+      "type": "QuestActConReportJournal",
+      "detailId": 283
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17261,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23130,
+      "type": "QuestActSupplyCopper",
+      "detailId": 409,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1250,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

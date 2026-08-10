@@ -1,0 +1,91 @@
+{
+ "questId": 1799,
+ "name": "오크가 된 실베스테르",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2852
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12758,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18441,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2380,
+      "npcId": 2852
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12759,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18442,
+      "type": "QuestActConReportNpc",
+      "detailId": 2599,
+      "npcId": 2854
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12760,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2854,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

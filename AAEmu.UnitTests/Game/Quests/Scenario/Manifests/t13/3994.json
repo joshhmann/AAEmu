@@ -1,0 +1,123 @@
+{
+ "questId": 3994,
+ "name": "산악 늑대 퇴치",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1242
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17220,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22772,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 932,
+      "npcId": 1242
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17221,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22773,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 887,
+      "npcId": 1242,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17222,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22774,
+      "type": "QuestActConReportJournal",
+      "detailId": 274
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17223,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23125,
+      "type": "QuestActSupplyCopper",
+      "detailId": 404,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1242,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

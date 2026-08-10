@@ -1,0 +1,144 @@
+{
+ "questId": 4209,
+ "name": "괴물로 변한 곤충들",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10754
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18279,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23904,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3428,
+      "npcId": 10754
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23897,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 458,
+      "monsterGroupId": 417,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23906,
+      "type": "QuestActConReportNpc",
+      "detailId": 3700,
+      "npcId": 10754
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38441,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2680,
+      "itemId": 33847,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38442,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2681,
+      "itemId": 33848,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38443,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2682,
+      "itemId": 33849,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 417,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10754,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

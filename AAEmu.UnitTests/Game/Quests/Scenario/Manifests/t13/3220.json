@@ -1,0 +1,165 @@
+{
+ "questId": 3220,
+ "name": "피고름 해적단 섬멸",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2794
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13719,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19322,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 680,
+      "npcId": 2794
+     },
+     {
+      "actId": 19323,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 681,
+      "npcId": 2814
+     },
+     {
+      "actId": 19324,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 682,
+      "npcId": 2813
+     },
+     {
+      "actId": 19325,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 683,
+      "npcId": 2789
+     },
+     {
+      "actId": 19326,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 684,
+      "npcId": 2790
+     },
+     {
+      "actId": 19327,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 685,
+      "npcId": 2791
+     },
+     {
+      "actId": 19328,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 686,
+      "npcId": 2792
+     },
+     {
+      "actId": 19329,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 687,
+      "npcId": 2793
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13720,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19330,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 329,
+      "monsterGroupId": 272,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13721,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19332,
+      "type": "QuestActConReportJournal",
+      "detailId": 201
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19331,
+      "type": "QuestActSupplyCopper",
+      "detailId": 300,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 272,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

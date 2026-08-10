@@ -1,0 +1,153 @@
+{
+ "questId": 3759,
+ "name": "늙은 사냥꾼의 호소",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 37,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9064
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21363,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3000,
+      "npcId": 9064
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21365,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 809,
+      "npcId": 10072,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15730,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21366,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 810,
+      "npcId": 9368,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15731,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21364,
+      "type": "QuestActConReportNpc",
+      "detailId": 3226,
+      "npcId": 9064
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15975,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38756,
+      "type": "QuestActSupplyItem",
+      "detailId": 4505,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10072,
+     "count": 5
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 9368,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9064,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

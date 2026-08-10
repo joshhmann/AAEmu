@@ -1,0 +1,91 @@
+{
+ "questId": 518,
+ "name": "유령 군대",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2432
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2022,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3170,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 320,
+      "npcId": 2432
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2023,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3174,
+      "type": "QuestActConReportNpc",
+      "detailId": 384,
+      "npcId": 4965
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2024,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4965,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

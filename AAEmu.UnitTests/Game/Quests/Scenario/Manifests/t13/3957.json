@@ -1,0 +1,123 @@
+{
+ "questId": 3957,
+ "name": "그 약초를 먹지 마!",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9408
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16693,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22045,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 848,
+      "npcId": 9408
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16694,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22044,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 846,
+      "npcId": 9408,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16695,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22046,
+      "type": "QuestActConReportJournal",
+      "detailId": 268
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16716,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22047,
+      "type": "QuestActSupplyCopper",
+      "detailId": 380,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9408,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

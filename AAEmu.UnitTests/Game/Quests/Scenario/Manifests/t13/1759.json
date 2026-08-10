@@ -1,0 +1,117 @@
+{
+ "questId": 1759,
+ "name": "범인은 누구?",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2834
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12603,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19487,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2601,
+      "npcId": 2834
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12604,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19488,
+      "type": "QuestActObjTalk",
+      "detailId": 897,
+      "npcId": 2758
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13805,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19489,
+      "type": "QuestActConReportNpc",
+      "detailId": 2833,
+      "npcId": 2801
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13806,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 2758
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2801,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

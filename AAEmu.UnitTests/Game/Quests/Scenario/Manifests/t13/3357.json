@@ -1,0 +1,125 @@
+{
+ "questId": 3357,
+ "name": "늦은 목화 수확",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9001
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20722,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2874,
+      "npcId": 9001
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15127,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20723,
+      "type": "QuestActObjItemGather",
+      "detailId": 1504,
+      "itemId": 19443,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15128,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20721,
+      "type": "QuestActConReportNpc",
+      "detailId": 3104,
+      "npcId": 8991
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15129,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19443,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8991,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19443,
+   "count": 12
+  }
+ ]
+}

@@ -1,0 +1,156 @@
+{
+ "questId": 5135,
+ "name": "벅시루루의 진상품:뜨거운 날의 보양식",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26795
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31433,
+      "type": "QuestActConAcceptItem",
+      "detailId": 196,
+      "itemId": 26795
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31434,
+      "type": "QuestActObjItemGather",
+      "detailId": 2501,
+      "itemId": 26795,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22275,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31416,
+      "type": "QuestActConReportNpc",
+      "detailId": 4306,
+      "npcId": 10857
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31419,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1006,
+      "amount": 50000
+     },
+     {
+      "actId": 31435,
+      "type": "QuestActSupplyExp",
+      "detailId": 600,
+      "exp": 2500
+     },
+     {
+      "actId": 31485,
+      "type": "QuestActSupplyItem",
+      "detailId": 3614,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26795,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10857,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26795,
+   "count": 1
+  },
+  {
+   "itemId": 26795,
+   "count": 1
+  }
+ ]
+}

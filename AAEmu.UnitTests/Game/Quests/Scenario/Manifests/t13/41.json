@@ -1,0 +1,91 @@
+{
+ "questId": 41,
+ "name": "정령이 지키고 있는 것?",
+ "zoneId": 128,
+ "categoryId": 9,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 101
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 814,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 2511,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 35,
+      "sphereId": 101
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 959,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 801,
+      "type": "QuestActConReportNpc",
+      "detailId": 175,
+      "npcId": 593
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 960,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 593,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

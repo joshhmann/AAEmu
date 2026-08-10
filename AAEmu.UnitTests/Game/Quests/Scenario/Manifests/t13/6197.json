@@ -1,0 +1,104 @@
+{
+ "questId": 6197,
+ "name": "하디르의 농장을 무력화시키는 우정",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14683
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26564,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36352,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4670,
+      "npcId": 14683
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26565,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36349,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1331,
+      "amount": 1000
+     },
+     {
+      "actId": 36350,
+      "type": "QuestActSupplyExp",
+      "detailId": 885,
+      "exp": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26566,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36351,
+      "type": "QuestActConReportNpc",
+      "detailId": 4867,
+      "npcId": 14423
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14423,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

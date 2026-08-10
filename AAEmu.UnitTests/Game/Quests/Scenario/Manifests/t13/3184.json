@@ -1,0 +1,147 @@
+{
+ "questId": 3184,
+ "name": "은신처의 황금 해적 처치",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9228
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14412,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20053,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 743,
+      "npcId": 9228
+     },
+     {
+      "actId": 20054,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 744,
+      "npcId": 9229
+     },
+     {
+      "actId": 20055,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 745,
+      "npcId": 9230
+     },
+     {
+      "actId": 20056,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 746,
+      "npcId": 9231
+     },
+     {
+      "actId": 20057,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 747,
+      "npcId": 9278
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14413,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20058,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 350,
+      "monsterGroupId": 312,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14414,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20059,
+      "type": "QuestActConReportJournal",
+      "detailId": 212
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14415,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20060,
+      "type": "QuestActSupplyCopper",
+      "detailId": 319,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 312,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

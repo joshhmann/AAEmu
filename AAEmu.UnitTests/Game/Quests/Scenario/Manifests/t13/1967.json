@@ -1,0 +1,140 @@
+{
+ "questId": 1967,
+ "name": "녹색 늑대의 증명",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8974
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9064,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12730,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1666,
+      "npcId": 8974
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9065,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20139,
+      "type": "QuestActObjItemGather",
+      "detailId": 1420,
+      "itemId": 15854,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9067,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20138,
+      "type": "QuestActConReportNpc",
+      "detailId": 2958,
+      "npcId": 8973
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9505,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38755,
+      "type": "QuestActSupplyItem",
+      "detailId": 4504,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 15854,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8973,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 15854,
+   "count": 1
+  }
+ ]
+}

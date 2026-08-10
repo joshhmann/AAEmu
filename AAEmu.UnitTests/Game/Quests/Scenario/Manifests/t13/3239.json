@@ -1,0 +1,156 @@
+{
+ "questId": 3239,
+ "name": "피 묻은 손 모자 2단계",
+ "zoneId": 168,
+ "categoryId": 56,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13882,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 13924,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19541,
+      "type": "QuestActObjItemGather",
+      "detailId": 1347,
+      "itemId": 19505,
+      "count": 6
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13944,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19542,
+      "type": "QuestActObjItemGather",
+      "detailId": 1348,
+      "itemId": 19483,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13945,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19543,
+      "type": "QuestActConReportNpc",
+      "detailId": 2841,
+      "npcId": 9179
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13948,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19544,
+      "type": "QuestActSupplyItem",
+      "detailId": 1942,
+      "itemId": 19483,
+      "gradeId": 2,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19505,
+     "count": 6
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 19483,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9179,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 19483,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19505,
+   "count": 6
+  },
+  {
+   "itemId": 19483,
+   "count": 1
+  }
+ ]
+}

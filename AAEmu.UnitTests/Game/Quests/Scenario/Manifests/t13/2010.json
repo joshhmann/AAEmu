@@ -1,0 +1,119 @@
+{
+ "questId": 2010,
+ "name": "연회에 늦겠어요",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9048
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9237,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12865,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1708,
+      "npcId": 9048
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9238,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20284,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 358,
+      "monsterGroupId": 318,
+      "count": 9
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9239,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12867,
+      "type": "QuestActConReportNpc",
+      "detailId": 1911,
+      "npcId": 9048
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9240,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 318,
+     "count": 9
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9048,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

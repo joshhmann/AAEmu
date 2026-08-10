@@ -1,0 +1,172 @@
+{
+ "questId": 2037,
+ "name": "끝없는 공포",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9014
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12923,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1735,
+      "npcId": 9014
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29105,
+      "type": "QuestActObjTalk",
+      "detailId": 988,
+      "npcId": 9039
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29106,
+      "type": "QuestActObjTalk",
+      "detailId": 989,
+      "npcId": 9040
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15209,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29107,
+      "type": "QuestActObjTalk",
+      "detailId": 990,
+      "npcId": 9050
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15210,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20838,
+      "type": "QuestActConReportNpc",
+      "detailId": 3113,
+      "npcId": 9014
+     },
+     {
+      "actId": 29604,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 205,
+      "itemId": 19690,
+      "count": 1
+     },
+     {
+      "actId": 29605,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 206,
+      "itemId": 19689,
+      "count": 1
+     },
+     {
+      "actId": 29606,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 207,
+      "itemId": 19691,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15211,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 9039
+    },
+    {
+     "type": "Talk",
+     "npcId": 9040
+    },
+    {
+     "type": "Talk",
+     "npcId": 9050
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9014,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

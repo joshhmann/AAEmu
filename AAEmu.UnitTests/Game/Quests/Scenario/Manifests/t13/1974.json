@@ -1,0 +1,144 @@
+{
+ "questId": 1974,
+ "name": "페레 전사의 목적",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8980
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12761,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1672,
+      "npcId": 8980
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9092,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20176,
+      "type": "QuestActSupplyItem",
+      "detailId": 2012,
+      "itemId": 19771,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9094,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20178,
+      "type": "QuestActObjInteraction",
+      "detailId": 486,
+      "doodadId": 3778,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14827,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20175,
+      "type": "QuestActConReportNpc",
+      "detailId": 2965,
+      "npcId": 8980
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14828,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3778,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8980,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

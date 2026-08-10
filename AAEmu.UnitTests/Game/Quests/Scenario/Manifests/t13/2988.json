@@ -1,0 +1,125 @@
+{
+ "questId": 2988,
+ "name": "차 맛에 중독된 페레",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1247
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13070,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18795,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2417,
+      "npcId": 1247
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13071,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18796,
+      "type": "QuestActObjItemGather",
+      "detailId": 1278,
+      "itemId": 18971,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13072,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18797,
+      "type": "QuestActConReportNpc",
+      "detailId": 2649,
+      "npcId": 9939
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13073,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18971,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9939,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18971,
+   "count": 5
+  }
+ ]
+}

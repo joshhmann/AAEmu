@@ -152,12 +152,14 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M2a/M2c + WI-2 + WI-3 + WI-4 + WI-5, band 1-30 census 2026-08-09, post-drop on merged develop): **2096/2096 driven quests runnable, 0 FAIL** across the
-> 2105-quest scenario-harness census (117 M2a-dropped quests excluded — 26 engine-stuck + 91 shells). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
+> Quest-runnability (M2a/M2c + WI-2 + WI-3 + WI-4 + WI-5 + WI-7, band 1-40 census 2026-08-09, post-drop on merged develop): **2727/2727 driven quests runnable, 0 FAIL** across the
+> 2736-quest scenario-harness census (117 M2a-dropped quests excluded — 26 engine-stuck + 91 shells). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
 > 560 non-dropped (668 − 108 dropped). **Band 11-20: 609 PASS / 0 SKIP / 0 FAIL = 100.0%** of 609 non-dropped (626 − 17 dropped).
 > **Band 21-30: 847 PASS / 0 SKIP / 0 FAIL = 100.0%** of 847 non-dropped (0 dropped).
+> **Band 31-40: 643 PASS / 0 SKIP / 0 FAIL = 100.0%** of 643 non-dropped (0 dropped) — the WI-7 T13 sweep drove all 643 contexts (631 in t13, 12 sampled in earlier tiers), zero harness SKIPs as predicted.
 > All SKIPs documented-SKIP with reason (9): 8 orphaned contexts (no quest_contexts row),
-> plus 1 let-it-done-without-report-act (6069, engine completion-path class) — the WI-2
+> plus 1 let-it-done-without-report-act (6069, engine completion-path class; WI-6 triage
+> ruled DROP 2026-08-09 — register §8, drop execution t_6810ebd4) — the WI-2
 > CrimePoint closure closed the last 2 census SKIPs (2916/2926) and added the t9 tier so the five level-41-50
 > carriers (2935/2936/5197/5198/5494) are sampled and PASS — 7/7 CrimePoint contexts driven; the WI-3 AbilityLevel
 > closure closed the AbilityLevel objective family and added the t10 tier so the nine level-50 single-ability
@@ -173,8 +175,9 @@ zones required by a milestone or an observed defect.
 > (2916/2926) + 5 unsampled carriers → 7/7 driven (98 cumulative); WI-3 AbilityLevel closure flipped 5967 + 9
 > unsampled carriers → 10/11 driven (108 cumulative); WI-4 MateLevel closure flipped 5430/5464 + 4 unsampled
 > carriers → 6/6 driven (114 cumulative); WI-5 CompleteQuest closure flipped 5814/5815 + 9 unsampled carriers →
-> 11/11 driven (125 cumulative); zero PASS→SKIP regressions.
-> Census regen deterministic (byte-identical); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
+> 11/11 driven (125 cumulative); WI-7 T13 sweep drove band 31-40 643/643 PASS (631 new t13 manifests, 12 sampled
+> earlier) with zero harness SKIPs as predicted; zero PASS→SKIP regressions across every sweep.
+> Census regen deterministic (byte-identical ×2); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
 > Tiger Spine/Falcony/Sunny Wilderness/Ancient Forest/Marionople/Two Crowns/White Forest/Singing Land/Sunrise
 > Peninsula) in runnability.md (census-meta.json-driven). Fail-before states on the
 > wave-1/wave-2 rig commits (2283c0df/7a1145be). Watch items: EtcItemObtain engine no-op, cinema zero-wired,

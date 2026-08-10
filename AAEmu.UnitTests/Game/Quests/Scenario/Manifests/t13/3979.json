@@ -1,0 +1,125 @@
+{
+ "questId": 3979,
+ "name": "최고의 별미",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10640
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16962,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22675,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3248,
+      "npcId": 10640
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16963,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22400,
+      "type": "QuestActObjItemGather",
+      "detailId": 1680,
+      "itemId": 21354,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16964,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22676,
+      "type": "QuestActConReportNpc",
+      "detailId": 3481,
+      "npcId": 10640
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16965,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21354,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10640,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21354,
+   "count": 3
+  }
+ ]
+}

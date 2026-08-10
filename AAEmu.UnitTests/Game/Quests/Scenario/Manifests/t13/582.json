@@ -1,0 +1,125 @@
+{
+ "questId": 582,
+ "name": "억울한 누명",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2440
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3422,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 378,
+      "npcId": 2440
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2308,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3423,
+      "type": "QuestActObjItemGather",
+      "detailId": 182,
+      "itemId": 4979,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3424,
+      "type": "QuestActConReportNpc",
+      "detailId": 440,
+      "npcId": 2440
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2310,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4979,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2440,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4979,
+   "count": 1
+  }
+ ]
+}

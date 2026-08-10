@@ -1,0 +1,153 @@
+{
+ "questId": 1202,
+ "name": "시차일드 별장의 유령들 몰아내기",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2331
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6119,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17876,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 562,
+      "npcId": 2331
+     },
+     {
+      "actId": 17877,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 563,
+      "npcId": 2332
+     },
+     {
+      "actId": 17878,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 564,
+      "npcId": 4992
+     },
+     {
+      "actId": 17879,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 565,
+      "npcId": 4993
+     },
+     {
+      "actId": 17880,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 566,
+      "npcId": 4994
+     },
+     {
+      "actId": 17881,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 567,
+      "npcId": 2384
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6120,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17882,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 284,
+      "monsterGroupId": 255,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17883,
+      "type": "QuestActConReportJournal",
+      "detailId": 174
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6122,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17884,
+      "type": "QuestActSupplyCopper",
+      "detailId": 256,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 255,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

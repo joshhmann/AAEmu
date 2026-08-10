@@ -1,0 +1,129 @@
+{
+ "questId": 3959,
+ "name": "유람선 위의 폭동 저지",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9421
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16704,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22034,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 841,
+      "npcId": 9421
+     },
+     {
+      "actId": 22035,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 842,
+      "npcId": 9422
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16705,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22033,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 398,
+      "monsterGroupId": 380,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16706,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22030,
+      "type": "QuestActConReportJournal",
+      "detailId": 267
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16707,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22029,
+      "type": "QuestActSupplyCopper",
+      "detailId": 379,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 380,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

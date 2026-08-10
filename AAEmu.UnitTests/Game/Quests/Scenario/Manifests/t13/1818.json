@@ -1,0 +1,104 @@
+{
+ "questId": 1818,
+ "name": "코카트리스의 위협",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5511
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13479,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28991,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 183,
+      "doodadId": 5511
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28989,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1008,
+      "npcId": 2705,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13482,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28990,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1095
+     },
+     {
+      "actId": 36986,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1394,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2705,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

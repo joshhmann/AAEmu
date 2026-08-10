@@ -1,0 +1,148 @@
+{
+ "questId": 1822,
+ "name": "수상한 유리병",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3560
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13497,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19115,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 93,
+      "doodadId": 3560
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 13498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19116,
+      "type": "QuestActSupplyItem",
+      "detailId": 1913,
+      "itemId": 24602,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19117,
+      "type": "QuestActObjItemGather",
+      "detailId": 1314,
+      "itemId": 24602,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19447,
+      "type": "QuestActConReportNpc",
+      "detailId": 2822,
+      "npcId": 1137
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13641,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24602,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1137,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24602,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 3140,
+ "name": "무릎까지 차는 늪",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 36,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9257
+ },
+ "template": {
+  "level": 36,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19831,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2671,
+      "npcId": 9257
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19833,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 729,
+      "npcId": 9219,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19832,
+      "type": "QuestActConReportNpc",
+      "detailId": 2907,
+      "npcId": 9257
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14118,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38748,
+      "type": "QuestActSupplyItem",
+      "detailId": 4497,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9219,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9257,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

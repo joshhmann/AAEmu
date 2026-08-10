@@ -1,0 +1,163 @@
+{
+ "questId": 2000,
+ "name": "광신도 추방",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8989
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9191,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12833,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1696,
+      "npcId": 8989
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9192,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13447,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 534,
+      "npcId": 9399,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9193,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20226,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 751,
+      "npcId": 9400,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9194,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20227,
+      "type": "QuestActConReportNpc",
+      "detailId": 2979,
+      "npcId": 8989
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14886,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38459,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2698,
+      "itemId": 33889,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38460,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2699,
+      "itemId": 33890,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38461,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2700,
+      "itemId": 33891,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9399,
+     "count": 8
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 9400,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8989,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

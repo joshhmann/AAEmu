@@ -1,0 +1,134 @@
+{
+ "questId": 1773,
+ "name": "도로시의 고민",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2806
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18389,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2374,
+      "npcId": 2806
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12653,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18390,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 297,
+      "monsterGroupId": 270,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12654,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18391,
+      "type": "QuestActConReportNpc",
+      "detailId": 2593,
+      "npcId": 2806
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12655,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38731,
+      "type": "QuestActSupplyItem",
+      "detailId": 4480,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 270,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2806,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

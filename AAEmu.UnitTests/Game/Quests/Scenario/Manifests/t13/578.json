@@ -1,0 +1,125 @@
+{
+ "questId": 578,
+ "name": "테세나 구출",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 149
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2319,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6736,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 100,
+      "sphereId": 149
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2320,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17453,
+      "type": "QuestActObjItemGather",
+      "detailId": 1184,
+      "itemId": 4988,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2322,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6645,
+      "type": "QuestActConReportNpc",
+      "detailId": 836,
+      "npcId": 2445
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2475,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 4988,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2445,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4988,
+   "count": 1
+  }
+ ]
+}

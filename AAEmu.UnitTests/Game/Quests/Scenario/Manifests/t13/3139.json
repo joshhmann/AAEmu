@@ -1,0 +1,91 @@
+{
+ "questId": 3139,
+ "name": "늪을 지나서",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 36,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9259
+ },
+ "template": {
+  "level": 36,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14112,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19829,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2670,
+      "npcId": 9259
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14113,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20142,
+      "type": "QuestActConReportNpc",
+      "detailId": 2959,
+      "npcId": 9267
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14114,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9267,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,117 @@
+{
+ "questId": 2327,
+ "name": "날아라! 인간대포 23호",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1470
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12359,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18158,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2319,
+      "npcId": 1470
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18925,
+      "type": "QuestActObjSphere",
+      "detailId": 575,
+      "sphereId": 1177
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12437,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18895,
+      "type": "QuestActConReportNpc",
+      "detailId": 2676,
+      "npcId": 1471
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13184,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 12436
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1471,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

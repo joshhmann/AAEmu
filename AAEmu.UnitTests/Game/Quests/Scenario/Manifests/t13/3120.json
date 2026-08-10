@@ -1,0 +1,104 @@
+{
+ "questId": 3120,
+ "name": "새로운 신도의 길",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5523
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14025,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29065,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 185,
+      "doodadId": 5523
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14026,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19757,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 722,
+      "npcId": 9213,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14028,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29064,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1101
+     },
+     {
+      "actId": 37013,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1409,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9213,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

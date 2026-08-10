@@ -1,0 +1,147 @@
+{
+ "questId": 3182,
+ "name": "수렁의 지배자들 처치",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9226
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14404,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20038,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 734,
+      "npcId": 9226
+     },
+     {
+      "actId": 20039,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 735,
+      "npcId": 9227
+     },
+     {
+      "actId": 20040,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 736,
+      "npcId": 9232
+     },
+     {
+      "actId": 20041,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 737,
+      "npcId": 9233
+     },
+     {
+      "actId": 20540,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 756,
+      "npcId": 9303
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14405,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20042,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 348,
+      "monsterGroupId": 310,
+      "count": 58
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20043,
+      "type": "QuestActConReportJournal",
+      "detailId": 210
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20044,
+      "type": "QuestActSupplyCopper",
+      "detailId": 317,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 310,
+     "count": 58
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}
