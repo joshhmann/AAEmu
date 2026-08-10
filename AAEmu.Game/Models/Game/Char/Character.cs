@@ -2123,10 +2123,13 @@ public partial class Character : Unit, ICharacter
         }
 
         // If they are still sitting down, detach them first
-        var chairDoodad = Connection.ActiveChar.Bonding?.GetOwner();
+        // (this, not Connection.ActiveChar — headless bot characters have no
+        // Connection (ActivateHeadless passes null); the dereference NRE'd
+        // the world tick on prod CT 133, P0 hotfix t_468d6360)
+        var chairDoodad = Bonding?.GetOwner();
         if (chairDoodad != null)
         {
-            chairDoodad.Seat.UnLoadPassenger(Connection.ActiveChar, chairDoodad.ObjId);
+            chairDoodad.Seat.UnLoadPassenger(this, chairDoodad.ObjId);
             Bonding.SetOwner(null);
             Bonding = null;
             BroadcastPacket(new SCUnbondDoodadPacket(ObjId, Id, chairDoodad.ObjId), true);
@@ -2140,7 +2143,7 @@ public partial class Character : Unit, ICharacter
     {
         var res = ForceDismount();
 
-        var mySlave = ParentWorld.SlaveManager.GetActiveSlaveByOwnerObjId(Connection.ActiveChar.ObjId);
+        var mySlave = ParentWorld.SlaveManager.GetActiveSlaveByOwnerObjId(ObjId);
         if (mySlave != null)
         {
             // run the task to turn off the transport after timeToDespawn minutes
@@ -3008,6 +3011,15 @@ public partial class Character : Unit, ICharacter
     /// <param name="delta"></param>
     private void CheckPlayerInactivity(TimeSpan delta)
     {
+        // Headless bot characters have no Connection (ActivateHeadless passes
+        // connection: null). They never receive packets, so LastPacketActivityTime
+        // is permanently stale — without this guard the sweep would fire
+        // LeaveWorldTask every 2 minutes, ForceDismount NRE'd on the null
+        // Connection and froze the world tick (P0 hotfix t_468d6360, prod CT
+        // 133). Bot lifecycle is owned by the bot manager, not this sweep.
+        if (Connection == null)
+            return;
+
         var maxAllowedInactivityTime = TimeSpan.FromMinutes(2);
         if (DateTime.UtcNow.Subtract(delta) - LastPacketActivityTime > maxAllowedInactivityTime)
         {

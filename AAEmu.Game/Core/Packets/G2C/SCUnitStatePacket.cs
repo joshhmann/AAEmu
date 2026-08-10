@@ -321,7 +321,11 @@ public class SCUnitStatePacket : GamePacket
             stream.WriteBc(0);
 
             //character.VisualOptions.Write(stream, 31);
-            character.VisualOptions.WriteOptions(stream); // cosplay_visual
+            // Headless-provisioned bots never receive a client spawn packet, so
+            // VisualOptions stays null (CSSpawnCharacterPacket's assignment never
+            // runs for them). Fall back to the shared empty instance — byte-identical
+            // wire output, no NRE (P0 hotfix t_506a9acb, prod CT 133 Asssaa region 324).
+            (character.VisualOptions ?? CharacterVisualOptions.Default).WriteOptions(stream); // cosplay_visual
 
             stream.Write(1); // premium
 

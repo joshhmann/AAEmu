@@ -4,6 +4,17 @@ namespace AAEmu.Game.Models.Game.Char;
 
 public class CharacterVisualOptions : PacketMarshaler
 {
+    /// <summary>Zeroed 6-byte stp block — the wire default for characters whose
+    /// visual-option flag never carried the stp bit (the stp field is a fixed
+    /// 6-byte block in SCUnitStatePacket regardless of the create/spawn flag).</summary>
+    private static readonly byte[] EmptyStp = new byte[6];
+
+    /// <summary>Shared empty instance for characters that never received a
+    /// client-supplied visual-option payload (headless-provisioned bots have
+    /// no spawn packet, so CSSpawnCharacterPacket's assignment never runs).
+    /// Read-only in practice — the packet write paths only read fields.</summary>
+    public static readonly CharacterVisualOptions Default = new();
+
     private byte _flag;
     public byte[] Stp;
     public bool Helmet;
@@ -35,7 +46,7 @@ public class CharacterVisualOptions : PacketMarshaler
     public PacketStream Write(PacketStream stream, byte flag)
     {
         if ((flag & 1) == 1)
-            stream.Write(Stp);
+            stream.Write(Stp ?? EmptyStp);
         if ((flag & 2) == 2)
             stream.Write(Helmet);
         if ((flag & 4) == 4)
@@ -49,7 +60,13 @@ public class CharacterVisualOptions : PacketMarshaler
     public PacketStream WriteOptions(PacketStream stream)
     {
         // all this data must be output to the SCUnitStatePacket
-        stream.Write(Stp);             // stp
+        // stp is only populated when the client's visual-option flag carried
+        // bit 1 (custom appearance block); clients that omit it leave Stp
+        // null, and a null byte[] write NREs PacketStream.Write(byte[]) —
+        // truncating SCUnitStatePacket mid-send and desyncing the session
+        // (M2b-E2E restart266, run29). Serialize the fixed 6-byte block as
+        // zeroed bytes instead.
+        stream.Write(Stp ?? EmptyStp);       // stp
         stream.Write(Helmet);          // helmet
         stream.Write(BackHoldable);    // back_holdable
         stream.Write(Cosplay);         // cosplay

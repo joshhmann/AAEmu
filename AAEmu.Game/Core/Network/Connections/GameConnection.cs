@@ -197,39 +197,5 @@ public class GameConnection
     /// Called when closing a connection
     /// </summary>
     public static void SaveAndRemoveFromWorld(Character activeChar)
-    {
-        // TODO: this needs a rewrite
-        if (activeChar == null)
-            return;
-
-        // Remove Radars
-        RadarManager.Instance.UnRegister(activeChar);
-
-        // Cancel all running buff effect tasks before removing the character.
-        // The buffs themselves are saved to DB inside SaveDirectlyToDatabase() → Character.Save().
-        activeChar.Buffs?.CancelAllEffectTasks();
-
-        // Hide/Despawn the player
-        activeChar.Delete();
-        // Removed ReleaseId here to try and fix party/raid disconnect and reconnect issues. Replaced with saving the data
-        //ObjectIdManager.Instance.ReleaseId(ActiveChar.ObjId);
-
-        // Also drop the entry from WorldManager._characters. Without this, hard-DC
-        // / crash paths leak a ghost reference at that ObjId (LeaveWorldTask does
-        // the same TryRemoveCharacter explicitly on graceful logout — we have to
-        // mirror it here or the next reconnect will TryAddCharacter on a stale slot
-        // and end up with a divergent _characters[id] = OLD vs _baseUnits[id] = NEW,
-        // so any later operation on the ghost reference Deletes the live character.
-        //
-        // Guard with an identity check so the cleanup stays safe if ObjId recycling
-        // is ever re-enabled: only remove the slot if _characters still maps this
-        // ObjId to OUR character — never evict a freshly-spawned entity that
-        // happened to inherit the recycled ObjId.
-        if (WorldManager.Instance.GetCharacterByObjId(activeChar.ObjId) == activeChar)
-            WorldManager.Instance.TryRemoveCharacter(activeChar.ObjId);
-
-        // Do a manual save here as it's no longer in _characters at this point
-        // TODO: might need a better option like saving this transaction for later to be used by the SaveManager
-        activeChar.SaveDirectlyToDatabase();
-    }
+        => CharacterLifecycleService.Instance.Deactivate(activeChar, CharacterLifecycleReason.Disconnect);
 }

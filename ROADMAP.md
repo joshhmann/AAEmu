@@ -425,6 +425,25 @@ M8 economic audit.
     from Tier 3/4 to Tier 1/2 without the world paying for 1000 full
     simulations at once.
 
+- **6.6 Player parity — REQUIRED for client-visible bots (2026-08-09
+  findings: presence demo surfaced 5 hotfixes + parity audit `t_98415169`):**
+  - **Appearance:** bots must carry race/gender-canonical `unit_model_params`
+    (231B type=Face blob, correct model id) AND `VisualOptions`; provisioning
+    heals degenerate rows (1B → 231B). Wrong model id / empty params /
+    null VisualOptions = invisible body or packet NRE (`SCUnitStatePacket`).
+  - **Equipment:** bots must be seeded with a real equipped item set —
+    zero equipped items = invisible body despite valid model params.
+  - **Skills + actabilities:** seed real skill rows + actability set (parity
+    audit: bots have 0 skills / 0 actabilities vs human 34).
+  - **Bag supplies:** starting consumables/currency for long-horizon tests.
+  - **Wire surface:** SCUnitStatePacket + equipment + faction + VisualOptions
+    must serialize without NRE for every bot (null-safe writes mandatory).
+  - **Factory:** `BotAppearanceFactory` (randomized player-like appearance,
+    per-race/class starting equipment, deterministic seeds) is the durable
+    generation path; demo clones (Asssaa-replicate) are stopgaps only.
+  - **Acceptance for any "bots visible" claim:** real client in same zone
+    receives unit-state + movement frames AND renders distinct bodies.
+
 **Exit test:** 10 bots run 6 hours with no unrecovered loops, no inventory
 duplication, no runaway combat, no DB corruption, no tick-budget overrun.
 Playerbot behavior tests (controller chooses the right command sequence)
