@@ -95,6 +95,20 @@ needed, never by editing the reference file.
 
 ---
 
+## 8. WI-6 band 41-50 ltd triage — DRAFT (PENDING Josh decision, 2026-08-09)
+
+Evidence: `scorecard-explorations/band-41-50-ltd-triage-wi6.md` (card t_6f950108). Josh rules
+per G0-5; Nei prepared evidence only. Status: **BLOCKED awaiting decision** — this section is a
+draft; verdicts below are recommendations until Josh answers on the card.
+
+| Quest | Shape | Accept surface | Completion path | Recommendation | Josh's ruling |
+|---|---|---|---|---|---|
+| **3419** 의논할 수 없는 고민 | ltd, score 0, Start→Progress→Reward, no report act; zone 20, ms 5, cat 59 | **NPC 9581** (live, spawner) + gates 3370/3372 (completable) | packet path 0x0dd (reachable: 2/3 group-469 kills → CanEarlyComplete) | NO-GO drop (keep) | _pending_ |
+| **4967** 황금비늘의 후손 해방 | ltd, score 0, Start→Progress→Reward, no report act; zone 1, ms 5, cat 60 | **NPC 10089** (live, spawner) | packet path 0x0dd (1 interaction credits) | NO-GO drop (keep) | _pending_ |
+| **6069** 거침없이 춤추는 격투의 칼날 | ltd, score 0, Start(no acts)→Progress→Ready(no acts)→Reward; zone 1, ms 14, cat 55 | **NONE** (0 across all 5 accept surfaces) | none (unreachable; objective never credits) | GO drop | _pending_ |
+
+---
+
 ## How to check if an id is in this register
 
 ```bash
