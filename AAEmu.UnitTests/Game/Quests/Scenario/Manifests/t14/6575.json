@@ -33,7 +33,9 @@
     "nextComponent": 0,
     "acts": []
    }
-  ]
+  ],
+  "detailId": 1,
+  "repeatable": true
  },
  "stages": [
   {
@@ -63,6 +65,13 @@
    "events": [],
    "expect": {
     "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
    }
   }
  ],

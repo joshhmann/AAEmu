@@ -195,6 +195,26 @@ public static class QuestScenarioAssertions
                 failures.Add("expected fail path (QuestActCheckTimer act or Fail component), none wired");
         }
 
+        if (expect.ReAccepted == true)
+        {
+            // M2 WI-10 (t_abafd918): the RESET stage re-added the quest through
+            // the engine's AddQuest path - the quest must be active again.
+            if (!character.Quests.ActiveQuests.ContainsKey(manifest.QuestId))
+                failures.Add("expected quest re-accepted after daily reset (active), found not active");
+        }
+
+        if (expect.GuardBlocked == true)
+        {
+            // M2 WI-10 (t_abafd918): the GUARD_DIED probe must stall at the
+            // guard-checking step - a dead guard makes QuestActCheckGuard.RunAct
+            // return false (BUG-008), so the quest never advances past the guard
+            // component and never reaches a terminal state. expect.Step pins the
+            // exact stall position; this pins that the guard check itself failed
+            // (not a pass-through that happened to rest at the same step).
+            if (quest.Step == QuestComponentKind.Drop || quest.Status == QuestStatus.Completed)
+                failures.Add("expected dead guard to block progression (guard-check false), quest advanced past the guard step");
+        }
+
         if (failures.Count > 0)
             return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Fail, Reason = string.Join("; ", failures) };
 

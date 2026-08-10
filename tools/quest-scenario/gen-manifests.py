@@ -393,17 +393,20 @@ def load_quest_acts(c, quest_id):
 
 
 def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
-    ctx = c.execute("SELECT id, name, category_id, LEVEL, zone_id, let_it_done, selective, score FROM quest_contexts WHERE id = ?",
+    ctx = c.execute("SELECT id, name, category_id, LEVEL, zone_id, let_it_done, selective, score, detail_id, REPEATABLE FROM quest_contexts WHERE id = ?",
                     (quest_id,)).fetchone()
     if ctx is None:
         return {"questId": quest_id, "name": "", "family": family,
                 "skip": {"reason": "orphaned context (no quest_contexts row)"}}
-    qid, name, category_id, level, zone_id, let_it_done, selective, score = ctx
+    qid, name, category_id, level, zone_id, let_it_done, selective, score, detail_id, repeatable_raw = ctx
     # Stage-model v4 (RC-1): the raw sqlite cells are 't'/'f' strings - bool('f')
     # is True in Python. Parse once here so EVERY use (kind_is_auto included) sees
     # the real value; the manifest fields were already parse_bool'd (14c78c94).
     let_it_done = parse_bool(let_it_done)
     selective = parse_bool(selective)
+    # WI-10 (t_abafd918): REPEATABLE is 't'/'f' text like the other bools; the
+    # manifest's template.repeatable drives the engine's re-accept gate.
+    repeatable = parse_bool(repeatable_raw)
     # WI-8 (t_fc85a317): score can be NULL in sqlite (quest 3806 is the only
     # one in the corpus) - the engine reads GetInt32("score", 0)
     # (QuestManager.cs:578), so NULL == 0. Never pass None downstream.
@@ -481,6 +484,8 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     components = []
     skip_reasons = []
     has_timer_or_fail = False
+    has_check_timer = False  # WI-10: TIMEOUT fidelity stage (fire OnTimerExpired)
+    guard_kind = None  # WI-10: kind of the component holding the FIRST CheckGuard act
     guard_npc_ids = []  # RC-3: from ALL components' QuestActCheckGuard acts, deduped
 
     for cid, kind, nxt in comps:
@@ -495,6 +500,7 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
             has_timer_or_fail = True
         if act_type_in(comp_acts, "QuestActCheckTimer"):
             has_timer_or_fail = True
+            has_check_timer = True
         # RC-3: a QuestActCheckGuard in ANY component needs its NPC spawned -
         # QuestActCheckGuard.RunAct returns false when the guard is unresolvable
         # (CheckGuard.cs:26-33), so a guard in a non-Start component could never
@@ -504,6 +510,11 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
                 npc_id = act.get("npcId")
                 if npc_id and npc_id not in guard_npc_ids:
                     guard_npc_ids.append(npc_id)
+                # WI-10: the GUARD_DIED probe asserts the stall at the FIRST
+                # guard-checking kind in component order (with all guards dead,
+                # every kind before it passes, so the quest rests exactly there).
+                if guard_kind is None:
+                    guard_kind = kind_name
 
         # Drop-only act shapes: any act whose event shape is None and is not a
         # NO_EVENT type means this quest cannot be driven -> skip.
@@ -828,6 +839,70 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
             if stage["name"] == "PERSIST":
                 stage["expect"]["failPathWired"] = True
 
+    # ---- WI-10 fidelity probe stages (t_abafd918) ----
+    # Appended AFTER PERSIST: each probe drives a REAL engine path on a fresh
+    # probe quest (or the main-run character) and asserts its outcome without
+    # disturbing the main lifecycle or the persist snapshot.
+    # TIMEOUT: the quest carries a QuestActCheckTimer act - the driver fires
+    # the timeout task's exact body (QuestManager.OnTimerExpired) on a fresh
+    # probe and asserts the quest FAILS (step Fail). The timer is only LIVE at
+    # probe-accept when the quest's rest position (first present kind after
+    # Start - one GoToNextStep walk) is NOT an end-state kind (stepping into
+    # Ready/Drop/Reward removes the timer, QuestActCheckTimer.
+    # OnQuestStepChanged) AND the CheckTimer component's kind was actually
+    # entered during the walk (InitializeStep registers the timer).
+    # Engine-grounded skips: 6108/6131/6154/6162/6163/6164 rest at Ready (timer
+    # already removed); 1897's CheckTimer sits in Progress but the probe walk
+    # stops at Supply (comp never entered - no timer to expire).
+    if has_check_timer:
+        ck_walk = ("Start", "None", "Supply", "Progress", "Ready", "Reward")
+        probe_first = next((k for k in ("None", "Supply", "Progress", "Ready", "Reward") if k in present), None)
+        ck_kind = next((c["kind"] for c in components
+                        if any(a["type"] == "QuestActCheckTimer" for a in c["acts"])), None)
+        if (probe_first not in (None, "Ready", "Reward") and ck_kind in ck_walk
+                and ck_walk.index(ck_kind) <= ck_walk.index(probe_first)):
+            stages.append({"name": "TIMEOUT", "events": [], "expect": {"step": "Fail"}})
+    # RESET: daily (detail Daily 7 / DailyHunt 10 / DailyLivelihood 11 /
+    # DailyGroup 12 - the exact set ResetDailyQuests clears, CharacterQuests.cs:
+    # 637-645) or repeatable (REPEATABLE='t') quests - the driver clears the
+    # completed state via the engine's ResetDailyQuests (non-repeatable only)
+    # and re-accepts through the engine's AddQuest (QuestDailyLimit gate).
+    is_daily = detail_id in (7, 10, 11, 12)
+    if is_daily or repeatable:
+        stages.append({"name": "RESET", "events": [], "expect": {"reAccepted": True}})
+    # GUARD_DIED: the quest carries a QuestActCheckGuard act - the driver builds
+    # a probe with the rigged guards killed (Hp 0 -> IsDead) so RunAct returns
+    # false per BUG-008 and the quest stalls at the first guard-checking kind.
+    # The probe can only demonstrate the stall when the walk can REACH the
+    # guard kind without events: for a Start-comp guard, Start/Ready steps OR
+    # their acts (QuestComponent.RunComponent actsOrCheck) - a dead guard only
+    # blocks when EVERY act in the Start comp is a CheckGuard (any always-true
+    # sibling, e.g. CheckTimer/ConAcceptNpc, carries the step); for later
+    # kinds, every present kind before it must be auto-pass (else the probe
+    # stalls earlier on an uncredited objective). Engine-grounded skip: 1313
+    # (Start comp = ConAcceptNpc+CheckGuard+CheckTimer - OR semantics carry it).
+    if guard_kind is not None:
+        guard_ok = False
+        if guard_kind == "Start":
+            start_acts = [a for c in components if c["kind"] == "Start" for a in c["acts"]]
+            guard_ok = bool(start_acts) and all(a["type"] == "QuestActCheckGuard" for a in start_acts)
+        else:
+            g_walk = ("Start", "None", "Supply", "Progress", "Ready", "Reward")
+            if guard_kind in g_walk:
+                g_idx = g_walk.index(guard_kind)
+                guard_ok = all(k not in present or kind_is_auto(k) for k in g_walk[1:g_idx])
+        if guard_ok:
+            stages.append({"name": "GUARD_DIED", "events": [],
+                           "expect": {"step": guard_kind, "guardBlocked": True}})
+
+    # WI-10 (t_abafd918): detailId + repeatable ride the template shape so the
+    # driver's BuildTemplate wires them onto the QuestTemplate (the engine's
+    # ResetDailyQuests + AddQuest re-accept gate read them). Emitted ONLY for
+    # the RESET family so non-family manifests stay byte-identical.
+    template_parts = {"level": level, "components": components}
+    if is_daily or repeatable:
+        template_parts.update({"detailId": detail_id, "repeatable": repeatable})
+
     manifest = {
         "questId": qid,
         "name": (name or "").strip(),
@@ -839,7 +914,7 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         "score": score,
         "family": family,
         "acceptor": acceptor,
-        "template": {"level": level, "components": components},
+        "template": template_parts,
         "stages": stages,
         "selectedRewardIndex": 1 if any(
             a["type"] == "QuestActSupplySelectiveItem" for comp in components for a in comp["acts"]) else 0,

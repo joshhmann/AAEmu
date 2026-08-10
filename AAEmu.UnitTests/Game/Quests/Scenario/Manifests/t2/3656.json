@@ -157,6 +157,14 @@
     "persistRoundTrip": true,
     "failPathWired": true
    }
+  },
+  {
+   "name": "GUARD_DIED",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "guardBlocked": true
+   }
   }
  ],
  "selectedRewardIndex": 0,

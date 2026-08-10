@@ -74,7 +74,9 @@
      }
     ]
    }
-  ]
+  ],
+  "detailId": 7,
+  "repeatable": false
  },
  "stages": [
   {
@@ -117,6 +119,13 @@
    "expect": {
     "persistRoundTrip": true,
     "failPathWired": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
    }
   }
  ],

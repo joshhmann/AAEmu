@@ -108,7 +108,9 @@
     "nextComponent": 0,
     "acts": []
    }
-  ]
+  ],
+  "detailId": 7,
+  "repeatable": false
  },
  "stages": [
   {
@@ -173,6 +175,20 @@
    "expect": {
     "persistRoundTrip": true,
     "failPathWired": true
+   }
+  },
+  {
+   "name": "TIMEOUT",
+   "events": [],
+   "expect": {
+    "step": "Fail"
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
    }
   }
  ],

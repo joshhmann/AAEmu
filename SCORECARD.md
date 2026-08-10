@@ -193,7 +193,18 @@ zones required by a milestone or an observed defect.
 > past Ready without the report event (5174/5722); (3) QuestActConReportJournal subscribed in InitializeAction
 > (step-entry) instead of InitializeQuest (ctor) like its ReportNpc/ReportDoodad siblings — ltd quests stuck at
 > Progress never enter Ready, so the journal report could never fire (3630); subscription moved to ctor, sibling
-> pattern. zero PASS→SKIP regressions across every sweep.
+> pattern. zero PASS→SKIP regressions across every sweep. WI-10 (2026-08-10, t_abafd918) added driver-fidelity
+> probe stages to the census manifests: TIMEOUT (37 CheckTimer quests — driver fires the timeout task's exact
+> body QuestManager.OnTimerExpired on a fresh probe and asserts FailQuest; 7 ineligible engine-grounded: 6 rest
+> at Ready so the timer is already removed at end-state entry, 1897 never enters the CheckTimer comp), RESET
+> (602 daily/repeatable quests — engine ResetDailyQuests + AddQuest re-accept, QuestDailyLimit gate; detail
+> Daily 7/DailyHunt 10/DailyLivelihood 11/DailyGroup 12 = the exact set ResetDailyQuests clears), GUARD_DIED
+> (3 escorts — dead-guard probe per BUG-008 semantics: RunAct false ⇒ stall at the guard kind; 1313 skipped
+> engine-grounded: Start comp ORs its acts so the always-true CheckTimer carries the step). 642 probe stages
+> all PASS on the merged census — 4518/4518 runnable, 0 FAIL, 10 documented SKIPs unchanged. New rig pins:
+> QuestCheckTimerRigTests 2/2 (timer registered at accept → expiry fires FailQuest), QuestDailyResetRigTests
+> 4/4 (completed daily refused → ResetDailyQuests clears → re-accept; repeatable re-accepts immediately),
+> QuestCheckGuardRigTests 3/3 (alive → true; dead → false + stall; npcId-0 unresolvable → false + stall).
 > Census regen deterministic (byte-identical ×2); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
 > Tiger Spine/Falcony/Sunny Wilderness/Ancient Forest/Marionople/Two Crowns/White Forest/Singing Land/Sunrise
 > Peninsula) in runnability.md (census-meta.json-driven). Fail-before states on the
