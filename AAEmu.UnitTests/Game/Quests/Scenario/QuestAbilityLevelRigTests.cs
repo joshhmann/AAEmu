@@ -21,12 +21,12 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// The manifests below mirror the REAL carrier shapes: 5967 (all-abilities,
 /// abilityId 0, level 50) and 6070/6075-6082 (single-ability, level 50) -
 /// Progress objective + report at Ready + item at Reward. Fail-before:
-/// without the factory case + ACT_TABLES entry the 11 live carriers SKIP
+/// without the factory case + ACT_TABLES entry the 10 live carriers SKIP
 /// as unsupported-act-type (census t3: 5967/6069; the other nine were not
 /// sampled at all - t10 adds them). Pass-after: this rig drives both
 /// branches through the full lifecycle, and the census flips the drivable
-/// carriers to PASS (6069 stays SKIP - let-it-done with no report act is
-/// an engine completion-path class, not an act-family gap).
+/// carriers to PASS (6069 was DROPPED 2026-08-09, register §8 t_6810ebd4 -
+/// unreachable ltd with zero accept surfaces; it is no longer a carrier).
 /// </summary>
 [NotInParallel]
 public class QuestAbilityLevelRigTests
@@ -94,7 +94,7 @@ public class QuestAbilityLevelRigTests
     }
 
     /// <summary>
-    /// PASS: the single-ability shape (real carriers 6069/6070/6075-6082:
+    /// PASS: the single-ability shape (real carriers 6070/6075-6082:
     /// one ability must reach level 50) drives the full lifecycle. The
     /// PROGRESS stage's AbilityLevel event presees Fight(1) exp via
     /// CharacterAbilities.AddExp, then RunCurrentStep's RunAct state check

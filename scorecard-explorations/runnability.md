@@ -8,7 +8,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 - **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
-- **T3 stratified act-family census (frozen M1-5c sample)**: 47 PASS / 0 FAIL / 7 SKIP
+- **T3 stratified act-family census (frozen M1-5c sample)**: 47 PASS / 0 FAIL / 6 SKIP
 - **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 32 PASS / 0 FAIL / 0 SKIP
 - **T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)**: 13 PASS / 0 FAIL / 0 SKIP
 - **T6 M2a census (band 1-10 full sweep)**: 445 PASS / 0 FAIL / 0 SKIP
@@ -16,7 +16,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 - **T8 M2c census (band 21-30 full sweep)**: 826 PASS / 0 FAIL / 0 SKIP
 - **T9 M2 WI-2 (CrimePoint supply carriers)**: 5 PASS / 0 FAIL / 0 SKIP
 - **T10 M2 WI-3 (AbilityLevel objective carriers)**: 9 PASS / 0 FAIL / 0 SKIP
-- **ALL TIERS (census)**: 2079 PASS / 0 FAIL / 13 SKIP over 2092 quests — **2079/2079 quests runnable** (13 SKIP not driven, reasons below)
+- **ALL TIERS (census)**: 2079 PASS / 0 FAIL / 12 SKIP over 2091 quests — **2079/2079 quests runnable** (12 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
@@ -244,7 +244,6 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 6003 | 전장의 노예 퇴치 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 6037 | 프롤로그01 | QuestActConAcceptSphere | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6040 | 프롤로그04 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 6069 | 거침없이 춤추는 격투의 칼날 | QuestActObjAbilityLevel | Skip | SKIP:Skip (let-it-done quest with no report act (engine has no completion path)) |
 | 6095 | [1층]도서관 열람실 정리 의뢰 1단계 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6250 | 새로운 당신을 위한 선물 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6282 | 시련을 부르는 선택 | QuestActConAcceptLevelUp | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2205,7 +2204,6 @@ _none — every driven quest passed._
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
 - **unsupported act type QuestActObjMateLevel** — 2 quests: 5430, 5464
 - **unsupported act type QuestActObjCompleteQuest** — 2 quests: 5814, 5815
-- **let-it-done quest with no report act (engine has no completion path)** — 1 quests: 6069
 
 ## Recommended fix-card queue
 

@@ -794,7 +794,7 @@ T3_PINNED_QUESTS = [
     1998, 2008, 2017, 2102, 2108, 2301, 2717, 2916, 2926, 3006, 3026, 3569,
     3570, 4419, 4433, 4434, 4784, 4788, 4881, 5052, 5263, 5430, 5442, 5443,
     5464, 5552, 5650, 5814, 5815, 5900, 5923, 5924, 5967, 6003, 6037, 6040,
-    6069, 6095, 6250, 6282, 6375,
+    6095, 6250, 6282, 6375,
 ]
 
 # ---- T4 (M2a wave-1): band 1-20 quests carrying the four closed act families ----
@@ -868,15 +868,17 @@ def select_t9_quests(c, existing_ids):
         JOIN quest_components cmp ON a.quest_component_id = cmp.id
         WHERE a.act_detail_type IN ({placeholders})
         ORDER BY cmp.quest_context_id""", WAVE3_ACT_TYPES).fetchall()
-    return [r[0] for r in rows if r[0] not in existing_ids]
+    # Dropped quests stay out of every tier (same rule as select_band_quests).
+    return [r[0] for r in rows if r[0] not in DROPPED_QUESTS and r[0] not in existing_ids]
 
 
 # ---- T10 (M2 WI-3, t_d5e802f5): AbilityLevel objective act carriers ----
-# All 11 live carriers. 5967 (all-abilities branch) + 6069 (let-it-done,
-# stays SKIP for the no-report-act class) are already sampled in T3
-# (T3_PINNED_QUESTS); the other nine (6070/6075-6082, single-ability, all
-# level 50) are outside the t6/t7/t8 band sweeps - they need their own tier
-# or they never reach the census (same rule as t9 for CrimePoint).
+# All 11 live carriers. 5967 (all-abilities branch) is already sampled in T3
+# (T3_PINNED_QUESTS); 6069 was DROPPED 2026-08-09 (register §8, t_6810ebd4 -
+# unreachable ltd, zero accept surfaces); the other nine (6070/6075-6082,
+# single-ability, all level 50) are outside the t6/t7/t8 band sweeps - they
+# need their own tier or they never reach the census (same rule as t9 for
+# CrimePoint).
 WAVE4_ACT_TYPES = (
     "QuestActObjAbilityLevel",
 )
@@ -891,7 +893,11 @@ def select_t10_quests(c, existing_ids):
         JOIN quest_components cmp ON a.quest_component_id = cmp.id
         WHERE a.act_detail_type IN ({placeholders})
         ORDER BY cmp.quest_context_id""", WAVE4_ACT_TYPES).fetchall()
-    return [r[0] for r in rows if r[0] not in existing_ids]
+    # Dropped quests stay out of every tier (same rule as select_band_quests).
+    # Required for the 6069 drop: it is still a live DB row (the overlay is
+    # deploy-time), so without this filter t10 would re-sample it after the
+    # stale t3 manifest is gone.
+    return [r[0] for r in rows if r[0] not in DROPPED_QUESTS and r[0] not in existing_ids]
 
 
 # ---- T6/T7/T8 (M2a/M2c census): full band sweeps ----
@@ -925,6 +931,10 @@ DROPPED_QUESTS = {
     # --- M2a drop cluster B (91 zero-component shells) ---
     *range(2148, 2230),  # 2148-2229 reserve block
     3748, *range(3750, 3758),  # Hadir-farm cutscenes
+    # --- WI-6 drop (2026-08-09, register §8, t_6810ebd4): 6069 unreachable ltd ---
+    # quest (zero accept surfaces, no completion path) - rows deleted by
+    # SQL/patches/compact/2026-08-09-drop-wi6-6069.sql.
+    6069,
 }
 
 # Signature zones for the M2a/M2c zone-coverage rows (M2_PLAN.md zone map):
