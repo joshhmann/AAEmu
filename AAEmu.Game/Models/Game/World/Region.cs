@@ -398,11 +398,17 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
             if (useModelSize)
                 finalRad += obj.ModelSize * obj.ModelSize;
 
-            var dx = obj.Transform.World.Position.X - x;
+            // Single-snapshot position read (t_0a61eeb1): World.Position is a
+            // parent-chain composition, so reading .X and .Y via two separate
+            // accesses walks the chain twice and can observe two different
+            // positions (torn pair even single-threaded, and a witness race
+            // with concurrent Transform writers). Snapshot once, then use it.
+            var pos = obj.Transform.World.Position;
+            var dx = pos.X - x;
             dx *= dx;
             if (dx > finalRad)
                 continue;
-            var dy = obj.Transform.World.Position.Y - y;
+            var dy = pos.Y - y;
             dy *= dy;
             if (dx + dy < finalRad)
                 result.Add(item);

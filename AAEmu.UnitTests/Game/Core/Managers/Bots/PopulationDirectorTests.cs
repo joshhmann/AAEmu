@@ -122,7 +122,11 @@ public class PopulationDirectorTests
             return id;
         }
 
-        public void Pump() => Scheduler.RunScanCycle();
+        public void Pump()
+        {
+            Scheduler.RunScanCycle();
+            Scheduler.RunMarshalDrain();
+        }
 
         public async Task WaitUntilAsync(Func<bool> condition, TimeSpan? timeout = null)
         {

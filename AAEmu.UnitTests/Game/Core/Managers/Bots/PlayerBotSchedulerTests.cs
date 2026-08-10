@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Units;
@@ -10,13 +11,14 @@ using Microsoft.Extensions.Time.Testing;
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 /// <summary>
-/// Scheduler rig for IPlayerBotScheduler (slice #6): due-time semantics,
-/// bounded worker pool, per-bot execution lease, event wakes, metrics, and
-/// the hard gate (one wake-scan, no per-bot anything). Time is driven by
-/// FakeTimeProvider; scan cycles are pumped manually (scan interval is set
-/// to 1h so the background loop never fires mid-test), and the worker pool
-/// runs for real — slow bots are real delays, which is exactly what the
-/// "a slow bot never blocks others" gate needs to prove.
+/// Scheduler rig for IPlayerBotScheduler (slice #6, marshal seam t_0a61eeb1):
+/// due-time semantics, serialized marshal execution (no worker pool — the
+/// 2026-08-09 audit's race fix), per-bot execution lease, event wakes,
+/// metrics, and the hard gate (one wake-scan, no per-bot anything). Time is
+/// driven by FakeTimeProvider; scan cycles AND marshal drains are pumped
+/// manually (scan + marshal intervals set to 1h so the background loops
+/// never fire mid-test), and the marshal runs steps serially on the pumping
+/// thread — which is exactly what "race-free step execution" means now.
 /// </summary>
 public class PlayerBotSchedulerTests
 {
@@ -33,6 +35,8 @@ public class PlayerBotSchedulerTests
     /// per-bot max concurrency, records which bots' steps overlapped each
     /// other in time (deterministic — no wall-clock comparison), supports
     /// per-bot simulated durations and a per-bot next-wake delay to return.
+    /// With the marshal seam, steps are serialized: the rig's overlap track
+    /// must stay EMPTY and MaxConcurrentOverall must stay 1.
     /// </summary>
     private sealed class RecordingExecutor : IBotStepExecutor
     {
@@ -134,7 +138,8 @@ public class PlayerBotSchedulerTests
             var options = new PlayerBotSchedulerOptions
             {
                 WorkerCount = workerCount,
-                ScanInterval = TimeSpan.FromHours(1), // loop inert in tests; cycles pumped manually
+                ScanInterval = TimeSpan.FromHours(1),    // loop inert in tests; cycles pumped manually
+                MarshalInterval = TimeSpan.FromHours(1),  // fallback marshal loop inert; drains pumped manually
                 StepTimeout = stepTimeout ?? TimeSpan.FromSeconds(30),
                 ShutdownTimeout = TimeSpan.FromSeconds(5),
             };
@@ -156,7 +161,18 @@ public class PlayerBotSchedulerTests
             return id;
         }
 
-        public void Pump() => Scheduler.RunScanCycle();
+        /// <summary>One full scheduler cycle: wake-scan + one marshal drain.</summary>
+        public void Pump()
+        {
+            Scheduler.RunScanCycle();
+            Scheduler.RunMarshalDrain();
+        }
+
+        /// <summary>Wake-scan only (steps stay queued for a later drain).</summary>
+        public void PumpScan() => Scheduler.RunScanCycle();
+
+        /// <summary>Runs one marshal drain on a background thread (in-flight step observation).</summary>
+        public Task DrainAsync() => Task.Run(() => Scheduler.RunMarshalDrain());
 
         public async Task WaitUntilAsync(Func<bool> condition, TimeSpan? timeout = null)
         {
@@ -285,8 +301,13 @@ public class PlayerBotSchedulerTests
     #region Bounded pool + per-bot lease
 
     [Test]
-    public async Task SlowBot_DoesNotBlockOthers()
+    public async Task SlowBot_SerializesOthers_NoOverlap_AllComplete()
     {
+        // Marshal seam contract (t_0a61eeb1): bot steps are FULLY serialized —
+        // a slow bot's step defers the fast bots (no overlap, ever), and every
+        // queued step still completes. The pre-marshal "SlowBot_DoesNotBlockOthers"
+        // asserted parallel overlap — exactly the 8-worker race the Kimi audit
+        // flagged; that contract is gone by design.
         using var rig = new Rig(workerCount: 4);
         var slow = rig.AddActiveBot(1);
         var fastA = rig.AddActiveBot(2);
@@ -301,15 +322,15 @@ public class PlayerBotSchedulerTests
 
         await rig.WaitUntilAsync(() => rig.Executor.Finishes.Count >= 3, TimeSpan.FromSeconds(15));
 
-        // Deterministic gates (no wall-clock comparison — load-immune):
-        // 1) The slow bot's step overlapped at least one fast bot's step in
-        //    time — a serialized scheduler can never produce an overlap.
-        // 2) ≥2 steps ran concurrently overall.
-        var slowOverlapsFast = rig.Executor.Overlaps.Any(o =>
-            (o.A == slow && (o.B == fastA || o.B == fastB)) ||
-            (o.B == slow && (o.A == fastA || o.A == fastB)));
-        await Assert.That(slowOverlapsFast).IsTrue();
-        await Assert.That(rig.Executor.MaxConcurrentOverall).IsGreaterThanOrEqualTo(2);
+        // Deterministic gates (load-immune):
+        // 1) No step EVER overlapped another — the marshal's core promise.
+        // 2) At most one step ran concurrently overall.
+        // 3) All three bots completed their step.
+        await Assert.That(rig.Executor.Overlaps).IsEmpty();
+        await Assert.That(rig.Executor.MaxConcurrentOverall).IsLessThanOrEqualTo(1);
+        await Assert.That(rig.Executor.CountStarts(slow)).IsEqualTo(1);
+        await Assert.That(rig.Executor.CountStarts(fastA)).IsEqualTo(1);
+        await Assert.That(rig.Executor.CountStarts(fastB)).IsEqualTo(1);
         await Assert.That(rig.Scheduler.GetMetrics().WorkerUtilization).IsGreaterThan(0);
     }
 
@@ -320,19 +341,23 @@ public class PlayerBotSchedulerTests
         var bot = rig.AddActiveBot(1);
         rig.Executor.DelayFor = _ => TimeSpan.FromMilliseconds(150);
 
+        // Scan enqueues the step; the marshal drains it on a BACKGROUND
+        // thread so we can observe the lease while the step is in flight.
         rig.Scheduler.WakeAt(bot, rig.Now);
-        rig.Pump();
+        rig.PumpScan();
+        var drain = rig.DrainAsync();
         await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
 
         // A second wake arrives while the first step is still in flight.
         rig.Scheduler.Wake(bot);
-        rig.Pump();
+        rig.PumpScan();
         await Task.Delay(50);
         await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(1); // still only one concurrent step
         await Assert.That(rig.Executor.MaxConcurrentPerBot[bot]).IsEqualTo(1);
 
         // After the first step completes, the pending wake is honored — the
         // re-scheduled due entry is popped by the next scan cycle.
+        await drain;
         await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().DueQueueDepth == 1);
         rig.Pump();
         await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 2);
@@ -521,17 +546,73 @@ public class PlayerBotSchedulerTests
         var bot = rig.AddActiveBot(1);
         rig.Executor.DelayFor = _ => TimeSpan.FromMilliseconds(200);
 
+        // The marshal drains synchronously on the pumping thread, so to
+        // observe ActiveWorkers mid-step we drain on a background thread.
         rig.Scheduler.Wake(bot);
-        rig.Pump();
+        rig.PumpScan();
+        var drain = rig.DrainAsync();
         await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
 
         await Assert.That(rig.Scheduler.GetMetrics().ActiveWorkers).IsGreaterThanOrEqualTo(1);
-        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().ActiveWorkers == 0);
+        await drain;
+        await Assert.That(rig.Scheduler.GetMetrics().ActiveWorkers).IsEqualTo(0);
     }
 
     #endregion
 
     #region Lifecycle + configuration
+
+    [Test]
+    public async Task Marshal_WithTickManager_RunsStepsOnGameLoopThread()
+    {
+        // t_0a61eeb1 core proof: with a TickManager wired, the marshal drains
+        // INLINE on the game loop thread (the thread that invokes the tick).
+        // We drive a real TickManager manually (never Initialize()'d — no
+        // background thread), so the invoking thread here stands in for the
+        // game loop thread; the step must run on that same thread.
+        var tickManager = new TickManager();
+        var manager = new PlayerBotManager(new RecordingLifecycle());
+        var executor = new ThreadRecordingExecutor();
+        var options = new PlayerBotSchedulerOptions
+        {
+            ScanInterval = TimeSpan.FromHours(1),
+            MarshalInterval = TimeSpan.FromHours(1),
+            ShutdownTimeout = TimeSpan.FromSeconds(5),
+        };
+        var scheduler = new PlayerBotScheduler(manager, executor, options, TimeProvider.System, tickManager);
+        try
+        {
+            scheduler.Start();
+
+            manager.Spawn(new Character(new UnitCustomModelParams()) { Id = 1, Name = "bot" }, "rig");
+            manager.Activate(1, null, "rig");
+            scheduler.Wake(1);
+
+            scheduler.RunScanCycle();            // due → channel
+            await Assert.That(executor.ThreadIds).IsEmpty();
+
+            tickManager.OnTick.Invoke();         // the game loop "tick" — drains the marshal
+
+            await Assert.That(executor.ThreadIds).HasCount().EqualTo(1);
+            await Assert.That(executor.ThreadIds[0]).IsEqualTo(Environment.CurrentManagedThreadId);
+        }
+        finally
+        {
+            await scheduler.StopAsync();
+        }
+    }
+
+    /// <summary>Executor that records the managed thread id each step ran on.</summary>
+    private sealed class ThreadRecordingExecutor : IBotStepExecutor
+    {
+        public List<int> ThreadIds { get; } = [];
+
+        public Task<TimeSpan?> StepAsync(PlayerBotRuntime bot, CancellationToken cancellationToken)
+        {
+            ThreadIds.Add(Environment.CurrentManagedThreadId);
+            return Task.FromResult<TimeSpan?>(null);
+        }
+    }
 
     [Test]
     public async Task StopAsync_DrainsQueuedSteps_Gracefully()
@@ -562,18 +643,21 @@ public class PlayerBotSchedulerTests
     }
 
     [Test]
-    public async Task WorkerCount_ClampedToSpecBounds()
+    public async Task WorkerCount_IsOne_MarshalContext()
     {
+        // Marshal seam (t_0a61eeb1): step execution is serialized onto the
+        // game loop — there is no worker pool, so WorkerCount is always 1
+        // regardless of the (obsolete) options value.
         var manager = new PlayerBotManager(new RecordingLifecycle());
 
         var low = new PlayerBotScheduler(manager, new RecordingExecutor(), new PlayerBotSchedulerOptions { WorkerCount = 2 });
-        await Assert.That(low.WorkerCount).IsEqualTo(4);
+        await Assert.That(low.WorkerCount).IsEqualTo(1);
 
         var high = new PlayerBotScheduler(manager, new RecordingExecutor(), new PlayerBotSchedulerOptions { WorkerCount = 16 });
-        await Assert.That(high.WorkerCount).IsEqualTo(8);
+        await Assert.That(high.WorkerCount).IsEqualTo(1);
 
         var dflt = new PlayerBotScheduler(manager, new RecordingExecutor());
-        await Assert.That(dflt.WorkerCount).IsEqualTo(4);
+        await Assert.That(dflt.WorkerCount).IsEqualTo(1);
     }
 
     #endregion

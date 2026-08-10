@@ -9,17 +9,30 @@ using NLog;
 namespace AAEmu.Game.Core.Managers.Bots;
 
 /// <summary>
-/// Due-time scheduler + bounded worker pool for player bots (slice #6).
+/// Due-time scheduler + game-loop marshal for player bots (slice #6, audit
+/// follow-up t_0a61eeb1).
 /// See <see cref="IPlayerBotScheduler"/> for the contract.
 ///
-/// Concurrency model (spec §4-5): one <see cref="PriorityQueue{TElement,TPriority}"/>
-/// of (BotId, NextWakeTime) plus an event queue, both guarded by a single
-/// small queue lock; a per-bot execution lease (<see cref="_leases"/>) that
-/// guarantees at most one in-flight step per bot; a bounded Channel of steps
-/// consumed by a fixed pool of workers. There is NO global behavior lock and
-/// no per-bot thread or TickManager subscription — the wake-scan is exactly
-/// one dedicated background loop (<see cref="ScanLoopAsync"/>), the review's
-/// allowed "dedicated thread" option.
+/// Concurrency model (spec §4-5 as corrected by the 2026-08-09 Kimi audit):
+/// one <see cref="PriorityQueue{TElement,TPriority}"/> of (BotId,
+/// NextWakeTime) plus an event queue, both guarded by a single small queue
+/// lock; a per-bot execution lease (<see cref="_leases"/>) that guarantees
+/// at most one in-flight step per bot; and a MARSHAL SEAM that executes bot
+/// steps on the game loop thread instead of an unsynchronized worker pool.
+///
+/// Marshal seam: the audit found the old 4-8 worker pool ran bot steps on
+/// parallel threads that wrote Character transforms while the game loop and
+/// Region.GetList (Region.cs:401) read the same state — a witness race
+/// (Collection-modified / torn Transform reads). Steps are now handed to a
+/// bounded channel drained INLINE on the game loop thread (a sync
+/// TickManager subscription, useAsync: false) or, when no TickManager is
+/// wired (standalone / tests), by exactly ONE dedicated marshal thread —
+/// the card's "properly synchronized executor" fallback. Either way bot
+/// step execution is fully serialized: at most one step runs at any time,
+/// never concurrently with the game loop's own tick work. The wake-scan
+/// stays exactly one dedicated background loop (<see cref="ScanLoopAsync"/>),
+/// the review's allowed "dedicated thread" option — it only touches
+/// scheduler bookkeeping, never game state.
 ///
 /// Step scheduling: a step returns its next wake delay (or null = dormant).
 /// A wake that arrives while a bot is leased is folded into a per-bot
@@ -35,6 +48,7 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     private readonly IBotStepExecutor _executor;
     private readonly PlayerBotSchedulerOptions _options;
     private readonly TimeProvider _timeProvider;
+    private readonly ITickManager? _tickManager;
 
     // Due-time queue + event queue + dedup/pending bookkeeping (queue lock only).
     private readonly object _queueLock = new();
@@ -46,9 +60,10 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     // Per-bot execution lease: TryAdd on enqueue, TryRemove on completion.
     private readonly ConcurrentDictionary<uint, byte> _leases = new();
 
-    // Bounded work channel consumed by the worker pool.
+    // Bounded work channel drained by the marshal (game loop thread or the
+    // single fallback marshal thread). One step at a time — fully serialized.
     private Channel<BotStep> _work = null!;
-    private Task[] _workers = [];
+    private Task? _marshalTask;
     private Task _scanTask = Task.CompletedTask;
     private CancellationTokenSource _scanCts = new();
 
@@ -73,19 +88,18 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         IPlayerBotManager manager,
         IBotStepExecutor executor,
         PlayerBotSchedulerOptions? options = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        ITickManager? tickManager = null)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options ?? new PlayerBotSchedulerOptions();
         _timeProvider = timeProvider ?? TimeProvider.System;
-
-        // Spec §5: bounded worker pool, 4-8.
-        WorkerCount = Math.Clamp(_options.WorkerCount, 4, 8);
+        _tickManager = tickManager;
     }
 
     /// <inheritdoc />
-    public int WorkerCount { get; }
+    public int WorkerCount => 1; // serialized marshal — a single execution context
 
     /// <inheritdoc />
     public bool IsRunning => Volatile.Read(ref _started) != 0 && Volatile.Read(ref _stopped) == 0;
@@ -108,16 +122,21 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         // Exactly ONE wake-scan loop (spec §21-5: never per-bot subscriptions).
         _scanTask = Task.Run(() => ScanLoopAsync(_scanCts.Token), CancellationToken.None);
 
-        // Bounded pool: WorkerCount tasks, each draining the work channel.
-        _workers = new Task[WorkerCount];
-        for (var i = 0; i < WorkerCount; i++)
+        // Marshal seam: the game loop thread drains the step channel inline
+        // (sync subscriber → runs on the TickThread). No TickManager wired
+        // (standalone/tests) → exactly one dedicated marshal thread.
+        if (_tickManager != null)
         {
-            var workerId = i;
-            _workers[i] = Task.Run(() => WorkerLoopAsync(workerId), CancellationToken.None);
+            _tickManager.OnTick.Subscribe(MarshalTick, TimeSpan.Zero, useAsync: false, name: "PlayerBotMarshal");
+            Logger.Debug("PlayerBotScheduler started: marshal on game loop tick, scan {ScanIntervalMs}ms, batch {BatchSize}",
+                _options.ScanInterval.TotalMilliseconds, _options.MarshalBatchSize);
         }
-
-        Logger.Debug("PlayerBotScheduler started: {WorkerCount} workers, scan {ScanIntervalMs}ms",
-            WorkerCount, _options.ScanInterval.TotalMilliseconds);
+        else
+        {
+            _marshalTask = Task.Run(() => MarshalLoopAsync(_scanCts.Token), CancellationToken.None);
+            Logger.Debug("PlayerBotScheduler started: fallback marshal thread (no TickManager), scan {ScanIntervalMs}ms, batch {BatchSize}",
+                _options.ScanInterval.TotalMilliseconds, _options.MarshalBatchSize);
+        }
     }
 
     /// <inheritdoc />
@@ -130,19 +149,29 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
 
         // Stop the wake-scan; workers drain the remaining queued steps (graceful).
         _scanCts.Cancel();
+        if (_tickManager != null)
+            _tickManager.OnTick.UnSubscribe(MarshalTick);
         _work.Writer.TryComplete();
 
         try
         {
-            await Task.WhenAll(_workers).WaitAsync(_options.ShutdownTimeout, cancellationToken);
+            if (_marshalTask != null)
+                await _marshalTask.WaitAsync(_options.ShutdownTimeout, cancellationToken);
         }
         catch (TimeoutException)
         {
-            Logger.Warn("PlayerBotScheduler shutdown timed out after {Timeout}s — {Running} workers still busy",
-                _options.ShutdownTimeout.TotalSeconds, Volatile.Read(ref _activeWorkers));
+            Logger.Warn("PlayerBotScheduler marshal shutdown timed out after {Timeout}s",
+                _options.ShutdownTimeout.TotalSeconds);
         }
 
         await _scanTask.WaitAsync(cancellationToken);
+
+        // Graceful drain: execute any steps still queued after the loop
+        // stopped (the pre-marshal StopAsync contract kept draining queued
+        // work; the marshal path honors it inline).
+        while (_work.Reader.TryRead(out var step))
+            ExecuteStepSync(step);
+
         Logger.Debug("PlayerBotScheduler stopped (steps run: {StepsRun})", Volatile.Read(ref _totalStepsRun));
     }
 
@@ -203,7 +232,7 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
 
     /// <summary>
     /// One wake-scan cycle: drain the event queue, then pop every due bot and
-    /// hand it to the worker pool. Internal so the rig can drive cycles
+    /// hand it to the marshal. Internal so the rig can drive cycles
     /// deterministically (the loop calls it on the scan interval).
     /// </summary>
     internal void RunScanCycle()
@@ -260,6 +289,23 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         }
     }
 
+    /// <summary>Marshal tick handler — runs INLINE on the game loop thread (sync subscriber).</summary>
+    private void MarshalTick(TimeSpan delta) => MarshalDrain();
+
+    /// <summary>
+    /// Test/observability seam: executes one marshal drain (up to
+    /// <see cref="PlayerBotSchedulerOptions.MarshalBatchSize"/> queued steps)
+    /// on the CALLER's thread, synchronously. The rig uses this to drive the
+    /// marshal deterministically without a real TickManager (the production
+    /// path is the game-loop tick; this is the same drain).
+    /// </summary>
+    internal void RunMarshalDrain() => MarshalDrain();
+
+    /// <summary>
+    /// The one wake-scan loop (dedicated background task — the review's
+    /// allowed "dedicated thread"). Touches ONLY scheduler bookkeeping under
+    /// the queue lock; never game state, so it is safe off the game loop.
+    /// </summary>
     private async Task ScanLoopAsync(CancellationToken cancellationToken)
     {
         // Delay first: Start() returns before the first cycle, and the rig
@@ -283,15 +329,45 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         }
     }
 
-    private async Task WorkerLoopAsync(int workerId)
+    /// <summary>Fallback marshal loop (no TickManager wired): drains on a fixed cadence.</summary>
+    private async Task MarshalLoopAsync(CancellationToken cancellationToken)
     {
-        await foreach (var step in _work.Reader.ReadAllAsync(CancellationToken.None))
+        while (!cancellationToken.IsCancellationRequested)
         {
-            await ExecuteStepAsync(step, workerId);
+            try
+            {
+                await Task.Delay(_options.MarshalInterval, _timeProvider, cancellationToken);
+                MarshalDrain();
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "PlayerBotScheduler marshal cycle failed");
+            }
         }
     }
 
-    private async Task ExecuteStepAsync(BotStep step, int workerId)
+    /// <summary>
+    /// Executes at most <see cref="PlayerBotSchedulerOptions.MarshalBatchSize"/>
+    /// queued steps, one at a time, on the caller's thread (the game loop
+    /// thread in production). Fully serialized by construction — a step that
+    /// is still running blocks the drain, so no two bot steps ever overlap.
+    /// </summary>
+    private void MarshalDrain()
+    {
+        var batch = _options.MarshalBatchSize;
+        for (var i = 0; i < batch; i++)
+        {
+            if (!_work.Reader.TryRead(out var step))
+                break;
+            ExecuteStepSync(step);
+        }
+    }
+
+    private void ExecuteStepSync(BotStep step)
     {
         Interlocked.Increment(ref _activeWorkers);
         var sw = Stopwatch.StartNew();
@@ -320,11 +396,14 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                 {
                     using var stepCts = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken.None);
                     stepCts.CancelAfter(_options.StepTimeout);
-                    nextDelay = await _executor.StepAsync(runtime, stepCts.Token).WaitAsync(stepCts.Token);
+                    // WaitAsync: the timeout token must release the marshal even
+                    // if the executor ignores cancellation (the orphaned task is
+                    // abandoned, exactly like the old worker-pool behavior).
+                    nextDelay = _executor.StepAsync(runtime, stepCts.Token).WaitAsync(stepCts.Token).GetAwaiter().GetResult();
                 }
                 else
                 {
-                    nextDelay = await _executor.StepAsync(runtime, CancellationToken.None);
+                    nextDelay = _executor.StepAsync(runtime, CancellationToken.None).GetAwaiter().GetResult();
                 }
             }
             catch (OperationCanceledException)
@@ -418,6 +497,6 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         }
     }
 
-    /// <summary>A step handed from the due queue to the worker pool.</summary>
+    /// <summary>A step handed from the due queue to the marshal.</summary>
     private readonly record struct BotStep(uint BotId, DateTime DueUtc);
 }
