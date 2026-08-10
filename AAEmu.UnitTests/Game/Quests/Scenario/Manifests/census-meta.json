@@ -260,5 +260,102 @@
    "tier": "t15",
    "label": "lvl-99 straggler (top-level quest)"
   }
+ ],
+ "bandZero": [
+  {
+   "cls": "D2",
+   "label": "old Sunny Wilderness (구 불볕황야) - superseded pre-1.2 line",
+   "tier": "t16",
+   "questIds": [
+    1883,
+    1884,
+    1886,
+    1887,
+    1912,
+    1913,
+    1914,
+    1915,
+    1916,
+    1917,
+    1918,
+    1919,
+    1922
+   ]
+  },
+  {
+   "cls": "D3",
+   "label": "tutorial sphere steps (cat 45)",
+   "tier": "t16",
+   "questIds": [
+    2585,
+    2587,
+    2588,
+    2607,
+    2608,
+    2610,
+    2611,
+    2613,
+    2615,
+    2617,
+    2618,
+    2619
+   ]
+  },
+  {
+   "cls": "D4",
+   "label": "real content - must NOT be dropped",
+   "tier": "t16",
+   "questIds": [
+    1394,
+    1397,
+    1401,
+    1402,
+    1404,
+    1485,
+    5307,
+    5308,
+    5313,
+    5314,
+    5459,
+    5698,
+    5699,
+    5999,
+    6222,
+    6223,
+    6229,
+    6250,
+    6251,
+    6314,
+    6355,
+    8000004
+   ]
+  },
+  {
+   "cls": "D5",
+   "label": "test/dummy-named (cat 1/12/45/50)",
+   "tier": "t16",
+   "questIds": [
+    1097,
+    1101,
+    1128,
+    1132,
+    1148,
+    1204,
+    2971,
+    4897,
+    5649
+   ]
+  },
+  {
+   "cls": "A2",
+   "label": "unit-req/dummy specials - kept by Q2 NO-GO ruling (zero components)",
+   "tier": "t16",
+   "questIds": [
+    315,
+    1576,
+    1728,
+    2046
+   ]
+  }
  ]
 }

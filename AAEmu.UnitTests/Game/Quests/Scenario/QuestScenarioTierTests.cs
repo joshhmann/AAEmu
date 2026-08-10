@@ -45,7 +45,8 @@ public class QuestScenarioTierTests
         ("t12", "T12 M2 WI-5 (CompleteQuest objective carriers)"),
         ("t13", "T13 M2 WI-7 census (band 31-40 full sweep)"),
         ("t14", "T14 M2 WI-8 census (band 41-50 full sweep)"),
-        ("t15", "T15 M2 WI-9 census (band 51-55 + lvl-99 straggler sweep)")
+        ("t15", "T15 M2 WI-9 census (band 51-55 + lvl-99 straggler sweep)"),
+        ("t16", "T16 M2 WI-11b census (band 0/null sweep)")
     ];
 
     private static string RepoRoot()
@@ -217,6 +218,31 @@ public class QuestScenarioTierTests
                     sb.AppendLine($"| {sQid} ({s.GetProperty("label").GetString()}) | " +
                                   $"{s.GetProperty("tier").GetString()} | 1 | 0 | 1 | " +
                                   $"{sRows.Count} | {sPass} | {sFail} | {sSkip} | {sPct:F1}% |");
+                }
+            }
+
+            // ---- Band 0/null (WI-11b): LEVEL 0/NULL contexts get one
+            // acceptance row per triage class (census-meta "bandZero" key;
+            // same pattern as stragglers - the band table keys parse as
+            // lo-hi, so a 0/null band cannot ride the bands dict). A class
+            // member already sampled in an earlier tier (6250 rides T3) is
+            // reconciled through its existing row, so the class total stays
+            // the handoff count and driven covers every member. ----
+            if (metaDoc.RootElement.TryGetProperty("bandZero", out var bandZero))
+            {
+                foreach (var g in bandZero.EnumerateArray())
+                {
+                    var gQuestIds = g.GetProperty("questIds").EnumerateArray()
+                        .Select(q => q.GetUInt32()).ToHashSet();
+                    var gRows = rows.Where(r => gQuestIds.Contains(r.QuestId)).ToList();
+                    var gTotal = gQuestIds.Count;
+                    var gPass = gRows.Count(r => r.Verdict == "Pass");
+                    var gFail = gRows.Count(r => r.Verdict == "Fail");
+                    var gSkip = gRows.Count(r => r.Verdict == "Skip");
+                    var gPct = gTotal > 0 ? 100.0 * (gPass + gSkip) / gTotal : 100.0;
+                    sb.AppendLine($"| {g.GetProperty("cls").GetString()} {g.GetProperty("label").GetString()} | " +
+                                  $"{g.GetProperty("tier").GetString()} | {gTotal} | 0 | {gTotal} | " +
+                                  $"{gRows.Count} | {gPass} | {gFail} | {gSkip} | {gPct:F1}% |");
                 }
             }
             sb.AppendLine();

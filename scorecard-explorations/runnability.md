@@ -21,7 +21,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 - **T13 M2 WI-7 census (band 31-40 full sweep)**: 631 PASS / 0 FAIL / 0 SKIP
 - **T14 M2 WI-8 census (band 41-50 full sweep)**: 1526 PASS / 0 FAIL / 2 SKIP
 - **T15 M2 WI-9 census (band 51-55 + lvl-99 straggler sweep)**: 265 PASS / 0 FAIL / 0 SKIP
-- **ALL TIERS (census)**: 4518 PASS / 0 FAIL / 10 SKIP over 4528 quests — **4518/4518 quests runnable** (10 SKIP not driven, reasons below)
+- **T16 M2 WI-11b census (band 0/null sweep)**: 54 PASS / 1 FAIL / 4 SKIP
+- **ALL TIERS (census)**: 4572 PASS / 1 FAIL / 14 SKIP over 4587 quests — **4572/4573 quests runnable** (14 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
@@ -34,6 +35,11 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 41-50 | t14 | 1592 | 1 | 1591 | 1591 | 1589 | 0 | 2 | 100.0% |
 | 51-55 | t15 | 268 | 0 | 268 | 268 | 268 | 0 | 0 | 100.0% |
 | 3465 (lvl-99 straggler (top-level quest)) | t15 | 1 | 0 | 1 | 1 | 1 | 0 | 0 | 100.0% |
+| D2 old Sunny Wilderness (구 불볕황야) - superseded pre-1.2 line | t16 | 13 | 0 | 13 | 13 | 13 | 0 | 0 | 100.0% |
+| D3 tutorial sphere steps (cat 45) | t16 | 12 | 0 | 12 | 12 | 12 | 0 | 0 | 100.0% |
+| D4 real content - must NOT be dropped | t16 | 22 | 0 | 22 | 22 | 21 | 1 | 0 | 95.5% |
+| D5 test/dummy-named (cat 1/12/45/50) | t16 | 9 | 0 | 9 | 9 | 9 | 0 | 0 | 100.0% |
+| A2 unit-req/dummy specials - kept by Q2 NO-GO ruling (zero components) | t16 | 4 | 0 | 4 | 4 | 0 | 0 | 4 | 100.0% |
 
 ## Zone coverage (signature zones)
 
@@ -4675,16 +4681,87 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 6648 | [전층] 벨시온의 의뢰 에아나드 도서관 정리 9단계 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6649 | [전층] 벨시온의 의뢰 에아나드 도서관 정리 10단계 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 
+## T16 — per-quest verdicts
+
+| quest | name | family | verdict | detail |
+|---|---|---|---|---|
+| 1097 | dummy | no-acts | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1101 | dummy | no-acts | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1128 | dummy | no-acts | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1132 | dummy | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1148 | dummy | no-acts | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1204 | 미사용 | no-acts | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1394 | 고르곤 진정시키기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1397 | 뱀이 싫어하는 것 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1401 | 폭주한 골렘 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1402 | 거인이 되고 싶은 골렘 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1404 | 시선을 피해서 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1485 | 하얀 숲으로 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1576 | dummy | no-acts | Skip | SKIP:Skip (no components) |
+| 1728 | 두다드 스킬 사용전용(삭제하지마시오) | no-acts | Skip | SKIP:Skip (no components) |
+| 1883 | (구 불볕황야)불길한 결말 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1884 | (구 불볕황야)연장된 결말 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1886 | (구 불볕황야)낙서의 시작 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1887 | (구 불볕황야)낙서가 끊어진 부분 | no-acts | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1912 | (구 불볕황야)첫 번째 관문 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1913 | (구 불볕황야)두 번째 관문 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1914 | (구 불볕황야)마지막 관문 | QuestActObjTalk | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1915 | (구 불볕황야)북쪽 끝의 낙서 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1916 | (구 불볕황야)낙서의 완성 | no-acts | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1917 | (구 불볕황야)잘못된 완성 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1918 | (구 불볕황야)낙서가 의미하는 것 | no-acts | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1919 | (구 불볕황야)흙 정령 소환 | no-acts | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1922 | (구 불볕황야)장로의 지혜 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2046 | Unit Req Dummy | no-acts | Skip | SKIP:Skip (no components) |
+| 2585 | 튜토리얼 2 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2587 | 튜토리얼 4 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2588 | 튜토리얼 5 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2607 | 튜토리얼 24 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2608 | 튜토리얼 25 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2610 | 튜토리얼 27 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2611 | 튜토리얼 28 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2613 | 튜토리얼 30 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2615 | 튜토리얼 32 | QuestActConAcceptSphere | Pass | START:Pass; PERSIST:Pass |
+| 2617 | 튜토리얼 34 | no-acts | Pass | START:Pass; PERSIST:Pass |
+| 2618 | 튜토리얼 35 | no-acts | Pass | START:Pass; PERSIST:Pass |
+| 2619 | 튜토리얼 36 | no-acts | Pass | START:Pass; PERSIST:Pass |
+| 2971 | 테스트던전_타워디펜스시작 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 315 | (삭제 금지) 스킬 연결용 퀘스트 | no-acts | Skip | SKIP:Skip (no components) |
+| 4897 | OBT_튜토리얼링크용 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5307 | 봉제 인형 낙원 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 5308 | 작은 소녀의 소원 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 5313 | 봉제 인형 낙원 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 5314 | 작은 소녀의 소원 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 5459 | 붉은 용의 망령 처치 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 5649 | 끝없는 여정_test | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5698 | 용의 알을 회수하라! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5699 | 용의 알을 파괴하라! | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5999 | 여왕 목걸이 파괴하기 | no-acts | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass; RESET:Pass |
+| 6222 | 1주년을 축하드립니다. | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 6223 | 돌잡이 기념증 교환 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 6229 | 1년을 함께한 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6251 | 50레벨 달성 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6314 | 갈색 날개 하피 학살 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 6355 | 푸른 기운을 가진 청마 | QuestActConAcceptItem | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 8000004 | 할로윈 축제 준비 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Fail (InvalidOperationException: re-accept refused by engine AddQuest after ResetDailyQuests    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 1108) |
+
 ## FAIL rollup (by act family — top blockers)
 
-_none — every driven quest passed._
+- **QuestActConAcceptNpc** — 1 failing quest occurrence(s)
+- **QuestActConReportNpc** — 1 failing quest occurrence(s)
+- **QuestActObjItemGather** — 1 failing quest occurrence(s)
+- **QuestActSupplyCopper** — 1 failing quest occurrence(s)
+- **QuestActSupplyExp** — 1 failing quest occurrence(s)
+- **QuestActSupplyItem** — 1 failing quest occurrence(s)
 
 ## FAIL rollup (by stage reason)
 
+- **START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Fail** — 1 quests: 8000004
 
 ## SKIP rollup (by reason)
 
 - **orphaned context (no quest_contexts row)** — 8 quests: 1421, 1955, 1957, 1958, 2140, 745, 1954, 1956
+- **no components** — 4 quests: 1576, 1728, 2046, 315
 - **let-it-done quest with no report act (engine has no completion path)** — 2 quests: 3419, 4967
 
 ## Recommended fix-card queue
@@ -4693,4 +4770,5 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 
 | quest | name | family | failing stage | act families | file:line | reason |
 |---|---|---|---|---|---|---|
+| 8000004 | 할로윈 축제 준비 | QuestActConAcceptNpc | RESET | QuestActConAcceptNpc+QuestActObjItemGather+QuestActConReportNpc+QuestActSupplyItem | QuestScenarioDriver.cs:1108 | RESET:Fail (InvalidOperationException: re-accept refused by engine AddQuest after ResetDailyQuests    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDrive… |
 

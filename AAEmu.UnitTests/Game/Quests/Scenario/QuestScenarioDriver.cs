@@ -473,7 +473,17 @@ public class QuestScenarioDriver
             ObjId = 1,
             Id = 1,
             Name = "ScenarioTester",
-            Level = manifest.Template.Level,
+            // WI-11b (t_8ec705f0): the rig character must be a LEGAL engine
+            // state. Band-0 quests carry template.Level 0 (data truth, kept
+            // on the template), but the engine's exp curve rejects level-0
+            // units (ExperienceManager.GetLevelFromExp:
+            // ArgumentOutOfRangeException.ThrowIfZero(currentLevel) - a
+            // production player can never be level 0, they start at 1). A
+            // level-0 character completing a SupplyExp reward throws; clamp
+            // the CHARACTER to >= 1 (max(1, template level)) so the owner is
+            // the playable state the engine expects. Template.Level stays the
+            // data value (band-zero census rows key off it).
+            Level = (byte)Math.Max(1, (int)manifest.Template.Level),
             Inventory = CreateInventory()
         };
         character.Appellations = new CharacterAppellations(character);

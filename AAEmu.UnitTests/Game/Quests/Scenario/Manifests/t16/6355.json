@@ -1,0 +1,112 @@
+{
+ "questId": 6355,
+ "name": "푸른 기운을 가진 청마",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 0,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 33392
+ },
+ "template": {
+  "level": 0,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38292,
+      "type": "QuestActConAcceptItem",
+      "detailId": 446,
+      "itemId": 33392
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38293,
+      "type": "QuestActConReportJournal",
+      "detailId": 546
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27219,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38294,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 291,
+      "appellationId": 434
+     },
+     {
+      "actId": 38295,
+      "type": "QuestActSupplyExp",
+      "detailId": 1324,
+      "exp": 1000
+     },
+     {
+      "actId": 38296,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1634,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33392,
+   "count": 1
+  }
+ ]
+}

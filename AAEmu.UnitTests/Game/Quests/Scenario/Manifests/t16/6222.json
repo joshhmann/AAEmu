@@ -1,0 +1,161 @@
+{
+ "questId": 6222,
+ "name": "1주년을 축하드립니다.",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 0,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14816
+ },
+ "template": {
+  "level": 0,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26665,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36949,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4707,
+      "npcId": 14816
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26666,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36950,
+      "type": "QuestActObjItemGather",
+      "detailId": 2908,
+      "itemId": 32205,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26667,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36951,
+      "type": "QuestActConReportNpc",
+      "detailId": 4937,
+      "npcId": 14816
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26668,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36952,
+      "type": "QuestActSupplyItem",
+      "detailId": 4094,
+      "itemId": 32207,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37091,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1448,
+      "amount": 0
+     },
+     {
+      "actId": 37092,
+      "type": "QuestActSupplyExp",
+      "detailId": 1127,
+      "exp": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 32205,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14816,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32207,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 32205,
+   "count": 1
+  }
+ ]
+}

@@ -412,6 +412,13 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     # (QuestManager.cs:578), so NULL == 0. Never pass None downstream.
     if score is None:
         score = 0
+    # WI-11b (t_8ec705f0): LEVEL can be NULL (quest 1576 is the only one in
+    # the corpus) - the engine reads GetByte("level", 0)
+    # (QuestManager.cs:565), so NULL == 0. A null in the manifest's
+    # template.level crashes the C# byte deserializer (JsonException), so
+    # normalize exactly like the engine.
+    if level is None:
+        level = 0
 
     comps = c.execute("SELECT id, component_kind_id, next_component FROM quest_components WHERE quest_context_id = ? ORDER BY id",
                       (quest_id,)).fetchall()
@@ -1159,6 +1166,41 @@ def select_stragglers(c, existing_ids):
     return [(qid, lvl) for qid, lvl in rows
             if qid not in DROPPED_QUESTS and qid not in existing_ids]
 
+
+# ---- Band 0/null (WI-11b, t_8ec705f0): LEVEL 0/NULL contexts - the deferred
+# sweep population (wi-11a-band0-null-triage.md §8 handoff, corrected
+# post-ruling: D1 folded into the Q3 drop). 56 sweep contexts split into the
+# triage classes D2 (old Sunny Wilderness) / D3 (tutorial sphere steps) / D4
+# (real content, MUST NOT drop) / D5 (test/dummy) PLUS the 4 A2 unit-req/
+# dummy specials kept by Josh's Q2 NO-GO ruling (315/1576/1728/2046 - they
+# are live, non-dropped band-0 contexts with zero components, so the G1 gate
+# wants them PASS-or-doc-SKIP too; the triage doc §3 A2 documents them).
+# 6250 (D4) is already sampled in T3 (T3_PINNED_QUESTS, PASS) - it stays out
+# of t16 so each quest is driven exactly once; its t3 verdict reconciles the
+# D4 acceptance row.
+BAND_ZERO_TIER = "t16"
+BAND_ZERO_GROUPS = [
+    {"cls": "D2", "label": "old Sunny Wilderness (구 불볕황야) - superseded pre-1.2 line",
+     "questIds": [1883, 1884, 1886, 1887, 1912, 1913, 1914, 1915, 1916, 1917, 1918, 1919, 1922]},
+    {"cls": "D3", "label": "tutorial sphere steps (cat 45)",
+     "questIds": [2585, 2587, 2588, 2607, 2608, 2610, 2611, 2613, 2615, 2617, 2618, 2619]},
+    {"cls": "D4", "label": "real content - must NOT be dropped",
+     "questIds": [1394, 1397, 1401, 1402, 1404, 1485, 5307, 5308, 5313, 5314, 5459, 5698, 5699,
+                  5999, 6222, 6223, 6229, 6250, 6251, 6314, 6355, 8000004]},
+    {"cls": "D5", "label": "test/dummy-named (cat 1/12/45/50)",
+     "questIds": [1097, 1101, 1128, 1132, 1148, 1204, 2971, 4897, 5649]},
+    {"cls": "A2", "label": "unit-req/dummy specials - kept by Q2 NO-GO ruling (zero components)",
+     "questIds": [315, 1576, 1728, 2046]},
+]
+
+
+def select_t16_quests(c, existing_ids):
+    """Band 0/null sweep: the WI-11b handoff population (56) + the A2 keeps
+    (4), minus dropped + already-sampled (6250 rides T3), ordered by id."""
+    qids = sorted({q for g in BAND_ZERO_GROUPS for q in g["questIds"]})
+    return [q for q in qids if q not in DROPPED_QUESTS and q not in existing_ids]
+
+
 # Dropped content (scorecard-explorations/dropped-content-register.md):
 # dummy shell 1391 + 23 no-start tutorial shells + 8 orphaned contexts
 # (745/1421/1954-1958/2140 have no quest_contexts row - excluded by the
@@ -1250,6 +1292,15 @@ def emit_census_meta(c, out_root):
         {"questId": qid, "level": lvl, "tier": "t15",
          "label": f"lvl-{lvl} straggler (top-level quest)"}
         for qid, lvl in select_stragglers(c, set())
+    ]
+    # Band 0/null (WI-11b): LEVEL 0/NULL contexts get dedicated
+    # acceptance-table rows grouped by triage class (census-meta "bandZero"
+    # key; the band table keys parse as lo-hi so a 0/null band cannot ride
+    # the bands dict - same pattern as stragglers).
+    meta["bandZero"] = [
+        {"cls": g["cls"], "label": g["label"], "tier": BAND_ZERO_TIER,
+         "questIds": g["questIds"]}
+        for g in BAND_ZERO_GROUPS
     ]
     for name, zone_ids in SIGNATURE_ZONES.items():
         meta["signatureZones"].append({"name": name, "zoneIds": zone_ids})
@@ -1493,6 +1544,26 @@ def main():
         counts["t15"] = counts.get("t15", 0) + 1
     existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
 
+    # ---- Band 0/null (WI-11b, t_8ec705f0): t16 sweep - the 56-context
+    # handoff population (D2/D3/D4/D5) + the 4 A2 keeps. 6250 already rides
+    # T3 (each quest driven exactly once); folded into existing_ids so no
+    # later tier re-samples it. ----
+    t16_ids = select_t16_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t16")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t16_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t16"] = counts.get("t16", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
                       "t1_total": len(t1_ids), "t2_total": len(t2_ids),
                       "t3_selected": len(t3_ids), "t4_selected": len(t4_ids),
@@ -1507,7 +1578,8 @@ def main():
                       "t13_selected": band_counts.get("t13", 0),
                       "t14_selected": band_counts.get("t14", 0),
                       "t15_selected": band_counts.get("t15", 0),
-                      "stragglers_selected": len(straggler_ids)}, indent=1))
+                      "stragglers_selected": len(straggler_ids),
+                      "t16_selected": len(t16_ids)}, indent=1))
 
 
 if __name__ == "__main__":
