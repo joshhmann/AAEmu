@@ -373,7 +373,18 @@ public sealed class House : Unit
 
     public override bool AllowedToInteract(Character player)
     {
-        return HousingPlacementValidator.CanInteract(this, player, NameManager.Instance, FamilyManager.Instance.GetFamilyOrDefault);
+        // AlwaysPublic templates and unfinished houses are interactable by everyone —
+        // short-circuit BEFORE the permission model runs.
+        if (Template?.AlwaysPublic == true || CurrentStep != -1)
+            return true;
+
+        // The resolver must be a LAMBDA, not a method group: a method group on
+        // FamilyManager.Instance evaluates the singleton eagerly at argument-build
+        // time (touching FamilyManager even for Private/Guild/Public houses, where
+        // the resolver is never invoked). The lambda defers the lookup to the only
+        // branch that needs it (HousingPermission.Family).
+        return HousingPlacementValidator.CanInteract(this, player, NameManager.Instance,
+            id => FamilyManager.Instance.GetFamilyOrDefault(id));
     }
 
     public override Character GetOwnerCharacter()

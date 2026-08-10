@@ -403,7 +403,9 @@ public class HousingManager(
             zone?.FactionId ?? FactionsEnum.Invalid,
             houseTemplate,
             new Vector3(x, y, z),
-            connection.ActiveChar.Faction.Id,
+            connection.ActiveChar.Faction.MotherId != FactionsEnum.Invalid
+                ? connection.ActiveChar.Faction.MotherId
+                : connection.ActiveChar.Faction.Id,
             _houses.Values.Any(h => h.OwnerId == connection.ActiveChar.Id),
             []);
         if (placementError != HousingPlacementError.None)
@@ -516,7 +518,9 @@ public class HousingManager(
             zone?.FactionId ?? FactionsEnum.Invalid,
             houseTemplate,
             new Vector3(posX, posY, posZ),
-            connection.ActiveChar.Faction.Id,
+            connection.ActiveChar.Faction.MotherId != FactionsEnum.Invalid
+                ? connection.ActiveChar.Faction.MotherId
+                : connection.ActiveChar.Faction.Id,
             _houses.Values.Any(h => h.OwnerId == connection.ActiveChar.Id),
             _houses.Values);
         if (placementError != HousingPlacementError.None)
