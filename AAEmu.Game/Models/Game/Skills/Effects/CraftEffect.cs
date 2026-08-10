@@ -49,7 +49,7 @@ public class CraftEffect : EffectTemplate
                         Logger.Trace("[Shipyard] ID {0}, objID {1}", shipyard.ShipyardData.TemplateId, shipyard.ObjId);
 
                         var shipStep =
-                            shipyard.CurrentAction >= 0 && shipyard.CurrentStep < shipyard.Template.ShipyardSteps.Count
+                            shipyard.CurrentAction >= 0 && shipyard.CurrentStep >= 0 && shipyard.CurrentStep < shipyard.Template.ShipyardSteps.Count
                                 ? shipyard.Template.ShipyardSteps[shipyard.CurrentStep]
                                 : null;
 
@@ -90,14 +90,23 @@ public class CraftEffect : EffectTemplate
                     character.Craft.EndCraft();
                     break;
                 case WorldInteractionGroup.Building when target is House house:
-                    // Get the house's current build step
+                    // Get the house's current build step.
+                    // CurrentStep == -1 means the house is finished (or has no build steps),
+                    // and BuildSteps is keyed by step index — never index it with -1.
                     var currentStep =
-                        house.CurrentAction >= 0 && house.CurrentStep < house.Template.BuildSteps.Count
+                        house.CurrentStep >= 0 && house.CurrentStep < house.Template.BuildSteps.Count
                             ? house.Template.BuildSteps[house.CurrentStep]
                             : null;
 
+                    if (currentStep == null)
+                    {
+                        // Finished house (or no build steps) — nothing left to build, end the craft
+                        character.Craft.EndCraft();
+                        break;
+                    }
+
                     // Compare if the used skill (correct pack) is still valid when used
-                    if (currentStep != null && usedSkill != currentStep.SkillId)
+                    if (usedSkill != currentStep.SkillId)
                     {
                         Logger.Warn("{0} tried to building using the wrong skill, {1} instead of {2}", caster.Name, usedSkill, currentStep.SkillId);
                         character.SkillTask.Skill.Cancelled = true;
@@ -105,11 +114,7 @@ public class CraftEffect : EffectTemplate
                     }
                     else
                     {
-                        // When done, set step to -1
-                        if (house.Template.BuildSteps.Count == 0)
-                            house.CurrentStep = -1;
-                        else
-                            house.AddBuildAction();
+                        house.AddBuildAction();
 
                         // Send build packet
                         character.BroadcastPacket(

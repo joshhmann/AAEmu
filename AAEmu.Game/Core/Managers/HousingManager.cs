@@ -1544,6 +1544,25 @@ public class HousingManager(
 
         // Create decoration doodad
         var decorationDesign = HousingGameData.Instance.GetDecorationDesignFromId(designId);
+        if (decorationDesign == null)
+        {
+            // Unknown decoration design — reject before touching any state
+            player.SendErrorMessage(ErrorMessageType.HouseCannotDecorate);
+            return false;
+        }
+
+        // Enforce decoration limits (count/type per plot) before anything is created.
+        if (!DecorationLimitEvaluator.IsDecorationAllowed(
+                house.Template,
+                decorationDesign,
+                house.ParentWorld.GetDoodadByHouseDbId(house.Id),
+                HousingGameData.Instance.GetDecorationDesignFromDoodadId,
+                HousingGameData.Instance.GetDecoLimitCount,
+                out var limitError))
+        {
+            player.SendErrorMessage(limitError);
+            return false;
+        }
 
         // TODO: Validate if designId is correct for the given item
         /*
