@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime;
 using AAEmu.Commons.IO;
 using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers;
@@ -39,6 +40,18 @@ public static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        // GC latency profile (t_eecc5604): SustainedLowLatency keeps gen2/LOH
+        // compactions on the background (concurrent) GC path. The M6 soak ran
+        // stock Interactive latency: blocking full-GC compactions on the
+        // 3.4-5.2GB heap paused 70-459ms, descheduling the physics thread
+        // past its 65ms slow-thread detector 11x over 6h (0 impact on tick).
+        // SustainedLowLatency defers blocking compactions (heap grows instead;
+        // host has headroom), keeping STW in the 2-10ms background-GC class.
+        // Must be set before the first significant allocation, so: top of Main.
+        // NOTE: the runtimeconfig key System.GC.LatencyLevel is NOT honored by
+        // the runtime (verified 2026-08-10) — code is the carrier.
+        GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+
         _launchArgs = args;
         Initialization();
 
