@@ -38,15 +38,15 @@
 - **Taxes/demolition:** `HousingTaxTask` scheduled `:199-200`, `UpdateTaxInfo` `:190`, 22h grace after failed tax `:55`, sell/buy flow `CSSellHousePacket`/`BuyHouse` `:1355`.
 - **Misc:** permissions `:602`, rename `:620`, for-sale marker doodad 6760 `:53`, `GetHouseAtLocation` `:1627` (used by doodad placement `CSCreateDoodadPacket.cs:63`, `PutDownBackpackEffect.cs:51`).
 
-### What is NOT wired (5 tables)
+### What is NOT wired (2 tables — 3 of 5 housing tables wired by M3a-1/M3a-2)
 
 | Table | Data it carries (1.2 game data) | Feature it would enable |
 |---|---|---|
-| `housing_areas` | Housing-allowed zone/zone-group definitions | Server-side placement validation — `Build()` has an explicit `// TODO validate house by range` `HousingManager.cs:477`; today houses can be placed anywhere, incl. non-housing zones |
+| `housing_areas` | Housing-allowed zone/zone-group definitions | **WIRED (M3a-1, feat/homestead-placement @ e1863625a)** — zone-level placement validation in `HousingManager.Build()`/`ConstructHouseTax` via `HousingPlacementValidator.ValidatePlacement`; land-zone check, faction gate, houseless-only zone types, zone-type category rule, overlap spacing. Client errors `HouseCannotLocateInvalidArea`/`HouseCannotLocateOverlapHouse` |
 | `housing_deco_limits` | Deco-limit groups (referenced by `housings.housing_deco_limit_id`, read but unused at `HousingGameData.cs:105`) | Per-house decoration-count categories |
 | `housing_deco_limit_elems` | Per-limit decoration allowances (which decoration designs count toward a limit, and how many) | Real deco-limit enforcement; currently `deco_limit`/`absolute_deco_limit` are read into `HousingTemplate` (`HousingGameData.cs:103-104`) but **never checked anywhere** — grep for `DecoLimit` in `HousingManager` returns zero enforcement hits; `:1651` has `// TODO: Implement special decor effect limit` |
-| `housing_groups` | House-design groups (client UI grouping of designs) | Client-side housing design list organization; no server consumer identified |
-| `housing_group_categories` | Group categories for above | Same — UI taxonomy, no server consumer identified |
+| `housing_groups` | House-design groups (client UI grouping of designs) | **WIRED (M3a-1)** — loaded into `HousingLandZoneInfo` (zone-type category rules + houseless-only groups 12/13) |
+| `housing_group_categories` | Group categories for above | **WIRED (M3a-1)** — loaded into `HousingLandZoneInfo.AllowedCategories`; a zone whose groups allow no categories rejects everything (1.2 group 11) |
 
 **Corroborating stubs:** `SpecialEffects/ExpandDecoLimit.cs:22` logs-only; `SpecialEffects/RebuildHousing.cs:22` logs-only; `DoodadFuncHousingArea.cs:15` logs-only.
 
@@ -173,7 +173,7 @@ The three **socketing tables** + the `ItemSocketing` TODO are the single most va
 | Claim | Evidence |
 |---|---|
 | Housing templates read deco limits but never enforce | `HousingGameData.cs:103-105`; `HousingManager.cs:1520-1603` (no limit check); `:1651` TODO |
-| House placement lacks zone validation | `HousingManager.cs:477` `// TODO validate house by range...` |
+| House placement lacks zone validation | ~~`HousingManager.cs:477` `// TODO validate house by range...`~~ **RESOLVED M3a-1** — `HousingPlacementValidator.ValidatePlacement` wired into `Build()`/`ConstructHouseTax` (land-zone, faction, houseless-only, category, overlap) |
 | Build steps work end-to-end | `House.cs:62,70-132`; `CraftEffect.cs:92-133`; `HousingGameData.cs:149` |
 | Decoration placement works | `HousingManager.cs:1520-1603`; `CSDecorateHousePacket.cs:35` |
 | Auction runtime is MySQL `auction_house` only | `AuctionManager.cs:354,407,464`; `AuctionIdManager.cs:14` |

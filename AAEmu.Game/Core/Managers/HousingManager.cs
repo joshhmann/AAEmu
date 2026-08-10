@@ -392,9 +392,25 @@ public class HousingManager(
     /// <param name="z"></param>
     public void ConstructHouseTax(GameConnection connection, uint designId, float x, float y, float z)
     {
-        // TODO validation position and some range...
-
         var houseTemplate = HousingGameData.Instance.GetTemplate(designId);
+
+        // Placement zone validation (zone-level; overlap is re-checked at Build).
+        var zoneKey = worldManager.GetZoneId(connection.ActiveChar.ParentWorld.Template, x, y);
+        var zone = zoneKey > 0 ? zoneManager.GetZoneByKey(zoneKey) : null;
+        var landZone = HousingGameData.Instance.GetLandZoneByZoneName(zone?.Name);
+        var placementError = HousingPlacementValidator.ValidatePlacement(
+            landZone,
+            zone?.FactionId ?? FactionsEnum.Invalid,
+            houseTemplate,
+            new Vector3(x, y, z),
+            connection.ActiveChar.Faction.Id,
+            _houses.Values.Any(h => h.OwnerId == connection.ActiveChar.Id),
+            []);
+        if (placementError != HousingPlacementError.None)
+        {
+            connection.ActiveChar.SendErrorMessage(ErrorMessageType.HouseCannotLocateInvalidArea);
+            return;
+        }
 
         CalculateBuildingTaxInfo(connection.ActiveChar.AccountId, houseTemplate, true, out var totalTaxAmountDue, out var heavyTaxHouseCount, out var normalTaxHouseCount, out _, out _);
 
@@ -474,7 +490,6 @@ public class HousingManager(
     public void Build(GameConnection connection, uint designId, float posX, float posY, float posZ, float zRot,
         ulong itemId, int moneyAmount, int ht, bool autoUseAaPoint)
     {
-        // TODO validate house by range...
         // TODO remove itemId
         // TODO minus moneyAmount
 
@@ -489,6 +504,30 @@ public class HousingManager(
         // var zoneId = worldManager.GetZoneId(connection.ActiveChar.Transform.WorldId, posX, posY);
 
         var houseTemplate = HousingGameData.Instance.GetTemplate(designId);
+
+        // Placement zone validation (M3a-1): land zone + zone-type rules + ownership claim rules + overlap.
+        // Grounded in 1.2 data: housing_areas/housing_groups/housing_group_categories joined to
+        // world zones by exact zone-name match; spacing = garden radius sum (floor MinHouseSpacing).
+        var zoneKey = worldManager.GetZoneId(connection.ActiveChar.ParentWorld.Template, posX, posY);
+        var zone = zoneKey > 0 ? zoneManager.GetZoneByKey(zoneKey) : null;
+        var landZone = HousingGameData.Instance.GetLandZoneByZoneName(zone?.Name);
+        var placementError = HousingPlacementValidator.ValidatePlacement(
+            landZone,
+            zone?.FactionId ?? FactionsEnum.Invalid,
+            houseTemplate,
+            new Vector3(posX, posY, posZ),
+            connection.ActiveChar.Faction.Id,
+            _houses.Values.Any(h => h.OwnerId == connection.ActiveChar.Id),
+            _houses.Values);
+        if (placementError != HousingPlacementError.None)
+        {
+            Logger.Warn($"House placement rejected for {connection.ActiveChar.Name}: {placementError} at <{posX:0.#}, {posY:0.#}, {posZ:0.#}> (zone: {zone?.Name ?? "unknown"})");
+            connection.ActiveChar.SendErrorMessage(placementError == HousingPlacementError.OverlapHouse
+                ? ErrorMessageType.HouseCannotLocateOverlapHouse
+                : ErrorMessageType.HouseCannotLocateInvalidArea);
+            return;
+        }
+
         CalculateBuildingTaxInfo(connection.ActiveChar.AccountId, houseTemplate, true, out var totalTaxAmountDue, out _, out _, out _, out _);
 
         if (FeaturesManager.Fsets.Check(Models.Game.Features.Feature.taxItem))
@@ -604,7 +643,7 @@ public class HousingManager(
         if (!_housesTl.TryGetValue(tlId, out var house))
             return; // invalid house
 
-        if (house.OwnerId != connection.ActiveChar.Id)
+        if (!HousingPlacementValidator.CanManage(house, connection.ActiveChar.Id))
             return; // not the owner
 
         house.Permission = permission;
@@ -622,7 +661,7 @@ public class HousingManager(
         if (!_housesTl.TryGetValue(tlId, out var house))
             return;
 
-        if (house.OwnerId != connection.ActiveChar.Id)
+        if (!HousingPlacementValidator.CanManage(house, connection.ActiveChar.Id))
             return;
 
         house.Name = string.Concat(name.Substring(0, 1).ToUpper(), name.AsSpan(1));

@@ -20,6 +20,8 @@ public class HousingGameData : Singleton<HousingGameData>, IGameDataLoader
     private List<ItemHousingDecoration> _housingItemHousingDecorations = [];
     private List<HousingItemHousings> _housingItemHousings = [];
     private Dictionary<uint, HousingTemplate> _housingTemplates = [];
+    private Dictionary<uint, HousingGroup> _housingGroups = [];
+    private Dictionary<string, HousingLandZoneInfo> _landZones = [];
 
     public void Load(SqliteConnection connection)
     {
@@ -27,6 +29,8 @@ public class HousingGameData : Singleton<HousingGameData>, IGameDataLoader
         _housingItemHousings = [];
         _housingDecorations = [];
         _housingItemHousingDecorations = [];
+        _housingGroups = [];
+        _landZones = [];
 
         // var housingAreas = new Dictionary<uint, HousingAreas>();
         // var houseTaxes = new Dictionary<uint, HouseTax>();
@@ -224,6 +228,7 @@ public class HousingGameData : Singleton<HousingGameData>, IGameDataLoader
             }
         }
 
+        LoadLandZones(connection);
     }
 
     public void PostLoad()
@@ -234,6 +239,86 @@ public class HousingGameData : Singleton<HousingGameData>, IGameDataLoader
             template.Taxation = TaxationsManager.Instance.taxations.GetValueOrDefault(template.TaxationId);
         }
     }
+
+    /// <summary>
+    /// Loads the homestead land-zone data: housing_groups (zone types + houseless rules),
+    /// housing_areas (named plots), housing_group_categories (per-zone-type allowed house
+    /// categories), then builds the zone-name → land-zone map used by placement validation.
+    /// </summary>
+    private void LoadLandZones(SqliteConnection connection)
+    {
+        Logger.Info("Loading Housing Groups...");
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT * FROM housing_groups";
+            command.Prepare();
+            using (var reader = new SQLiteWrapperReader(command.ExecuteReader()))
+            {
+                while (reader.Read())
+                {
+                    var group = new HousingGroup
+                    {
+                        Id = reader.GetUInt32("id"),
+                        Name = reader.GetString("name"),
+                        HouselessOnly = reader.GetBoolean("houseless", false),
+                        CanExtend = reader.GetBoolean("can_extend", true)
+                    };
+                    _housingGroups.Add(group.Id, group);
+                }
+            }
+        }
+        Logger.Info($"Loaded {_housingGroups.Count} Housing Groups");
+
+        Logger.Info("Loading Housing Areas...");
+        var areas = new List<HousingAreas>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT * FROM housing_areas";
+            command.Prepare();
+            using (var reader = new SQLiteWrapperReader(command.ExecuteReader()))
+            {
+                while (reader.Read())
+                {
+                    areas.Add(new HousingAreas
+                    {
+                        Id = reader.GetUInt32("id"),
+                        Name = reader.GetString("name"),
+                        GroupId = reader.GetUInt32("housing_group_id")
+                    });
+                }
+            }
+        }
+        Logger.Info($"Loaded {areas.Count} Housing Areas");
+
+        Logger.Info("Loading Housing Group Categories...");
+        var groupCategories = new Dictionary<uint, HashSet<uint>>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT * FROM housing_group_categories";
+            command.Prepare();
+            using (var reader = new SQLiteWrapperReader(command.ExecuteReader()))
+            {
+                while (reader.Read())
+                {
+                    var groupId = reader.GetUInt32("housing_group_id");
+                    var categoryId = reader.GetUInt32("category_id");
+                    if (!groupCategories.TryGetValue(groupId, out var categories))
+                        groupCategories.Add(groupId, categories = []);
+                    categories.Add(categoryId);
+                }
+            }
+        }
+
+        _landZones = HousingLandZoneInfo.BuildFromData(areas, _housingGroups, groupCategories);
+        Logger.Info($"Loaded {_landZones.Count} Housing Land Zones");
+    }
+
+    /// <summary>
+    /// Gets the homestead land-zone info for a world zone (by exact zone name, e.g.
+    /// "w_solzreed_1"), or null when the zone is not a land zone (placement rejected).
+    /// </summary>
+    public HousingLandZoneInfo GetLandZoneByZoneName(string zoneName)
+        => string.IsNullOrEmpty(zoneName) ? null : _landZones.GetValueOrDefault(zoneName);
     
     private List<HousingBindingTemplate> LoadHousingBindings(string dataFolder)
     {
