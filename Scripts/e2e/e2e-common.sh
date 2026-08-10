@@ -332,7 +332,20 @@ e2e_prepare() {
     # Hard-fails the boot (set -e) if a re-cap cannot be applied. Touch
     # afterwards so a live adopted stack re-reads via NLog autoReload (no
     # restart needed).
-    "$E2E_ROOT/ensure-log-caps.sh" "$E2E_ROOT"
+    # The guard ships in the repo (Scripts/e2e/ensure-log-caps.sh) and may
+    # also be provisioned at $E2E_ROOT. Prefer the $E2E_ROOT copy when
+    # present (existing stacks may carry a runtime-patched version); on a
+    # clean host with no pre-state, fall back to the repo copy so the
+    # README procedure completes from a fresh clone alone (t_dde9846f).
+    local log_caps_guard
+    if [ -f "$E2E_ROOT/ensure-log-caps.sh" ]; then
+        log_caps_guard="$E2E_ROOT/ensure-log-caps.sh"
+    elif [ -f "$SCRIPT_DIR/ensure-log-caps.sh" ]; then
+        log_caps_guard="$SCRIPT_DIR/ensure-log-caps.sh"
+    else
+        e2e_fail "ensure-log-caps.sh not found — expected at $E2E_ROOT/ensure-log-caps.sh or $SCRIPT_DIR/ensure-log-caps.sh"
+    fi
+    "$log_caps_guard" "$E2E_ROOT"
     [ -f "$LOGIN_DIR/NLog.config" ] && touch "$LOGIN_DIR/NLog.config"
     [ -f "$GAME_DIR/NLog.config" ]  && touch "$GAME_DIR/NLog.config"
 

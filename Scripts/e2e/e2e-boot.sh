@@ -41,7 +41,8 @@ esac
 
 e2e_full_boot
 # Post-publish log-cap guard runs inside e2e_prepare (e2e-common.sh):
-#   "$E2E_ROOT/ensure-log-caps.sh" "$E2E_ROOT"
+#   $E2E_ROOT/ensure-log-caps.sh when present, else the repo copy at
+#   Scripts/e2e/ensure-log-caps.sh (t_dde9846f fallback for clean hosts)
 # so an E2E_REBUILD=1 publish can never clobber the capped runtime NLog.configs
 # (t_a54574e9 — thinpool massacre prevention).
 e2e_log "BOOT OK — pids: login $(cat "$PID_DIR/login.pid" 2>/dev/null || echo -) game $(cat "$PID_DIR/game.pid" 2>/dev/null || echo -)"

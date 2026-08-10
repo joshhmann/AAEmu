@@ -12,6 +12,7 @@ config precedence and the same SQL seeds as prod; nothing is stubbed.
 | `e2e-reset.sh`  | teardown + clean re-boot + byte-identical baseline proof (exit 0 only when proven) |
 | `e2e-stack.sh`  | helpers: `status` \| `logs` \| `db-up` \| `db-down` \| `db-reset` |
 | `e2e-common.sh` | shared boot phases + helpers (sourced, not executed) |
+| `ensure-log-caps.sh` | post-publish NLog cap/rule re-applier (see prereq #5) — committed in the repo; also provisioned at `$E2E_ROOT/` on existing stacks |
 | `docker-compose.yaml` | MySQL 8.0.36 only (servers run as host processes so E2E-3 can restart them at process level) |
 
 ## Usage
@@ -53,16 +54,28 @@ verification, not compose state.
 1. .NET 10 SDK on the dev box (openclaw): `dotnet --version` → 10.x
 2. Canonical game data, once: `./e2e-boot.sh --provision-data` (rsyncs
    `root@192.168.0.165:/root/AAEmu/.server_files/AAEmu.Game/` → `$E2E_ROOT/runtime/game-data/`).
-   This is the ~114MB `compact.sqlite3` + the 24GB `game_pak` (symlinked, not
-   duplicated) + Configurations.
-3. Docker with compose v2 for the MySQL container.
+   This is the ~114MB `compact.sqlite3` + the `game_pak` (sparse file:
+   ~24G apparent size, ~16G on-disk) + Configurations. The rsync copies the
+   real pak into `game-data/ClientData/` — nothing is symlinked at this
+   stage. The symlink is the RUNTIME layout only
+   (`runtime/game/ClientData` → `runtime/game-data/ClientData`, built by
+   `e2e_provision_layout`), so the pak exists exactly once on disk.
+3. Docker with compose v2 for the MySQL container. Clean-host runs need a
+   docker-capable host: the db container binds 127.0.0.1:3306 (AF_INET), so
+   nested Docker inside an unprivileged LXC container fails at socket() with
+   EACCES (t_dde9846f gate evidence) — a plain Linux box without working
+   Docker is not enough.
 4. First boot publishes Login + Game (Release) into `$E2E_ROOT/runtime/`;
    afterwards binaries are reused until `E2E_REBUILD=1`.
-5. Post-publish log-cap guard: every prepare re-runs
-   `$E2E_ROOT/ensure-log-caps.sh` so a publish (which copies `NLog.config`
-   from the still-uncapped repo tree) can never clobber the capped runtime
-   configs (Sequence/25MB/20, Info default, TRACE via `AAEMU_E2E_LOG_LEVEL`).
-   Same guard is wired into `E2eStack.EnsureServerBinaries` (t_a54574e9).
+5. Post-publish log-cap guard: every prepare re-runs `ensure-log-caps.sh`
+   (file table above) so a publish (which copies `NLog.config` from the repo
+   tree) can never clobber the capped runtime configs (Sequence/25MB/20,
+   Info default, TRACE via `AAEMU_E2E_LOG_LEVEL`). The guard ships in the
+   repo at `Scripts/e2e/ensure-log-caps.sh`; on existing stacks it also
+   lives at `$E2E_ROOT/ensure-log-caps.sh`. `e2e-common.sh` prefers the
+   `$E2E_ROOT` copy when present and falls back to the repo copy on clean
+   hosts, so a fresh clone boots with no pre-provisioning (t_dde9846f). The
+   same guard is wired into `E2eStack.EnsureServerBinaries` (t_a54574e9).
 
 ## Cycle isolation contract (what reset proves)
 
