@@ -30,8 +30,10 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///           cadence) so real clients see the bot walking.
 ///
 /// The scheduler's per-bot execution lease guarantees at most one in-flight
-/// step per bot, so this executor needs no per-bot concurrency guard — it
-/// drives the actor (single-writer) from exactly one worker at a time.
+/// step per bot, and the M5 A1 marshal executes every step on the single
+/// execution boundary (the game-loop thread) — so this executor needs no
+/// per-bot concurrency guard of its own: it drives the actor
+/// (single-writer) from exactly one execution context at a time.
 ///
 /// DI note: this replaces <see cref="GameplayActorStepExecutor"/> as the
 /// production IBotStepExecutor wiring in Program.cs. Bots WITHOUT a roam

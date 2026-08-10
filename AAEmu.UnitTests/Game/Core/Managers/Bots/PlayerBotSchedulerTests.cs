@@ -4,20 +4,37 @@ using System.Diagnostics;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.World.Transform;
 
 using Microsoft.Extensions.Time.Testing;
 
+using TUnit.Core;
+using TUnit.Core.Interfaces;
+
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
+
+/// <summary>Serializes a test class (the ExecutionBoundary static state must not race across parallel tests).</summary>
+public sealed class SequentialParallelLimit : IParallelLimit
+{
+    public int Limit => 1;
+}
 
 /// <summary>
 /// Scheduler rig for IPlayerBotScheduler (slice #6): due-time semantics,
-/// bounded worker pool, per-bot execution lease, event wakes, metrics, and
-/// the hard gate (one wake-scan, no per-bot anything). Time is driven by
+/// bounded worker pool, per-bot execution lease, event wakes, metrics, the
+/// hard gate (one wake-scan, no per-bot anything), and — since M5 A1 — the
+/// execution-boundary marshal (steps execute on the single execution
+/// boundary thread, never on worker threads). Time is driven by
 /// FakeTimeProvider; scan cycles are pumped manually (scan interval is set
-/// to 1h so the background loop never fires mid-test), and the worker pool
-/// runs for real — slow bots are real delays, which is exactly what the
-/// "a slow bot never blocks others" gate needs to prove.
+/// to 1h so the background loop never fires mid-test), the marshal queue is
+/// drained by the rig's waits, and the worker pool runs for real.
+///
+/// Execution boundary: every test pins the boundary to the test thread (the
+/// simulated game loop); drains run on that thread. The
+/// <see cref="ExecutionBoundary"/> static state is reset per test.
 /// </summary>
+[NotInParallel]
+[ParallelLimiter<SequentialParallelLimit>]
 public class PlayerBotSchedulerTests
 {
     /// <summary>Deterministic lifecycle seam (same shape as the manager rig).</summary>
@@ -43,6 +60,7 @@ public class PlayerBotSchedulerTests
 
         public ConcurrentQueue<(uint BotId, DateTime StartedUtc)> Starts { get; } = [];
         public ConcurrentQueue<(uint BotId, DateTime FinishedUtc)> Finishes { get; } = [];
+        public ConcurrentQueue<int> StepThreadIds { get; } = [];
         public ConcurrentDictionary<uint, int> MaxConcurrentPerBot { get; } = [];
         public int MaxConcurrentOverall;
         public ConcurrentQueue<(uint A, uint B)> Overlaps { get; } = [];
@@ -56,6 +74,7 @@ public class PlayerBotSchedulerTests
             var botConcurrent = ConcurrentPerBot(bot.CharacterId, +1);
             MaxConcurrentPerBot.AddOrUpdate(bot.CharacterId, botConcurrent, (_, existing) => Math.Max(existing, botConcurrent));
             Starts.Enqueue((bot.CharacterId, DateTime.UtcNow));
+            StepThreadIds.Enqueue(Environment.CurrentManagedThreadId);
 
             // Deterministic overlap record: every other bot running right now
             // is one this step executed concurrently with.
@@ -130,6 +149,10 @@ public class PlayerBotSchedulerTests
 
         public Rig(int workerCount = 4, TimeSpan? stepTimeout = null)
         {
+            // M5 A1: the boundary is AsyncLocal-scoped and the drain pins
+            // itself to its own thread on every entry — no explicit pin here
+            // (async test continuations may hop threads; the pin follows the
+            // drain, tests that need a fixed boundary pin it explicitly).
             Manager = new PlayerBotManager(new RecordingLifecycle());
             var options = new PlayerBotSchedulerOptions
             {
@@ -137,6 +160,7 @@ public class PlayerBotSchedulerTests
                 ScanInterval = TimeSpan.FromHours(1), // loop inert in tests; cycles pumped manually
                 StepTimeout = stepTimeout ?? TimeSpan.FromSeconds(30),
                 ShutdownTimeout = TimeSpan.FromSeconds(5),
+                SubscribeToTickManager = false, // tests pump the marshal drain manually
             };
             Scheduler = new PlayerBotScheduler(Manager, Executor, options, Time);
             Scheduler.Start();
@@ -163,6 +187,11 @@ public class PlayerBotSchedulerTests
             var deadline = Stopwatch.StartNew();
             while (!condition())
             {
+                // M5 A1: worker threads only marshal steps to the execution
+                // queue; the drain (run on the test thread — the simulated
+                // game loop) is what executes them. Waits pump the drain so
+                // step execution is observable from the test thread.
+                Scheduler.DrainTickQueue();
                 if (deadline.Elapsed > (timeout ?? TimeSpan.FromSeconds(5)))
                     throw new TimeoutException("rig wait condition not met");
                 await Task.Delay(5);
@@ -285,32 +314,37 @@ public class PlayerBotSchedulerTests
     #region Bounded pool + per-bot lease
 
     [Test]
-    public async Task SlowBot_DoesNotBlockOthers()
+    public async Task BotSteps_SerializeOnTheExecutionBoundary()
     {
+        // M5 A1: steps execute on the single execution boundary (the game-loop
+        // thread) — the world-mutating part of a bot step is SERIALIZED by
+        // design. The old worker pool no longer executes steps; it only
+        // marshals wakes. This test proves the new contract: three due bots
+        // all run, never concurrently, on the boundary thread, with zero
+        // execution-boundary violations.
         using var rig = new Rig(workerCount: 4);
         var slow = rig.AddActiveBot(1);
         var fastA = rig.AddActiveBot(2);
         var fastB = rig.AddActiveBot(3);
 
-        rig.Executor.DelayFor = id => id == slow ? TimeSpan.FromMilliseconds(600) : TimeSpan.FromMilliseconds(25);
+        rig.Executor.DelayFor = id => id == slow ? TimeSpan.FromMilliseconds(60) : TimeSpan.FromMilliseconds(20);
 
         rig.Scheduler.WakeAt(slow, rig.Now);
         rig.Scheduler.WakeAt(fastA, rig.Now);
         rig.Scheduler.WakeAt(fastB, rig.Now);
         rig.Pump();
+        var violationsBefore = ExecutionBoundary.ViolationCount;
 
         await rig.WaitUntilAsync(() => rig.Executor.Finishes.Count >= 3, TimeSpan.FromSeconds(15));
 
-        // Deterministic gates (no wall-clock comparison — load-immune):
-        // 1) The slow bot's step overlapped at least one fast bot's step in
-        //    time — a serialized scheduler can never produce an overlap.
-        // 2) ≥2 steps ran concurrently overall.
-        var slowOverlapsFast = rig.Executor.Overlaps.Any(o =>
-            (o.A == slow && (o.B == fastA || o.B == fastB)) ||
-            (o.B == slow && (o.A == fastA || o.A == fastB)));
-        await Assert.That(slowOverlapsFast).IsTrue();
-        await Assert.That(rig.Executor.MaxConcurrentOverall).IsGreaterThanOrEqualTo(2);
-        await Assert.That(rig.Scheduler.GetMetrics().WorkerUtilization).IsGreaterThan(0);
+        // Deterministic gates:
+        // 1) No two steps ever overlapped in time — serialized execution.
+        // 2) The execution-boundary assertion never fired (every step ran on
+        //    the drain thread — the boundary — at the moment it executed).
+        await Assert.That(rig.Executor.MaxConcurrentOverall).IsEqualTo(1);
+        await Assert.That(rig.Executor.Overlaps).IsEmpty();
+        await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(violationsBefore);
+        await Assert.That(rig.Scheduler.GetMetrics().TotalStepsRun).IsEqualTo(3);
     }
 
     [Test]
@@ -322,18 +356,24 @@ public class PlayerBotSchedulerTests
 
         rig.Scheduler.WakeAt(bot, rig.Now);
         rig.Pump();
-        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
+        // The lease is held from due-pop until the drain completes the step —
+        // the step now sits in the marshal queue (not yet executed).
 
-        // A second wake arrives while the first step is still in flight.
+        // A second wake arrives while the bot is leased (step queued).
         rig.Scheduler.Wake(bot);
         rig.Pump();
         await Task.Delay(50);
-        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(1); // still only one concurrent step
-        await Assert.That(rig.Executor.MaxConcurrentPerBot[bot]).IsEqualTo(1);
+        // Nothing may execute concurrently: the step is still leased; the
+        // wake folded into the pending wake.
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(0);
+        await Assert.That(rig.Executor.MaxConcurrentPerBot.TryGetValue(bot, out var m) ? m : 0).IsEqualTo(0);
 
-        // After the first step completes, the pending wake is honored — the
-        // re-scheduled due entry is popped by the next scan cycle.
-        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().DueQueueDepth == 1);
+        // The drain executes the step; on completion the pending wake is
+        // honored — exactly ONE re-scheduled due entry, no duplicate.
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
+        await Assert.That(rig.Executor.MaxConcurrentPerBot[bot]).IsEqualTo(1);
+        await Assert.That(rig.Scheduler.GetMetrics().DueQueueDepth).IsEqualTo(1);
+
         rig.Pump();
         await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 2);
         await Assert.That(rig.Executor.MaxConcurrentPerBot[bot]).IsEqualTo(1);
@@ -515,18 +555,23 @@ public class PlayerBotSchedulerTests
     }
 
     [Test]
-    public async Task Metrics_ActiveWorkers_TracksConcurrentSteps()
+    public async Task Metrics_ActiveWorkers_ReturnsToZeroAfterStepCompletes()
     {
+        // M5 A1: steps execute synchronously on the execution boundary, so
+        // ActiveWorkers is only transiently > 0 DURING a step (not observable
+        // from the test thread) and is 0 after completion. This asserts the
+        // post-completion state and that busy time was tracked.
         using var rig = new Rig(workerCount: 4);
         var bot = rig.AddActiveBot(1);
-        rig.Executor.DelayFor = _ => TimeSpan.FromMilliseconds(200);
+        rig.Executor.DelayFor = _ => TimeSpan.FromMilliseconds(20);
 
         rig.Scheduler.Wake(bot);
         rig.Pump();
         await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
 
-        await Assert.That(rig.Scheduler.GetMetrics().ActiveWorkers).IsGreaterThanOrEqualTo(1);
-        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().ActiveWorkers == 0);
+        await Assert.That(rig.Scheduler.GetMetrics().ActiveWorkers).IsEqualTo(0);
+        await Assert.That(rig.Scheduler.GetMetrics().WorkerUtilization).IsGreaterThan(0);
+        await Assert.That(rig.Scheduler.GetMetrics().WorkerUtilization).IsLessThanOrEqualTo(1);
     }
 
     #endregion
@@ -534,22 +579,43 @@ public class PlayerBotSchedulerTests
     #region Lifecycle + configuration
 
     [Test]
-    public async Task StopAsync_DrainsQueuedSteps_Gracefully()
+    public async Task StopAsync_CompletedStepsPersist_NewWorkRefused()
     {
         using var rig = new Rig();
         var botA = rig.AddActiveBot(1);
         var botB = rig.AddActiveBot(2);
-        rig.Executor.DelayFor = _ => TimeSpan.FromMilliseconds(50);
+        rig.Executor.DelayFor = _ => TimeSpan.FromMilliseconds(10);
 
         rig.Scheduler.WakeAt(botA, rig.Now);
         rig.Scheduler.WakeAt(botB, rig.Now);
         rig.Pump();
+        // Steps execute on the boundary drain — wait until both ran.
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(botA) == 1 && rig.Executor.CountStarts(botB) == 1);
 
         await rig.Scheduler.StopAsync();
         await Assert.That(rig.Executor.CountStarts(botA)).IsEqualTo(1);
         await Assert.That(rig.Executor.CountStarts(botB)).IsEqualTo(1);
         await Assert.That(rig.Scheduler.IsRunning).IsFalse();
         await Assert.That(rig.Scheduler.Wake(99)).IsFalse(); // stopped → refuse
+    }
+
+    [Test]
+    public async Task StopAsync_UndrainedQueuedSteps_AreDropped_NotExecuted()
+    {
+        // M5 A1: steps only execute on the execution boundary (the game loop).
+        // At shutdown the boundary is gone, so queued-but-undrained steps are
+        // dropped instead of executing off-thread — nothing runs after stop.
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        var violationsBefore = ExecutionBoundary.ViolationCount;
+
+        rig.Scheduler.WakeAt(bot, rig.Now);
+        rig.Pump(); // scan pops the due entry; workers marshal it (async)
+
+        await rig.Scheduler.StopAsync();
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(0);
+        await Assert.That(rig.Scheduler.IsRunning).IsFalse();
+        await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(violationsBefore);
     }
 
     [Test]
@@ -574,6 +640,117 @@ public class PlayerBotSchedulerTests
 
         var dflt = new PlayerBotScheduler(manager, new RecordingExecutor());
         await Assert.That(dflt.WorkerCount).IsEqualTo(4);
+    }
+
+    #endregion
+
+    #region M5 A1 — execution boundary (thread affinity)
+
+    [Test]
+    public async Task BotStep_ExecutesOnTheExecutionBoundaryThread()
+    {
+        // M5 A1 acceptance: "a debug thread-affinity assertion proves zero
+        // Character/world mutation off the single execution boundary".
+        // FAIL-BEFORE: with the old worker-pool execution, steps run on
+        // worker threads — the assertion fires and this test is RED.
+        // PASS-AFTER: steps marshal onto the boundary (the drain) — zero
+        // violations.
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        var violationsBefore = ExecutionBoundary.ViolationCount;
+
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        // Drain once explicitly: pins the boundary and executes the step on
+        // the drain thread. Any step that does NOT run inside a drain (e.g.
+        // a regression to worker-pool execution) fires the assertion.
+        rig.Scheduler.DrainTickQueue();
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
+
+        await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(violationsBefore);
+    }
+
+    [Test]
+    public async Task BotStep_OffBoundaryExecution_IsDetectedAsViolation()
+    {
+        // Detector control: pin the boundary to an impossible thread — even
+        // the correct marshal drain is then off-boundary, so the assertion
+        // MUST fire. Proves the detector itself works (this is the "fail"
+        // half of the fail-before/pass-after evidence).
+        using var rig = new Rig();
+        ExecutionBoundary.SetExecutionThreadForTest(int.MaxValue);
+        var bot = rig.AddActiveBot(1);
+        var violationsBefore = ExecutionBoundary.ViolationCount;
+
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
+
+        await Assert.That(ExecutionBoundary.ViolationCount).IsGreaterThan(violationsBefore);
+    }
+
+    [Test]
+    public async Task TransformWrite_InsideBotStep_OnBoundaryThread_NoViolation()
+    {
+        ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+        var violationsBefore = ExecutionBoundary.ViolationCount;
+        try
+        {
+            var pr = new PositionAndRotation();
+            ExecutionBoundary.EnterBotStep();
+            pr.SetPosition(1f, 2f, 3f);
+            pr.SetRotationDegree(0f, 0f, 45f);
+            pr.Position = new System.Numerics.Vector3(4f, 5f, 6f);
+            pr.Rotation = new System.Numerics.Vector3(0f, 0f, 1f);
+            ExecutionBoundary.ExitBotStep();
+
+            await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(violationsBefore);
+        }
+        finally
+        {
+            ExecutionBoundary.ResetForTest();
+        }
+    }
+
+    [Test]
+    public async Task TransformWrite_InsideBotStep_OffBoundaryThread_Violation()
+    {
+        ExecutionBoundary.SetExecutionThreadForTest(int.MaxValue);
+        var violationsBefore = ExecutionBoundary.ViolationCount;
+        try
+        {
+            var pr = new PositionAndRotation();
+            ExecutionBoundary.EnterBotStep();
+            pr.SetPosition(1f, 2f, 3f);
+            ExecutionBoundary.ExitBotStep();
+
+            await Assert.That(ExecutionBoundary.ViolationCount).IsGreaterThan(violationsBefore);
+        }
+        finally
+        {
+            ExecutionBoundary.ResetForTest();
+        }
+    }
+
+    [Test]
+    public async Task TransformWrite_OutsideBotStep_NoViolation_AnyThread()
+    {
+        // Normal gameplay writes (spawning, packet handlers, loading) happen
+        // on all sorts of threads and must NEVER be flagged — the write-level
+        // assertion is scoped to bot-step execution.
+        ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+        var violationsBefore = ExecutionBoundary.ViolationCount;
+        try
+        {
+            var pr = new PositionAndRotation();
+            pr.SetPosition(1f, 2f, 3f); // no EnterBotStep → no assertion
+            pr.Position = new System.Numerics.Vector3(4f, 5f, 6f);
+            await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(violationsBefore);
+        }
+        finally
+        {
+            ExecutionBoundary.ResetForTest();
+        }
     }
 
     #endregion

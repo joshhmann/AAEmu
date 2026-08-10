@@ -398,6 +398,13 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
 
     public List<T> GetList<T>(List<T> result, uint exclude, float x, float y, float sqrad, bool useModelSize = false) where T : class
     {
+        // M5 A1 (execution boundary, Kimi audit 2026-08-09 race witness): this
+        // overload reads obj.Transform (a position scan) while movement writers
+        // mutate it. The other overloads' snapshot pattern only protects the
+        // _objects ARRAY — the Transform read here is the race. Iterate under
+        // _objectsLock so the whole distance scan is consistent with region
+        // mutation; combined with the marshal (bot steps now run only on the
+        // game-loop thread), the witness is closed on the read side.
         if (typeof(T) == typeof(Character) && Volatile.Read(ref _charactersSize) <= 0)
             return result;
 
@@ -409,8 +416,7 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
             for (var i = 0; i < _objectsSize; i++)
             {
                 var obj = _objects[i];
-                var item = obj as T;
-                if (item == null || obj.ObjId == exclude)
+                if (obj is not T item || obj.ObjId == exclude)
                     continue;
 
                 var finalRad = sqrad;

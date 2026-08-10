@@ -104,6 +104,7 @@ public class PopulationDirectorTests
                 WorkerCount = 4,
                 ScanInterval = TimeSpan.FromHours(1), // loop inert; cycles pumped manually
                 ShutdownTimeout = TimeSpan.FromSeconds(5),
+                SubscribeToTickManager = false, // never touch the process-wide tick in tests
             };
             Scheduler = new PlayerBotScheduler(Manager, Executor, schedulerOptions, Time);
             Scheduler.Start();
@@ -143,6 +144,9 @@ public class PopulationDirectorTests
             var deadline = Stopwatch.StartNew();
             while (!condition())
             {
+                // M5 A1: worker threads only marshal steps to the execution
+                // queue; the drain (the boundary) is what executes them.
+                Scheduler.DrainTickQueue();
                 if (deadline.Elapsed > (timeout ?? TimeSpan.FromSeconds(5)))
                     throw new TimeoutException("rig wait condition not met");
                 await Task.Delay(5);
