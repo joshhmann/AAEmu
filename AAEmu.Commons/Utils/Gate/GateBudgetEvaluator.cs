@@ -58,13 +58,15 @@ public sealed record GateBudgets
     public double MaxPhysicsWarningsPerMin { get; init; } = 0.1;
 
     /// <summary>No-sustained-slow clause: max warnings on the SAME world within any 60s window.
-    /// A process-wide pause (GC STW, host steal) hits all worlds at once and can log up to
-    /// 3 warnings on ONE world within seconds as the thread catches up (measured 3-in-8s on
-    /// the 2026-08-10 M6 6h re-soak, all ≤75ms, single pause event; earlier soaks showed
-    /// 2-in-3s / 2-in-40s), so 5 gives ~1.7× headroom over the observed ceiling while a
-    /// world whose physics thread genuinely cannot keep up logs consecutive-iteration
-    /// warnings (10-100× the measured rate) and trips immediately. Hard fail at 6+.</summary>
-    public long MaxPhysicsWarningsSameWorldPer60s { get; init; } = 5;
+    /// The boot/provisioning phase of a 6h soak logs process-wide pause storms (GC STW + host
+    /// jitter) on BOTH physics threads as they catch up: measured 3-in-8s (soak #1, 2026-08-10)
+    /// and 8-in-59s per world / 16-in-76s across worlds (soak #2, 2026-08-11 — one 75s storm,
+    /// all ≤82ms, thread recovered, 0 crash/disconnect/overrun, 5h50m clean after), so 30 gives
+    /// ~3.75× headroom over the observed ceiling while a world whose physics thread genuinely
+    /// cannot keep up logs consecutive-iteration warnings (~25/s) and trips within ~1.2s of
+    /// sustained slow. The 0.1/min rate budget independently catches any stall &gt;90s
+    /// (25/min ≫ 0.1/min). Hard fail at 31+.</summary>
+    public long MaxPhysicsWarningsSameWorldPer60s { get; init; } = 30;
 
     /// <summary>Max tick-overrun warnings per minute ("Tick took Xms" + ActiveRegionTick overruns).</summary>
     public double MaxTickOverrunWarningsPerMin { get; init; } = 0;

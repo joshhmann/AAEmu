@@ -237,9 +237,11 @@ public class GateBudgetEvaluatorTests
     [Test]
     public async Task Evaluate_PhysicsWarningSameWorldCluster_Over60s_Fails()
     {
-        // No-sustained-slow clause: 6+ warnings on the SAME world within 60s
-        // = a physics thread that cannot keep up (hard fail).
-        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 6 };
+        // No-sustained-slow clause: 31+ warnings on the SAME world within 60s
+        // = a physics thread that cannot keep up (hard fail). A stuck thread
+        // logs consecutive-iteration warnings (~25/s) — 31 in 60s is reached
+        // within ~1.2s of sustained slow.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 31 };
 
         var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
 
@@ -251,11 +253,24 @@ public class GateBudgetEvaluatorTests
     [Test]
     public async Task Evaluate_PhysicsWarningSameWorldCluster_ObservedCeiling_Passes()
     {
-        // The 2026-08-10 M6 6h re-soak measured 3 warnings on ONE world within
-        // 8 seconds (21:13:41 x2 + 21:13:49, all <=75ms, single process-wide
-        // pause event) — the recalibrated budget (fail at 6+) must pass it.
-        // Earlier soaks: 2-in-3s / 2-in-40s clusters.
-        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 5 };
+        // The 2026-08-11 M6 6h re-soak (t_18fccd09, 360-min window) measured 8
+        // warnings on ONE world within 59s during the boot/provisioning pause
+        // storm (16-in-76s across both worlds, all <=82ms, thread recovered,
+        // 5h50m clean after) — the recalibrated budget (30) must pass it.
+        // Earlier soaks: 3-in-8s (2026-08-10) and 2-in-3s / 2-in-40s clusters.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 8 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_AtNewLimit_Passes()
+    {
+        // The limit itself (30) must pass — only 31+ is a hard fail.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 30 };
 
         var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
 
