@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-10 03:35 PDT · by Nei
-Branch of record: develop @ 6c8515611
+Updated: 2026-08-10 22:25 PDT · by Nei
+Branch of record: develop @ 5ed5d6493
 
 ## Milestone state
 
@@ -41,7 +41,18 @@ presence-demo compose overlay captured in-repo
 - **In-client visual acceptance: ✅ PASS (wire-level) — rendered screenshots pending Josh's client** — real X2 protocol client session received unit-state for all 3 Citizen bots (17× 0x69 distinct objIds/names + 164× 0x6C, all walking, t_509ef8c2); Josh sighting ACCEPTED 08-09. No Windows client in lab → rendered screenshot confirmation awaits Josh. ⚠️ Defect found: adopt-heal force-stamps demo blob → looks collapse to 1 on reboot (t_555ed207; fix pushed fix/adopt-heal-keeps-factory-look @ cdf6d4a62, awaiting Rei gate; prod needs re-provision after merge).
 - **6h/10-bot soak: ⚠️ FAIL (numeric budget) — operational criteria all PASS** — full 6h window completed (attempt 3): 10/10 bots connected, 0 crash, 0 disconnect, RSS flat 3418-3453MB, tick p95 0.02ms, DB writes 262/500 — but physics slow-thread warnings 0.03/min vs 0 limit (11 transient single-frame WARNs, first = boot spike 459ms 21:25:18 PDT). Regression card t_eecc5604 filed: RCA or budget recalibration (precedent t_2006451f). Evidence: soak-report-20260810.md + gate-10-soak-20260810-102503.md (attached t_1ed9881f). Caveat: PlayerBotScheduler NOT enabled this run — scheduler-driven soak still required if M6 exit mandates it.
 
-**E2E gates (GateSoakRunner, real Login+Game+MySQL, canonical data — evidence /root/aaemu-e2e/logs/):**
+**G2-A4 save path (1,000-bot item): 🔶 implementation MERGED — acceptance measurement open**
+SaveManager dirty-tracking merged to fork develop @ 5ed5d6493 (2026-08-10, t_8c18eb1c,
+Rei gate t_53025996 ACCEPT): the periodic autosave now persists ONLY dirty characters
+(Character.IsDirty/MarkDirty chokepoints; SaveManager.GetCharactersToSave;
+DoSave(saveAllCharacters) force-all on shutdown + /save), closing the Kimi audit
+finding "DoSave full-table sync save on every cycle" (t_0fda3cd3 → ROADMAP G2-A4).
+Evidence: SaveManagerTests 10/10 (incl. 1,000-character simulated load), merged-tree
+gate 1575/0/1, M2bE2e restart-persistence 5/5 (t_2ee39438 — disconnect save path
+untouched). Remaining for A4: autosave p95 < 2s at 250 characters + zero _isSaving
+skips at the milestone gate.
+
+## E2E gates (GateSoakRunner, real Login+Game+MySQL, canonical data — evidence /root/aaemu-e2e/logs/):
 - **10-bot correctness: PASS** (2026-08-09) — tick invoke p95 0.014ms /
   max 0.20ms (limits 100/250), ActiveRegionTick worst 18ms / 0 overruns,
   DB writes 276.53 (limit 500), 0 physics/tick-overrun warnings.
@@ -59,7 +70,7 @@ presence-demo compose overlay captured in-repo
 | Builds | Tai | presence-demo image aaemu-game:presence-demo live via hotfix3 overlay; overlay now in-repo | ✅ deployed |
 | Verifies | Rei | e2e gates 10-bot correctness + 25-bot stability PASS (2026-08-09) | ✅ done |
 | Dispatches | Mai | presence-demo hotfix chain deployed (hotfix3 overlay) | ✅ done |
-| Tracks | Nei | STATUS.md M6.6 closeout 08-10 — parity audit CLOSED, in-client wire PASS, soak operational PASS / budget FAIL (t_eecc5604) | ✅ this commit |
+| Tracks | Nei | post-merge tracking 08-10 — SaveManager dirty-tracking (5ed5d6493) into SCORECARD/ISSUES/STATUS + ROADMAP A4; M6.6 closeout (t_eecc5604) | ✅ this commit |
 
 ## Open tasks (kanban, AAEmu lane)
 
@@ -81,6 +92,10 @@ presence-demo compose overlay captured in-repo
 
 ## Last scorecard update
 
+- 2026-08-10 — this commit: post-merge tracking for SaveManager dirty-tracking
+  (merged 5ed5d6493, t_8c18eb1c / Rei gate t_53025996 ACCEPT) — SCORECARD.md fork-fix
+  entry + PROG-01 save-path pointer, ISSUES.md AUDIT-001 closure, STATUS.md G2-A4
+  note, ROADMAP.md A4 implementation annotation.
 - 2026-08-10 — this commit: STATUS.md M6.6 closeout — parity audit
   t_98415169 CLOSED (seeding gaps live-verified 45cd3f3a9), in-client
   wire-level PASS (t_509ef8c2) with appearance defect t_555ed207 pending

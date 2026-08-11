@@ -47,7 +47,7 @@ Graphify and must be promoted by an end-to-end exploration.
 
 | ID | Mechanic / scoped scenario | First gate | C | W | H | A | R | S | Evidence / next audit |
 |---|---|---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
-| PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline |
+| PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline; save path: SaveManager dirty-tracking merged 5ed5d6493 (fork fix, SaveManagerTests 10/10) |
 | QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 1 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; `next-missing-776-777.md` (330/776/777 COMPONENT_NEXT_MISSING → 0 via QuestDataOverlay, Rei gate PASS t_d8a8c798); `act-ref-2145-rig.md` (2145→2146 + sibling 1960→1961 ACT_REF_MISSING_QUEST → 0 via `2026-08-05-prune-act-ref-missing-2145.sql`, Rei gate PASS t_53baa876); `no-start-cluster-1533-1548-evidence.md` (QUEST_NO_START cluster 1533–1548 → 0 via `2026-08-05-drop-no-start-cluster.sql` — 23 contexts/25 components/42 acts dropped, Rei gate PASS t_f884383f); `no-components-1391-rig.md` (QUEST_NO_COMPONENTS 1391 empty template → dropped via `2026-08-05-drop-1391.sql` — 1 context dropped, drift −1, Rei gate PASS t_a56e8e2d); real restart still required |
 | CTRL-01 | Movement, targeting, interaction, control-state recovery | M2/M5 | U | U | U | U | U | U | Actor-contract spike |
 | COMBAT-01 | PvE combat, death, resurrection, loot | M2/M5 | U | 1 | U | U | U | U | `SkillManager`; combat audit |
@@ -300,6 +300,26 @@ zones required by a milestone or an observed defect.
   intact (granted before the call), no bogus General row persisted. 6 new
   `CharacterAbilitiesTests` (3 General-slot no-throw + None + seeded-ability controls).
   Full gate 1127/1127. Catalog: bugs/012-abilities-general-key.md.
+
+- **A4 save-path fix — SaveManager dirty-tracking (MERGED to fork develop @ 5ed5d6493, 2026-08-10 — t_8c18eb1c, Rei gate ACCEPT t_53025996).**
+  Kimi audit finding (t_0fda3cd3, ROADMAP G2-A4): `SaveManager.DoSave` ran a full
+  REPLACE for every in-world character every cycle (SaveManager.cs:94) — at 1,000 bots
+  the periodic save rewrote ~1,000 full character rows + sub-collections (options,
+  abilities, skills, quests, mates, …) each cycle even when nothing changed. Fix
+  (a0277ad07, 20 files +404/−15): per-character dirty tracking — `Character.IsDirty`
+  (default true: first cycle persists everyone, then settles into dirty-only) +
+  `MarkDirty()` at every save-relevant chokepoint (SetPosition + bot movement paths,
+  Hp/Mp value-compare props, Money/Money2/Experience, options/action slots/quests/
+  skills/abilities/actability/appellations/portals/friends/blocked/mates, persistable
+  buffs); `Save()` clears IsDirty on success; `SaveDirectlyToDatabase` stays
+  unconditional (disconnect path unchanged — E2E restart-persistence contract intact).
+  `DoSave(bool saveAllCharacters = false)` force-all seam — shutdown (StopAsync /
+  ShutdownTask) and `/save` + `/shutdown` persist everything; `GetCharactersToSave()`
+  extracted as a testable seam. Evidence: SaveManagerTests 10/10 (incl. 1,000-character
+  simulated load: all-clean → 0, touched-subset → dirty-only, force-all → all); branch
+  gate 1481/0/1; merged-tree gate 1575/0/1; M2bE2e restart-persistence 5/5
+  (t_2ee39438). A4 acceptance (autosave p95 < 2s at 250 chars, zero `_isSaving` skips)
+  remains a milestone-gate measurement.
 
 - **M1-5 — quest scenario harness census COMPLETE (feat/quest-scenario-harness, 2026-08-04).**
   Harness (driver + manifest loader + tier runner) drives every manifest quest through

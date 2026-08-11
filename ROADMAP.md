@@ -1045,6 +1045,9 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   trigger. Acceptance: 1,000-bot wake storm transition p99 < 100ms.
 - A4 (M) Save scalability: per-character dirty tracking + batching.
   Acceptance: autosave p95 < 2s at 250 characters; zero _isSaving skips.
+  ✅ implementation merged 5ed5d6493 (2026-08-10, t_8c18eb1c, Rei gate
+  t_53025996 ACCEPT — dirty-only periodic saves, force-all on shutdown + /save);
+  acceptance measurement still a milestone-gate item.
 - A5 (L) TRUE DORMANCY — the pivotal item: Dormant = DB row + metadata only,
   no Character materialized, no region presence, no per-second tick; Tier 3 =
   DB-driven scheduled simulation (harvest/travel timers advance while nobody

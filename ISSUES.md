@@ -26,6 +26,12 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-014 | quest completed-block id wraps for quest ids >= 4,194,304 — ResetQuests recomputes a wrapped id, daily reset never clears, AddQuest refuses with QuestDailyLimit forever (live: 8000004) | FIXED — branch fix/bug-014-quest-completed-block-uint (2026-08-10) |
 | BUG-015 | CharacterQuests.Save NREs on a null completed-block entry — concurrent mutation during enumeration yields a null block, disconnect save aborts BEFORE the active-quest REPLACE loop, quest rows lost | FIXED — branch fix/quest-save-null-guard (2026-08-10) |
 
+## Audit findings (Kimi deep-dive 2026-08-09, t_0fda3cd3)
+
+| ID | Finding | Status |
+|----|---------|--------|
+| AUDIT-001 | SaveManager.DoSave full-table sync save on every cycle — every in-world character REPLACEd each autosave tick (SaveManager.cs:94); at 1,000-bot scale the periodic save rewrites the whole character surface every cycle | CLOSED — dirty-tracking merged 5ed5d6493 (2026-08-10, t_8c18eb1c, Rei gate t_53025996 ACCEPT): dirty-only periodic saves, force-all retained on shutdown + /save |
+
 ## Production state (2026-08-02)
 
 - **Website:** https://archeageslums.asslorde.com — nginx :8081, register API (rate-limited 5/10min), downloads, patch manifest
