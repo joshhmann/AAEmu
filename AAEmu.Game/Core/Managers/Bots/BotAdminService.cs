@@ -34,6 +34,13 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// </summary>
 public sealed record BotAdminCommandResult(bool Success, string Message);
 
+/// <summary>
+/// Structured per-bot snapshot for the control API/MCP surface (P1
+/// t_2ea94a20) — the machine-readable sibling of the GM command's
+/// human-readable <see cref="BotAdminService.List"/> output.
+/// </summary>
+public sealed record BotStatusRecord(string Name, uint Id, string State, string Fidelity, float X, float Y, float Z);
+
 public sealed class BotAdminService
 {
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
@@ -134,6 +141,29 @@ public sealed class BotAdminService
         }
 
         return new BotAdminCommandResult(true, string.Join("\n", lines));
+    }
+
+    /// <summary>
+    /// Structured registry snapshot (control API/MCP surface — t_2ea94a20):
+    /// one record per registered bot with embodied state, fidelity and
+    /// position, sorted by name. The GM command's <see cref="List"/> keeps
+    /// its human-readable string; both frontends share this single core.
+    /// </summary>
+    public IReadOnlyList<BotStatusRecord> ListStatus()
+    {
+        var runtimes = _manager.GetAll();
+        return [.. runtimes
+            .OrderBy(r => r.Character.Name)
+            .Select(r =>
+            {
+                var pos = r.Character.Transform.World.Position;
+                return new BotStatusRecord(
+                    r.Character.Name,
+                    r.CharacterId,
+                    r.State.ToString(),
+                    _director.GetFidelity(r.CharacterId).ToString(),
+                    pos.X, pos.Y, pos.Z);
+            })];
     }
 
     /// <summary>
