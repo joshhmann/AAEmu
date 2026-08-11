@@ -77,7 +77,7 @@ public class QuestCheckTimerRigTests
         var quest = QuestScenarioDriver.BuildQuest(manifest);
         var character = (Character)quest.Owner;
         quest.StartQuest();
-        character.Quests.ActiveQuests.Add(quest.TemplateId, quest);
+        character.Quests.ActiveQuests.TryAdd(quest.TemplateId, quest);
         quest.RunCurrentStep();
 
         // Timer registered at quest construction (InitializeAction -> AddQuestTimer)

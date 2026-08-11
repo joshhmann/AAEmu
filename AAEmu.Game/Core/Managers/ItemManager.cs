@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Concurrent;
+using System.Data;
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers.Id;
@@ -73,9 +74,9 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
     private DateTime LastTimerCheck { get; set; }
     private object ItemTimerLock { get; set; }
 
-    private Dictionary<ulong, Item> _allItems;
+    private ConcurrentDictionary<ulong, Item> _allItems;
     private List<ulong> _removedItems;
-    private Dictionary<ulong, ItemContainer> _allPersistentContainers;
+    private ConcurrentDictionary<ulong, ItemContainer> _allPersistentContainers;
     private bool _loadedUserItems;
     // private Dictionary<ulong, Item> _timerSubscriptionsItems;
 
@@ -1480,10 +1481,9 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
             command.Connection = connection;
             command.Transaction = transaction;
 
-            lock (_allPersistentContainers)
+            // _allPersistentContainers is a ConcurrentDictionary: snapshot enumeration is thread-safe
+            foreach (var c in _allPersistentContainers.Values)
             {
-                foreach (var (_, c) in _allPersistentContainers)
-                {
                     if (c.ContainerType == SlotType.None)
                         continue; // Skip the BuyBack container
 
@@ -1518,7 +1518,6 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
                         Logger.Error(e);
                     }
                 }
-            }
         }
 
         using (var command = connection.CreateCommand())
@@ -1526,10 +1525,9 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
             command.Connection = connection;
             command.Transaction = transaction;
 
-            lock (_allItems)
+            // _allItems is a ConcurrentDictionary: snapshot enumeration is thread-safe
+            foreach (var (itemId, item) in _allItems)
             {
-                foreach (var (itemId, item) in _allItems)
-                {
                     if (item == null)
                         continue;
 
@@ -1620,7 +1618,6 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
                     }
                     command.Parameters.Clear();
                 }
-            }
         }
 
         return (updateCount, deleteCount, containerUpdateCount);
@@ -1668,7 +1665,17 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
         var newContainer = ItemContainer.CreateByTypeName(newContainerType, characterId, slotType, slotType != SlotType.None, parentUnit);
 
         if (slotType != SlotType.None)
-            _allPersistentContainers.Add(newContainer.ContainerId, newContainer);
+        {
+            var registered = _allPersistentContainers.GetOrAdd(newContainer.ContainerId, newContainer);
+            if (!ReferenceEquals(registered, newContainer))
+            {
+                // Lost a creation race — another thread registered this container id first.
+                // Hand out the winner and release the orphaned container's id.
+                if (newContainer.ContainerId > 0)
+                    containerIdManager.ReleaseId((uint)newContainer.ContainerId);
+                return registered;
+            }
+        }
 
         if (mateId > 0)
             newContainer.MateId = mateId;
@@ -1679,7 +1686,8 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
     public CofferContainer NewCofferContainer(uint characterId)
     {
         var coffer = new CofferContainer(characterId, true);
-        _allPersistentContainers.Add(coffer.ContainerId, coffer);
+        if (!_allPersistentContainers.TryAdd(coffer.ContainerId, coffer))
+            Logger.Error($"Failed to register coffer container with ID {coffer.ContainerId}, possible duplicate entries!");
         return coffer;
     }
 
@@ -1704,12 +1712,8 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
         var idToRemove = (uint)container.ContainerId;
         container.ContainerId = 0;
 
-        bool res;
-        lock (_allPersistentContainers)
-        {
-            res = _allPersistentContainers.Remove(idToRemove);
-            containerIdManager.ReleaseId(idToRemove);
-        }
+        var res = _allPersistentContainers.TryRemove(idToRemove, out _);
+        containerIdManager.ReleaseId(idToRemove);
 
         // Remove deleted container from DB
         using var connection = MySQL.CreateConnection();
@@ -1759,7 +1763,7 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
                     container.ContainerSize = containerSize;
                     container.MateId = containerMateId;
 
-                    _allPersistentContainers.Add(container.ContainerId, container);
+                    _allPersistentContainers.TryAdd(container.ContainerId, container);
                     container.IsDirty = false;
                 }
             }
@@ -1942,10 +1946,8 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
             if (itemId != 0 && !_removedItems.Contains(itemId))
                 _removedItems.Add(itemId);
         }
-        lock (_allItems)
-        {
-            _allItems.Remove(itemId);
-        }
+
+        _allItems.TryRemove(itemId, out _);
         // This should be the only place where ItemId ReleaseId should be called directly
         itemIdManager.ReleaseId((uint)itemId);
     }

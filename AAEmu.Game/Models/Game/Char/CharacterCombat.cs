@@ -467,7 +467,7 @@ public partial class Character
     {
         var updateTasks = new List<ItemTask>();
         var destroyedItems = new List<Item>();
-        foreach (var item in Equipment.Items)
+        foreach (var item in Equipment.GetItemsSnapshot())
         {
             if (item is not EquipItem equipItem)
                 continue;

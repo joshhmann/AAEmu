@@ -1020,9 +1020,8 @@ public class HousingManager(
                 // TODO: Check if items should stay in the coffer when house is sold.
                 // Move it to new owner's SystemContainer first so they don't get destroyed
                 var ownerSystemContainer = itemManager.GetItemContainerForCharacter(house.OwnerId, SlotType.System, null, 0);
-                for (var i = coffer.ItemContainer.Items.Count - 1; i >= 0; i--)
+                foreach (var cofferItem in coffer.ItemContainer.GetItemsSnapshot())
                 {
-                    var cofferItem = coffer.ItemContainer.Items[i];
                     //if (cofferItem.HasFlag(ItemFlag.SoulBound) || forceRestoreAllDecor)
                     {
                         ownerSystemContainer?.AddOrMoveExistingItem(ItemTaskType.Invalid, cofferItem);

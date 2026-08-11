@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 
 using AAEmu.Commons.Utils;
@@ -563,9 +564,9 @@ public class BotAdminServiceTests
                 Mock.Of<IWorldManager>().Object);
             var containerField = typeof(ItemManager).GetField("_allPersistentContainers",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var existing = containerField?.GetValue(itemManager) as Dictionary<ulong, ItemContainer>;
+            var existing = containerField?.GetValue(itemManager) as ConcurrentDictionary<ulong, ItemContainer>;
             if (existing == null)
-                containerField?.SetValue(itemManager, new Dictionary<ulong, ItemContainer>());
+                containerField?.SetValue(itemManager, new ConcurrentDictionary<ulong, ItemContainer>());
             field?.SetValue(null, itemManager);
         }
         ContainerIdManager.Instance.Initialize(false);

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
@@ -180,9 +181,9 @@ public class HeadlessSessionProvisioningTests
         // registry would NRE the ordinary Character construction path.
         var containerField = typeof(ItemManager).GetField("_allPersistentContainers",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        var existing = containerField?.GetValue(itemManager) as Dictionary<ulong, ItemContainer>;
+        var existing = containerField?.GetValue(itemManager) as ConcurrentDictionary<ulong, ItemContainer>;
         if (existing == null)
-            containerField?.SetValue(itemManager, new Dictionary<ulong, ItemContainer>());
+            containerField?.SetValue(itemManager, new ConcurrentDictionary<ulong, ItemContainer>());
 
         return itemManager;
     }

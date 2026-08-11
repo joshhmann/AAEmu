@@ -36,7 +36,7 @@ public class ShowInventory : ICommand
         {
             var targetContainer = unit.Equipment;
             var templateName = "Unit";
-            foreach (var item in targetContainer.Items.OrderBy(x => x.Slot).ThenBy(x => x.CreateTime).ToList())
+            foreach (var item in targetContainer.GetItemsSnapshot().OrderBy(x => x.Slot).ThenBy(x => x.CreateTime).ToList())
             {
                 if (unit is Npc npc)
                 {
@@ -55,7 +55,7 @@ public class ShowInventory : ICommand
             }
 
             CommandManager.SendNormalText(this, messageOutput,
-                $"[{templateName}][{targetContainer.ContainerType}] {targetContainer.Items.Count} entries");
+                $"[{templateName}][{targetContainer.ContainerType}] {targetContainer.GetItemsSnapshot().Count} entries");
             return;
         }
         else
@@ -93,7 +93,7 @@ public class ShowInventory : ICommand
                                    targetContainer.ContainerType == SlotType.Bank;
                 var lastSlotNumber = -1;
                 var hasSlotErrors = 0;
-                foreach (var item in targetContainer.Items.OrderBy(x => x.Slot).ThenBy(x => x.CreateTime).ToList())
+                foreach (var item in targetContainer.GetItemsSnapshot().OrderBy(x => x.Slot).ThenBy(x => x.CreateTime).ToList())
                 {
                     var additionalErrors = string.Empty;
                     var slotName = targetContainer.ContainerType.ToString() + "-" + item.Slot.ToString();
@@ -132,7 +132,7 @@ public class ShowInventory : ICommand
                 }
 
                 CommandManager.SendNormalText(this, messageOutput,
-                    $"[|nd;{targetPlayer.Name}|r][{targetContainer.ContainerType}] {targetContainer.Items.Count} entries");
+                    $"[|nd;{targetPlayer.Name}|r][{targetContainer.ContainerType}] {targetContainer.GetItemsSnapshot().Count} entries");
             }
             else
             {

@@ -208,7 +208,7 @@ public class HousingStorageFurnitureTests
             Mock.Of<ILocalizationManager>().Object,
             Mock.Of<ITaskManager>().Object,
             Mock.Of<IWorldManager>().Object);
-        SetPrivateField(itemManager, "_allPersistentContainers", new Dictionary<ulong, ItemContainer>());
+        SetPrivateField(itemManager, "_allPersistentContainers", new ConcurrentDictionary<ulong, ItemContainer>());
         SetPrivateField(itemManager, "_templates", new Dictionary<uint, ItemTemplate>());
         SetSingletonInstance(itemManager);
     }

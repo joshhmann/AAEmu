@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using AAEmu.Commons.Network;
 using AAEmu.Commons.Utils;
@@ -457,8 +458,8 @@ public class BotBodyPartEquipmentTests
         // _allPersistentContainers: the Inventory ctor resolves
         // GetItemContainerForCharacter against it — a null registry NREs the
         // ordinary Character construction path.
-        SetPrivateField(itemManager, "_allPersistentContainers", new Dictionary<ulong, ItemContainer>());
-        SetPrivateField(itemManager, "_allItems", new Dictionary<ulong, Item>());
+        SetPrivateField(itemManager, "_allPersistentContainers", new ConcurrentDictionary<ulong, ItemContainer>());
+        SetPrivateField(itemManager, "_allItems", new ConcurrentDictionary<ulong, Item>());
         SetPrivateField(itemManager, "_removedItems", new List<ulong>());
 
         // _templates: ItemManager.Create resolves the demo item templates.

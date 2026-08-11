@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 
 using AAEmu.Game.Models.Game.Char;
@@ -48,15 +49,15 @@ public class CharacterQuestsSaveNullEntryRigTests
     {
         var field = typeof(CharacterQuests).GetField(
             "<CompletedQuests>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
-        var dict = (Dictionary<uint, CompletedQuest>)field!.GetValue(quests)!;
-        dict.Add(blockId, null!);
+        var dict = (ConcurrentDictionary<uint, CompletedQuest>)field!.GetValue(quests)!;
+        dict.TryAdd(blockId, null!);
     }
 
     /// <summary>Injects a null entry into the public ActiveQuests dictionary — the
     /// same artifact class in the active-quest REPLACE loop.</summary>
     private static void InjectNullActiveQuest(CharacterQuests quests, uint questId)
     {
-        quests.ActiveQuests.Add(questId, null!);
+        quests.ActiveQuests.TryAdd(questId, null!);
     }
 
     /// <summary>
