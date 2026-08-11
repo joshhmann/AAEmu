@@ -373,25 +373,18 @@ public sealed class House : Unit
 
     public override bool AllowedToInteract(Character player)
     {
-        if (Template.AlwaysPublic)
-            return base.AllowedToInteract(player);
-        if (CurrentStep != -1) // unfinished houses can't be used to private store, so always true
-            return base.AllowedToInteract(player);
-        switch (Permission)
-        {
-            case HousingPermission.Private:
-                if (player.Id == OwnerId)
-                    return base.AllowedToInteract(player);
-                var ownerAccount = NameManager.Instance.GetCharacterAccount(OwnerId);
-                return player.AccountId == ownerAccount && base.AllowedToInteract(player);
-            case HousingPermission.Family when player.Family > 0:
-                return FamilyManager.Instance.GetFamily(player.Family).Members.Any(x => x.Id == OwnerId);
-            case HousingPermission.Guild when (player.Expedition?.Id > 0):
-                return player.Expedition.Members.Any(x => x.CharacterId == OwnerId);
-            case HousingPermission.Public:
-            default:
-                return base.AllowedToInteract(player);
-        }
+        // AlwaysPublic templates and unfinished houses are interactable by everyone —
+        // short-circuit BEFORE the permission model runs.
+        if (Template?.AlwaysPublic == true || CurrentStep != -1)
+            return true;
+
+        // The resolver must be a LAMBDA, not a method group: a method group on
+        // FamilyManager.Instance evaluates the singleton eagerly at argument-build
+        // time (touching FamilyManager even for Private/Guild/Public houses, where
+        // the resolver is never invoked). The lambda defers the lookup to the only
+        // branch that needs it (HousingPermission.Family).
+        return HousingPlacementValidator.CanInteract(this, player, NameManager.Instance,
+            id => FamilyManager.Instance.GetFamilyOrDefault(id));
     }
 
     public override Character GetOwnerCharacter()
