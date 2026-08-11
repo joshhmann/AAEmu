@@ -81,7 +81,8 @@ Notes:
 | Scheduler max wake latency | ≤ 1000 ms | |
 | Scheduler step failures | 0 | any throw is red |
 | DB writes | ≤ 500/min/embodied-char | catches AI-step-loop writes (calibrated: 277 measured on stage-10 golden route @ AutoSave 0.2; denominator = network bots + presence citizens when `AAEMU_PRESENCE_DEMO=1`) |
-| Physics warnings | 0/min | physics thread running slow |
+| Physics warnings | ≤ 0.1/min | physics thread running slow (calibrated: 0.031/min 6h soak pre-fix, 0.067/min post-fix — t_eecc5604; 0.1 ≈ 1.5-3.3× headroom) |
+| Physics warnings same-world | ≤ 30 in any 60s | no-sustained-slow clause: 31+ warnings on one world within 60s = thread cannot keep up (hard fail; ceilings 3-in-8s on the 2026-08-10 re-soak and 8-in-59s per world on the 2026-08-11 360-min re-soak boot storm → 30 ≈ 3.75× headroom) |
 | Tick overrun warnings | 0/min | "Tick took" / over-budget lines |
 
 Budgets live in `AAEmu.Commons/Utils/Gate/GateBudgetEvaluator.cs`

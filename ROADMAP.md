@@ -551,6 +551,30 @@ profiling. M6.6 shipped consumables without currency — the exception is
 recorded here; either Josh approves it standing or a follow-up card seeds
 currency.
 
+**Physics slow-thread budget recalibrated (2026-08-10/11, t_18fccd09):** the gate's
+physics-warning budget is now ≤0.1/min + a no-sustained-slow clause (≤30
+warnings on the SAME world within any 60s window; 31+ = hard fail). Rationale:
+the detector (upstream stock, PR #1253) measures wall-clock inter-iteration
+gap on a thread that sleeps ~40ms and steps a zero-body world, so boot GC +
+host scheduling jitter trip it regardless of physics load. Measured 0.031/min
+(11 warnings / 6h soak, pre-GC-fix) and 0.067/min (4 warnings / 60 min,
+post-fix, one 3s background-GC burst) with 0 crash/disconnect/region-overrun
+— 0.1 gives ~1.5-3.3× headroom while a real overload (10-100× the measured
+rate) still fails. Same-world ceilings measured on the 6h re-soaks: 3-in-8s
+(2026-08-10, one pause event) and 8-in-59s per world / 16-in-76s across
+worlds (2026-08-11 360-min re-soak, one 75s provisioning/GC storm, all ≤82ms,
+thread recovered, 5h50m clean after) → clause at 30 ≈ 3.75× headroom; a
+genuinely stuck physics thread logs consecutive-iteration warnings (~25/s)
+and trips within ~1.2s. The 360-min re-soak additionally showed the STRICT H2
+load budgets (100ms region ceiling, 0 tick-overrun tolerance) false-RED on
+the SAME storm (one 105ms region pass, 2 overrun warnings, deferred 0
+characters) — the 10-bot idle soak now uses stage-specific SoakBudgets
+(region ceiling 200ms ≈ 1.9×, tick-overrun rate 0.1/min ≈ 18×) while the
+25/50-bot LOAD stages keep the strict budgets. In-code rationale mirrors the
+DB-write budget precedent (t_2006451f / t_b4eb35e9). Fix attempt first (GC
+latency tuning, t_eecc5604, merged) per Josh's ruling; recalibration is the
+recorded fallback.
+
 **Detail (2026-08-09 audit):** M6 exit is blocked on **A1** (execution
 boundary — bot steps off the game loop violate M5's core rule). Added exit
 requirements: (a) restart-persistence scenario per the standing rule —

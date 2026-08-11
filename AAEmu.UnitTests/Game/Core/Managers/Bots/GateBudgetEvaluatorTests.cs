@@ -26,6 +26,7 @@ public class GateBudgetEvaluatorTests
         SchedulerMaxWakeLatencyMs = 88,
         DbWrites = 2500,          // 50/min/bot
         PhysicsWarnings = 0,
+        MaxSameWorldPhysicsWarningsPer60s = 0,
         TickOverrunWarnings = 0
     };
 
@@ -209,7 +210,7 @@ public class GateBudgetEvaluatorTests
     [Test]
     public async Task Evaluate_PhysicsWarningRateOverBudget_Fails()
     {
-        // 5 min window, 6 warnings → 1.2/min > 0.
+        // 5 min window, 6 warnings → 1.2/min > 0.1 (recalibrated budget).
         var s = BaseSnapshot() with { PhysicsWarnings = 6 };
 
         var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
@@ -217,6 +218,77 @@ public class GateBudgetEvaluatorTests
         var v = verdicts.Single(x => x.Name == "Physics warnings");
         await Assert.That(v.Passed).IsFalse();
         await Assert.That(v.Measured).IsEqualTo(1.2);
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningRate_SoakMeasuredRate_Passes()
+    {
+        // Post-fix 60-min soak measured 4 warnings / 60 min = 0.067/min
+        // (t_eecc5604 run B) — must pass the recalibrated 0.1/min budget.
+        var s = BaseSnapshot() with { WindowMinutes = 60, PhysicsWarnings = 4 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings");
+        await Assert.That(v.Passed).IsTrue();
+        await Assert.That(Math.Abs(v.Measured - 0.067) < 0.001).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_Over60s_Fails()
+    {
+        // No-sustained-slow clause: 31+ warnings on the SAME world within 60s
+        // = a physics thread that cannot keep up (hard fail). A stuck thread
+        // logs consecutive-iteration warnings (~25/s) — 31 in 60s is reached
+        // within ~1.2s of sustained slow.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 31 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsFalse();
+        await Assert.That(v.Detail.Contains("cannot keep up")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_ObservedCeiling_Passes()
+    {
+        // The 2026-08-11 M6 6h re-soak (t_18fccd09, 360-min window) measured 8
+        // warnings on ONE world within 59s during the boot/provisioning pause
+        // storm (16-in-76s across both worlds, all <=82ms, thread recovered,
+        // 5h50m clean after) — the recalibrated budget (30) must pass it.
+        // Earlier soaks: 3-in-8s (2026-08-10) and 2-in-3s / 2-in-40s clusters.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 8 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_AtNewLimit_Passes()
+    {
+        // The limit itself (30) must pass — only 31+ is a hard fail.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 30 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_TwoInWindow_Passes()
+    {
+        // Observed soak clusters (2026-08-10): 2 warnings in 3s and 2 in 40s
+        // on one world — process-wide pauses, thread recovered — must pass.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 2 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsTrue();
     }
 
     [Test]

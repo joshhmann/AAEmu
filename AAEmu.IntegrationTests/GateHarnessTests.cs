@@ -86,7 +86,7 @@ public class GateHarnessTests
         if (!int.TryParse(soakEnv, out var soakMinutes) || soakMinutes <= 0)
             throw new InvalidOperationException($"GATE_SOAK_MINUTES must be a positive integer, got '{soakEnv}'");
 
-        var stage = GateStages.Stage10 with { Name = "10-soak", SoakMinutes = soakMinutes };
+        var stage = GateStages.Stage10 with { Name = "10-soak", SoakMinutes = soakMinutes, Budgets = GateStages.SoakBudgets };
         var result = await GateSoakRunner.RunStageAsync(stage);
         Assert.True(result.Passed, result.Detail + "\nEvidence: " + result.EvidencePath);
     }
