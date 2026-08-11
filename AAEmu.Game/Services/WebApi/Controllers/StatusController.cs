@@ -9,7 +9,10 @@ namespace AAEmu.Game.Services.WebApi.Controllers;
 /// </summary>
 internal class StatusController : BaseController
 {
-    [WebApiGet("/status")]
+    // Anchored so it cannot prefix-match other endpoints whose URL ends in
+    // "/status" (e.g. GET /api/bots/status — the unanchored form collided
+    // with the bot control status route, t_2ea94a20).
+    [WebApiGet("^/status$")]
     public HttpResponse GetStatus(HttpRequest request)
     {
         var playerCount = WorldManager.Instance.GetAllCharacters().Count();
