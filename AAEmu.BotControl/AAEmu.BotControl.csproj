@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <AssemblyName>AAEmu.BotControl</AssemblyName>
+    <RootNamespace>AAEmu.BotControl</RootNamespace>
+    <Description>MCP stdio gateway over the AAEmu game bot control API (P1 t_2ea94a20)</Description>
+  </PropertyGroup>
+</Project>
