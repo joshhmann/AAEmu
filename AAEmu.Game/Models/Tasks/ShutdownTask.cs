@@ -85,7 +85,7 @@ public class ShutdownTask : Task
                 // Ignore
             }
 
-            if (SaveManager.Instance.DoSave())
+            if (SaveManager.Instance.DoSave(true))
             {
                 WorldManager.Instance.BroadcastPacketToServer(new SCNoticeMessagePacket(3, Color.Magenta, 15000,
                     "The server is shutting down right now!"));

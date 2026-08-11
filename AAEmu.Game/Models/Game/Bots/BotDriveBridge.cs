@@ -472,6 +472,7 @@ public sealed class BotDriveBridge
                 character.Transform.Local.Position = new System.Numerics.Vector3(
                     spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
                 character.Transform.ZoneId = spawner.Position.ZoneId;
+                character.MarkDirty(); // position changed — persist on the next save cycle
                 return Ok(new
                 {
                     x = spawner.Position.X,

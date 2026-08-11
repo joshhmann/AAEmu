@@ -158,6 +158,7 @@ public class CharacterQuests(Character owner)
             ActiveQuests.Add(quest.TemplateId, quest);
         }
         quest.Owner.SendDebugMessage($"[Quest] {Owner.Name}, quest {questId} added.");
+        Owner.MarkDirty();
 
         // Execute the first Step
         _ = quest.RunCurrentStep(); // We don't need the return value here

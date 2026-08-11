@@ -27,6 +27,7 @@ public class CharacterFriends(Character owner)
             Owner = Owner.Id
         };
         FriendsIdList.Add(friend.CharacterId, template);
+        Owner.MarkDirty();
         FriendMananger.Instance.AddToAllFriends(template);
         Owner.SendPacket(new SCAddFriendPacket(friend, true, 0));
     }
@@ -43,6 +44,7 @@ public class CharacterFriends(Character owner)
         FriendMananger.Instance.RemoveFromAllFriends(value.Id);
         FriendsIdList.Remove(friend.CharacterId);
         _removedFriends.Add(friend.CharacterId);
+        Owner.MarkDirty();
         Owner.SendPacket(new SCDeleteFriendPacket(friend.CharacterId, true, name, 0));
     }
 

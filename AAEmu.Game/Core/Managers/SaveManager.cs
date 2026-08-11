@@ -4,6 +4,7 @@ using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models;
+using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Tasks;
 using AAEmu.Game.Models.Tasks.SaveTask;
 
@@ -49,8 +50,8 @@ public class SaveManager(
         {
             saveTask = null;
         }
-        // Do one final save here
-        DoSave();
+        // Do one final save here (force-all: shutdown must persist every character)
+        DoSave(true);
     }
 
     public void SaveTickStart()
@@ -60,7 +61,7 @@ public class SaveManager(
         taskManager.Schedule(saveTask, TimeSpan.FromMinutes(Delay), TimeSpan.FromMinutes(Delay));
     }
 
-    public bool DoSave()
+    public bool DoSave(bool saveAllCharacters = false)
     {
         if (_isSaving)
             return false;
@@ -89,9 +90,9 @@ public class SaveManager(
                         // Crimes
                         var savedCrimes = crimeManager.Save(connection, transaction);
 
-                        // Characters
+                        // Characters (dirty-tracking: only persist touched rows unless forced)
                         var savedCharacters = 0;
-                        foreach (var c in worldManager.GetAllCharacters())
+                        foreach (var c in GetCharactersToSave(saveAllCharacters))
                         {
                             if (c.Save(connection, transaction))
                                 savedCharacters++;
@@ -184,6 +185,19 @@ public class SaveManager(
             return;
         }
         DoSave();
+    }
+
+    /// <summary>
+    /// Returns the characters the current save cycle should persist. With dirty-tracking
+    /// enabled this is only the touched subset; <paramref name="saveAllCharacters"/> forces
+    /// the full set (shutdown/manual-save paths). Extracted for unit testing the filter.
+    /// </summary>
+    internal List<Character> GetCharactersToSave(bool saveAllCharacters)
+    {
+        var characters = worldManager.GetAllCharacters();
+        if (saveAllCharacters)
+            return characters;
+        return characters.Where(c => c.IsDirty).ToList();
     }
 
     public void SetAutoSaveInterval()

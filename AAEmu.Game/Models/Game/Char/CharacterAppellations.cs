@@ -42,6 +42,7 @@ public class CharacterAppellations(Character owner)
         }
 
         Appellations.Add(id);
+        Owner.MarkDirty();
         Owner.SendPacket(new SCAppellationGainedPacket(id));
     }
 
@@ -65,6 +66,7 @@ public class CharacterAppellations(Character owner)
                 Logger.Warn("Id {0} doesn't exist, owner {1}", id, Owner.Id);
             }
         }
+        Owner.MarkDirty();
         Owner.BroadcastPacket(new SCAppellationChangedPacket(Owner.ObjId, ActiveAppellation), true);
     }
 
