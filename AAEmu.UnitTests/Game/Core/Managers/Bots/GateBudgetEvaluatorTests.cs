@@ -237,15 +237,30 @@ public class GateBudgetEvaluatorTests
     [Test]
     public async Task Evaluate_PhysicsWarningSameWorldCluster_Over60s_Fails()
     {
-        // No-sustained-slow clause: 3+ warnings on the SAME world within 60s
+        // No-sustained-slow clause: 6+ warnings on the SAME world within 60s
         // = a physics thread that cannot keep up (hard fail).
-        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 3 };
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 6 };
 
         var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
 
         var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
         await Assert.That(v.Passed).IsFalse();
         await Assert.That(v.Detail.Contains("cannot keep up")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_ObservedCeiling_Passes()
+    {
+        // The 2026-08-10 M6 6h re-soak measured 3 warnings on ONE world within
+        // 8 seconds (21:13:41 x2 + 21:13:49, all <=75ms, single process-wide
+        // pause event) — the recalibrated budget (fail at 6+) must pass it.
+        // Earlier soaks: 2-in-3s / 2-in-40s clusters.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 5 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsTrue();
     }
 
     [Test]

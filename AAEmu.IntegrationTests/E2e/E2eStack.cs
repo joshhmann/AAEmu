@@ -155,7 +155,14 @@ public static class E2eStack
                 if (!cmdline.Contains("AAEmu.Login.dll") && !cmdline.Contains("AAEmu.Game.dll"))
                     continue;
                 var cwd = new FileInfo($"/proc/{proc.Id}/cwd").LinkTarget;
-                if (cwd == null || !Path.GetFullPath(cwd).StartsWith(root, StringComparison.Ordinal))
+                // PATH-SEGMENT match, not a raw string prefix: /root/aaemu-e2e
+                // must NOT match /root/aaemu-e2e-soak2 (isolated soak stacks
+                // live under a sibling root — t_18fccd09 2026-08-10: the
+                // concurrent M2b run killed the soak2 stack 12min before its
+                // 6h window ended because StartsWith(root) matched the prefix).
+                if (cwd == null
+                    || (!Path.GetFullPath(cwd).StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+                        && !Path.GetFullPath(cwd).Equals(root, StringComparison.Ordinal)))
                     continue;
                 Console.WriteLine($"[e2e] killing stale e2e server pid {proc.Id} (cwd {cwd})");
                 proc.Kill(entireProcessTree: true);
