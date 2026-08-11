@@ -150,8 +150,13 @@ public class CharacterQuests(Character owner)
             return false;
         }
 
-        // Add it to the Active Quests
-        ActiveQuests.Add(quest.TemplateId, quest);
+        // Add it to the Active Quests (t_90c0d0d1: same per-character lock the
+        // save snapshot takes — a mutation during Save's enumeration can yield a
+        // null entry and NRE the active-quest REPLACE loop)
+        lock (ActiveQuests)
+        {
+            ActiveQuests.Add(quest.TemplateId, quest);
+        }
         quest.Owner.SendDebugMessage($"[Quest] {Owner.Name}, quest {questId} added.");
 
         // Execute the first Step
@@ -246,7 +251,11 @@ public class CharacterQuests(Character owner)
         quest.Cleanup();
         quest.Drop(update);
         quest.FinalizeQuestActs();
-        ActiveQuests.Remove(questId);
+        // t_90c0d0d1: same per-character lock as the save snapshot (see AddQuest)
+        lock (ActiveQuests)
+        {
+            ActiveQuests.Remove(questId);
+        }
         _removed.Add(questId);
 
         if (forcibly)
@@ -390,15 +399,23 @@ public class CharacterQuests(Character owner)
         // Calculate block and index
         var completedQuestBlockId = questId / 64;
         var completedQuestBlockIndex = (ushort)(questId % 64);
-        // Grab or create block
-        if (!CompletedQuests.TryGetValue(completedQuestBlockId, out var completedBlock))
+
+        // Grab or create block — under the per-character CompletedQuests lock
+        // (t_90c0d0d1): the check-then-act Add must serialize with Save's snapshot
+        // or a concurrent Add during enumeration can yield a null block entry to
+        // the save loop (the observed NRE that aborted the disconnect save).
+        lock (CompletedQuests)
         {
-            completedBlock = new CompletedQuest(completedQuestBlockId);
-            CompletedQuests.Add(completedQuestBlockId, completedBlock);
+            // Grab or create block
+            if (!CompletedQuests.TryGetValue(completedQuestBlockId, out var completedBlock))
+            {
+                completedBlock = new CompletedQuest(completedQuestBlockId);
+                CompletedQuests.Add(completedQuestBlockId, completedBlock);
+            }
+            // Set quest flag to (not) completed
+            completedBlock.Body.Set(completedQuestBlockIndex, isCompleted);
+            return completedBlock;
         }
-        // Set quest flag to (not) completed
-        completedBlock.Body.Set(completedQuestBlockIndex, isCompleted);
-        return completedBlock;
     }
 
     /// <summary>
@@ -515,7 +532,13 @@ public class CharacterQuests(Character owner)
                         Id = reader.GetUInt32("id"),
                         Body = new BitArray((byte[])reader.GetValue("data"))
                     };
-                    CompletedQuests.Add(quest.Id, quest);
+                    // Per-character lock (t_90c0d0d1): Load runs at login before
+                    // concurrent access, but every CompletedQuests Add must take the
+                    // same lock Save's snapshot takes — keeps the invariant simple.
+                    lock (CompletedQuests)
+                    {
+                        CompletedQuests.Add(quest.Id, quest);
+                    }
                 }
             }
         }
@@ -547,7 +570,13 @@ public class CharacterQuests(Character owner)
                     var oldStatus = quest.Status;
                     quest.ReadData((byte[])reader.GetValue("data"));
                     quest.Status = oldStatus;
-                    ActiveQuests.Add(quest.TemplateId, quest);
+                    // t_90c0d0d1: same per-character lock as the save snapshot
+                    // (Load runs at login, but every ActiveQuests mutation must
+                    // take the lock the save enumerates under)
+                    lock (ActiveQuests)
+                    {
+                        ActiveQuests.Add(quest.TemplateId, quest);
+                    }
                     quest.QuestInitialized();
                     quest.RequestEvaluation();
                 }
@@ -585,8 +614,27 @@ public class CharacterQuests(Character owner)
             command.Transaction = transaction;
 
             command.CommandText = "REPLACE INTO completed_quests(`id`,`data`,`owner`) VALUES(@id,@data,@owner)";
-            foreach (var quest in CompletedQuests.Values)
+
+            // t_90c0d0d1: snapshot under the per-character lock. A concurrent
+            // SetCompletedQuestFlag Add during live enumeration of CompletedQuests
+            // can yield a NULL block entry (Dictionary resize artifact); quest.Id
+            // then NREs and the save aborts BEFORE the active-quest REPLACE loop
+            // below — losing active-quest rows on disconnect. The snapshot kills
+            // the modified-during-save class; nulls are skipped with a WARN.
+            CompletedQuest[] completedBlocks;
+            lock (CompletedQuests)
             {
+                completedBlocks = CompletedQuests.Values.ToArray();
+            }
+
+            foreach (var quest in completedBlocks)
+            {
+                if (quest is null)
+                {
+                    Logger.Warn($"[QuestSave] skipping null completed-quest block for {Owner.Name} ({Owner.Id})");
+                    continue;
+                }
+
                 command.Parameters.AddWithValue("@id", quest.Id);
                 var body = new byte[8];
                 quest.Body.CopyTo(body, 0);
@@ -606,8 +654,25 @@ public class CharacterQuests(Character owner)
             command.CommandText =
                 "REPLACE INTO quests(`id`,`template_id`,`data`,`status`,`owner`) VALUES(@id,@template_id,@data,@status,@owner)";
 
-            foreach (var quest in ActiveQuests.Values)
+            // t_90c0d0d1: same snapshot + null-skip for the ACTIVE-quest loop —
+            // the acceptance is "save never aborts mid-loop (active-quest REPLACE
+            // always runs)". ActiveQuests is mutated by AddQuest/DropQuest on the
+            // game thread; a concurrent mutation during enumeration can yield a
+            // null entry (same Dictionary artifact class) and NRE here.
+            Quest[] activeQuests;
+            lock (ActiveQuests)
             {
+                activeQuests = ActiveQuests.Values.ToArray();
+            }
+
+            foreach (var quest in activeQuests)
+            {
+                if (quest is null)
+                {
+                    Logger.Warn($"[QuestSave] skipping null active quest for {Owner.Name} ({Owner.Id})");
+                    continue;
+                }
+
                 command.Parameters.AddWithValue("@id", quest.Id);
                 command.Parameters.AddWithValue("@template_id", quest.TemplateId);
                 command.Parameters.AddWithValue("@data", quest.WriteData());
