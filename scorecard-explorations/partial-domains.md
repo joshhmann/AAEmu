@@ -10,7 +10,7 @@
 
 | Domain | Tables | Wired | % | Loader / Manager | Biggest missing slice |
 |--------|--------|-------|---|------------------|----------------------|
-| housing | 9 (+2 item_*) | 4 (+2) | 44% (55% w/ item_*) | `HousingGameData` → `HousingManager` | Deco-limit enforcement, zone validation |
+| housing | 9 (+2 item_*) | 7 (+2) | 78% (82% w/ item_*) | `HousingGameData` → `HousingManager` | Deco-limit enforcement |
 | auction | 3 | 0 | 0% | `AuctionManager` (MySQL `auction_house` only) | Category *name* data only — low impact |
 | specialty-trade | 4 | 3 | 75% | `SpecialtyManager` (sqlite) | `specialty_bundles` name table — near-zero impact |
 | items | 54 | 32 | 59% | `ItemManager` + `ItemGameData`, `ItemConversionGameData` | Socketing (TODO), proc bindings, recipe books |
@@ -19,7 +19,7 @@
 
 ---
 
-## 1. Housing — 4/9 tables wired (scorecard says 38%; measured 4/9 = 44% core, 6/11 = 55% incl. item_housings)
+## 1. Housing — 7/9 tables wired (scorecard says 38%; measured 7/9 = 78% core, 9/11 = 82% incl. item_housings)
 
 ### What IS wired
 
@@ -50,15 +50,12 @@
 
 **Corroborating stubs:** `SpecialEffects/ExpandDecoLimit.cs:22` logs-only; `SpecialEffects/RebuildHousing.cs:22` logs-only; `DoodadFuncHousingArea.cs:15` logs-only.
 
-### The 38% gap, concretely
+### The remaining gap, concretely
 - Player **can** place, build up (multi-step), decorate, set permissions, sell, pay taxes, recover furniture.
-- Player **cannot** be stopped from over-decorating (no server-side count check; `DecorateHouse` `:1520-1603` never consults `DecoLimit`), cannot be validated against housing zones, and the deco-limit *data model* (`housing_deco_limits`, `housing_deco_limit_elems`) is dead weight.
-- The two `housing_groups*` tables are the only ones with genuinely **no** server-side use — they're client-UI taxonomy.
+- Player **cannot** be stopped from over-decorating (no server-side count check; `DecorateHouse` `:1520-1603` never consults `DecoLimit`), and the deco-limit *data model* (`housing_deco_limits`, `housing_deco_limit_elems`) is dead weight.
 
 ### Priority
 1. **Deco-limit enforcement** (load `housing_deco_limits` + `housing_deco_limit_elems`, count decorations per house in `DecorateHouse`, send the right error — `ErrorMessageType.HousingActabilityDecoLimited = 628` exists at `ErrorMessageType.cs:613`). Visible, finishes an already-90%-working feature. Low effort, medium payoff — with friends, the client's own limit is what most players hit first, so this is mainly anti-exploit.
-2. **`housing_areas` zone validation** — only if you want "no building in towns" to be true. For a friends server, sandbox placement is arguably a feature; skip unless authenticity matters.
-3. `housing_groups*` — skip; no server runtime.
 
 ---
 
@@ -166,7 +163,7 @@ The three **socketing tables** + the `ItemSocketing` TODO are the single most va
 3. **Housing deco limits** — load `housing_deco_limits`/`housing_deco_limit_elems`; enforce counts in `HousingManager.DecorateHouse` (`:1520`) using `template.DecoLimit`/`AbsoluteDecoLimit` (already read, never checked); finish the `:1651` TODO. Completes the housing gap cheaply.
 4. **Mate equip packs** — load the four `mate_equip_*` tables; add a legality check in `CSChangeMateEquipmentPacket`. Scaffolding exists; this is a data+validation pass.
 5. **Recipe/quest/open-paper item impls** (`item_recipes`, `item_accept_quests`, `item_open_papers`) — item-use depth for crafters and questers; medium effort, each is a small effect handler.
-6. **Do NOT touch:** `auction_a/b/c_categories` (search works on ids from `items`), `specialty_bundles` (name table), `model_*` orphans (client-side), `housing_areas` (sandbox placement is fine for friends), `housing_groups*` (no server consumer).
+6. **Do NOT touch:** `auction_a/b/c_categories` (search works on ids from `items`), `specialty_bundles` (name table), `model_*` orphans (client-side).
 
 ## Evidence index (file:line)
 
