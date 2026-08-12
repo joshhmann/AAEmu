@@ -17,13 +17,16 @@ namespace AAEmu.IntegrationTests;
 ///     (chandelier), distinct transforms. Restart. Assert all rows survive
 ///     with transforms/phases/ownership/attachment intact, no duplication.
 ///   Cycle 2 (plant + kill -9 mid-save): seed crops (potato 2259) per house with
-///     plant_time/phase_time. Restart. Wait for the autosave transaction to be
-///     observed open in MySQL (INNODB_TRX), then SIGKILL the game process while
-///     the save is in flight. Restart. Assert planted rows survived with their
-///     phase clocks unclobbered, no duplication.
+///     plant_time/phase_time. Restart. Hold a row lock on the seeded housings,
+///     trigger a real save pass through the bridge (dirty houses + DoSave),
+///     observe the game's housings write blocked in MySQL (INNODB_TRX), then
+///     SIGKILL the game process while the save is provably in flight. Restart.
+///     Assert planted rows survived with their phase clocks unclobbered, no
+///     duplication. (Deterministic since t_1329a833: the row lock holds the
+///     save open until the kill — no dependence on autosave tick timing.)
 ///   Cycle 3 (harvest + container kill during harvest): advance the crops to the
 ///     mature (harvestable) phase — the persisted post-harvest state. Restart.
-///     Wait for the save transaction, then `docker kill` the MySQL container
+///     Same save-observation seam, then `docker kill` the MySQL container
 ///     while the game is mid-save. Bring the DB back, restart the game. Assert
 ///     the harvest state survived, no loss, no duplication.
 ///
@@ -125,7 +128,7 @@ public class M3bExitPersistenceE2eTests
             E2eStack.RestartGameServer(); // load planted crops
             AssertRowsIntact("cycle2-planted-loaded", expectedPerHouse: 7, expectedCrops: 1);
 
-            var observed = KillGameMidSave(secondsToWait: 45);
+            var observed = KillGameMidSave(secondsToWait: 60);
             Assert.True(observed, "did not observe an autosave transaction in flight — cannot claim kill -9 mid-save");
 
             E2eStack.RestartGameServer();
@@ -159,95 +162,300 @@ public class M3bExitPersistenceE2eTests
     // ================================================================ crash helpers
 
     /// <summary>
-    /// Waits until MySQL reports an open transaction (the game's autosave
-    /// DoSave holds one for its whole duration), then SIGKILLs the game
-    /// process mid-save. Returns true only if the kill landed inside an
-    /// observed save window.
+    /// Deterministic mid-save kill (t_1329a833 hardening): holds an X row
+    /// lock on the seeded housings rows, fires the bridge "save" trigger
+    /// (dirties every loaded house + runs the real save path), then polls
+    /// INNODB_TRX for the game's save transaction. The row lock GUARANTEES
+    /// the game's REPLACE INTO housings blocks in flight — the save cannot
+    /// finish before the observation fires, so the window cannot miss on
+    /// host load (the A4 dirty-tracking failure mode: a clean world's
+    /// autosave executes zero statements and never appears in INNODB_TRX).
+    /// Fail-honest: the kill fires only after a transaction whose in-flight
+    /// statement is the housings write is actually observed.
     /// </summary>
     private static bool KillGameMidSave(int secondsToWait)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(secondsToWait);
-        var hit = false;
-        while (DateTime.UtcNow < deadline)
-        {
-            if (OpenSaveTransactionCount() > 0)
-            {
-                hit = true;
-                E2eStack.StopGameServer(); // Process.Kill = SIGKILL on Linux
-                break;
-            }
-            Thread.Sleep(5);
-        }
+        WaitForSavePipelineReady();
+
+        using var locker = OpenLockConnection();
+        using var lockTx = locker.BeginTransaction();
+        LockSeededHousingRows(locker, lockTx);
+
+        FireBridgeSave();
+
+        var hit = WaitForGameSaveTransaction(secondsToWait);
         if (hit)
-            Console.WriteLine("[m3b-exit] kill -9 landed inside an open autosave transaction");
+        {
+            Console.WriteLine("[m3b-exit] kill -9 landed inside an open autosave transaction (housings write blocked in flight)");
+            E2eStack.StopGameServer();
+        }
+        // lockTx disposal rolls the lock back — after the kill the game's
+        // transaction is gone either way.
         return hit;
     }
 
     /// <summary>
-    /// Waits for an open save transaction, then `docker kill`s the MySQL
-    /// container while the game is mid-save, brings it back, and waits for
-    /// MySQL to be healthy again. Returns true only if the kill happened
-    /// inside an observed save window.
+    /// Deterministic container-kill-during-save (t_1329a833 hardening):
+    /// same seam as <see cref="KillGameMidSave"/> — row lock + bridge save
+    /// trigger + INNODB_TRX observation — then `docker kill`s the MySQL
+    /// container while the game's save is provably in flight, brings it
+    /// back, and waits for MySQL to be healthy again. Returns true only if
+    /// the container kill happened inside an observed save window.
     /// </summary>
     private static bool KillDbContainerMidSave()
     {
-        var deadline = DateTime.UtcNow.AddSeconds(45);
-        while (DateTime.UtcNow < deadline)
+        WaitForSavePipelineReady();
+
+        MySqlConnection locker = null;
+        MySqlTransaction lockTx = null;
+        try
         {
-            if (OpenSaveTransactionCount() > 0)
-                break;
-            Thread.Sleep(5);
+            locker = OpenLockConnection();
+            lockTx = locker.BeginTransaction();
+            LockSeededHousingRows(locker, lockTx);
+
+            FireBridgeSave();
+
+            var hit = WaitForGameSaveTransaction(60);
+            if (!hit)
+                return false;
+
+            Console.WriteLine("[m3b-exit] container kill during open autosave transaction (housings write blocked in flight)");
+            var envFile = Path.Combine(E2eStack.E2eRoot, ".env");
+            Run("docker", $"compose -f {E2eStack.ComposeFile} --env-file {envFile} kill db");
+            Thread.Sleep(3000);
+            Run("docker", $"compose -f {E2eStack.ComposeFile} --env-file {envFile} up -d db");
+
+            // Wait for MySQL to be healthy again (the game's next save needs it).
+            var healthyDeadline = DateTime.UtcNow.AddSeconds(180);
+            var ready = false;
+            while (DateTime.UtcNow < healthyDeadline)
+            {
+                try
+                {
+                    using var conn = E2eStack.OpenDb("aaemu_login");
+                    using var cmd = conn.CreateCommand();
+                    cmd.CommandText = "SELECT COUNT(*) FROM users LIMIT 1";
+                    _ = cmd.ExecuteScalar();
+                    ready = true;
+                    break;
+                }
+                catch
+                {
+                    Thread.Sleep(2000);
+                }
+            }
+
+            Assert.True(ready, "MySQL container did not come back healthy after docker kill");
+            return true;
         }
+        finally
+        {
+            // The container kill took the lock connection down with it — a
+            // rollback would throw "Reading from the stream has failed".
+            // Dispose defensively; the lock is gone either way.
+            try { lockTx?.Dispose(); } catch { }
+            try { locker?.Dispose(); } catch { }
+        }
+    }
 
-        var hit = OpenSaveTransactionCount() > 0;
-        if (!hit)
-            return false;
-
-        Console.WriteLine("[m3b-exit] container kill during open autosave transaction");
-        var envFile = Path.Combine(E2eStack.E2eRoot, ".env");
-        Run("docker", $"compose -f {E2eStack.ComposeFile} --env-file {envFile} kill db");
-        Thread.Sleep(3000);
-        Run("docker", $"compose -f {E2eStack.ComposeFile} --env-file {envFile} up -d db");
-
-        // Wait for MySQL to be healthy again (the game's next save needs it).
-        var healthyDeadline = DateTime.UtcNow.AddSeconds(180);
-        var ready = false;
-        while (DateTime.UtcNow < healthyDeadline)
+    /// <summary>
+    /// Waits until the game's MySQL activity has quieted down (PROCESSLIST:
+    /// fewer than 3 active Query connections for aaemu_game, sustained).
+    /// On a loaded host the game's boot spawns saturate its MySQL pool for
+    /// a minute or more — a DoSave started in that window starves inside
+    /// MySQL.CreateConnection (holding _isSaving), no transaction ever
+    /// opens, and the mid-save observation would miss (t_1329a833 runs
+    /// 3-8: raw INNODB_TRX count stayed 1 — only the test's own lock — for
+    /// the whole window). Once the boot work drains, the bridge save
+    /// trigger gets a connection immediately, its pass blocks on the test's
+    /// row lock, and the observation is deterministic. (An idle-Sleep
+    /// count is NOT a valid signal — the test's own pooled connections
+    /// show up as Sleep and skewed the gate in run 9.) Proceeds anyway
+    /// (with a warning) if the game never quiets — the poll then fails
+    /// honestly rather than hanging.
+    /// </summary>
+    private static void WaitForSavePipelineReady(int timeoutSeconds = 300)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(timeoutSeconds);
+        var seenQuiet = 0;
+        while (DateTime.UtcNow < deadline)
         {
             try
             {
-                using var conn = E2eStack.OpenDb("aaemu_login");
+                using var conn = OpenPollConnection();
                 using var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT COUNT(*) FROM users LIMIT 1";
-                _ = cmd.ExecuteScalar();
-                ready = true;
-                break;
+                cmd.CommandText =
+                    "SELECT COUNT(*) FROM information_schema.PROCESSLIST " +
+                    "WHERE db = 'aaemu_game' AND command = 'Query' AND id <> CONNECTION_ID()";
+                var active = Convert.ToInt32(cmd.ExecuteScalar());
+                if (active < 3)
+                {
+                    seenQuiet++;
+                    if (seenQuiet >= 3) // sustained across 3 consecutive polls (≈6s)
+                    {
+                        Console.WriteLine($"[m3b-exit] save pipeline ready (game MySQL quiet: {active} active queries)");
+                        return;
+                    }
+                }
+                else
+                {
+                    seenQuiet = 0;
+                }
             }
             catch
             {
-                Thread.Sleep(2000);
+                // DB momentarily unreachable — keep waiting
             }
+            Thread.Sleep(2000);
         }
-
-        Assert.True(ready, "MySQL container did not come back healthy after docker kill");
-        return true;
+        Console.WriteLine($"[m3b-exit] WARN: game MySQL never quieted within {timeoutSeconds}s — proceeding (observation may fail honestly)");
     }
 
-    private static int OpenSaveTransactionCount()
+    /// <summary>
+    /// Dedicated NON-pooled connection for the mid-save row lock. A pooled
+    /// connection is subject to pool lifecycle behaviour (reset-on-return,
+    /// recycling) that could silently drop the FOR UPDATE lock mid-window;
+    /// the lock must be held on a physical connection the test fully owns
+    /// (t_1329a833 run 3: the observation missed with a pooled locker).
+    /// </summary>
+    private static MySqlConnection OpenLockConnection()
     {
+        var conn = new MySqlConnection(
+            $"Server={E2eStack.DbHost};Port={E2eStack.DbPort};User=root;Password={E2eStack.DbPassword};" +
+            $"Database=aaemu_game;Connection Timeout=15;Pooling=false");
+        conn.Open();
+        return conn;
+    }
+
+    /// <summary>
+    /// Takes an X lock (SELECT ... FOR UPDATE) on both seeded housings rows.
+    /// The game's save REPLACE INTO housings then blocks until this
+    /// transaction commits/rolls back — the save cannot complete while the
+    /// test holds the lock, making the mid-save observation deterministic.
+    /// </summary>
+    private static void LockSeededHousingRows(MySqlConnection conn, MySqlTransaction tx)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT id FROM housings WHERE id IN (@h1, @h2) FOR UPDATE";
+        cmd.Parameters.AddWithValue("@h1", Homesteads[0].HouseId);
+        cmd.Parameters.AddWithValue("@h2", Homesteads[1].HouseId);
+        cmd.ExecuteNonQuery();
+        Console.WriteLine($"[m3b-exit] housings row lock held on MySQL thread {conn.ServerThread}");
+    }
+
+    /// <summary>
+    /// Fires the bridge "save" trigger without waiting for the reply: the
+    /// bridge dirties every loaded house and starts a real save pass; the
+    /// response only returns after the pass completes (which, with the row
+    /// lock held, is after the kill). Fire-and-forget keeps the test's poll
+    /// loop authoritative.
+    /// </summary>
+    private static void FireBridgeSave()
+    {
+        using var client = new BotDriveClient(E2eStack.BridgePort);
+        client.Send("{\"cmd\":\"save\"}");
+    }
+
+    /// <summary>
+    /// Polling connection for the INNODB_TRX observation — deliberately
+    /// NON-pooled, a fresh physical connection per query. The test's pooled
+    /// connections carry process-wide pool history (connections opened
+    /// before the MySQL volume reset die with the old container; a pool
+    /// with stale members can serve a view that diverges from the server's
+    /// real transaction state — t_1329a833 runs 4-9: the poll saw
+    /// raw_trx=1 while the game's LOCK WAIT provably existed server-side).
+    /// A fresh connection per query sees exactly what the server has.
+    /// </summary>
+    private static MySqlConnection OpenPollConnection()
+    {
+        var conn = new MySqlConnection(
+            $"Server={E2eStack.DbHost};Port={E2eStack.DbPort};User=root;Password={E2eStack.DbPassword};" +
+            $"Database=aaemu_game;Connection Timeout=15;Pooling=false");
+        conn.Open();
+        return conn;
+    }
+
+    /// <summary>
+    /// Polls INNODB_TRX until a transaction whose in-flight statement is a
+    /// housings write is observed — the game's save pass, blocked on the
+    /// test's row lock. The trx_query match proves WHICH write is in
+    /// flight, so the observation cannot be satisfied by the test's own
+    /// connection (excluded by thread id) or an unrelated idle transaction.
+    /// Re-fires the bridge save trigger every 10s while waiting: a pass can
+    /// be starved by the game's DB connection pool during boot churn (the
+    /// pass holds _isSaving while its pool acquire blocks), so a fresh
+    /// trigger has a new chance once the pool frees up. On a full miss the
+    /// raw INNODB_TRX contents are dumped for self-diagnosis.
+    /// </summary>
+    private static bool WaitForGameSaveTransaction(int secondsToWait)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(secondsToWait);
+        var lastRefire = DateTime.UtcNow;
+        var lastLog = DateTime.UtcNow;
+        var lastError = "";
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                using var conn = OpenPollConnection();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText =
+                    "SELECT COUNT(*) FROM information_schema.INNODB_TRX " +
+                    "WHERE trx_mysql_thread_id <> CONNECTION_ID() " +
+                    "AND trx_query LIKE '%housings%'";
+                var matched = Convert.ToInt32(cmd.ExecuteScalar());
+                if (matched > 0)
+                    return true;
+                if (DateTime.UtcNow - lastLog > TimeSpan.FromSeconds(5))
+                {
+                    lastLog = DateTime.UtcNow;
+                    using var cmd2 = conn.CreateCommand();
+                    cmd2.CommandText = "SELECT COUNT(*) FROM information_schema.INNODB_TRX";
+                    var raw = Convert.ToInt32(cmd2.ExecuteScalar());
+                    Console.WriteLine($"[m3b-exit] poll t={(DateTime.UtcNow - deadline + TimeSpan.FromSeconds(secondsToWait)).TotalSeconds:F0}s: raw_trx={raw} housings_matched=0");
+                }
+            }
+            catch (Exception ex)
+            {
+                // DB momentarily unreachable — treat as no observed save.
+                if (ex.Message != lastError)
+                {
+                    lastError = ex.Message;
+                    Console.WriteLine($"[m3b-exit] poll query error: {ex.GetType().Name}: {ex.Message}");
+                }
+            }
+
+            if (DateTime.UtcNow - lastRefire > TimeSpan.FromSeconds(10))
+            {
+                FireBridgeSave();
+                lastRefire = DateTime.UtcNow;
+            }
+            Thread.Sleep(5);
+        }
+
+        // Miss — dump what INNODB_TRX actually held (ALL transactions,
+        // including the test's own lock transaction) so the next failure is
+        // self-diagnosing: was the lock held? was the save starved? blocked
+        // elsewhere? never reached the housings write?
         try
         {
-            using var conn = E2eStack.OpenDb("aaemu_game");
+            using var conn = OpenPollConnection();
             using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                "SELECT COUNT(*) FROM information_schema.INNODB_TRX " +
-                "WHERE trx_state = 'RUNNING' AND trx_mysql_thread_id <> CONNECTION_ID()";
-            return Convert.ToInt32(cmd.ExecuteScalar());
+                "SELECT trx_id, trx_state, trx_started, trx_mysql_thread_id, trx_rows_locked, " +
+                "LEFT(IFNULL(trx_query, '<null>'), 80) " +
+                "FROM information_schema.INNODB_TRX";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+                Console.WriteLine($"[m3b-exit] trx dump: id={reader.GetValue(0)} state={reader.GetValue(1)} started={reader.GetValue(2)} thread={reader.GetValue(3)} rows_locked={reader.GetValue(4)} query={reader.GetValue(5)}");
         }
-        catch
+        catch (Exception ex)
         {
-            return 0; // DB momentarily unreachable — treat as no observed save
+            Console.WriteLine($"[m3b-exit] trx dump failed: {ex.Message}");
         }
+        return false;
     }
 
     private static void Run(string cmd, string args)
