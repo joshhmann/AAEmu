@@ -352,12 +352,34 @@ public sealed class BotDriveBridge
             population = new { available = false, error = ex.Message };
         }
 
+        // M3b — SaveManager autosave duration metrics (autosave p95 < 2s at
+        // gate scale). Ring-buffer percentiles over DoSave wall-clock.
+        object save = null;
+        try
+        {
+            var m = SaveManager.Instance.GetSaveMetrics();
+            save = new
+            {
+                available = true,
+                sampleCount = m.SampleCount,
+                p50Ms = m.P50Ms,
+                p95Ms = m.P95Ms,
+                maxMs = m.MaxMs
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "gate metrics: save metrics unavailable");
+            save = new { available = false, error = ex.Message };
+        }
+
         return new
         {
             tick,
             regionTick,
             scheduler,
             population,
+            save,
             uptimeMs = Environment.TickCount64
         };
     }

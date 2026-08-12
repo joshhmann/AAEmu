@@ -33,6 +33,13 @@ public sealed record GateStageConfig
     /// </summary>
     public string[] ScenarioTemplates { get; init; } = [];
 
+    /// <summary>
+    /// Number of homesteads (housings rows) to seed into the stack before the
+    /// game boots, so the autosave budget measures a world that contains real
+    /// homesteads (M3b gate-scale scenario: two homesteads + N bots embodied).
+    /// </summary>
+    public int SeedHomesteads { get; init; }
+
     public required GateBudgets Budgets { get; init; }
 }
 
@@ -93,6 +100,24 @@ public static class GateStages
         WindowMinutes = 3,
         QuestSubset = 4, // stability focus — correctness is stage 10's job
         ScenarioTemplates = ["level22-gate", "ability-gate", "cat34-daily"],
+        Budgets = new GateBudgets()
+    };
+
+    /// <summary>
+    /// Stage 2-homestead — the M3b gate-scale save budget: 25 bots embodied
+    /// with TWO seeded homesteads in the world, enforcing the autosave p95
+    /// &lt; 2s budget (ROADMAP M3b). Same density as stage 25 plus homestead
+    /// state; the exit scenario (t_accb1c63) re-runs this after the full
+    /// place → decorate → plant → harvest → restart cycles.
+    /// </summary>
+    public static GateStageConfig Stage25Homesteads { get; } = new()
+    {
+        Name = "25-homesteads-save-budget",
+        BotCount = 25,
+        RequireH2 = true,
+        WindowMinutes = 3,
+        QuestSubset = 4,
+        SeedHomesteads = 2,
         Budgets = new GateBudgets()
     };
 

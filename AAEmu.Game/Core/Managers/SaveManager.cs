@@ -27,8 +27,22 @@ public class SaveManager(
     private bool _enabled = false;
     private bool _isSaving = false;
     private readonly object _lock = new();
+    private readonly SaveDurationMetrics _saveMetrics = new();
     private SaveTickStartTask saveTask;
     public ShutdownTask ShutdownTask { get; set; } = null;
+
+    /// <summary>
+    /// Save-duration metrics for the gate-scale autosave budget (M3b): every
+    /// DoSave pass records its wall-clock duration. The gate harness samples
+    /// this via the bridge metrics surface and enforces autosave p95 &lt; 2s.
+    /// </summary>
+    public SaveDurationMetricsSnapshot GetSaveMetrics()
+    {
+        lock (_lock)
+        {
+            return _saveMetrics.Snapshot();
+        }
+    }
 
     public void Initialize()
     {
@@ -171,6 +185,7 @@ public class SaveManager(
                 Logger.Error(e, "DoSave Exception\n");
             }
             stopWatch.Stop();
+            _saveMetrics.Record(stopWatch.Elapsed);
             Logger.Debug("Saving data took {0}", stopWatch.Elapsed);
         }
         _isSaving = false;

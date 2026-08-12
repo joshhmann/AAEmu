@@ -48,6 +48,12 @@ public sealed record GateMetricsSnapshot
     public double SchedulerAvgWakeLatencyMs { get; init; }
     public double SchedulerMaxWakeLatencyMs { get; init; }
 
+    // -- SaveManager autosave duration (M3b budget surface) --
+    public bool SaveMetricsAvailable { get; init; }
+    public long SaveSampleCount { get; init; }
+    public double SaveP95Ms { get; init; }
+    public double SaveMaxMs { get; init; }
+
     // -- DB pressure (MySQL Com_* delta over the window) --
     public long DbWrites { get; init; }
 
