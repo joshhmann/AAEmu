@@ -25,6 +25,7 @@ public class HousingGameData : Singleton<HousingGameData>, IGameDataLoader
     private Dictionary<uint, HousingGroup> _housingGroups = [];
     private List<HousingGroupCategory> _housingGroupCategories = [];
     private Dictionary<string, HousingLandZoneInfo> _landZones = [];
+    private Dictionary<string, HousingAreaRule> _housingAreaRules = [];
 
     public void Load(SqliteConnection connection)
     {
@@ -37,6 +38,7 @@ public class HousingGameData : Singleton<HousingGameData>, IGameDataLoader
         _housingGroups = [];
         _housingGroupCategories = [];
         _landZones = [];
+        _housingAreaRules = [];
 
         // var housingAreas = new Dictionary<uint, HousingAreas>();
         // var houseTaxes = new Dictionary<uint, HouseTax>();
@@ -353,7 +355,8 @@ public class HousingGameData : Singleton<HousingGameData>, IGameDataLoader
                     {
                         Id = reader.GetUInt32("id"),
                         Name = reader.GetString("name"),
-                        GroupId = reader.GetUInt32("housing_group_id")
+                        GroupId = reader.GetUInt32("housing_group_id"),
+                        Comments = reader.IsDBNull("comments") ? null : reader.GetString("comments")
                     });
                 }
             }
@@ -381,7 +384,63 @@ public class HousingGameData : Singleton<HousingGameData>, IGameDataLoader
 
         _landZones = HousingLandZoneInfo.BuildFromData(areas, _housingGroups, groupCategories);
         Logger.Info($"Loaded {_landZones.Count} Housing Land Zones");
+
+        // Polygon-level rules: keyed by the pak AreaShape entity name (housing_areas.comments).
+        // The canonical 1.2 join: housing_areas.comments = LevelDesignShape_<zoneKey>_<name>_<n>
+        // = the <Entity Name="..."> of a housing_area.xml AreaShape. Each shape carries the
+        // group's allowed categories + per-category max_construct_count + houseless gate.
+        _housingAreaRules = [];
+        var perGroupMaxCounts = new Dictionary<uint, Dictionary<uint, int>>();
+        foreach (var hgc in _housingGroupCategories)
+        {
+            if (!perGroupMaxCounts.TryGetValue(hgc.HousingGroupId, out var maxByCategory))
+                perGroupMaxCounts.Add(hgc.HousingGroupId, maxByCategory = []);
+            maxByCategory[hgc.CategoryId] = hgc.MaxConstructCount;
+        }
+
+        foreach (var area in areas)
+        {
+            if (string.IsNullOrWhiteSpace(area.Comments))
+                continue;
+            if (!_housingGroups.TryGetValue(area.GroupId, out var group))
+                continue;
+
+            var allowedCategories = new HashSet<uint>();
+            var maxCounts = new Dictionary<uint, int>();
+            if (perGroupMaxCounts.TryGetValue(area.GroupId, out var groupMaxCounts))
+            {
+                foreach (var (categoryId, maxCount) in groupMaxCounts)
+                {
+                    allowedCategories.Add(categoryId);
+                    maxCounts[categoryId] = maxCount;
+                }
+            }
+
+            _housingAreaRules[area.Comments] = new HousingAreaRule
+            {
+                ShapeName = area.Comments,
+                HousingGroupId = area.GroupId,
+                AllowedCategories = allowedCategories,
+                MaxConstructCounts = maxCounts,
+                HouselessOnly = group.HouselessOnly
+            };
+        }
+
+        Logger.Info($"Loaded {_housingAreaRules.Count} Housing Area Shape Rules");
     }
+
+    /// <summary>
+    /// Gets the polygon-level placement rule for a pak AreaShape entity name
+    /// (e.g. "LevelDesignShape_142_anne_2"), or null when the shape has no
+    /// housing_areas row (legacy/typo/deleted — treated as not-buildable).
+    /// </summary>
+    public HousingAreaRule GetAreaRuleByShapeName(string shapeName)
+        => string.IsNullOrWhiteSpace(shapeName) ? null : _housingAreaRules.GetValueOrDefault(shapeName);
+
+    /// <summary>
+    /// Number of polygon rules loaded (housing_areas rows with a comments join key).
+    /// </summary>
+    public int HousingAreaRuleCount => _housingAreaRules.Count;
 
     /// <summary>
     /// Gets the homestead land-zone info for a world zone (by exact zone name, e.g.

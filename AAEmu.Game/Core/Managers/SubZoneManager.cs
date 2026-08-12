@@ -293,17 +293,26 @@ public class SubZoneManager(IWorldManager worldManager, IZoneManager zoneManager
 
     public List<uint> GetHousingZoneByPosition(WorldInstance world, float x, float y)
     {
-        var zoneId = worldManager.GetZoneId(world.Template, x, y);
+        var zoneKey = worldManager.GetZoneId(world.Template, x, y);
 
         var foundHousingZones = new List<uint>();
 
+        // HousingZones is keyed by the sqlite zone id (zones.id), NOT the zone key
+        // (world.xml id / zones.zone_key) — resolve through the zone table first.
+        var zone = zoneManager.GetZoneByKey(zoneKey);
+        if (zone is null || !world.Template.HousingZones.TryGetValue(zone.Id, out var zoneShapes))
+        {
+            Logger.Debug($"No housing zone data for zone key {zoneKey} at position ({x}, {y})");
+            return foundHousingZones;
+        }
+
         var found = false;
 
-        foreach (var houseZoneTemplate in world.Template.HousingZones[zoneId])
+        foreach (var houseZoneTemplate in zoneShapes)
         {
             if (Point.IsInside(houseZoneTemplate.Points, houseZoneTemplate.Points.Count, new Vector3(x, y, 0)))
             {
-                Logger.Debug($"Is in zone {zoneId} housezone name {houseZoneTemplate.Name} ({houseZoneTemplate.Id})");
+                Logger.Debug($"Is in zone {zoneKey} housezone name {houseZoneTemplate.Name} ({houseZoneTemplate.Id})");
                 found = true;
 
                 foundHousingZones.Add(houseZoneTemplate.Id);

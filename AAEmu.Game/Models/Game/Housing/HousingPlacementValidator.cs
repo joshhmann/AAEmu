@@ -2,6 +2,8 @@ using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.World.Zones;
 using AAEmu.Game.Models.StaticValues;
 
 namespace AAEmu.Game.Models.Game.Housing;
@@ -15,6 +17,21 @@ public enum HousingPlacementError : byte
 
     /// <summary>Position overlaps an existing house (garden spacing).</summary>
     OverlapHouse = 2,
+
+    /// <summary>Position overlaps a spawned unit/NPC (canonical 114 house_cannot_locate_overlap_unit).</summary>
+    OverlapUnit = 3,
+
+    /// <summary>Ground is higher than the template's terrain band allows (canonical 115 terrain_too_high).</summary>
+    TerrainTooHigh = 4,
+
+    /// <summary>Ground is lower than the template's terrain band allows (canonical 116 terrain_too_low).</summary>
+    TerrainTooLow = 5,
+
+    /// <summary>Position is inside a land zone but not inside any housing-area polygon (canonical 229 no_housing_area).</summary>
+    NoHousingArea = 6,
+
+    /// <summary>The area's per-category construction cap is reached (canonical 766 max_construct_count).</summary>
+    MaxConstructCount = 7,
 }
 
 /// <summary>
@@ -128,6 +145,117 @@ public static class HousingPlacementValidator
 
             if (dx * dx + dy * dy < required * required)
                 return HousingPlacementError.OverlapHouse;
+        }
+
+        return HousingPlacementError.None;
+    }
+
+    /// <summary>
+    /// Polygon-level placement validation, layered on top of the zone-level fast path
+    /// (<see cref="ValidatePlacement"/>). Enforces the canonical 1.2 placement rules that
+    /// operate per pak AreaShape polygon (housing_area.xml, joined via housing_areas.comments):
+    /// <list type="number">
+    /// <item>Point-in-polygon containment — outside every shape → 229 no_housing_area.</item>
+    /// <item>Per-shape housing group rules: category + houseless gate → 112 invalid_area;
+    /// per-(group, category) max_construct_count → 766.</item>
+    /// <item>Unit/NPC overlap → 114 overlap_unit.</item>
+    /// <item>Terrain band (extra_height_above/below vs ground height) → 115/116.</item>
+    /// </list>
+    /// Returns <see cref="HousingPlacementError.None"/> when the polygon layer cannot run
+    /// (no shapes loaded — e.g. client pak unavailable); the zone-level checks still gate.
+    /// </summary>
+    /// <param name="zoneShapes">Pak AreaShapes for the zone (world coords), or empty when unavailable.</param>
+    /// <param name="ruleResolver">Resolves a shape entity name to its housing_areas rule (comments join).</param>
+    /// <param name="template">House design template.</param>
+    /// <param name="position">Placement position.</param>
+    /// <param name="characterOwnsHouses">Whether the character already owns a house (houseless-only gate).</param>
+    /// <param name="groundHeight">Ground height at the position, or null when no height data is available (terrain checks skipped).</param>
+    /// <param name="unitPositions">Spawned unit/NPC positions near the placement (may be empty).</param>
+    /// <param name="existingHouses">All placed houses (used for the per-area max_construct_count).</param>
+    public static HousingPlacementError ValidatePolygonPlacement(
+        IReadOnlyList<Area> zoneShapes,
+        Func<string, HousingAreaRule> ruleResolver,
+        HousingTemplate template,
+        Vector3 position,
+        bool characterOwnsHouses,
+        float? groundHeight,
+        IReadOnlyCollection<Vector3> unitPositions,
+        IReadOnlyCollection<House> existingHouses)
+    {
+        if (template == null || zoneShapes == null || zoneShapes.Count == 0)
+            return HousingPlacementError.None;
+
+        // 1. Point-in-polygon containment against every shape of the zone.
+        var containingShapes = zoneShapes
+            .Where(s => s != null && s.Points != null && Point.IsInside(s.Points, s.Points.Count, new Vector3(position.X, position.Y, 0)))
+            .ToList();
+        if (containingShapes.Count == 0)
+            return HousingPlacementError.NoHousingArea;
+
+        // Resolve the buildable rules for the containing shapes. A shape without a
+        // housing_areas row (deleted/legacy shape) grants nothing.
+        var containingRules = containingShapes
+            .Select(s => ruleResolver?.Invoke(s.Name))
+            .Where(r => r != null)
+            .ToList();
+        if (containingRules.Count == 0)
+            return HousingPlacementError.NoHousingArea;
+
+        // 2. Per-shape group rules: category + houseless gate, then max_construct_count.
+        //    The position may sit inside several overlapping shapes; any shape that accepts
+        //    the design makes the placement legal (the player picked that area).
+        var acceptingRules = containingRules
+            .Where(r => !(r.HouselessOnly && characterOwnsHouses) && r.AllowedCategories.Contains(template.CategoryId))
+            .ToList();
+        if (acceptingRules.Count == 0)
+            return HousingPlacementError.InvalidArea;
+
+        // Shape-by-name lookup for the capacity check. Zone 283 (freedom island) ships
+        // THREE housing_area.xml locale copies (root/cn/na) with identical shape names
+        // (LevelDesignShape_211_jsw2u_1/_3) — the shapes are geometrically identical
+        // copies, so dedupe by name (first copy wins) instead of throwing on the key.
+        var shapeByRule = containingShapes
+            .Where(s => s != null)
+            .GroupBy(s => s.Name)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        var anyCapacity = acceptingRules.Any(rule =>
+        {
+            if (!rule.MaxConstructCounts.TryGetValue(template.CategoryId, out var maxCount) || maxCount <= 0)
+                return true; // unlimited
+            if (!shapeByRule.TryGetValue(rule.ShapeName, out var shape))
+                return true;
+
+            var existingInShape = existingHouses.Count(h =>
+                h?.Template != null && h.Template.CategoryId == template.CategoryId &&
+                h.Transform != null &&
+                Point.IsInside(shape.Points, shape.Points.Count,
+                    new Vector3(h.Transform.World.Position.X, h.Transform.World.Position.Y, 0)));
+            return existingInShape < maxCount;
+        });
+        if (!anyCapacity)
+            return HousingPlacementError.MaxConstructCount;
+
+        // 3. Unit/NPC overlap: the plot's garden circle must be free of spawned units.
+        if (unitPositions != null && unitPositions.Count > 0)
+        {
+            var required = MathF.Max(template.GardenRadius, MinHouseSpacing);
+            foreach (var unitPosition in unitPositions)
+            {
+                var dx = position.X - unitPosition.X;
+                var dy = position.Y - unitPosition.Y;
+                if (dx * dx + dy * dy < required * required)
+                    return HousingPlacementError.OverlapUnit;
+            }
+        }
+
+        // 4. Terrain band: ground must sit within [base - ExtraHeightBelow, base + ExtraHeightAbove].
+        if (groundHeight.HasValue)
+        {
+            if (groundHeight.Value - position.Z > template.ExtraHeightAbove)
+                return HousingPlacementError.TerrainTooHigh;
+            if (position.Z - groundHeight.Value > template.ExtraHeightBelow)
+                return HousingPlacementError.TerrainTooLow;
         }
 
         return HousingPlacementError.None;
