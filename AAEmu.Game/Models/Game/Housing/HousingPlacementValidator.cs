@@ -210,9 +210,14 @@ public static class HousingPlacementValidator
         if (acceptingRules.Count == 0)
             return HousingPlacementError.InvalidArea;
 
+        // Shape-by-name lookup for the capacity check. Zone 283 (freedom island) ships
+        // THREE housing_area.xml locale copies (root/cn/na) with identical shape names
+        // (LevelDesignShape_211_jsw2u_1/_3) — the shapes are geometrically identical
+        // copies, so dedupe by name (first copy wins) instead of throwing on the key.
         var shapeByRule = containingShapes
             .Where(s => s != null)
-            .ToDictionary(s => s.Name);
+            .GroupBy(s => s.Name)
+            .ToDictionary(g => g.Key, g => g.First());
 
         var anyCapacity = acceptingRules.Any(rule =>
         {
