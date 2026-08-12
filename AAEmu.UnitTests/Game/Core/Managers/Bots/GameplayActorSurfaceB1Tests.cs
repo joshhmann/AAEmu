@@ -183,7 +183,7 @@ public class GameplayActorSurfaceB1Tests
         // Uses the rig's canonical usable item (TestItemTemplateId + real
         // reagent mapping on TestItemUseSkillId — the merged B1 rig setup):
         // consumption flows through the ordinary skill-pipeline reagent path.
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-useitem-1");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sf-useitem-1");
         GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 2);
 
         var request = actor.UseItem(GameplayActorTestRig.TestItemTemplateId);
@@ -202,7 +202,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task UseItem_RetryAfterConsumption_RejectedWithoutDoubleUse_ProvesIdempotency()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-useitem-2");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sf-useitem-2");
         GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 1);
 
         var first = actor.UseItem(GameplayActorTestRig.TestItemTemplateId);
@@ -219,7 +219,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task UseItem_NoItemInInventory_RejectedWithRejectedAction()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-useitem-3");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-useitem-3");
         GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.UseItemTemplateId,
             GameplayActorTestRig.UseItemSkillId, useSkillAsReagent: true);
         GameplayActorTestRig.SeedSkillTemplate(GameplayActorTestRig.UseItemSkillId);
@@ -233,7 +233,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task UseItem_ItemWithoutUseSkill_RejectedWithRejectedAction()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-useitem-4");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-useitem-4");
         GameplayActorTestRig.SeedItemTemplate(91_003, useSkillId: 0);
         GameplayActorTestRig.GrantItem(actor, 91_003, 1);
 
@@ -248,7 +248,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task UseItem_UnknownUseSkill_RejectedWithRejectedAction()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-useitem-5");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-useitem-5");
         GameplayActorTestRig.SeedItemTemplate(91_004, useSkillId: 0x7FFF_FFFE);
         GameplayActorTestRig.GrantItem(actor, 91_004, 1);
 
@@ -267,7 +267,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Mount_WithConnection_CompletesThroughRealEnginePath()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-mount-1");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sf-mount-1");
         GameplayActorTestRig.AttachConnection(actor);
         GameplayActorTestRig.SpawnMate(actor, MateObjId, 1);
 
@@ -291,7 +291,7 @@ public class GameplayActorSurfaceB1Tests
         // shared MateManager.MountMate(Character, …) entry — the same engine
         // call the packet wrapper reaches via connection.ActiveChar. Headless
         // pilots mount without a GameConnection; no fabricated session needed.
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-mount-2");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-mount-2");
         GameplayActorTestRig.SpawnMate(actor, MateObjId, 1);
 
         var request = actor.Mount(MateObjId);
@@ -303,7 +303,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Mount_AlreadyMounted_RejectedWithStateTransition_ProvesIdempotency()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-mount-3");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-mount-3");
         GameplayActorTestRig.AttachConnection(actor);
         GameplayActorTestRig.SpawnMate(actor, MateObjId, 1);
 
@@ -321,7 +321,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Mount_UnknownMate_RejectedWithRejectedAction()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-mount-4");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-mount-4");
         GameplayActorTestRig.AttachConnection(actor);
 
         var request = actor.Mount(0x5002);
@@ -333,7 +333,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Dismount_Mounted_CompletesThroughRealEnginePath()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-dismount-1");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-dismount-1");
         GameplayActorTestRig.AttachConnection(actor);
         GameplayActorTestRig.SpawnMate(actor, MateObjId, 1);
         var mount = actor.Mount(MateObjId);
@@ -353,7 +353,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Dismount_NotMounted_RejectedWithStateTransition()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-dismount-2");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-dismount-2");
 
         var request = actor.Dismount();
 
@@ -364,7 +364,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Dismount_RetryAfterSuccess_RejectedWithStateTransition_ProvesIdempotency()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-dismount-3");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-dismount-3");
         GameplayActorTestRig.AttachConnection(actor);
         GameplayActorTestRig.SpawnMate(actor, MateObjId, 1);
         var mount = actor.Mount(MateObjId);
@@ -384,7 +384,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Dismount_WrongMateSpecified_RejectedWithStateTransition()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-dismount-4");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sf-dismount-4");
         GameplayActorTestRig.AttachConnection(actor);
         GameplayActorTestRig.SpawnMate(actor, MateObjId, 1);
         var mount = actor.Mount(MateObjId);
@@ -404,7 +404,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task B1Actions_AllEmitStructuredTraceRecords()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-trace-1");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sf-trace-1");
         GameplayActorTestRig.AttachConnection(actor);
         GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.InteractItemTemplateId);
         GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.UseItemTemplateId,
