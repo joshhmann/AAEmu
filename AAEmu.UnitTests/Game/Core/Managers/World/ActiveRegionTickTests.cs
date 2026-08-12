@@ -116,9 +116,24 @@ public class ActiveRegionTickTests
             .IsTrue()
             .Because($"the ActiveRegionTick subscription must dispatch async so Invoke stays within budget; actual {sw.ElapsedMilliseconds}ms");
 
-        // The async pass must actually run and start ticking characters
-        await Task.Delay(400);
-        await Assert.That(characters.Values.OfType<SlowCharacter>().Any(c => c.TickCount > 0))
+        // The async pass must actually run and start ticking characters.
+        // Poll (not a single fixed delay): under full-suite thread-pool load
+        // the async dispatch can take longer than a fixed 400ms window
+        // (t_eb9d8b30 gate flake — ActiveRegionTickTests.cs:121). A bounded
+        // poll keeps the assertion's meaning — the dispatch must execute and
+        // tick at least one character — without wall-clock starvation.
+        var swWait = Stopwatch.StartNew();
+        var ticked = false;
+        while (swWait.ElapsedMilliseconds < 5000)
+        {
+            if (characters.Values.OfType<SlowCharacter>().Any(c => c.TickCount > 0))
+            {
+                ticked = true;
+                break;
+            }
+            await Task.Delay(50);
+        }
+        await Assert.That(ticked)
             .IsTrue()
             .Because("the async-dispatched pass must execute and tick at least one character");
     }

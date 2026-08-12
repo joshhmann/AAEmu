@@ -17,8 +17,17 @@ using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
+using TUnit.Core.Interfaces;
 
 namespace AAEmu.UnitTests.Game.Bots;
+
+/// <summary>Serializes tests in this class: the rig shares owner-id 900001
+/// between the fail-before and equip tests through the singleton ItemManager
+/// (t_f3700374 pattern: [NotInParallel] does NOT serialize within a class).</summary>
+public sealed class SequentialParallelLimit : IParallelLimit
+{
+    public int Limit => 1;
+}
 
 /// <summary>
 /// P0 hotfix t_d0889187 — FINAL visibility layer. Rig evidence chain:
@@ -46,6 +55,7 @@ namespace AAEmu.UnitTests.Game.Bots;
 ///  SCUnitStatePacket equipment section carries non-zero template ids and
 ///  the client can assemble the mesh.
 /// </summary>
+[ParallelLimiter<SequentialParallelLimit>]
 [NotInParallel]
 public class BotBodyPartEquipmentTests
 {
@@ -328,19 +338,23 @@ public class BotBodyPartEquipmentTests
             BindingFlags.NonPublic | BindingFlags.Instance);
         var itemsField = typeof(ItemManager).GetField("_allItems",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        if (containersField?.GetValue(itemManager) is not Dictionary<ulong, ItemContainer> containers)
+        // Production field type is ConcurrentDictionary (ItemManager.cs:77-79)
+        // and the fixture seeds the same — a `Dictionary` cast here silently
+        // fails the pattern match and the cleanup no-ops, leaking every rig
+        // container into the shared singleton (t_eb9d8b30 root cause).
+        if (containersField?.GetValue(itemManager) is not ConcurrentDictionary<ulong, ItemContainer> containers)
             return;
 
         var toRemove = containers.Where(kv => kv.Value.OwnerId >= RigOwnerIdBase).Select(kv => kv.Key).ToList();
         foreach (var key in toRemove)
         {
             var container = containers[key];
-            if (itemsField?.GetValue(itemManager) is Dictionary<ulong, Item> allItems)
+            if (itemsField?.GetValue(itemManager) is ConcurrentDictionary<ulong, Item> allItems)
             {
                 foreach (var item in container.Items.ToList())
-                    allItems.Remove(item.Id);
+                    allItems.TryRemove(item.Id, out _);
             }
-            containers.Remove(key);
+            containers.TryRemove(key, out _);
         }
     }
 
