@@ -2,26 +2,27 @@
   "environment": "aaemu-.165",
   "image": {
     "tag": "aaemu-game:presence-demo",
-    "digest": "sha256:096593111afc011f80fe57e9b20dc0c268b70779fbea3169485846baeb8e2d4e",
-    "built_at": "2026-08-10T04:03:00-07:00 (PDT)"
+    "digest": "sha256:3ddcf7a4bdbcaf6b96628b7ac0f3ea7f2e496f68603101ce094331c7a4905dc2",
+    "built_at": "2026-08-11T22:53:33-07:00 (PDT)"
   },
   "source": {
-    "commit": "960ef8479",
+    "commit": "4ded92c61",
     "branch": "develop (fork joshhmann/AAEmu)",
-    "lineage": "fork develop b8afe2097 + merge of fix/adopt-heal-keeps-factory-look @ cdf6d4a62 (Rei gate PASS t_c310b5ce) \u2014 adopt-heal keeps stored factory look; demo-blob force-stamp removed",
-    "verified": "merge commit 960ef8479 = fork develop HEAD; cdf6d4a62 lineage on top of fd4ab6eea confirmed via GitHub compare (merge base fd4ab6eea704, 2026-08-10, t_26a0ef77)"
+    "lineage": "fork develop @ 4ded92c61 (verified tip: M3b-1..4 + exit gate f5b00c686 + SaveManager + quest-save NRE + race-fix chain + bot-control fixes; audit ACCEPT t_4b4e9fbe; M1-M3 audit PASS t_5b1f5494)",
+    "verified": "4ded92c61 = fork develop tip at card time; ff-only merge from f4adbadcb (prior prod HEAD); hotfix ancestors verified (exit gate f5b00c686, SaveManager 5ed5d6493, adopt-heal 960ef8479, patrol-home 96e45252a all ANCESTOR OK, 2026-08-11 t_fec9b36f)"
   },
-  "git_sha": "a6a2f3459dc7df551a8dcca950a055fc827b1e00",
-  "git_sha_note": "current prod tree HEAD (deploy t_26a0ef77 + wi-9 census sweep + manifest commit). Runtime image built from source.commit 960ef8479; the later commits are non-runtime (census manifests + this manifest file).",
-  "deployed_at": "2026-08-10T04:03:00-07:00",
-  "milestone": "M6 adopt-heal fix deploy (t_26a0ef77) \u2014 demo-blob force-stamp removed; Citizen rows re-provisioned to 3 distinct factory looks",
-  "database_backup": "none_required_no_schema_change (bot rows additive; accounts reused idempotently by BotAccountProvisioningService; box compact.sqlite3 pristine per read-only reference rule 3)",
+  "git_sha": "72b807e47",
+  "git_sha_note": "prod tree HEAD after ff-merge to fork develop tip (docs-only delta 4ded92c61..72b807e47: scorecard/roadmap merges, non-runtime). Runtime image built from source.commit 4ded92c61.",
+  "deployed_at": "2026-08-11T22:54:00-07:00",
+  "milestone": "M3b deploy (t_fec9b36f) \u2014 M3b furniture persistence + phase-crop recovery + restart restore + property repair + exit gate + M2/M3a fixes; quest census drops applied (SQL/patches overlays)",
+  "database_backup": "compact.sqlite3.bak-pre-m3b-20260811 (in .server_files/AAEmu.Game/Data/) \u2014 pre-overlay pristine copy; MySQL untouched (bot rows additive, accounts reused)",
   "services": {
-    "db": "Up (healthy)",
-    "login": "Up (healthy)",
-    "game": "Up (healthy) - presence-demo image 096593111afc, 3 citizen bots embodied+roaming, 0 NRE",
+    "db": "Up (healthy) - untouched",
+    "login": "Up (healthy) - untouched",
+    "game": "Up (healthy) - presence-demo image 3ddcf7a4bdbc, 3/3 citizen bots adopted+roaming (positions change across save cycles), QuestSanity SUMMARY OK 0 errors, 0 FATAL, client connection from 192.168.0.186 accepted post-boot",
     "adminer": "Up"
   },
-  "build_path": "in-repo overlay recipe (docker-compose.presence.yaml now tracked in repo, captured by 615c3719cc5d): `cd /root/AAEmu && git merge --ff-only fork/develop && docker compose -f docker-compose.yaml -f docker-compose.presence.yaml up -d --build game`. Rollback tags retained: pre-adoptheal=ebe809a0ec5b / pre-gm=af96b0f3bbd6 / pre-parity-seeding=037dcfa2803c / pre-hotfix5=a6f6631c1835 / pre-hotfix4=280df55c585d / pre-hotfix3=b43277edf887 / pre-hotfix2=eae06dc172ac.",
-  "notes": "Deploy t_26a0ef77 (2026-08-10): merge of the Rei-gate-passed adopt-heal fix was performed by Mai (deploy lane rescue) because Tai's card t_555ed207 was orphaned blocked (review-required unblock unavailable from worker session). Re-provision of collapsed Citizen rows required deleting orphaned items too (DELETE FROM items WHERE owner IN (citizen ids)) \u2014 the documented t_506a9acb workaround only deleted item_containers + characters, which leaves 42 orphaned item rows that crash LoadUserItems (ContainerIdManager bitset NRE) on next boot. Skill pitfall updated. Presence overlay on prod now carries the P0 home override (15572/15364/126.5) via the tracked in-repo overlay. No upstream PRs (lane gate)."
+  "build_path": "in-repo overlay recipe: `cd /root/AAEmu && git merge --ff-only 4ded92c61 && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml up -d --no-deps --force-recreate game` (presence overlay carries AAEMU_PRESENCE_DEMO=1 + patrol-home 15572/15364/126.5). Rollback tag: aaemu-game:presence-demo-rollback-pre-m3b = 096593111afc.",
+  "notes": "Deploy t_fec9b36f (2026-08-11, Mai): rollback tag snapshotted FIRST from running image 096593111afc (pre-build, per thinpool/GC pitfall). SQL overlays applied to runtime compact.sqlite3 only (dev tree stays pristine reference per rule 3); overlay script at /tmp/overlay-apply.py on CT 133 (idempotent, guarded deletes). npc_spawns.json (main_world) md5 5f6e57efcf5a0df46914f90de49c2d1a matches previous deploy. NLog caps confirmed: Sequence/26214400/20 + env-Info rule. No upstream PRs (lane gate).",
+  "sql_overlays": "SQL/patches/compact/*.sql applied to runtime compact.sqlite3 (12 patches, FK OFF per authors' env): quest_contexts 4876->4579, quest_components 17851->17480, quest_acts 26886->26802, unit_reqs 13354->13214; dropped ids 1391/6069/1533-1548 cluster/2148-2229 reserve etc verified 0 rows; census-only drops (2026/2230/2607/2684/3491/3503/3569/3758/5812) remain live DB rows by design (WI-11b deferred/KEEP register)"
 }
