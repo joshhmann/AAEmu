@@ -162,13 +162,36 @@ public interface IGameplayActor
     /// </summary>
     ActorRequest Loot(uint corpseObjId, string? idempotencyKey = null);
 
-    /// <summary>B1 SEAM (typed, fail-closed): use an inventory item (by item template id).</summary>
+    /// <summary>
+    /// Uses an inventory item (by item template id) through the REAL
+    /// gameplay pipeline: the item is resolved through normal inventory
+    /// services, validated (existence, charges, use skill, skill template),
+    /// then applied exactly like the client's item-use path — Skill.Use
+    /// with a SkillItem caster (the CSStartSkillPacket SkillItem branch).
+    /// The engine evaluates requirements, cooldown, GCD and reagent
+    /// consumption; refusals map to Rejected(RejectedAction) and happen
+    /// before any consumption. Idempotent: an explicit-key retry is
+    /// rejected pre-flight, so the item is never consumed twice.
+    /// </summary>
     ActorRequest UseItem(uint itemId, string? idempotencyKey = null);
 
-    /// <summary>B1 SEAM (typed, fail-closed): mount a rideable slave unit.</summary>
+    /// <summary>
+    /// Mounts a rideable mate (by world objId) through the normal mount
+    /// pipeline — the same MateManager.MountMate the CSMountMatePacket
+    /// handler drives. Rejects when already mounted
+    /// (StateTransition) or when the target is not an active, owned mate
+    /// with a free driver seat (RejectedAction). Retries cannot double-
+    /// toggle: the key gate plus the already-mounted guard make a second
+    /// mount request a rejection, never a state flip.
+    /// </summary>
     ActorRequest Mount(uint mountObjId, string? idempotencyKey = null);
 
-    /// <summary>B1 SEAM (typed, fail-closed): dismount the current slave.</summary>
+    /// <summary>
+    /// Dismounts the current mate through the normal mount pipeline — the
+    /// same MateManager.UnMountMate the CSUnMountMatePacket handler uses.
+    /// Rejects when not mounted (StateTransition). Retries after a
+    /// successful dismount are rejected, never re-executed.
+    /// </summary>
     ActorRequest Dismount(string? idempotencyKey = null);
 
     /// <summary>
@@ -212,19 +235,19 @@ public enum ActorActionType : byte
     /// <summary>Auto-complete turn-in (real packet path third branch).</summary>
     AutoTurnIn = 9,
 
-    /// <summary>B1 seam: interact with a world unit/doodad (lands with the B1 milestone).</summary>
+    /// <summary>Interact with a world unit/doodad (real engine path).</summary>
     Interact = 10,
 
-    /// <summary>B1 seam: loot a corpse container (lands with the B1 milestone).</summary>
+    /// <summary>Loot a corpse container (real engine path).</summary>
     Loot = 11,
 
-    /// <summary>B1 seam: use an inventory item (lands with the B1 milestone).</summary>
+    /// <summary>Use an inventory item through the real item-use pipeline.</summary>
     UseItem = 12,
 
-    /// <summary>B1 seam: mount a rideable slave (lands with the B1 milestone).</summary>
+    /// <summary>Mount a rideable mate through the normal mount pipeline.</summary>
     Mount = 13,
 
-    /// <summary>B1 seam: dismount the current slave (lands with the B1 milestone).</summary>
+    /// <summary>Dismount the current mate through the normal mount pipeline.</summary>
     Dismount = 14
 }
 

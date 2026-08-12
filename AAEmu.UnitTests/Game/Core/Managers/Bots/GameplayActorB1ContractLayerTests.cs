@@ -15,8 +15,10 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///    TimedOut lock the key; Rejected attempts are retryable); the
 ///    effect-fingerprint ledger dedupes items/currency/labor/quest
 ///    credit/interactions at the B1 action layer;
-///  - typed B1 seams: the five not-yet-implemented actions fail closed
-///    (Rejected(RejectedAction) + audit record), never throw, never no-op;
+///  - typed B1 seams: every B1 action (Interact · Loot · UseItem ·
+///    Mount/Dismount) is implemented on real engine paths and fails closed
+///    on invalid input (Rejected + audit record), never throws, never
+///    no-ops — the fail-closed contract the seams originally staked out;
 ///  - timeout support on every action (Move → Navigation, others →
 ///    Starvation, spec §17 only);
 ///  - trace record JSON form usable by the control-plane API.
@@ -256,40 +258,39 @@ public class GameplayActorB1ContractLayerTests
 
     #endregion
 
-    #region B1 typed seams — fail closed (remaining surface)
+    #region B1 actions — fail closed on invalid input (full surface)
 
     [Test]
-    public async Task SeamActions_FailClosed_RejectedWithAuditRecord_NoThrow()
+    public async Task B1Actions_InvalidInputs_FailClosed_WithAuditRecords_NoThrow()
     {
         var (actor, session) = GameplayActorTestRig.CreateActor("b1-seam-1");
         var npcObjId = GameplayActorTestRig.SpawnNpc(session, 2000);
 
-        // Interact/Loot are implemented (t_fc51af53): on a plain NPC both
-        // still fail closed — Interact because the target is not a doodad,
-        // Loot because the container holds nothing — but with real reasons,
-        // never the seam wording. UseItem/Mount/Dismount remain seams until
-        // the sibling slices land.
+        // All five B1 actions are implemented on real engine paths
+        // (Interact/Loot t_fc51af53; UseItem/Mount/Dismount t_a5edc1e6).
+        // On invalid input each still fails closed with a REAL reason —
+        // never the seam wording, never a throw, never a silent no-op.
         var interact = actor.Interact(npcObjId);
         var loot = actor.Loot(npcObjId);
         var useItem = actor.UseItem(1234);
         var mount = actor.Mount(npcObjId);
         var dismount = actor.Dismount();
 
-        await Assert.That(interact.State).IsEqualTo(ActorLifecycleState.Rejected);
-        await Assert.That(interact.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-        await Assert.That(interact.Detail?.Contains("B1 seam")).IsFalse();
-
-        await Assert.That(loot.State).IsEqualTo(ActorLifecycleState.Rejected);
-        await Assert.That(loot.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-        await Assert.That(loot.Detail?.Contains("B1 seam")).IsFalse();
-
-        foreach (var request in new[] { useItem, mount, dismount })
+        // Interact (target not a doodad), Loot (container holds nothing),
+        // UseItem (no such item in inventory) and Mount (target not an
+        // active owned mate) reject with RejectedAction.
+        foreach (var request in new[] { interact, loot, useItem, mount })
         {
             await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
             await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-            await Assert.That(request.Detail?.Contains("B1 seam")).IsTrue();
-            await Assert.That(request.Detail?.Contains("not implemented in this slice")).IsTrue();
+            await Assert.That(request.Detail?.Contains("B1 seam")).IsFalse();
+            await Assert.That(request.Detail?.Contains("not implemented in this slice")).IsFalse();
         }
+
+        // Dismount with no active mount is a StateTransition rejection.
+        await Assert.That(dismount.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(dismount.Failure).IsEqualTo(ActorFailureReason.StateTransition);
+        await Assert.That(dismount.Detail?.Contains("B1 seam")).IsFalse();
 
         // Every request emitted a full audit record; the actor is idle.
         await Assert.That(actor.AuditTrace.Count).IsEqualTo(5);
