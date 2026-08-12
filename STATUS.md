@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-10 22:25 PDT · by Nei
-Branch of record: develop @ 5ed5d6493
+Updated: 2026-08-11 22:40 PDT · by Nei
+Branch of record: develop @ 4ded92c61
 
 ## Milestone state
 
@@ -18,6 +18,27 @@ Items 1-8 delivered; automated exit test GREEN — census headline
 1148/1148. PROD DEPLOYED @ 94f498fc (2026-08-04, M1 engine-health
 release — BUG-007/008/009/010/011/012 live). Deploy incident (39GB
 container json.log) resolved; rotation fix shipped (t_264e1984 ✅).
+M1 closed on automated evidence (M1-M3 audit t_5b1f5494); human playtest
+verdict open (Open Decision #1, pending Josh — C5).
+
+**M2 — Golden-path baseline: ✅ DONE — G1 census gate PASSED (2026-08-10)**
+M2 redefined (2026-08-10 audit, in ROADMAP) into the M2a–M2d census sweep.
+G1 GATE @ 7f5c179f7: 4,579 live = 4,573 PASS + 6 doc-SKIP, 0 unexplained;
+full gate 1495/0/1 (t_971d275b / gate card t_4221f85c). Baseline legs
+Rei-gated: automated (t_c6eb12ec / t_1998cfd8 PASS), restart (t_cca63225 /
+t_c069bacd PASS + live probe t_92a41fe6 2/2), clean-host (t_52755daa /
+t_819930ef PASS-WITH-FIXES). Human leg DEFERRED to M4 close (t_46bf9b84).
+
+**M3a — Homestead shell: ✅ CLOSED (2026-08-10, Rei gate t_449875bd ACCEPT)**
+Merged @ 4d0427b96; two-player exit via M3aExitScenarioTests (M5-stand-in:
+2 scripted actors, adjacent 16m, ONE session — placement → construction →
+crops → storage → furniture). Scorecard HOUSING-01 / FARM-01 C/W/H/A = 2.
+
+**M3b — Property persistence and recovery: ✅ CLOSED (2026-08-11, EXIT gate t_accb1c63 PASS)**
+M3b-1..4 merged (5dc7c2fbd / 71b43e09f / 3913932bf / 5981246ea); EXIT E2E
+f5b00c686 PASS 7m08s — N=3 crash cycles incl. kill -9 mid-save (INNODB_TRX-
+observed) + container kill, 16 rows/boot, no loss/dup; autosave p95 1301ms
+< 2000ms at 25 bots + 2 homesteads. PROPERTY-01 R = 2 (U→2 in f5b00c686).
 
 **M6 — Deterministic playerbot framework: 🔶 presence-demo hotfix chain DONE — parity + soak open**
 Presence demo (3 citizen bots embody + roam AT Josh's spawn, zone 179)
@@ -70,7 +91,7 @@ skips at the milestone gate.
 | Builds | Tai | presence-demo image aaemu-game:presence-demo live via hotfix3 overlay; overlay now in-repo | ✅ deployed |
 | Verifies | Rei | e2e gates 10-bot correctness + 25-bot stability PASS (2026-08-09) | ✅ done |
 | Dispatches | Mai | presence-demo hotfix chain deployed (hotfix3 overlay) | ✅ done |
-| Tracks | Nei | post-merge tracking 08-10 — SaveManager dirty-tracking (5ed5d6493) into SCORECARD/ISSUES/STATUS + ROADMAP A4; M6.6 closeout (t_eecc5604) | ✅ this commit |
+| Tracks | Nei | M1-M3 audit C4 tracking refresh 08-11 (t_b3980118) — STATUS M2/M3 rows, ROADMAP M3 closeout + M1 reconcile, progression-board M3 rows | ✅ this commit |
 
 ## Open tasks (kanban, AAEmu lane)
 
@@ -92,6 +113,11 @@ skips at the milestone gate.
 
 ## Last scorecard update
 
+- 2026-08-11 — this commit: M1-M3 audit C4 tracking refresh (t_b3980118,
+  audit t_5b1f5494 PASS WITH NOTES) — STATUS.md M2/M3a/M3b rows +
+  branch-of-record 4ded92c61; ROADMAP.md M3a/M3b closeout lines + M1
+  status reconcile (closed on automated evidence, human playtest verdict
+  open — C5); progression-board.md M3a/M3b rows.
 - 2026-08-10 — this commit: post-merge tracking for SaveManager dirty-tracking
   (merged 5ed5d6493, t_8c18eb1c / Rei gate t_53025996 ACCEPT) — SCORECARD.md fork-fix
   entry + PROG-01 save-path pointer, ISSUES.md AUDIT-001 closure, STATUS.md G2-A4
