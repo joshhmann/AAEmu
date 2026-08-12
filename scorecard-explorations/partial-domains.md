@@ -3,6 +3,7 @@
 **Repo:** `/root/aaemu-dev` (fork of AAEmu/AAEmu, ArcheAge 1.2 emulator, .NET 10)
 **Method:** grep of all 679 canonical sqlite table names against `AAEmu.Game/**/*.cs` (bin/obj excluded), plus manager/loader source reads. Table counts below are measured from this repo, not the scorecard — see notes where they differ.
 **Date:** 2026-08-03
+**Updated:** 2026-08-11 — FIX-3 scrub (t_2eddfb93): deco-limit "dead weight" claims resolved per M3a; housing now 9/9 tables wired.
 
 ---
 
@@ -10,7 +11,7 @@
 
 | Domain | Tables | Wired | % | Loader / Manager | Biggest missing slice |
 |--------|--------|-------|---|------------------|----------------------|
-| housing | 9 (+2 item_*) | 7 (+2) | 78% (82% w/ item_*) | `HousingGameData` → `HousingManager` | Deco-limit enforcement |
+| housing | 9 (+2 item_*) | 9 (+2) | 100% | `HousingGameData` → `HousingManager` | None — all 9 wired (M3a); code-level leftovers: polygon-level placement (FIX-2), `ExpandDecoLimit` effect stub |
 | auction | 3 | 0 | 0% | `AuctionManager` (MySQL `auction_house` only) | Category *name* data only — low impact |
 | specialty-trade | 4 | 3 | 75% | `SpecialtyManager` (sqlite) | `specialty_bundles` name table — near-zero impact |
 | items | 54 | 32 | 59% | `ItemManager` + `ItemGameData`, `ItemConversionGameData` | Socketing (TODO), proc bindings, recipe books |
@@ -19,12 +20,12 @@
 
 ---
 
-## 1. Housing — 7/9 tables wired (scorecard says 38%; measured 7/9 = 78% core, 9/11 = 82% incl. item_housings)
+## 1. Housing — 9/9 tables wired (100%; scorecard coverage row still shows 38% — stale, pending regen; measured 9/9 = 100% core, 11/11 = 100% incl. item_housings)
 
 ### What IS wired
 
 **Tables referenced:**
-- `housings` — `GameData/HousingGameData.cs:74` (template load: id, name, category_id, main_model_id, hp, garden_radius, taxation_id, **deco_limit, absolute_deco_limit, housing_deco_limit_id** at `:103-105`, is_sellable, heavy_tax, always_public…); `HousingManager.cs:147` (MySQL `SELECT * FROM housings` for player-owned state); `House.cs:293` (`REPLACE INTO housings` save); `HousingIdManager.cs:14` (id allocator).
+- `housings` — `GameData/HousingGameData.cs:74` (template load: id, name, category_id, main_model_id, hp, garden_radius, taxation_id, **deco_limit, absolute_deco_limit, housing_deco_limit_id** at `:113-115`, is_sellable, heavy_tax, always_public…); `HousingManager.cs:179` (MySQL `SELECT * FROM housings` for player-owned state); `House.cs:293` (`REPLACE INTO housings` save); `HousingIdManager.cs:8` (id allocator).
 - `housing_binding_doodads` — `HousingGameData.cs:115` (bound doodads per house template, joined with `Data/housing_bindings*.json` position files at `:238-282`).
 - `housing_build_steps` — `HousingGameData.cs:149` (step → model_id, skill_id, num_actions per house).
 - `housing_decorations` — `HousingGameData.cs:177` (decoration designs: doodad_id, allow_on_floor/wall/ceiling, actability_group_id, actability_up, deco_actability_group_id).
@@ -34,28 +35,28 @@
 **Runtime behavior (what a player actually gets today):**
 - **Place a house: full flow.** `HousingManager.Build()` `HousingManager.cs:474` — validates design item, pays tax (certificates via `FeaturesManager.Fsets.Check(Feature.taxItem)` `:494`, or gold `:534`), consumes design `:546`, spawns house, sets `CurrentStep = 0` if build steps exist else `-1` `:578-581`, sends `SCMyHousePacket` `:591`.
 - **Build steps: functional.** `House.cs:62` `_allAction` sums `BuildSteps[].NumActions`; `CurrentStep` setter `House.cs:70-132` swaps `ModelId` per step and spawns/deletes bound doodads; `CraftEffect.cs:92-133` handles `WorldInteractionGroup.Building` — wrong skill aborts `:100-105`, `AddBuildAction()` advances, `SCHouseBuildProgressPacket` broadcast `:115-123`, bound doodads spawned at completion `:126-131`.
-- **Decorate: functional.** `HousingManager.DecorateHouse()` `:1520` — validates item ownership, creates decoration doodad from `GetDecorationDesignFromId` `:1546`, supports big-fish weights `:1565-1570`, coffers `:1580-1583`, UCC `:1577`, persistent save `:1587`. Removal/recovery path `ReturnHouseItemsToOwner` `:937-991` (respects `restore` flag `:964`). Actability bonuses from furniture `GetActAbilityBonusFromHouse` `:1643-1670`.
+- **Decorate: functional + limit-checked.** `HousingManager.DecorateHouse()` `:1685` — validates item ownership, rejects unknown designs, **enforces decoration limits via `DecorationLimitEvaluator.IsDecorationAllowed` `:1720`** (absolute cap `AbsoluteDecoLimit` → per-actability-group allowance `GetDecoLimitCount` → `deco_limit` backstop; client errors 124 `HouseTooManyDecorations` / 628 `HousingActabilityDecoLimited`), creates decoration doodad from `GetDecorationDesignFromId` `:1711`, supports big-fish weights `:1749`, UCC `:1761`, coffers `:1764-1766`, persistent save `:1771`. Removal/recovery path `ReturnHouseItemsToOwner` `:1047-1130` (respects `restore` flag `:1130`). Actability bonuses from furniture `GetActAbilityBonusFromHouse` `:1827` (`:1835` TODO = special decor-effect limit, distinct from the wired count check).
 - **Taxes/demolition:** `HousingTaxTask` scheduled `:199-200`, `UpdateTaxInfo` `:190`, 22h grace after failed tax `:55`, sell/buy flow `CSSellHousePacket`/`BuyHouse` `:1355`.
 - **Misc:** permissions `:602`, rename `:620`, for-sale marker doodad 6760 `:53`, `GetHouseAtLocation` `:1627` (used by doodad placement `CSCreateDoodadPacket.cs:63`, `PutDownBackpackEffect.cs:51`).
 
-### What is NOT wired (2 tables — 3 of 5 housing tables wired by M3a-1/M3a-2)
+### What is NOT wired — none (all 5 previously-gap tables wired: 3 by M3a-1, 2 by M3a)
 
 | Table | Data it carries (1.2 game data) | Feature it would enable |
 |---|---|---|
 | `housing_areas` | Housing-allowed zone/zone-group definitions | **WIRED (M3a-1, feat/homestead-placement @ e1863625a)** — zone-level placement validation in `HousingManager.Build()`/`ConstructHouseTax` via `HousingPlacementValidator.ValidatePlacement`; land-zone check, faction gate, houseless-only zone types, zone-type category rule, overlap spacing. Client errors `HouseCannotLocateInvalidArea`/`HouseCannotLocateOverlapHouse` |
-| `housing_deco_limits` | Deco-limit groups (referenced by `housings.housing_deco_limit_id`, read but unused at `HousingGameData.cs:105`) | Per-house decoration-count categories |
-| `housing_deco_limit_elems` | Per-limit decoration allowances (which decoration designs count toward a limit, and how many) | Real deco-limit enforcement; currently `deco_limit`/`absolute_deco_limit` are read into `HousingTemplate` (`HousingGameData.cs:103-104`) but **never checked anywhere** — grep for `DecoLimit` in `HousingManager` returns zero enforcement hits; `:1651` has `// TODO: Implement special decor effect limit` |
+| `housing_deco_limits` | Deco-limit groups (referenced by `housings.housing_deco_limit_id`) | **WIRED (M3a, merge 4d0427b96)** — loaded at `HousingGameData.cs:240`; per-limit group lookup `GetDecoLimit`; consumed by `DecorationLimitEvaluator.IsDecorationAllowed` (`HousingManager.cs:1720`) |
+| `housing_deco_limit_elems` | Per-limit decoration allowances (which decoration designs count toward a limit, and how many) | **WIRED (M3a)** — loaded at `HousingGameData.cs:258`; per-actability-group count `GetDecoLimitCount(limitId, groupId)`; enforced in `DecorateHouse` via `DecorationLimitEvaluator` (absolute cap `AbsoluteDecoLimit` → group allowance → `deco_limit` backstop; errors 124/628). Pins: `HousingM3aConstructionTests` (`Evaluator_*`, `DecorateHouse_Over*Limit_Rejected*`, `HousingGameData_Load_CanonicalDecoLimitData`) |
 | `housing_groups` | House-design groups (client UI grouping of designs) | **WIRED (M3a-1)** — loaded into `HousingLandZoneInfo` (zone-type category rules + houseless-only groups 12/13) |
 | `housing_group_categories` | Group categories for above | **WIRED (M3a-1)** — loaded into `HousingLandZoneInfo.AllowedCategories`; a zone whose groups allow no categories rejects everything (1.2 group 11) |
 
-**Corroborating stubs:** `SpecialEffects/ExpandDecoLimit.cs:22` logs-only; `SpecialEffects/RebuildHousing.cs:22` logs-only; `DoodadFuncHousingArea.cs:15` logs-only.
+**Remaining code-level stubs (not table-wiring gaps):** `SpecialEffects/ExpandDecoLimit.cs:22` logs-only (the *expand-limit* special effect — distinct from the wired count check); `SpecialEffects/RebuildHousing.cs:22` logs-only; `DoodadFuncHousingArea.cs:15` logs-only (now at `Models/Game/DoodadObj/Funcs/`).
 
 ### The remaining gap, concretely
-- Player **can** place, build up (multi-step), decorate, set permissions, sell, pay taxes, recover furniture.
-- Player **cannot** be stopped from over-decorating (no server-side count check; `DecorateHouse` `:1520-1603` never consults `DecoLimit`), and the deco-limit *data model* (`housing_deco_limits`, `housing_deco_limit_elems`) is dead weight.
+- Player **can** place, build up (multi-step), decorate (limit-checked), set permissions, sell, pay taxes, recover furniture.
+- Placement validation is zone-level, not polygon-level — terrain 115/116, unit 114, `max_construct_count` unenforced (FIX-2, t_9682e86a); `ExpandDecoLimit` special effect remains a log-only stub.
 
 ### Priority
-1. **Deco-limit enforcement** (load `housing_deco_limits` + `housing_deco_limit_elems`, count decorations per house in `DecorateHouse`, send the right error — `ErrorMessageType.HousingActabilityDecoLimited = 628` exists at `ErrorMessageType.cs:613`). Visible, finishes an already-90%-working feature. Low effort, medium payoff — with friends, the client's own limit is what most players hit first, so this is mainly anti-exploit.
+1. **Polygon-level placement validation + `max_construct_count`** (FIX-2, t_9682e86a) — placement is validated at zone level today; terrain/unit/max-count checks are the remaining anti-grief slice. ~~Deco-limit enforcement~~ **RESOLVED (M3a)** — `DecorationLimitEvaluator.IsDecorationAllowed` wired into `DecorateHouse` (`HousingManager.cs:1720`), loads at `HousingGameData.cs:240/258`, errors 124/628.
 
 ---
 
@@ -160,7 +161,7 @@ The three **socketing tables** + the `ItemSocketing` TODO are the single most va
 
 1. **Item socketing** — load `item_sockets`, `item_socket_num_limits`, `item_socket_level_limits`; implement the `ItemSocketing` special effect (currently TODO at `Models/Game/Skills/Effects/SpecialEffects/ItemSocketing.cs:29`). Biggest endgame feature gap; data is all there (gem items load, chance table loads).
 2. **Item proc bindings** — load `item_proc_bindings` and attach procs to items at `ItemManager` load; the trigger path (`UnitProcs.cs:24`) already exists. Turns on an entire combat layer (proc weapons/armor) with a small loader + one attach point.
-3. **Housing deco limits** — load `housing_deco_limits`/`housing_deco_limit_elems`; enforce counts in `HousingManager.DecorateHouse` (`:1520`) using `template.DecoLimit`/`AbsoluteDecoLimit` (already read, never checked); finish the `:1651` TODO. Completes the housing gap cheaply.
+3. ~~Housing deco limits~~ **RESOLVED (M3a)** — loaded (`HousingGameData.cs:240/258`) + enforced (`DecorationLimitEvaluator.IsDecorationAllowed`, `HousingManager.cs:1720`). Next housing slice: polygon-level placement validation (FIX-2, t_9682e86a).
 4. **Mate equip packs** — load the four `mate_equip_*` tables; add a legality check in `CSChangeMateEquipmentPacket`. Scaffolding exists; this is a data+validation pass.
 5. **Recipe/quest/open-paper item impls** (`item_recipes`, `item_accept_quests`, `item_open_papers`) — item-use depth for crafters and questers; medium effort, each is a small effect handler.
 6. **Do NOT touch:** `auction_a/b/c_categories` (search works on ids from `items`), `specialty_bundles` (name table), `model_*` orphans (client-side).
@@ -169,10 +170,10 @@ The three **socketing tables** + the `ItemSocketing` TODO are the single most va
 
 | Claim | Evidence |
 |---|---|
-| Housing templates read deco limits but never enforce | `HousingGameData.cs:103-105`; `HousingManager.cs:1520-1603` (no limit check); `:1651` TODO |
+| ~~Housing templates read deco limits but never enforce~~ **RESOLVED M3a** — deco limits wired end-to-end | `DecorationLimitEvaluator.IsDecorationAllowed` (`HousingManager.cs:1720`, called from `DecorateHouse`); loads `HousingGameData.cs:240,258`; template fields `HousingTemplate.cs:30-32`; client errors 124/628 (`ErrorMessageType.cs:131,613`); pins `HousingM3aConstructionTests` (`Evaluator_*`, `DecorateHouse_Over*Limit_Rejected*`, `HousingGameData_Load_CanonicalDecoLimitData`) |
 | House placement lacks zone validation | ~~`HousingManager.cs:477` `// TODO validate house by range...`~~ **RESOLVED M3a-1** — `HousingPlacementValidator.ValidatePlacement` wired into `Build()`/`ConstructHouseTax` (land-zone, faction, houseless-only, category, overlap) |
 | Build steps work end-to-end | `House.cs:62,70-132`; `CraftEffect.cs:92-133`; `HousingGameData.cs:149` |
-| Decoration placement works | `HousingManager.cs:1520-1603`; `CSDecorateHousePacket.cs:35` |
+| Decoration placement works (limit-checked since M3a) | `HousingManager.cs:1685-1800`; `CSDecorateHousePacket.cs:35` |
 | Auction runtime is MySQL `auction_house` only | `AuctionManager.cs:354,407,464`; `AuctionIdManager.cs:14` |
 | Auction category ids come from `items` rows | `ItemManager.cs:1030-1032,1039-1045`; search compare `AuctionManager.cs:554-564` |
 | Specialty 3/4 tables loaded | `SpecialtyManager.cs:49,71,97`; sell flow `:176-281` |
