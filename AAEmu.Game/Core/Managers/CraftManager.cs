@@ -120,6 +120,6 @@ public class CraftManager : Singleton<CraftManager>, ICraftManager
 
     public Craft GetCraftById(uint craftId)
     {
-        return _crafts[craftId];
+        return _crafts.GetValueOrDefault(craftId);
     }
 }

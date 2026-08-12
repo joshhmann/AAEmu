@@ -12,6 +12,12 @@ public class CraftTask(Character character, uint craftId, uint objId, int count)
         {
             // _character.SendMessage($"CraftTask: {_craftId}");
             var craft = CraftManager.Instance.GetCraftById(craftId);
+            if (craft == null)
+            {
+                // Craft vanished from the manager (data change) — never crash the task loop
+                character?.Craft.CancelCraft();
+                return;
+            }
             character?.Craft.Craft(craft, count, objId);
         }
     }
