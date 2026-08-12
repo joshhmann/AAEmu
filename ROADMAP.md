@@ -373,8 +373,12 @@ ArcheAge here.**
 
 **Depends on:** M3b (property persistence), M2's reset/seed procedure
 validated by the third-party check, **A2 (broadcast economics)** — vehicle +
-pack + group movement is where allocation churn first becomes visible; M4
-owns confirming the short-circuit works for convoy traffic. **Feeds:** M8
+pack + group movement is where allocation churn first becomes visible. The
+convoy-traffic confirmation is covered by the A2 gate at M4 entry
+(t_921a7be5, Rei ACCEPT, merged f9572e1a8 — ancestor of develop): mechanism
+verified (allocation-free short-circuit, wake-storm scans budgeted) and the
+broadcast allocation profile is unit-verified flat. Convoy-volume
+measurement is a soak-scale item owned by the M6 soak lane. **Feeds:** M8
 (hauler/trader bots), M9 (trade economy).
 
 **Detail (2026-08-09 audit):** persistence criteria are per-object-type, not
@@ -410,6 +414,15 @@ on the merged tree:
   rows × 3 crash cycles incl. kill -9 mid-save and container kill) PASS 7m03s.
 - **Scorecard:** CRAFT-01, PACK-01, SLAVE-01 → C/W/H/A/R=2 (H via the
   scripted-actor automated fallback; humans confirm feel, not function).
+- **A2 convoy-traffic confirmation:** covered by the A2 gate at M4 entry
+  (t_921a7be5, Rei ACCEPT, merged f9572e1a8 — ancestor of develop) — the
+  short-circuit mechanism is verified (RegionBroadcastAllocationTests 9/9:
+  allocation-free region iteration + character short-circuit, GC delta
+  < 1KB per 100k scans; PopulationDirectorTests 26/26: wake-storm scans
+  ≤ O(cap)) and the broadcast allocation profile is unit-verified flat.
+  Live convoy volume (bots + vehicle convoy under broadcast load) is a
+  soak-scale measurement that belongs to the M6 soak lane (numeric budgets
+  + staged gate: 1 bot/30 min → 10 bots/1 h → 10 bots/6 h).
 - Human playtest of the integrated release (the M2 "feel" leg) remains the
   deployment-lane follow-up once Josh GO's the release merge.
 
