@@ -1,0 +1,147 @@
+{
+ "questId": 2791,
+ "name": "로카의 장기말들을 지켜라 4단계",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12064,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17543,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2241,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12065,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17542,
+      "type": "QuestActObjZoneKill",
+      "detailId": 12,
+      "zoneId": 16,
+      "countNpc": 200,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 770,
+      "lvMin": 26,
+      "lvMax": 55,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12066,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17541,
+      "type": "QuestActConReportNpc",
+      "detailId": 2463,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12067,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28791,
+      "type": "QuestActSupplyExp",
+      "detailId": 382,
+      "exp": 9660
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 16,
+     "count": 200,
+     "countNpc": 200,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 26,
+     "lvMax": 55
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7054,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

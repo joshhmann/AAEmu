@@ -1,0 +1,161 @@
+{
+ "questId": 6377,
+ "name": "가격 보다 중요한 것은 정성",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14903
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38894,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4760,
+      "npcId": 14903
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38892,
+      "type": "QuestActObjItemGather",
+      "detailId": 2957,
+      "itemId": 27278,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27311,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38891,
+      "type": "QuestActConReportNpc",
+      "detailId": 4993,
+      "npcId": 14903
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27321,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38884,
+      "type": "QuestActSupplyItem",
+      "detailId": 4547,
+      "itemId": 34238,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38885,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1660,
+      "amount": 100
+     },
+     {
+      "actId": 38886,
+      "type": "QuestActSupplyExp",
+      "detailId": 1349,
+      "exp": 1004
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27278,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14903,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34238,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27278,
+   "count": 3
+  }
+ ]
+}

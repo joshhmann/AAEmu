@@ -1,0 +1,81 @@
+{
+ "questId": 4732,
+ "name": "봉인의 돌이 만든 줄기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1782
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20470,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27937,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 444,
+      "sphereId": 1782
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20472,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27938,
+      "type": "QuestActSupplyCopper",
+      "detailId": 739,
+      "amount": 0
+     },
+     {
+      "actId": 27939,
+      "type": "QuestActSupplyExp",
+      "detailId": 292,
+      "exp": 0
+     },
+     {
+      "actId": 27941,
+      "type": "QuestActConAutoComplete",
+      "detailId": 992
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

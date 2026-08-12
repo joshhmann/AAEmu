@@ -24,12 +24,22 @@ public static class E2eStack
     public static string DbPassword { get; private set; } = "e2e_" + Guid.NewGuid().ToString("N")[..16];
     public static string CanonicalSqliteMd5 { get; private set; } = "";
 
-    public const int LoginPort = 1237;
-    public const int GamePort = 1239;
-    public const int StreamPort = 1250;
-    public const int BridgePort = 1260;
+    // Ports are env-overridable so an isolated soak stack can run beside the
+    // shared one on the same host (M6 soak pattern, t_1ed9881f): point
+    // E2E_ROOT at a dedicated root, shift the ports, and give the compose
+    // stack its own COMPOSE_PROJECT_NAME. Defaults keep the shared-stack
+    // layout byte-identical.
+    public static int LoginPort => EnvPort("E2E_LOGIN_PORT", 1237);
+    public static int GamePort => EnvPort("E2E_GAME_PORT", 1239);
+    public static int StreamPort => EnvPort("E2E_STREAM_PORT", 1250);
+    public static int BridgePort => EnvPort("E2E_BRIDGE_PORT", 1260);
+    public static int InternalPort => EnvPort("E2E_INTERNAL_PORT", 1234);
+    public static int WebApiPort => EnvPort("E2E_WEBAPI_PORT", 1280);
     public const string DbHost = "127.0.0.1";
-    public const int DbPort = 3306;
+    public static int DbPort => EnvPort("E2E_DB_PORT", 3306);
+
+    private static int EnvPort(string name, int fallback)
+        => int.TryParse(Environment.GetEnvironmentVariable(name), out var v) && v > 0 ? v : fallback;
 
     private static Process _loginProc;
     private static Process _gameProc;
@@ -145,7 +155,14 @@ public static class E2eStack
                 if (!cmdline.Contains("AAEmu.Login.dll") && !cmdline.Contains("AAEmu.Game.dll"))
                     continue;
                 var cwd = new FileInfo($"/proc/{proc.Id}/cwd").LinkTarget;
-                if (cwd == null || !Path.GetFullPath(cwd).StartsWith(root, StringComparison.Ordinal))
+                // PATH-SEGMENT match, not a raw string prefix: /root/aaemu-e2e
+                // must NOT match /root/aaemu-e2e-soak2 (isolated soak stacks
+                // live under a sibling root — t_18fccd09 2026-08-10: the
+                // concurrent M2b run killed the soak2 stack 12min before its
+                // 6h window ended because StartsWith(root) matched the prefix).
+                if (cwd == null
+                    || (!Path.GetFullPath(cwd).StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+                        && !Path.GetFullPath(cwd).Equals(root, StringComparison.Ordinal)))
                     continue;
                 Console.WriteLine($"[e2e] killing stale e2e server pid {proc.Id} (cwd {cwd})");
                 proc.Kill(entireProcessTree: true);
@@ -315,35 +332,36 @@ public static class E2eStack
     private static string GameLocalConfig()
         => $$"""
             {
-              "Network": { "Host": "*", "Port": 1239, "NumConnections": 10 },
-              "StreamNetwork": { "Host": "*", "Port": 1250 },
-              "LoginNetwork": { "Host": "127.0.0.1", "Port": "1234" },
+              "Network": { "Host": "*", "Port": {{GamePort}}, "NumConnections": 10 },
+              "StreamNetwork": { "Host": "*", "Port": {{StreamPort}} },
+              "WebApiNetwork": { "Host": "*", "Port": {{WebApiPort}} },
+              "LoginNetwork": { "Host": "127.0.0.1", "Port": "{{InternalPort}}" },
               "Connections": {
                 "MySQLProvider": {
-                  "Host": "127.0.0.1", "Port": "3306", "User": "root",
+                  "Host": "127.0.0.1", "Port": "{{DbPort}}", "User": "root",
                   "Password": "{{DbPassword}}", "Database": "aaemu_game"
                 }
               },
               "ClientData": { "Sources": [ "./ClientData/game_pak" ] },
               "HeightMapsEnable": true,
               "World": { "AutoSaveInterval": 0.2 },
-              "Bots": { "EnableE2EBridge": true, "E2EBridgePort": 1260 }
+              "Bots": { "EnableE2EBridge": true, "E2EBridgePort": {{BridgePort}} }
             }
             """;
 
     private static string LoginLocalConfig()
         => $$"""
             {
-              "InternalNetwork": { "Host": "*", "Port": 1234 },
-              "Network": { "Host": "*", "Port": 1237, "NumConnections": 10 },
+              "InternalNetwork": { "Host": "*", "Port": {{InternalPort}} },
+              "Network": { "Host": "*", "Port": {{LoginPort}}, "NumConnections": 10 },
               "Connections": {
                 "MySQLProvider": {
-                  "Host": "127.0.0.1", "Port": "3306", "User": "root",
+                  "Host": "127.0.0.1", "Port": "{{DbPort}}", "User": "root",
                   "Password": "{{DbPassword}}", "Database": "aaemu_login"
                 }
               },
               "GameServers": [
-                { "Id": 1, "Name": "AAEmu.Game (e2e)", "Host": "127.0.0.1", "Port": 1239 }
+                { "Id": 1, "Name": "AAEmu.Game (e2e)", "Host": "127.0.0.1", "Port": {{GamePort}} }
               ]
             }
             """;
@@ -367,13 +385,25 @@ public static class E2eStack
     {
         Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
         var log = new FileStream(logPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-        var p = Process.Start(new ProcessStartInfo("dotnet", dll)
+
+        // Host isolation (t_eecc5604): the e2e stack shares CT-133 (4 cores)
+        // with the prod compose stack and monitoring, and single-world
+        // physics warnings on the M6 soak traced to thread descheduling.
+        // NOTE: a priority bump (nice -5) was prototyped but is CLAMPED by
+        // the LXC host: lxc.prlimit.nice=0 (RLIMIT_NICE hard 0 — verified,
+        // even root cannot raise it in this container), so the game process
+        // runs at nice 0 regardless. Isolation therefore means: dedicated
+        // E2E_ROOT + shifted ports + own compose project (M6 soak pattern)
+        // and a quiet host for the window — see fix/physics-gc-tuning.
+        var psi = new ProcessStartInfo("dotnet", dll)
         {
             WorkingDirectory = dir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false
-        })!;
+        };
+
+        var p = Process.Start(psi)!;
         p.OutputDataReceived += (_, e) => { if (e.Data != null) WriteLog(log, e.Data); };
         p.ErrorDataReceived += (_, e) => { if (e.Data != null) WriteLog(log, e.Data); };
         p.BeginOutputReadLine();

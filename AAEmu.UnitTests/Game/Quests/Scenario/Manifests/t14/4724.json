@@ -1,0 +1,81 @@
+{
+ "questId": 4724,
+ "name": "재회의 사당 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1774
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20445,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27895,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 436,
+      "sphereId": 1774
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27896,
+      "type": "QuestActSupplyCopper",
+      "detailId": 731,
+      "amount": 0
+     },
+     {
+      "actId": 27897,
+      "type": "QuestActSupplyExp",
+      "detailId": 283,
+      "exp": 0
+     },
+     {
+      "actId": 27899,
+      "type": "QuestActConAutoComplete",
+      "detailId": 984
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

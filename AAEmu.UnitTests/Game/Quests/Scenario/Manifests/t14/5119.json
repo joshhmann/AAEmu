@@ -1,0 +1,135 @@
+{
+ "questId": 5119,
+ "name": "조금만 성격이 차분했더라면",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26658
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22171,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31241,
+      "type": "QuestActConAcceptItem",
+      "detailId": 190,
+      "itemId": 26658
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31273,
+      "type": "QuestActSupplyItem",
+      "detailId": 3581,
+      "itemId": 26694,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22173,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31274,
+      "type": "QuestActConReportNpc",
+      "detailId": 4283,
+      "npcId": 1279
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22188,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31407,
+      "type": "QuestActSupplyItem",
+      "detailId": 3598,
+      "itemId": 26645,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1279,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26645,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26658,
+   "count": 1
+  }
+ ]
+}

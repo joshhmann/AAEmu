@@ -1,0 +1,93 @@
+{
+ "questId": 5471,
+ "name": "실천하는 양심",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28496
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23664,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33309,
+      "type": "QuestActConAcceptItem",
+      "detailId": 315,
+      "itemId": 28496
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23666,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33327,
+      "type": "QuestActSupplyExp",
+      "detailId": 740,
+      "exp": 1000
+     },
+     {
+      "actId": 33328,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1165,
+      "amount": 0
+     },
+     {
+      "actId": 33329,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 204,
+      "appellationId": 149
+     },
+     {
+      "actId": 33330,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1412
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28496,
+   "count": 1
+  }
+ ]
+}

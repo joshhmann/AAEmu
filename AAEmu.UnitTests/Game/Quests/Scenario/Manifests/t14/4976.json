@@ -1,0 +1,81 @@
+{
+ "questId": 4976,
+ "name": "정원의 아름다운 정자",
+ "zoneId": 2,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2073
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21588,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30180,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 594,
+      "sphereId": 2073
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21589,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30176,
+      "type": "QuestActSupplyCopper",
+      "detailId": 892,
+      "amount": 0
+     },
+     {
+      "actId": 30177,
+      "type": "QuestActSupplyExp",
+      "detailId": 433,
+      "exp": 0
+     },
+     {
+      "actId": 30179,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1199
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

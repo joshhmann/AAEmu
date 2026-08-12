@@ -1,0 +1,139 @@
+{
+ "questId": 6057,
+ "name": "[테스트 서버] 낚시 대회",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14322
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26074,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35681,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4604,
+      "npcId": 14322
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26076,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35682,
+      "type": "QuestActConReportNpc",
+      "detailId": 4830,
+      "npcId": 14322
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26077,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35679,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1287,
+      "amount": 0
+     },
+     {
+      "actId": 35680,
+      "type": "QuestActSupplyExp",
+      "detailId": 841,
+      "exp": 0
+     },
+     {
+      "actId": 35683,
+      "type": "QuestActSupplyItem",
+      "detailId": 3998,
+      "itemId": 27959,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35684,
+      "type": "QuestActSupplyItem",
+      "detailId": 3999,
+      "itemId": 27549,
+      "gradeId": 0,
+      "count": 20
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14322,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 27959,
+      "count": 1
+     },
+     {
+      "itemId": 27549,
+      "count": 20
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

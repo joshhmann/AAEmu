@@ -1,0 +1,81 @@
+{
+ "questId": 4771,
+ "name": "뚱뚱한 바오밥 나무 위",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1824
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20613,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28185,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 483,
+      "sphereId": 1824
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20615,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28186,
+      "type": "QuestActSupplyCopper",
+      "detailId": 777,
+      "amount": 0
+     },
+     {
+      "actId": 28187,
+      "type": "QuestActSupplyExp",
+      "detailId": 334,
+      "exp": 0
+     },
+     {
+      "actId": 28189,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1032
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 3809,
+ "name": "보물 상자에 담긴 비법",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10303
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15979,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22368,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3170,
+      "npcId": 10303
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15981,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22366,
+      "type": "QuestActObjItemGather",
+      "detailId": 1678,
+      "itemId": 24778,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15982,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22367,
+      "type": "QuestActConReportNpc",
+      "detailId": 3406,
+      "npcId": 10303
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15983,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24778,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10303,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24778,
+   "count": 1
+  }
+ ]
+}

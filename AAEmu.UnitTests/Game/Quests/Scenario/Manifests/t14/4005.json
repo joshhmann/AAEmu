@@ -1,0 +1,195 @@
+{
+ "questId": 4005,
+ "name": "아카네스 학파 일당 퇴치",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1201
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22814,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 946,
+      "npcId": 1201
+     },
+     {
+      "actId": 22815,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 947,
+      "npcId": 1210
+     },
+     {
+      "actId": 22816,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 948,
+      "npcId": 1360
+     },
+     {
+      "actId": 22817,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 949,
+      "npcId": 1305
+     },
+     {
+      "actId": 30697,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1182,
+      "npcId": 1302
+     },
+     {
+      "actId": 30698,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1183,
+      "npcId": 1303
+     },
+     {
+      "actId": 30699,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1184,
+      "npcId": 1304
+     },
+     {
+      "actId": 30700,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1185,
+      "npcId": 1323
+     },
+     {
+      "actId": 30701,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1186,
+      "npcId": 1324
+     },
+     {
+      "actId": 30702,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1187,
+      "npcId": 1378
+     },
+     {
+      "actId": 30703,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1188,
+      "npcId": 1357
+     },
+     {
+      "actId": 30704,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1189,
+      "npcId": 1358
+     },
+     {
+      "actId": 30705,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1190,
+      "npcId": 1359
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17267,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22818,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 437,
+      "monsterGroupId": 401,
+      "count": 18
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17268,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22819,
+      "type": "QuestActConReportJournal",
+      "detailId": 285
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17269,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23132,
+      "type": "QuestActSupplyCopper",
+      "detailId": 411,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 401,
+     "count": 18
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

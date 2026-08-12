@@ -1,0 +1,81 @@
+{
+ "questId": 4826,
+ "name": "누군가의 흔적이 느껴지는 무인도",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1874
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20808,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28458,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 512,
+      "sphereId": 1874
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20810,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28459,
+      "type": "QuestActSupplyCopper",
+      "detailId": 804,
+      "amount": 0
+     },
+     {
+      "actId": 28460,
+      "type": "QuestActSupplyExp",
+      "detailId": 364,
+      "exp": 0
+     },
+     {
+      "actId": 28462,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1067
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

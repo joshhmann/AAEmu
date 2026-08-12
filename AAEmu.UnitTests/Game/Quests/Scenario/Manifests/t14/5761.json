@@ -1,0 +1,165 @@
+{
+ "questId": 5761,
+ "name": "밀밭 사령관의 명예 훈장",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 29674
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24799,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34405,
+      "type": "QuestActConAcceptItem",
+      "detailId": 351,
+      "itemId": 29674
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24800,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34406,
+      "type": "QuestActObjItemGather",
+      "detailId": 2828,
+      "itemId": 29674,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24801,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34407,
+      "type": "QuestActConReportNpc",
+      "detailId": 4683,
+      "npcId": 8963
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24803,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34409,
+      "type": "QuestActSupplyExp",
+      "detailId": 776,
+      "exp": 10000
+     },
+     {
+      "actId": 34412,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1213,
+      "amount": 0
+     },
+     {
+      "actId": 34506,
+      "type": "QuestActSupplyItem",
+      "detailId": 3903,
+      "itemId": 29730,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29674,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8963,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29730,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29674,
+   "count": 1
+  },
+  {
+   "itemId": 29674,
+   "count": 1
+  }
+ ]
+}

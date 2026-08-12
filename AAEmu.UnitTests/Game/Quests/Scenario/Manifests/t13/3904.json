@@ -1,0 +1,130 @@
+{
+ "questId": 3904,
+ "name": "사라진 미녀들",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9010
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16491,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21793,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3076,
+      "npcId": 9010
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16492,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21794,
+      "type": "QuestActObjTalk",
+      "detailId": 926,
+      "npcId": 9460
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16493,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21795,
+      "type": "QuestActObjTalk",
+      "detailId": 927,
+      "npcId": 9461
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16494,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21796,
+      "type": "QuestActObjTalk",
+      "detailId": 928,
+      "npcId": 9462
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16496,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21798,
+      "type": "QuestActConAutoComplete",
+      "detailId": 709
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 9460
+    },
+    {
+     "type": "Talk",
+     "npcId": 9461
+    },
+    {
+     "type": "Talk",
+     "npcId": 9462
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

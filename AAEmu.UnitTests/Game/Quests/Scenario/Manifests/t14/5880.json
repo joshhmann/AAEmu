@@ -1,0 +1,129 @@
+{
+ "questId": 5880,
+ "name": "파열의 연금술",
+ "zoneId": 1,
+ "categoryId": 33,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13649
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25403,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34743,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4457,
+      "npcId": 13649
+     },
+     {
+      "actId": 34744,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4458,
+      "npcId": 13663
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25404,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34745,
+      "type": "QuestActObjInteraction",
+      "detailId": 720,
+      "doodadId": 7082,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25423,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35051,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1547
+     },
+     {
+      "actId": 38877,
+      "type": "QuestActSupplyItem",
+      "detailId": 4543,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7082,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

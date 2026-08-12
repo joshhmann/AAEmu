@@ -1,0 +1,81 @@
+{
+ "questId": 4502,
+ "name": "할 하파의 잔영을 발견하다!",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1614
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19632,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26751,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 290,
+      "sphereId": 1614
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19634,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26752,
+      "type": "QuestActSupplyCopper",
+      "detailId": 572,
+      "amount": 0
+     },
+     {
+      "actId": 26753,
+      "type": "QuestActSupplyExp",
+      "detailId": 129,
+      "exp": 0
+     },
+     {
+      "actId": 26755,
+      "type": "QuestActConAutoComplete",
+      "detailId": 837
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,160 @@
+{
+ "questId": 6390,
+ "name": "다시 할 수 없는 의뢰",
+ "zoneId": 197,
+ "categoryId": 103,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14353
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27352,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38958,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4778,
+      "npcId": 14353
+     },
+     {
+      "actId": 38972,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4792,
+      "npcId": 14451
+     },
+     {
+      "actId": 38976,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4796,
+      "npcId": 14452
+     },
+     {
+      "actId": 38985,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4805,
+      "npcId": 14453
+     },
+     {
+      "actId": 38994,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4814,
+      "npcId": 14454
+     },
+     {
+      "actId": 39003,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4823,
+      "npcId": 14455
+     },
+     {
+      "actId": 39012,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4832,
+      "npcId": 14456
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27353,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39019,
+      "type": "QuestActObjItemGather",
+      "detailId": 2963,
+      "itemId": 30832,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27354,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39029,
+      "type": "QuestActSupplyExp",
+      "detailId": 1355,
+      "exp": 0
+     },
+     {
+      "actId": 39039,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1730
+     },
+     {
+      "actId": 39048,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1668,
+      "amount": 10000
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30832,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30832,
+   "count": 1
+  }
+ ]
+}

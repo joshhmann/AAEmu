@@ -1,0 +1,113 @@
+{
+ "questId": 2014,
+ "name": "다리 건설의 어려움",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5521
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9253,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29068,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 187,
+      "doodadId": 5521
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9254,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13471,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 111,
+      "monsterGroupId": 115,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9256,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29062,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1100
+     },
+     {
+      "actId": 36987,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1395,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 10,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 115,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

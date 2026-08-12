@@ -178,21 +178,21 @@ public class HeadlessSession
             // renders the name tag but no body. Heal the in-memory params
             // AND persist them so the row stays visible across reboots.
             //
-            // P0 hotfix t_d0889187 (demo body source): model-10 bots must
-            // carry the EXACT Asssaa blob (733 at bytes 2-5) — rows from the
-            // hotfix-#4 era have the right structure (231B) but hair 1, so
-            // the degenerate check alone won't upgrade them. Detect via the
-            // demo-bytes comparison and replace when it doesn't match.
+            // t_555ed207: the t_d0889187 demo-blob force-stamp is GONE. It
+            // treated ANY non-demo blob (including valid factory-distinct
+            // blobs from t_61814965) as "pre-demo legacy" and replaced it
+            // with Asssaa's exact demo appearance on EVERY boot — collapsing
+            // all citizens to one identical look after any reboot. Adopted
+            // rows now keep their stored look: appearance is baked at birth
+            // (BotAppearanceFactory), and the only heal left is for rows
+            // with NO look at all (degenerate 1-byte type=None).
             var adoptedTemplate = CharacterManager.Instance.GetTemplate(adoptedCharacter.Race, adoptedCharacter.Gender);
-            var needDemoBlob = adoptedTemplate?.ModelId == 10 && !BotAppearanceDefaults.IsDemoAppearance(adoptedCharacter.ModelParams);
-            if (needDemoBlob || BotAppearanceDefaults.IsDegenerate(adoptedCharacter.ModelParams))
+            if (BotAppearanceDefaults.IsDegenerate(adoptedCharacter.ModelParams))
             {
                 adoptedCharacter.ModelParams = BotAppearanceDefaults.BuildDefault(
                     adoptedCharacter.Race, adoptedCharacter.Gender, adoptedTemplate?.ModelId ?? 0);
                 if (!adoptedCharacter.SaveDirectlyToDatabase())
                     Logger.Warn("Provisioning: adopted '{Name}' (id {Id}) — model-params heal save FAILED", name, adoptedCharacter.Id);
-                else if (needDemoBlob)
-                    Logger.Info("Provisioning: upgraded unit_model_params to demo appearance for adopted bot '{Name}' (id {Id})", name, adoptedCharacter.Id);
                 else
                     Logger.Info("Provisioning: healed degenerate unit_model_params for adopted bot '{Name}' (id {Id})", name, adoptedCharacter.Id);
             }

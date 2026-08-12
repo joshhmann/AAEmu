@@ -1,0 +1,93 @@
+{
+ "questId": 5433,
+ "name": "사랑의 조련사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28335
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23487,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33040,
+      "type": "QuestActConAcceptItem",
+      "detailId": 306,
+      "itemId": 28335
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23489,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33043,
+      "type": "QuestActSupplyExp",
+      "detailId": 731,
+      "exp": 1000
+     },
+     {
+      "actId": 33044,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1150,
+      "amount": 0
+     },
+     {
+      "actId": 33049,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 192,
+      "appellationId": 137
+     },
+     {
+      "actId": 33050,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1400
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28335,
+   "count": 1
+  }
+ ]
+}

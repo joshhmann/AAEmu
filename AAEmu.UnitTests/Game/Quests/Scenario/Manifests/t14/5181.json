@@ -1,0 +1,98 @@
+{
+ "questId": 5181,
+ "name": "릴리엇 말 애호가",
+ "zoneId": 17,
+ "categoryId": 87,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2177
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22435,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31643,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 655,
+      "sphereId": 2177
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32078,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 104,
+      "appellationId": 92
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22437,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31644,
+      "type": "QuestActConReportNpc",
+      "detailId": 4344,
+      "npcId": 2826
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2826,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,129 @@
+{
+ "questId": 3101,
+ "name": "습격자의 정체",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 19572
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13366,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19674,
+      "type": "QuestActConAcceptItem",
+      "detailId": 107,
+      "itemId": 19572
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19681,
+      "type": "QuestActConReportNpc",
+      "detailId": 2863,
+      "npcId": 8878
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14308,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 15741,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21359,
+      "type": "QuestActObjItemGather",
+      "detailId": 1576,
+      "itemId": 19572,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19572,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8878,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19572,
+   "count": 1
+  },
+  {
+   "itemId": 19572,
+   "count": 1
+  }
+ ]
+}

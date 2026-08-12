@@ -1,0 +1,97 @@
+{
+ "questId": 5399,
+ "name": "초상화의 주인공",
+ "zoneId": 27,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28084
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23339,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32821,
+      "type": "QuestActConAcceptItem",
+      "detailId": 287,
+      "itemId": 28084
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23340,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 23341,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32914,
+      "type": "QuestActConReportNpc",
+      "detailId": 4480,
+      "npcId": 9029
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9029,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28084,
+   "count": 1
+  }
+ ]
+}

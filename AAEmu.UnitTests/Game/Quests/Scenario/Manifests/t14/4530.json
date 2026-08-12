@@ -1,0 +1,81 @@
+{
+ "questId": 4530,
+ "name": "시치미 약탈단 본거지 파오",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1638
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26899,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 315,
+      "sphereId": 1638
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19724,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26900,
+      "type": "QuestActSupplyCopper",
+      "detailId": 596,
+      "amount": 0
+     },
+     {
+      "actId": 26904,
+      "type": "QuestActConAutoComplete",
+      "detailId": 862
+     },
+     {
+      "actId": 31092,
+      "type": "QuestActSupplyExp",
+      "detailId": 557,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

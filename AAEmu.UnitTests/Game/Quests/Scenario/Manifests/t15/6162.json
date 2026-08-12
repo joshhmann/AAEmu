@@ -1,0 +1,135 @@
+{
+ "questId": 6162,
+ "name": "[1층]입관실 지킴이 스테노 처치",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14169
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26434,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36089,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 391,
+      "questContextId": 6162
+     },
+     {
+      "actId": 36090,
+      "type": "QuestActCheckTimer",
+      "detailId": 159,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 26435,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 26436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36091,
+      "type": "QuestActConReportDoodad",
+      "detailId": 55,
+      "doodadId": 7597
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26439,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37938,
+      "type": "QuestActSupplyExp",
+      "detailId": 1186,
+      "exp": 250800
+     },
+     {
+      "actId": 38251,
+      "type": "QuestActSupplyItem",
+      "detailId": 4245,
+      "itemId": 32060,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 7597,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32060,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

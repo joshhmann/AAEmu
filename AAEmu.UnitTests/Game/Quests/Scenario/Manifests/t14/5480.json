@@ -1,0 +1,93 @@
+{
+ "questId": 5480,
+ "name": "깃발 애호가",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28507
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23691,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33318,
+      "type": "QuestActConAcceptItem",
+      "detailId": 324,
+      "itemId": 28507
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23693,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33363,
+      "type": "QuestActSupplyExp",
+      "detailId": 749,
+      "exp": 1000
+     },
+     {
+      "actId": 33364,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1174,
+      "amount": 0
+     },
+     {
+      "actId": 33365,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 213,
+      "appellationId": 158
+     },
+     {
+      "actId": 33366,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1421
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28507,
+   "count": 1
+  }
+ ]
+}

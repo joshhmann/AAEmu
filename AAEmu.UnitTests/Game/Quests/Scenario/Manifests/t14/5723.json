@@ -1,0 +1,255 @@
+{
+ "questId": 5723,
+ "name": "왕녀의 반지 복원",
+ "zoneId": 196,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13726
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24606,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34413,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4408,
+      "npcId": 13726
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34262,
+      "type": "QuestActObjItemGather",
+      "detailId": 2804,
+      "itemId": 8084,
+      "count": 125
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24608,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34258,
+      "type": "QuestActConReportNpc",
+      "detailId": 4676,
+      "npcId": 13726
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24750,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34465,
+      "type": "QuestActSupplyItem",
+      "detailId": 3897,
+      "itemId": 28801,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24751,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34259,
+      "type": "QuestActObjItemGather",
+      "detailId": 2801,
+      "itemId": 29716,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24752,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34263,
+      "type": "QuestActObjItemGather",
+      "detailId": 2805,
+      "itemId": 8079,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24753,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34261,
+      "type": "QuestActObjItemGather",
+      "detailId": 2803,
+      "itemId": 8082,
+      "count": 125
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24754,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34260,
+      "type": "QuestActObjItemGather",
+      "detailId": 2802,
+      "itemId": 29614,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24954,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34467,
+      "type": "QuestActSupplyItem",
+      "detailId": 3898,
+      "itemId": 29715,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8084,
+     "count": 125
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29716,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8079,
+     "count": 40
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8082,
+     "count": 125
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29614,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13726,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28801,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8084,
+   "count": 125
+  },
+  {
+   "itemId": 29716,
+   "count": 1
+  },
+  {
+   "itemId": 8079,
+   "count": 40
+  },
+  {
+   "itemId": 8082,
+   "count": 125
+  },
+  {
+   "itemId": 29614,
+   "count": 15
+  }
+ ]
+}

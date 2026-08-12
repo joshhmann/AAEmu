@@ -26,6 +26,7 @@ public class GateBudgetEvaluatorTests
         SchedulerMaxWakeLatencyMs = 88,
         DbWrites = 2500,          // 50/min/bot
         PhysicsWarnings = 0,
+        MaxSameWorldPhysicsWarningsPer60s = 0,
         TickOverrunWarnings = 0
     };
 
@@ -157,9 +158,59 @@ public class GateBudgetEvaluatorTests
     }
 
     [Test]
+    public async Task Evaluate_PresenceDemoActive_NormalizesByEmbodiedCharacters()
+    {
+        // t_b4eb35e9 evidence: stage-10 presence run (AAEMU_PRESENCE_DEMO=1,
+        // AAEMU_PRESENCE_BOT_COUNT=10) measured 15872 writes / 3.0 min across
+        // 10 network bots + 10 presence citizens. The old network-bot-only
+        // denominator gave 529.06/500 — a false RED. Per embodied character
+        // it is 15872 / 3 / 20 = 264.53 — inside the 266-277 calibration band.
+        var s = BaseSnapshot() with { WindowMinutes = 3, BotCount = 10, PresenceBotCount = 10, DbWrites = 15872 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: false);
+
+        var v = verdicts.Single(x => x.Name == "DB writes");
+        await Assert.That(v.Passed).IsTrue();
+        await Assert.That(v.Measured).IsEqualTo(264.53).Within(0.01);
+        await Assert.That(v.Detail.Contains("embodied-char")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PresenceDemoActive_WriteLoopStillFails()
+    {
+        // Presence citizens must not mask a genuine write loop: 20 embodied
+        // chars, 5 min, 300k writes → 3000/min/char — still 6× over the 500
+        // budget even with the presence-aware denominator.
+        var s = BaseSnapshot() with { BotCount = 10, PresenceBotCount = 10, DbWrites = 300000 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "DB writes");
+        await Assert.That(v.Passed).IsFalse();
+        await Assert.That(v.Measured).IsEqualTo(3000);
+        await Assert.That(v.Detail.Contains("write-loop")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PresenceBotCountZero_PlainRunNormalizationUnchanged()
+    {
+        // Plain stage-10 (no presence demo): PresenceBotCount defaults to 0,
+        // so the denominator stays the network-bot count and the calibrated
+        // 266-277/min/bot baseline vs the 500 limit is unchanged.
+        var s = BaseSnapshot() with { WindowMinutes = 3, BotCount = 10, DbWrites = 8300 }; // ≈ 276.7/min/bot
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: false);
+
+        var v = verdicts.Single(x => x.Name == "DB writes");
+        await Assert.That(v.Passed).IsTrue();
+        await Assert.That(v.Measured).IsEqualTo(276.67).Within(0.01);
+        await Assert.That(v.Detail.Contains("writes/min/bot")).IsTrue();
+    }
+
+    [Test]
     public async Task Evaluate_PhysicsWarningRateOverBudget_Fails()
     {
-        // 5 min window, 6 warnings → 1.2/min > 0.
+        // 5 min window, 6 warnings → 1.2/min > 0.1 (recalibrated budget).
         var s = BaseSnapshot() with { PhysicsWarnings = 6 };
 
         var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
@@ -167,6 +218,77 @@ public class GateBudgetEvaluatorTests
         var v = verdicts.Single(x => x.Name == "Physics warnings");
         await Assert.That(v.Passed).IsFalse();
         await Assert.That(v.Measured).IsEqualTo(1.2);
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningRate_SoakMeasuredRate_Passes()
+    {
+        // Post-fix 60-min soak measured 4 warnings / 60 min = 0.067/min
+        // (t_eecc5604 run B) — must pass the recalibrated 0.1/min budget.
+        var s = BaseSnapshot() with { WindowMinutes = 60, PhysicsWarnings = 4 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings");
+        await Assert.That(v.Passed).IsTrue();
+        await Assert.That(Math.Abs(v.Measured - 0.067) < 0.001).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_Over60s_Fails()
+    {
+        // No-sustained-slow clause: 31+ warnings on the SAME world within 60s
+        // = a physics thread that cannot keep up (hard fail). A stuck thread
+        // logs consecutive-iteration warnings (~25/s) — 31 in 60s is reached
+        // within ~1.2s of sustained slow.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 31 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsFalse();
+        await Assert.That(v.Detail.Contains("cannot keep up")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_ObservedCeiling_Passes()
+    {
+        // The 2026-08-11 M6 6h re-soak (t_18fccd09, 360-min window) measured 8
+        // warnings on ONE world within 59s during the boot/provisioning pause
+        // storm (16-in-76s across both worlds, all <=82ms, thread recovered,
+        // 5h50m clean after) — the recalibrated budget (30) must pass it.
+        // Earlier soaks: 3-in-8s (2026-08-10) and 2-in-3s / 2-in-40s clusters.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 8 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_AtNewLimit_Passes()
+    {
+        // The limit itself (30) must pass — only 31+ is a hard fail.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 30 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsWarningSameWorldCluster_TwoInWindow_Passes()
+    {
+        // Observed soak clusters (2026-08-10): 2 warnings in 3s and 2 in 40s
+        // on one world — process-wide pauses, thread recovered — must pass.
+        var s = BaseSnapshot() with { MaxSameWorldPhysicsWarningsPer60s = 2 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings same-world");
+        await Assert.That(v.Passed).IsTrue();
     }
 
     [Test]

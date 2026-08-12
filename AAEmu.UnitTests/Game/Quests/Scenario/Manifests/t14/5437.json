@@ -1,0 +1,149 @@
+{
+ "questId": 5437,
+ "name": "나차쉬가르 입장 준비",
+ "zoneId": 191,
+ "categoryId": 92,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13386
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33061,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4183,
+      "npcId": 13386
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33062,
+      "type": "QuestActObjItemGather",
+      "detailId": 2684,
+      "itemId": 28317,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33063,
+      "type": "QuestActConReportNpc",
+      "detailId": 4494,
+      "npcId": 13386
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23506,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33065,
+      "type": "QuestActSupplyItem",
+      "detailId": 3742,
+      "itemId": 28333,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28317,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13386,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28333,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28317,
+   "count": 1
+  }
+ ]
+}

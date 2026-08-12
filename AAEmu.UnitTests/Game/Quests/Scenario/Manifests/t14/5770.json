@@ -1,0 +1,112 @@
+{
+ "questId": 5770,
+ "name": "하늘 정원사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 29709
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24834,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34443,
+      "type": "QuestActConAcceptItem",
+      "detailId": 352,
+      "itemId": 29709
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24835,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34447,
+      "type": "QuestActConReportJournal",
+      "detailId": 382
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34449,
+      "type": "QuestActSupplyExp",
+      "detailId": 778,
+      "exp": 1000
+     },
+     {
+      "actId": 34450,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1214,
+      "amount": 0
+     },
+     {
+      "actId": 34462,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 241,
+      "appellationId": 183
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29709,
+   "count": 1
+  }
+ ]
+}

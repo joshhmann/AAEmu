@@ -1,0 +1,139 @@
+{
+ "questId": 6486,
+ "name": "다루족의 은밀한 임무",
+ "zoneId": 129,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34485
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27662,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39679,
+      "type": "QuestActConAcceptItem",
+      "detailId": 496,
+      "itemId": 34485
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39666,
+      "type": "QuestActObjCraft",
+      "detailId": 322,
+      "craftId": 6474,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27782,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39705,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1808
+     },
+     {
+      "actId": 39706,
+      "type": "QuestActSupplyItem",
+      "detailId": 4622,
+      "itemId": 31893,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 39707,
+      "type": "QuestActSupplyExp",
+      "detailId": 1435,
+      "exp": 80000
+     },
+     {
+      "actId": 39708,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1744,
+      "amount": 10000
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6474,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31893,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34485,
+   "count": 1
+  }
+ ]
+}

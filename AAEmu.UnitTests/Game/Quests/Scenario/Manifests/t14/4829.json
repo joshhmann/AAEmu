@@ -1,0 +1,81 @@
+{
+ "questId": 4829,
+ "name": "수중 동굴이 있을 것 같지만 없는 바위틈",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1877
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20817,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28473,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 515,
+      "sphereId": 1877
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20819,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28474,
+      "type": "QuestActSupplyCopper",
+      "detailId": 807,
+      "amount": 0
+     },
+     {
+      "actId": 28475,
+      "type": "QuestActSupplyExp",
+      "detailId": 367,
+      "exp": 0
+     },
+     {
+      "actId": 28477,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1070
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

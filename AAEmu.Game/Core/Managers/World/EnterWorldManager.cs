@@ -1,4 +1,5 @@
-﻿using AAEmu.Commons.Utils;
+﻿using System.Collections.Concurrent;
+using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Network.Connections;
@@ -29,7 +30,7 @@ public class EnterWorldManager(
     /// <summary>
     /// List of connected accounts (connection token, accountId)
     /// </summary>
-    private readonly Dictionary<uint, uint> _accounts = [];
+    private readonly ConcurrentDictionary<uint, uint> _accounts = [];
 
     /// <summary>
     /// Adds an account to the connection list and notifies the login server the client is connected
@@ -45,7 +46,7 @@ public class EnterWorldManager(
             connection.SendPacket(new GLPlayerEnterPacket(connectionId, gsId, 1));
         else
         {
-            _accounts.Add(connectionId, accountId);
+            _accounts.TryAdd(connectionId, accountId);
             connection.SendPacket(new GLPlayerEnterPacket(connectionId, gsId, 0));
         }
     }
@@ -63,7 +64,7 @@ public class EnterWorldManager(
         {
             if (account == accountId)
             {
-                _accounts.Remove(token);
+                _accounts.TryRemove(token, out _);
 
                 connection.AccountId = accountId;
                 connection.State = GameState.Lobby;

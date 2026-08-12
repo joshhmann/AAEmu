@@ -1,0 +1,112 @@
+{
+ "questId": 6033,
+ "name": "언어의 마술사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 30421
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25978,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35590,
+      "type": "QuestActConAcceptItem",
+      "detailId": 369,
+      "itemId": 30421
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25979,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35594,
+      "type": "QuestActConReportJournal",
+      "detailId": 415
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25980,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35591,
+      "type": "QuestActSupplyExp",
+      "detailId": 817,
+      "exp": 1000
+     },
+     {
+      "actId": 35592,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1263,
+      "amount": 0
+     },
+     {
+      "actId": 35593,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 261,
+      "appellationId": 204
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30421,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,128 @@
+{
+ "questId": 2913,
+ "name": "해적 깃발의 위엄",
+ "zoneId": 152,
+ "categoryId": 48,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8732
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12285,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18041,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2291,
+      "npcId": 8732
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12286,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18043,
+      "type": "QuestActObjInteraction",
+      "detailId": 422,
+      "doodadId": 3382,
+      "count": 1,
+      "wiId": 19,
+      "phase": 7886
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12287,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18050,
+      "type": "QuestActConReportNpc",
+      "detailId": 2521,
+      "npcId": 8732
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12288,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18051,
+      "type": "QuestActSupplyCopper",
+      "detailId": 270,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3382,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8732,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

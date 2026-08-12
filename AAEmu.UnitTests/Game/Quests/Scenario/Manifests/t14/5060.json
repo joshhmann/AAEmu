@@ -1,0 +1,187 @@
+{
+ "questId": 5060,
+ "name": "배심원은 내 운명!",
+ "zoneId": 21,
+ "categoryId": 5,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21908,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30977,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3973,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21909,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31186,
+      "type": "QuestActObjItemGather",
+      "detailId": 2472,
+      "itemId": 26584,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21910,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30981,
+      "type": "QuestActConReportNpc",
+      "detailId": 4246,
+      "npcId": 12531
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22026,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31013,
+      "type": "QuestActSupplyJuryPoint",
+      "detailId": 4,
+      "point": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31191,
+      "type": "QuestActObjItemGather",
+      "detailId": 2474,
+      "itemId": 26592,
+      "count": 6
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31041,
+      "type": "QuestActObjItemGather",
+      "detailId": 2467,
+      "itemId": 26533,
+      "count": 9
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26584,
+     "count": 4
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26592,
+     "count": 6
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 26533,
+     "count": 9
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12531,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26584,
+   "count": 4
+  },
+  {
+   "itemId": 26592,
+   "count": 6
+  },
+  {
+   "itemId": 26533,
+   "count": 9
+  }
+ ]
+}

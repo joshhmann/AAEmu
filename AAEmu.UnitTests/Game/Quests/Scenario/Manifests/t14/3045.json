@@ -1,0 +1,119 @@
+{
+ "questId": 3045,
+ "name": "초원의 질서",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 977
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13192,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18993,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2469,
+      "npcId": 977
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13193,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19495,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 336,
+      "monsterGroupId": 299,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13194,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18994,
+      "type": "QuestActConReportNpc",
+      "detailId": 2703,
+      "npcId": 977
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13195,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 299,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 977,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

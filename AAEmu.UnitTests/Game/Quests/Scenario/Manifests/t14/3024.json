@@ -1,0 +1,91 @@
+{
+ "questId": 3024,
+ "name": "흰 유령의 전설",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1293
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19035,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2485,
+      "npcId": 1293
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13585,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19046,
+      "type": "QuestActConReportNpc",
+      "detailId": 2721,
+      "npcId": 1294
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13586,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1294,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

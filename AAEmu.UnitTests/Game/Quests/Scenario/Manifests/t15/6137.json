@@ -1,0 +1,127 @@
+{
+ "questId": 6137,
+ "name": "[3층]비명서고의 괴물",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14562
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26352,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36177,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4659,
+      "npcId": 14562
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26353,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36181,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1179,
+      "npcId": 14370,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26476,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36182,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1675
+     },
+     {
+      "actId": 36855,
+      "type": "QuestActSupplyItem",
+      "detailId": 4070,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37974,
+      "type": "QuestActSupplyExp",
+      "detailId": 1204,
+      "exp": 252800
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14370,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -94,6 +94,48 @@ public class ItemContainer
 
     public List<Item> Items { get; set; }
 
+    /// <summary>
+    /// Guards access to <see cref="Items"/> — quest/drive threads can mutate the list while
+    /// other threads enumerate it (collection-modified race, see t_3fdd6ac3).
+    /// </summary>
+    private readonly object _itemsLock = new();
+
+    /// <summary>
+    /// Returns a thread-safe snapshot of the current items list.
+    /// Iterate this instead of <see cref="Items"/> directly when the container may be mutated concurrently.
+    /// </summary>
+    public List<Item> GetItemsSnapshot()
+    {
+        lock (_itemsLock)
+        {
+            return Items.ToList();
+        }
+    }
+
+    internal void AddItemRaw(Item item)
+    {
+        lock (_itemsLock)
+        {
+            Items.Add(item);
+        }
+    }
+
+    internal bool RemoveItemRaw(Item item)
+    {
+        lock (_itemsLock)
+        {
+            return Items.Remove(item);
+        }
+    }
+
+    internal void ClearItemsRaw()
+    {
+        lock (_itemsLock)
+        {
+            Items.Clear();
+        }
+    }
+
     private bool PartOfPlayerInventory =>
         ContainerType switch
         {
@@ -157,11 +199,14 @@ public class ItemContainer
 
     public void ReNumberSlots(bool reverse = false)
     {
-        for (var c = 0; c < Items.Count; c++)
+        lock (_itemsLock)
         {
-            var i = Items[reverse ? Items.Count - 1 - c : c];
-            i.SlotType = ContainerType;
-            i.Slot = c;
+            for (var c = 0; c < Items.Count; c++)
+            {
+                var i = Items[reverse ? Items.Count - 1 - c : c];
+                i.SlotType = ContainerType;
+                i.Slot = c;
+            }
         }
     }
 
@@ -173,7 +218,12 @@ public class ItemContainer
             return;
         }
 
-        var usedSlotsCount = Items.Count(i => i != null);
+        int usedSlotsCount;
+        lock (_itemsLock)
+        {
+            usedSlotsCount = Items.Count(i => i != null);
+        }
+
         _freeSlotCount = _containerSize - usedSlotsCount;
     }
 
@@ -184,70 +234,74 @@ public class ItemContainer
     /// <returns>Location if an empty slot was found, or -1 in case the item container is full</returns>
     public int GetUnusedSlot(int preferredSlot)
     {
-        // No max size defined, get the highest number and add one
-        if (_containerSize < 0)
+        lock (_itemsLock)
         {
-            var highestSlot = -1;
-            foreach (var i in Items)
+            // No max size defined, get the highest number and add one
+            if (_containerSize < 0)
             {
-                if (i.Slot > highestSlot)
+                var highestSlot = -1;
+                foreach (var i in Items)
                 {
-                    highestSlot = i.Slot;
+                    if (i.Slot > highestSlot)
+                    {
+                        highestSlot = i.Slot;
+                    }
+                }
+
+                highestSlot++;
+                return preferredSlot > highestSlot ? preferredSlot : highestSlot;
+            }
+
+            // Check the preferred slot to see if it's free, or if we need to assign a new one
+            var needNewSlot = false;
+            if (preferredSlot < 0)
+            {
+                needNewSlot = true;
+            }
+            else
+            {
+                foreach (var i in Items)
+                {
+                    if (i.Slot == preferredSlot)
+                    {
+                        needNewSlot = true;
+                        break;
+                    }
                 }
             }
 
-            highestSlot++;
-            return preferredSlot > highestSlot ? preferredSlot : highestSlot;
-        }
-
-        // Check the preferred slot to see if it's free, or if we need to assign a new one
-        var needNewSlot = false;
-        if (preferredSlot < 0)
-        {
-            needNewSlot = true;
-        }
-        else
-        {
-            foreach (var i in Items)
+            // Find a new slot if needed
+            if (needNewSlot)
             {
-                if (i.Slot == preferredSlot)
+                var usedSlots = (from iSlot in Items where iSlot.Slot != preferredSlot select iSlot.Slot).ToList();
+                for (var i = 0; i < ContainerSize; i++)
                 {
-                    needNewSlot = true;
-                    break;
+                    if (!usedSlots.Contains(i))
+                    {
+                        return i;
+                    }
                 }
-            }
-        }
 
-        // Find a new slot if needed
-        if (needNewSlot)
-        {
-            var usedSlots = (from iSlot in Items where iSlot.Slot != preferredSlot select iSlot.Slot).ToList();
-            for (var i = 0; i < ContainerSize; i++)
-            {
-                if (!usedSlots.Contains(i))
-                {
-                    return i;
-                }
+                // inventory container is full
+                return -1;
             }
 
-            // inventory container is full
-            return -1;
-        }
-        // Otherwise just return the preferred slot
-        else
-        {
+            // Otherwise just return the preferred slot
             return preferredSlot;
         }
     }
 
     private bool TryGetItemBySlot(int slot, out Item theItem)
     {
-        foreach (var i in Items)
+        lock (_itemsLock)
         {
-            if (i.Slot == slot)
+            foreach (var i in Items)
             {
-                theItem = i;
-                return true;
+                if (i.Slot == slot)
+                {
+                    theItem = i;
+                    return true;
+                }
             }
         }
 
@@ -269,12 +323,15 @@ public class ItemContainer
 
     private bool TryGetItemByItemId(ulong itemId, out Item theItem)
     {
-        foreach (var i in Items)
+        lock (_itemsLock)
         {
-            if (i.Id == itemId)
+            foreach (var i in Items)
             {
-                theItem = i;
-                return true;
+                if (i.Id == itemId)
+                {
+                    theItem = i;
+                    return true;
+                }
             }
         }
 
@@ -378,7 +435,10 @@ public class ItemContainer
             item._holdingContainer = this;
             item.OwnerId = OwnerId;
 
-            Items.Insert(0, item); // insert at front for easy buyback handling
+            lock (_itemsLock)
+            {
+                Items.Insert(0, item); // insert at front for easy buyback handling
+            }
 
             UpdateFreeSlotCount();
 
@@ -398,7 +458,11 @@ public class ItemContainer
         // Item Tasks
         if (sourceContainer != null && sourceContainer != this)
         {
-            sourceContainer.Items.Remove(item);
+            lock (sourceContainer._itemsLock)
+            {
+                sourceContainer.Items.Remove(item);
+            }
+
             sourceContainer.UpdateFreeSlotCount();
             if (sourceContainer.ContainerType != SlotType.Mail)
             {
@@ -473,7 +537,12 @@ public class ItemContainer
             Owner?.SendPacket(sync);
         }
 
-        var res = item._holdingContainer.Items.Remove(item);
+        bool res;
+        lock (item._holdingContainer._itemsLock)
+        {
+            res = item._holdingContainer.Items.Remove(item);
+        }
+
         if (res && task != ItemTaskType.Invalid)
         {
             item._holdingContainer?.Owner?.SendPacket(new SCItemTaskSuccessPacket(task, [new ItemRemoveSlot(item)], []));
@@ -861,7 +930,8 @@ public class ItemContainer
     {
         foundItems = [];
         unitsOfItemFound = 0;
-        foreach (var i in Items)
+        // Iterate a snapshot: another thread (quest reward / bot drive) may mutate Items concurrently
+        foreach (var i in GetItemsSnapshot())
         {
             if (i.TemplateId == templateId && (gradeToFind < 0 || gradeToFind == i.Grade))
             {
@@ -880,7 +950,7 @@ public class ItemContainer
     public void ApplyBindRules(ItemTaskType taskType)
     {
         var itemTasks = new List<ItemTask>();
-        foreach (var item in Items)
+        foreach (var item in GetItemsSnapshot())
         {
             if (item.HasFlag(ItemFlag.SoulBound) == false)
             {
@@ -912,9 +982,10 @@ public class ItemContainer
     /// </summary>
     public void Wipe()
     {
-        while (Items.Count > 0)
+        // Remove from a snapshot so the list can't shift under us between the count and the index read
+        foreach (var item in GetItemsSnapshot())
         {
-            RemoveItem(ItemTaskType.Invalid, Items[0], true);
+            RemoveItem(ItemTaskType.Invalid, item, true);
         }
 
         UpdateFreeSlotCount();

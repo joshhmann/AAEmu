@@ -1,0 +1,152 @@
+{
+ "questId": 6252,
+ "name": "액운을 막는 부적",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14831
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26789,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37326,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4723,
+      "npcId": 14831
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26790,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37343,
+      "type": "QuestActObjItemGather",
+      "detailId": 2928,
+      "itemId": 33075,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26791,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37313,
+      "type": "QuestActConReportNpc",
+      "detailId": 4959,
+      "npcId": 14831
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26792,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37320,
+      "type": "QuestActSupplyItem",
+      "detailId": 4160,
+      "itemId": 33040,
+      "gradeId": 2,
+      "count": 1
+     },
+     {
+      "actId": 38161,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1633,
+      "amount": 777
+     },
+     {
+      "actId": 38162,
+      "type": "QuestActSupplyExp",
+      "detailId": 1318,
+      "exp": 777
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 33075,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14831,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33040,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33075,
+   "count": 5
+  }
+ ]
+}

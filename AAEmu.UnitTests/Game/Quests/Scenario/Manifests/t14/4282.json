@@ -1,0 +1,91 @@
+{
+ "questId": 4282,
+ "name": "네네와 쿱네의 이루어질 수 없는 사랑",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1283
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18655,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24289,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3506,
+      "npcId": 1283
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18656,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24290,
+      "type": "QuestActConReportNpc",
+      "detailId": 3770,
+      "npcId": 1222
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18657,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1222,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

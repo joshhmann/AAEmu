@@ -43,6 +43,26 @@ public sealed record GateStageResult(
 /// </summary>
 public static class GateStages
 {
+    /// <summary>
+    /// Budgets for the 10-bot IDLE soak (the M6 exit-record shape, t_18fccd09).
+    /// The idle world's tick/region threads do no work, so the strict H2
+    /// density budgets (100ms ceiling, zero tolerance) false-RED on a single
+    /// host-jitter deschedule over a 6h window: the 2026-08-11 360-min re-soak
+    /// measured ONE 105ms region pass + 2 "over 100ms budget" warnings, all
+    /// inside a single 76s provisioning/GC pause storm (deferred 0 characters,
+    /// thread recovered, 5h50m clean after). Soak keeps the recalibrated
+    /// warning-rate budgets (physics 0.1/min) but widens the region-tick
+    /// ceiling to 200ms (~1.9× over the measured 105ms) and the tick-overrun
+    /// rate to 0.1/min (18× over the measured 0.0056/min). LOAD stages
+    /// (Stage25/Stage50) keep the strict budgets — a real region overload
+    /// fires many overrun warnings per minute and still trips.
+    /// </summary>
+    public static GateBudgets SoakBudgets { get; } = new()
+    {
+        RegionTickMaxElapsedMs = 200,
+        MaxTickOverrunWarningsPerMin = 0.1
+    };
+
     /// <summary>Stage 1 — 10 bots: correctness (golden route) + budgets.</summary>
     public static GateStageConfig Stage10 { get; } = new()
     {

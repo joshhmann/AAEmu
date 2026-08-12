@@ -1,0 +1,112 @@
+{
+ "questId": 6192,
+ "name": "책벌레",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 31686
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36334,
+      "type": "QuestActConAcceptItem",
+      "detailId": 433,
+      "itemId": 31686
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26550,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36306,
+      "type": "QuestActConReportJournal",
+      "detailId": 443
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26551,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36303,
+      "type": "QuestActSupplyExp",
+      "detailId": 880,
+      "exp": 1000
+     },
+     {
+      "actId": 36304,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1325,
+      "amount": 0
+     },
+     {
+      "actId": 36305,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 288,
+      "appellationId": 231
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31686,
+   "count": 1
+  }
+ ]
+}

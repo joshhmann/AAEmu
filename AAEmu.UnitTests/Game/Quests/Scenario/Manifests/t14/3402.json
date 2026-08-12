@@ -1,0 +1,125 @@
+{
+ "questId": 3402,
+ "name": "그를 위한 음식 만들기",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9604
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14603,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20287,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2756,
+      "npcId": 9604
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14604,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20286,
+      "type": "QuestActObjItemGather",
+      "detailId": 1455,
+      "itemId": 19749,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14605,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20288,
+      "type": "QuestActConReportNpc",
+      "detailId": 2990,
+      "npcId": 9604
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14606,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19749,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9604,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19749,
+   "count": 3
+  }
+ ]
+}

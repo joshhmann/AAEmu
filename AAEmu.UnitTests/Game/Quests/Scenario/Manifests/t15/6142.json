@@ -1,0 +1,125 @@
+{
+ "questId": 6142,
+ "name": "[3층]도서관 서고 정리 의뢰 2단계",
+ "zoneId": 203,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14569
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26367,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36384,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4676,
+      "npcId": 14569
+     },
+     {
+      "actId": 36385,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 401,
+      "questContextId": 6142
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26368,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36386,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 611,
+      "monsterGroupId": 563,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26369,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36387,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1686
+     },
+     {
+      "actId": 37986,
+      "type": "QuestActSupplyExp",
+      "detailId": 1210,
+      "exp": 252800
+     },
+     {
+      "actId": 39344,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 525,
+      "questContextId": 6432
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 563,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

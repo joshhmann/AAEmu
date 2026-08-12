@@ -1,0 +1,135 @@
+{
+ "questId": 2949,
+ "name": "붉은 염료의 비밀재료",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8031
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12898,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18655,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 653,
+      "npcId": 8031
+     },
+     {
+      "actId": 18656,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 654,
+      "npcId": 8036
+     },
+     {
+      "actId": 18657,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 655,
+      "npcId": 8035
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12938,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18654,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 323,
+      "monsterGroupId": 290,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12939,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18599,
+      "type": "QuestActConReportJournal",
+      "detailId": 187
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12940,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18600,
+      "type": "QuestActSupplyCopper",
+      "detailId": 285,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 290,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

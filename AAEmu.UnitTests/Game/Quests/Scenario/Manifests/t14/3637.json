@@ -1,0 +1,153 @@
+{
+ "questId": 3637,
+ "name": "초원의 띠를 누비는 동물들 사냥",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 987
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20798,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 794,
+      "npcId": 987
+     },
+     {
+      "actId": 20799,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 795,
+      "npcId": 966
+     },
+     {
+      "actId": 20800,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 796,
+      "npcId": 8944
+     },
+     {
+      "actId": 30592,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1174,
+      "npcId": 1012
+     },
+     {
+      "actId": 30593,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1175,
+      "npcId": 1003
+     },
+     {
+      "actId": 30594,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1176,
+      "npcId": 8939
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20804,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 372,
+      "monsterGroupId": 335,
+      "count": 36
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15176,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20802,
+      "type": "QuestActConReportJournal",
+      "detailId": 224
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15177,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20803,
+      "type": "QuestActSupplyCopper",
+      "detailId": 332,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 335,
+     "count": 36
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

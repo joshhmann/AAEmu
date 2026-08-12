@@ -1,0 +1,81 @@
+{
+ "questId": 4909,
+ "name": "다후타 교단 점거지",
+ "zoneId": 11,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2030
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21324,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29686,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 557,
+      "sphereId": 2030
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21325,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29682,
+      "type": "QuestActSupplyCopper",
+      "detailId": 822,
+      "amount": 0
+     },
+     {
+      "actId": 29683,
+      "type": "QuestActSupplyExp",
+      "detailId": 396,
+      "exp": 0
+     },
+     {
+      "actId": 29685,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1143
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -21,6 +21,14 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// one dedicated background loop (<see cref="ScanLoopAsync"/>), the review's
 /// allowed "dedicated thread" option.
 ///
+/// Execution boundary (M5 A1): worker threads are PURE WAKE PRODUCERS — they
+/// pop due steps and marshal them into the execution-boundary queue
+/// (<see cref="_tickQueue"/>). Steps execute ONLY on the single execution
+/// boundary: the game-loop thread (TickManager OnTick, useAsync: false →
+/// <see cref="DrainTickQueue"/>), never on a worker thread. ZERO
+/// Character/world mutation happens off that boundary; the
+/// <see cref="ExecutionBoundary"/> debug assertion proves the rule.
+///
 /// Step scheduling: a step returns its next wake delay (or null = dormant).
 /// A wake that arrives while a bot is leased is folded into a per-bot
 /// pending-wake and honored as soon as the current step completes, so no
@@ -46,7 +54,12 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     // Per-bot execution lease: TryAdd on enqueue, TryRemove on completion.
     private readonly ConcurrentDictionary<uint, byte> _leases = new();
 
-    // Bounded work channel consumed by the worker pool.
+    // M5 A1 execution boundary: steps handed by the worker pool (wake
+    // producers) into this marshal queue, drained on the single execution
+    // boundary — the game-loop thread (TickManager OnTick, useAsync: false).
+    private readonly ConcurrentQueue<BotStep> _tickQueue = new();
+
+    // Bounded work channel consumed by the worker pool (wake marshalling only).
     private Channel<BotStep> _work = null!;
     private Task[] _workers = [];
     private Task _scanTask = Task.CompletedTask;
@@ -108,16 +121,24 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         // Exactly ONE wake-scan loop (spec §21-5: never per-bot subscriptions).
         _scanTask = Task.Run(() => ScanLoopAsync(_scanCts.Token), CancellationToken.None);
 
-        // Bounded pool: WorkerCount tasks, each draining the work channel.
+        // Bounded pool: WorkerCount tasks, each draining the work channel and
+        // MARSHALLING steps to the execution-boundary queue (M5 A1). Workers
+        // never execute steps and never touch Character/world state.
         _workers = new Task[WorkerCount];
         for (var i = 0; i < WorkerCount; i++)
         {
-            var workerId = i;
-            _workers[i] = Task.Run(() => WorkerLoopAsync(workerId), CancellationToken.None);
+            _workers[i] = Task.Run(() => WorkerLoopAsync(), CancellationToken.None);
         }
 
-        Logger.Debug("PlayerBotScheduler started: {WorkerCount} workers, scan {ScanIntervalMs}ms",
-            WorkerCount, _options.ScanInterval.TotalMilliseconds);
+        // M5 A1: subscribe the marshal drain INLINE (useAsync: false) so bot
+        // steps run on the game-loop thread — the single execution boundary.
+        // The rig sets SubscribeToTickManager=false and pumps the drain
+        // manually on its simulated boundary thread.
+        if (_options.SubscribeToTickManager)
+            TickManager.Instance.OnTick.Subscribe(TickDrain, _options.TickDrainInterval, useAsync: false, name: "PlayerBotScheduler.TickDrain");
+
+        Logger.Debug("PlayerBotScheduler started: {WorkerCount} workers, scan {ScanIntervalMs}ms, tick drain {TickDrainMs}ms",
+            WorkerCount, _options.ScanInterval.TotalMilliseconds, _options.TickDrainInterval.TotalMilliseconds);
     }
 
     /// <inheritdoc />
@@ -128,7 +149,16 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         if (Interlocked.Exchange(ref _stopped, 1) != 0)
             return;
 
-        // Stop the wake-scan; workers drain the remaining queued steps (graceful).
+        // Unsubscribe the marshal drain: after this, no bot step can execute
+        // anywhere (the boundary is the only execution path).
+        if (_options.SubscribeToTickManager)
+            TickManager.Instance.OnTick.UnSubscribe(TickDrain);
+
+        // Stop the wake-scan; workers finish marshalling the remaining queued
+        // steps into the tick queue. Steps that were never drained are
+        // DROPPED — the execution boundary (game loop) is gone at shutdown,
+        // and executing them off-boundary would violate the M5 contract
+        // (nothing may mutate Character/world off the single boundary).
         _scanCts.Cancel();
         _work.Writer.TryComplete();
 
@@ -283,16 +313,36 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         }
     }
 
-    private async Task WorkerLoopAsync(int workerId)
+    private async Task WorkerLoopAsync()
     {
+        // M5 A1: wake producer — workers ONLY marshal steps from the bounded
+        // channel into the execution-boundary queue. They never run steps and
+        // never mutate Character/world state; execution happens exclusively on
+        // the game-loop thread via DrainTickQueue.
         await foreach (var step in _work.Reader.ReadAllAsync(CancellationToken.None))
         {
-            await ExecuteStepAsync(step, workerId);
+            _tickQueue.Enqueue(step);
         }
     }
 
-    private async Task ExecuteStepAsync(BotStep step, int workerId)
+    /// <summary>
+    /// Executes one bot step ON the single execution boundary (the game-loop
+    /// thread). Called only by <see cref="DrainTickQueue"/>. The execution is
+    /// synchronous (GetResult) so the whole step — executor call, lease
+    /// release, next-wake scheduling — stays on the boundary thread; an async
+    /// hop could resume the continuation on a thread-pool thread, which would
+    /// violate the M5 contract.
+    /// </summary>
+    private void ExecuteStepOnExecutionBoundary(BotStep step)
     {
+        // M5 A1 (execution boundary): every bot step must run on the single
+        // execution boundary (the game-loop thread). This assertion fires
+        // whenever a step executes off the boundary — it is the ROADMAP §M5
+        // thread-affinity proof. It lives here, at the one place every step
+        // goes through, so both the old worker path and the marshal drain
+        // are covered.
+        ExecutionBoundary.AssertOnExecutionThread("bot step execution");
+
         Interlocked.Increment(ref _activeWorkers);
         var sw = Stopwatch.StartNew();
         try
@@ -314,17 +364,24 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
 
             TimeSpan? nextDelay = null;
             var ok = true;
+            ExecutionBoundary.EnterBotStep();
             try
             {
                 if (_options.StepTimeout > TimeSpan.Zero)
                 {
                     using var stepCts = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken.None);
                     stepCts.CancelAfter(_options.StepTimeout);
-                    nextDelay = await _executor.StepAsync(runtime, stepCts.Token).WaitAsync(stepCts.Token);
+                    // The executors are synchronous-bodied; GetResult returns
+                    // immediately. A genuinely hung async executor blocks the
+                    // tick thread until the timeout — a loud, deliberate
+                    // failure mode (a bot step must never run off-thread).
+                    nextDelay = _executor.StepAsync(runtime, stepCts.Token)
+                        .WaitAsync(stepCts.Token).GetAwaiter().GetResult();
                 }
                 else
                 {
-                    nextDelay = await _executor.StepAsync(runtime, CancellationToken.None);
+                    nextDelay = _executor.StepAsync(runtime, CancellationToken.None)
+                        .GetAwaiter().GetResult();
                 }
             }
             catch (OperationCanceledException)
@@ -339,6 +396,10 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                 ok = false;
                 Interlocked.Increment(ref _totalStepsFailed);
                 Logger.Error(ex, "PlayerBot step failed: character {CharacterId}", step.BotId);
+            }
+            finally
+            {
+                ExecutionBoundary.ExitBotStep();
             }
 
             if (ok)
@@ -416,6 +477,29 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             if (Interlocked.CompareExchange(ref field, candidate, current) == current)
                 return;
         }
+    }
+
+    /// <summary>
+    /// Tick subscriber entry — production runs this INLINE on the game-loop
+    /// thread (TickManager OnTick, useAsync: false), which is the single
+    /// execution boundary. The first call pins the boundary thread.
+    /// </summary>
+    private void TickDrain(TimeSpan delta) => DrainTickQueue();
+
+    /// <summary>
+    /// Drains the marshal queue on the single execution boundary (the
+    /// game-loop thread). Each queued step executes synchronously here;
+    /// worker threads never run steps (M5 A1). Internal so the rig can pump
+    /// the drain on its simulated boundary thread.
+    /// </summary>
+    internal void DrainTickQueue()
+    {
+        // Pin the boundary on first drain: production = the tick thread;
+        // the rig = its test thread (or an explicit test pin).
+        ExecutionBoundary.RegisterExecutionThread();
+
+        while (_tickQueue.TryDequeue(out var step))
+            ExecuteStepOnExecutionBoundary(step);
     }
 
     /// <summary>A step handed from the due queue to the worker pool.</summary>

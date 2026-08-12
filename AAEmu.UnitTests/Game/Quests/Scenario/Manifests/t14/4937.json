@@ -1,0 +1,123 @@
+{
+ "questId": 4937,
+ "name": "미노타우르스 광전사 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1993
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21427,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29805,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1114,
+      "npcId": 1993
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21428,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29806,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1060,
+      "npcId": 1993,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21429,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29807,
+      "type": "QuestActConReportJournal",
+      "detailId": 341
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21430,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29808,
+      "type": "QuestActSupplyCopper",
+      "detailId": 850,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1993,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

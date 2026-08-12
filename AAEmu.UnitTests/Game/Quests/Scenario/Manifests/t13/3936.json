@@ -1,0 +1,129 @@
+{
+ "questId": 3936,
+ "name": "같이 지내고 싶지 않은 이웃",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9373
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16612,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22116,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 895,
+      "npcId": 9373
+     },
+     {
+      "actId": 22117,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 896,
+      "npcId": 9374
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16613,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22115,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 416,
+      "monsterGroupId": 368,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16614,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21972,
+      "type": "QuestActConReportJournal",
+      "detailId": 239
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16615,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21973,
+      "type": "QuestActSupplyCopper",
+      "detailId": 351,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 368,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

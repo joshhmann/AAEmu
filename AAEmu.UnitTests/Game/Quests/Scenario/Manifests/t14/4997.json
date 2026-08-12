@@ -1,0 +1,81 @@
+{
+ "questId": 4997,
+ "name": "콰우의 침대",
+ "zoneId": 25,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2094
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21653,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30289,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 615,
+      "sphereId": 2094
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21654,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30285,
+      "type": "QuestActSupplyCopper",
+      "detailId": 913,
+      "amount": 0
+     },
+     {
+      "actId": 30286,
+      "type": "QuestActSupplyExp",
+      "detailId": 455,
+      "exp": 0
+     },
+     {
+      "actId": 30288,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1220
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

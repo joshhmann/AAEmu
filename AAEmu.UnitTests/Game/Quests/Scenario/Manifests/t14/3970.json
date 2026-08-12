@@ -1,0 +1,138 @@
+{
+ "questId": 3970,
+ "name": "아사지의 송곳니",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9733
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16873,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22284,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3158,
+      "npcId": 9733
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16874,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29896,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1073,
+      "npcId": 9727,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16875,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22287,
+      "type": "QuestActConReportNpc",
+      "detailId": 3393,
+      "npcId": 9733
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16876,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29897,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 520,
+      "monsterGroupId": 475,
+      "count": 10
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9727,
+     "count": 30
+    },
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 475,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9733,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

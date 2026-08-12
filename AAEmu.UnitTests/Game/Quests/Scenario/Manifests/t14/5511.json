@@ -1,0 +1,145 @@
+{
+ "questId": 5511,
+ "name": "불한당들의 관심사",
+ "zoneId": 1,
+ "categoryId": 48,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8761
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23796,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33483,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4224,
+      "npcId": 8761
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23797,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33531,
+      "type": "QuestActObjInteraction",
+      "detailId": 688,
+      "doodadId": 6937,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23798,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33484,
+      "type": "QuestActConReportNpc",
+      "detailId": 4550,
+      "npcId": 8761
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23845,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33485,
+      "type": "QuestActSupplyItem",
+      "detailId": 3800,
+      "itemId": 28521,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6937,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8761,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28521,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

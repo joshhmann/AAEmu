@@ -1,0 +1,123 @@
+{
+ "questId": 4932,
+ "name": "미노타우르스 감시병 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1989
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29785,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1109,
+      "npcId": 1989
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21408,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29786,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1055,
+      "npcId": 1989,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21409,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29787,
+      "type": "QuestActConReportJournal",
+      "detailId": 336
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21410,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29788,
+      "type": "QuestActSupplyCopper",
+      "detailId": 845,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1989,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

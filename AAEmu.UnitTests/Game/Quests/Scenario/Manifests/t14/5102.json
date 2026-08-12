@@ -1,0 +1,113 @@
+{
+ "questId": 5102,
+ "name": "누구를 도울 것인가",
+ "zoneId": 7,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 79
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31283,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3998,
+      "npcId": 79
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31553,
+      "type": "QuestActObjTalk",
+      "detailId": 1012,
+      "npcId": 680
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31554,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1290
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22199,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31551,
+      "type": "QuestActObjTalk",
+      "detailId": 1011,
+      "npcId": 80
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 680
+    },
+    {
+     "type": "Talk",
+     "npcId": 80
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

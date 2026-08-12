@@ -1,0 +1,133 @@
+{
+ "questId": 5911,
+ "name": "월요일의 의뢰",
+ "zoneId": 191,
+ "categoryId": 92,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7270
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25518,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34905,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 279,
+      "doodadId": 7270
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25519,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34915,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 62,
+      "questId": 5918,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2644
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25520,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 25544,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34921,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 65,
+      "questId": 5921,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2647
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25549,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34920,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 64,
+      "questId": 5920,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2646
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "CompleteQuest",
+     "questId": 5918
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5921
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5920
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

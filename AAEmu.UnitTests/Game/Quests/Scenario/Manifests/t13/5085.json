@@ -1,0 +1,138 @@
+{
+ "questId": 5085,
+ "name": "풀려나지 못한 영혼",
+ "zoneId": 180,
+ "categoryId": 56,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9178
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22035,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31019,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3979,
+      "npcId": 9178
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22036,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31017,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1110,
+      "npcId": 8962,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22037,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31018,
+      "type": "QuestActConReportNpc",
+      "detailId": 4252,
+      "npcId": 9178
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22038,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31014,
+      "type": "QuestActSupplyCopper",
+      "detailId": 974,
+      "amount": 0
+     },
+     {
+      "actId": 31015,
+      "type": "QuestActSupplyExp",
+      "detailId": 509,
+      "exp": 1000
+     },
+     {
+      "actId": 31016,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 20,
+      "appellationId": 13
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8962,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9178,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

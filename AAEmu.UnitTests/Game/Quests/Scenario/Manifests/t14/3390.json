@@ -1,0 +1,91 @@
+{
+ "questId": 3390,
+ "name": "왕을 찾아서",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9594
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14555,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20382,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2794,
+      "npcId": 9594
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14557,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20383,
+      "type": "QuestActConReportNpc",
+      "detailId": 3021,
+      "npcId": 9601
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14558,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9601,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

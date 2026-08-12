@@ -1,0 +1,96 @@
+{
+ "questId": 3046,
+ "name": "평범한 부탁",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 977
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13196,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18998,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2471,
+      "npcId": 977
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13197,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19498,
+      "type": "QuestActObjSphere",
+      "detailId": 578,
+      "sphereId": 1183
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19497,
+      "type": "QuestActConAutoComplete",
+      "detailId": 652
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 13197
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

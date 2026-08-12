@@ -1,0 +1,81 @@
+{
+ "questId": 4614,
+ "name": "이즈나 하수도의 사자 석상",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1684
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20063,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27297,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 357,
+      "sphereId": 1684
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20065,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27298,
+      "type": "QuestActSupplyCopper",
+      "detailId": 644,
+      "amount": 0
+     },
+     {
+      "actId": 27299,
+      "type": "QuestActSupplyExp",
+      "detailId": 198,
+      "exp": 0
+     },
+     {
+      "actId": 27301,
+      "type": "QuestActConAutoComplete",
+      "detailId": 902
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,121 @@
+{
+ "questId": 3929,
+ "name": "봉화를 올려라",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10911
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16951,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22396,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3178,
+      "npcId": 10911
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16953,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22394,
+      "type": "QuestActObjInteraction",
+      "detailId": 551,
+      "doodadId": 4414,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16954,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22395,
+      "type": "QuestActObjInteraction",
+      "detailId": 552,
+      "doodadId": 4415,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25741,
+      "type": "QuestActConAutoComplete",
+      "detailId": 771
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4414,
+     "count": 1
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 4415,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

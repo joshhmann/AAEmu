@@ -1,0 +1,135 @@
+{
+ "questId": 5117,
+ "name": "돌아온 탕아",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26654
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22165,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31239,
+      "type": "QuestActConAcceptItem",
+      "detailId": 188,
+      "itemId": 26654
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22166,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31269,
+      "type": "QuestActSupplyItem",
+      "detailId": 3579,
+      "itemId": 26692,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22167,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31270,
+      "type": "QuestActConReportNpc",
+      "detailId": 4281,
+      "npcId": 9577
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22185,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31405,
+      "type": "QuestActSupplyItem",
+      "detailId": 3596,
+      "itemId": 26645,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9577,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26645,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26654,
+   "count": 1
+  }
+ ]
+}

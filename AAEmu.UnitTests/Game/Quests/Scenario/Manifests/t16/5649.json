@@ -1,0 +1,153 @@
+{
+ "questId": 5649,
+ "name": "끝없는 여정_test",
+ "zoneId": 1,
+ "categoryId": 12,
+ "level": 0,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13626
+ },
+ "template": {
+  "level": 0,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24278,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33825,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4288,
+      "npcId": 13626
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24279,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33828,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1144,
+      "npcId": 13208,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24291,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33841,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2373,
+      "itemId": 29153,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24369,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33833,
+      "type": "QuestActObjItemGather",
+      "detailId": 2755,
+      "itemId": 29153,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24381,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33839,
+      "type": "QuestActConReportNpc",
+      "detailId": 4600,
+      "npcId": 13626
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 13208,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29153,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13626,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 29153,
+   "count": 1
+  }
+ ]
+}

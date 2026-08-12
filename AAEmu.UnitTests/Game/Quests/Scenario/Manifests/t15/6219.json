@@ -1,0 +1,218 @@
+{
+ "questId": 6219,
+ "name": "겁많은 유령사육사의 부탁",
+ "zoneId": 217,
+ "categoryId": 106,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14821
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26656,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37001,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4709,
+      "npcId": 14821
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26657,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36953,
+      "type": "QuestActObjItemGather",
+      "detailId": 2909,
+      "itemId": 30000,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26658,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37002,
+      "type": "QuestActConReportNpc",
+      "detailId": 4939,
+      "npcId": 14818
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26672,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36964,
+      "type": "QuestActObjItemGather",
+      "detailId": 2911,
+      "itemId": 32209,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26674,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36971,
+      "type": "QuestActObjItemGather",
+      "detailId": 2912,
+      "itemId": 32217,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26675,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38301,
+      "type": "QuestActSupplyItem",
+      "detailId": 4270,
+      "itemId": 31778,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 26714,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37139,
+      "type": "QuestActSupplyItem",
+      "detailId": 4129,
+      "itemId": 32560,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30000,
+     "count": 5
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 32209,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 32217,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14818,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31778,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30000,
+   "count": 5
+  },
+  {
+   "itemId": 32209,
+   "count": 10
+  },
+  {
+   "itemId": 32217,
+   "count": 5
+  }
+ ]
+}

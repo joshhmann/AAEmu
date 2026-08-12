@@ -1,0 +1,217 @@
+{
+ "questId": 5725,
+ "name": "매혹을 이겨내는 방법",
+ "zoneId": 173,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13743
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24612,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34283,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4379,
+      "npcId": 13743
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24613,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34289,
+      "type": "QuestActObjItemGather",
+      "detailId": 2816,
+      "itemId": 8076,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24614,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34284,
+      "type": "QuestActConReportNpc",
+      "detailId": 4679,
+      "npcId": 13743
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24763,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 24764,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34285,
+      "type": "QuestActObjItemGather",
+      "detailId": 2812,
+      "itemId": 29508,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24765,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34288,
+      "type": "QuestActObjItemGather",
+      "detailId": 2815,
+      "itemId": 8077,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24766,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34287,
+      "type": "QuestActObjItemGather",
+      "detailId": 2814,
+      "itemId": 8078,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24767,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34286,
+      "type": "QuestActObjItemGather",
+      "detailId": 2813,
+      "itemId": 29509,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8076,
+     "count": 3
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29508,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8077,
+     "count": 5
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8078,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 29509,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13743,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8076,
+   "count": 3
+  },
+  {
+   "itemId": 29508,
+   "count": 1
+  },
+  {
+   "itemId": 8077,
+   "count": 5
+  },
+  {
+   "itemId": 8078,
+   "count": 10
+  },
+  {
+   "itemId": 29509,
+   "count": 1
+  }
+ ]
+}

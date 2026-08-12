@@ -1,0 +1,160 @@
+{
+ "questId": 3781,
+ "name": "조각상 복원",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10351
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15838,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21942,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3107,
+      "npcId": 10351
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15839,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21944,
+      "type": "QuestActSupplyItem",
+      "detailId": 2195,
+      "itemId": 21261,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 21945,
+      "type": "QuestActSupplyItem",
+      "detailId": 2196,
+      "itemId": 21262,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 21946,
+      "type": "QuestActSupplyItem",
+      "detailId": 2197,
+      "itemId": 21263,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15840,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21964,
+      "type": "QuestActObjInteraction",
+      "detailId": 536,
+      "doodadId": 4367,
+      "count": 1,
+      "wiId": 19,
+      "phase": 10855
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15841,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21943,
+      "type": "QuestActConReportNpc",
+      "detailId": 3338,
+      "npcId": 10351
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15842,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4367,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10351,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

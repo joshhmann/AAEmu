@@ -1,0 +1,81 @@
+{
+ "questId": 4487,
+ "name": "박쥐 동굴 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1599
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19585,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26670,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 276,
+      "sphereId": 1599
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19587,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26671,
+      "type": "QuestActSupplyCopper",
+      "detailId": 558,
+      "amount": 0
+     },
+     {
+      "actId": 26674,
+      "type": "QuestActConAutoComplete",
+      "detailId": 823
+     },
+     {
+      "actId": 31080,
+      "type": "QuestActSupplyExp",
+      "detailId": 545,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

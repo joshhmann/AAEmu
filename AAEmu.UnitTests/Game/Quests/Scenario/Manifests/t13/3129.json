@@ -1,0 +1,91 @@
+{
+ "questId": 3129,
+ "name": "살인의 흔적",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 36,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3844
+ },
+ "template": {
+  "level": 36,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14063,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20137,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 101,
+      "doodadId": 3844
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14066,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19791,
+      "type": "QuestActConReportNpc",
+      "detailId": 2896,
+      "npcId": 9281
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14067,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9281,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

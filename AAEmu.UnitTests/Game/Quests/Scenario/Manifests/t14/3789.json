@@ -1,0 +1,125 @@
+{
+ "questId": 3789,
+ "name": "도둑맞은 푸른 병",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10284
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15878,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21678,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3053,
+      "npcId": 10284
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15880,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22732,
+      "type": "QuestActObjItemGather",
+      "detailId": 1716,
+      "itemId": 21573,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15881,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22733,
+      "type": "QuestActConReportNpc",
+      "detailId": 3492,
+      "npcId": 10284
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15882,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21573,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10284,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21573,
+   "count": 1
+  }
+ ]
+}

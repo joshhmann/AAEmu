@@ -1,0 +1,81 @@
+{
+ "questId": 4539,
+ "name": "동 론반 광산의 높은 자리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1647
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19749,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26948,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 326,
+      "sphereId": 1647
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19751,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26949,
+      "type": "QuestActSupplyCopper",
+      "detailId": 605,
+      "amount": 0
+     },
+     {
+      "actId": 26950,
+      "type": "QuestActSupplyExp",
+      "detailId": 165,
+      "exp": 0
+     },
+     {
+      "actId": 26952,
+      "type": "QuestActConAutoComplete",
+      "detailId": 871
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

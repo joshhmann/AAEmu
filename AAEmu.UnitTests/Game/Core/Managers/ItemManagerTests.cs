@@ -1,4 +1,5 @@
-﻿using AAEmu.Game.Core.Managers;
+﻿using System.Collections.Concurrent;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Items;
@@ -1078,7 +1079,42 @@ public class ItemManagerTests
     private static void SetPrivateField(object obj, string fieldName, object value)
     {
         var field = obj.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        field?.SetValue(obj, value);
+        if (field == null)
+            return;
+
+        field.SetValue(obj, AdaptValue(field.FieldType, value));
+    }
+
+    /// <summary>
+    /// The production _allItems/_allPersistentContainers fields were converted to
+    /// ConcurrentDictionary for thread safety (t_3fdd6ac3) — the tests still seed the
+    /// natural Dictionary type, so wrap it when the target field requires it.
+    /// </summary>
+    private static object AdaptValue(Type targetType, object value)
+    {
+        if (value == null || !targetType.IsGenericType ||
+            targetType.GetGenericTypeDefinition() != typeof(ConcurrentDictionary<,>))
+        {
+            return value;
+        }
+
+        var keyType = targetType.GetGenericArguments()[0];
+        var itemType = targetType.GetGenericArguments()[1];
+        var dictInterface = typeof(IDictionary<,>).MakeGenericType(keyType, itemType);
+        if (!dictInterface.IsInstanceOfType(value))
+            return value;
+
+        var converted = Activator.CreateInstance(targetType);
+        var tryAdd = targetType.GetMethod("TryAdd", [keyType, itemType]);
+        var keys = (System.Collections.ICollection)dictInterface.GetProperty("Keys")!.GetValue(value)!;
+        var indexer = dictInterface.GetProperty("Item");
+        foreach (var key in keys)
+        {
+            var item = indexer!.GetValue(value, [key]);
+            tryAdd!.Invoke(converted, [key, item]);
+        }
+
+        return converted;
     }
 
     private static Item CreateTestItem(ulong id, uint templateId, int count)

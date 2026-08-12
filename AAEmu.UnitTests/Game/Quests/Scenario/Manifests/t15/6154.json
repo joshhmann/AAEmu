@@ -1,0 +1,135 @@
+{
+ "questId": 6154,
+ "name": "[3층]서고 경비대장 타시투스 처치",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13966
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26403,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36099,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 394,
+      "questContextId": 6154
+     },
+     {
+      "actId": 36100,
+      "type": "QuestActCheckTimer",
+      "detailId": 162,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 26404,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 26405,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36101,
+      "type": "QuestActConReportDoodad",
+      "detailId": 58,
+      "doodadId": 7600
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26445,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37997,
+      "type": "QuestActSupplyExp",
+      "detailId": 1215,
+      "exp": 758400
+     },
+     {
+      "actId": 38255,
+      "type": "QuestActSupplyItem",
+      "detailId": 4248,
+      "itemId": 32062,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 7600,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32062,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,136 @@
+{
+ "questId": 5498,
+ "name": "해결책은 초원에 있다",
+ "zoneId": 2,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13333
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23756,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33428,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4212,
+      "npcId": 13333
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33664,
+      "type": "QuestActObjTalk",
+      "detailId": 1035,
+      "npcId": 13473
+     },
+     {
+      "actId": 33667,
+      "type": "QuestActSupplyItem",
+      "detailId": 3836,
+      "itemId": 28916,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23758,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33467,
+      "type": "QuestActConReportNpc",
+      "detailId": 4544,
+      "npcId": 13477
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23952,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33663,
+      "type": "QuestActObjItemGather",
+      "detailId": 2730,
+      "itemId": 28137,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 13473
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28137,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13477,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28137,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4720,
+ "name": "오스테라 극장의 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1770
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20433,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27875,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 432,
+      "sphereId": 1770
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20435,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27876,
+      "type": "QuestActSupplyCopper",
+      "detailId": 727,
+      "amount": 0
+     },
+     {
+      "actId": 27877,
+      "type": "QuestActSupplyExp",
+      "detailId": 279,
+      "exp": 0
+     },
+     {
+      "actId": 27879,
+      "type": "QuestActConAutoComplete",
+      "detailId": 980
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 6022,
+ "name": "불꽃의 기운 흡수",
+ "zoneId": 144,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25931,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35527,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 342,
+      "questContextId": 6022
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25932,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35533,
+      "type": "QuestActObjInteraction",
+      "detailId": 725,
+      "doodadId": 6756,
+      "count": 30,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25933,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35532,
+      "type": "QuestActConReportJournal",
+      "detailId": 413
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25936,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35613,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 126,
+      "point": 100
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6756,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

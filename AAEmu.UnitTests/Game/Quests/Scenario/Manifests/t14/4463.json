@@ -1,0 +1,81 @@
+{
+ "questId": 4463,
+ "name": "폐광 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1576
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26537,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 256,
+      "sphereId": 1576
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26538,
+      "type": "QuestActConAutoComplete",
+      "detailId": 804
+     },
+     {
+      "actId": 26539,
+      "type": "QuestActSupplyCopper",
+      "detailId": 539,
+      "amount": 0
+     },
+     {
+      "actId": 31056,
+      "type": "QuestActSupplyExp",
+      "detailId": 521,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,121 @@
+{
+ "questId": 4352,
+ "name": "자유를 주다",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1941
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18980,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26022,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3613,
+      "npcId": 1941
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18981,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26024,
+      "type": "QuestActObjInteraction",
+      "detailId": 590,
+      "doodadId": 4982,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18982,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26023,
+      "type": "QuestActConReportNpc",
+      "detailId": 3884,
+      "npcId": 1941
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19226,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4982,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1941,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

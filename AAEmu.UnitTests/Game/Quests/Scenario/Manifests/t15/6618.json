@@ -1,0 +1,147 @@
+{
+ "questId": 6618,
+ "name": "저주 받은 고대의 힘",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28205,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40380,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 568,
+      "questContextId": 6618
+     },
+     {
+      "actId": 40381,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5058,
+      "npcId": 14934
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28206,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40623,
+      "type": "QuestActObjItemGather",
+      "detailId": 3043,
+      "itemId": 34723,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40401,
+      "type": "QuestActSupplyExp",
+      "detailId": 1511,
+      "exp": 70000
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28317,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40624,
+      "type": "QuestActConReportNpc",
+      "detailId": 5089,
+      "npcId": 14934
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34723,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14934,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34723,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,149 @@
+{
+ "questId": 2909,
+ "name": "동료로 인정받는 법",
+ "zoneId": 152,
+ "categoryId": 48,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8732
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12242,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17952,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2279,
+      "npcId": 8732
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12243,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18011,
+      "type": "QuestActSupplyItem",
+      "detailId": 1808,
+      "itemId": 14007,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12244,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18010,
+      "type": "QuestActObjItemUse",
+      "detailId": 463,
+      "itemId": 14007,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12245,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17983,
+      "type": "QuestActConReportNpc",
+      "detailId": 2508,
+      "npcId": 8732
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12254,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18008,
+      "type": "QuestActSupplyCopper",
+      "detailId": 268,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 14007,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8732,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

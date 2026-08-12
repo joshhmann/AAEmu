@@ -1,0 +1,129 @@
+{
+ "questId": 5881,
+ "name": "기계 인형의 동력기관",
+ "zoneId": 1,
+ "categoryId": 33,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13649
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34749,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4459,
+      "npcId": 13649
+     },
+     {
+      "actId": 34750,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4460,
+      "npcId": 13663
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34760,
+      "type": "QuestActObjInteraction",
+      "detailId": 722,
+      "doodadId": 7083,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25424,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35052,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1548
+     },
+     {
+      "actId": 38878,
+      "type": "QuestActSupplyItem",
+      "detailId": 4544,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7083,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

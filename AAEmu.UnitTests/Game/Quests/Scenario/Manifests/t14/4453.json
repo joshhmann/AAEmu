@@ -1,0 +1,81 @@
+{
+ "questId": 4453,
+ "name": "너른 소매 마을 전망대 오르기",
+ "zoneId": 13,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1566
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19468,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26481,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 245,
+      "sphereId": 1566
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19470,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26482,
+      "type": "QuestActConAutoComplete",
+      "detailId": 793
+     },
+     {
+      "actId": 26483,
+      "type": "QuestActSupplyCopper",
+      "detailId": 528,
+      "amount": 0
+     },
+     {
+      "actId": 31068,
+      "type": "QuestActSupplyExp",
+      "detailId": 533,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

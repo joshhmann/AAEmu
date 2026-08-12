@@ -1,0 +1,196 @@
+{
+ "questId": 5898,
+ "name": "화요일 정체불명의 눈알",
+ "zoneId": 198,
+ "categoryId": 102,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25473,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35366,
+      "type": "QuestActCheckTimer",
+      "detailId": 150,
+      "limitTime": 90000,
+      "nextComponent": 0
+     },
+     {
+      "actId": 35367,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4573,
+      "npcId": 14200
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35368,
+      "type": "QuestActObjSphere",
+      "detailId": 678,
+      "sphereId": 2254
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25475,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35371,
+      "type": "QuestActConReportNpc",
+      "detailId": 4792,
+      "npcId": 14200
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25825,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35372,
+      "type": "QuestActObjSphere",
+      "detailId": 680,
+      "sphereId": 2256
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25826,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35369,
+      "type": "QuestActObjSphere",
+      "detailId": 679,
+      "sphereId": 2255
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25827,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35370,
+      "type": "QuestActSupplyItem",
+      "detailId": 3967,
+      "itemId": 29794,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 25834,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 25474
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 25825
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 25826
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14200,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29794,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "TIMEOUT",
+   "events": [],
+   "expect": {
+    "step": "Fail"
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

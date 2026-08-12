@@ -1,0 +1,148 @@
+{
+ "questId": 2082,
+ "name": "살리움의 깃발 아래",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10509
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9593,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22693,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3255,
+      "npcId": 10509
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9594,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13347,
+      "type": "QuestActConReportNpc",
+      "detailId": 2027,
+      "npcId": 7521
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9595,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 17049,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22694,
+      "type": "QuestActObjItemGather",
+      "detailId": 1711,
+      "itemId": 21562,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 17388,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22884,
+      "type": "QuestActSupplyItem",
+      "detailId": 2257,
+      "itemId": 21581,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21562,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7521,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21562,
+   "count": 3
+  }
+ ]
+}

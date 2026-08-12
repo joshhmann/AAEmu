@@ -47,7 +47,7 @@ Graphify and must be promoted by an end-to-end exploration.
 
 | ID | Mechanic / scoped scenario | First gate | C | W | H | A | R | S | Evidence / next audit |
 |---|---|---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
-| PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline |
+| PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline; save path: SaveManager dirty-tracking merged 5ed5d6493 (fork fix, SaveManagerTests 10/10) |
 | QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 1 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; `next-missing-776-777.md` (330/776/777 COMPONENT_NEXT_MISSING → 0 via QuestDataOverlay, Rei gate PASS t_d8a8c798); `act-ref-2145-rig.md` (2145→2146 + sibling 1960→1961 ACT_REF_MISSING_QUEST → 0 via `2026-08-05-prune-act-ref-missing-2145.sql`, Rei gate PASS t_53baa876); `no-start-cluster-1533-1548-evidence.md` (QUEST_NO_START cluster 1533–1548 → 0 via `2026-08-05-drop-no-start-cluster.sql` — 23 contexts/25 components/42 acts dropped, Rei gate PASS t_f884383f); `no-components-1391-rig.md` (QUEST_NO_COMPONENTS 1391 empty template → dropped via `2026-08-05-drop-1391.sql` — 1 context dropped, drift −1, Rei gate PASS t_a56e8e2d); real restart still required |
 | CTRL-01 | Movement, targeting, interaction, control-state recovery | M2/M5 | U | U | U | U | U | U | Actor-contract spike |
 | COMBAT-01 | PvE combat, death, resurrection, loot | M2/M5 | U | 1 | U | U | U | U | `SkillManager`; combat audit |
@@ -55,8 +55,8 @@ Graphify and must be promoted by an end-to-end exploration.
 | ITEM-01 | Inventory, equipment, stacking, split/move, full-inventory errors | M2 | U | 1 | U | U | U | U | `ItemManager`; inventory conservation audit |
 | LABOR-01 | Labor consume/regenerate/cap/persist | M3/M4 | U | U | U | U | U | U | Labor/ActAbility audit |
 | MATE-01 | Obtain, summon, mount, dismount, persist a mount | M2 | U | 1 | U | U | U | N/A | `MateManager`; golden-route mount scenario |
-| HOUSING-01 | Claim land, construct, own, permit, demolish | M3 | U | 1 | U | U | U | N/A | `HousingManager`; homestead audit |
-| FARM-01 | Place, grow, harvest, and recover curated crops/livestock | M3 | U | 1 | U | U | U | U | `PublicFarmManager` + Doodad paths; farming audit |
+| HOUSING-01 | Claim land, construct, own, permit, demolish | M3 | 2 | 2 | 2 | 2 | U | N/A | M3a: `HousingPlacementValidator` (zone/category/overlap/ownership, 1.2 housing_groups/areas/group_categories) + `HousingManager.Build` wiring + `CraftEffect` construction + `DecorationLimitEvaluator` (canonical deco limits); harnesses `HomesteadPlacementScenarioTests` 29/29 + `HousingM3aConstructionTests` 18/18 + M3a exit scenario `M3aExitScenarioTests` (two players, adjacent homesteads, one session) — Rei gate t_72c787c8 |
+| FARM-01 | Place, grow, harvest, and recover curated crops/livestock | M3 | 2 | 2 | 2 | 2 | U | U | M3a: canonical potato loop (seed 15659 → doodad 2259 → loot pack 6452) on real Doodad paths (`DoodadFuncCropHarvest`/`DoodadFuncFruitPick` → loot phase); `CropHarvestLoopTests` 6/6 + M3a exit scenario (plant→grow→harvest in the same one-session flow) — Rei gate t_72c787c8 |
 | PROPERTY-01 | Furniture/storage/phase/attachment persistence | M3b | U | 1 | U | U | U | U | Housing/Doodad persistence audit |
 | CRAFT-01 | Recipe prerequisites, labor/material consume, output | M4 | U | 1 | U | U | U | N/A | `CraftManager`; selected pack recipe |
 | PACK-01 | Craft, carry, place, load, unload, sell trade pack | M4 | U | 1 | U | U | U | U | `SpecialtyManager`; pack audit |
@@ -152,18 +152,63 @@ zones required by a milestone or an observed defect.
 | music | 1 | 0 | 0% | MusicIdManager, MusicManager |
 | taxation | 1 | 1 | 100% | TaxationsManager |
 
-> Quest-runnability (M2a/M2c, band 1-30 census 2026-08-09, post-drop on merged develop): **2062/2062 driven quests runnable, 0 FAIL** across the
-> 2078-quest scenario-harness census (117 M2a-dropped quests excluded — 26 engine-stuck + 91 shells). **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
+> Quest-runnability (M2a/M2c + WI-2 + WI-3 + WI-4 + WI-5 + WI-7 + WI-8 + WI-9 + WI-11b + WI-12, band 0-55 + lvl-99 straggler census 2026-08-10, FINAL G1 CENSUS on merged develop): **4573/4573 quests runnable, 0 FAIL, 14 documented SKIP** across the
+> 4587-quest scenario-harness census (297 dropped quest_contexts rows excluded — 305 registered drops, 8 of which are orphaned contexts without rows; register is the source of truth). Denominator reconciliation (WI-12): 4,876 quest_contexts rows − 297 registered drops = **4,579 live contexts** = 4,573 PASS + 6 kept-by-ruling doc-SKIP (3419/4967 ltd, 315/1576/1728/2046 no-components), 0 unexplained; the G1 audit estimate 4,735 (4,876 − 141) shrinks by the WI-6 drop (6069, −1) and WI-11a drop (−155) to the final 4,579 — every live context is PASS or registered-drop or documented-SKIP, zero unexplained FAIL/SKIP. **Band 1-10: 560 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of
 > 560 non-dropped (668 − 108 dropped). **Band 11-20: 609 PASS / 0 SKIP / 0 FAIL = 100.0%** of 609 non-dropped (626 − 17 dropped).
 > **Band 21-30: 847 PASS / 0 SKIP / 0 FAIL = 100.0%** of 847 non-dropped (0 dropped).
-> All SKIPs documented-SKIP with reason (16): 8 orphaned contexts (no quest_contexts row),
-> 8 unsupported-act-type (CrimePoint 2 / MateLevel 2 / CompleteQuest 2 / AbilityLevel 1 — the Wave-3
-> ZoneKill closure closed 23 SKIP→PASS: 20 band-21-30 2794–2822 + frozen-sample 5900/5923/5924; 5641 score-without-objectives
-> now dropped with cluster A), plus 1 let-it-done-without-report-act (6069). Band-21-30 sweep calibration: kind_id-1 None components (legacy task-board
+> **Band 31-40: 643 PASS / 0 SKIP / 0 FAIL = 100.0%** of 643 non-dropped (0 dropped) — the WI-7 T13 sweep drove all 643 contexts (631 in t13, 12 sampled in earlier tiers), zero harness SKIPs as predicted.
+> **Band 41-50: 1589 PASS / 2 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of 1591 non-dropped (1592 − 1 dropped, 6069 WI-6) — the WI-8 T14 sweep drove all 1591 contexts (1528 in t14, 63 sampled in earlier tiers); the 2 SKIPs are 3419/4967 (let-it-done without report act — Josh NO-GO keep ruling, WI-6 register §8).
+> **Band 51-55: 268 PASS / 0 SKIP / 0 FAIL = 100.0% PASS-or-doc-SKIP** of 268 non-dropped (0 dropped) — the WI-9 T15 sweep drove all 268 contexts (264 in t15, 4 sampled in earlier tiers: 6095 t3 / 6578 t2 / 6600 t2 / 6615 t2).
+> **Lvl-99 straggler 3465: 1 PASS / 0 SKIP / 0 FAIL = 100.0%** (1 non-dropped) — top-level quest outside every banded tier; a no-acts shell (4 components, 0 acts) that the harness walks Start→Progress→Ready→Reward→Persist via the empty-comp auto-pass path, verdict PASS.
+> **Band 0/null (WI-11b + WI-12, 2026-08-10, t_8ec705f0): 59/60 contexts driven in the new t16 tier (56-context sweep handoff D2/D3/D4/D5 + the 4 A2 keeps; 6250 rides T3 = 60/60 accounted) — 56 PASS / 0 FAIL / 4 SKIP = 100.0% PASS-or-doc-SKIP.** D2 old Sunny (13/13 PASS — act-less superseded line, vacuous shells); D3 tutorial sphere steps (12/12 PASS — 33 accept-sphere acts reference spheres 1982-2014, ALL present in the spheres table; 2617-2619 are single empty Start comps the engine completes via the kind-chain walk; 11 of the 33 sphere_quests rows (1098-1130) reference sphere ids missing from the spheres table — inert data, the engine consumes sphere ids from the accept acts, not sphere_quests); D4 real content (22/22 PASS — Cradle chain 1394-1485, Blue Salt 5307-5314, dailies 5459/6222/6223/8000004, event/title/library quests all drive full lifecycle; 6250 already PASS in T3; **8000004 flipped FAIL→PASS after BUG-014 fix merged @ 4b73b63ac**); D5 test/dummy (9/9 PASS); A2 unit-req keeps (4 SKIP "no components" — zero-component shells kept by Josh's Q2 NO-GO ruling, documented in the triage doc §3 A2, not dropped). The WI-11b first-sweep FAIL was quest 8000004's RESET fidelity stage — **BUG-014 (REAL engine defect)**: the completed-block id is a ushort key and `(ushort)(8000004/64)` wraps 125000 → 59464, so ResetDailyQuests recomputes questId 3,805,700 and can never clear the completed bit for quest ids ≥ 4,194,304 — 8000004 is permanently daily-locked after first completion (bugs/014-quest-completed-block-ushort-wrap.md; repro probe + evidence on the card). **FIXED 2026-08-10 (t_8b47a3bf, fix/bug-014-quest-completed-block-uint @ 4b73b63ac): completed-block key ushort→uint, Rei gate PASS (t_5c09fdf9, isolated clone, 5/5 rig incl. HighIdDailyQuest pin, full gate 1494/0/1), merged to origin/develop.** Two harness/generator calibrations were required to sweep band 0: (1) NULL LEVEL (quest 1576) now normalizes to 0 exactly like the engine (GetByte("level", 0), QuestManager.cs:565) — a null template.level crashed the C# byte deserializer; (2) the rig character's level is clamped to ≥1 (max(1, template.Level)) because the engine's exp curve explicitly rejects level-0 units (GetLevelFromExp ThrowIfZero, ExperienceManager.cs:76) — a level-0 character completing a SupplyExp reward (6229/6314/6355) threw; the template keeps the data-true level 0. All 56 sweep contexts accounted: 55 driven in t16 (all PASS post-fix) + 6250 in t3 (PASS). No drops decided or executed in this card.
+> All SKIPs documented-SKIP with reason (14): 8 orphaned contexts (no quest_contexts row; 6069 was the
+> let-it-done-without-report-act SKIP but is now DROPPED — WI-6 triage ruling 2026-08-09, register §8,
+> drop execution t_6810ebd4, merged t_ec1a3326) + 2 kept-by-ruling ltd quests (3419/4967, WI-8 census) + 4
+> kept-by-ruling no-components (315/1576/1728/2046, WI-11b A2 keeps — zero-component shells, do-not-delete
+> labels, triage doc §3 A2) — the WI-2
+> CrimePoint closure closed the last 2 census SKIPs (2916/2926) and added the t9 tier so the five level-41-50
+> carriers (2935/2936/5197/5198/5494) are sampled and PASS — 7/7 CrimePoint contexts driven; the WI-3 AbilityLevel
+> closure closed the AbilityLevel objective family and added the t10 tier so the nine level-50 single-ability
+> carriers (6070/6075-6082) are sampled and PASS — 10/10 AbilityLevel contexts driven (6069 dropped, not counted),
+> 5967 (all-abilities branch) flipped SKIP→PASS; the WI-4 MateLevel closure added the t11 tier so the four level-50
+> carriers (5465/5466/5812/5813) are sampled and PASS — 6/6 MateLevel contexts driven (5430/5464 flipped
+> SKIP→PASS in T3; 6015 is an orphaned context, excluded from t11 so the census gains no new orphan SKIP); the
+> WI-5 CompleteQuest closure added the t12 tier so the nine level-50 carriers (5816-5821/5862/5868/5911) are
+> sampled and PASS — 11/11 CompleteQuest contexts driven (5814/5815 flipped SKIP→PASS in T3). Band-21-30 sweep
+> calibration: kind_id-1 None components (legacy task-board
 > step, engine walks Start→None→Supply) now emitted as "None" — 5 quests flipped FAIL→PASS (275/281/305/371/604).
 > Wave-1+2 closures flipped 73 SKIP→PASS cumulative (36 wave-1 + 37 merged-line incl. 1702 multi-gap); wave-3
-> ZoneKill closure flipped 23 more (73 + 23 = 96 cumulative); zero PASS→SKIP regressions.
-> Census regen deterministic (byte-identical); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
+> ZoneKill closure flipped 23 more (73 + 23 = 96 cumulative); WI-2 CrimePoint closure flipped 2 more census SKIP→PASS
+> (2916/2926) + 5 unsampled carriers → 7/7 driven (98 cumulative); WI-3 AbilityLevel closure flipped 5967 + 9
+> unsampled carriers → 10/10 driven (108 cumulative, 6069 dropped not counted); WI-4 MateLevel closure flipped 5430/5464 + 4 unsampled
+> carriers → 6/6 driven (114 cumulative); WI-5 CompleteQuest closure flipped 5814/5815 + 9 unsampled carriers →
+> 11/11 driven (125 cumulative); WI-7 T13 sweep drove band 31-40 643/643 PASS (631 new t13 manifests, 12 sampled
+> earlier) with zero harness SKIPs as predicted; WI-8 T14 sweep drove band 41-50 1591/1591 PASS-or-doc-SKIP
+> (1528 new t14 manifests, 63 sampled earlier, 6069 dropped excluded) — 1589 PASS / 2 SKIP (3419/4967 kept-by-ruling) /
+> 0 FAIL; WI-9 T15 sweep drove band 51-55 268/268 + the lvl-99 straggler 3465 = 269/269 PASS-or-doc-SKIP
+> (264 new t15 manifests + 3465, 4 band contexts sampled earlier: 6095/6578/6600/6615) — 265 PASS / 0 SKIP / 0 FAIL,
+> zero first-sweep FAILs and zero new SKIPs (3465 is a no-acts shell; the band's 6 CheckTimer carriers 6108/6131/6154/
+> 6162-6164 PASS via the auto-pass kind — WI-10 owns driver-fidelity for that family); the 10 first-sweep FAILs were TWO harness expectation-model gaps + ONE real engine bug, all fixed with
+> engine-source evidence: (1) score-quest under-credit — generator fired count events but the engine score branch
+> needs Σ Count×Objective ≥ Score (MaxObjective = Score/Count+1 proves the data intends objectives beyond the
+> displayed count); now fires scaled events (7 quests: 3076/3089/3625/4343/5062/5063/5064); (2) Ready-step OR
+> semantics — QuestComponent.RunComponent ORs Start/Ready acts, so an always-true act (SupplyRemoveItem) advances
+> past Ready without the report event (5174/5722); (3) QuestActConReportJournal subscribed in InitializeAction
+> (step-entry) instead of InitializeQuest (ctor) like its ReportNpc/ReportDoodad siblings — ltd quests stuck at
+> Progress never enter Ready, so the journal report could never fire (3630); subscription moved to ctor, sibling
+> pattern. zero PASS→SKIP regressions across every sweep. WI-10 (2026-08-10, t_abafd918) added driver-fidelity
+> probe stages to the census manifests: TIMEOUT (37 CheckTimer quests — driver fires the timeout task's exact
+> body QuestManager.OnTimerExpired on a fresh probe and asserts FailQuest; 7 ineligible engine-grounded: 6 rest
+> at Ready so the timer is already removed at end-state entry, 1897 never enters the CheckTimer comp), RESET
+> (602 daily/repeatable quests — engine ResetDailyQuests + AddQuest re-accept, QuestDailyLimit gate; detail
+> Daily 7/DailyHunt 10/DailyLivelihood 11/DailyGroup 12 = the exact set ResetDailyQuests clears), GUARD_DIED
+> (3 escorts — dead-guard probe per BUG-008 semantics: RunAct false ⇒ stall at the guard kind; 1313 skipped
+> engine-grounded: Start comp ORs its acts so the always-true CheckTimer carries the step). 642 probe stages
+> all PASS on the merged census — 4518/4518 runnable, 0 FAIL, 10 documented SKIPs unchanged. New rig pins:
+> QuestCheckTimerRigTests 2/2 (timer registered at accept → expiry fires FailQuest), QuestDailyResetRigTests
+> 4/4 (completed daily refused → ResetDailyQuests clears → re-accept; repeatable re-accepts immediately),
+> QuestCheckGuardRigTests 3/3 (alive → true; dead → false + stall; npcId-0 unresolvable → false + stall).
+> Census regen deterministic (byte-identical ×2); band denominators + zone coverage (Gweonid/Lilyut/Mahadevi/
 > Tiger Spine/Falcony/Sunny Wilderness/Ancient Forest/Marionople/Two Crowns/White Forest/Singing Land/Sunrise
 > Peninsula) in runnability.md (census-meta.json-driven). Fail-before states on the
 > wave-1/wave-2 rig commits (2283c0df/7a1145be). Watch items: EtcItemObtain engine no-op, cinema zero-wired,
@@ -255,6 +300,26 @@ zones required by a milestone or an observed defect.
   intact (granted before the call), no bogus General row persisted. 6 new
   `CharacterAbilitiesTests` (3 General-slot no-throw + None + seeded-ability controls).
   Full gate 1127/1127. Catalog: bugs/012-abilities-general-key.md.
+
+- **A4 save-path fix — SaveManager dirty-tracking (MERGED to fork develop @ 5ed5d6493, 2026-08-10 — t_8c18eb1c, Rei gate ACCEPT t_53025996).**
+  Kimi audit finding (t_0fda3cd3, ROADMAP G2-A4): `SaveManager.DoSave` ran a full
+  REPLACE for every in-world character every cycle (SaveManager.cs:94) — at 1,000 bots
+  the periodic save rewrote ~1,000 full character rows + sub-collections (options,
+  abilities, skills, quests, mates, …) each cycle even when nothing changed. Fix
+  (a0277ad07, 20 files +404/−15): per-character dirty tracking — `Character.IsDirty`
+  (default true: first cycle persists everyone, then settles into dirty-only) +
+  `MarkDirty()` at every save-relevant chokepoint (SetPosition + bot movement paths,
+  Hp/Mp value-compare props, Money/Money2/Experience, options/action slots/quests/
+  skills/abilities/actability/appellations/portals/friends/blocked/mates, persistable
+  buffs); `Save()` clears IsDirty on success; `SaveDirectlyToDatabase` stays
+  unconditional (disconnect path unchanged — E2E restart-persistence contract intact).
+  `DoSave(bool saveAllCharacters = false)` force-all seam — shutdown (StopAsync /
+  ShutdownTask) and `/save` + `/shutdown` persist everything; `GetCharactersToSave()`
+  extracted as a testable seam. Evidence: SaveManagerTests 10/10 (incl. 1,000-character
+  simulated load: all-clean → 0, touched-subset → dirty-only, force-all → all); branch
+  gate 1481/0/1; merged-tree gate 1575/0/1; M2bE2e restart-persistence 5/5
+  (t_2ee39438). A4 acceptance (autosave p95 < 2s at 250 chars, zero `_isSaving` skips)
+  remains a milestone-gate measurement.
 
 - **M1-5 — quest scenario harness census COMPLETE (feat/quest-scenario-harness, 2026-08-04).**
   Harness (driver + manifest loader + tier runner) drives every manifest quest through

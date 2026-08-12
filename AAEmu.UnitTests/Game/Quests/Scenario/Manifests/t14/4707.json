@@ -1,0 +1,81 @@
+{
+ "questId": 4707,
+ "name": "갈색 카펫",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1757
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20394,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27809,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 419,
+      "sphereId": 1757
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20396,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27810,
+      "type": "QuestActSupplyCopper",
+      "detailId": 714,
+      "amount": 0
+     },
+     {
+      "actId": 27811,
+      "type": "QuestActSupplyExp",
+      "detailId": 266,
+      "exp": 0
+     },
+     {
+      "actId": 27813,
+      "type": "QuestActConAutoComplete",
+      "detailId": 967
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

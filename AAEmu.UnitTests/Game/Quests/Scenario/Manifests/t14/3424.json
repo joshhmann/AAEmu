@@ -1,0 +1,125 @@
+{
+ "questId": 3424,
+ "name": "오염을 정화하는 간단한 방법",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9618
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14694,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20429,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2817,
+      "npcId": 9618
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14695,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20311,
+      "type": "QuestActObjItemGather",
+      "detailId": 1461,
+      "itemId": 19762,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14696,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20430,
+      "type": "QuestActConReportNpc",
+      "detailId": 3044,
+      "npcId": 9618
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14697,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19762,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9618,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19762,
+   "count": 5
+  }
+ ]
+}

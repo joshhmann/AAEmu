@@ -1,0 +1,123 @@
+{
+ "questId": 4283,
+ "name": "고대 설인의 분노",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1204
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18668,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24455,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1048,
+      "npcId": 1204
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18669,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24465,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 946,
+      "npcId": 1204,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18670,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24466,
+      "type": "QuestActConReportJournal",
+      "detailId": 320
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18671,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24467,
+      "type": "QuestActSupplyCopper",
+      "detailId": 483,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1204,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,118 @@
+{
+ "questId": 1765,
+ "name": "그녀의 머리카락",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12637,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 12638,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19484,
+      "type": "QuestActObjItemGather",
+      "detailId": 1335,
+      "itemId": 19384,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12639,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19250,
+      "type": "QuestActConReportNpc",
+      "detailId": 2790,
+      "npcId": 2743
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12640,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19384,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2743,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19384,
+   "count": 1
+  }
+ ]
+}

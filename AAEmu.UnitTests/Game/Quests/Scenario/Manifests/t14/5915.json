@@ -1,0 +1,77 @@
+{
+ "questId": 5915,
+ "name": "금요일의 의뢰",
+ "zoneId": 191,
+ "categoryId": 92,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7274
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25530,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34901,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 275,
+      "doodadId": 7274
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25531,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 25532,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

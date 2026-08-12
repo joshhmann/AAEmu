@@ -1,0 +1,81 @@
+{
+ "questId": 4525,
+ "name": "선박의 뼈대 위",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1633
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19707,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26873,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 310,
+      "sphereId": 1633
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19709,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26874,
+      "type": "QuestActSupplyCopper",
+      "detailId": 591,
+      "amount": 0
+     },
+     {
+      "actId": 26877,
+      "type": "QuestActConAutoComplete",
+      "detailId": 857
+     },
+     {
+      "actId": 31097,
+      "type": "QuestActSupplyExp",
+      "detailId": 562,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

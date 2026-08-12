@@ -1,0 +1,135 @@
+{
+ "questId": 3854,
+ "name": "오염된 신수",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3723
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16205,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22957,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 995,
+      "npcId": 3723
+     },
+     {
+      "actId": 22958,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 996,
+      "npcId": 3724
+     },
+     {
+      "actId": 22959,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 997,
+      "npcId": 10079
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22965,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 445,
+      "monsterGroupId": 494,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22960,
+      "type": "QuestActConReportJournal",
+      "detailId": 302
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16209,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22961,
+      "type": "QuestActSupplyCopper",
+      "detailId": 393,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 494,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,132 @@
+{
+ "questId": 5354,
+ "name": "내가 바로 장인 축산업자",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12505
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23140,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32626,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4137,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23141,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32627,
+      "type": "QuestActObjItemGather",
+      "detailId": 2625,
+      "itemId": 8048,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23142,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32722,
+      "type": "QuestActConReportNpc",
+      "detailId": 4454,
+      "npcId": 12505
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23200,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32628,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 143,
+      "appellationId": 67
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8048,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12505,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8048,
+   "count": 100
+  }
+ ]
+}

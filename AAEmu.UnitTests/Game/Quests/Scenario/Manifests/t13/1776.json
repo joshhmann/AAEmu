@@ -1,0 +1,130 @@
+{
+ "questId": 1776,
+ "name": "농노의 시체",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 3469
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12660,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18395,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 90,
+      "doodadId": 3469
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12661,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18396,
+      "type": "QuestActObjTalk",
+      "detailId": 875,
+      "npcId": 2806
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12662,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18397,
+      "type": "QuestActObjTalk",
+      "detailId": 876,
+      "npcId": 2807
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13660,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19228,
+      "type": "QuestActObjTalk",
+      "detailId": 890,
+      "npcId": 2851
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13661,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19227,
+      "type": "QuestActConAutoComplete",
+      "detailId": 644
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 2806
+    },
+    {
+     "type": "Talk",
+     "npcId": 2807
+    },
+    {
+     "type": "Talk",
+     "npcId": 2851
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

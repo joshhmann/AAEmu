@@ -1,0 +1,93 @@
+{
+ "questId": 5468,
+ "name": "솜씨 좋은 역습의",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28493
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23655,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33294,
+      "type": "QuestActConAcceptItem",
+      "detailId": 312,
+      "itemId": 28493
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23657,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33297,
+      "type": "QuestActSupplyExp",
+      "detailId": 737,
+      "exp": 1000
+     },
+     {
+      "actId": 33298,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1161,
+      "amount": 0
+     },
+     {
+      "actId": 33303,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 201,
+      "appellationId": 146
+     },
+     {
+      "actId": 33304,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1409
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28493,
+   "count": 1
+  }
+ ]
+}

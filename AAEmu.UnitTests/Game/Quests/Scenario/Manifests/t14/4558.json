@@ -1,0 +1,81 @@
+{
+ "questId": 4558,
+ "name": "바다의 거석 꼭대기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1653
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19851,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27050,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 332,
+      "sphereId": 1653
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19853,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27051,
+      "type": "QuestActSupplyCopper",
+      "detailId": 611,
+      "amount": 0
+     },
+     {
+      "actId": 27052,
+      "type": "QuestActSupplyExp",
+      "detailId": 171,
+      "exp": 0
+     },
+     {
+      "actId": 27054,
+      "type": "QuestActConAutoComplete",
+      "detailId": 877
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

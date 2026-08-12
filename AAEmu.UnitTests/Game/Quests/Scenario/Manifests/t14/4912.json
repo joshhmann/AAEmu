@@ -1,0 +1,81 @@
+{
+ "questId": 4912,
+ "name": "모레 일가의 야영지",
+ "zoneId": 13,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2033
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21333,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29701,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 560,
+      "sphereId": 2033
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21334,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29697,
+      "type": "QuestActSupplyCopper",
+      "detailId": 825,
+      "amount": 0
+     },
+     {
+      "actId": 29700,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1146
+     },
+     {
+      "actId": 31118,
+      "type": "QuestActSupplyExp",
+      "detailId": 582,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

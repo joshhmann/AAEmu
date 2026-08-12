@@ -1,15 +1,46 @@
 ﻿using System.Numerics;
 
 using AAEmu.Commons.Utils;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Utils;
 
 namespace AAEmu.Game.Models.Game.World.Transform;
 
 public class PositionAndRotation
 {
+    private Vector3 _position;
+    private Vector3 _rotation;
+
     public bool IsLocal { get; set; } = true;
-    public Vector3 Position { get; set; }
-    public Vector3 Rotation { get; set; }
+
+    /// <summary>
+    /// Local/world position. The setter carries the M5 execution-boundary
+    /// write assertion (<see cref="ExecutionBoundary.AssertTransformWrite"/>):
+    /// while a bot step executes, Transform writes must happen on the single
+    /// execution boundary (the game-loop thread). Normal gameplay writes
+    /// (spawning, packet handlers, loading) are outside the bot scope and
+    /// never asserted.
+    /// </summary>
+    public Vector3 Position
+    {
+        get => _position;
+        set
+        {
+            ExecutionBoundary.AssertTransformWrite();
+            _position = value;
+        }
+    }
+
+    /// <summary>See <see cref="Position"/> — rotation carries the same write assertion.</summary>
+    public Vector3 Rotation
+    {
+        get => _rotation;
+        set
+        {
+            ExecutionBoundary.AssertTransformWrite();
+            _rotation = value;
+        }
+    }
 
     private const float ToSByteDivider = 1f / 127f; // ~0.007874015748f ;
     private const float TwoPi = MathF.PI * 2f;

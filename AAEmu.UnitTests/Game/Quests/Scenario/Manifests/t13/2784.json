@@ -1,0 +1,147 @@
+{
+ "questId": 2784,
+ "name": "지옥 늪지대를 지켜라 3단계",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 11845,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17406,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2220,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 11846,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17400,
+      "type": "QuestActObjZoneKill",
+      "detailId": 5,
+      "zoneId": 26,
+      "countNpc": 100,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 745,
+      "lvMin": 26,
+      "lvMax": 55,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 11847,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17405,
+      "type": "QuestActConReportNpc",
+      "detailId": 2441,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11848,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28783,
+      "type": "QuestActSupplyExp",
+      "detailId": 374,
+      "exp": 5600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 26,
+     "count": 100,
+     "countNpc": 100,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 26,
+     "lvMax": 55
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7054,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

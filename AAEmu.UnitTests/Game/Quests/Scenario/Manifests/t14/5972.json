@@ -1,0 +1,195 @@
+{
+ "questId": 5972,
+ "name": "예언의 도래",
+ "zoneId": 1,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 868
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35304,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4549,
+      "npcId": 868
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35165,
+      "type": "QuestActObjItemGather",
+      "detailId": 2861,
+      "itemId": 30002,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25730,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35168,
+      "type": "QuestActObjItemGather",
+      "detailId": 2863,
+      "itemId": 30004,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25731,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35167,
+      "type": "QuestActObjItemGather",
+      "detailId": 2862,
+      "itemId": 30003,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25732,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37090,
+      "type": "QuestActSupplyItem",
+      "detailId": 4116,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25802,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35303,
+      "type": "QuestActConReportNpc",
+      "detailId": 4781,
+      "npcId": 868
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30002,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 30004,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 30003,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 868,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30002,
+   "count": 1
+  },
+  {
+   "itemId": 30004,
+   "count": 1
+  },
+  {
+   "itemId": 30003,
+   "count": 1
+  }
+ ]
+}

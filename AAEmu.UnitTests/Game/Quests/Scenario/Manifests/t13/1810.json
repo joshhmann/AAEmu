@@ -1,0 +1,91 @@
+{
+ "questId": 1810,
+ "name": "소피에게 안식을",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2872
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12866,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18552,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 628,
+      "npcId": 2872
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12867,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18553,
+      "type": "QuestActConReportNpc",
+      "detailId": 2619,
+      "npcId": 2870
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12868,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2870,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,125 @@
+{
+ "questId": 2317,
+ "name": "김레의 약",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1404
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18068,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2297,
+      "npcId": 1404
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12314,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18104,
+      "type": "QuestActObjItemGather",
+      "detailId": 1225,
+      "itemId": 17378,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18105,
+      "type": "QuestActConReportNpc",
+      "detailId": 2528,
+      "npcId": 1470
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12316,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17378,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1470,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17378,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,223 @@
+{
+ "questId": 6281,
+ "name": "정착의 속삭임",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 33146
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26907,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37508,
+      "type": "QuestActConAcceptItem",
+      "detailId": 444,
+      "itemId": 33146
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26908,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37509,
+      "type": "QuestActObjZoneKill",
+      "detailId": 101,
+      "zoneId": 19,
+      "countNpc": 80,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "f",
+      "questActObjAliasId": 3278,
+      "lvMin": 1,
+      "lvMax": 50,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26909,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37511,
+      "type": "QuestActConReportNpc",
+      "detailId": 4962,
+      "npcId": 10857
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26910,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37510,
+      "type": "QuestActObjZoneKill",
+      "detailId": 102,
+      "zoneId": 23,
+      "countNpc": 100,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "f",
+      "questActObjAliasId": 3279,
+      "lvMin": 1,
+      "lvMax": 50,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26911,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37512,
+      "type": "QuestActSupplyExp",
+      "detailId": 1137,
+      "exp": 1004
+     },
+     {
+      "actId": 37513,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1487,
+      "amount": 1000
+     },
+     {
+      "actId": 37514,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2528,
+      "itemId": 33147,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37515,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2529,
+      "itemId": 33148,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37516,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2530,
+      "itemId": 33149,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 19,
+     "count": 80,
+     "countNpc": 80,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 1,
+     "lvMax": 50
+    },
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 23,
+     "count": 100,
+     "countNpc": 100,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 1,
+     "lvMax": 50
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10857,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 33146,
+   "count": 1
+  }
+ ]
+}

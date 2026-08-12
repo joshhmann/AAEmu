@@ -1,0 +1,151 @@
+{
+ "questId": 2043,
+ "name": "산호초 채집",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9016
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9367,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12934,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1741,
+      "npcId": 9016
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9368,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13709,
+      "type": "QuestActObjInteraction",
+      "detailId": 344,
+      "doodadId": 3651,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9369,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12935,
+      "type": "QuestActConReportNpc",
+      "detailId": 1942,
+      "npcId": 9016
+     },
+     {
+      "actId": 20629,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 181,
+      "itemId": 19609,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 9370,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 15058,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20628,
+      "type": "QuestActSupplyItem",
+      "detailId": 2063,
+      "itemId": 19609,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3651,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9016,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

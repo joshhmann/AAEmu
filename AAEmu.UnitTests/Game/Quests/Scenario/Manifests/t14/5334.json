@@ -1,0 +1,178 @@
+{
+ "questId": 5334,
+ "name": "내가 바로 장인 채광꾼",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12504
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23015,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32597,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4126,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23016,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32500,
+      "type": "QuestActObjItemGather",
+      "detailId": 2605,
+      "itemId": 8081,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23017,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32503,
+      "type": "QuestActConReportNpc",
+      "detailId": 4419,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32437,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 130,
+      "appellationId": 74
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23092,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32501,
+      "type": "QuestActObjItemGather",
+      "detailId": 2606,
+      "itemId": 8085,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23093,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32502,
+      "type": "QuestActObjItemGather",
+      "detailId": 2607,
+      "itemId": 8086,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 8081,
+     "count": 5
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8085,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 8086,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12504,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 8081,
+   "count": 5
+  },
+  {
+   "itemId": 8085,
+   "count": 1
+  },
+  {
+   "itemId": 8086,
+   "count": 1
+  }
+ ]
+}

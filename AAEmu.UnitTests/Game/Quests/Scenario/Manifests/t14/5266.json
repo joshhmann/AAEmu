@@ -1,0 +1,135 @@
+{
+ "questId": 5266,
+ "name": "광석의 비밀을 풀기 위해",
+ "zoneId": 6,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12969
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22714,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32018,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4044,
+      "npcId": 12969
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22715,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32120,
+      "type": "QuestActObjInteraction",
+      "detailId": 666,
+      "doodadId": 6407,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 32155,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 156,
+      "itemId": 27307,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22716,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32019,
+      "type": "QuestActConReportNpc",
+      "detailId": 4354,
+      "npcId": 8861
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22810,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32121,
+      "type": "QuestActObjInteraction",
+      "detailId": 667,
+      "doodadId": 6405,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 6407,
+     "count": 1
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 6405,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8861,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,161 @@
+{
+ "questId": 6380,
+ "name": "용기 있는 남자가 미인을 얻는다.",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14902
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27318,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38902,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4763,
+      "npcId": 14902
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27319,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38903,
+      "type": "QuestActObjItemGather",
+      "detailId": 2961,
+      "itemId": 34239,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27320,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38904,
+      "type": "QuestActConReportNpc",
+      "detailId": 4996,
+      "npcId": 14902
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27324,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38906,
+      "type": "QuestActSupplyItem",
+      "detailId": 4550,
+      "itemId": 34253,
+      "gradeId": 2,
+      "count": 3
+     },
+     {
+      "actId": 38907,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1663,
+      "amount": 100
+     },
+     {
+      "actId": 38908,
+      "type": "QuestActSupplyExp",
+      "detailId": 1351,
+      "exp": 1004
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34239,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14902,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34253,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34239,
+   "count": 3
+  }
+ ]
+}

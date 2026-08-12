@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
@@ -334,8 +335,8 @@ public class BotParitySeedingTests
             [18792] = BuildSupplyTemplate(18792),
             [417] = BuildSupplyTemplate(417)
         });
-        SetPrivateField(itemManager, "_allPersistentContainers", new Dictionary<ulong, ItemContainer>());
-        SetPrivateField(itemManager, "_allItems", new Dictionary<ulong, Item>());
+        SetPrivateField(itemManager, "_allPersistentContainers", new ConcurrentDictionary<ulong, ItemContainer>());
+        SetPrivateField(itemManager, "_allItems", new ConcurrentDictionary<ulong, Item>());
         SetPrivateField(itemManager, "_removedItems", new List<ulong>());
 
         SetSingleton(typeof(Singleton<ItemManager>), itemManager);

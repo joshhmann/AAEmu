@@ -1,0 +1,147 @@
+{
+ "questId": 1198,
+ "name": "별무덤 점령자들 쫓아내기",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2337
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6099,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17909,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 586,
+      "npcId": 2337
+     },
+     {
+      "actId": 17910,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 587,
+      "npcId": 2338
+     },
+     {
+      "actId": 17911,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 588,
+      "npcId": 4949
+     },
+     {
+      "actId": 17912,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 589,
+      "npcId": 2385
+     },
+     {
+      "actId": 22698,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 924,
+      "npcId": 10513
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6101,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17913,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 287,
+      "monsterGroupId": 258,
+      "count": 24
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6102,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17914,
+      "type": "QuestActConReportJournal",
+      "detailId": 177
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6103,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17915,
+      "type": "QuestActSupplyCopper",
+      "detailId": 259,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 258,
+     "count": 24
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,123 @@
+{
+ "questId": 2961,
+ "name": "분노한 말리카 족 전사 처치",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8800
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12909,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18631,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 638,
+      "npcId": 8800
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12957,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18625,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 668,
+      "npcId": 8800,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12958,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18612,
+      "type": "QuestActConReportJournal",
+      "detailId": 194
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12959,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18613,
+      "type": "QuestActSupplyCopper",
+      "detailId": 291,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8800,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

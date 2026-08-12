@@ -1,0 +1,144 @@
+{
+ "questId": 2921,
+ "name": "괴물 또는 감자",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8792
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18199,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2331,
+      "npcId": 8792
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12475,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18201,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 649,
+      "npcId": 8781,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12476,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18200,
+      "type": "QuestActConReportNpc",
+      "detailId": 2551,
+      "npcId": 1449
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12477,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21102,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28979,
+      "type": "QuestActObjItemGather",
+      "detailId": 2331,
+      "itemId": 23435,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8781,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 23435,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1449,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23435,
+   "count": 5
+  }
+ ]
+}

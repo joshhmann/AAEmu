@@ -1,0 +1,116 @@
+{
+ "questId": 6644,
+ "name": "[전층] 벨시온의 의뢰 에아나드 도서관 정리 5단계",
+ "zoneId": 197,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34890
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28341,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40656,
+      "type": "QuestActConAcceptItem",
+      "detailId": 571,
+      "itemId": 34890
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28342,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40657,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 710,
+      "monsterGroupId": 626,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40658,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1900
+     },
+     {
+      "actId": 40659,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1914,
+      "amount": 0
+     },
+     {
+      "actId": 40660,
+      "type": "QuestActSupplyExp",
+      "detailId": 1569,
+      "exp": 252800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 626,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34890,
+   "count": 1
+  }
+ ]
+}

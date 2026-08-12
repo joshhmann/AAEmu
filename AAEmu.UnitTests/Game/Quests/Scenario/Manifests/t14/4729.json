@@ -1,0 +1,81 @@
+{
+ "questId": 4729,
+ "name": "징병소의 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1779
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20461,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27921,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 441,
+      "sphereId": 1779
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27922,
+      "type": "QuestActSupplyCopper",
+      "detailId": 736,
+      "amount": 0
+     },
+     {
+      "actId": 27923,
+      "type": "QuestActSupplyExp",
+      "detailId": 288,
+      "exp": 0
+     },
+     {
+      "actId": 27925,
+      "type": "QuestActConAutoComplete",
+      "detailId": 989
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 2340,
+ "name": "하디르의 최후",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1475
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18172,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2324,
+      "npcId": 1475
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12450,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24534,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 949,
+      "npcId": 8770,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12451,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18173,
+      "type": "QuestActConReportNpc",
+      "detailId": 2545,
+      "npcId": 1403
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12452,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38728,
+      "type": "QuestActSupplyItem",
+      "detailId": 4477,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8770,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1403,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

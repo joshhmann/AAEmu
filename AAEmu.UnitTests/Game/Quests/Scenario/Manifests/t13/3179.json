@@ -1,0 +1,141 @@
+{
+ "questId": 3179,
+ "name": "냄새나는 식물들 꺾기",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 36,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9216
+ },
+ "template": {
+  "level": 36,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14392,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20019,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 724,
+      "npcId": 9216
+     },
+     {
+      "actId": 20020,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 725,
+      "npcId": 9217
+     },
+     {
+      "actId": 20021,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 726,
+      "npcId": 9218
+     },
+     {
+      "actId": 20022,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 727,
+      "npcId": 9219
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14393,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20023,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 345,
+      "monsterGroupId": 307,
+      "count": 58
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14394,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20024,
+      "type": "QuestActConReportJournal",
+      "detailId": 207
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14395,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20025,
+      "type": "QuestActSupplyCopper",
+      "detailId": 314,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 307,
+     "count": 58
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

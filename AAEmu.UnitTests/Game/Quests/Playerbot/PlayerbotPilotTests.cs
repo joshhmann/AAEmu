@@ -394,7 +394,7 @@ public class PlayerbotPilotTests
                 restored.TemplateId = entry.TemplateId;
                 restored.Status = entry.Status;
                 restored.ReadData(entry.Data);
-                restartBot.Character.Quests.ActiveQuests.Add(entry.TemplateId, restored);
+                restartBot.Character.Quests.ActiveQuests.TryAdd(entry.TemplateId, restored);
                 restored.QuestInitialized();
                 restored.RequestEvaluation();
             }

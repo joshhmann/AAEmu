@@ -1,0 +1,144 @@
+{
+ "questId": 1783,
+ "name": "피고름에는 독이 딱이지",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2806
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12679,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19293,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2565,
+      "npcId": 2806
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12680,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18406,
+      "type": "QuestActSupplyItem",
+      "detailId": 1846,
+      "itemId": 18723,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12681,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18407,
+      "type": "QuestActObjInteraction",
+      "detailId": 442,
+      "doodadId": 3470,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12682,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19294,
+      "type": "QuestActConReportNpc",
+      "detailId": 2797,
+      "npcId": 2806
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12683,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3470,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2806,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

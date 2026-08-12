@@ -1,0 +1,68 @@
+{
+ "questId": 2588,
+ "name": "튜토리얼 5",
+ "zoneId": 1,
+ "categoryId": 45,
+ "level": 0,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1984
+ },
+ "template": {
+  "level": 0,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21270,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29524,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 524,
+      "sphereId": 1984
+     },
+     {
+      "actId": 29525,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 525,
+      "sphereId": 1994
+     },
+     {
+      "actId": 29526,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 526,
+      "sphereId": 2001
+     },
+     {
+      "actId": 29527,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 527,
+      "sphereId": 2010
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

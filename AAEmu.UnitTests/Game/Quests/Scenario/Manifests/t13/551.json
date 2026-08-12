@@ -1,0 +1,209 @@
+{
+ "questId": 551,
+ "name": "잊혀진 기록",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2435
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3308,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 349,
+      "npcId": 2435
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3309,
+      "type": "QuestActObjItemGather",
+      "detailId": 170,
+      "itemId": 24550,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3313,
+      "type": "QuestActConReportNpc",
+      "detailId": 414,
+      "npcId": 2435
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2180,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38721,
+      "type": "QuestActSupplyItem",
+      "detailId": 4470,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4565,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7063,
+      "type": "QuestActObjItemGather",
+      "detailId": 354,
+      "itemId": 24552,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4566,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7064,
+      "type": "QuestActObjItemGather",
+      "detailId": 355,
+      "itemId": 24551,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4567,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7065,
+      "type": "QuestActObjItemGather",
+      "detailId": 356,
+      "itemId": 24553,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24550,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 24552,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 24551,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 24553,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2435,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24550,
+   "count": 1
+  },
+  {
+   "itemId": 24552,
+   "count": 1
+  },
+  {
+   "itemId": 24551,
+   "count": 1
+  },
+  {
+   "itemId": 24553,
+   "count": 1
+  }
+ ]
+}

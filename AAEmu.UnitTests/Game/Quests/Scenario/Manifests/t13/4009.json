@@ -1,0 +1,123 @@
+{
+ "questId": 4009,
+ "name": "암흑갈기 가론 퇴치",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1332
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17284,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22835,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 953,
+      "npcId": 1332
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17285,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22836,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 897,
+      "npcId": 1332,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17286,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22837,
+      "type": "QuestActConReportJournal",
+      "detailId": 289
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17287,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23136,
+      "type": "QuestActSupplyCopper",
+      "detailId": 415,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1332,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,191 @@
+{
+ "questId": 1777,
+ "name": "심심풀이 가위바위보",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2807
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18398,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2376,
+      "npcId": 2807
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12664,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18399,
+      "type": "QuestActObjExpressFire",
+      "detailId": 8,
+      "expressKeyId": 221,
+      "npcGroupId": 271,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12665,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18400,
+      "type": "QuestActObjExpressFire",
+      "detailId": 9,
+      "expressKeyId": 222,
+      "npcGroupId": 271,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12666,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18401,
+      "type": "QuestActObjExpressFire",
+      "detailId": 10,
+      "expressKeyId": 223,
+      "npcGroupId": 271,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12667,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18402,
+      "type": "QuestActObjExpressFire",
+      "detailId": 11,
+      "expressKeyId": 81,
+      "npcGroupId": 271,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12668,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18403,
+      "type": "QuestActConReportNpc",
+      "detailId": 2595,
+      "npcId": 2807
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12669,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ExpressFire",
+     "npcId": 2807,
+     "emotionId": 221,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 2807,
+     "emotionId": 222,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 2807,
+     "emotionId": 223,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 2807,
+     "emotionId": 81,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2807,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "groups": {
+  "npcGroups": {
+   "271": [
+    2807
+   ]
+  }
+ }
+}

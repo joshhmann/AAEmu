@@ -1,0 +1,81 @@
+{
+ "questId": 4481,
+ "name": "눈사자 훈련소 지붕 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1593
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19567,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26640,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 270,
+      "sphereId": 1593
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19569,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26641,
+      "type": "QuestActSupplyCopper",
+      "detailId": 552,
+      "amount": 0
+     },
+     {
+      "actId": 26644,
+      "type": "QuestActConAutoComplete",
+      "detailId": 817
+     },
+     {
+      "actId": 31086,
+      "type": "QuestActSupplyExp",
+      "detailId": 551,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

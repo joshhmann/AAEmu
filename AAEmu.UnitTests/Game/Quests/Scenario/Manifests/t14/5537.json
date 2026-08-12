@@ -1,0 +1,148 @@
+{
+ "questId": 5537,
+ "name": "나츠빌 마라의 소개서",
+ "zoneId": 3,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8878
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23904,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33662,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4261,
+      "npcId": 8878
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23906,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33613,
+      "type": "QuestActConReportNpc",
+      "detailId": 4577,
+      "npcId": 1123
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 23919,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33609,
+      "type": "QuestActSupplyItem",
+      "detailId": 3822,
+      "itemId": 28838,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23922,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 24295,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33763,
+      "type": "QuestActObjItemGather",
+      "detailId": 2748,
+      "itemId": 28838,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28838,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1123,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28838,
+   "count": 1
+  }
+ ]
+}

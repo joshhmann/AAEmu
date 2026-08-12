@@ -1,0 +1,171 @@
+{
+ "questId": 4284,
+ "name": "금단의 강령술",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 23690
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18673,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24474,
+      "type": "QuestActConAcceptItem",
+      "detailId": 169,
+      "itemId": 23690
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18674,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24491,
+      "type": "QuestActObjItemUse",
+      "detailId": 615,
+      "itemId": 23692,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18675,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24490,
+      "type": "QuestActConReportNpc",
+      "detailId": 3778,
+      "npcId": 10824
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 18676,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24486,
+      "type": "QuestActSupplyItem",
+      "detailId": 2381,
+      "itemId": 23692,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18677,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 18684,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24487,
+      "type": "QuestActObjItemGather",
+      "detailId": 2014,
+      "itemId": 23690,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 23692,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 23690,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10824,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23690,
+   "count": 1
+  },
+  {
+   "itemId": 23690,
+   "count": 1
+  }
+ ]
+}

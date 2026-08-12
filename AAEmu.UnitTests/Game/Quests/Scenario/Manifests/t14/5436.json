@@ -1,0 +1,91 @@
+{
+ "questId": 5436,
+ "name": "심연의 입구로",
+ "zoneId": 191,
+ "categoryId": 92,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13379
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23496,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33056,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4181,
+      "npcId": 13379
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23497,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 23498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33057,
+      "type": "QuestActConReportNpc",
+      "detailId": 4492,
+      "npcId": 13386
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13386,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

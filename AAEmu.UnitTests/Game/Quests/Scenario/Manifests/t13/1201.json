@@ -1,0 +1,141 @@
+{
+ "questId": 1201,
+ "name": "불탄 성을 수호하는 악의 무리들 퇴치",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2340
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6114,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17927,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 597,
+      "npcId": 2340
+     },
+     {
+      "actId": 17928,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 598,
+      "npcId": 2341
+     },
+     {
+      "actId": 17929,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 599,
+      "npcId": 2334
+     },
+     {
+      "actId": 17930,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 600,
+      "npcId": 4976
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17926,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 289,
+      "monsterGroupId": 260,
+      "count": 24
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17931,
+      "type": "QuestActConReportJournal",
+      "detailId": 179
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6118,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17932,
+      "type": "QuestActSupplyCopper",
+      "detailId": 261,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 260,
+     "count": 24
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

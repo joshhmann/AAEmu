@@ -1,0 +1,81 @@
+{
+ "questId": 4521,
+ "name": "초심자의 언덕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1629
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19695,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26852,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 305,
+      "sphereId": 1629
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19697,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26853,
+      "type": "QuestActSupplyCopper",
+      "detailId": 587,
+      "amount": 0
+     },
+     {
+      "actId": 26856,
+      "type": "QuestActConAutoComplete",
+      "detailId": 853
+     },
+     {
+      "actId": 31102,
+      "type": "QuestActSupplyExp",
+      "detailId": 567,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4691,
+ "name": "비행선 바늘 꼭지",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1740
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20344,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27696,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 401,
+      "sphereId": 1740
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20346,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27697,
+      "type": "QuestActSupplyCopper",
+      "detailId": 695,
+      "amount": 0
+     },
+     {
+      "actId": 27698,
+      "type": "QuestActSupplyExp",
+      "detailId": 244,
+      "exp": 0
+     },
+     {
+      "actId": 27700,
+      "type": "QuestActConAutoComplete",
+      "detailId": 945
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

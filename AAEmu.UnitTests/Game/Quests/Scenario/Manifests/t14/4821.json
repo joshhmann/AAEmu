@@ -1,0 +1,81 @@
+{
+ "questId": 4821,
+ "name": "해적 소굴의 샹드리에",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1869
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20793,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28432,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 507,
+      "sphereId": 1869
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20795,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28434,
+      "type": "QuestActSupplyCopper",
+      "detailId": 799,
+      "amount": 0
+     },
+     {
+      "actId": 28435,
+      "type": "QuestActSupplyExp",
+      "detailId": 359,
+      "exp": 0
+     },
+     {
+      "actId": 28437,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1062
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

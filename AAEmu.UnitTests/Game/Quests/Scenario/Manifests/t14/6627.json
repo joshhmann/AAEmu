@@ -1,0 +1,171 @@
+{
+ "questId": 6627,
+ "name": "연습을 실전처럼, 실전을 연습처럼",
+ "zoneId": 216,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14414
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28273,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40533,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5065,
+      "npcId": 14414
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40532,
+      "type": "QuestActObjZoneKill",
+      "detailId": 129,
+      "zoneId": 77,
+      "countNpc": 0,
+      "countPk": 3,
+      "teamShare": "f",
+      "useAlias": "t",
+      "questActObjAliasId": 3360,
+      "lvMin": 50,
+      "lvMax": 55,
+      "isParty": "f",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionId": 115,
+      "pcFactionExclusive": "t",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28275,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40534,
+      "type": "QuestActConReportNpc",
+      "detailId": 5084,
+      "npcId": 14414
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40540,
+      "type": "QuestActSupplyItem",
+      "detailId": 4712,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40542,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1900,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 77,
+     "count": 3,
+     "countNpc": 0,
+     "countPk": 3,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 115,
+     "pcFactionExclusive": true,
+     "lvMin": 50,
+     "lvMax": 55
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14414,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

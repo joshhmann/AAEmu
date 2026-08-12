@@ -1,0 +1,81 @@
+{
+ "questId": 4686,
+ "name": "고목에 핀 거대 버섯",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1735
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20329,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27670,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 396,
+      "sphereId": 1735
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20331,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27671,
+      "type": "QuestActSupplyCopper",
+      "detailId": 690,
+      "amount": 0
+     },
+     {
+      "actId": 27672,
+      "type": "QuestActSupplyExp",
+      "detailId": 238,
+      "exp": 0
+     },
+     {
+      "actId": 27674,
+      "type": "QuestActConAutoComplete",
+      "detailId": 940
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

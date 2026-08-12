@@ -1,0 +1,81 @@
+{
+ "questId": 4454,
+ "name": "바이암 소굴 산등성이 탐험",
+ "zoneId": 13,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1567
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19471,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26486,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 246,
+      "sphereId": 1567
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19473,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26487,
+      "type": "QuestActConAutoComplete",
+      "detailId": 794
+     },
+     {
+      "actId": 26488,
+      "type": "QuestActSupplyCopper",
+      "detailId": 529,
+      "amount": 0
+     },
+     {
+      "actId": 31067,
+      "type": "QuestActSupplyExp",
+      "detailId": 532,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

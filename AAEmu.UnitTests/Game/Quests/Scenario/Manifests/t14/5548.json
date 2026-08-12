@@ -1,0 +1,201 @@
+{
+ "questId": 5548,
+ "name": "대통합의 길",
+ "zoneId": 1,
+ "categoryId": 96,
+ "level": 50,
+ "letItDone": false,
+ "selective": true,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1123
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23959,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33686,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4264,
+      "npcId": 1123
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23960,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33688,
+      "type": "QuestActObjItemGather",
+      "detailId": 2738,
+      "itemId": 16025,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23961,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33687,
+      "type": "QuestActConReportNpc",
+      "detailId": 4588,
+      "npcId": 1123
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23980,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33689,
+      "type": "QuestActSupplyItem",
+      "detailId": 3841,
+      "itemId": 28946,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33714,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1193,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23981,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33690,
+      "type": "QuestActObjItemGather",
+      "detailId": 2739,
+      "itemId": 16026,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23982,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33691,
+      "type": "QuestActObjItemGather",
+      "detailId": 2740,
+      "itemId": 16027,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 16025,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 16026,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 16027,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1123,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28946,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 16025,
+   "count": 1
+  },
+  {
+   "itemId": 16026,
+   "count": 1
+  },
+  {
+   "itemId": 16027,
+   "count": 1
+  }
+ ]
+}

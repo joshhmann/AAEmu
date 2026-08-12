@@ -1,0 +1,125 @@
+{
+ "questId": 3198,
+ "name": "배신의 대가",
+ "zoneId": 172,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8909
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13428,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19193,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2542,
+      "npcId": 8909
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13429,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19622,
+      "type": "QuestActObjItemGather",
+      "detailId": 1371,
+      "itemId": 19540,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13430,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19194,
+      "type": "QuestActConReportNpc",
+      "detailId": 2773,
+      "npcId": 8909
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13431,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19540,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8909,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19540,
+   "count": 1
+  }
+ ]
+}

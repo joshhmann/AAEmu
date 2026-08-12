@@ -1,0 +1,156 @@
+{
+ "questId": 3281,
+ "name": "피 묻은 손 판금 투구 2단계",
+ "zoneId": 168,
+ "categoryId": 56,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13868,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 13910,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19561,
+      "type": "QuestActObjItemGather",
+      "detailId": 1355,
+      "itemId": 19505,
+      "count": 6
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13956,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19562,
+      "type": "QuestActObjItemGather",
+      "detailId": 1356,
+      "itemId": 19497,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13958,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19563,
+      "type": "QuestActConReportNpc",
+      "detailId": 2845,
+      "npcId": 9179
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13959,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19564,
+      "type": "QuestActSupplyItem",
+      "detailId": 1946,
+      "itemId": 19497,
+      "gradeId": 2,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19505,
+     "count": 6
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 19497,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9179,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 19497,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19505,
+   "count": 6
+  },
+  {
+   "itemId": 19497,
+   "count": 1
+  }
+ ]
+}

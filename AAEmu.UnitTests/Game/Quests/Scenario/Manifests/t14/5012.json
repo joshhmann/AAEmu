@@ -1,0 +1,81 @@
+{
+ "questId": 5012,
+ "name": "버려진 훈련소의 막다른 길",
+ "zoneId": 20,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2109
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30364,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 630,
+      "sphereId": 2109
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21699,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30360,
+      "type": "QuestActSupplyCopper",
+      "detailId": 928,
+      "amount": 0
+     },
+     {
+      "actId": 30361,
+      "type": "QuestActSupplyExp",
+      "detailId": 470,
+      "exp": 0
+     },
+     {
+      "actId": 30363,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1235
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

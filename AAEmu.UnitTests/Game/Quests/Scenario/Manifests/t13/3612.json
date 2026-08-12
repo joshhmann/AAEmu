@@ -1,0 +1,136 @@
+{
+ "questId": 3612,
+ "name": "로카의 장기말들 정복",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1369
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14995,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20516,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2840,
+      "npcId": 1369
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14996,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20517,
+      "type": "QuestActObjSphere",
+      "detailId": 582,
+      "sphereId": 1231
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14997,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20518,
+      "type": "QuestActObjSphere",
+      "detailId": 583,
+      "sphereId": 1230
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14998,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20519,
+      "type": "QuestActObjSphere",
+      "detailId": 584,
+      "sphereId": 1232
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14999,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24473,
+      "type": "QuestActConAutoComplete",
+      "detailId": 762
+     },
+     {
+      "actId": 25730,
+      "type": "QuestActSupplyCopper",
+      "detailId": 500,
+      "amount": 7000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 14996
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 14997
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 14998
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

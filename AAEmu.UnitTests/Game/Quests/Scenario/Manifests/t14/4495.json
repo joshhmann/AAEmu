@@ -1,0 +1,81 @@
+{
+ "questId": 4495,
+ "name": "쇠모루 마을의 첨탑",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1607
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19611,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26715,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 283,
+      "sphereId": 1607
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19613,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26716,
+      "type": "QuestActSupplyCopper",
+      "detailId": 565,
+      "amount": 0
+     },
+     {
+      "actId": 26717,
+      "type": "QuestActSupplyExp",
+      "detailId": 121,
+      "exp": 0
+     },
+     {
+      "actId": 26719,
+      "type": "QuestActConAutoComplete",
+      "detailId": 830
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

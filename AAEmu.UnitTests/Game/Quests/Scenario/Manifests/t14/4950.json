@@ -1,0 +1,81 @@
+{
+ "questId": 4950,
+ "name": "풀바람 초원의 한적한 큰 바위",
+ "zoneId": 3,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2045
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21498,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30008,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 571,
+      "sphereId": 2045
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30004,
+      "type": "QuestActSupplyCopper",
+      "detailId": 869,
+      "amount": 0
+     },
+     {
+      "actId": 30005,
+      "type": "QuestActSupplyExp",
+      "detailId": 410,
+      "exp": 0
+     },
+     {
+      "actId": 30007,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1166
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -50,7 +50,12 @@
      {
       "actId": 33000,
       "type": "QuestActObjMateLevel",
-      "detailId": 2
+      "detailId": 2,
+      "itemId": 14878,
+      "level": 50,
+      "cleanup": true,
+      "useAlias": true,
+      "questActObjAliasId": 2420
      }
     ]
    },
@@ -82,7 +87,9 @@
      }
     ]
    }
-  ]
+  ],
+  "detailId": 1,
+  "repeatable": true
  },
  "stages": [
   {
@@ -100,6 +107,11 @@
      "type": "ItemGather",
      "itemId": 28219,
      "count": 1
+    },
+    {
+     "type": "MateLevel",
+     "itemId": 14878,
+     "level": 50
     }
    ],
    "expect": {
@@ -140,6 +152,13 @@
    "expect": {
     "persistRoundTrip": true
    }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
   }
  ],
  "selectedRewardIndex": 0,
@@ -148,8 +167,5 @@
    "itemId": 28219,
    "count": 1
   }
- ],
- "skip": {
-  "reason": "unsupported act type QuestActObjMateLevel; unsynthesizable event shape for QuestActObjMateLevel (comp 23458)"
- }
+ ]
 }

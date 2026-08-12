@@ -1,0 +1,81 @@
+{
+ "questId": 4982,
+ "name": "음유시인의 집",
+ "zoneId": 17,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2079
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21606,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30211,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 600,
+      "sphereId": 2079
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30207,
+      "type": "QuestActSupplyCopper",
+      "detailId": 898,
+      "amount": 0
+     },
+     {
+      "actId": 30208,
+      "type": "QuestActSupplyExp",
+      "detailId": 440,
+      "exp": 0
+     },
+     {
+      "actId": 30210,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1205
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

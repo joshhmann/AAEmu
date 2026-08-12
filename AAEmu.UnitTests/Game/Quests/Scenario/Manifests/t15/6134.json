@@ -1,0 +1,127 @@
+{
+ "questId": 6134,
+ "name": "[3층]비명서고 수색을 방해하는 존재",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14535
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36159,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4655,
+      "npcId": 14535
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26344,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36161,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1177,
+      "npcId": 14375,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26457,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36162,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1671
+     },
+     {
+      "actId": 36852,
+      "type": "QuestActSupplyItem",
+      "detailId": 4067,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37968,
+      "type": "QuestActSupplyExp",
+      "detailId": 1201,
+      "exp": 252800
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14375,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

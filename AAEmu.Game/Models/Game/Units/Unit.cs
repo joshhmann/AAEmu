@@ -63,7 +63,27 @@ public class Unit : BaseUnit, IUnit
 
     public byte Level { get; set; }
 
-    public int Hp { get; set; }
+    /// <summary>
+    /// Called when save-relevant unit state (HP/MP) actually changes.
+    /// Base is a no-op; Characters override to mark themselves dirty for SaveManager.
+    /// </summary>
+    protected virtual void OnSaveRelevantChange()
+    {
+    }
+
+    private int _hp;
+
+    public int Hp
+    {
+        get => _hp;
+        set
+        {
+            if (_hp == value)
+                return;
+            _hp = value;
+            OnSaveRelevantChange();
+        }
+    }
 
     public int Hpp
     {
@@ -102,7 +122,21 @@ public class Unit : BaseUnit, IUnit
     public virtual int HpRegen { get; set; }
     [UnitAttribute(UnitAttribute.PersistentHealthRegen)]
     public virtual int PersistentHpRegen { get; set; } = 30;
-    public int Mp { get; set; }
+
+    private int _mp;
+
+    public int Mp
+    {
+        get => _mp;
+        set
+        {
+            if (_mp == value)
+                return;
+            _mp = value;
+            OnSaveRelevantChange();
+        }
+    }
+
     [UnitAttribute(UnitAttribute.MaxMana)]
     public virtual int MaxMp { get; set; }
     [UnitAttribute(UnitAttribute.ManaRegen)]
@@ -1096,7 +1130,7 @@ public class Unit : BaseUnit, IUnit
     {
         Bonuses[GearBonusesIndex] = [];
 
-        foreach (var item in Equipment.Items)
+        foreach (var item in Equipment.GetItemsSnapshot())
         {
             if (item is not EquipItem ei)
                 continue;
@@ -1161,7 +1195,7 @@ public class Unit : BaseUnit, IUnit
     {
         var setNumPieces = new Dictionary<uint, int>();
         var itemLevels = new Dictionary<uint, uint>();
-        foreach (var item in Equipment.Items)
+        foreach (var item in Equipment.GetItemsSnapshot())
         {
             if (item.Template is EquipItemTemplate template)
             {
@@ -1240,7 +1274,7 @@ public class Unit : BaseUnit, IUnit
 
         // Get armor pieces by kind
         var armorPieces = new Dictionary<ArmorType, List<Armor>>();
-        foreach (var item in Equipment.Items)
+        foreach (var item in Equipment.GetItemsSnapshot())
         {
             if (item is not Armor armor)
                 continue;
@@ -1430,7 +1464,7 @@ public class Unit : BaseUnit, IUnit
         if (itemAdded == null && itemRemoved == null) // This is the first load check to apply buffs for equipped items. 
         {
             Buffs.RemoveBuffs((uint)BuffConstants.EquipmentBuffTag, 20);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
             {
                 // Static Buffs
                 if (item.Template.BuffId != 0)

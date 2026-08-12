@@ -1,0 +1,12 @@
+{
+ "questId": 1728,
+ "name": "두다드 스킬 사용전용(삭제하지마시오)",
+ "family": "no-acts",
+ "zoneId": 1,
+ "template": {
+  "level": 0
+ },
+ "skip": {
+  "reason": "no components"
+ }
+}

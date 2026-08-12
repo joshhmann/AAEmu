@@ -152,6 +152,13 @@
     "persistRoundTrip": true,
     "failPathWired": true
    }
+  },
+  {
+   "name": "TIMEOUT",
+   "events": [],
+   "expect": {
+    "step": "Fail"
+   }
   }
  ],
  "selectedRewardIndex": 0

@@ -1,0 +1,113 @@
+{
+ "questId": 3812,
+ "name": "신수 수호자들 처치",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5881
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15994,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30106,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 217,
+      "doodadId": 5881
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15996,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30108,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 527,
+      "monsterGroupId": 484,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15999,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30107,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1184
+     },
+     {
+      "actId": 37033,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1422,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 10,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 484,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

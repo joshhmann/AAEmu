@@ -1,0 +1,189 @@
+{
+ "questId": 5769,
+ "name": "올로의 풍요",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13790
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24831,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34448,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4415,
+      "npcId": 13790
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24832,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34463,
+      "type": "QuestActObjItemGather",
+      "detailId": 2832,
+      "itemId": 29708,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24833,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34451,
+      "type": "QuestActConReportNpc",
+      "detailId": 4690,
+      "npcId": 13790
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24845,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34514,
+      "type": "QuestActObjExpressFire",
+      "detailId": 46,
+      "expressKeyId": 556,
+      "npcGroupId": 535,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24846,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34452,
+      "type": "QuestActSupplyExp",
+      "detailId": 779,
+      "exp": 0
+     },
+     {
+      "actId": 34453,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1215,
+      "amount": 0
+     },
+     {
+      "actId": 34460,
+      "type": "QuestActSupplyItem",
+      "detailId": 3896,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29708,
+     "count": 1
+    },
+    {
+     "type": "ExpressFire",
+     "npcId": 13790,
+     "emotionId": 556,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13790,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29708,
+   "count": 1
+  }
+ ],
+ "groups": {
+  "npcGroups": {
+   "535": [
+    13790
+   ]
+  }
+ }
+}

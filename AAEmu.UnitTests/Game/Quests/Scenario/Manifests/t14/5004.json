@@ -1,0 +1,81 @@
+{
+ "questId": 5004,
+ "name": "이니스테르 기념비",
+ "zoneId": 6,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2101
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21674,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30324,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 622,
+      "sphereId": 2101
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21675,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30320,
+      "type": "QuestActSupplyCopper",
+      "detailId": 920,
+      "amount": 0
+     },
+     {
+      "actId": 30321,
+      "type": "QuestActSupplyExp",
+      "detailId": 462,
+      "exp": 0
+     },
+     {
+      "actId": 30323,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1227
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

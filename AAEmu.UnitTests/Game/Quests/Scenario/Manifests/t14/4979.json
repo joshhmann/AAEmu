@@ -1,0 +1,81 @@
+{
+ "questId": 4979,
+ "name": "불탄성 감시 야영지의 감시탑",
+ "zoneId": 14,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2076
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21597,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30195,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 597,
+      "sphereId": 2076
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21598,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30191,
+      "type": "QuestActSupplyCopper",
+      "detailId": 895,
+      "amount": 0
+     },
+     {
+      "actId": 30192,
+      "type": "QuestActSupplyExp",
+      "detailId": 436,
+      "exp": 0
+     },
+     {
+      "actId": 30194,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1202
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

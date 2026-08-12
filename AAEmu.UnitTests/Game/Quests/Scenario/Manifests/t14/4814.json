@@ -1,0 +1,81 @@
+{
+ "questId": 4814,
+ "name": "주상절리에 서서 대양을 바라보다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1862
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20772,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28394,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 500,
+      "sphereId": 1862
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20774,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28395,
+      "type": "QuestActSupplyCopper",
+      "detailId": 792,
+      "amount": 0
+     },
+     {
+      "actId": 28396,
+      "type": "QuestActSupplyExp",
+      "detailId": 352,
+      "exp": 0
+     },
+     {
+      "actId": 28398,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1055
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

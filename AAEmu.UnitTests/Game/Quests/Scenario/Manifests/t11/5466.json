@@ -1,0 +1,171 @@
+{
+ "questId": 5466,
+ "name": "잘 자란 순백의 릴리엇 말 납품",
+ "zoneId": 1,
+ "categoryId": 87,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13455
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23640,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33265,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4207,
+      "npcId": 13455
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23641,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33268,
+      "type": "QuestActObjItemGather",
+      "detailId": 2704,
+      "itemId": 28449,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23642,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33278,
+      "type": "QuestActConReportNpc",
+      "detailId": 4524,
+      "npcId": 13455
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23647,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33272,
+      "type": "QuestActObjMateLevel",
+      "detailId": 8,
+      "itemId": 8163,
+      "level": 50,
+      "cleanup": true,
+      "useAlias": true,
+      "questActObjAliasId": 2469
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23648,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33275,
+      "type": "QuestActSupplyItem",
+      "detailId": 3780,
+      "itemId": 28458,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28449,
+     "count": 1
+    },
+    {
+     "type": "MateLevel",
+     "itemId": 8163,
+     "level": 50
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13455,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28458,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28449,
+   "count": 1
+  }
+ ]
+}

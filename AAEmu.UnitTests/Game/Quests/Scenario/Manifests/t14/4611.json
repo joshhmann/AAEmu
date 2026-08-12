@@ -1,0 +1,81 @@
+{
+ "questId": 4611,
+ "name": "위어드윈드 저택의 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1681
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20054,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27282,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 354,
+      "sphereId": 1681
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20056,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27283,
+      "type": "QuestActSupplyCopper",
+      "detailId": 641,
+      "amount": 0
+     },
+     {
+      "actId": 27284,
+      "type": "QuestActSupplyExp",
+      "detailId": 195,
+      "exp": 0
+     },
+     {
+      "actId": 27286,
+      "type": "QuestActConAutoComplete",
+      "detailId": 899
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

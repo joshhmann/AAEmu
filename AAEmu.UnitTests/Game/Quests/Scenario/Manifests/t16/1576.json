@@ -1,0 +1,12 @@
+{
+ "questId": 1576,
+ "name": "dummy",
+ "family": "no-acts",
+ "zoneId": 1,
+ "template": {
+  "level": 0
+ },
+ "skip": {
+  "reason": "no components"
+ }
+}

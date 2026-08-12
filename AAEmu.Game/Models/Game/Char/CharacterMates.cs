@@ -121,6 +121,7 @@ public class CharacterMates(Character owner)
         // Cap stats to their max
         mount.Hp = Math.Min(mount.Hp, mount.MaxHp);
         mount.Mp = Math.Min(mount.Mp, mount.MaxMp);
+        Owner.MarkDirty(); // mate row may be created/updated
 
         mount.Transform.Local.AddDistanceToFront(3f);
         //Logger.Warn($"Spawn the pet:{mount.ObjId} X={mount.Transform.World.Position.X} Y={mount.Transform.World.Position.Y}");
@@ -147,6 +148,7 @@ public class CharacterMates(Character owner)
         }
 
         Owner.ParentWorld.MateManager.RemoveActiveMateAndDespawn(Owner, tlId);
+        Owner.MarkDirty(); // mate row updated (hp/xp/etc.)
     }
 
     /// <summary>

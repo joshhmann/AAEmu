@@ -1,0 +1,147 @@
+{
+ "questId": 4016,
+ "name": "변절한 검은늑대 기사단 섬멸",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 10484
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17312,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22876,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 976,
+      "npcId": 10484
+     },
+     {
+      "actId": 22877,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 977,
+      "npcId": 10485
+     },
+     {
+      "actId": 22878,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 978,
+      "npcId": 10517
+     },
+     {
+      "actId": 22879,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 979,
+      "npcId": 10519
+     },
+     {
+      "actId": 22880,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 980,
+      "npcId": 10527
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22875,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 440,
+      "monsterGroupId": 400,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17314,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22874,
+      "type": "QuestActConReportJournal",
+      "detailId": 296
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22873,
+      "type": "QuestActSupplyCopper",
+      "detailId": 387,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 400,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

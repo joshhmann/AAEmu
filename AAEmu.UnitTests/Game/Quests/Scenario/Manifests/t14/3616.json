@@ -1,0 +1,140 @@
+{
+ "questId": 3616,
+ "name": "제물 상납",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9693
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15024,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20634,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2856,
+      "npcId": 9693
+     },
+     {
+      "actId": 30100,
+      "type": "QuestActCheckTimer",
+      "detailId": 128,
+      "limitTime": 600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15026,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29967,
+      "type": "QuestActSupplyItem",
+      "detailId": 3411,
+      "itemId": 25993,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15027,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29619,
+      "type": "QuestActObjSphere",
+      "detailId": 645,
+      "sphereId": 1234
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15028,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20588,
+      "type": "QuestActConAutoComplete",
+      "detailId": 675
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 21549,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 15027
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "TIMEOUT",
+   "events": [],
+   "expect": {
+    "step": "Fail"
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

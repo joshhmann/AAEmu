@@ -1,0 +1,113 @@
+{
+ "questId": 6247,
+ "name": "알 수 없는 자의 경고",
+ "zoneId": 135,
+ "categoryId": 22,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 8020
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26773,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37297,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 309,
+      "doodadId": 8020
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26774,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37305,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 630,
+      "monsterGroupId": 590,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26775,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37296,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1709
+     },
+     {
+      "actId": 37304,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1459,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 10,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 590,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

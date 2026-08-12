@@ -1,0 +1,129 @@
+{
+ "questId": 6339,
+ "name": "비명서고 책장 학살",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27141,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37853,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 510,
+      "questContextId": 6339
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27142,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37854,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1265,
+      "npcId": 14373,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27143,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37855,
+      "type": "QuestActConReportJournal",
+      "detailId": 533
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27145,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37856,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1575,
+      "amount": 0
+     },
+     {
+      "actId": 38089,
+      "type": "QuestActSupplyExp",
+      "detailId": 1304,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14373,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,98 @@
+{
+ "questId": 6367,
+ "name": "속박당한 스노든",
+ "zoneId": 197,
+ "categoryId": 111,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14749
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38763,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4753,
+      "npcId": 14749
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27267,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38815,
+      "type": "QuestActSupplyExp",
+      "detailId": 1339,
+      "exp": 140000
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27268,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38767,
+      "type": "QuestActConReportNpc",
+      "detailId": 4984,
+      "npcId": 14748
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14748,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

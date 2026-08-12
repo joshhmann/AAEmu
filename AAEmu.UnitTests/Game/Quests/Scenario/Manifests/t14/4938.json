@@ -1,0 +1,123 @@
+{
+ "questId": 4938,
+ "name": "뼈의 땅 쌍두사 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1995
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21431,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29809,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1115,
+      "npcId": 1995
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21432,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29810,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1061,
+      "npcId": 1995,
+      "count": 18
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21433,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29811,
+      "type": "QuestActConReportJournal",
+      "detailId": 342
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21434,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29812,
+      "type": "QuestActSupplyCopper",
+      "detailId": 851,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1995,
+     "count": 18
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

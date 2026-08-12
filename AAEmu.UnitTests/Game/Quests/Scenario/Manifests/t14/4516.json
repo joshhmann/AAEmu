@@ -1,0 +1,81 @@
+{
+ "questId": 4516,
+ "name": "마른 별 쉼터가 내려다보이는 바위 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1626
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19676,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26813,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 302,
+      "sphereId": 1626
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19678,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26814,
+      "type": "QuestActSupplyCopper",
+      "detailId": 584,
+      "amount": 0
+     },
+     {
+      "actId": 26817,
+      "type": "QuestActConAutoComplete",
+      "detailId": 849
+     },
+     {
+      "actId": 31106,
+      "type": "QuestActSupplyExp",
+      "detailId": 570,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

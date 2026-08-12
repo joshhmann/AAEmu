@@ -1,0 +1,125 @@
+{
+ "questId": 3644,
+ "name": "코끼리는 죽어서 뼛가루를 남긴다",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8916
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15224,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20856,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2884,
+      "npcId": 8916
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15225,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20857,
+      "type": "QuestActObjItemGather",
+      "detailId": 1510,
+      "itemId": 19866,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15226,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20858,
+      "type": "QuestActConReportNpc",
+      "detailId": 3117,
+      "npcId": 8916
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15227,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19866,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8916,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19866,
+   "count": 8
+  }
+ ]
+}

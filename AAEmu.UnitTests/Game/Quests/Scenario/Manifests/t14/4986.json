@@ -1,0 +1,81 @@
+{
+ "questId": 4986,
+ "name": "화장터 소각로 뒤편",
+ "zoneId": 26,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2083
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30231,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 604,
+      "sphereId": 2083
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21619,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30227,
+      "type": "QuestActSupplyCopper",
+      "detailId": 902,
+      "amount": 0
+     },
+     {
+      "actId": 30228,
+      "type": "QuestActSupplyExp",
+      "detailId": 444,
+      "exp": 0
+     },
+     {
+      "actId": 30230,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1209
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

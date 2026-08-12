@@ -1,0 +1,81 @@
+{
+ "questId": 4496,
+ "name": "거미 나무 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1608
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19614,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26720,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 284,
+      "sphereId": 1608
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19616,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26721,
+      "type": "QuestActSupplyCopper",
+      "detailId": 566,
+      "amount": 0
+     },
+     {
+      "actId": 26722,
+      "type": "QuestActSupplyExp",
+      "detailId": 122,
+      "exp": 0
+     },
+     {
+      "actId": 26724,
+      "type": "QuestActConAutoComplete",
+      "detailId": 831
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

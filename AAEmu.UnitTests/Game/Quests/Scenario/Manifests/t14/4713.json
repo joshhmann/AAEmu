@@ -1,0 +1,81 @@
+{
+ "questId": 4713,
+ "name": "햇무리 마을이 내려다보이는 언덕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1763
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20412,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27840,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 425,
+      "sphereId": 1763
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20414,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27841,
+      "type": "QuestActSupplyCopper",
+      "detailId": 720,
+      "amount": 0
+     },
+     {
+      "actId": 27842,
+      "type": "QuestActSupplyExp",
+      "detailId": 272,
+      "exp": 0
+     },
+     {
+      "actId": 27844,
+      "type": "QuestActConAutoComplete",
+      "detailId": 973
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

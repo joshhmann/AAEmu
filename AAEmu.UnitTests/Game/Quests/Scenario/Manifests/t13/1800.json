@@ -1,0 +1,140 @@
+{
+ "questId": 1800,
+ "name": "뱀비늘 부족 주술사 실베스테르",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2854
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12761,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18443,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2381,
+      "npcId": 2854
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12762,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18444,
+      "type": "QuestActObjItemGather",
+      "detailId": 1262,
+      "itemId": 18743,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18445,
+      "type": "QuestActConReportNpc",
+      "detailId": 2600,
+      "npcId": 2854
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12764,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38735,
+      "type": "QuestActSupplyItem",
+      "detailId": 4484,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18743,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2854,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18743,
+   "count": 1
+  }
+ ]
+}

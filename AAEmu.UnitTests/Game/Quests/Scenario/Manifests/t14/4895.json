@@ -1,0 +1,91 @@
+{
+ "questId": 4895,
+ "name": "무쇠날 기사단의 의뢰",
+ "zoneId": 1,
+ "categoryId": 78,
+ "level": 44,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12203
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21222,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29447,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3889,
+      "npcId": 12203
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21224,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29448,
+      "type": "QuestActConReportNpc",
+      "detailId": 4179,
+      "npcId": 12202
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21225,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12202,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

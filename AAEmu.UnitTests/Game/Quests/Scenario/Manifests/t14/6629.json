@@ -1,0 +1,112 @@
+{
+ "questId": 6629,
+ "name": "요람의 마법사들",
+ "zoneId": 186,
+ "categoryId": 80,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12193
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28281,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40543,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5070,
+      "npcId": 12193
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28282,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40544,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 704,
+      "monsterGroupId": 624,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28284,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40553,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1892
+     },
+     {
+      "actId": 40599,
+      "type": "QuestActSupplyItem",
+      "detailId": 4731,
+      "itemId": 18456,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 624,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 18456,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

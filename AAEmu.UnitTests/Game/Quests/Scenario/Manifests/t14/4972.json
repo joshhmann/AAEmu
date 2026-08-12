@@ -1,0 +1,81 @@
+{
+ "questId": 4972,
+ "name": "과수원 오두막",
+ "zoneId": 10,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2069
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21576,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30160,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 590,
+      "sphereId": 2069
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21577,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30156,
+      "type": "QuestActSupplyCopper",
+      "detailId": 888,
+      "amount": 0
+     },
+     {
+      "actId": 30157,
+      "type": "QuestActSupplyExp",
+      "detailId": 429,
+      "exp": 0
+     },
+     {
+      "actId": 30159,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1195
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

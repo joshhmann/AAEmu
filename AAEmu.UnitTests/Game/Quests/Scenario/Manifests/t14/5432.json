@@ -1,0 +1,215 @@
+{
+ "questId": 5432,
+ "name": "불멸의 사랑",
+ "zoneId": 27,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2206
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33038,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 665,
+      "sphereId": 2206
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23481,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33031,
+      "type": "QuestActObjItemGather",
+      "detailId": 2679,
+      "itemId": 28290,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23482,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33035,
+      "type": "QuestActConReportNpc",
+      "detailId": 4491,
+      "npcId": 13288
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23483,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33032,
+      "type": "QuestActObjItemGather",
+      "detailId": 2680,
+      "itemId": 28292,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23484,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33033,
+      "type": "QuestActObjItemGather",
+      "detailId": 2681,
+      "itemId": 28294,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23485,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33034,
+      "type": "QuestActObjItemGather",
+      "detailId": 2682,
+      "itemId": 28306,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23486,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33037,
+      "type": "QuestActSupplyItem",
+      "detailId": 3739,
+      "itemId": 28316,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33055,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 195,
+      "appellationId": 140
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28290,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28292,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28294,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28306,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13288,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28316,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28290,
+   "count": 1
+  },
+  {
+   "itemId": 28292,
+   "count": 1
+  },
+  {
+   "itemId": 28294,
+   "count": 1
+  },
+  {
+   "itemId": 28306,
+   "count": 1
+  }
+ ]
+}

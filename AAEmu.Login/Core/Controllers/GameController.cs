@@ -17,7 +17,7 @@ public class GameController(
     : IGameController
 {
     private readonly ConcurrentDictionary<GameServerId, GameServer> _gameServers = [];
-    private readonly Dictionary<GameServerId, GameServerId> _mirrorsId = [];
+    private readonly ConcurrentDictionary<GameServerId, GameServerId> _mirrorsId = [];
 
     public bool TryGetParentId(GameServerId gsId, out GameServerId id) => _mirrorsId.TryGetValue(gsId, out id);
 
@@ -102,7 +102,7 @@ public class GameController(
         foreach (var mirrorId in mirrorsId)
         {
             _gameServers[mirrorId].Connection = connection;
-            _mirrorsId.Add(mirrorId, gsId);
+            _mirrorsId.TryAdd(mirrorId, gsId);
         }
 
         logger.LogInformation("Registered GameServer {GameServerId} ({GameServerName}) from {ConnectionIP}",
@@ -120,7 +120,7 @@ public class GameController(
             if (_gameServers.TryGetValue(mirrorId, out var server))
                 server.Connection = null;
 
-            _mirrorsId.Remove(mirrorId);
+            _mirrorsId.TryRemove(mirrorId, out _);
         }
 
         gameServer.MirrorsId.Clear();

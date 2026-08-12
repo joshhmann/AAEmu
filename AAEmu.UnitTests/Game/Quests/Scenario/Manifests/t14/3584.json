@@ -1,0 +1,125 @@
+{
+ "questId": 3584,
+ "name": "동물관리사의 고충",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9592
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14766,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29856,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3901,
+      "npcId": 9592
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14767,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29855,
+      "type": "QuestActObjItemGather",
+      "detailId": 2398,
+      "itemId": 2138,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14768,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29857,
+      "type": "QuestActConReportNpc",
+      "detailId": 4195,
+      "npcId": 9598
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14769,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 2138,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9598,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 2138,
+   "count": 1
+  }
+ ]
+}

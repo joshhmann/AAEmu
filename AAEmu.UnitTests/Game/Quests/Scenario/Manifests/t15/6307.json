@@ -1,0 +1,135 @@
+{
+ "questId": 6307,
+ "name": "난폭한 가시주걱 퇴치",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14389
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27014,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37633,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1263,
+      "npcId": 14389
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27015,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37634,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1236,
+      "npcId": 14389,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27016,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37635,
+      "type": "QuestActConReportJournal",
+      "detailId": 502
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27020,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37636,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 479,
+      "questContextId": 6308
+     },
+     {
+      "actId": 37637,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1512,
+      "amount": 0
+     },
+     {
+      "actId": 38055,
+      "type": "QuestActSupplyExp",
+      "detailId": 1270,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14389,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

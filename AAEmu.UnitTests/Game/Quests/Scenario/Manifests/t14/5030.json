@@ -1,0 +1,81 @@
+{
+ "questId": 5030,
+ "name": "어두운 기운의 탑",
+ "zoneId": 12,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2128
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21752,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30454,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 648,
+      "sphereId": 2128
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21753,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30450,
+      "type": "QuestActSupplyCopper",
+      "detailId": 946,
+      "amount": 0
+     },
+     {
+      "actId": 30451,
+      "type": "QuestActSupplyExp",
+      "detailId": 488,
+      "exp": 0
+     },
+     {
+      "actId": 30453,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1253
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

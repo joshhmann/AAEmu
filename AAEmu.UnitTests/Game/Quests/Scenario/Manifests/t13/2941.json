@@ -1,0 +1,141 @@
+{
+ "questId": 2941,
+ "name": "징조의 틈 1단계",
+ "zoneId": 1,
+ "categoryId": 51,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8853
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12796,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18567,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2394,
+      "npcId": 8853
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12797,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18569,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 308,
+      "monsterGroupId": 280,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12798,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18672,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 51,
+      "point": 50
+     },
+     {
+      "actId": 37065,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1443,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22478,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31617,
+      "type": "QuestActConReportNpc",
+      "detailId": 4337,
+      "npcId": 8853
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 280,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8853,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

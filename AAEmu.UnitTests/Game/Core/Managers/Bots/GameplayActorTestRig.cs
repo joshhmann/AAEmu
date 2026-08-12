@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 
 using AAEmu.Commons.Utils;
@@ -108,7 +109,7 @@ public static class GameplayActorTestRig
                 Mock.Of<IWorldManager>().Object);
             SetField(itemManager, "_templates", new Dictionary<uint, ItemTemplate>());
             SetField(itemManager, "_removedItems", new List<ulong>());
-            SetField(itemManager, "_allItems", new Dictionary<ulong, Item>());
+            SetField(itemManager, "_allItems", new ConcurrentDictionary<ulong, Item>());
             SeedSingleton(typeof(Singleton<ItemManager>), itemManager);
         }
 
@@ -183,7 +184,7 @@ public static class GameplayActorTestRig
         var containerField = typeof(ItemManager).GetField("_allPersistentContainers",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         containerField?.SetValue(ItemManager.Instance,
-            new Dictionary<ulong, AAEmu.Game.Models.Game.Items.Containers.ItemContainer>());
+            new ConcurrentDictionary<ulong, AAEmu.Game.Models.Game.Items.Containers.ItemContainer>());
     }
 
     private static void SetField(object target, string fieldName, object value)

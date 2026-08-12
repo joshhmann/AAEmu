@@ -1,0 +1,119 @@
+{
+ "questId": 3163,
+ "name": "주인공으로 분하다",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9271
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14213,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19914,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2697,
+      "npcId": 9271
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14214,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19915,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 734,
+      "npcId": 9241,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14215,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19916,
+      "type": "QuestActConReportNpc",
+      "detailId": 2932,
+      "npcId": 9271
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14216,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9241,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9271,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

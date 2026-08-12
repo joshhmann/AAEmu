@@ -1,0 +1,93 @@
+{
+ "questId": 5672,
+ "name": "화합의 연주가",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 29128
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24358,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33798,
+      "type": "QuestActConAcceptItem",
+      "detailId": 337,
+      "itemId": 29128
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24360,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33806,
+      "type": "QuestActSupplyExp",
+      "detailId": 762,
+      "exp": 1000
+     },
+     {
+      "actId": 33807,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1198,
+      "amount": 0
+     },
+     {
+      "actId": 33808,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 224,
+      "appellationId": 168
+     },
+     {
+      "actId": 33809,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1446
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29128,
+   "count": 1
+  }
+ ]
+}

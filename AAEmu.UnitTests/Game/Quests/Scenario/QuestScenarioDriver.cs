@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -74,6 +75,11 @@ public class QuestScenarioDriver
     /// (Task.Cancel() resolves Singleton&lt;TaskManager&gt;.Instance - CheckTimer paths).</summary>
     private static TaskManager s_taskManager;
 
+    /// <summary>Incrementing instance-id source for rig-preseeded SummonMate items
+    /// (M2 WI-4). Starts high so ids never collide with the IncrementingIdManager's
+    /// reward-item ids (which count up from 1 in the same process).</summary>
+    private static ulong s_nextMateItemId = 1_000_000;
+
     /// <summary>Snapshot of the quest state captured for the PERSIST round-trip.</summary>
     public sealed record PersistSnapshot(byte[] Data, QuestComponentKind Step, QuestAcceptorType AcceptorType,
         uint AcceptorId, uint ComponentId, int[] Objectives);
@@ -112,7 +118,7 @@ public class QuestScenarioDriver
         // item id removed-queue + live item registry. Both are assigned in Load(),
         // which we do not run - seed empty collections so GetNewId()/Create() work.
         SetField(itemManager, "_removedItems", new List<ulong>());
-        SetField(itemManager, "_allItems", new Dictionary<ulong, Item>());
+        SetField(itemManager, "_allItems", new ConcurrentDictionary<ulong, Item>());
         SetSingleton(typeof(Singleton<ItemManager>), itemManager);
 
         // UnitRequirementsGameData: empty requirement sets -> every component is runnable.
@@ -183,6 +189,19 @@ public class QuestScenarioDriver
         // CharacterManager.Instance (DI singleton, not available here). The test host's
         // DI may carry a config with DebugInfo=true, so force it off explicitly.
         AppConfiguration.Instance.DebugInfo = false;
+
+        // M2 WI-10 (t_abafd918): the RESET stage re-accepts through the engine's
+        // CharacterQuests.AddQuest, whose 2-arg Quest ctor resolves these three
+        // singletons (Quest.cs:238: QuestManager/TaskManager are already seeded
+        // above). Seed mock-backed instances with a MISSING-ONLY guard - never
+        // replace an established singleton (t_4f11a519 full-suite rule). The
+        // mock WorldManager's Lazy deps are never dereferenced by quest paths.
+        SetSingletonIfMissing(typeof(Singleton<SkillManager>),
+            new SkillManager(Mock.Of<IAnimationManager>().Object, Mock.Of<IPlotManager>().Object));
+        SetSingletonIfMissing(typeof(Singleton<ExpressTextManager>), new ExpressTextManager());
+        SetSingletonIfMissing(typeof(Singleton<WorldManager>),
+            new WorldManager(Mock.Of<ITickManager>().Object, Mock.Of<IWorldIdManager>().Object,
+                new Lazy<IZoneManager>(), new Lazy<IIndunManager>(), new Lazy<IFamilyManager>()));
     }
 
     private static void SetField(object target, string fieldName, object value)
@@ -199,6 +218,19 @@ public class QuestScenarioDriver
         if (field == null)
             throw new InvalidOperationException($"Cannot locate singleton field on {singletonBase.Name}");
         field.SetValue(null, instance);
+    }
+
+    /// <summary>Missing-only singleton seed (t_4f11a519 full-suite rule): never
+    /// replace an established singleton - a later rig's unconditional seed can
+    /// clobber this one or vice versa. The null check reads the backing field
+    /// directly; touching the Instance getter would trigger OnInit().</summary>
+    private static void SetSingletonIfMissing(Type singletonBase, object instance)
+    {
+        var field = singletonBase.GetField("s_instance", BindingFlags.NonPublic | BindingFlags.Static);
+        if (field == null)
+            throw new InvalidOperationException($"Cannot locate singleton field on {singletonBase.Name}");
+        if (field.GetValue(null) == null)
+            field.SetValue(null, instance);
     }
 
     #endregion
@@ -219,7 +251,13 @@ public class QuestScenarioDriver
             Level = manifest.Template.Level,
             Selective = manifest.Selective,
             Score = manifest.Score,
-            LetItDone = manifest.LetItDone
+            LetItDone = manifest.LetItDone,
+            // M2 WI-10 (t_abafd918): daily/repeatable fidelity. ResetDailyQuests
+            // clears completed flags by QuestTemplate.DetailId (Daily 7 / DailyHunt 10 /
+            // DailyLivelihood 11 / DailyGroup 12 - CharacterQuests.cs:637-645), and
+            // AddQuest gates re-accept on QuestTemplate.Repeatable (:107-120).
+            DetailId = manifest.Template.DetailId,
+            Repeatable = manifest.Template.Repeatable
         };
 
         var actId = FirstSyntheticActId;
@@ -268,6 +306,14 @@ public class QuestScenarioDriver
         foreach (var (componentId, component) in template.Components)
             registered[componentId] = component;
 
+        // M2 WI-10 (t_abafd918): register the template itself so the engine's
+        // GetTemplate path resolves it - CharacterQuests.AddQuest (re-accept,
+        // RESET stage) fails with "invalid Id" without it (QuestManager.cs:85-90).
+        // Quest ids are unique across the census, so accumulation is collision-free.
+        var templatesField = typeof(QuestManager).GetField("_questTemplates", BindingFlags.NonPublic | BindingFlags.Instance);
+        var questTemplates = (Dictionary<uint, QuestTemplate>)templatesField.GetValue(QuestManager.Instance);
+        questTemplates[template.Id] = template;
+
         return template;
     }
 
@@ -306,6 +352,37 @@ public class QuestScenarioDriver
             nameof(QuestActObjSphere) => new QuestActObjSphere(component) { SphereId = GetUInt(raw, "sphereId"), Count = count },
             nameof(QuestActObjCraft) => new QuestActObjCraft(component) { CraftId = GetUInt(raw, "craftId"), Count = count },
             nameof(QuestActObjLevel) => new QuestActObjLevel(component) { Level = GetByte(raw, "level"), Count = count },
+            nameof(QuestActObjAbilityLevel) => new QuestActObjAbilityLevel(component)
+            {
+                AbilityId = (AbilityType)GetUInt(raw, "abilityId"),
+                Level = GetByte(raw, "level"),
+                UseAlias = GetBool(raw, "useAlias"),
+                QuestActObjAliasId = GetUInt(raw, "questActObjAliasId")
+            },
+            // M2 WI-5 (t_d6516324): CompleteQuest objective act. RunAct checks
+            // HasQuestCompleted(QuestId) (QuestActObjCompleteQuest.cs:26) - a
+            // state check at RunAct time, like AbilityLevel/MateLevel. The
+            // driver's CompleteQuest event pre-marks the referenced quest as
+            // completed (synthetic-block pattern) so the check counts. Count
+            // must be set (default 1): GetQuestObjectiveStatus scales by
+            // Count, and 0 makes zero objectives read as Overachieved on
+            // let-it-done quests (5868) - false Ready at START.
+            nameof(QuestActObjCompleteQuest) => new QuestActObjCompleteQuest(component)
+            {
+                QuestId = GetUInt(raw, "questId"),
+                AcceptWith = GetBool(raw, "acceptWith"),
+                UseAlias = GetBool(raw, "useAlias"),
+                QuestActObjAliasId = GetUInt(raw, "questActObjAliasId"),
+                Count = count
+            },
+            nameof(QuestActObjMateLevel) => new QuestActObjMateLevel(component)
+            {
+                ItemId = GetUInt(raw, "itemId"),
+                Level = GetByte(raw, "level"),
+                Cleanup = GetBool(raw, "cleanup"),
+                UseAlias = GetBool(raw, "useAlias"),
+                QuestActObjAliasId = GetUInt(raw, "questActObjAliasId")
+            },
             nameof(QuestActObjZoneKill) => new QuestActObjZoneKill(component)
             {
                 ZoneId = GetUInt(raw, "zoneId"),
@@ -349,6 +426,10 @@ public class QuestScenarioDriver
             // M2c wave-3: LivingPoint supply the expedition dailies carry at
             // Reward (5923/5924) - without it the dailies stay SKIP.
             nameof(QuestActSupplyLivingPoint) => new QuestActSupplyLivingPoint(component) { Point = GetInt(raw, "point") },
+            // M2 WI-2 (t_f42b9ae3): CrimePoint supply act (7 live carriers) -
+            // RunAct -> Character.AddCrime (null-safe SendPacket), mirrors the
+            // point-supply family.
+            nameof(QuestActSupplyCrimePoint) => new QuestActSupplyCrimePoint(component) { Point = (short)GetInt(raw, "point") },
             nameof(QuestActCheckGuard) => new QuestActCheckGuard(component) { NpcId = GetUInt(raw, "npcId") },
             nameof(QuestActCheckSphere) => new QuestActCheckSphere(component) { SphereId = GetUInt(raw, "sphereId") },
             nameof(QuestActCheckTimer) => new QuestActCheckTimer(component) { LimitTime = GetInt(raw, "limitTime"), NextComponent = GetUInt(raw, "nextComponent") },
@@ -393,7 +474,17 @@ public class QuestScenarioDriver
             ObjId = 1,
             Id = 1,
             Name = "ScenarioTester",
-            Level = manifest.Template.Level,
+            // WI-11b (t_8ec705f0): the rig character must be a LEGAL engine
+            // state. Band-0 quests carry template.Level 0 (data truth, kept
+            // on the template), but the engine's exp curve rejects level-0
+            // units (ExperienceManager.GetLevelFromExp:
+            // ArgumentOutOfRangeException.ThrowIfZero(currentLevel) - a
+            // production player can never be level 0, they start at 1). A
+            // level-0 character completing a SupplyExp reward throws; clamp
+            // the CHARACTER to >= 1 (max(1, template level)) so the owner is
+            // the playable state the engine expects. Template.Level stays the
+            // data value (band-zero census rows key off it).
+            Level = (byte)Math.Max(1, (int)manifest.Template.Level),
             Inventory = CreateInventory()
         };
         character.Appellations = new CharacterAppellations(character);
@@ -713,6 +804,62 @@ public class QuestScenarioDriver
                     owner.Level = requiredLevel;
                 owner.Events.OnLevelUp(owner, new OnLevelUpArgs());
                 break;
+            case "AbilityLevel":
+                // M2 WI-3 (t_d5e802f5): QuestActObjAbilityLevel.RunAct is a
+                // pure state check on ability exp (no event subscription, no
+                // SetObjective - QuestComponent.RunComponent passes on the
+                // RunAct return). The rig presees exp so the objective's
+                // state check counts: abilityId 0 = the all-abilities branch
+                // (every ability 1..10 must meet Level). CharacterAbilities
+                // seeds 1..10 only - AddExp's TryGetValue guard skips the
+                // unseeded General(0)/None(11) keys (BUG-012 semantics).
+                // Saturation: the rigged exp curve (level * 100M) wraps int32
+                // past level 21, so GetExpForLevel is unreliable there -
+                // int.MaxValue falls off the binary search's top end and
+                // GetLevelFromExp returns MaxPlayerLevel (55) >= any
+                // requirement in the corpus (all carriers demand 50).
+                var abilityId = GetUInt(rawEvent, "abilityId");
+                if (abilityId == 0)
+                    for (var i = AbilityType.General + 1; i < AbilityType.None; i++)
+                        owner.Abilities.AddExp((AbilityType)i, int.MaxValue);
+                else
+                    owner.Abilities.AddExp((AbilityType)abilityId, int.MaxValue);
+                break;
+            case "MateLevel":
+                // M2 WI-4 (t_fe93e2d8): QuestActObjMateLevel.RunAct ->
+                // CalculateObjective scans the owner's inventory for a
+                // SummonMate item with the act's ItemId whose DetailLevel >=
+                // Level (QuestActObjMateLevel.cs:22-58) - a state check at
+                // RunAct time, like AbilityLevel. The event's job is the RIG:
+                // preseed a REAL SummonMate (an ItemMock fails the
+                // `item is not SummonMate` guard) at the required DetailLevel
+                // so the Progress stage's state check counts. _holdingContainer
+                // must be wired so the Cleanup consume path (ConsumeItem ->
+                // RemoveItem, QuestRemoveSupplies) can physically remove the
+                // mate from the bag.
+                var mateItemId = GetUInt(rawEvent, "itemId");
+                var mateLevel = GetByte(rawEvent, "level");
+                var mateBag = ((Character)owner).Inventory.Bag;
+                var mate = new SummonMate(s_nextMateItemId++, new ItemTemplate { Id = mateItemId, MaxCount = 1 }, 1)
+                {
+                    DetailLevel = mateLevel,
+                    _holdingContainer = mateBag
+                };
+                mateBag.Items.Add(mate);
+                break;
+            case "CompleteQuest":
+                // M2 WI-5 (t_d6516324): QuestActObjCompleteQuest.RunAct checks
+                // HasQuestCompleted(QuestId) (QuestActObjCompleteQuest.cs:26) -
+                // a state check at RunAct time, like AbilityLevel/MateLevel.
+                // The event's job is the RIG: pre-mark the referenced quest as
+                // completed through the engine's OWN flag API
+                // (CharacterQuests.SetCompletedQuestFlag - the same method the
+                // completion path calls; synthetic-block pattern from
+                // PlayerbotPilotTests) so the Progress stage's state check
+                // counts. AcceptWith is unused by the engine today (TODO in
+                // the act) - the questId alone drives the objective.
+                ((Character)owner).Quests.SetCompletedQuestFlag(GetUInt(rawEvent, "questId"), true);
+                break;
             case "Aggro":
                 // M2a wave-2 (t_41a14bab): QuestActObjAggro subscribes OnKill
                 // (NOT OnAggro - InitializeAction: Events.OnKill += questAct.OnKill).
@@ -852,6 +999,20 @@ public class QuestScenarioDriver
     #region Lifecycle
 
     /// <summary>
+    /// Accept path shared by the main run and the WI-10 fidelity probes: mirrors
+    /// CharacterQuests.AddQuest's quest-construction sequence (StartQuest +
+    /// ActiveQuests registration + first step evaluation,
+    /// CharacterQuests.cs:142-156).
+    /// </summary>
+    private static void AcceptQuest(Character character, Quest quest)
+    {
+        if (!quest.StartQuest())
+            throw new InvalidOperationException("StartQuest() returned false - quest has no Start component");
+        character.Quests.ActiveQuests.TryAdd(quest.TemplateId, quest);
+        quest.RunCurrentStep();
+    }
+
+    /// <summary>
     /// Drives the full manifest lifecycle and returns the per-stage verdict record.
     /// START semantics mirror CharacterQuests.AddQuest: accept (StartQuest), register
     /// in ActiveQuests, run the first step evaluation.
@@ -891,10 +1052,7 @@ public class QuestScenarioDriver
         try
         {
             // Accept the quest (mirror AddQuest): StartQuest + register + first evaluation.
-            if (!quest.StartQuest())
-                throw new InvalidOperationException("StartQuest() returned false - quest has no Start component");
-            character.Quests.ActiveQuests.Add(quest.TemplateId, quest);
-            quest.RunCurrentStep();
+            AcceptQuest(character, quest);
         }
         catch (Exception ex)
         {
@@ -918,6 +1076,69 @@ public class QuestScenarioDriver
                         persistFreshQuest = BuildQuest(manifest);
                         persistFreshQuest.ReadData(persistSnapshot.Data);
                         break;
+                    case "TIMEOUT":
+                        // M2 WI-10 (t_abafd918): timer fidelity. A fresh probe
+                        // quest accepts (its CheckTimer InitializeAction registers
+                        // the quest timer), then the timeout task's exact
+                        // execution body runs: QuestManager.OnTimerExpired ->
+                        // owner.Events.OnTimerExpired -> QuestActCheckTimer.
+                        // OnTimerExpired -> FailQuest (Step = Fail,
+                        // QuestManager.cs:182-193). The expect block asserts the
+                        // quest FAILED (step Fail). The happy path never fires it.
+                        quest = BuildQuest(manifest);
+                        AcceptQuest((Character)quest.Owner, quest);
+                        QuestManager.Instance.OnTimerExpired(quest.Owner, quest.TemplateId);
+                        break;
+                    case "RESET":
+                        // M2 WI-10 (t_abafd918): daily/repeatable fidelity. The
+                        // main run completed the quest on `character`; the probe
+                        // clears the daily completed state through the engine's
+                        // OWN ResetDailyQuests (only for non-repeatable templates
+                        // - repeatables re-accept immediately, the daily limit
+                        // only refuses Repeatable == false, CharacterQuests.cs:114)
+                        // and re-accepts through the engine's AddQuest path
+                        // (GetTemplate + QuestDailyLimit gate + StartQuest +
+                        // first step). expect reAccepted asserts the quest is
+                        // active again.
+                        if (!manifest.Template.Repeatable)
+                            character.Quests.ResetDailyQuests(true);
+                        var reAccepted = character.Quests.AddQuest(manifest.QuestId, false,
+                            Enum.Parse<QuestAcceptorType>(manifest.Acceptor.Type, ignoreCase: true),
+                            manifest.Acceptor.Id);
+                        if (!reAccepted)
+                            throw new InvalidOperationException(
+                                "re-accept refused by engine AddQuest after ResetDailyQuests");
+                        break;
+                    case "GUARD_DIED":
+                        // M2 WI-10 (t_abafd918): escort negative path per
+                        // BUG-008 semantics (QuestActCheckGuard.cs:19-34): a
+                        // dead guard (Hp <= 0 -> IsDead) makes RunAct return
+                        // false, so the guard component can never pass and the
+                        // quest stalls AT the guard-checking step. A fresh probe
+                        // is built with the rigged guards KILLED before accept;
+                        // the accept's single RunCurrentStep rests at the first
+                        // present kind, so the probe ADVANCES (RunCurrentStep
+                        // until the step stops moving, max one walk) to reach
+                        // the guard kind - the dead guard then blocks it there.
+                        // The expect block asserts the stall (step = guard
+                        // component kind + guardBlocked).
+                        quest = BuildQuest(manifest);
+                        var guardProbeCharacter = (Character)quest.Owner;
+                        foreach (var guardShape in manifest.Guards)
+                        {
+                            var guardNpc = guardProbeCharacter.ParentWorld.GetNpcByTemplateId(guardShape.NpcId);
+                            if (guardNpc != null)
+                                guardNpc.Hp = 0; // IsDead => true (Unit.cs:873)
+                        }
+                        AcceptQuest(guardProbeCharacter, quest);
+                        for (var i = 0; i < 8; i++)
+                        {
+                            var before = quest.Step;
+                            quest.RunCurrentStep();
+                            if (quest.Step == before)
+                                break;
+                        }
+                        break;
                     default:
                         foreach (var rawEvent in stage.Events)
                             FireEvent(quest, rawEvent);
@@ -926,8 +1147,10 @@ public class QuestScenarioDriver
                 }
 
                 // Snapshot for the PERSIST round-trip: capture after every stage that
-                // leaves the quest alive in a meaningful state (REWARD drops the quest).
-                if (stage.Name.ToUpperInvariant() is not ("PERSIST" or "REWARD"))
+                // leaves the quest alive in a meaningful state (REWARD drops the quest;
+                // WI-10 probe stages operate on their own probe quests and do not
+                // contribute to the main-run snapshot).
+                if (stage.Name.ToUpperInvariant() is not ("PERSIST" or "REWARD" or "TIMEOUT" or "RESET" or "GUARD_DIED"))
                 {
                     persistSnapshot = new PersistSnapshot(
                         quest.WriteData(), quest.Step, quest.QuestAcceptorType, quest.AcceptorId,

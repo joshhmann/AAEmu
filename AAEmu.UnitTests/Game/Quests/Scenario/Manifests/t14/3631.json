@@ -1,0 +1,141 @@
+{
+ "questId": 3631,
+ "name": "불숨결 부락을 위협하는 동물들 처치",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 8943
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15150,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20758,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 769,
+      "npcId": 8943
+     },
+     {
+      "actId": 30574,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1158,
+      "npcId": 1011
+     },
+     {
+      "actId": 30575,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1159,
+      "npcId": 985
+     },
+     {
+      "actId": 30577,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1161,
+      "npcId": 1100
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15151,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20760,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 366,
+      "monsterGroupId": 329,
+      "count": 66
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15152,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20757,
+      "type": "QuestActConReportJournal",
+      "detailId": 219
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15153,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20756,
+      "type": "QuestActSupplyCopper",
+      "detailId": 326,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 329,
+     "count": 66
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

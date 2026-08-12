@@ -1,0 +1,186 @@
+{
+ "questId": 1992,
+ "name": "싱싱한 해초와 커다란 바닷게 다리",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8988
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9162,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12814,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1689,
+      "npcId": 8988
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9163,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20467,
+      "type": "QuestActObjItemGather",
+      "detailId": 1475,
+      "itemId": 20138,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9164,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29073,
+      "type": "QuestActObjItemGather",
+      "detailId": 2335,
+      "itemId": 15860,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9165,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29075,
+      "type": "QuestActConReportNpc",
+      "detailId": 4155,
+      "npcId": 8987
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 14950,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20468,
+      "type": "QuestActSupplyItem",
+      "detailId": 2040,
+      "itemId": 19708,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21114,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38758,
+      "type": "QuestActSupplyItem",
+      "detailId": 4507,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20138,
+     "count": 8
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 15860,
+     "count": 4
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8987,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20138,
+   "count": 8
+  },
+  {
+   "itemId": 15860,
+   "count": 4
+  }
+ ]
+}

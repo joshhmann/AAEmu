@@ -1,0 +1,81 @@
+{
+ "questId": 4959,
+ "name": "전하의 탑 지붕 모서리",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2054
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21525,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30054,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 580,
+      "sphereId": 2054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21526,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30050,
+      "type": "QuestActSupplyCopper",
+      "detailId": 878,
+      "amount": 0
+     },
+     {
+      "actId": 30051,
+      "type": "QuestActSupplyExp",
+      "detailId": 419,
+      "exp": 0
+     },
+     {
+      "actId": 30053,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1175
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

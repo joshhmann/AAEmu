@@ -17,7 +17,8 @@ notice-board kills (250, 251, 329, 330) and village errands (2239, 252, 324, 325
 2532) get you to level 3-4; then the main village chain **254 → 255 → 256 → 257 → 259**
 (plus the **260 → 261** fan) carries the story to level 5-6; the shepherd/pickaxe arc
 (**265 → 266 → 354**) unlocks the **mount chain 4292 → 4294 → 4295**, which ends with the
-first mount (item 18649). In parallel, the prophet line (**2531 → 2532**) feeds the big
+first mounts — the Lilyut horses **8159/8160/8161** (the chain also rewards a pet-heal
+potion, item 18649). In parallel, the prophet line (**2531 → 2532**) feeds the big
 Bloody Hand investigation (**2255 → 2256 → 2257 → 2258 → 2259 → 2260 → 1525 → 2263 →
 2261 → 3503 → 2262 → 2264 → 2265 → 2266**) for levels 4-10. Everything else in the zone
 is either a bounty-board kill quest (optional, good exp) or intentionally excluded
@@ -67,7 +68,7 @@ explained in section 4 — most are harness/manifest artifacts, not gameplay blo
 | 20 | 354 | 미안한 이야기 (An awkward story) | 3 (req 266) | Npc 3523 | — | Npc 3605 | — | PASS |
 | 21 | 4292 | 망아지 운반 (Carrying the foal) | 3 (req 354) | Npc 3636 | Deliver foal (1 h timer) | Npc 10666 | item 23635 | **FAIL** (persistence, §4) |
 | 22 | 4294 | 망아지의 먹이 (The foal's feed) | 3 (req 4292) | Npc 10666 | Use item 23635 + gather 1× item 21850 | Npc 10666 | item 23680-2 (choose 1) | PASS |
-| 23 | 4295 | 여행의 동반자를 얻다! (Gain a travel companion!) | 3 (req 4294) | Npc 10666 | Gather 1× each item 8159/8160/8161 | Npc 10666 | **item 18649 — FIRST MOUNT** | PASS |
+| 23 | 4295 | 여행의 동반자를 얻다! (Gain a travel companion!) | 3 (req 4294) | Npc 10666 | Gather 1× each item 8159/8160/8161 | Npc 10666 | **FIRST MOUNTS = the gathered items 8159/8160/8161** (Lilyut horses — summon via the items); reward: item 18649 ×1 (pet-heal potion) | PASS |
 
 > **M1 exit-test note:** "reaches first-mount prerequisite" maps to completing 4292→4294→4295.
 > 4292's harness PERSIST failure (WriteData→ReadData byte mismatch, timed quest) is the
@@ -116,7 +117,7 @@ enter sphere 1142), 2393 (Lv 3, Npc 7661, gather item 17863 — the Solzreed fer
 254 ─ 255 ─ 256 ─ 257 ─ 259                (main story)
 260 ─ 261                                   (fan-out)
 265 ─ 263 ─ 2400                            (pickaxe branch)
-266 ─ 354 ─ 4292 ─ 4294 ─ 4295 ─► MOUNT 18649
+266 ─ 354 ─ 4292 ─ 4294 ─ 4295 ─► FIRST MOUNTS 8159/8160/8161 (reward: heal potion 18649)
 269 ─┬─ 270                                 (doodle fan-out)
      └─ 271
 273 ─ 2249
@@ -193,7 +194,7 @@ route. They remain playable targets for later milestones or Lane B.
 
 - [ ] New Nuian character completes 1a + 1b without GM intervention (expect: levels 1 → 5-6, quest rewards received).
 - [ ] Character completes the shepherd arc (265/266 — watch LetItDone report behavior live) and 354.
-- [ ] Mount chain 4292 → 4294 → 4295 completes; character receives item 18649 (first mount) and can summon it.
+- [ ] Mount chain 4292 → 4294 → 4295 completes; character receives the first mounts — items 8159/8160/8161 (Lilyut horses) — and can summon them via the horse items; item 18649 (pet-heal potion) arrives as the quest reward.
 - [ ] Mid-route logout/restart: quest log state resumes (pay special attention to timed quests 350/4292 — blocker class D).
 - [ ] Bloody Hand arc 2255 → 2266 completes end to end (levels 4 → 10).
 - [ ] Bounty-board kills credit and journal turn-in works (kill-acceptor family, BUG-006).

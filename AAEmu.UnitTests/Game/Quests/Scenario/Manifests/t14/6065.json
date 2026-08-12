@@ -1,0 +1,119 @@
+{
+ "questId": 6065,
+ "name": "여신의 인도자",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjItemGather",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26103,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 26104,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35720,
+      "type": "QuestActObjItemGather",
+      "detailId": 2876,
+      "itemId": 30757,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26105,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 26109,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35927,
+      "type": "QuestActSupplyItem",
+      "detailId": 4034,
+      "itemId": 29612,
+      "gradeId": 0,
+      "count": 80
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30757,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29612,
+      "count": 80
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30757,
+   "count": 5
+  }
+ ]
+}

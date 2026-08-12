@@ -1,0 +1,161 @@
+{
+ "questId": 6653,
+ "name": "의리가 넘치는 원정대의 세 번째 증거",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14990
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28368,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40743,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5119,
+      "npcId": 14990
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28369,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40740,
+      "type": "QuestActObjItemGather",
+      "detailId": 3046,
+      "itemId": 34880,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28370,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40746,
+      "type": "QuestActConReportNpc",
+      "detailId": 5099,
+      "npcId": 14990
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28372,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40751,
+      "type": "QuestActSupplyExp",
+      "detailId": 1580,
+      "exp": 1004
+     },
+     {
+      "actId": 40752,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1922,
+      "amount": 100
+     },
+     {
+      "actId": 40756,
+      "type": "QuestActSupplyItem",
+      "detailId": 4747,
+      "itemId": 34906,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34880,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14990,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34906,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34880,
+   "count": 100
+  }
+ ]
+}

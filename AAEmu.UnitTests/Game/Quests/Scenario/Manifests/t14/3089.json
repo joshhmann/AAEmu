@@ -1,0 +1,144 @@
+{
+ "questId": 3089,
+ "name": "쓰러진 눈사자",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8869
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13308,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19128,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2517,
+      "npcId": 8869
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29961,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1075,
+      "npcId": 8868,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19129,
+      "type": "QuestActConReportNpc",
+      "detailId": 2749,
+      "npcId": 8869
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13311,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21475,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29960,
+      "type": "QuestActObjItemGather",
+      "detailId": 2406,
+      "itemId": 19538,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8868,
+     "count": 19
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 19538,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8869,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19538,
+   "count": 3
+  }
+ ]
+}

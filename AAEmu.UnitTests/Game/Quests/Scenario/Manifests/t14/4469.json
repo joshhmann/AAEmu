@@ -1,0 +1,81 @@
+{
+ "questId": 4469,
+ "name": "숲의 인도자 나무 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1583
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19521,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26593,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 261,
+      "sphereId": 1583
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19523,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26594,
+      "type": "QuestActSupplyCopper",
+      "detailId": 543,
+      "amount": 0
+     },
+     {
+      "actId": 29598,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1128
+     },
+     {
+      "actId": 31052,
+      "type": "QuestActSupplyExp",
+      "detailId": 517,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4725,
+ "name": "노래하는 계곡의 누각",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1775
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20448,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27900,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 437,
+      "sphereId": 1775
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20450,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27901,
+      "type": "QuestActSupplyCopper",
+      "detailId": 732,
+      "amount": 0
+     },
+     {
+      "actId": 27902,
+      "type": "QuestActSupplyExp",
+      "detailId": 284,
+      "exp": 0
+     },
+     {
+      "actId": 27904,
+      "type": "QuestActConAutoComplete",
+      "detailId": 985
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

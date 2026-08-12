@@ -1,0 +1,81 @@
+{
+ "questId": 4980,
+ "name": "생명력이 끈질긴 나무",
+ "zoneId": 14,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2077
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21600,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30200,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 598,
+      "sphereId": 2077
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21601,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30196,
+      "type": "QuestActSupplyCopper",
+      "detailId": 896,
+      "amount": 0
+     },
+     {
+      "actId": 30197,
+      "type": "QuestActSupplyExp",
+      "detailId": 437,
+      "exp": 0
+     },
+     {
+      "actId": 30199,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1203
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

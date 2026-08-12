@@ -1,0 +1,181 @@
+{
+ "questId": 6639,
+ "name": "[전층] 에아나드 도서관 정리 의뢰 3단계",
+ "zoneId": 197,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14353
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28326,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40720,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5108,
+      "npcId": 14353
+     },
+     {
+      "actId": 40721,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5109,
+      "npcId": 14451
+     },
+     {
+      "actId": 40722,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5110,
+      "npcId": 14452
+     },
+     {
+      "actId": 40723,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5111,
+      "npcId": 14453
+     },
+     {
+      "actId": 40724,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5112,
+      "npcId": 14454
+     },
+     {
+      "actId": 40725,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5113,
+      "npcId": 14455
+     },
+     {
+      "actId": 40726,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5114,
+      "npcId": 14456
+     },
+     {
+      "actId": 40727,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5115,
+      "npcId": 14523
+     },
+     {
+      "actId": 40728,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5116,
+      "npcId": 14569
+     },
+     {
+      "actId": 40729,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 580,
+      "questContextId": 6639
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28327,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40719,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 718,
+      "monsterGroupId": 626,
+      "count": 75
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28328,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40730,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1908
+     },
+     {
+      "actId": 40731,
+      "type": "QuestActSupplyItem",
+      "detailId": 4744,
+      "itemId": 30827,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40732,
+      "type": "QuestActSupplyExp",
+      "detailId": 1577,
+      "exp": 252800
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 626,
+     "count": 75
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30827,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

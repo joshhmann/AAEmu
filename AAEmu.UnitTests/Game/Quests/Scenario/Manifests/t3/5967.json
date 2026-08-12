@@ -102,7 +102,11 @@
      {
       "actId": 35103,
       "type": "QuestActObjAbilityLevel",
-      "detailId": 5
+      "detailId": 5,
+      "abilityId": 0,
+      "level": 50,
+      "useAlias": true,
+      "questActObjAliasId": 2683
      }
     ]
    },
@@ -219,7 +223,13 @@
   },
   {
    "name": "PROGRESS",
-   "events": [],
+   "events": [
+    {
+     "type": "AbilityLevel",
+     "abilityId": 0,
+     "level": 50
+    }
+   ],
    "expect": {
     "step": "Ready",
     "status": "Ready"
@@ -315,8 +325,5 @@
    }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActObjAbilityLevel; unsynthesizable event shape for QuestActObjAbilityLevel (comp 25707)"
- }
+ "selectedRewardIndex": 0
 }

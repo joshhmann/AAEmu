@@ -1,0 +1,144 @@
+{
+ "questId": 4894,
+ "name": "비탄에 빠진 소녀",
+ "zoneId": 186,
+ "categoryId": 80,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12193
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21216,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29443,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3887,
+      "npcId": 12193
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29458,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 510,
+      "monsterGroupId": 460,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29459,
+      "type": "QuestActConReportNpc",
+      "detailId": 4181,
+      "npcId": 12193
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21230,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29460,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2269,
+      "itemId": 24497,
+      "gradeId": 3,
+      "count": 1
+     },
+     {
+      "actId": 29461,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2270,
+      "itemId": 24507,
+      "gradeId": 3,
+      "count": 1
+     },
+     {
+      "actId": 29462,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2271,
+      "itemId": 24514,
+      "gradeId": 3,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 460,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12193,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

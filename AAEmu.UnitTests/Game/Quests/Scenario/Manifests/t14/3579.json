@@ -1,0 +1,97 @@
+{
+ "questId": 3579,
+ "name": "변장용 복면",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 25903
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14746,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29561,
+      "type": "QuestActConAcceptItem",
+      "detailId": 173,
+      "itemId": 25903
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20336,
+      "type": "QuestActConReportNpc",
+      "detailId": 3002,
+      "npcId": 9576
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14749,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9576,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 25903,
+   "count": 1
+  }
+ ]
+}

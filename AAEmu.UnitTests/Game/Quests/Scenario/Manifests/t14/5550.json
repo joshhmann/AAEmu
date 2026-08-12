@@ -1,0 +1,155 @@
+{
+ "questId": 5550,
+ "name": "귀족들의 외유",
+ "zoneId": 1,
+ "categoryId": 96,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13560
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23965,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33698,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4266,
+      "npcId": 13560
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23966,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33700,
+      "type": "QuestActObjItemGather",
+      "detailId": 2744,
+      "itemId": 26874,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23967,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33699,
+      "type": "QuestActConReportNpc",
+      "detailId": 4590,
+      "npcId": 13560
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23989,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33701,
+      "type": "QuestActSupplyItem",
+      "detailId": 3843,
+      "itemId": 28948,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 33712,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1191,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 26874,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13560,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28948,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26874,
+   "count": 1
+  }
+ ]
+}

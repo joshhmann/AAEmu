@@ -1,0 +1,144 @@
+{
+ "questId": 1996,
+ "name": "원대한 계획",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8987
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9177,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12824,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1693,
+      "npcId": 8987
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9179,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21643,
+      "type": "QuestActObjInteraction",
+      "detailId": 532,
+      "doodadId": 4291,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9180,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21637,
+      "type": "QuestActConReportNpc",
+      "detailId": 3270,
+      "npcId": 8990
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9566,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13261,
+      "type": "QuestActSupplyItem",
+      "detailId": 1276,
+      "itemId": 20145,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16431,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4291,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8990,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

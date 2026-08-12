@@ -1,0 +1,98 @@
+{
+ "questId": 4200,
+ "name": "전사의 자존심",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10720
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18245,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23859,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3417,
+      "npcId": 10720
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18246,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23857,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 913,
+      "npcId": 8800,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18248,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23987,
+      "type": "QuestActConAutoComplete",
+      "detailId": 750
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8800,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

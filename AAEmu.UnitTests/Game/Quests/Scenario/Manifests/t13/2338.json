@@ -1,0 +1,96 @@
+{
+ "questId": 2338,
+ "name": "밴시들의 소문",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10839
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12345,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18226,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2334,
+      "npcId": 10839
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12499,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18227,
+      "type": "QuestActObjSphere",
+      "detailId": 567,
+      "sphereId": 1158
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12500,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18228,
+      "type": "QuestActConAutoComplete",
+      "detailId": 611
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 12499
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

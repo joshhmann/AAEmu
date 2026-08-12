@@ -1,0 +1,81 @@
+{
+ "questId": 4497,
+ "name": "기계 폐기장의 거대 톱니바퀴 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1609
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19617,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26725,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 285,
+      "sphereId": 1609
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19619,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26726,
+      "type": "QuestActSupplyCopper",
+      "detailId": 567,
+      "amount": 0
+     },
+     {
+      "actId": 26727,
+      "type": "QuestActSupplyExp",
+      "detailId": 123,
+      "exp": 0
+     },
+     {
+      "actId": 26729,
+      "type": "QuestActConAutoComplete",
+      "detailId": 832
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

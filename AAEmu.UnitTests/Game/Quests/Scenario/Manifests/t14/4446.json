@@ -1,0 +1,81 @@
+{
+ "questId": 4446,
+ "name": "화강암 채석장 언덕 탐험",
+ "zoneId": 133,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1558
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26568,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 257,
+      "sphereId": 1558
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19449,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26446,
+      "type": "QuestActSupplyCopper",
+      "detailId": 520,
+      "amount": 0
+     },
+     {
+      "actId": 26449,
+      "type": "QuestActConAutoComplete",
+      "detailId": 786
+     },
+     {
+      "actId": 31076,
+      "type": "QuestActSupplyExp",
+      "detailId": 541,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

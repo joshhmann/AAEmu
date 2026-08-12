@@ -1,0 +1,123 @@
+{
+ "questId": 3953,
+ "name": "목화 둥치를 갉은 범인",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9437
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16677,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22058,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 855,
+      "npcId": 9437
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16678,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22057,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 847,
+      "npcId": 9437,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16679,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22006,
+      "type": "QuestActConReportJournal",
+      "detailId": 255
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16680,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22237,
+      "type": "QuestActSupplyCopper",
+      "detailId": 381,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9437,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

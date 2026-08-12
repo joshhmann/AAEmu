@@ -1,0 +1,81 @@
+{
+ "questId": 4486,
+ "name": "안개 동굴 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1598
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19582,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26665,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 275,
+      "sphereId": 1598
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19584,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26666,
+      "type": "QuestActSupplyCopper",
+      "detailId": 557,
+      "amount": 0
+     },
+     {
+      "actId": 26669,
+      "type": "QuestActConAutoComplete",
+      "detailId": 822
+     },
+     {
+      "actId": 31081,
+      "type": "QuestActSupplyExp",
+      "detailId": 546,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4508,
+ "name": "난파된 배 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1618
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19652,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26773,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 294,
+      "sphereId": 1618
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19654,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26774,
+      "type": "QuestActSupplyCopper",
+      "detailId": 576,
+      "amount": 0
+     },
+     {
+      "actId": 26777,
+      "type": "QuestActConAutoComplete",
+      "detailId": 841
+     },
+     {
+      "actId": 31114,
+      "type": "QuestActSupplyExp",
+      "detailId": 578,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

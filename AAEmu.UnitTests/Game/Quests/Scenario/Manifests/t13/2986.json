@@ -1,0 +1,142 @@
+{
+ "questId": 2986,
+ "name": "번뇌에 사로잡힌 수행자",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1245
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13061,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18788,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2415,
+      "npcId": 1245
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13062,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30514,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1088,
+      "npcId": 12363,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13063,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18790,
+      "type": "QuestActConReportNpc",
+      "detailId": 2647,
+      "npcId": 1245
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13064,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 21813,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30711,
+      "type": "QuestActSupplyItem",
+      "detailId": 3528,
+      "itemId": 19000,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12363,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1245,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

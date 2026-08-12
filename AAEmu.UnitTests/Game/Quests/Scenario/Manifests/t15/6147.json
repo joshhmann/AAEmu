@@ -1,0 +1,116 @@
+{
+ "questId": 6147,
+ "name": "[3층]벨시온의 의뢰 서고 정리 4단계",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 30853
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26382,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36050,
+      "type": "QuestActConAcceptItem",
+      "detailId": 400,
+      "itemId": 30853
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26383,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36051,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 597,
+      "monsterGroupId": 563,
+      "count": 150
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26384,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36052,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1646
+     },
+     {
+      "actId": 37701,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1540,
+      "amount": 0
+     },
+     {
+      "actId": 37702,
+      "type": "QuestActSupplyExp",
+      "detailId": 1163,
+      "exp": 252800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 563,
+     "count": 150
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30853,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,160 @@
+{
+ "questId": 6473,
+ "name": "다루족의 은밀한 임무",
+ "zoneId": 129,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34472
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39594,
+      "type": "QuestActConAcceptItem",
+      "detailId": 483,
+      "itemId": 34472
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39525,
+      "type": "QuestActObjZoneKill",
+      "detailId": 117,
+      "zoneId": 61,
+      "countNpc": 150,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 3333,
+      "lvMin": 1,
+      "lvMax": 50,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27766,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39595,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1794
+     },
+     {
+      "actId": 39596,
+      "type": "QuestActSupplyItem",
+      "detailId": 4605,
+      "itemId": 31893,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 39597,
+      "type": "QuestActSupplyExp",
+      "detailId": 1419,
+      "exp": 80000
+     },
+     {
+      "actId": 39598,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1728,
+      "amount": 10000
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 61,
+     "count": 150,
+     "countNpc": 150,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 1,
+     "lvMax": 50
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31893,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34472,
+   "count": 1
+  }
+ ]
+}

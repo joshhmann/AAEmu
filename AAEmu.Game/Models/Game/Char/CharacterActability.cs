@@ -59,6 +59,7 @@ public class CharacterActability(Character owner)
         }
 
         Owner.SendPacket(new SCExpertLimitModifiedPacket(isUpgrade, id, actability.Step));
+        Owner.MarkDirty();
     }
 
     public void ExpandExpert()
@@ -104,6 +105,7 @@ public class CharacterActability(Character owner)
         }
 
         Owner.ExpandedExpert = expand.ExpandCount;
+        Owner.MarkDirty();
         Owner.SendPacket(new SCExpertExpandedPacket(Owner.ExpandedExpert));
     }
 

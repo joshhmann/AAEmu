@@ -1,0 +1,148 @@
+{
+ "questId": 3018,
+ "name": "친구를 생각하는 마음",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1285
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13556,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18999,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2472,
+      "npcId": 1285
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 13557,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19001,
+      "type": "QuestActSupplyItem",
+      "detailId": 1907,
+      "itemId": 18989,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19004,
+      "type": "QuestActObjItemGather",
+      "detailId": 1305,
+      "itemId": 18989,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13559,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19005,
+      "type": "QuestActConReportNpc",
+      "detailId": 2707,
+      "npcId": 1286
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13560,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18989,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1286,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18989,
+   "count": 1
+  }
+ ]
+}

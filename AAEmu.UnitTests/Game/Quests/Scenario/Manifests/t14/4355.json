@@ -1,0 +1,113 @@
+{
+ "questId": 4355,
+ "name": "망령이 담긴 검",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5802
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18989,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29551,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 201,
+      "doodadId": 5802
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18990,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29552,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1034,
+      "npcId": 1987,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19231,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29553,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1119
+     },
+     {
+      "actId": 37039,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1428,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 10,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1987,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

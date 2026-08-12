@@ -1,0 +1,114 @@
+{
+ "questId": 3426,
+ "name": "정직한 노력",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9617
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14702,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20433,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2819,
+      "npcId": 9617
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14704,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22408,
+      "type": "QuestActConReportNpc",
+      "detailId": 3420,
+      "npcId": 9582
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14705,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 14934,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20313,
+      "type": "QuestActSupplyItem",
+      "detailId": 2033,
+      "itemId": 19763,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9582,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

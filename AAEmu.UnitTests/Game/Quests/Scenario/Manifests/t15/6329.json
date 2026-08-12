@@ -1,0 +1,129 @@
+{
+ "questId": 6329,
+ "name": "망령의 도감 학살",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27101,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37805,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 500,
+      "questContextId": 6329
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27102,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37806,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1255,
+      "npcId": 14368,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27103,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37809,
+      "type": "QuestActConReportJournal",
+      "detailId": 523
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27105,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37810,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1565,
+      "amount": 0
+     },
+     {
+      "actId": 38079,
+      "type": "QuestActSupplyExp",
+      "detailId": 1294,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14368,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

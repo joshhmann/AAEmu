@@ -1,0 +1,208 @@
+{
+ "questId": 5984,
+ "name": "명예로운 전사의 길 3단계",
+ "zoneId": 6,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25775,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35227,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 300,
+      "questContextId": 5984
+     },
+     {
+      "actId": 35242,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4533,
+      "npcId": 13389
+     },
+     {
+      "actId": 35243,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4534,
+      "npcId": 13792
+     },
+     {
+      "actId": 35353,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4565,
+      "npcId": 14168
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25776,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35266,
+      "type": "QuestActObjZoneKill",
+      "detailId": 87,
+      "zoneId": 31,
+      "countNpc": 0,
+      "countPk": 80,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 2734,
+      "lvMin": 40,
+      "lvMax": 55,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionId": 115,
+      "pcFactionExclusive": "t",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25777,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35267,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 100,
+      "point": 40
+     },
+     {
+      "actId": 35417,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 254,
+      "appellationId": 195
+     },
+     {
+      "actId": 35432,
+      "type": "QuestActSupplyItem",
+      "detailId": 3974,
+      "itemId": 30108,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25869,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35418,
+      "type": "QuestActConReportNpc",
+      "detailId": 4798,
+      "npcId": 13389
+     },
+     {
+      "actId": 35419,
+      "type": "QuestActConReportNpc",
+      "detailId": 4799,
+      "npcId": 13792
+     },
+     {
+      "actId": 35424,
+      "type": "QuestActConReportNpc",
+      "detailId": 4804,
+      "npcId": 14168
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 31,
+     "count": 80,
+     "countNpc": 0,
+     "countPk": 80,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 115,
+     "pcFactionExclusive": true,
+     "lvMin": 40,
+     "lvMax": 55
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13389,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 13792,
+     "selected": 0
+    },
+    {
+     "type": "ReportNpc",
+     "npcId": 14168,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30108,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

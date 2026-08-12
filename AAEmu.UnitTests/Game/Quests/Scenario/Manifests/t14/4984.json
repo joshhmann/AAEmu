@@ -1,0 +1,81 @@
+{
+ "questId": 4984,
+ "name": "탈환 작전지의 훈련용 공성 사다리차",
+ "zoneId": 17,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2081
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21612,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30221,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 602,
+      "sphereId": 2081
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21613,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30217,
+      "type": "QuestActSupplyCopper",
+      "detailId": 900,
+      "amount": 0
+     },
+     {
+      "actId": 30218,
+      "type": "QuestActSupplyExp",
+      "detailId": 442,
+      "exp": 0
+     },
+     {
+      "actId": 30220,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1207
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

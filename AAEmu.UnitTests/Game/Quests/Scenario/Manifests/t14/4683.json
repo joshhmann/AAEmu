@@ -1,0 +1,81 @@
+{
+ "questId": 4683,
+ "name": "악명의 골짜기 위",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1732
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20320,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27660,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 394,
+      "sphereId": 1732
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20322,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27661,
+      "type": "QuestActSupplyCopper",
+      "detailId": 688,
+      "amount": 0
+     },
+     {
+      "actId": 27662,
+      "type": "QuestActSupplyExp",
+      "detailId": 236,
+      "exp": 0
+     },
+     {
+      "actId": 27664,
+      "type": "QuestActConAutoComplete",
+      "detailId": 938
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

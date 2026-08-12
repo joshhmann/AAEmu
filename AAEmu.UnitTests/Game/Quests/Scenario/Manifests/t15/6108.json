@@ -1,0 +1,135 @@
+{
+ "questId": 6108,
+ "name": "[1층]빙결의 작가 링메이렌 처치",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13968
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26265,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36084,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 390,
+      "questContextId": 6108
+     },
+     {
+      "actId": 36086,
+      "type": "QuestActCheckTimer",
+      "detailId": 158,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 26267,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 26437,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37936,
+      "type": "QuestActSupplyExp",
+      "detailId": 1185,
+      "exp": 250800
+     },
+     {
+      "actId": 38250,
+      "type": "QuestActSupplyItem",
+      "detailId": 4244,
+      "itemId": 32060,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26438,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36088,
+      "type": "QuestActConReportDoodad",
+      "detailId": 54,
+      "doodadId": 7596
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 7596,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32060,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

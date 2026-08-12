@@ -1,0 +1,144 @@
+{
+ "questId": 2976,
+ "name": "황혼석에 남겨진 이야기",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1237
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13020,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30807,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3950,
+      "npcId": 1237
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13021,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30892,
+      "type": "QuestActObjInteraction",
+      "detailId": 650,
+      "doodadId": 4335,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13022,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18757,
+      "type": "QuestActConReportNpc",
+      "detailId": 2639,
+      "npcId": 1237
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13023,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 21941,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30894,
+      "type": "QuestActSupplyItem",
+      "detailId": 3553,
+      "itemId": 18959,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4335,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1237,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,121 @@
+{
+ "questId": 3802,
+ "name": "전하의 탑에 새겨진 부조",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10283
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15943,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22217,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3141,
+      "npcId": 10283
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15945,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22219,
+      "type": "QuestActObjInteraction",
+      "detailId": 543,
+      "doodadId": 4374,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15946,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22218,
+      "type": "QuestActConReportNpc",
+      "detailId": 3370,
+      "npcId": 10283
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15947,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4374,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10283,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

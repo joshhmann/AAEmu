@@ -1,0 +1,119 @@
+{
+ "questId": 2919,
+ "name": "사벨탄 처치",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1468
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12387,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18106,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2305,
+      "npcId": 1468
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12388,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18108,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 645,
+      "npcId": 1466,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12389,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18107,
+      "type": "QuestActConReportNpc",
+      "detailId": 2529,
+      "npcId": 1468
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12390,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1466,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1468,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

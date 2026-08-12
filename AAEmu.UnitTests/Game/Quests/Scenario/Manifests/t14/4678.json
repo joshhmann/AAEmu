@@ -1,0 +1,81 @@
+{
+ "questId": 4678,
+ "name": "전사의 성 첨탑",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1727
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20305,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27633,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 388,
+      "sphereId": 1727
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20307,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27634,
+      "type": "QuestActSupplyCopper",
+      "detailId": 683,
+      "amount": 0
+     },
+     {
+      "actId": 27635,
+      "type": "QuestActSupplyExp",
+      "detailId": 230,
+      "exp": 0
+     },
+     {
+      "actId": 27637,
+      "type": "QuestActConAutoComplete",
+      "detailId": 933
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

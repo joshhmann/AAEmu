@@ -1,0 +1,119 @@
+{
+ "questId": 3620,
+ "name": "대신 수습하기",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9283
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15097,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20691,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2868,
+      "npcId": 9283
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15098,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20692,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 785,
+      "npcId": 9240,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15099,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20693,
+      "type": "QuestActConReportNpc",
+      "detailId": 3099,
+      "npcId": 9283
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15100,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9240,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9283,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

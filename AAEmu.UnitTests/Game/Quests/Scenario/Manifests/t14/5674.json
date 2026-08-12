@@ -1,0 +1,93 @@
+{
+ "questId": 5674,
+ "name": "모링가 중독자",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 29130
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24364,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33801,
+      "type": "QuestActConAcceptItem",
+      "detailId": 339,
+      "itemId": 29130
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24366,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33814,
+      "type": "QuestActSupplyExp",
+      "detailId": 764,
+      "exp": 1000
+     },
+     {
+      "actId": 33815,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1200,
+      "amount": 0
+     },
+     {
+      "actId": 33816,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 226,
+      "appellationId": 170
+     },
+     {
+      "actId": 33817,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1448
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29130,
+   "count": 1
+  }
+ ]
+}

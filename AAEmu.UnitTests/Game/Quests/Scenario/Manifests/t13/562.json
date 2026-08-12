@@ -1,0 +1,159 @@
+{
+ "questId": 562,
+ "name": "유골을 발굴하는 일",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2436
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3345,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 359,
+      "npcId": 2436
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29389,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 506,
+      "monsterGroupId": 456,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2220,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3348,
+      "type": "QuestActConReportNpc",
+      "detailId": 422,
+      "npcId": 2436
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2221,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38718,
+      "type": "QuestActSupplyItem",
+      "detailId": 4467,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21195,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29388,
+      "type": "QuestActObjItemGather",
+      "detailId": 2360,
+      "itemId": 4973,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 456,
+     "count": 10
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 4973,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2436,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 4973,
+   "count": 5
+  }
+ ]
+}

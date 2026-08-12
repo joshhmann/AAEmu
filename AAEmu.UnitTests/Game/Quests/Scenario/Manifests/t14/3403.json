@@ -1,0 +1,121 @@
+{
+ "questId": 3403,
+ "name": "이제 행복하게 떠나렴",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9604
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14607,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20289,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2757,
+      "npcId": 9604
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14608,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20469,
+      "type": "QuestActObjItemUse",
+      "detailId": 513,
+      "itemId": 19750,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14610,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20494,
+      "type": "QuestActConAutoComplete",
+      "detailId": 666
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 14928,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20290,
+      "type": "QuestActSupplyItem",
+      "detailId": 2027,
+      "itemId": 19750,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 19750,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,179 @@
+{
+ "questId": 2028,
+ "name": "깨어진 꿈",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9004
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12904,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1726,
+      "npcId": 9004
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 9311,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21768,
+      "type": "QuestActSupplyItem",
+      "detailId": 2176,
+      "itemId": 21188,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 21769,
+      "type": "QuestActSupplyItem",
+      "detailId": 2177,
+      "itemId": 21190,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9312,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21770,
+      "type": "QuestActObjItemGather",
+      "detailId": 1627,
+      "itemId": 21190,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16487,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21772,
+      "type": "QuestActObjItemGather",
+      "detailId": 1628,
+      "itemId": 21188,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16488,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21775,
+      "type": "QuestActConReportNpc",
+      "detailId": 3297,
+      "npcId": 9003
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16489,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21190,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 21188,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9003,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21190,
+   "count": 1
+  },
+  {
+   "itemId": 21188,
+   "count": 1
+  }
+ ]
+}

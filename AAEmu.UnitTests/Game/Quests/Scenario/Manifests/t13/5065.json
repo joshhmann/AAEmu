@@ -1,0 +1,103 @@
+{
+ "questId": 5065,
+ "name": "진정한 요리 연구가가 되다",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConReportNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21942,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 21944,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30896,
+      "type": "QuestActConReportNpc",
+      "detailId": 4232,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21946,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30897,
+      "type": "QuestActSupplyCopper",
+      "detailId": 959,
+      "amount": 0
+     },
+     {
+      "actId": 30898,
+      "type": "QuestActSupplyExp",
+      "detailId": 494,
+      "exp": 1000
+     },
+     {
+      "actId": 30899,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 5,
+      "appellationId": 4
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12504,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

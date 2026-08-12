@@ -128,6 +128,7 @@ public class CharacterBlocked(Character owner)
             Owner = Owner.Id
         };
         BlockedList.Add(blocked.Id, template);
+        Owner.MarkDirty();
         Owner.SendPacket(new SCAddBlockedUserPacket(blocked.Id, blocked.Name, true, 0));
     }
 
@@ -137,6 +138,7 @@ public class CharacterBlocked(Character owner)
         if (blocked == null || !BlockedList.ContainsKey(blocked.Id)) return; // not blocked
         BlockedList.Remove(blocked.Id);
         _removedBlocked.Add(blocked.Id);
+        Owner.MarkDirty();
         Owner.SendPacket(new SCDeleteBlockedUserPacket(blocked.Id, true, name, 0));
     }
 

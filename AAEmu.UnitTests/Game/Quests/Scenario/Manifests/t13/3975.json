@@ -1,0 +1,134 @@
+{
+ "questId": 3975,
+ "name": "마법사에게 죽음을",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 4981
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16924,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22298,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3161,
+      "npcId": 4981
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16925,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22299,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 862,
+      "npcId": 4972,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16926,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22300,
+      "type": "QuestActConReportNpc",
+      "detailId": 3398,
+      "npcId": 4981
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16927,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38722,
+      "type": "QuestActSupplyItem",
+      "detailId": 4471,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 4972,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4981,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

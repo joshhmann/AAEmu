@@ -1,0 +1,127 @@
+{
+ "questId": 5871,
+ "name": "태극기 휘날리며",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14010
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25345,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34612,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4434,
+      "npcId": 14010
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25347,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34623,
+      "type": "QuestActConReportDoodad",
+      "detailId": 52,
+      "doodadId": 7205
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25350,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34620,
+      "type": "QuestActSupplyItem",
+      "detailId": 3916,
+      "itemId": 29792,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 34841,
+      "type": "QuestActSupplyExp",
+      "detailId": 796,
+      "exp": 1004
+     },
+     {
+      "actId": 34842,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1232,
+      "amount": 100
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 7205,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29792,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -45,6 +45,24 @@ public partial class Character : Unit, ICharacter
 
     public static Dictionary<uint, uint> UsedCharacterObjIds { get; } = [];
 
+    /// <summary>
+    /// Whether this character has any save-relevant state change since its last successful
+    /// save. SaveManager.DoSave skips characters with IsDirty == false so the periodic
+    /// save cycle only persists touched rows (breaks the O(botCount) full-table rewrite).
+    /// Defaults to true so newly loaded/created characters are always persisted on the
+    /// first cycle after boot, then the flag settles into dirty-only.
+    /// </summary>
+    public bool IsDirty { get; set; } = true;
+
+    /// <summary>Marks this character as needing persistence on the next SaveManager cycle.</summary>
+    public void MarkDirty() => IsDirty = true;
+
+    /// <summary>Save-relevant state (HP/MP) changed — mark for persistence.</summary>
+    protected override void OnSaveRelevantChange()
+    {
+        MarkDirty();
+    }
+
     private readonly Dictionary<ushort, string> _options;
 
     public List<IDisposable> Subscribers { get; set; }
@@ -104,8 +122,34 @@ public partial class Character : Unit, ICharacter
     public DateTime RezTime { get; set; }
     public int RezPenaltyDuration { get; set; }
     public DateTime LeaveTime { get; set; }
-    public long Money { get; set; }
-    public long Money2 { get; set; }
+
+    private long _money;
+
+    public long Money
+    {
+        get => _money;
+        set
+        {
+            if (_money == value)
+                return;
+            _money = value;
+            MarkDirty();
+        }
+    }
+
+    private long _money2;
+
+    public long Money2
+    {
+        get => _money2;
+        set
+        {
+            if (_money2 == value)
+                return;
+            _money2 = value;
+            MarkDirty();
+        }
+    }
     public int HonorPoint { get; set; }
     public int VocationPoint { get; set; }
 
@@ -174,7 +218,20 @@ public partial class Character : Unit, ICharacter
     public int PrevPoint { get; set; }
     public int Point { get; set; }
     public int Gift { get; set; }
-    public int Experience { get; private set; }
+
+    private int _experience;
+
+    public int Experience
+    {
+        get => _experience;
+        private set
+        {
+            if (_experience == value)
+                return;
+            _experience = value;
+            MarkDirty();
+        }
+    }
     public int RecoverableExp { get; set; }
     public int LastExpLoss { get; set; }
     public byte LastDurabilityLoss { get; set; }
@@ -331,7 +388,7 @@ public partial class Character : Unit, ICharacter
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var result = formula.Evaluate(parameters);
             var res = result;
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Str;
             res = CalculateWithBonuses(res, UnitAttribute.Str);
@@ -348,7 +405,7 @@ public partial class Character : Unit, ICharacter
             var formula = FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.Dex);
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var res = formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Dex;
             res = CalculateWithBonuses(res, UnitAttribute.Dex);
@@ -365,7 +422,7 @@ public partial class Character : Unit, ICharacter
             var formula = FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.Sta);
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var res = formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Sta;
             res = CalculateWithBonuses(res, UnitAttribute.Sta);
@@ -382,7 +439,7 @@ public partial class Character : Unit, ICharacter
             var formula = FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.Int);
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var res = formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Int;
             res = CalculateWithBonuses(res, UnitAttribute.Int);
@@ -399,7 +456,7 @@ public partial class Character : Unit, ICharacter
             var formula = FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.Spi);
             var parameters = new Dictionary<string, double> { ["level"] = Level };
             var res = formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
                 if (item is EquipItem { IsNotDestroyed: true } equip)
                     res += equip.Spi;
             res = CalculateWithBonuses(res, UnitAttribute.Spi);
@@ -1127,7 +1184,7 @@ public partial class Character : Unit, ICharacter
                 ["fai"] = Fai
             };
             var res = (int)formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
             {
                 switch (item)
                 {
@@ -1167,7 +1224,7 @@ public partial class Character : Unit, ICharacter
                 ["fai"] = Fai
             };
             var res = (int)formula.Evaluate(parameters);
-            foreach (var item in Equipment.Items)
+            foreach (var item in Equipment.GetItemsSnapshot())
             {
                 switch (item)
                 {
@@ -1658,6 +1715,9 @@ public partial class Character : Unit, ICharacter
 
         base.SetPosition(x, y, z, rotationX, rotationY, rotationZ);
 
+        if (moved)
+            MarkDirty();
+
         var world = WorldManager.Instance.GetWorld(Transform.InstanceId);
 
         // Probe slightly above the character "feet" position to avoid false drowning
@@ -1876,17 +1936,20 @@ public partial class Character : Unit, ICharacter
     {
         Slots[slot].Type = type;
         Slots[slot].ActionId = actionId;
+        MarkDirty();
     }
 
     public void SetAction(byte slot, ActionSlotType type, ulong itemId)
     {
         Slots[slot].Type = type;
         Slots[slot].ActionId = itemId;
+        MarkDirty();
     }
 
     public void SetOption(ushort key, string value)
     {
         _options[key] = value;
+        MarkDirty();
     }
 
     public string GetOption(ushort key)
@@ -2041,7 +2104,7 @@ public partial class Character : Unit, ICharacter
             if (item == null)
                 continue;
 
-            if (!Inventory.Bag.Items.Contains(item) && !Equipment.Items.Contains(item))
+            if (!Inventory.Bag.GetItemsSnapshot().Contains(item) && !Equipment.GetItemsSnapshot().Contains(item))
             {
                 Logger.Warn($"Attempting to repair an item that isn't in your inventory or equipment, Item: {item.Id}");
                 continue;
@@ -2781,7 +2844,8 @@ public partial class Character : Unit, ICharacter
             Skills?.Save(connection, transaction);
             Quests?.Save(connection, transaction);
             Mates?.Save(connection, transaction);
-            
+
+            IsDirty = false;
             result = true;
         }
         catch (Exception ex)

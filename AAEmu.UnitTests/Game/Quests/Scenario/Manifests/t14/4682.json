@@ -1,0 +1,81 @@
+{
+ "questId": 4682,
+ "name": "벌집을 살피다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1731
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20317,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27655,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 393,
+      "sphereId": 1731
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20319,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27656,
+      "type": "QuestActSupplyCopper",
+      "detailId": 687,
+      "amount": 0
+     },
+     {
+      "actId": 27657,
+      "type": "QuestActSupplyExp",
+      "detailId": 235,
+      "exp": 0
+     },
+     {
+      "actId": 27659,
+      "type": "QuestActConAutoComplete",
+      "detailId": 937
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

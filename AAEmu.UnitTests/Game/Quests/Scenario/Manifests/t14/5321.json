@@ -1,0 +1,93 @@
+{
+ "questId": 5321,
+ "name": "햇무리 언덕 선생님",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 27901
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22976,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32414,
+      "type": "QuestActConAcceptItem",
+      "detailId": 274,
+      "itemId": 27901
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22978,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32415,
+      "type": "QuestActSupplyExp",
+      "detailId": 691,
+      "exp": 1000
+     },
+     {
+      "actId": 32416,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1108,
+      "amount": 0
+     },
+     {
+      "actId": 32417,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 118,
+      "appellationId": 105
+     },
+     {
+      "actId": 32418,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1367
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27901,
+   "count": 1
+  }
+ ]
+}

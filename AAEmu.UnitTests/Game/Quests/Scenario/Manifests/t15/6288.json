@@ -1,0 +1,129 @@
+{
+ "questId": 6288,
+ "name": "주인 잃은 애완 식물 학살",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26936,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37543,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 459,
+      "questContextId": 6288
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26937,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37547,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1217,
+      "npcId": 14384,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26938,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38033,
+      "type": "QuestActConReportJournal",
+      "detailId": 544
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26940,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37548,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1493,
+      "amount": 0
+     },
+     {
+      "actId": 38034,
+      "type": "QuestActSupplyExp",
+      "detailId": 1249,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14384,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

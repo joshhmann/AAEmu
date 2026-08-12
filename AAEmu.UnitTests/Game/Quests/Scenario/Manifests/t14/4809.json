@@ -1,0 +1,81 @@
+{
+ "questId": 4809,
+ "name": "홀로 선 섬의 정상",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1857
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20757,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28367,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 495,
+      "sphereId": 1857
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20759,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28368,
+      "type": "QuestActSupplyCopper",
+      "detailId": 787,
+      "amount": 0
+     },
+     {
+      "actId": 28369,
+      "type": "QuestActSupplyExp",
+      "detailId": 346,
+      "exp": 0
+     },
+     {
+      "actId": 28371,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1050
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -23,6 +23,14 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-011 | QuestActCheckSphere can never pass + sphere entry crashes — Objectives[0xFF] write (quest 1033 Progress component 5065) | FIXED — branch fix/quest-check-sphere (2026-08-04) |
 | BUG-012 | CharacterAbilities KeyNotFoundException 'General' on quest exp rewards (Ability1==General; ctor seeds Fight..Love only, ability1 DB column has no default, no client validation) — quests 250/6578/6600/6615 REWARD crash | FIXED — branch fix/char-abilities-general (2026-08-04) |
 | BUG-013 | NPC sit poses render "knees in" — server sends sit anim ids the 1.2 client cannot play for the NPC's race/gender (missing .caf assets; ids 70/160 have none at all) | FIXED — branch fix/npc-sit-pose (2026-08-05) |
+| BUG-014 | quest completed-block id wraps for quest ids >= 4,194,304 — ResetQuests recomputes a wrapped id, daily reset never clears, AddQuest refuses with QuestDailyLimit forever (live: 8000004) | FIXED — branch fix/bug-014-quest-completed-block-uint (2026-08-10) |
+| BUG-015 | CharacterQuests.Save NREs on a null completed-block entry — concurrent mutation during enumeration yields a null block, disconnect save aborts BEFORE the active-quest REPLACE loop, quest rows lost | FIXED — branch fix/quest-save-null-guard (2026-08-10) |
+
+## Audit findings (Kimi deep-dive 2026-08-09, t_0fda3cd3)
+
+| ID | Finding | Status |
+|----|---------|--------|
+| AUDIT-001 | SaveManager.DoSave full-table sync save on every cycle — every in-world character REPLACEd each autosave tick (SaveManager.cs:94); at 1,000-bot scale the periodic save rewrites the whole character surface every cycle | CLOSED — dirty-tracking merged 5ed5d6493 (2026-08-10, t_8c18eb1c, Rei gate t_53025996 ACCEPT): dirty-only periodic saves, force-all retained on shutdown + /save |
 
 ## Production state (2026-08-02)
 

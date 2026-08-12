@@ -1,0 +1,81 @@
+{
+ "questId": 4642,
+ "name": "보름 분화구 용암석 채집기를 살피다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1704
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27455,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 375,
+      "sphereId": 1704
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27456,
+      "type": "QuestActSupplyCopper",
+      "detailId": 672,
+      "amount": 0
+     },
+     {
+      "actId": 27457,
+      "type": "QuestActSupplyExp",
+      "detailId": 217,
+      "exp": 0
+     },
+     {
+      "actId": 27459,
+      "type": "QuestActConAutoComplete",
+      "detailId": 919
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

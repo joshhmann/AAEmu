@@ -1,0 +1,133 @@
+{
+ "questId": 6430,
+ "name": "[1층]도서관 열람실 정리 의뢰 3단계",
+ "zoneId": 197,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27483,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39334,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 522,
+      "questContextId": 6430
+     },
+     {
+      "actId": 39335,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 315,
+      "doodadId": 8235
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27484,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39336,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 678,
+      "monsterGroupId": 561,
+      "count": 60
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27485,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39331,
+      "type": "QuestActSupplyItem",
+      "detailId": 4568,
+      "itemId": 30827,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 39332,
+      "type": "QuestActSupplyExp",
+      "detailId": 1383,
+      "exp": 83600
+     },
+     {
+      "actId": 39333,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1757
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 561,
+     "count": 60
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30827,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

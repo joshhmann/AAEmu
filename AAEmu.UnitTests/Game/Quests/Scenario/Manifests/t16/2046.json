@@ -1,0 +1,12 @@
+{
+ "questId": 2046,
+ "name": "Unit Req Dummy",
+ "family": "no-acts",
+ "zoneId": 1,
+ "template": {
+  "level": 0
+ },
+ "skip": {
+  "reason": "no components"
+ }
+}

@@ -1,0 +1,144 @@
+{
+ "questId": 1781,
+ "name": "눈물을 대신하여",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2851
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12670,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19295,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2566,
+      "npcId": 2851
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12671,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18404,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 298,
+      "monsterGroupId": 272,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12672,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19296,
+      "type": "QuestActConReportNpc",
+      "detailId": 2798,
+      "npcId": 2851
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12673,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38444,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2683,
+      "itemId": 33850,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38445,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2684,
+      "itemId": 33851,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38446,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2685,
+      "itemId": 33852,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 272,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2851,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1
+}

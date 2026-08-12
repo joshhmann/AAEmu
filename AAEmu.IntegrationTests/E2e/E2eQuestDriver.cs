@@ -118,8 +118,14 @@ public static class E2eQuestDriver
         for (var stageIndex = firstStageIndex; stageIndex < manifest.Stages.Count; stageIndex++)
         {
             var stage = manifest.Stages[stageIndex];
-            if (string.Equals(stage.Name, "PERSIST", StringComparison.OrdinalIgnoreCase))
-                continue; // E2E restart-persistence has its own checkpoints
+            // Fresh-probe fidelity stages (TIMEOUT/RESET/GUARD_DIED) operate
+            // on a FRESH probe quest built by the scenario harness — never on
+            // the live drive. After a successful drive the quest is
+            // dropped+completed, so e.g. TIMEOUT's "expected step Fail" can
+            // never reproduce against the live quest (false-RED). Skip them
+            // exactly like PERSIST.
+            if (stage.Name.ToUpperInvariant() is "PERSIST" or "TIMEOUT" or "RESET" or "GUARD_DIED")
+                continue; // probe stages have their own harness checkpoints
 
             StageVerdict verdict;
             try

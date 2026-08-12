@@ -1,0 +1,171 @@
+{
+ "questId": 5718,
+ "name": "타오르는 겁화의 심장",
+ "zoneId": 14,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13726
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24591,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34150,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4371,
+      "npcId": 13726
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24592,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34152,
+      "type": "QuestActObjItemGather",
+      "detailId": 2787,
+      "itemId": 29281,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24593,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34153,
+      "type": "QuestActConReportNpc",
+      "detailId": 4671,
+      "npcId": 13726
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24635,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34151,
+      "type": "QuestActSupplyItem",
+      "detailId": 3883,
+      "itemId": 29282,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 34394,
+      "type": "QuestActSupplyItem",
+      "detailId": 3894,
+      "itemId": 29630,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24636,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34348,
+      "type": "QuestActSupplyItem",
+      "detailId": 3892,
+      "itemId": 28800,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29281,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13726,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28800,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29281,
+   "count": 1
+  }
+ ]
+}

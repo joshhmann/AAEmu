@@ -182,6 +182,7 @@ public static class GateSoakRunner
             {
                 WindowMinutes = windowSpan.TotalMinutes,
                 BotCount = stage.BotCount,
+                PresenceBotCount = ReadPresenceCitizenCount(),
                 TickMetricsAvailable = h2Probe.Tick?.Available == true,
                 TickInvokeP95Ms = tickWorst.TickP95Ms,
                 TickInvokeMaxMs = tickWorst.TickMaxMs,
@@ -196,6 +197,7 @@ public static class GateSoakRunner
                 SchedulerMaxWakeLatencyMs = tickWorst.SchedulerMaxWakeLatencyMs,
                 DbWrites = Math.Max(0, dbWritesEnd - dbWritesStart),
                 PhysicsWarnings = logTail.PhysicsWarnings,
+                MaxSameWorldPhysicsWarningsPer60s = logTail.MaxSameWorldPhysicsWarningsPer60s,
                 TickOverrunWarnings = logTail.TickOverrunWarnings
             };
 
@@ -239,6 +241,28 @@ public static class GateSoakRunner
     }
 
     // ------------------------------------------------------------------ probes
+
+    /// <summary>
+    /// Number of scheduler-stepping presence-demo citizens the game server
+    /// will embody, read from the SAME env contract the server reads
+    /// (AAEMU_PRESENCE_DEMO=1 → AAEMU_PRESENCE_BOT_COUNT, default 3, clamped
+    /// 1..10 — mirrors BotPresenceCoordinator.ReadBotCount). 0 when the demo
+    /// is not enabled. The gate process and the game server it boots share
+    /// this environment, so the count is authoritative for the run.
+    /// </summary>
+    private static int ReadPresenceCitizenCount()
+    {
+        var enabled = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_DEMO") is "1" or "true" or "True";
+        if (!enabled)
+            return 0;
+
+        var count = 3;
+        var env = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BOT_COUNT");
+        if (int.TryParse(env, out var envCount) && envCount > 0)
+            count = envCount;
+
+        return Math.Clamp(count, 1, 10);
+    }
 
     private sealed class TickSample
     {
@@ -325,26 +349,55 @@ public static class GateSoakRunner
         return total;
     }
 
-    private sealed record LogTail(long PhysicsWarnings, long TickOverrunWarnings);
+    private sealed record LogTail(long PhysicsWarnings, long TickOverrunWarnings, long MaxSameWorldPhysicsWarningsPer60s);
+
+    private static readonly System.Text.RegularExpressions.Regex PhysicsWarningRegex = new(
+        @"^(\d{2}):(\d{2}):(\d{2}) .*?in (.+?) at ",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static LogTail ReadGameLogTail(long startOffset)
     {
         long physics = 0, overruns = 0;
+        // Per-world warning times (seconds-of-day, adjusted across midnight
+        // wraps) for the no-sustained-slow clause: the most warnings any ONE
+        // world logged within a 60s window.
+        var worldTimes = new Dictionary<string, List<long>>();
         try
         {
             if (!File.Exists(GameLogPath))
-                return new LogTail(0, 0);
+                return new LogTail(0, 0, 0);
 
             using var fs = File.OpenRead(GameLogPath);
             if (fs.Length <= startOffset)
-                return new LogTail(0, 0);
+                return new LogTail(0, 0, 0);
 
             fs.Seek(startOffset, SeekOrigin.Begin);
             using var reader = new StreamReader(fs, Encoding.UTF8, false, 4096, leaveOpen: true);
+            var dayOffset = 0L;
+            long lastSec = -1;
             while (reader.ReadLine() is { } line)
             {
                 if (line.Contains("Physics thread is running slow", StringComparison.Ordinal))
+                {
                     physics++;
+                    var m = PhysicsWarningRegex.Match(line);
+                    if (m.Success)
+                    {
+                        var sec = int.Parse(m.Groups[1].Value) * 3600
+                                  + int.Parse(m.Groups[2].Value) * 60
+                                  + int.Parse(m.Groups[3].Value);
+                        // Log timestamps are HH:mm:ss only — carry a day
+                        // offset forward when the clock wraps (6h soak can
+                        // cross midnight).
+                        if (lastSec >= 0 && sec < lastSec)
+                            dayOffset += 86400;
+                        lastSec = sec;
+                        var world = m.Groups[4].Value;
+                        if (!worldTimes.TryGetValue(world, out var times))
+                            worldTimes[world] = times = [];
+                        times.Add(sec + dayOffset);
+                    }
+                }
                 if (line.Contains("Tick took ", StringComparison.Ordinal) ||
                     line.Contains("over 100ms budget", StringComparison.Ordinal) ||
                     line.Contains("ActiveRegionTick took", StringComparison.Ordinal))
@@ -356,7 +409,22 @@ public static class GateSoakRunner
             Console.WriteLine($"[gate] game log scan failed: {ex.GetType().Name}: {ex.Message}");
         }
 
-        return new LogTail(physics, overruns);
+        // Sliding 60s window per world: max count of warnings on one world
+        // within any 60s span.
+        long maxSameWorld60s = 0;
+        foreach (var times in worldTimes.Values)
+        {
+            times.Sort();
+            var head = 0;
+            for (var tail = 0; tail < times.Count; tail++)
+            {
+                while (times[tail] - times[head] > 60)
+                    head++;
+                maxSameWorld60s = Math.Max(maxSameWorld60s, tail - head + 1);
+            }
+        }
+
+        return new LogTail(physics, overruns, maxSameWorld60s);
     }
 
     // ------------------------------------------------------------------ evidence
@@ -372,7 +440,10 @@ public static class GateSoakRunner
         sb.AppendLine();
         sb.AppendLine($"> Generated by GateSoakRunner (deterministic budgets; wall-clock only for the window).");
         sb.AppendLine($"> Stack: REAL Login (:1237) + Game (:1239/:1250) + MySQL, canonical compact.sqlite3, bots over the REAL network path.");
-        sb.AppendLine($"> Window: {s.WindowMinutes:F1} min · bots: {s.BotCount}");
+        sb.AppendLine($"> Window: {s.WindowMinutes:F1} min · bots: {s.BotCount}" +
+                      (s.PresenceBotCount > 0
+                          ? $" + {s.PresenceBotCount} presence citizens = {s.EmbodiedCharacterCount} embodied (DB-write budget normalizes per embodied char)"
+                          : " (DB-write budget normalizes per bot)"));
         sb.AppendLine();
         sb.AppendLine("| Metric | Measured | Limit | Verdict |");
         sb.AppendLine("|---|---|---|---|");

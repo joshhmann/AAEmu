@@ -1,0 +1,81 @@
+{
+ "questId": 4698,
+ "name": "요정의 장막 나선 계단의 끝",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1747
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20365,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27732,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 408,
+      "sphereId": 1747
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20367,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27733,
+      "type": "QuestActSupplyCopper",
+      "detailId": 702,
+      "amount": 0
+     },
+     {
+      "actId": 27734,
+      "type": "QuestActSupplyExp",
+      "detailId": 252,
+      "exp": 0
+     },
+     {
+      "actId": 27736,
+      "type": "QuestActConAutoComplete",
+      "detailId": 952
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

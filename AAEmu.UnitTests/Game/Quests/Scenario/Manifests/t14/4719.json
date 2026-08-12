@@ -1,0 +1,81 @@
+{
+ "questId": 4719,
+ "name": "시가지 공사장의 사자상",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1769
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20430,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27870,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 431,
+      "sphereId": 1769
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20432,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27871,
+      "type": "QuestActSupplyCopper",
+      "detailId": 726,
+      "amount": 0
+     },
+     {
+      "actId": 27872,
+      "type": "QuestActSupplyExp",
+      "detailId": 278,
+      "exp": 0
+     },
+     {
+      "actId": 27874,
+      "type": "QuestActConAutoComplete",
+      "detailId": 979
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

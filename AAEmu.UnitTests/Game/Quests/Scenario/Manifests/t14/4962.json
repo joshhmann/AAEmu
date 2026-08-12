@@ -1,0 +1,81 @@
+{
+ "questId": 4962,
+ "name": "옛 처형터의 폭포 시작지",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2057
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21534,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30069,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 583,
+      "sphereId": 2057
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21535,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30065,
+      "type": "QuestActSupplyCopper",
+      "detailId": 881,
+      "amount": 0
+     },
+     {
+      "actId": 30066,
+      "type": "QuestActSupplyExp",
+      "detailId": 422,
+      "exp": 0
+     },
+     {
+      "actId": 30068,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1178
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

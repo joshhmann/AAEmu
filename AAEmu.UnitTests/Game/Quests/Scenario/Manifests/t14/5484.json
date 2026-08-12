@@ -1,0 +1,93 @@
+{
+ "questId": 5484,
+ "name": "신들린 춤사위",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28511
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23703,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33322,
+      "type": "QuestActConAcceptItem",
+      "detailId": 328,
+      "itemId": 28511
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23705,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33379,
+      "type": "QuestActSupplyExp",
+      "detailId": 753,
+      "exp": 1000
+     },
+     {
+      "actId": 33380,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1178,
+      "amount": 0
+     },
+     {
+      "actId": 33381,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 217,
+      "appellationId": 162
+     },
+     {
+      "actId": 33382,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1425
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28511,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4455,
+ "name": "요정의 은신처 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1568
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19474,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26497,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 248,
+      "sphereId": 1568
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19476,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26498,
+      "type": "QuestActConAutoComplete",
+      "detailId": 796
+     },
+     {
+      "actId": 26499,
+      "type": "QuestActSupplyCopper",
+      "detailId": 531,
+      "amount": 0
+     },
+     {
+      "actId": 31066,
+      "type": "QuestActSupplyExp",
+      "detailId": 531,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4476,
+ "name": "누온의 거리가 내려다보이는 지붕 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1590
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19542,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26627,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 268,
+      "sphereId": 1590
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19544,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26628,
+      "type": "QuestActSupplyCopper",
+      "detailId": 550,
+      "amount": 0
+     },
+     {
+      "actId": 26631,
+      "type": "QuestActConAutoComplete",
+      "detailId": 815
+     },
+     {
+      "actId": 31088,
+      "type": "QuestActSupplyExp",
+      "detailId": 553,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

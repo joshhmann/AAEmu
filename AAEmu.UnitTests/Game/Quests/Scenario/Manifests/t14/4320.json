@@ -1,0 +1,119 @@
+{
+ "questId": 4320,
+ "name": "화 풀고 다시 잠드세요",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1928
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18884,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25922,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3586,
+      "npcId": 1928
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18885,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29866,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 517,
+      "monsterGroupId": 472,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18886,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25923,
+      "type": "QuestActConReportNpc",
+      "detailId": 3854,
+      "npcId": 1928
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19188,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 472,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1928,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

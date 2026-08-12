@@ -1,0 +1,119 @@
+{
+ "questId": 3206,
+ "name": "파괴된 바람돌",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8921
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13459,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19209,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2550,
+      "npcId": 8921
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13460,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19210,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 702,
+      "npcId": 8933,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13461,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19211,
+      "type": "QuestActConReportNpc",
+      "detailId": 2781,
+      "npcId": 8921
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13462,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8933,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8921,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

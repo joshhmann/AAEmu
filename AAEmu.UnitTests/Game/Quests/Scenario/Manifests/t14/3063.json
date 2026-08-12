@@ -1,0 +1,125 @@
+{
+ "questId": 3063,
+ "name": "눈사자 검",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 995
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19630,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2619,
+      "npcId": 995
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13699,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30465,
+      "type": "QuestActObjItemGather",
+      "detailId": 2411,
+      "itemId": 19506,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19531,
+      "type": "QuestActConReportNpc",
+      "detailId": 2838,
+      "npcId": 995
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13816,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19506,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 995,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19506,
+   "count": 1
+  }
+ ]
+}

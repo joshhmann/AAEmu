@@ -1,0 +1,144 @@
+{
+ "questId": 566,
+ "name": "전쟁의 상처를 지우는 방법",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2436
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2242,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3641,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 399,
+      "npcId": 2436
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 2442,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 5912,
+      "type": "QuestActSupplyItem",
+      "detailId": 353,
+      "itemId": 4968,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 4107,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13327,
+      "type": "QuestActObjInteraction",
+      "detailId": 326,
+      "doodadId": 2544,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 9590,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17810,
+      "type": "QuestActConReportNpc",
+      "detailId": 2498,
+      "npcId": 2436
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12221,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 2544,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2436,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,114 @@
+{
+ "questId": 5918,
+ "name": "에페리움 선봉대 처치",
+ "zoneId": 191,
+ "categoryId": 92,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13812
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25540,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35373,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4574,
+      "npcId": 13812
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25541,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 25542,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35374,
+      "type": "QuestActConReportNpc",
+      "detailId": 4793,
+      "npcId": 13812
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25543,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13812,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

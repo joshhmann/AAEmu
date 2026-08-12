@@ -1,0 +1,81 @@
+{
+ "questId": 4722,
+ "name": "속삭이는 강의 뒤편",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1772
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20439,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27885,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 434,
+      "sphereId": 1772
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20441,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27886,
+      "type": "QuestActSupplyCopper",
+      "detailId": 729,
+      "amount": 0
+     },
+     {
+      "actId": 27887,
+      "type": "QuestActSupplyExp",
+      "detailId": 281,
+      "exp": 0
+     },
+     {
+      "actId": 27889,
+      "type": "QuestActConAutoComplete",
+      "detailId": 982
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

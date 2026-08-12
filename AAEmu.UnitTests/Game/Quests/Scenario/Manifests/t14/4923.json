@@ -1,0 +1,123 @@
+{
+ "questId": 4923,
+ "name": "바위 정령 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1980
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21371,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29750,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1100,
+      "npcId": 1980
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21372,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29751,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1046,
+      "npcId": 1980,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21373,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29752,
+      "type": "QuestActConReportJournal",
+      "detailId": 328
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21374,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29753,
+      "type": "QuestActSupplyCopper",
+      "detailId": 836,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1980,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

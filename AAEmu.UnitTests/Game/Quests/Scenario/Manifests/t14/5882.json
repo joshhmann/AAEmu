@@ -1,0 +1,129 @@
+{
+ "questId": 5882,
+ "name": "생명체가 들 수 없는 무기",
+ "zoneId": 1,
+ "categoryId": 33,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13649
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25410,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34754,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4461,
+      "npcId": 13649
+     },
+     {
+      "actId": 34755,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4462,
+      "npcId": 13663
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25411,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34756,
+      "type": "QuestActObjInteraction",
+      "detailId": 721,
+      "doodadId": 7081,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25425,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35053,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1549
+     },
+     {
+      "actId": 38879,
+      "type": "QuestActSupplyItem",
+      "detailId": 4545,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7081,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,163 @@
+{
+ "questId": 5887,
+ "name": "겁화에 휩싸인 바이라바를 물리쳐라!",
+ "zoneId": 148,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13490
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25434,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34785,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 266,
+      "questContextId": 5887
+     },
+     {
+      "actId": 34786,
+      "type": "QuestActCheckTimer",
+      "detailId": 149,
+      "limitTime": 14400000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25435,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38831,
+      "type": "QuestActObjAggro",
+      "detailId": 63,
+      "range": 150,
+      "rank1": 100,
+      "rank2": 0,
+      "rank3": 0,
+      "rank1Ratio": 100,
+      "rank2Ratio": 0,
+      "rank3Ratio": 0,
+      "rank1Item": true,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 3293
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25436,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34788,
+      "type": "QuestActSupplyItem",
+      "detailId": 3926,
+      "itemId": 29515,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 34789,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1229,
+      "amount": 0
+     },
+     {
+      "actId": 34790,
+      "type": "QuestActSupplyExp",
+      "detailId": 793,
+      "exp": 0
+     },
+     {
+      "actId": 34791,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1512
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 25443,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 13490
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29515,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "TIMEOUT",
+   "events": [],
+   "expect": {
+    "step": "Fail"
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

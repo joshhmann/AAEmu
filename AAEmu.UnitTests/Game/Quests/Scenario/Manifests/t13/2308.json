@@ -1,0 +1,123 @@
+{
+ "questId": 2308,
+ "name": "훼손된 시신",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1448
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12350,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18139,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2315,
+      "npcId": 1448
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12420,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18142,
+      "type": "QuestActSupplyItem",
+      "detailId": 1826,
+      "itemId": 18645,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12421,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18141,
+      "type": "QuestActObjInteraction",
+      "detailId": 429,
+      "doodadId": 3357,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12422,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18140,
+      "type": "QuestActConAutoComplete",
+      "detailId": 604
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3357,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

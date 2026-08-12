@@ -1,0 +1,113 @@
+{
+ "questId": 6372,
+ "name": "유령 동물원으로",
+ "zoneId": 217,
+ "categoryId": 106,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14688
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27288,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38777,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4754,
+      "npcId": 14688
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27290,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38778,
+      "type": "QuestActConReportNpc",
+      "detailId": 4986,
+      "npcId": 14825
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27291,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38799,
+      "type": "QuestActSupplyExp",
+      "detailId": 1333,
+      "exp": 500
+     },
+     {
+      "actId": 38800,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1645,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14825,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

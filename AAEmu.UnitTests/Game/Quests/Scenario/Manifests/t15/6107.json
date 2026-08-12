@@ -1,0 +1,121 @@
+{
+ "questId": 6107,
+ "name": "에아나드에 침입한 도둑",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 30828
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26262,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36081,
+      "type": "QuestActConAcceptItem",
+      "detailId": 407,
+      "itemId": 30828
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26263,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36445,
+      "type": "QuestActObjInteraction",
+      "detailId": 737,
+      "doodadId": 7582,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26264,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36082,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1655
+     },
+     {
+      "actId": 37928,
+      "type": "QuestActSupplyExp",
+      "detailId": 1181,
+      "exp": 83600
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 7582,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30828,
+   "count": 1
+  }
+ ]
+}

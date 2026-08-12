@@ -1,0 +1,160 @@
+{
+ "questId": 592,
+ "name": "그녀에게 벌어진 일",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2445
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2323,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6382,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 714,
+      "npcId": 2445
+     },
+     {
+      "actId": 17356,
+      "type": "QuestActCheckTimer",
+      "detailId": 91,
+      "limitTime": 180000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2325,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 13421,
+      "type": "QuestActObjTalk",
+      "detailId": 815,
+      "npcId": 2445
+     },
+     {
+      "actId": 30799,
+      "type": "QuestActSupplyRemoveItem",
+      "detailId": 214,
+      "itemId": 4988,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4344,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6399,
+      "type": "QuestActConReportNpc",
+      "detailId": 826,
+      "npcId": 4971
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 11618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38719,
+      "type": "QuestActSupplyItem",
+      "detailId": 4468,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 11946,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 2445
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 4971,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "TIMEOUT",
+   "events": [],
+   "expect": {
+    "step": "Fail"
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

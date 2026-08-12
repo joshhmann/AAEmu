@@ -454,6 +454,10 @@ public class Buffs : IBuffs
             else
             {
                 _effects.Add(buff);
+                // Persistable buffs (SaveRuleId > DontSave, ≥60s, beneficial) are written to
+                // character_active_buffs during Save — the owning character must be marked dirty.
+                if (GetOwner() is Character ownerCharacter && ShouldPersistBuff(buff))
+                    ownerCharacter.MarkDirty();
                 buff.Triggers.SubscribeEvents();
                 buff.Events.OnBuffStarted(buff, new OnBuffStartedArgs());
 
@@ -522,6 +526,10 @@ public class Buffs : IBuffs
         {
             buff.SetInUse(false, false);
             _effects.Remove(buff);
+            // Removal of a persistable buff must reach SaveActiveBuffs (DELETE + reinsert) —
+            // mark the owner so the stale row is cleared on the next save cycle.
+            if (own is Character ownerCharacter && ShouldPersistBuff(buff))
+                ownerCharacter.MarkDirty();
             own.SkillModifiersCache.RemoveModifiers(buff.Template.BuffId);
             own.BuffModifiersCache.RemoveModifiers(buff.Template.BuffId);
             own.CombatBuffs.RemoveCombatBuff(buff.Template.BuffId);

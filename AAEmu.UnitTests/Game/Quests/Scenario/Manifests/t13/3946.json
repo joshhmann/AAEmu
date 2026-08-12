@@ -1,0 +1,123 @@
+{
+ "questId": 3946,
+ "name": "별모래를 먹는 해파리",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9426
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16653,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22078,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 871,
+      "npcId": 9426
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16654,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22079,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 848,
+      "npcId": 9426,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16655,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21994,
+      "type": "QuestActConReportJournal",
+      "detailId": 249
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16656,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21993,
+      "type": "QuestActSupplyCopper",
+      "detailId": 361,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9426,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

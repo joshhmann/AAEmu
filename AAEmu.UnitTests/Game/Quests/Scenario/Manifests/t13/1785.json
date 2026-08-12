@@ -1,0 +1,113 @@
+{
+ "questId": 1785,
+ "name": "황금갈기 부족 섬멸",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5510
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12701,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28988,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 182,
+      "doodadId": 5510
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12702,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18415,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 299,
+      "monsterGroupId": 273,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12704,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28987,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1094
+     },
+     {
+      "actId": 36985,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1393,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 10,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 273,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

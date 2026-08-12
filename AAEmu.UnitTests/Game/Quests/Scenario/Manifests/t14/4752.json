@@ -1,0 +1,81 @@
+{
+ "questId": 4752,
+ "name": "의식의 탑 꼭대기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1805
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20554,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28082,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 464,
+      "sphereId": 1805
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20556,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28083,
+      "type": "QuestActSupplyCopper",
+      "detailId": 758,
+      "amount": 0
+     },
+     {
+      "actId": 28084,
+      "type": "QuestActSupplyExp",
+      "detailId": 313,
+      "exp": 0
+     },
+     {
+      "actId": 28086,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1012
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

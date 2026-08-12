@@ -1,0 +1,93 @@
+{
+ "questId": 5470,
+ "name": "누이 여신 바라기",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28495
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23661,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33308,
+      "type": "QuestActConAcceptItem",
+      "detailId": 314,
+      "itemId": 28495
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33323,
+      "type": "QuestActSupplyExp",
+      "detailId": 739,
+      "exp": 1000
+     },
+     {
+      "actId": 33324,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1164,
+      "amount": 0
+     },
+     {
+      "actId": 33325,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 203,
+      "appellationId": 148
+     },
+     {
+      "actId": 33326,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1411
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28495,
+   "count": 1
+  }
+ ]
+}

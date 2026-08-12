@@ -1,0 +1,93 @@
+{
+ "questId": 5475,
+ "name": "변덕쟁이",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28502
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23676,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33313,
+      "type": "QuestActConAcceptItem",
+      "detailId": 319,
+      "itemId": 28502
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23678,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33343,
+      "type": "QuestActSupplyExp",
+      "detailId": 744,
+      "exp": 1000
+     },
+     {
+      "actId": 33344,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1169,
+      "amount": 0
+     },
+     {
+      "actId": 33345,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 208,
+      "appellationId": 153
+     },
+     {
+      "actId": 33346,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1416
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28502,
+   "count": 1
+  }
+ ]
+}

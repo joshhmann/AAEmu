@@ -1,0 +1,81 @@
+{
+ "questId": 4688,
+ "name": "오랑우탄 우리를 살피다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1737
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20335,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27680,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 398,
+      "sphereId": 1737
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20337,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27681,
+      "type": "QuestActSupplyCopper",
+      "detailId": 692,
+      "amount": 0
+     },
+     {
+      "actId": 27683,
+      "type": "QuestActSupplyExp",
+      "detailId": 241,
+      "exp": 0
+     },
+     {
+      "actId": 27685,
+      "type": "QuestActConAutoComplete",
+      "detailId": 942
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

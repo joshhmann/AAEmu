@@ -14,7 +14,10 @@ public class SCCompletedQuestsPacket(CompletedQuest[] quests) : GamePacket(SCOff
             var body = new byte[8];
             quest.Body.CopyTo(body, 0);
 
-            stream.Write(quest.Id); // idx
+            // BUG-014: Id is uint server-side (block id = questId / 64 for quest
+            // ids >= 4,194,304); the 1.2 client wire format is a ushort block id,
+            // so cast at the boundary — the client wraps high block ids itself.
+            stream.Write((ushort)quest.Id); // idx
             stream.Write(body); // body
         }
         return stream;

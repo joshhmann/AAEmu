@@ -1,0 +1,116 @@
+{
+ "questId": 6076,
+ "name": "그대, 사랑으로 치유하라",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjAbilityLevel",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26143,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 26144,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35770,
+      "type": "QuestActObjAbilityLevel",
+      "detailId": 12,
+      "abilityId": 10,
+      "level": 50,
+      "useAlias": false,
+      "questActObjAliasId": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26145,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 26146,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35771,
+      "type": "QuestActSupplyItem",
+      "detailId": 4010,
+      "itemId": 30757,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "AbilityLevel",
+     "abilityId": 10,
+     "level": 50
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30757,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4823,
+ "name": "해적 소굴의 가로막힌 통로",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1871
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20799,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28443,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 509,
+      "sphereId": 1871
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20801,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28444,
+      "type": "QuestActSupplyCopper",
+      "detailId": 801,
+      "amount": 0
+     },
+     {
+      "actId": 28445,
+      "type": "QuestActSupplyExp",
+      "detailId": 361,
+      "exp": 0
+     },
+     {
+      "actId": 28447,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1064
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

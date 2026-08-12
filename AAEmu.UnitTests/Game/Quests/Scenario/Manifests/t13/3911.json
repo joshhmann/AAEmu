@@ -1,0 +1,91 @@
+{
+ "questId": 3911,
+ "name": "충실한 부하 산치카",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10442
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22129,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3116,
+      "npcId": 10442
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16724,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22130,
+      "type": "QuestActConReportNpc",
+      "detailId": 3346,
+      "npcId": 10441
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16725,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10441,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

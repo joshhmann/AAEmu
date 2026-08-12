@@ -44,6 +44,7 @@ public class CharacterPortals(Character owner)
                 //Owner.SendMessage("Default Portal deleted.");
             }
         }
+        Owner.MarkDirty();
     }
 
     public void NotifySubZone(uint subZoneId)
@@ -85,6 +86,7 @@ public class CharacterPortals(Character owner)
             Owner = Owner.Id
         };
         PrivatePortals.Add(newPortal.Id, newPortal);
+        Owner.MarkDirty();
         Owner.SendPacket(new SCCharacterPortalsPacket([newPortal]));
     }
 
@@ -93,6 +95,7 @@ public class CharacterPortals(Character owner)
         if (PrivatePortals.TryGetValue(id, out var privatePortal))
         {
             privatePortal.Name = name;
+            Owner.MarkDirty();
             Owner.SendPacket(new SCPortalInfoSavedPacket(privatePortal));
             return true;
         }

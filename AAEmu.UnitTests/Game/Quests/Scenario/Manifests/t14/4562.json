@@ -1,0 +1,81 @@
+{
+ "questId": 4562,
+ "name": "모래 먼지 마을의 숨겨진 다락방",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1657
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19863,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27071,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 336,
+      "sphereId": 1657
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19865,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27072,
+      "type": "QuestActSupplyCopper",
+      "detailId": 615,
+      "amount": 0
+     },
+     {
+      "actId": 27073,
+      "type": "QuestActSupplyExp",
+      "detailId": 175,
+      "exp": 0
+     },
+     {
+      "actId": 27075,
+      "type": "QuestActConAutoComplete",
+      "detailId": 881
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

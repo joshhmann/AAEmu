@@ -1,0 +1,121 @@
+{
+ "questId": 2994,
+ "name": "생존자를 찾아라",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1246
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13093,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18814,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2423,
+      "npcId": 1246
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13094,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30464,
+      "type": "QuestActObjInteraction",
+      "detailId": 639,
+      "doodadId": 5876,
+      "count": 3,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13095,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18816,
+      "type": "QuestActConReportNpc",
+      "detailId": 2654,
+      "npcId": 1254
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13096,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 5876,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1254,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

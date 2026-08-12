@@ -1,0 +1,81 @@
+{
+ "questId": 4673,
+ "name": "얼어붙은 군량 저장고의 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1722
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20290,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27611,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 382,
+      "sphereId": 1722
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20292,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27612,
+      "type": "QuestActSupplyCopper",
+      "detailId": 679,
+      "amount": 0
+     },
+     {
+      "actId": 27613,
+      "type": "QuestActSupplyExp",
+      "detailId": 226,
+      "exp": 0
+     },
+     {
+      "actId": 27615,
+      "type": "QuestActConAutoComplete",
+      "detailId": 929
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

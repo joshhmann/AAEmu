@@ -1,0 +1,125 @@
+{
+ "questId": 2310,
+ "name": "연기 속의 목소리",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1462
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12351,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18109,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2306,
+      "npcId": 1462
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12391,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18110,
+      "type": "QuestActObjItemGather",
+      "detailId": 1226,
+      "itemId": 17370,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12392,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28031,
+      "type": "QuestActConReportNpc",
+      "detailId": 4066,
+      "npcId": 1462
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12393,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 17370,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1462,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 17370,
+   "count": 5
+  }
+ ]
+}

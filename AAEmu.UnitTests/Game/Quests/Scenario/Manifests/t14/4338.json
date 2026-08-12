@@ -1,0 +1,148 @@
+{
+ "questId": 4338,
+ "name": "뼈 웅덩이",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1937
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18938,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25978,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3600,
+      "npcId": 1937
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18939,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25981,
+      "type": "QuestActObjItemGather",
+      "detailId": 2073,
+      "itemId": 24288,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18940,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25979,
+      "type": "QuestActConReportNpc",
+      "detailId": 3872,
+      "npcId": 1937
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19209,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 19210,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25980,
+      "type": "QuestActSupplyItem",
+      "detailId": 2809,
+      "itemId": 24289,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24288,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1937,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24288,
+   "count": 1
+  }
+ ]
+}

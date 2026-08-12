@@ -294,6 +294,7 @@ public class PlayerBotBehaviorController
         var angle = (float)MathUtil.CalculateAngleFrom(transform.World.Position, next);
         transform.Local.SetRotationDegree(0f, 0f, angle - 90);
         transform.Local.SetPosition(next);
+        Bot.Character.MarkDirty(); // position changed — persist on the next save cycle
     }
 
     #endregion

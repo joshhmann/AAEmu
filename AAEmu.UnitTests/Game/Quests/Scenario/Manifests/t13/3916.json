@@ -1,0 +1,125 @@
+{
+ "questId": 3916,
+ "name": "지혜로운 지혜 선물",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10493
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22580,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3224,
+      "npcId": 10493
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16749,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22600,
+      "type": "QuestActObjItemGather",
+      "detailId": 1702,
+      "itemId": 21544,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16750,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22581,
+      "type": "QuestActConReportNpc",
+      "detailId": 3459,
+      "npcId": 10493
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16751,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21544,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10493,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21544,
+   "count": 5
+  }
+ ]
+}

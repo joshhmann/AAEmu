@@ -1,0 +1,113 @@
+{
+ "questId": 6366,
+ "name": "든든한 지원군으로",
+ "zoneId": 217,
+ "categoryId": 106,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14852
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27257,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38546,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4752,
+      "npcId": 14852
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27259,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38552,
+      "type": "QuestActConReportNpc",
+      "detailId": 4983,
+      "npcId": 14693
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27265,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38797,
+      "type": "QuestActSupplyExp",
+      "detailId": 1332,
+      "exp": 500
+     },
+     {
+      "actId": 38798,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1644,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14693,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

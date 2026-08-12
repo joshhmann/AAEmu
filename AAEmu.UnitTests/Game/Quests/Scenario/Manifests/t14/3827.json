@@ -1,0 +1,91 @@
+{
+ "questId": 3827,
+ "name": "깨어난 제국의 대형 도끼",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 3721
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16070,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22531,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 917,
+      "npcId": 3721
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16073,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22752,
+      "type": "QuestActConReportNpc",
+      "detailId": 3498,
+      "npcId": 10093
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16074,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10093,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

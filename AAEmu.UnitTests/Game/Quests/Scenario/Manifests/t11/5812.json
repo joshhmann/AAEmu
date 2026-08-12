@@ -1,0 +1,194 @@
+{
+ "questId": 5812,
+ "name": "잘 자란 날렵한 갈색 곰 납품",
+ "zoneId": 1,
+ "categoryId": 87,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13454
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25119,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34545,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4430,
+      "npcId": 13454
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25120,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34549,
+      "type": "QuestActObjItemGather",
+      "detailId": 2846,
+      "itemId": 29767,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25121,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34546,
+      "type": "QuestActConReportNpc",
+      "detailId": 4706,
+      "npcId": 13453
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34550,
+      "type": "QuestActObjMateLevel",
+      "detailId": 9,
+      "itemId": 28420,
+      "level": 50,
+      "cleanup": true,
+      "useAlias": true,
+      "questActObjAliasId": 2567
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25127,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34552,
+      "type": "QuestActSupplyItem",
+      "detailId": 3912,
+      "itemId": 29769,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25398,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34708,
+      "type": "QuestActObjItemGather",
+      "detailId": 2851,
+      "itemId": 28481,
+      "count": 500
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29767,
+     "count": 1
+    },
+    {
+     "type": "MateLevel",
+     "itemId": 28420,
+     "level": 50
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 28481,
+     "count": 500
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13453,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29769,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29767,
+   "count": 1
+  },
+  {
+   "itemId": 28481,
+   "count": 500
+  }
+ ]
+}

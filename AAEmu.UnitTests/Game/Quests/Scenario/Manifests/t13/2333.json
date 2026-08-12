@@ -1,0 +1,119 @@
+{
+ "questId": 2333,
+ "name": "호박머리 처치",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1489
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12779,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18456,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2383,
+      "npcId": 1489
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12780,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18457,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 659,
+      "npcId": 8020,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12781,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18458,
+      "type": "QuestActConReportNpc",
+      "detailId": 2605,
+      "npcId": 1483
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12782,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8020,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1483,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

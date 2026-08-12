@@ -1,0 +1,148 @@
+{
+ "questId": 2341,
+ "name": "농장을 탈출하라!",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1403
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12342,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18170,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2323,
+      "npcId": 1403
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18171,
+      "type": "QuestActSupplyItem",
+      "detailId": 1829,
+      "itemId": 24558,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12447,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18168,
+      "type": "QuestActObjItemGather",
+      "detailId": 1234,
+      "itemId": 24558,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12448,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18167,
+      "type": "QuestActConReportNpc",
+      "detailId": 2544,
+      "npcId": 10839
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12449,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24558,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10839,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24558,
+   "count": 1
+  }
+ ]
+}

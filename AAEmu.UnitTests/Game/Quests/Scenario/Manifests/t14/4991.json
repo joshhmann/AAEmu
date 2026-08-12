@@ -1,0 +1,81 @@
+{
+ "questId": 4991,
+ "name": "떠나는 비행선을 배웅하는 곳",
+ "zoneId": 18,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2088
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21635,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30256,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 609,
+      "sphereId": 2088
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21636,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30252,
+      "type": "QuestActSupplyCopper",
+      "detailId": 907,
+      "amount": 0
+     },
+     {
+      "actId": 30253,
+      "type": "QuestActSupplyExp",
+      "detailId": 449,
+      "exp": 0
+     },
+     {
+      "actId": 30255,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1214
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

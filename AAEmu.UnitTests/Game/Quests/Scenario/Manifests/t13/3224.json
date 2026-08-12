@@ -1,0 +1,165 @@
+{
+ "questId": 3224,
+ "name": "뱀비늘 부족 처치",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2710
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13739,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19368,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 695,
+      "npcId": 2710
+     },
+     {
+      "actId": 19369,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 696,
+      "npcId": 2711
+     },
+     {
+      "actId": 19370,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 697,
+      "npcId": 2712
+     },
+     {
+      "actId": 19371,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 698,
+      "npcId": 2713
+     },
+     {
+      "actId": 19372,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 699,
+      "npcId": 2714
+     },
+     {
+      "actId": 19373,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 700,
+      "npcId": 2715
+     },
+     {
+      "actId": 19374,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 701,
+      "npcId": 2716
+     },
+     {
+      "actId": 19375,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 702,
+      "npcId": 2717
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13740,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19376,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 332,
+      "monsterGroupId": 275,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13741,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19377,
+      "type": "QuestActConReportJournal",
+      "detailId": 203
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13742,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19378,
+      "type": "QuestActSupplyCopper",
+      "detailId": 302,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 275,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

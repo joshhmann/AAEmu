@@ -1,0 +1,81 @@
+{
+ "questId": 4679,
+ "name": "폭포수의 뒤편",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1728
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20308,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27638,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 389,
+      "sphereId": 1728
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27639,
+      "type": "QuestActSupplyCopper",
+      "detailId": 684,
+      "amount": 0
+     },
+     {
+      "actId": 27640,
+      "type": "QuestActSupplyExp",
+      "detailId": 231,
+      "exp": 0
+     },
+     {
+      "actId": 27642,
+      "type": "QuestActConAutoComplete",
+      "detailId": 934
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

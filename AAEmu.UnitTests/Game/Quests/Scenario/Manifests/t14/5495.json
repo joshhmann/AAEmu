@@ -1,0 +1,140 @@
+{
+ "questId": 5495,
+ "name": "폼에 살고 폼에 죽는",
+ "zoneId": 1,
+ "categoryId": 48,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8701
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23746,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33555,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4242,
+      "npcId": 8701
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23747,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33422,
+      "type": "QuestActObjItemGather",
+      "detailId": 2711,
+      "itemId": 28521,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23748,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33423,
+      "type": "QuestActConReportNpc",
+      "detailId": 4533,
+      "npcId": 8701
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23749,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33424,
+      "type": "QuestActSupplyItem",
+      "detailId": 3789,
+      "itemId": 28556,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28521,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8701,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28556,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28521,
+   "count": 10
+  }
+ ]
+}

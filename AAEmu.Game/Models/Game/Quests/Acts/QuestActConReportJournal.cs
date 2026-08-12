@@ -20,16 +20,16 @@ public class QuestActConReportJournal(QuestComponentTemplate parentComponent) : 
         return questAct.OverrideObjectiveCompleted || true;
     }
 
-    public override void InitializeAction(Quest quest, QuestAct questAct)
+    public override void InitializeQuest(Quest quest, QuestAct questAct)
     {
-        base.InitializeQuest(quest, questAct);
+        base.InitializeAction(quest, questAct);
         quest.Owner.Events.OnReportJournal += questAct.OnReportJournal;
     }
 
-    public override void FinalizeAction(Quest quest, QuestAct questAct)
+    public override void FinalizeQuest(Quest quest, QuestAct questAct)
     {
         quest.Owner.Events.OnReportJournal -= questAct.OnReportJournal;
-        base.FinalizeQuest(quest, questAct);
+        base.FinalizeAction(quest, questAct);
     }
 
     public override void OnReportJournal(QuestAct questAct, object sender, OnReportJournalArgs args)

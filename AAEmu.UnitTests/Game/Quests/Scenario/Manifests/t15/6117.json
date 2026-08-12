@@ -1,0 +1,132 @@
+{
+ "questId": 6117,
+ "name": "[2층]날카로운 가시 포자",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14499
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26292,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36136,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4652,
+      "npcId": 14499
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26293,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36138,
+      "type": "QuestActObjItemGather",
+      "detailId": 2891,
+      "itemId": 30871,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26456,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36140,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1665
+     },
+     {
+      "actId": 36834,
+      "type": "QuestActSupplyItem",
+      "detailId": 4065,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37952,
+      "type": "QuestActSupplyExp",
+      "detailId": 1193,
+      "exp": 140000
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30871,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30871,
+   "count": 20
+  }
+ ]
+}

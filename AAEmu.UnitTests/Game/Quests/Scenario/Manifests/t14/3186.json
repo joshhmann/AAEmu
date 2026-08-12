@@ -1,0 +1,119 @@
+{
+ "questId": 3186,
+ "name": "불길한 늑대",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8882
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13381,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29983,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3911,
+      "npcId": 8882
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13382,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19620,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 711,
+      "npcId": 1009,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13383,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19168,
+      "type": "QuestActConReportNpc",
+      "detailId": 2762,
+      "npcId": 8882
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13384,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1009,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8882,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

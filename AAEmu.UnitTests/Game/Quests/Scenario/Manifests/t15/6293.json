@@ -1,0 +1,135 @@
+{
+ "questId": 6293,
+ "name": "암흑이 깃든 꽃 퇴치",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14388
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26957,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37567,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1256,
+      "npcId": 14388
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26958,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37568,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1222,
+      "npcId": 14388,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26959,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37569,
+      "type": "QuestActConReportJournal",
+      "detailId": 488
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26963,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37570,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 465,
+      "questContextId": 6294
+     },
+     {
+      "actId": 37571,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1498,
+      "amount": 0
+     },
+     {
+      "actId": 38040,
+      "type": "QuestActSupplyExp",
+      "detailId": 1255,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14388,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

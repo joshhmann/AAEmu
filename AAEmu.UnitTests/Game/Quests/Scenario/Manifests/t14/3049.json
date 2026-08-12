@@ -1,0 +1,91 @@
+{
+ "questId": 3049,
+ "name": "하리하란의 정체",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 978
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19024,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2480,
+      "npcId": 978
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13208,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19025,
+      "type": "QuestActConReportNpc",
+      "detailId": 2712,
+      "npcId": 993
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13209,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 993,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

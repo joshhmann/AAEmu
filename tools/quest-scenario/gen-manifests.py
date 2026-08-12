@@ -44,6 +44,7 @@ Quests whose shapes the harness cannot synthesize are emitted with a "skip"
 block (broken refs, unsupported act types) - reported, never faked.
 """
 import json
+import math
 import os
 import sqlite3
 import sys
@@ -131,6 +132,46 @@ ACT_TABLES = {
     # wave-2) - without this entry the dailies stay SKIP after the ZoneKill
     # closure.
     "QuestActSupplyLivingPoint": ("quest_act_supply_living_points", {"point": "point"}),
+    # M2 WI-2 (t_f42b9ae3): CrimePoint supply act (7 live carriers:
+    # 2916/2926/2935/2936/5197/5198/5494). Same shape as the JuryPoint/LivingPoint
+    # closures - point-only detail table, RunAct->true.
+    "QuestActSupplyCrimePoint": ("quest_act_supply_crime_points", {"point": "point"}),
+    # M2 WI-3 (t_d5e802f5): AbilityLevel objective act (11 live carriers:
+    # 5967 all-abilities + 6069/6070/6075-6082 single-ability, all level 50).
+    # State-check objective: RunAct reads owner.Abilities exp (no event
+    # subscription) - the driver's AbilityLevel event presees the exp.
+    "QuestActObjAbilityLevel": ("quest_act_obj_ability_levels", {
+        "abilityId": "ability_id",
+        "level": "LEVEL",
+        "useAlias": "use_alias",
+        "questActObjAliasId": "quest_act_obj_alias_id",
+    }),
+    # M2 WI-4 (t_fe93e2d8): MateLevel objective act (7 carriers: 5430/5464/
+    # 5465/5466/5812/5813 live + 6015 orphaned context, all level 50,
+    # cleanup='t'). State-check objective: RunAct -> CalculateObjective scans
+    # the owner's inventory for a SummonMate item with the act's ItemId whose
+    # DetailLevel >= Level (QuestActObjMateLevel.cs:22-58) - the driver's
+    # MateLevel event presees the summoned mate (cleanup acts consume it when
+    # the objective is met).
+    "QuestActObjMateLevel": ("quest_act_obj_mate_levels", {
+        "itemId": "item_id",
+        "level": "LEVEL",
+        "cleanup": "cleanup",
+        "useAlias": "use_alias",
+        "questActObjAliasId": "quest_act_obj_alias_id",
+    }),
+    # M2 WI-5 (t_d6516324): CompleteQuest objective act (11 live carriers:
+    # 5814-5821/5862/5868/5911, all level 50). State-check objective: RunAct
+    # checks quest.Owner.Quests.HasQuestCompleted(QuestId)
+    # (QuestActObjCompleteQuest.cs:26) - the driver's CompleteQuest event
+    # pre-marks the referenced quest as completed (SetCompletedQuestFlag,
+    # synthetic-block pattern) so the state check counts at Progress.
+    "QuestActObjCompleteQuest": ("quest_act_obj_complete_quests", {
+        "questId": "quest_id",
+        "acceptWith": "accept_with",
+        "useAlias": "use_alias",
+        "questActObjAliasId": "quest_act_obj_alias_id",
+    }),
 }
 
 # Act types that need no synthetic event but whose RunAct is drivable by quest state.
@@ -148,6 +189,9 @@ NO_EVENT_TYPES = {
     "QuestActSupplyHonorPoint",
     # M2c wave-3: supply acts RunAct->true (ChangeGamePoints), zero-wired domain.
     "QuestActSupplyLivingPoint",
+    # M2 WI-2 (t_f42b9ae3): CrimePoint supply act - RunAct->true (AddCrime),
+    # no synthetic event (mirrors JuryPoint/LivingPoint).
+    "QuestActSupplyCrimePoint",
 }
 
 # Act types -> synthetic event shape builder. Returns None when the shape is
@@ -203,6 +247,30 @@ def event_shape(act_type, params, component_id, group_members, npc_groups=None, 
         return {"type": "Craft", "craftId": params.get("craftId", 0), "count": params.get("count", 1)}
     if act_type == "QuestActObjLevel":
         return {"type": "LevelUp"}
+    if act_type == "QuestActObjAbilityLevel":
+        # M2 WI-3 (t_d5e802f5): state-check objective - RunAct reads ability
+        # exp (no event subscription). The event's job is the RIG: the driver
+        # presees ability exp so the state check counts at the Progress
+        # stage. abilityId 0 = the all-abilities branch (every ability
+        # 1..10 must meet the level; the driver saturates all of them).
+        return {"type": "AbilityLevel", "abilityId": params.get("abilityId", 0), "level": params.get("level", 0)}
+    if act_type == "QuestActObjMateLevel":
+        # M2 WI-4 (t_fe93e2d8): state-check objective - RunAct ->
+        # CalculateObjective scans the owner's inventory for a SummonMate
+        # item with the act's ItemId whose DetailLevel >= Level. The event's
+        # job is the RIG: the driver presees the summoned mate so the state
+        # check counts at the Progress stage (cleanup acts consume it when
+        # the objective is met).
+        return {"type": "MateLevel", "itemId": params.get("itemId", 0), "level": params.get("level", 0)}
+    if act_type == "QuestActObjCompleteQuest":
+        # M2 WI-5 (t_d6516324): state-check objective - RunAct checks
+        # HasQuestCompleted(QuestId) (QuestActObjCompleteQuest.cs:26). The
+        # event's job is the RIG: the driver pre-marks the referenced quest
+        # as completed (SetCompletedQuestFlag, synthetic-block pattern) so
+        # the state check counts at the Progress stage. AcceptWith is
+        # unused by the engine today (TODO in the act) - the questId alone
+        # drives the objective.
+        return {"type": "CompleteQuest", "questId": params.get("questId", 0)}
     if act_type == "QuestActObjCinema":
         # M2a wave-1: two-event drive. QuestActObjCinema.OnCinemaStarted sets
         # player.CurrentlyPlayingCinemaId = CinemaId; OnCinemaEnded credits the
@@ -282,6 +350,10 @@ def load_npc_groups(c):
 # Act types whose detail-table NUM columns hold 't'/'f' text (never bool() them).
 BOOL_COLUMNS = {
     "QuestActObjAggro": {"rank1Item", "rank2Item", "rank3Item", "useAlias"},
+    "QuestActObjAbilityLevel": {"useAlias"},
+    "QuestActObjMateLevel": {"cleanup", "useAlias"},
+    # M2 WI-5 (t_d6516324): acceptWith/useAlias are 't'/'f' text.
+    "QuestActObjCompleteQuest": {"acceptWith", "useAlias"},
 }
 
 
@@ -321,17 +393,32 @@ def load_quest_acts(c, quest_id):
 
 
 def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
-    ctx = c.execute("SELECT id, name, category_id, LEVEL, zone_id, let_it_done, selective, score FROM quest_contexts WHERE id = ?",
+    ctx = c.execute("SELECT id, name, category_id, LEVEL, zone_id, let_it_done, selective, score, detail_id, REPEATABLE FROM quest_contexts WHERE id = ?",
                     (quest_id,)).fetchone()
     if ctx is None:
         return {"questId": quest_id, "name": "", "family": family,
                 "skip": {"reason": "orphaned context (no quest_contexts row)"}}
-    qid, name, category_id, level, zone_id, let_it_done, selective, score = ctx
+    qid, name, category_id, level, zone_id, let_it_done, selective, score, detail_id, repeatable_raw = ctx
     # Stage-model v4 (RC-1): the raw sqlite cells are 't'/'f' strings - bool('f')
     # is True in Python. Parse once here so EVERY use (kind_is_auto included) sees
     # the real value; the manifest fields were already parse_bool'd (14c78c94).
     let_it_done = parse_bool(let_it_done)
     selective = parse_bool(selective)
+    # WI-10 (t_abafd918): REPEATABLE is 't'/'f' text like the other bools; the
+    # manifest's template.repeatable drives the engine's re-accept gate.
+    repeatable = parse_bool(repeatable_raw)
+    # WI-8 (t_fc85a317): score can be NULL in sqlite (quest 3806 is the only
+    # one in the corpus) - the engine reads GetInt32("score", 0)
+    # (QuestManager.cs:578), so NULL == 0. Never pass None downstream.
+    if score is None:
+        score = 0
+    # WI-11b (t_8ec705f0): LEVEL can be NULL (quest 1576 is the only one in
+    # the corpus) - the engine reads GetByte("level", 0)
+    # (QuestManager.cs:565), so NULL == 0. A null in the manifest's
+    # template.level crashes the C# byte deserializer (JsonException), so
+    # normalize exactly like the engine.
+    if level is None:
+        level = 0
 
     comps = c.execute("SELECT id, component_kind_id, next_component FROM quest_components WHERE quest_context_id = ? ORDER BY id",
                       (quest_id,)).fetchall()
@@ -404,6 +491,8 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
     components = []
     skip_reasons = []
     has_timer_or_fail = False
+    has_check_timer = False  # WI-10: TIMEOUT fidelity stage (fire OnTimerExpired)
+    guard_kind = None  # WI-10: kind of the component holding the FIRST CheckGuard act
     guard_npc_ids = []  # RC-3: from ALL components' QuestActCheckGuard acts, deduped
 
     for cid, kind, nxt in comps:
@@ -418,6 +507,7 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
             has_timer_or_fail = True
         if act_type_in(comp_acts, "QuestActCheckTimer"):
             has_timer_or_fail = True
+            has_check_timer = True
         # RC-3: a QuestActCheckGuard in ANY component needs its NPC spawned -
         # QuestActCheckGuard.RunAct returns false when the guard is unresolvable
         # (CheckGuard.cs:26-33), so a guard in a non-Start component could never
@@ -427,13 +517,18 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
                 npc_id = act.get("npcId")
                 if npc_id and npc_id not in guard_npc_ids:
                     guard_npc_ids.append(npc_id)
+                # WI-10: the GUARD_DIED probe asserts the stall at the FIRST
+                # guard-checking kind in component order (with all guards dead,
+                # every kind before it passes, so the quest rests exactly there).
+                if guard_kind is None:
+                    guard_kind = kind_name
 
         # Drop-only act shapes: any act whose event shape is None and is not a
         # NO_EVENT type means this quest cannot be driven -> skip.
         for act in comp_acts:
             if act["type"] not in NO_EVENT_TYPES and act["type"] not in ACT_TABLES:
                 continue
-            if act["type"] in NO_EVENT_TYPES or act["type"] in ("QuestActObjSphere", "QuestActObjMonsterGroupHunt", "QuestActObjItemGroupUse", "QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal", "QuestActObjMonsterHunt", "QuestActObjItemGather", "QuestActObjItemUse", "QuestActObjTalk", "QuestActObjInteraction", "QuestActObjCraft", "QuestActObjLevel", "QuestActObjItemGroupGather"):
+            if act["type"] in NO_EVENT_TYPES or act["type"] in ("QuestActObjSphere", "QuestActObjMonsterGroupHunt", "QuestActObjItemGroupUse", "QuestActConReportNpc", "QuestActConReportDoodad", "QuestActConReportJournal", "QuestActObjMonsterHunt", "QuestActObjItemGather", "QuestActObjItemUse", "QuestActObjTalk", "QuestActObjInteraction", "QuestActObjCraft", "QuestActObjLevel", "QuestActObjAbilityLevel", "QuestActObjMateLevel", "QuestActObjCompleteQuest", "QuestActObjItemGroupGather"):
                 continue
             if event_shape(act["type"], act, cid, item_groups, npc_groups, acceptor_npc_id) is None:
                 skip_reasons.append(f"unsynthesizable event shape for {act['type']}")
@@ -470,6 +565,9 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         # rig satisfies the condition; cinema needs events and is NOT here).
         "QuestActEtcItemObtain", "QuestActConAcceptItemGain", "QuestActSupplyLp",
         "QuestActSupplyHonorPoint",
+        # M2 WI-2 (t_f42b9ae3): CrimePoint supply act - auto-pass like the other
+        # point-supply acts.
+        "QuestActSupplyCrimePoint",
     }
 
     # Act types that pass without events because the generator pre-stocks the inventory
@@ -487,9 +585,50 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         "QuestActObjZoneKill", "QuestActObjExpressFire",
         # M2a wave-1: QuestActObjCinema overrides CountsAsAnObjective => true.
         "QuestActObjCinema", "QuestActObjAggro",
+        # M2 WI-3 (t_d5e802f5): ability-level objective - CountsAsAnObjective
+        # => true (QuestActObjAbilityLevel.cs:9); credited via the rig preseed.
+        "QuestActObjAbilityLevel",
+        # M2 WI-4 (t_fe93e2d8): mate-level objective - CountsAsAnObjective
+        # => true (QuestActObjMateLevel.cs:10); credited via the rig preseed
+        # (SummonMate in inventory at DetailLevel >= Level).
+        "QuestActObjMateLevel",
+        # M2 WI-5 (t_d6516324): complete-quest objective - CountsAsAnObjective
+        # => true (QuestActObjCompleteQuest.cs:7); credited via the rig preseed
+        # (referenced quest pre-marked completed).
+        "QuestActObjCompleteQuest",
     }
 
     present = [k for k in kind_order if any(comp["kind"] == k for comp in components)]
+
+    # WI-8 (t_fc85a317): score-quest event scaling. The engine's score branch
+    # (QuestStep.RunComponents, Score>0) passes when score >= Template.Score,
+    # score = Σ Count×Objective over objective acts. MaxObjective() =
+    # Score/Count+1 (ltd: ceil(×1.5)) shows the data intends objectives to
+    # EXCEED the displayed count (each kill is worth Count score points).
+    # Fire the first event-credited objective act enough times to close the
+    # deficit, so the engine can actually reach the score target instead of
+    # stalling at Progress (7 band-41-50 quests: 3076/3089/3625/4343/5062/
+    # 5063/5064 - e.g. 3076 score=100 with 5×5+3×3=34 credited).
+    scaled_events = {}
+    if score > 0:
+        s_now = sum((a.get("count", 1) ** 2) for comp in components
+                    if comp["kind"] == "Progress"
+                    for a in comp["acts"] if a["type"] in OBJECTIVE_TYPES)
+        if s_now < score:
+            deficit = score - s_now
+            for comp in components:
+                if comp["kind"] != "Progress":
+                    continue
+                for a in comp["acts"]:
+                    if a["type"] not in OBJECTIVE_TYPES or a["type"] in HYDRATED_TYPES:
+                        continue  # event acts only; hydrated acts credit from preseed
+                    base = a.get("count", 1)
+                    if base <= 0:
+                        continue
+                    scaled_events[a["actId"]] = base + math.ceil(deficit / base)
+                    break
+                if scaled_events:
+                    break
 
     events_by_kind = {}
     reward_items = []
@@ -500,7 +639,11 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
                 continue
             if act["type"] in NO_EVENT_TYPES:
                 continue
-            shape = event_shape(act["type"], act, comp["id"], item_groups, npc_groups, acceptor_npc_id)
+            shape_act = act
+            if act["actId"] in scaled_events:
+                shape_act = dict(act)
+                shape_act["count"] = scaled_events[act["actId"]]
+            shape = event_shape(act["type"], shape_act, comp["id"], item_groups, npc_groups, acceptor_npc_id)
             if shape is not None:
                 # Multi-event shapes (e.g. cinema started->ended) come as lists.
                 shapes = shape if isinstance(shape, list) else [shape]
@@ -544,12 +687,16 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         """Mimics the engine's Progress+Score>0 branch (QuestStep.RunComponents):
         res = score >= Template.Score where score = sum(Count * Objective) over
         objective acts; hydrated gather objectives carry their full count from
-        accept time."""
+        accept time. WI-8: score quests fire scaled event counts (scaled_events)
+        so the credited objective can exceed the displayed count (the engine's
+        MaxObjective = Score/Count+1 proves the data intends that)."""
+        def credited(a):
+            if not (events_credited or a["type"] in HYDRATED_TYPES):
+                return 0
+            return scaled_events.get(a["actId"], a.get("count", 1))
         acts = [a for comp in components if comp["kind"] == "Progress" for a in comp["acts"]]
         obj_acts = [a for a in acts if a["type"] in OBJECTIVE_TYPES]
-        s = sum(a.get("count", 1) * (a.get("count", 1)
-                                     if (events_credited or a["type"] in HYDRATED_TYPES) else 0)
-                for a in obj_acts)
+        s = sum(a.get("count", 1) * credited(a) for a in obj_acts)
         return s >= score
 
     def kind_is_auto(kind_name):
@@ -567,6 +714,14 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
             # engine: Progress + Score>0 -> res = score >= Score; hydrated
             # gather objectives credit at accept, event acts credit later
             return progress_score_met(False)
+        if kind_name in ("Start", "Ready"):
+            # Engine ORs Start/Ready acts (QuestComponent.RunComponent:
+            # actsOrCheck = ThisStep is Start or Ready && Acts.Count > 0) -
+            # ANY always-true act (e.g. SupplyRemoveItem) passes the step.
+            # WI-8: 5174/5722 have Ready = ReportNpc + SupplyRemoveItem; the
+            # supply act returns true unconditionally, so the engine advances
+            # past Ready WITHOUT the report event (probe: START -> Reward).
+            return any(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
         if selective:
             # Selective quests pass the Progress step when ANY active component passes
             return any(a["type"] in AUTO_PASS_TYPES or a["type"] in HYDRATED_TYPES for a in acts)
@@ -691,6 +846,70 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
             if stage["name"] == "PERSIST":
                 stage["expect"]["failPathWired"] = True
 
+    # ---- WI-10 fidelity probe stages (t_abafd918) ----
+    # Appended AFTER PERSIST: each probe drives a REAL engine path on a fresh
+    # probe quest (or the main-run character) and asserts its outcome without
+    # disturbing the main lifecycle or the persist snapshot.
+    # TIMEOUT: the quest carries a QuestActCheckTimer act - the driver fires
+    # the timeout task's exact body (QuestManager.OnTimerExpired) on a fresh
+    # probe and asserts the quest FAILS (step Fail). The timer is only LIVE at
+    # probe-accept when the quest's rest position (first present kind after
+    # Start - one GoToNextStep walk) is NOT an end-state kind (stepping into
+    # Ready/Drop/Reward removes the timer, QuestActCheckTimer.
+    # OnQuestStepChanged) AND the CheckTimer component's kind was actually
+    # entered during the walk (InitializeStep registers the timer).
+    # Engine-grounded skips: 6108/6131/6154/6162/6163/6164 rest at Ready (timer
+    # already removed); 1897's CheckTimer sits in Progress but the probe walk
+    # stops at Supply (comp never entered - no timer to expire).
+    if has_check_timer:
+        ck_walk = ("Start", "None", "Supply", "Progress", "Ready", "Reward")
+        probe_first = next((k for k in ("None", "Supply", "Progress", "Ready", "Reward") if k in present), None)
+        ck_kind = next((c["kind"] for c in components
+                        if any(a["type"] == "QuestActCheckTimer" for a in c["acts"])), None)
+        if (probe_first not in (None, "Ready", "Reward") and ck_kind in ck_walk
+                and ck_walk.index(ck_kind) <= ck_walk.index(probe_first)):
+            stages.append({"name": "TIMEOUT", "events": [], "expect": {"step": "Fail"}})
+    # RESET: daily (detail Daily 7 / DailyHunt 10 / DailyLivelihood 11 /
+    # DailyGroup 12 - the exact set ResetDailyQuests clears, CharacterQuests.cs:
+    # 637-645) or repeatable (REPEATABLE='t') quests - the driver clears the
+    # completed state via the engine's ResetDailyQuests (non-repeatable only)
+    # and re-accepts through the engine's AddQuest (QuestDailyLimit gate).
+    is_daily = detail_id in (7, 10, 11, 12)
+    if is_daily or repeatable:
+        stages.append({"name": "RESET", "events": [], "expect": {"reAccepted": True}})
+    # GUARD_DIED: the quest carries a QuestActCheckGuard act - the driver builds
+    # a probe with the rigged guards killed (Hp 0 -> IsDead) so RunAct returns
+    # false per BUG-008 and the quest stalls at the first guard-checking kind.
+    # The probe can only demonstrate the stall when the walk can REACH the
+    # guard kind without events: for a Start-comp guard, Start/Ready steps OR
+    # their acts (QuestComponent.RunComponent actsOrCheck) - a dead guard only
+    # blocks when EVERY act in the Start comp is a CheckGuard (any always-true
+    # sibling, e.g. CheckTimer/ConAcceptNpc, carries the step); for later
+    # kinds, every present kind before it must be auto-pass (else the probe
+    # stalls earlier on an uncredited objective). Engine-grounded skip: 1313
+    # (Start comp = ConAcceptNpc+CheckGuard+CheckTimer - OR semantics carry it).
+    if guard_kind is not None:
+        guard_ok = False
+        if guard_kind == "Start":
+            start_acts = [a for c in components if c["kind"] == "Start" for a in c["acts"]]
+            guard_ok = bool(start_acts) and all(a["type"] == "QuestActCheckGuard" for a in start_acts)
+        else:
+            g_walk = ("Start", "None", "Supply", "Progress", "Ready", "Reward")
+            if guard_kind in g_walk:
+                g_idx = g_walk.index(guard_kind)
+                guard_ok = all(k not in present or kind_is_auto(k) for k in g_walk[1:g_idx])
+        if guard_ok:
+            stages.append({"name": "GUARD_DIED", "events": [],
+                           "expect": {"step": guard_kind, "guardBlocked": True}})
+
+    # WI-10 (t_abafd918): detailId + repeatable ride the template shape so the
+    # driver's BuildTemplate wires them onto the QuestTemplate (the engine's
+    # ResetDailyQuests + AddQuest re-accept gate read them). Emitted ONLY for
+    # the RESET family so non-family manifests stay byte-identical.
+    template_parts = {"level": level, "components": components}
+    if is_daily or repeatable:
+        template_parts.update({"detailId": detail_id, "repeatable": repeatable})
+
     manifest = {
         "questId": qid,
         "name": (name or "").strip(),
@@ -702,7 +921,7 @@ def build_manifest(c, quest_id, family, item_groups, npc_groups=None):
         "score": score,
         "family": family,
         "acceptor": acceptor,
-        "template": {"level": level, "components": components},
+        "template": template_parts,
         "stages": stages,
         "selectedRewardIndex": 1 if any(
             a["type"] == "QuestActSupplySelectiveItem" for comp in components for a in comp["acts"]) else 0,
@@ -763,7 +982,7 @@ T3_PINNED_QUESTS = [
     1998, 2008, 2017, 2102, 2108, 2301, 2717, 2916, 2926, 3006, 3026, 3569,
     3570, 4419, 4433, 4434, 4784, 4788, 4881, 5052, 5263, 5430, 5442, 5443,
     5464, 5552, 5650, 5814, 5815, 5900, 5923, 5924, 5967, 6003, 6037, 6040,
-    6069, 6095, 6250, 6282, 6375,
+    6095, 6250, 6282, 6375,
 ]
 
 # ---- T4 (M2a wave-1): band 1-20 quests carrying the four closed act families ----
@@ -818,14 +1037,169 @@ def select_t5_quests(c, existing_ids):
     return [r[0] for r in rows if r[0] not in existing_ids]
 
 
-# ---- T6/T7/T8 (M2a/M2c census): full band sweeps ----
+# ---- T9 (M2 WI-2, t_f42b9ae3): CrimePoint supply act carriers ----
+# All 7 live carriers (2916/2926/2935/2936/5197/5198/5494). 2916/2926 are
+# already sampled in T3 (T3_PINNED_QUESTS); the other five are level 41-50,
+# outside the t6/t7/t8 band sweeps - they need their own tier or they never
+# reach the census. No level filter: the family's carriers are all high-level.
+WAVE3_ACT_TYPES = (
+    "QuestActSupplyCrimePoint",
+)
+
+
+def select_t9_quests(c, existing_ids):
+    """All CrimePoint act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE3_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        WHERE a.act_detail_type IN ({placeholders})
+        ORDER BY cmp.quest_context_id""", WAVE3_ACT_TYPES).fetchall()
+    # Dropped quests stay out of every tier (same rule as select_band_quests).
+    return [r[0] for r in rows if r[0] not in DROPPED_QUESTS and r[0] not in existing_ids]
+
+
+# ---- T10 (M2 WI-3, t_d5e802f5): AbilityLevel objective act carriers ----
+# All 11 live carriers. 5967 (all-abilities branch) is already sampled in T3
+# (T3_PINNED_QUESTS); 6069 was DROPPED 2026-08-09 (register §8, t_6810ebd4 -
+# unreachable ltd, zero accept surfaces); the other nine (6070/6075-6082,
+# single-ability, all level 50) are outside the t6/t7/t8 band sweeps - they
+# need their own tier or they never reach the census (same rule as t9 for
+# CrimePoint).
+WAVE4_ACT_TYPES = (
+    "QuestActObjAbilityLevel",
+)
+
+
+def select_t10_quests(c, existing_ids):
+    """All AbilityLevel act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE4_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        WHERE a.act_detail_type IN ({placeholders})
+        ORDER BY cmp.quest_context_id""", WAVE4_ACT_TYPES).fetchall()
+    # Dropped quests stay out of every tier (same rule as select_band_quests).
+    # Required for the 6069 drop: it is still a live DB row (the overlay is
+    # deploy-time), so without this filter t10 would re-sample it after the
+    # stale t3 manifest is gone.
+    return [r[0] for r in rows if r[0] not in DROPPED_QUESTS and r[0] not in existing_ids]
+
+
+# ---- T11 (M2 WI-4, t_fe93e2d8): MateLevel objective act carriers ----
+# 6 live carriers: 5430/5464 (already in T3_PINNED_QUESTS) + 5465/5466/5812/
+# 5813 (level 50, outside the t6/t7/t8 band sweeps - they need their own
+# tier or they never reach the census, same rule as t9/t10). 6015 also has a
+# MateLevel act but NO quest_contexts row (orphaned context) - joining
+# quest_contexts excludes it so the census does not gain a NEW orphan SKIP
+# (zero-new-SKIP acceptance).
+WAVE5_ACT_TYPES = (
+    "QuestActObjMateLevel",
+)
+
+
+def select_t11_quests(c, existing_ids):
+    """All LIVE MateLevel act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE5_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        JOIN quest_contexts q ON q.id = cmp.quest_context_id
+        WHERE a.act_detail_type IN ({placeholders})
+        ORDER BY cmp.quest_context_id""", WAVE5_ACT_TYPES).fetchall()
+    return [r[0] for r in rows if r[0] not in existing_ids]
+
+
+# ---- T12 (M2 WI-5, t_d6516324): CompleteQuest objective act carriers ----
+# 11 live carriers: 5814/5815 (already in T3_PINNED_QUESTS) + 5816-5821/5862/
+# 5868/5911 (level 50, outside the t6/t7/t8 band sweeps - they need their own
+# tier or they never reach the census, same rule as t9/t10/t11). The selector
+# joins quest_contexts so orphaned CompleteQuest act rows can't leak a new
+# orphan SKIP into the census (zero-new-SKIP acceptance).
+WAVE6_ACT_TYPES = (
+    "QuestActObjCompleteQuest",
+)
+
+
+def select_t12_quests(c, existing_ids):
+    """All LIVE CompleteQuest act carriers, not already sampled, ordered by id."""
+    placeholders = ",".join("?" * len(WAVE6_ACT_TYPES))
+    rows = c.execute(f"""
+        SELECT DISTINCT cmp.quest_context_id
+        FROM quest_acts a
+        JOIN quest_components cmp ON a.quest_component_id = cmp.id
+        JOIN quest_contexts q ON q.id = cmp.quest_context_id
+        WHERE a.act_detail_type IN ({placeholders})
+        ORDER BY cmp.quest_context_id""", WAVE6_ACT_TYPES).fetchall()
+    return [r[0] for r in rows if r[0] not in existing_ids]
+
+
+# ---- T6/T7/T8/T13 (M2a/M2c/WI-7 census): full band sweeps ----
 # Every non-dropped quest in the band, minus quests already sampled in
-# T1-T5 (each quest driven exactly once across the census).
+# T1-T5/T9-T12 (each quest driven exactly once across the census).
 BAND_TIERS = [
     ("t6", "band 1-10", 1, 10),
     ("t7", "band 11-20", 11, 20),
     ("t8", "band 21-30", 21, 30),
+    ("t13", "band 31-40", 31, 40),
+    ("t14", "band 41-50", 41, 50),
+    ("t15", "band 51-55", 51, 55),
 ]
+
+# ---- Stragglers (WI-9, t_867af9e4): quests above the top band ----
+# LEVEL > 55 contexts sit outside every banded tier (lvl-99 quest 3465 is
+# the only live one). They ride the t15 tier alongside band 51-55 so the
+# acceptance table can hold a dedicated row per straggler (the band table
+# keys parse as lo-hi, so stragglers get their own census-meta key instead).
+STRAGGLER_MIN_LEVEL = 56  # one past the top band's hi
+
+
+def select_stragglers(c, existing_ids):
+    """Live quest_contexts with LEVEL >= STRAGGLER_MIN_LEVEL, minus dropped +
+    already-sampled, ordered by id. Returns (quest_id, level) pairs."""
+    rows = c.execute(
+        "SELECT id, LEVEL FROM quest_contexts WHERE LEVEL >= ? ORDER BY id",
+        (STRAGGLER_MIN_LEVEL,)).fetchall()
+    return [(qid, lvl) for qid, lvl in rows
+            if qid not in DROPPED_QUESTS and qid not in existing_ids]
+
+
+# ---- Band 0/null (WI-11b, t_8ec705f0): LEVEL 0/NULL contexts - the deferred
+# sweep population (wi-11a-band0-null-triage.md §8 handoff, corrected
+# post-ruling: D1 folded into the Q3 drop). 56 sweep contexts split into the
+# triage classes D2 (old Sunny Wilderness) / D3 (tutorial sphere steps) / D4
+# (real content, MUST NOT drop) / D5 (test/dummy) PLUS the 4 A2 unit-req/
+# dummy specials kept by Josh's Q2 NO-GO ruling (315/1576/1728/2046 - they
+# are live, non-dropped band-0 contexts with zero components, so the G1 gate
+# wants them PASS-or-doc-SKIP too; the triage doc §3 A2 documents them).
+# 6250 (D4) is already sampled in T3 (T3_PINNED_QUESTS, PASS) - it stays out
+# of t16 so each quest is driven exactly once; its t3 verdict reconciles the
+# D4 acceptance row.
+BAND_ZERO_TIER = "t16"
+BAND_ZERO_GROUPS = [
+    {"cls": "D2", "label": "old Sunny Wilderness (구 불볕황야) - superseded pre-1.2 line",
+     "questIds": [1883, 1884, 1886, 1887, 1912, 1913, 1914, 1915, 1916, 1917, 1918, 1919, 1922]},
+    {"cls": "D3", "label": "tutorial sphere steps (cat 45)",
+     "questIds": [2585, 2587, 2588, 2607, 2608, 2610, 2611, 2613, 2615, 2617, 2618, 2619]},
+    {"cls": "D4", "label": "real content - must NOT be dropped",
+     "questIds": [1394, 1397, 1401, 1402, 1404, 1485, 5307, 5308, 5313, 5314, 5459, 5698, 5699,
+                  5999, 6222, 6223, 6229, 6250, 6251, 6314, 6355, 8000004]},
+    {"cls": "D5", "label": "test/dummy-named (cat 1/12/45/50)",
+     "questIds": [1097, 1101, 1128, 1132, 1148, 1204, 2971, 4897, 5649]},
+    {"cls": "A2", "label": "unit-req/dummy specials - kept by Q2 NO-GO ruling (zero components)",
+     "questIds": [315, 1576, 1728, 2046]},
+]
+
+
+def select_t16_quests(c, existing_ids):
+    """Band 0/null sweep: the WI-11b handoff population (56) + the A2 keeps
+    (4), minus dropped + already-sampled (6250 rides T3), ordered by id."""
+    qids = sorted({q for g in BAND_ZERO_GROUPS for q in g["questIds"]})
+    return [q for q in qids if q not in DROPPED_QUESTS and q not in existing_ids]
+
 
 # Dropped content (scorecard-explorations/dropped-content-register.md):
 # dummy shell 1391 + 23 no-start tutorial shells + 8 orphaned contexts
@@ -849,6 +1223,20 @@ DROPPED_QUESTS = {
     # --- M2a drop cluster B (91 zero-component shells) ---
     *range(2148, 2230),  # 2148-2229 reserve block
     3748, *range(3750, 3758),  # Hadir-farm cutscenes
+    # --- WI-6 drop (2026-08-09, register §8, t_6810ebd4): 6069 unreachable ltd ---
+    # quest (zero accept surfaces, no completion path) - rows deleted by
+    # SQL/patches/compact/2026-08-09-drop-wi6-6069.sql.
+    6069,
+    # --- WI-11a drop (2026-08-09, register §9, t_267a3279): 155 band-0/null contexts ---
+    # A1 tutorial stubs (88, cat 45): 2584, 2586, 2589-2606, 2609, 2612, 2614, 2616, 2620-2683
+    2584, 2586, *range(2589, 2607), 2609, 2612, 2614, 2616, *range(2620, 2684),
+    # B1+D1 Dwarf main-story skeleton (60, cat 93, one kind-31 chain 5980→…→5811):
+    5040, 5773, *range(5781, 5812),  # B1 (33 ltd)
+    *range(3484, 3491), *range(3492, 3503), 3562, 3563, *range(3565, 3569), 3992, 4408, 5980,  # D1 (27)
+    # B2 title quests (3, cat 82): 8000001-8000003
+    *range(8000001, 8000004),
+    # B3 cat-1 test/unused (3) + B4 Cradle act-less (1)
+    1835, 1836, 1895, 5678,
 }
 
 # Signature zones for the M2a/M2c zone-coverage rows (M2_PLAN.md zone map):
@@ -898,6 +1286,22 @@ def emit_census_meta(c, out_root):
             "label": label, "tier": tier, "total": len(ids),
             "dropped": dropped, "nonDropped": len(ids) - len(dropped),
         }
+    # Stragglers (WI-9): top-level quests above the top band get dedicated
+    # acceptance-table rows (rendered by the tier test after the band rows).
+    meta["stragglers"] = [
+        {"questId": qid, "level": lvl, "tier": "t15",
+         "label": f"lvl-{lvl} straggler (top-level quest)"}
+        for qid, lvl in select_stragglers(c, set())
+    ]
+    # Band 0/null (WI-11b): LEVEL 0/NULL contexts get dedicated
+    # acceptance-table rows grouped by triage class (census-meta "bandZero"
+    # key; the band table keys parse as lo-hi so a 0/null band cannot ride
+    # the bands dict - same pattern as stragglers).
+    meta["bandZero"] = [
+        {"cls": g["cls"], "label": g["label"], "tier": BAND_ZERO_TIER,
+         "questIds": g["questIds"]}
+        for g in BAND_ZERO_GROUPS
+    ]
     for name, zone_ids in SIGNATURE_ZONES.items():
         meta["signatureZones"].append({"name": name, "zoneIds": zone_ids})
     with open(os.path.join(out_root, "census-meta.json"), "w") as f:
@@ -1018,6 +1422,87 @@ def main():
     # too (each quest driven exactly once across the census).
     existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t5")) if f.endswith(".json")}
 
+    # ---- T9 (M2 WI-2, t_f42b9ae3): CrimePoint supply act carriers ----
+    # The five level-41-50 carriers not sampled anywhere else (2916/2926 are
+    # already in T3). Folded into existing_ids before the band sweeps so they
+    # stay driven exactly once.
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(os.path.join(OUT_ROOT, "t3")) if f.endswith(".json")}
+    t9_ids = select_t9_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t9")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t9_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t9"] = counts.get("t9", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
+    # ---- T10 (M2 WI-3, t_d5e802f5): AbilityLevel objective carriers ----
+    # The nine level-50 single-ability carriers (6070/6075-6082) not sampled
+    # anywhere else (5967/6069 are in T3). Folded into existing_ids before
+    # the band sweeps so they stay driven exactly once.
+    t10_ids = select_t10_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t10")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t10_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t10"] = counts.get("t10", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
+    # ---- T11 (M2 WI-4, t_fe93e2d8): MateLevel objective carriers ----
+    # The four level-50 carriers not sampled anywhere else (5465/5466/5812/
+    # 5813; 5430/5464 are in T3). Folded into existing_ids before the band
+    # sweeps so they stay driven exactly once.
+    t11_ids = select_t11_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t11")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t11_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t11"] = counts.get("t11", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
+    # ---- T12 (M2 WI-5, t_d6516324): CompleteQuest objective carriers ----
+    # The nine level-50 carriers not sampled anywhere else (5816-5821/5862/
+    # 5868/5911; 5814/5815 are in T3). Folded into existing_ids before the
+    # band sweeps so they stay driven exactly once.
+    t12_ids = select_t12_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t12")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t12_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t12"] = counts.get("t12", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
     # ---- T6/T7 (M2a census): full band sweeps ----
     # The band denominators (incl. dropped ids per band) and the signature
     # zone map are emitted to Manifests/census-meta.json for the tier test's
@@ -1041,12 +1526,60 @@ def main():
             counts[tier] = counts.get(tier, 0) + 1
         band_counts[tier] = len(band_ids)
 
+    # ---- Stragglers (WI-9, t_867af9e4): quests above the top band ride the
+    # t15 tier (band 51-55 + lvl-99 straggler 3465 = 269 manifests). Folded
+    # into existing_ids so each quest stays driven exactly once. ----
+    straggler_ids = select_stragglers(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t15")
+    for qid, _lvl in straggler_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t15"] = counts.get("t15", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
+    # ---- Band 0/null (WI-11b, t_8ec705f0): t16 sweep - the 56-context
+    # handoff population (D2/D3/D4/D5) + the 4 A2 keeps. 6250 already rides
+    # T3 (each quest driven exactly once); folded into existing_ids so no
+    # later tier re-samples it. ----
+    t16_ids = select_t16_quests(c, existing_ids)
+    out_dir = os.path.join(OUT_ROOT, "t16")
+    os.makedirs(out_dir, exist_ok=True)
+    for qid in t16_ids:
+        acts = set(r[0] for r in c.execute(
+            """SELECT a.act_detail_type FROM quest_acts a
+              JOIN quest_components cmp ON a.quest_component_id = cmp.id
+              WHERE cmp.quest_context_id = ?""", (qid,)).fetchall())
+        manifest = build_manifest(c, qid, primary_family(acts), item_groups, npc_groups)
+        if manifest is None:
+            continue
+        with open(os.path.join(out_dir, f"{qid}.json"), "w") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        counts["t16"] = counts.get("t16", 0) + 1
+    existing_ids |= {int(os.path.splitext(f)[0]) for f in os.listdir(out_dir) if f.endswith(".json")}
+
     print(json.dumps({"generated": counts, "out": OUT_ROOT,
                       "t1_total": len(t1_ids), "t2_total": len(t2_ids),
                       "t3_selected": len(t3_ids), "t4_selected": len(t4_ids),
                       "t5_selected": len(t5_ids),
+                      "t9_selected": len(t9_ids),
+                      "t10_selected": len(t10_ids),
+                      "t11_selected": len(t11_ids),
+                      "t12_selected": len(t12_ids),
                       "t6_selected": band_counts.get("t6", 0),
-                      "t7_selected": band_counts.get("t7", 0)}, indent=1))
+                      "t7_selected": band_counts.get("t7", 0),
+                      "t8_selected": band_counts.get("t8", 0),
+                      "t13_selected": band_counts.get("t13", 0),
+                      "t14_selected": band_counts.get("t14", 0),
+                      "t15_selected": band_counts.get("t15", 0),
+                      "stragglers_selected": len(straggler_ids),
+                      "t16_selected": len(t16_ids)}, indent=1))
 
 
 if __name__ == "__main__":

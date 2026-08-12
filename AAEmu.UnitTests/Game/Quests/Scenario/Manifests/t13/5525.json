@@ -1,0 +1,98 @@
+{
+ "questId": 5525,
+ "name": "바다의 무법자",
+ "zoneId": 1,
+ "categoryId": 48,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8732
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23861,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33546,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4237,
+      "npcId": 8732
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23862,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33563,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 221,
+      "appellationId": 166
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23863,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33561,
+      "type": "QuestActConReportNpc",
+      "detailId": 4564,
+      "npcId": 8730
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8730,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

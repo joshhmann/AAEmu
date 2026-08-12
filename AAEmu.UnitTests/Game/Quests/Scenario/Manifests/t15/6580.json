@@ -1,0 +1,116 @@
+{
+ "questId": 6580,
+ "name": "키리오스를 섬기는 자들 1단계",
+ "zoneId": 197,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14926
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40206,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5025,
+      "npcId": 14926
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28092,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40207,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 685,
+      "monsterGroupId": 614,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28093,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40208,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1865
+     },
+     {
+      "actId": 40209,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 528,
+      "questContextId": 6581
+     },
+     {
+      "actId": 40413,
+      "type": "QuestActSupplyExp",
+      "detailId": 1517,
+      "exp": 65480
+     },
+     {
+      "actId": 40414,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1860,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 614,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

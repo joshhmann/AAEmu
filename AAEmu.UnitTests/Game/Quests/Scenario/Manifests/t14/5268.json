@@ -1,0 +1,93 @@
+{
+ "questId": 5268,
+ "name": "백 명을 잠재운",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 27139
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22724,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32039,
+      "type": "QuestActConAcceptItem",
+      "detailId": 266,
+      "itemId": 27139
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22726,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32035,
+      "type": "QuestActSupplyExp",
+      "detailId": 675,
+      "exp": 1000
+     },
+     {
+      "actId": 32036,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1092,
+      "amount": 0
+     },
+     {
+      "actId": 32037,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 100,
+      "appellationId": 88
+     },
+     {
+      "actId": 32038,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1357
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27139,
+   "count": 1
+  }
+ ]
+}

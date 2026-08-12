@@ -2,6 +2,7 @@ using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
+using NLog;
 
 namespace AAEmu.Game.Models.Game.Bots;
 
@@ -202,6 +203,8 @@ public sealed class BotAppearanceFactory
 /// </summary>
 public sealed class CharacterManagerEquipmentSource : IBotStartingEquipmentSource
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     public AbilityItems GetAbilityEquipment(byte abilityId)
     {
         try
@@ -209,8 +212,9 @@ public sealed class CharacterManagerEquipmentSource : IBotStartingEquipmentSourc
             var manager = AAEmu.Game.Core.Managers.UnitManagers.CharacterManager.Instance;
             return manager.GetStartingAbilityEquipment(abilityId);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.Error(ex, "Bot appearance: starting-equipment lookup failed for ability {AbilityId}; bot ships gearless (empty equipment plan)", abilityId);
             return new AbilityItems { Ability = abilityId, Items = new EquipItemsTemplate() };
         }
     }
@@ -222,8 +226,9 @@ public sealed class CharacterManagerEquipmentSource : IBotStartingEquipmentSourc
             var manager = AAEmu.Game.Core.Managers.UnitManagers.CharacterManager.Instance;
             return manager.GetTemplate(race, gender).Items;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.Error(ex, "Bot appearance: body-item lookup failed for race {Race} gender {Gender}; bot ships without body items", race, gender);
             return new uint[7];
         }
     }

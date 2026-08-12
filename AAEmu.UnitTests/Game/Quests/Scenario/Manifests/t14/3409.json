@@ -1,0 +1,148 @@
+{
+ "questId": 3409,
+ "name": "묘지를 지키는 남자",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9606
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14631,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20301,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2762,
+      "npcId": 9606
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14632,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20302,
+      "type": "QuestActObjItemGather",
+      "detailId": 1459,
+      "itemId": 19756,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14633,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20303,
+      "type": "QuestActConReportNpc",
+      "detailId": 2994,
+      "npcId": 9615
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14634,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 14929,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20304,
+      "type": "QuestActSupplyItem",
+      "detailId": 2028,
+      "itemId": 19756,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19756,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9615,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19756,
+   "count": 1
+  }
+ ]
+}

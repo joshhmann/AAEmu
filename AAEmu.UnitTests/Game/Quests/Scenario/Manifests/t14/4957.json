@@ -1,0 +1,81 @@
+{
+ "questId": 4957,
+ "name": "석공 마을의 큼직한 짐승 우리",
+ "zoneId": 4,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2052
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21519,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30044,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 578,
+      "sphereId": 2052
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21520,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30040,
+      "type": "QuestActSupplyCopper",
+      "detailId": 876,
+      "amount": 0
+     },
+     {
+      "actId": 30041,
+      "type": "QuestActSupplyExp",
+      "detailId": 417,
+      "exp": 0
+     },
+     {
+      "actId": 30043,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1173
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

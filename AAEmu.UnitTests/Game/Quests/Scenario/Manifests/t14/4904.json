@@ -1,0 +1,81 @@
+{
+ "questId": 4904,
+ "name": "고요한 숲의 주인",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2024
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29660,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 552,
+      "sphereId": 2024
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29656,
+      "type": "QuestActSupplyCopper",
+      "detailId": 817,
+      "amount": 0
+     },
+     {
+      "actId": 29659,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1138
+     },
+     {
+      "actId": 31123,
+      "type": "QuestActSupplyExp",
+      "detailId": 587,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

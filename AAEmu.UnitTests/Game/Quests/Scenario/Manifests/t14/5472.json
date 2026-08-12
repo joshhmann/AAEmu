@@ -1,0 +1,93 @@
+{
+ "questId": 5472,
+ "name": "신선함이 살아있는",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28497
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23667,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33310,
+      "type": "QuestActConAcceptItem",
+      "detailId": 316,
+      "itemId": 28497
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23669,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33331,
+      "type": "QuestActSupplyExp",
+      "detailId": 741,
+      "exp": 1000
+     },
+     {
+      "actId": 33332,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1166,
+      "amount": 0
+     },
+     {
+      "actId": 33333,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 205,
+      "appellationId": 150
+     },
+     {
+      "actId": 33334,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1413
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28497,
+   "count": 1
+  }
+ ]
+}

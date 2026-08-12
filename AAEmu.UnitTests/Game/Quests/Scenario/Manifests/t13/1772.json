@@ -1,0 +1,140 @@
+{
+ "questId": 1772,
+ "name": "멧돼지의 큰뿔",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2803
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12684,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18878,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2442,
+      "npcId": 2803
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12685,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18408,
+      "type": "QuestActObjItemGather",
+      "detailId": 1254,
+      "itemId": 19029,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18879,
+      "type": "QuestActConReportNpc",
+      "detailId": 2671,
+      "npcId": 2803
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12687,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38737,
+      "type": "QuestActSupplyItem",
+      "detailId": 4486,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19029,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2803,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19029,
+   "count": 5
+  }
+ ]
+}

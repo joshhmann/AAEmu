@@ -1,0 +1,98 @@
+{
+ "questId": 3859,
+ "name": "에르덴의 요청",
+ "zoneId": 173,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1235
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16243,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30084,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3914,
+      "npcId": 1235
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16244,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21434,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 815,
+      "npcId": 1332,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16246,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30083,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1181
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1332,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

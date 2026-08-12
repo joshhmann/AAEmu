@@ -1,0 +1,81 @@
+{
+ "questId": 4975,
+ "name": "축축한 관리인 초소의 빨래",
+ "zoneId": 2,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2072
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21585,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30175,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 593,
+      "sphereId": 2072
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21586,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30171,
+      "type": "QuestActSupplyCopper",
+      "detailId": 891,
+      "amount": 0
+     },
+     {
+      "actId": 30172,
+      "type": "QuestActSupplyExp",
+      "detailId": 432,
+      "exp": 0
+     },
+     {
+      "actId": 30174,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1198
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

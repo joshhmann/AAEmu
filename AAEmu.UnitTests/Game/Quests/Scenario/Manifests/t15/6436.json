@@ -1,0 +1,204 @@
+{
+ "questId": 6436,
+ "name": "영혼의 파편",
+ "zoneId": 210,
+ "categoryId": 111,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14911
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39377,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5000,
+      "npcId": 14911
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27503,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39378,
+      "type": "QuestActConReportNpc",
+      "detailId": 5013,
+      "npcId": 14911
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27522,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39688,
+      "type": "QuestActSupplyItem",
+      "detailId": 4618,
+      "itemId": 34396,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 39690,
+      "type": "QuestActSupplyItem",
+      "detailId": 4619,
+      "itemId": 33152,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 40389,
+      "type": "QuestActSupplyExp",
+      "detailId": 1508,
+      "exp": 196400
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 27523,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39508,
+      "type": "QuestActSupplyItem",
+      "detailId": 4592,
+      "itemId": 34346,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27752,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39522,
+      "type": "QuestActObjItemGather",
+      "detailId": 3015,
+      "itemId": 34348,
+      "count": 1500
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27942,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39955,
+      "type": "QuestActObjItemGather",
+      "detailId": 3024,
+      "itemId": 34535,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34348,
+     "count": 1500
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 34535,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14911,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34396,
+      "count": 1
+     },
+     {
+      "itemId": 33152,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34348,
+   "count": 1500
+  },
+  {
+   "itemId": 34535,
+   "count": 1
+  }
+ ]
+}

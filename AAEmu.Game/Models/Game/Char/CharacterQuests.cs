@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Data;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Id;
@@ -19,10 +20,15 @@ public class CharacterQuests(Character owner)
 {
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     private readonly List<uint> _removed = [];
+    private readonly object _removedLock = new();
 
     private Character Owner { get; set; } = owner;
-    public Dictionary<uint, Quest> ActiveQuests { get; } = [];
-    private Dictionary<ushort, CompletedQuest> CompletedQuests { get; } = [];
+    public ConcurrentDictionary<uint, Quest> ActiveQuests { get; } = [];
+    // BUG-014: completed blocks are keyed by uint (block id = questId / 64) — a
+    // ushort key wrapped for quest ids >= 4,194,304 and ResetQuests recomputed a
+    // wrapped quest id that never resolved to a template (bit never cleared).
+    // ConcurrentDictionary: same collection, atomic check-then-act (t_781cdb32).
+    private ConcurrentDictionary<uint, CompletedQuest> CompletedQuests { get; } = [];
 
     public bool HasQuest(uint questId)
     {
@@ -31,7 +37,7 @@ public class CharacterQuests(Character owner)
 
     public bool HasQuestCompleted(uint questId)
     {
-        var questBlockId = (ushort)(questId / 64);
+        var questBlockId = questId / 64;
         var questBlockIndex = (int)(questId % 64);
         return CompletedQuests.TryGetValue(questBlockId, out var questBlock) && questBlock.Body.Get(questBlockIndex);
     }
@@ -147,9 +153,19 @@ public class CharacterQuests(Character owner)
             return false;
         }
 
-        // Add it to the Active Quests
-        ActiveQuests.Add(quest.TemplateId, quest);
+        // Add it to the Active Quests (ConcurrentDictionary — atomic check-then-act,
+        // no lock needed; t_781cdb32)
+        if (!ActiveQuests.TryAdd(quest.TemplateId, quest))
+        {
+            // Concurrent duplicate (same quest added from another thread) — undo this instance
+            Logger.Warn($"Quest {questId} already active for {Owner.Name}, concurrent add rejected");
+            quest.SkipUpdatePackets();
+            quest.Cleanup();
+            QuestIdManager.Instance.ReleaseId((uint)quest.Id);
+            return false;
+        }
         quest.Owner.SendDebugMessage($"[Quest] {Owner.Name}, quest {questId} added.");
+        Owner.MarkDirty();
 
         // Execute the first Step
         _ = quest.RunCurrentStep(); // We don't need the return value here
@@ -243,8 +259,11 @@ public class CharacterQuests(Character owner)
         quest.Cleanup();
         quest.Drop(update);
         quest.FinalizeQuestActs();
-        ActiveQuests.Remove(questId);
-        _removed.Add(questId);
+        ActiveQuests.TryRemove(questId, out _);
+        lock (_removedLock)
+        {
+            _removed.Add(questId);
+        }
 
         if (forcibly)
         {
@@ -385,14 +404,11 @@ public class CharacterQuests(Character owner)
     public CompletedQuest SetCompletedQuestFlag(uint questId, bool isCompleted)
     {
         // Calculate block and index
-        var completedQuestBlockId = (ushort)(questId / 64);
+        var completedQuestBlockId = questId / 64;
         var completedQuestBlockIndex = (ushort)(questId % 64);
-        // Grab or create block
-        if (!CompletedQuests.TryGetValue(completedQuestBlockId, out var completedBlock))
-        {
-            completedBlock = new CompletedQuest(completedQuestBlockId);
-            CompletedQuests.Add(completedQuestBlockId, completedBlock);
-        }
+        // Grab or create block (atomic — concurrent completions of the same quest
+        // must not race TryGetValue/Add on the same block; t_781cdb32)
+        var completedBlock = CompletedQuests.GetOrAdd(completedQuestBlockId, static id => new CompletedQuest(id));
         // Set quest flag to (not) completed
         completedBlock.Body.Set(completedQuestBlockIndex, isCompleted);
         return completedBlock;
@@ -405,7 +421,7 @@ public class CharacterQuests(Character owner)
     /// <returns></returns>
     public bool IsQuestComplete(uint questId)
     {
-        var completeId = (ushort)(questId / 64);
+        var completeId = questId / 64;
         if (!CompletedQuests.TryGetValue(completeId, out var completedQuest))
             return false;
         return completedQuest.Body[(int)(questId % 64)];
@@ -509,10 +525,10 @@ public class CharacterQuests(Character owner)
                 {
                     var quest = new CompletedQuest
                     {
-                        Id = reader.GetUInt16("id"),
+                        Id = reader.GetUInt32("id"),
                         Body = new BitArray((byte[])reader.GetValue("data"))
                     };
-                    CompletedQuests.Add(quest.Id, quest);
+                    CompletedQuests.TryAdd(quest.Id, quest);
                 }
             }
         }
@@ -544,7 +560,7 @@ public class CharacterQuests(Character owner)
                     var oldStatus = quest.Status;
                     quest.ReadData((byte[])reader.GetValue("data"));
                     quest.Status = oldStatus;
-                    ActiveQuests.Add(quest.TemplateId, quest);
+                    ActiveQuests.TryAdd(quest.TemplateId, quest);
                     quest.QuestInitialized();
                     quest.RequestEvaluation();
                 }
@@ -566,14 +582,18 @@ public class CharacterQuests(Character owner)
                 command.Connection = connection;
                 command.Transaction = transaction;
 
-                var ids = string.Join(",", _removed);
-                command.CommandText = $"DELETE FROM quests WHERE owner = @owner AND template_id IN({ids})";
+                uint[] ids;
+                lock (_removedLock)
+                {
+                    ids = [.. _removed];
+                    _removed.Clear();
+                }
+
+                command.CommandText = $"DELETE FROM quests WHERE owner = @owner AND template_id IN({string.Join(",", ids)})";
                 command.Parameters.AddWithValue("@owner", Owner.Id);
                 command.Prepare();
                 command.ExecuteNonQuery();
             }
-
-            _removed.Clear();
         }
 
         using (var command = connection.CreateCommand())
@@ -582,8 +602,27 @@ public class CharacterQuests(Character owner)
             command.Transaction = transaction;
 
             command.CommandText = "REPLACE INTO completed_quests(`id`,`data`,`owner`) VALUES(@id,@data,@owner)";
-            foreach (var quest in CompletedQuests.Values)
+
+            // t_90c0d0d1: snapshot under the per-character lock. A concurrent
+            // SetCompletedQuestFlag Add during live enumeration of CompletedQuests
+            // can yield a NULL block entry (Dictionary resize artifact); quest.Id
+            // then NREs and the save aborts BEFORE the active-quest REPLACE loop
+            // below — losing active-quest rows on disconnect. The snapshot kills
+            // the modified-during-save class; nulls are skipped with a WARN.
+            CompletedQuest[] completedBlocks;
+            lock (CompletedQuests)
             {
+                completedBlocks = CompletedQuests.Values.ToArray();
+            }
+
+            foreach (var quest in completedBlocks)
+            {
+                if (quest is null)
+                {
+                    Logger.Warn($"[QuestSave] skipping null completed-quest block for {Owner.Name} ({Owner.Id})");
+                    continue;
+                }
+
                 command.Parameters.AddWithValue("@id", quest.Id);
                 var body = new byte[8];
                 quest.Body.CopyTo(body, 0);
@@ -603,8 +642,25 @@ public class CharacterQuests(Character owner)
             command.CommandText =
                 "REPLACE INTO quests(`id`,`template_id`,`data`,`status`,`owner`) VALUES(@id,@template_id,@data,@status,@owner)";
 
-            foreach (var quest in ActiveQuests.Values)
+            // t_90c0d0d1: same snapshot + null-skip for the ACTIVE-quest loop —
+            // the acceptance is "save never aborts mid-loop (active-quest REPLACE
+            // always runs)". ActiveQuests is mutated by AddQuest/DropQuest on the
+            // game thread; a concurrent mutation during enumeration can yield a
+            // null entry (same Dictionary artifact class) and NRE here.
+            Quest[] activeQuests;
+            lock (ActiveQuests)
             {
+                activeQuests = ActiveQuests.Values.ToArray();
+            }
+
+            foreach (var quest in activeQuests)
+            {
+                if (quest is null)
+                {
+                    Logger.Warn($"[QuestSave] skipping null active quest for {Owner.Name} ({Owner.Id})");
+                    continue;
+                }
+
                 command.Parameters.AddWithValue("@id", quest.Id);
                 command.Parameters.AddWithValue("@template_id", quest.TemplateId);
                 command.Parameters.AddWithValue("@data", quest.WriteData());

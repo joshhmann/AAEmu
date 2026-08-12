@@ -1,0 +1,148 @@
+{
+ "questId": 3873,
+ "name": "기억의 호수를 찾아서",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8990
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16340,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21644,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3045,
+      "npcId": 8990
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16341,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21647,
+      "type": "QuestActObjItemGather",
+      "detailId": 1609,
+      "itemId": 24592,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16342,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21645,
+      "type": "QuestActConReportNpc",
+      "detailId": 3271,
+      "npcId": 9025
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16343,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 16432,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21646,
+      "type": "QuestActSupplyItem",
+      "detailId": 2158,
+      "itemId": 24592,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24592,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9025,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24592,
+   "count": 1
+  }
+ ]
+}

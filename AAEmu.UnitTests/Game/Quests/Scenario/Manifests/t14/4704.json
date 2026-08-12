@@ -1,0 +1,81 @@
+{
+ "questId": 4704,
+ "name": "마하데비 항구 육지의 섬",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1754
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20385,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27790,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 416,
+      "sphereId": 1754
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20387,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27791,
+      "type": "QuestActSupplyCopper",
+      "detailId": 711,
+      "amount": 0
+     },
+     {
+      "actId": 27793,
+      "type": "QuestActSupplyExp",
+      "detailId": 263,
+      "exp": 0
+     },
+     {
+      "actId": 27795,
+      "type": "QuestActConAutoComplete",
+      "detailId": 964
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

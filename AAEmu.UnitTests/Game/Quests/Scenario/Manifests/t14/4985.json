@@ -1,0 +1,81 @@
+{
+ "questId": 4985,
+ "name": "촌장 집 내부의 수상한 얼룩",
+ "zoneId": 26,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2082
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21615,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30226,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 603,
+      "sphereId": 2082
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21616,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30222,
+      "type": "QuestActSupplyCopper",
+      "detailId": 901,
+      "amount": 0
+     },
+     {
+      "actId": 30223,
+      "type": "QuestActSupplyExp",
+      "detailId": 443,
+      "exp": 0
+     },
+     {
+      "actId": 30225,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1208
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

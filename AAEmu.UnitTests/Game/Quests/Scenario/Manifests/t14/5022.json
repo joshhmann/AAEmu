@@ -1,0 +1,81 @@
+{
+ "questId": 5022,
+ "name": "마주 보는 용 머리뼈",
+ "zoneId": 12,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2119
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30414,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 640,
+      "sphereId": 2119
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30410,
+      "type": "QuestActSupplyCopper",
+      "detailId": 938,
+      "amount": 0
+     },
+     {
+      "actId": 30411,
+      "type": "QuestActSupplyExp",
+      "detailId": 480,
+      "exp": 0
+     },
+     {
+      "actId": 30413,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1245
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

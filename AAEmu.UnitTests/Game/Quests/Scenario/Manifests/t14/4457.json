@@ -1,0 +1,81 @@
+{
+ "questId": 4457,
+ "name": "잊혀진 성 꼭대기 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1570
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19480,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26507,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 250,
+      "sphereId": 1570
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19482,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26508,
+      "type": "QuestActConAutoComplete",
+      "detailId": 798
+     },
+     {
+      "actId": 26509,
+      "type": "QuestActSupplyCopper",
+      "detailId": 533,
+      "amount": 0
+     },
+     {
+      "actId": 31064,
+      "type": "QuestActSupplyExp",
+      "detailId": 529,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

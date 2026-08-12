@@ -1,0 +1,119 @@
+{
+ "questId": 3588,
+ "name": "망령의 그림자",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 47,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9615
+ },
+ "template": {
+  "level": 47,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14782,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20644,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2860,
+      "npcId": 9615
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14783,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29888,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1071,
+      "npcId": 9543,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14784,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20645,
+      "type": "QuestActConReportNpc",
+      "detailId": 3088,
+      "npcId": 9615
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14785,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9543,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9615,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

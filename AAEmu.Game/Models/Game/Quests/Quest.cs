@@ -480,6 +480,9 @@ public partial class Quest : PacketMarshaler
     public void RequestEvaluation()
     {
         RequestEvaluationFlag = true;
+        // Quest state (step/objectives) changed — the owning character's row must be persisted.
+        if (Owner is Character ownerCharacter)
+            ownerCharacter.MarkDirty();
     }
 
     /// <summary>

@@ -1,0 +1,123 @@
+{
+ "questId": 6008,
+ "name": "전장 방어 대포 제거",
+ "zoneId": 144,
+ "categoryId": 5,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25877,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35441,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 335,
+      "questContextId": 6008
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25878,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35442,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 567,
+      "monsterGroupId": 556,
+      "count": 200
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25879,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35443,
+      "type": "QuestActConReportJournal",
+      "detailId": 404
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25883,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35486,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 117,
+      "point": 600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 556,
+     "count": 200
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

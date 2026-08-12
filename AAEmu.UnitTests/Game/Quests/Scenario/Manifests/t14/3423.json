@@ -1,0 +1,125 @@
+{
+ "questId": 3423,
+ "name": "테미캣이 만드는 치료 약",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9617
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14690,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20427,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2816,
+      "npcId": 9617
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14691,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20310,
+      "type": "QuestActObjItemGather",
+      "detailId": 1460,
+      "itemId": 21352,
+      "count": 15
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14692,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20428,
+      "type": "QuestActConReportNpc",
+      "detailId": 3043,
+      "npcId": 9617
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14693,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21352,
+     "count": 15
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9617,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21352,
+   "count": 15
+  }
+ ]
+}

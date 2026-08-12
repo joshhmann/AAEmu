@@ -1,0 +1,81 @@
+{
+ "questId": 4818,
+ "name": "해적 소굴의 탑 중턱",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1866
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20784,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28414,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 504,
+      "sphereId": 1866
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20786,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28415,
+      "type": "QuestActSupplyCopper",
+      "detailId": 796,
+      "amount": 0
+     },
+     {
+      "actId": 28416,
+      "type": "QuestActSupplyExp",
+      "detailId": 356,
+      "exp": 0
+     },
+     {
+      "actId": 28418,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1059
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

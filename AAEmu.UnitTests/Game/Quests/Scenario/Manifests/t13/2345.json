@@ -1,0 +1,140 @@
+{
+ "questId": 2345,
+ "name": "비극의 지휘자",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8861
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12338,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18239,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2335,
+      "npcId": 8861
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12510,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18241,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 653,
+      "npcId": 1478,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12511,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18240,
+      "type": "QuestActConReportNpc",
+      "detailId": 2558,
+      "npcId": 1428
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12512,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24635,
+      "type": "QuestActSupplyItem",
+      "detailId": 2424,
+      "itemId": 417,
+      "gradeId": 0,
+      "count": 9
+     },
+     {
+      "actId": 25729,
+      "type": "QuestActSupplyCopper",
+      "detailId": 499,
+      "amount": 5000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1478,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1428,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 417,
+      "count": 9
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

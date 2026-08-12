@@ -1,0 +1,147 @@
+{
+ "questId": 5494,
+ "name": "뒤늦은 후회",
+ "zoneId": 1,
+ "categoryId": 48,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8706
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23742,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33554,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4241,
+      "npcId": 8706
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23743,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33418,
+      "type": "QuestActObjItemGather",
+      "detailId": 2710,
+      "itemId": 28521,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23744,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33421,
+      "type": "QuestActConReportNpc",
+      "detailId": 4532,
+      "npcId": 8706
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23745,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33419,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1183,
+      "amount": 0
+     },
+     {
+      "actId": 33420,
+      "type": "QuestActSupplyCrimePoint",
+      "detailId": 9,
+      "point": -100
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 28521,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8706,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28521,
+   "count": 8
+  }
+ ]
+}

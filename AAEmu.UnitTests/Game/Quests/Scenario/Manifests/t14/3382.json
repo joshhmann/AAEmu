@@ -1,0 +1,119 @@
+{
+ "questId": 3382,
+ "name": "역병 걸린 자 추방",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9590
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14523,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20366,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2785,
+      "npcId": 9590
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20579,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 360,
+      "monsterGroupId": 324,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14525,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20367,
+      "type": "QuestActConReportNpc",
+      "detailId": 3014,
+      "npcId": 9590
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14526,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 324,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9590,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

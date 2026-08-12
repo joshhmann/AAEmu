@@ -1,0 +1,81 @@
+{
+ "questId": 4451,
+ "name": "뱀의 틈 지붕 탐험",
+ "zoneId": 13,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1563
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19462,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26463,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 242,
+      "sphereId": 1563
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26472,
+      "type": "QuestActSupplyCopper",
+      "detailId": 526,
+      "amount": 0
+     },
+     {
+      "actId": 26473,
+      "type": "QuestActConAutoComplete",
+      "detailId": 791
+     },
+     {
+      "actId": 31070,
+      "type": "QuestActSupplyExp",
+      "detailId": 535,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

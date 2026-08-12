@@ -1,0 +1,81 @@
+{
+ "questId": 4759,
+ "name": "외딴 산봉우리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1812
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20577,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28124,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 471,
+      "sphereId": 1812
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20579,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28125,
+      "type": "QuestActSupplyCopper",
+      "detailId": 765,
+      "amount": 0
+     },
+     {
+      "actId": 28126,
+      "type": "QuestActSupplyExp",
+      "detailId": 321,
+      "exp": 0
+     },
+     {
+      "actId": 28128,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1020
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

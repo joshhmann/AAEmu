@@ -1,5 +1,7 @@
 using System.Text.Json;
 
+using AAEmu.Game.Models.Game.Quests.Static;
+
 namespace AAEmu.UnitTests.Game.Quests.Scenario;
 
 /// <summary>
@@ -18,7 +20,10 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 ///                                             // Doodad/Sphere/Item/Skill/Buff/Kill)
 ///   "template": {                             // optional template parts. When present,
 ///     "level": 3,                             //   the driver builds the QuestTemplate
-///     "components": [                         //   from these parts (no QuestManager.Load).
+///     "detailId": 7,                          //   from these parts (no QuestManager.Load).
+///     "repeatable": false,                    //   detailId = QuestDetail id (daily-reset
+///                                             //   key), repeatable = re-accept gate
+///     "components": [                         //   (engine AddQuest semantics).
 ///       { "kind": "Start", "id": 5734,        // kind is a QuestComponentKind name
 ///         "acts": [                           // (Start/Supply/Progress/Fail/Ready/Reward)
 ///           { "type": "QuestActConAcceptNpc", // act type = production act class name
@@ -44,12 +49,27 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 ///         "objectives": [0, 0, 0, 0, 0],      // expected objective counters (5)
 ///         "rewardItems": [ { "itemId": 18792, "count": 1 } ], // expected inventory after REWARD
 ///         "completed": true,                  // expected completed-quest flag
-///         "persistRoundTrip": true,           // expected WriteData->ReadData round-trip
-///         "failPathWired": true               // expected CheckTimer act or Fail component
-///       }
-///     }
-///   ]
+///        "persistRoundTrip": true,           // expected WriteData->ReadData round-trip
+///        "failPathWired": true               // expected CheckTimer act or Fail component
+///      }
+///    }
+///  ]
 /// }
+///
+/// WI-10 FIDELITY STAGES (t_abafd918) - probe stages appended after PERSIST on
+/// the family's manifests; each drives a REAL engine path on a fresh probe and
+/// asserts its outcome without disturbing the main lifecycle:
+///   TIMEOUT  - fires the timeout task's exact body (QuestManager.OnTimerExpired
+///              -> owner.Events.OnTimerExpired -> QuestActCheckTimer.OnTimerExpired
+///              -> FailQuest). expect: { "step": "Fail" }.
+///   RESET    - clears the daily completed state via the engine's OWN
+///              ResetDailyQuests (non-repeatable templates only) and re-accepts
+///              through the engine's AddQuest (QuestDailyLimit gate). expect:
+///              { "reAccepted": true }.
+///   GUARD_DIED - builds the probe with the rigged guards killed (Hp 0 ->
+///              IsDead) so QuestActCheckGuard.RunAct returns false (BUG-008) and
+///              the quest stalls at the guard-checking step. expect:
+///              { "step": "<guard component kind>", "guardBlocked": true }.
 ///
 /// SUPPORTED ACT TYPES (driver factory): QuestActConAcceptNpc/Kill/Doodad,
 /// QuestActConReportNpc/Doodad/Journal, QuestActObjMonsterHunt/MonsterGroupHunt,
@@ -124,6 +144,12 @@ public class QuestAcceptorShape
 public class QuestTemplateShape
 {
     public byte Level { get; set; }
+    /// <summary>QuestDetail id (engine daily-reset key: ResetDailyQuests clears
+    /// Daily 7 / DailyHunt 10 / DailyLivelihood 11 / DailyGroup 12).</summary>
+    public QuestDetail DetailId { get; set; }
+    /// <summary>Repeatable flag (engine re-accept gate: AddQuest refuses
+    /// completed non-repeatable quests, CharacterQuests.cs:107-120).</summary>
+    public bool Repeatable { get; set; }
     public List<QuestComponentShape> Components { get; set; } = [];
 }
 
@@ -181,9 +207,18 @@ public class QuestExpectShape
     public bool? PersistRoundTrip { get; set; }
     /// <summary>Expected fail path (CheckTimer act or Fail component) to be wired (optional).</summary>
     public bool? FailPathWired { get; set; }
+    /// <summary>Expected the quest to be re-accepted and active after the RESET
+    /// stage (daily/repeatable fidelity; the engine AddQuest path re-added it
+    /// to ActiveQuests).</summary>
+    public bool? ReAccepted { get; set; }
+    /// <summary>Expected the GUARD_DIED probe to stall at the guard-checking
+    /// step (dead guard => QuestActCheckGuard.RunAct false per BUG-008; the
+    /// quest must not advance past the guard component).</summary>
+    public bool? GuardBlocked { get; set; }
 
     public bool HasAnyExpectation => Step != null || Status != null || Objectives != null
-        || RewardItems != null || Completed != null || PersistRoundTrip != null || FailPathWired != null;
+        || RewardItems != null || Completed != null || PersistRoundTrip != null || FailPathWired != null
+        || ReAccepted != null || GuardBlocked != null;
 }
 
 public class QuestRewardItemShape

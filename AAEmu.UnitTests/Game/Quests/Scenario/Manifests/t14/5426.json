@@ -1,0 +1,93 @@
+{
+ "questId": 5426,
+ "name": "흩날리는 벚꽃잎",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28198
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23442,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32941,
+      "type": "QuestActConAcceptItem",
+      "detailId": 302,
+      "itemId": 28198
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32961,
+      "type": "QuestActSupplyExp",
+      "detailId": 727,
+      "exp": 1000
+     },
+     {
+      "actId": 32962,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1145,
+      "amount": 0
+     },
+     {
+      "actId": 32963,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 188,
+      "appellationId": 133
+     },
+     {
+      "actId": 32964,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1395
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28198,
+   "count": 1
+  }
+ ]
+}

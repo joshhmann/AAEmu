@@ -77,11 +77,14 @@
      {
       "actId": 18348,
       "type": "QuestActSupplyCrimePoint",
-      "detailId": 2
+      "detailId": 2,
+      "point": -20
      }
     ]
    }
-  ]
+  ],
+  "detailId": 7,
+  "repeatable": false
  },
  "stages": [
   {
@@ -133,10 +136,14 @@
    "expect": {
     "persistRoundTrip": true
    }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
   }
  ],
- "selectedRewardIndex": 0,
- "skip": {
-  "reason": "unsupported act type QuestActSupplyCrimePoint; unsynthesizable event shape for QuestActSupplyCrimePoint (comp 12555)"
- }
+ "selectedRewardIndex": 0
 }

@@ -1,0 +1,144 @@
+{
+ "questId": 5063,
+ "name": "만드라고라 잡기 중급",
+ "zoneId": 183,
+ "categoryId": 94,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 40,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21920,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30837,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 189,
+      "questContextId": 5063
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21921,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30839,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1102,
+      "npcId": 12446,
+      "count": 2
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21922,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30841,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1276
+     },
+     {
+      "actId": 30842,
+      "type": "QuestActSupplyCopper",
+      "detailId": 952,
+      "amount": 10000
+     },
+     {
+      "actId": 30857,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 192,
+      "questContextId": 5064
+     },
+     {
+      "actId": 31196,
+      "type": "QuestActSupplyExp",
+      "detailId": 596,
+      "exp": 1000
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21927,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30863,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1108,
+      "npcId": 12473,
+      "count": 5
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12446,
+     "count": 8
+    },
+    {
+     "type": "MonsterHunt",
+     "npcId": 12473,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

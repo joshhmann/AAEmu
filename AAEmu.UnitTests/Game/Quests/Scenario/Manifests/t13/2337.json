@@ -1,0 +1,121 @@
+{
+ "questId": 2337,
+ "name": "이제 안식을",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1483
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18451,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2382,
+      "npcId": 1483
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 12774,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18452,
+      "type": "QuestActSupplyItem",
+      "detailId": 1854,
+      "itemId": 17419,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12776,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18454,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 658,
+      "npcId": 8778,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12778,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19231,
+      "type": "QuestActConAutoComplete",
+      "detailId": 645
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8778,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

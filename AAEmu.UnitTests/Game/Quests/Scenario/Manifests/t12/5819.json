@@ -1,0 +1,200 @@
+{
+ "questId": 5819,
+ "name": "금요일의 의뢰",
+ "zoneId": 200,
+ "categoryId": 99,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7211
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25144,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34605,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 266,
+      "doodadId": 7211
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25145,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34591,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 37,
+      "questId": 5842,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2592
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25146,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34592,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 38,
+      "questId": 5843,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2593
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25326,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34593,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 39,
+      "questId": 5844,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2594
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25327,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34594,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 40,
+      "questId": 5845,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2595
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25328,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34595,
+      "type": "QuestActObjCompleteQuest",
+      "detailId": 41,
+      "questId": 5846,
+      "acceptWith": false,
+      "useAlias": true,
+      "questActObjAliasId": 2596
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25329,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34670,
+      "type": "QuestActConReportNpc",
+      "detailId": 4718,
+      "npcId": 13913
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25330,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "CompleteQuest",
+     "questId": 5842
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5843
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5844
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5845
+    },
+    {
+     "type": "CompleteQuest",
+     "questId": 5846
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13913,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,93 @@
+{
+ "questId": 5402,
+ "name": "빛나는 세계의 작가",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28126
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23348,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32808,
+      "type": "QuestActConAcceptItem",
+      "detailId": 285,
+      "itemId": 28126
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23350,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32804,
+      "type": "QuestActSupplyExp",
+      "detailId": 709,
+      "exp": 1000
+     },
+     {
+      "actId": 32805,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1127,
+      "amount": 0
+     },
+     {
+      "actId": 32806,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 168,
+      "appellationId": 118
+     },
+     {
+      "actId": 32807,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1380
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28126,
+   "count": 1
+  }
+ ]
+}

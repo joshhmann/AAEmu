@@ -1,0 +1,147 @@
+{
+ "questId": 6593,
+ "name": "에페리움 망령 전사 처치",
+ "zoneId": 193,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28130,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40262,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 539,
+      "questContextId": 6593
+     },
+     {
+      "actId": 40263,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5035,
+      "npcId": 14928
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28131,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40264,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1306,
+      "npcId": 14910,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28132,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40265,
+      "type": "QuestActConReportNpc",
+      "detailId": 5055,
+      "npcId": 14928
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28220,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40472,
+      "type": "QuestActSupplyExp",
+      "detailId": 1547,
+      "exp": 40000
+     },
+     {
+      "actId": 40473,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1889,
+      "amount": 10500
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14910,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14928,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

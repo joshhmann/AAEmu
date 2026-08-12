@@ -1,0 +1,117 @@
+{
+ "questId": 5721,
+ "name": "죽은 왕녀의 열쇠",
+ "zoneId": 6,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7139
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24600,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34201,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 260,
+      "doodadId": 7139
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24601,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34202,
+      "type": "QuestActObjItemGather",
+      "detailId": 2793,
+      "itemId": 29480,
+      "count": 1
+     },
+     {
+      "actId": 34208,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 167,
+      "itemId": 29439,
+      "count": 1
+     },
+     {
+      "actId": 34209,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 168,
+      "itemId": 29446,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24739,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34206,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1473
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29480,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29480,
+   "count": 1
+  }
+ ]
+}

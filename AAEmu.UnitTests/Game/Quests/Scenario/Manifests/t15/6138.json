@@ -1,0 +1,132 @@
+{
+ "questId": 6138,
+ "name": "[3층]희귀한 마법 금속",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14566
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26355,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36179,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4660,
+      "npcId": 14566
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26356,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36183,
+      "type": "QuestActObjItemGather",
+      "detailId": 2893,
+      "itemId": 30876,
+      "count": 25
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26478,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36184,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1676
+     },
+     {
+      "actId": 36856,
+      "type": "QuestActSupplyItem",
+      "detailId": 4071,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37976,
+      "type": "QuestActSupplyExp",
+      "detailId": 1205,
+      "exp": 252800
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30876,
+     "count": 25
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30876,
+   "count": 25
+  }
+ ]
+}

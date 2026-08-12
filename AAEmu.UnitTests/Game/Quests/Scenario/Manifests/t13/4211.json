@@ -1,0 +1,119 @@
+{
+ "questId": 4211,
+ "name": "하를도르 처치",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10754
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18288,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23907,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3429,
+      "npcId": 10754
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18289,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23917,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 917,
+      "npcId": 1457,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18290,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23908,
+      "type": "QuestActConReportNpc",
+      "detailId": 3701,
+      "npcId": 10754
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18291,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1457,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10754,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

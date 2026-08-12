@@ -1,0 +1,149 @@
+{
+ "questId": 5729,
+ "name": "바다 여신의 감시자",
+ "zoneId": 12,
+ "categoryId": 98,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13745
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34127,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4367,
+      "npcId": 13745
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24626,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34126,
+      "type": "QuestActObjItemGather",
+      "detailId": 2780,
+      "itemId": 29259,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24627,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34125,
+      "type": "QuestActConReportNpc",
+      "detailId": 4667,
+      "npcId": 13745
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24640,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34165,
+      "type": "QuestActSupplyItem",
+      "detailId": 3888,
+      "itemId": 29297,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29259,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13745,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29297,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29259,
+   "count": 1
+  }
+ ]
+}

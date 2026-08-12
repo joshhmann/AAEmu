@@ -1,0 +1,123 @@
+{
+ "questId": 3942,
+ "name": "거대한 집게발과의 결투",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9394
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Progress",
+    "id": 16637,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22091,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 849,
+      "npcId": 9394,
+      "count": 18
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16638,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21985,
+      "type": "QuestActConReportJournal",
+      "detailId": 245
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16639,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21986,
+      "type": "QuestActSupplyCopper",
+      "detailId": 357,
+      "amount": 0
+     }
+    ]
+   },
+   {
+    "kind": "Start",
+    "id": 16640,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22090,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 879,
+      "npcId": 9394
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9394,
+     "count": 18
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

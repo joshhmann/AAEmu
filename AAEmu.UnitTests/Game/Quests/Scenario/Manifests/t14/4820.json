@@ -1,0 +1,81 @@
+{
+ "questId": 4820,
+ "name": "해적 소굴의 인질 감옥",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1868
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20790,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28425,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 506,
+      "sphereId": 1868
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20792,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28427,
+      "type": "QuestActSupplyCopper",
+      "detailId": 798,
+      "amount": 0
+     },
+     {
+      "actId": 28428,
+      "type": "QuestActSupplyExp",
+      "detailId": 358,
+      "exp": 0
+     },
+     {
+      "actId": 28431,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1061
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

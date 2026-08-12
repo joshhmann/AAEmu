@@ -1,0 +1,150 @@
+{
+ "questId": 4336,
+ "name": "붉은비늘 에키혼 우두머리 아슈칼툼",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1936
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18932,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25972,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3599,
+      "npcId": 1936
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18933,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25974,
+      "type": "QuestActObjItemGather",
+      "detailId": 2072,
+      "itemId": 24285,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18934,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25973,
+      "type": "QuestActConReportNpc",
+      "detailId": 3870,
+      "npcId": 1936
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19207,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38489,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2728,
+      "itemId": 33917,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38490,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2729,
+      "itemId": 33918,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38491,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2730,
+      "itemId": 33919,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24285,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1936,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 24285,
+   "count": 1
+  }
+ ]
+}

@@ -62,4 +62,32 @@ public class GateHarnessTests
         var result = await GateSoakRunner.RunStageAsync(stage);
         Assert.True(result.Passed, result.Detail + "\nEvidence: " + result.EvidencePath);
     }
+
+    /// <summary>
+    /// Stage 10 as a soak window (10 bots — the M6 exit-record shape). The
+    /// correctness stage's 3-min window cannot pass judgment on rare
+    /// warning-rate budgets (physics slow-thread warnings run ~0.03/min:
+    /// P(0 warnings | 3 min) ≈ 91%, P(0 | 360 min) ≈ 1.6e-5 — a 6h window
+    /// only passes with the fix in place, not by luck). GATE_SOAK_MINUTES
+    /// runs the same 10-bot stack over a longer window (360 = full M6
+    /// re-soak). Skipped unless explicitly requested, like stage 50.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "e2e")]
+    public async Task Gate_Stage10_Soak()
+    {
+        var soakEnv = Environment.GetEnvironmentVariable("GATE_SOAK_MINUTES");
+        if (string.IsNullOrWhiteSpace(soakEnv))
+        {
+            Assert.Skip("GATE_SOAK_MINUTES not set — stage-10 soak is an explicit gate run.");
+            return;
+        }
+
+        if (!int.TryParse(soakEnv, out var soakMinutes) || soakMinutes <= 0)
+            throw new InvalidOperationException($"GATE_SOAK_MINUTES must be a positive integer, got '{soakEnv}'");
+
+        var stage = GateStages.Stage10 with { Name = "10-soak", SoakMinutes = soakMinutes, Budgets = GateStages.SoakBudgets };
+        var result = await GateSoakRunner.RunStageAsync(stage);
+        Assert.True(result.Passed, result.Detail + "\nEvidence: " + result.EvidencePath);
+    }
 }

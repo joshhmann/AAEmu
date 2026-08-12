@@ -1,0 +1,81 @@
+{
+ "questId": 4643,
+ "name": "뜨거운 용암의 중심에서 고통을 외치다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1705
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27460,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 376,
+      "sphereId": 1705
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20177,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27461,
+      "type": "QuestActSupplyCopper",
+      "detailId": 673,
+      "amount": 0
+     },
+     {
+      "actId": 27462,
+      "type": "QuestActSupplyExp",
+      "detailId": 218,
+      "exp": 0
+     },
+     {
+      "actId": 27464,
+      "type": "QuestActConAutoComplete",
+      "detailId": 920
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

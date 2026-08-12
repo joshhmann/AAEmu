@@ -1,0 +1,163 @@
+{
+ "questId": 3761,
+ "name": "저녁 식사는 두툼한 스테이크",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 37,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9173
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15736,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21372,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3002,
+      "npcId": 9173
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15738,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21373,
+      "type": "QuestActObjItemGather",
+      "detailId": 1578,
+      "itemId": 20067,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15739,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29084,
+      "type": "QuestActObjItemGather",
+      "detailId": 2336,
+      "itemId": 20066,
+      "count": 4
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15740,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29085,
+      "type": "QuestActConReportNpc",
+      "detailId": 4157,
+      "npcId": 9367
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38757,
+      "type": "QuestActSupplyItem",
+      "detailId": 4506,
+      "itemId": 34003,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 20067,
+     "count": 8
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 20066,
+     "count": 4
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9367,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34003,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 20067,
+   "count": 8
+  },
+  {
+   "itemId": 20066,
+   "count": 4
+  }
+ ]
+}

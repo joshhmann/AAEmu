@@ -1,0 +1,103 @@
+{
+ "questId": 2895,
+ "name": "(개발중)칼의 노래",
+ "zoneId": 149,
+ "categoryId": 44,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1150
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12175,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17719,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 199,
+      "sphereId": 1150
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12177,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17761,
+      "type": "QuestActObjItemGather",
+      "detailId": 1205,
+      "itemId": 18448,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12191,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17762,
+      "type": "QuestActConAutoComplete",
+      "detailId": 582
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18448,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18448,
+   "count": 1
+  }
+ ]
+}

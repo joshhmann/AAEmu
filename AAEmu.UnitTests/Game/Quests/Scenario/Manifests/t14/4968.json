@@ -1,0 +1,81 @@
+{
+ "questId": 4968,
+ "name": "로즈엔드 삼거리 감시 초소",
+ "zoneId": 7,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2065
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21564,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30140,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 586,
+      "sphereId": 2065
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21565,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30136,
+      "type": "QuestActSupplyCopper",
+      "detailId": 884,
+      "amount": 0
+     },
+     {
+      "actId": 30137,
+      "type": "QuestActSupplyExp",
+      "detailId": 425,
+      "exp": 0
+     },
+     {
+      "actId": 30139,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1191
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

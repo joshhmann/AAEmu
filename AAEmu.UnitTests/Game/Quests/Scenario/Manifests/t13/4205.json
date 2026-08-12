@@ -1,0 +1,129 @@
+{
+ "questId": 4205,
+ "name": "그들이 깨어난 이유",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 23593
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18268,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23883,
+      "type": "QuestActConAcceptItem",
+      "detailId": 167,
+      "itemId": 23593
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18269,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23885,
+      "type": "QuestActObjItemGather",
+      "detailId": 1957,
+      "itemId": 23593,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18270,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23884,
+      "type": "QuestActConReportNpc",
+      "detailId": 3696,
+      "npcId": 10742
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18271,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23593,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10742,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23593,
+   "count": 1
+  },
+  {
+   "itemId": 23593,
+   "count": 1
+  }
+ ]
+}

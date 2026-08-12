@@ -1,0 +1,126 @@
+{
+ "questId": 3078,
+ "name": "더러운 양을 깨끗이",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1097
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13266,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19084,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2501,
+      "npcId": 1097
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13267,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19635,
+      "type": "QuestActObjItemUse",
+      "detailId": 495,
+      "itemId": 19561,
+      "count": 3
+     },
+     {
+      "actId": 19637,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 70,
+      "itemId": 19561,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13268,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19094,
+      "type": "QuestActConReportNpc",
+      "detailId": 2736,
+      "npcId": 1097
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13269,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 19561,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1097,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

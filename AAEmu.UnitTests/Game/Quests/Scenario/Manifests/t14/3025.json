@@ -1,0 +1,121 @@
+{
+ "questId": 3025,
+ "name": "흰 유령의 부탁",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1294
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13587,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19050,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2490,
+      "npcId": 1294
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13588,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19051,
+      "type": "QuestActObjInteraction",
+      "detailId": 455,
+      "doodadId": 3559,
+      "count": 5,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13589,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19052,
+      "type": "QuestActConReportNpc",
+      "detailId": 2723,
+      "npcId": 1293
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13590,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3559,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1293,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

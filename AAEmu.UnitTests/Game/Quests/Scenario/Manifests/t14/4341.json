@@ -1,0 +1,96 @@
+{
+ "questId": 4341,
+ "name": "갈색비늘 에키혼은 다르다는데",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1931
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18947,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25988,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3603,
+      "npcId": 1931
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18948,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25990,
+      "type": "QuestActObjSphere",
+      "detailId": 634,
+      "sphereId": 1516
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18949,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25989,
+      "type": "QuestActConAutoComplete",
+      "detailId": 772
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 18948
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

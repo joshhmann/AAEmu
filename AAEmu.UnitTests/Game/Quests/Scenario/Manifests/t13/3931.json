@@ -1,0 +1,129 @@
+{
+ "questId": 3931,
+ "name": "마녀의 불길한 지팡이",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 21311
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16834,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22189,
+      "type": "QuestActConAcceptItem",
+      "detailId": 120,
+      "itemId": 21311
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16835,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22190,
+      "type": "QuestActObjItemGather",
+      "detailId": 1665,
+      "itemId": 21311,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16836,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22403,
+      "type": "QuestActConReportNpc",
+      "detailId": 3417,
+      "npcId": 10476
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16837,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21311,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10476,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21311,
+   "count": 1
+  },
+  {
+   "itemId": 21311,
+   "count": 1
+  }
+ ]
+}

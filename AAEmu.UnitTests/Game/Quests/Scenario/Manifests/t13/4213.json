@@ -1,0 +1,148 @@
+{
+ "questId": 4213,
+ "name": "이상한 다과회",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 4591
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18297,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23920,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 135,
+      "doodadId": 4591
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18298,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23922,
+      "type": "QuestActObjItemGather",
+      "detailId": 1959,
+      "itemId": 23596,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18299,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23923,
+      "type": "QuestActConReportNpc",
+      "detailId": 3703,
+      "npcId": 10753
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18300,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 18311,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23921,
+      "type": "QuestActSupplyItem",
+      "detailId": 2297,
+      "itemId": 23596,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 23596,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10753,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 23596,
+   "count": 1
+  }
+ ]
+}

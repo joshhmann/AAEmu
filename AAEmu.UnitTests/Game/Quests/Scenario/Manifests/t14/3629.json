@@ -1,0 +1,153 @@
+{
+ "questId": 3629,
+ "name": "붉은발톱 부족의 적대자들",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 42,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1099
+ },
+ "template": {
+  "level": 42,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15142,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20747,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 766,
+      "npcId": 1099
+     },
+     {
+      "actId": 20806,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 799,
+      "npcId": 1041
+     },
+     {
+      "actId": 20807,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 800,
+      "npcId": 1058
+     },
+     {
+      "actId": 30563,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1149,
+      "npcId": 965
+     },
+     {
+      "actId": 30570,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1155,
+      "npcId": 8868
+     },
+     {
+      "actId": 30571,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1156,
+      "npcId": 969
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15143,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20808,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 373,
+      "monsterGroupId": 336,
+      "count": 66
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15144,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20749,
+      "type": "QuestActConReportJournal",
+      "detailId": 217
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15145,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20750,
+      "type": "QuestActSupplyCopper",
+      "detailId": 324,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 336,
+     "count": 66
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,117 @@
+{
+ "questId": 1763,
+ "name": "수상 감옥으로",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2801
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13807,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19490,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2602,
+      "npcId": 2801
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13808,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19491,
+      "type": "QuestActObjTalk",
+      "detailId": 898,
+      "npcId": 2823
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13809,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19492,
+      "type": "QuestActConReportNpc",
+      "detailId": 2834,
+      "npcId": 2801
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13810,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 2823
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2801,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

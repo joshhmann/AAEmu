@@ -1,0 +1,141 @@
+{
+ "questId": 6346,
+ "name": "서고 강철 골렘 퇴치",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 53,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 14377
+ },
+ "template": {
+  "level": 53,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27170,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37890,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1287,
+      "npcId": 14377
+     },
+     {
+      "actId": 37891,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1288,
+      "npcId": 14379
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 27171,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37892,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 668,
+      "monsterGroupId": 597,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37895,
+      "type": "QuestActConReportJournal",
+      "detailId": 540
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27176,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37893,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 517,
+      "questContextId": 6347
+     },
+     {
+      "actId": 37894,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1582,
+      "amount": 0
+     },
+     {
+      "actId": 38096,
+      "type": "QuestActSupplyExp",
+      "detailId": 1311,
+      "exp": 61200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 597,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

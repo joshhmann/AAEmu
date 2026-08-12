@@ -1,0 +1,81 @@
+{
+ "questId": 4802,
+ "name": "작은 섬의 오두막",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1850
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20736,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28331,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 487,
+      "sphereId": 1850
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20738,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28332,
+      "type": "QuestActSupplyCopper",
+      "detailId": 781,
+      "amount": 0
+     },
+     {
+      "actId": 28333,
+      "type": "QuestActSupplyExp",
+      "detailId": 338,
+      "exp": 0
+     },
+     {
+      "actId": 28335,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1043
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

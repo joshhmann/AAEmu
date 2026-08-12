@@ -1,0 +1,123 @@
+{
+ "questId": 4914,
+ "name": "붉은비늘 에키혼 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1972
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21339,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29707,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1096,
+      "npcId": 1972
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21340,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29708,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1042,
+      "npcId": 1972,
+      "count": 18
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21341,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29709,
+      "type": "QuestActConReportJournal",
+      "detailId": 324
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21342,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29710,
+      "type": "QuestActSupplyCopper",
+      "detailId": 827,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1972,
+     "count": 18
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

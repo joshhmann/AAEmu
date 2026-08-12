@@ -1,0 +1,141 @@
+{
+ "questId": 3937,
+ "name": "기억을 가지고 노는 요정들",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9385
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16616,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22102,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 885,
+      "npcId": 9385
+     },
+     {
+      "actId": 22103,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 886,
+      "npcId": 9388
+     },
+     {
+      "actId": 22104,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 887,
+      "npcId": 9389
+     },
+     {
+      "actId": 22105,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 888,
+      "npcId": 9390
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16617,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22101,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 412,
+      "monsterGroupId": 369,
+      "count": 24
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21974,
+      "type": "QuestActConReportJournal",
+      "detailId": 240
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16619,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21975,
+      "type": "QuestActSupplyCopper",
+      "detailId": 352,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 369,
+     "count": 24
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

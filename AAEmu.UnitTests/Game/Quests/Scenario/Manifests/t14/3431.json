@@ -1,0 +1,125 @@
+{
+ "questId": 3431,
+ "name": "하리하란을 원대륙으로",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9620
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14722,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20441,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2824,
+      "npcId": 9620
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14723,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22662,
+      "type": "QuestActObjItemGather",
+      "detailId": 1707,
+      "itemId": 21554,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14724,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20442,
+      "type": "QuestActConReportNpc",
+      "detailId": 3049,
+      "npcId": 9620
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14725,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21554,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9620,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21554,
+   "count": 1
+  }
+ ]
+}

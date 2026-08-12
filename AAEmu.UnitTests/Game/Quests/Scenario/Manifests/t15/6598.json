@@ -1,0 +1,122 @@
+{
+ "questId": 6598,
+ "name": "바다에서 떠오르는 시체 2단계",
+ "zoneId": 193,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28145,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40285,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 545,
+      "questContextId": 6598
+     },
+     {
+      "actId": 40287,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5040,
+      "npcId": 14929
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28146,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40286,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 697,
+      "monsterGroupId": 619,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28147,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40288,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1877
+     },
+     {
+      "actId": 40289,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 546,
+      "questContextId": 6599
+     },
+     {
+      "actId": 40441,
+      "type": "QuestActSupplyExp",
+      "detailId": 1531,
+      "exp": 65480
+     },
+     {
+      "actId": 40442,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1874,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 619,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

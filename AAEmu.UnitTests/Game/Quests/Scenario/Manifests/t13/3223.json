@@ -1,0 +1,159 @@
+{
+ "questId": 3223,
+ "name": "황금갈기 부족의 적",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2707
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13735,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19358,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 688,
+      "npcId": 2707
+     },
+     {
+      "actId": 19359,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 689,
+      "npcId": 2709
+     },
+     {
+      "actId": 19360,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 690,
+      "npcId": 2708
+     },
+     {
+      "actId": 19361,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 691,
+      "npcId": 2706
+     },
+     {
+      "actId": 19362,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 692,
+      "npcId": 2796
+     },
+     {
+      "actId": 19363,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 693,
+      "npcId": 2797
+     },
+     {
+      "actId": 19364,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 694,
+      "npcId": 2819
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13736,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19365,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 331,
+      "monsterGroupId": 273,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13737,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19366,
+      "type": "QuestActConReportJournal",
+      "detailId": 202
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13738,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19367,
+      "type": "QuestActSupplyCopper",
+      "detailId": 301,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 273,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

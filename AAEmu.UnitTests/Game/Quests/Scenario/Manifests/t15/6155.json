@@ -1,0 +1,124 @@
+{
+ "questId": 6155,
+ "name": "[3층]그늘진 영광의 태양",
+ "zoneId": 211,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 30884
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26406,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36391,
+      "type": "QuestActConAcceptItem",
+      "detailId": 436,
+      "itemId": 30884
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26407,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36392,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 612,
+      "monsterGroupId": 563,
+      "count": 1000
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26408,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36393,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1688
+     },
+     {
+      "actId": 36394,
+      "type": "QuestActSupplyItem",
+      "detailId": 4044,
+      "itemId": 30887,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37988,
+      "type": "QuestActSupplyExp",
+      "detailId": 1211,
+      "exp": 379200
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 563,
+     "count": 1000
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30887,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30884,
+   "count": 1
+  }
+ ]
+}

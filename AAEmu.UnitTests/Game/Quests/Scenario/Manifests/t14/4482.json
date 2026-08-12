@@ -1,0 +1,81 @@
+{
+ "questId": 4482,
+ "name": "탄생의 절벽 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1594
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19570,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26645,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 271,
+      "sphereId": 1594
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19572,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26646,
+      "type": "QuestActConAutoComplete",
+      "detailId": 818
+     },
+     {
+      "actId": 26647,
+      "type": "QuestActSupplyCopper",
+      "detailId": 553,
+      "amount": 0
+     },
+     {
+      "actId": 31085,
+      "type": "QuestActSupplyExp",
+      "detailId": 550,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

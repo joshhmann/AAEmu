@@ -1,0 +1,132 @@
+{
+ "questId": 5648,
+ "name": "날개의 약속",
+ "zoneId": 1,
+ "categoryId": 84,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItemGain",
+ "acceptor": {
+  "type": "Item",
+  "id": 28543
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33716,
+      "type": "QuestActConAcceptItemGain",
+      "detailId": 111,
+      "itemId": 28543,
+      "count": 1
+     },
+     {
+      "actId": 33719,
+      "type": "QuestActConAcceptItemGain",
+      "detailId": 112,
+      "itemId": 28544,
+      "count": 1
+     },
+     {
+      "actId": 33720,
+      "type": "QuestActConAcceptItemGain",
+      "detailId": 113,
+      "itemId": 28545,
+      "count": 1
+     },
+     {
+      "actId": 33721,
+      "type": "QuestActConAcceptItemGain",
+      "detailId": 114,
+      "itemId": 28546,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33717,
+      "type": "QuestActConReportNpc",
+      "detailId": 4592,
+      "npcId": 13619
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24277,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33722,
+      "type": "QuestActSupplyExp",
+      "detailId": 760,
+      "exp": 1000
+     },
+     {
+      "actId": 33723,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1195,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13619,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28543,
+   "count": 1
+  }
+ ]
+}

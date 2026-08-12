@@ -1,0 +1,132 @@
+{
+ "questId": 3821,
+ "name": "비겁한 변명",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10094
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16040,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22514,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3206,
+      "npcId": 10094
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16042,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22706,
+      "type": "QuestActObjItemGather",
+      "detailId": 1714,
+      "itemId": 21566,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16043,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22515,
+      "type": "QuestActConReportNpc",
+      "detailId": 3445,
+      "npcId": 10094
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16044,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25736,
+      "type": "QuestActSupplyCopper",
+      "detailId": 506,
+      "amount": 9000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21566,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10094,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21566,
+   "count": 1
+  }
+ ]
+}

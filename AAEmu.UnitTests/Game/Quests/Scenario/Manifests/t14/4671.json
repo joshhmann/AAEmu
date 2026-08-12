@@ -1,0 +1,81 @@
+{
+ "questId": 4671,
+ "name": "수상 감옥의 망루",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1720
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20284,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27600,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 380,
+      "sphereId": 1720
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20286,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27601,
+      "type": "QuestActSupplyCopper",
+      "detailId": 677,
+      "amount": 0
+     },
+     {
+      "actId": 27603,
+      "type": "QuestActSupplyExp",
+      "detailId": 223,
+      "exp": 0
+     },
+     {
+      "actId": 27604,
+      "type": "QuestActConAutoComplete",
+      "detailId": 927
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

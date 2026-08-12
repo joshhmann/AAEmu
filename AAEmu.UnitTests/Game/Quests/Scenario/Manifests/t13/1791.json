@@ -1,0 +1,125 @@
+{
+ "questId": 1791,
+ "name": "으르렁거리는 섬",
+ "zoneId": 17,
+ "categoryId": 44,
+ "level": 33,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 18736
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12727,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18428,
+      "type": "QuestActConAcceptItem",
+      "detailId": 101,
+      "itemId": 18736
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18429,
+      "type": "QuestActObjItemGather",
+      "detailId": 1258,
+      "itemId": 18736,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12729,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18430,
+      "type": "QuestActObjSphere",
+      "detailId": 571,
+      "sphereId": 1169
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12730,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18431,
+      "type": "QuestActConAutoComplete",
+      "detailId": 614
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18736,
+     "count": 1
+    },
+    {
+     "type": "EnterSphere",
+     "componentId": 12729
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18736,
+   "count": 1
+  },
+  {
+   "itemId": 18736,
+   "count": 1
+  }
+ ]
+}

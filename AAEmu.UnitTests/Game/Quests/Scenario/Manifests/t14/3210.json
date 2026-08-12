@@ -1,0 +1,91 @@
+{
+ "questId": 3210,
+ "name": "하리하랄라야의 폐허로",
+ "zoneId": 172,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8921
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13475,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24070,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3457,
+      "npcId": 8921
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13477,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19220,
+      "type": "QuestActConReportNpc",
+      "detailId": 2784,
+      "npcId": 982
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13478,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 982,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 1787,
+ "name": "황금갈기 부족장 마곡 처치",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 34,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2762
+ },
+ "template": {
+  "level": 34,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12710,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19345,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2574,
+      "npcId": 2762
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12711,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19320,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 708,
+      "npcId": 2819,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12712,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19346,
+      "type": "QuestActConReportNpc",
+      "detailId": 2809,
+      "npcId": 2762
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13728,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38733,
+      "type": "QuestActSupplyItem",
+      "detailId": 4482,
+      "itemId": 34007,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2819,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2762,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34007,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

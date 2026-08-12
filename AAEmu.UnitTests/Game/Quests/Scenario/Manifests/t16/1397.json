@@ -1,0 +1,119 @@
+{
+ "questId": 1397,
+ "name": "뱀이 싫어하는 것",
+ "zoneId": 16,
+ "categoryId": 27,
+ "level": 0,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 5804
+ },
+ "template": {
+  "level": 0,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 7005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9674,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1211,
+      "npcId": 5804
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 7006,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 9675,
+      "type": "QuestActConReportNpc",
+      "detailId": 1381,
+      "npcId": 5804
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 7007,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Supply",
+    "id": 24556,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 24557,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 5804,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

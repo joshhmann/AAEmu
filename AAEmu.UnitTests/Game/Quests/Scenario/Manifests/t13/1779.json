@@ -1,0 +1,140 @@
+{
+ "questId": 1779,
+ "name": "황금갈기 부족의 술맛",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2809
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12688,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19315,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2570,
+      "npcId": 2809
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12689,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18409,
+      "type": "QuestActObjItemGather",
+      "detailId": 1255,
+      "itemId": 18725,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12690,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19316,
+      "type": "QuestActConReportNpc",
+      "detailId": 2803,
+      "npcId": 2809
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12691,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38738,
+      "type": "QuestActSupplyItem",
+      "detailId": 4487,
+      "itemId": 34009,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18725,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2809,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 34009,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 18725,
+   "count": 5
+  }
+ ]
+}

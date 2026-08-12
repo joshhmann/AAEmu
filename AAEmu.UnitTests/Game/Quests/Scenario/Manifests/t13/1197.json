@@ -1,0 +1,141 @@
+{
+ "questId": 1197,
+ "name": "별무덤에서 죽음의 냄새 지우기",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2311
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6095,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17885,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 568,
+      "npcId": 2311
+     },
+     {
+      "actId": 17886,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 569,
+      "npcId": 2336
+     },
+     {
+      "actId": 17887,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 570,
+      "npcId": 2330
+     },
+     {
+      "actId": 17888,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 571,
+      "npcId": 4969
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6096,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17889,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 285,
+      "monsterGroupId": 256,
+      "count": 32
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6097,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17890,
+      "type": "QuestActConReportJournal",
+      "detailId": 175
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6098,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17891,
+      "type": "QuestActSupplyCopper",
+      "detailId": 257,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 256,
+     "count": 32
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4470,
+ "name": "숲의 주인을 마주하는 자리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1584
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19524,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26597,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 262,
+      "sphereId": 1584
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19526,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26598,
+      "type": "QuestActSupplyCopper",
+      "detailId": 544,
+      "amount": 0
+     },
+     {
+      "actId": 26601,
+      "type": "QuestActConAutoComplete",
+      "detailId": 809
+     },
+     {
+      "actId": 31077,
+      "type": "QuestActSupplyExp",
+      "detailId": 542,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

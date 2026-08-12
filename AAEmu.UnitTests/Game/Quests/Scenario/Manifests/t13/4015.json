@@ -1,0 +1,171 @@
+{
+ "questId": 4015,
+ "name": "빛바랜 황금의 잔",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 10486
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 17308,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22862,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 967,
+      "npcId": 10486
+     },
+     {
+      "actId": 22863,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 968,
+      "npcId": 10487
+     },
+     {
+      "actId": 22864,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 969,
+      "npcId": 10516
+     },
+     {
+      "actId": 22865,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 970,
+      "npcId": 10488
+     },
+     {
+      "actId": 22866,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 971,
+      "npcId": 10524
+     },
+     {
+      "actId": 22867,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 972,
+      "npcId": 10481
+     },
+     {
+      "actId": 22868,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 973,
+      "npcId": 10520
+     },
+     {
+      "actId": 22869,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 974,
+      "npcId": 10525
+     },
+     {
+      "actId": 22870,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 975,
+      "npcId": 10526
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 17309,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22861,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 439,
+      "monsterGroupId": 388,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 17310,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22871,
+      "type": "QuestActConReportJournal",
+      "detailId": 295
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 17311,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22872,
+      "type": "QuestActSupplyCopper",
+      "detailId": 386,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 388,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

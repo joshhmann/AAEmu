@@ -1,0 +1,81 @@
+{
+ "questId": 4692,
+ "name": "마지막 계단",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1741
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20347,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27701,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 402,
+      "sphereId": 1741
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20349,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27702,
+      "type": "QuestActSupplyCopper",
+      "detailId": 696,
+      "amount": 0
+     },
+     {
+      "actId": 27703,
+      "type": "QuestActSupplyExp",
+      "detailId": 245,
+      "exp": 0
+     },
+     {
+      "actId": 27705,
+      "type": "QuestActConAutoComplete",
+      "detailId": 946
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,167 @@
+{
+ "questId": 5075,
+ "name": "은밀한 향수의 재료",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 11074
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21989,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30961,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3971,
+      "npcId": 11074
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21990,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30968,
+      "type": "QuestActObjItemGather",
+      "detailId": 2451,
+      "itemId": 19900,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21991,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30960,
+      "type": "QuestActConReportNpc",
+      "detailId": 4243,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21992,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30971,
+      "type": "QuestActObjItemGather",
+      "detailId": 2454,
+      "itemId": 19918,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21993,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30965,
+      "type": "QuestActSupplyCopper",
+      "detailId": 969,
+      "amount": 0
+     },
+     {
+      "actId": 30966,
+      "type": "QuestActSupplyExp",
+      "detailId": 504,
+      "exp": 1000
+     },
+     {
+      "actId": 30967,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 15,
+      "appellationId": 9
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19900,
+     "count": 3
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 19918,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12504,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19900,
+   "count": 3
+  },
+  {
+   "itemId": 19918,
+   "count": 3
+  }
+ ]
+}

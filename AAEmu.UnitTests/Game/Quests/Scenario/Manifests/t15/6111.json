@@ -1,0 +1,127 @@
+{
+ "questId": 6111,
+ "name": "[2층]암흑이 깃든 꽃",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14354
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26274,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36112,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4646,
+      "npcId": 14354
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26275,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36842,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1202,
+      "npcId": 14388,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26276,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36115,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1659
+     },
+     {
+      "actId": 36833,
+      "type": "QuestActSupplyItem",
+      "detailId": 4064,
+      "itemId": 31972,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37940,
+      "type": "QuestActSupplyExp",
+      "detailId": 1187,
+      "exp": 140000
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14388,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31972,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

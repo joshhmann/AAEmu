@@ -1,0 +1,81 @@
+{
+ "questId": 4805,
+ "name": "이즈나의 작은 바위섬",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1853
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20745,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28346,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 490,
+      "sphereId": 1853
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20747,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28347,
+      "type": "QuestActSupplyExp",
+      "detailId": 341,
+      "exp": 0
+     },
+     {
+      "actId": 28348,
+      "type": "QuestActSupplyExp",
+      "detailId": 342,
+      "exp": 0
+     },
+     {
+      "actId": 28350,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1046
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

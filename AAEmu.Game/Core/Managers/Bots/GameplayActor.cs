@@ -26,7 +26,9 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///
 /// Threading: NOT thread-safe by itself. The scheduler's per-bot execution
 /// lease (IPlayerBotScheduler) guarantees at most one in-flight step per
-/// bot, so the actor is driven from exactly one worker at a time.
+/// bot, and the M5 A1 marshal executes every step on the single execution
+/// boundary (the game-loop thread) — the actor is driven from exactly one
+/// execution context at a time.
 /// </summary>
 public class GameplayActor : IGameplayActor
 {

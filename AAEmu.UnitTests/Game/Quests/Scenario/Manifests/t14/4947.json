@@ -1,0 +1,81 @@
+{
+ "questId": 4947,
+ "name": "황혼 노을 부락 아래 쌍둥이 폭포",
+ "zoneId": 5,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2042
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21489,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29993,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 568,
+      "sphereId": 2042
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21490,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29989,
+      "type": "QuestActSupplyCopper",
+      "detailId": 866,
+      "amount": 0
+     },
+     {
+      "actId": 29990,
+      "type": "QuestActSupplyExp",
+      "detailId": 407,
+      "exp": 0
+     },
+     {
+      "actId": 29992,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1163
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

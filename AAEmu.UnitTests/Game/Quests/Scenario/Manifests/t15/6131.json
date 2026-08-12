@@ -1,0 +1,135 @@
+{
+ "questId": 6131,
+ "name": "[2층]서재 수호자 엑툼 처치",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14232
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26334,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36092,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 392,
+      "questContextId": 6131
+     },
+     {
+      "actId": 36093,
+      "type": "QuestActCheckTimer",
+      "detailId": 160,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 26335,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 26336,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36095,
+      "type": "QuestActConReportDoodad",
+      "detailId": 56,
+      "doodadId": 7599
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26440,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37964,
+      "type": "QuestActSupplyExp",
+      "detailId": 1199,
+      "exp": 420000
+     },
+     {
+      "actId": 38252,
+      "type": "QuestActSupplyItem",
+      "detailId": 4246,
+      "itemId": 32061,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 7599,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32061,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

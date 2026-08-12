@@ -1,0 +1,124 @@
+{
+ "questId": 5099,
+ "name": "모든 이야기를 팝니다",
+ "zoneId": 11,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12037
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22106,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31259,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3995,
+      "npcId": 12037
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22107,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31261,
+      "type": "QuestActObjSphere",
+      "detailId": 647,
+      "sphereId": 2165
+     },
+     {
+      "actId": 31493,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 154,
+      "itemId": 26786,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22108,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31260,
+      "type": "QuestActConReportNpc",
+      "detailId": 4277,
+      "npcId": 12652
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22193,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "EnterSphere",
+     "componentId": 22107
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12652,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -13,6 +13,20 @@ public sealed class PlayerBotSchedulerOptions
     /// <summary>Wake-scan cadence. Default 100 ms.</summary>
     public TimeSpan ScanInterval { get; init; } = TimeSpan.FromMilliseconds(100);
 
+    /// <summary>
+    /// Tick-drain cadence (M5 A1 execution boundary): how often the marshal
+    /// queue is drained on the game-loop thread. Default 10 ms.
+    /// </summary>
+    public TimeSpan TickDrainInterval { get; init; } = TimeSpan.FromMilliseconds(10);
+
+    /// <summary>
+    /// When true (production default), Start() subscribes the marshal drain
+    /// to <see cref="TickManager"/> OnTick with useAsync:false so steps run
+    /// INLINE on the game-loop thread — the single execution boundary. Tests
+    /// set this false and pump <c>DrainTickQueue()</c> manually.
+    /// </summary>
+    public bool SubscribeToTickManager { get; init; } = true;
+
     /// <summary>Bounded work channel capacity (backpressure for the pool). Default 256.</summary>
     public int WorkChannelCapacity { get; init; } = 256;
 

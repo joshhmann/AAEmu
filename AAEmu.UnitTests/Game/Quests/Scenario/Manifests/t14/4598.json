@@ -1,0 +1,81 @@
+{
+ "questId": 4598,
+ "name": "굳게 닫힌 저승의 문",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1668
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20015,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27220,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 342,
+      "sphereId": 1668
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20017,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27221,
+      "type": "QuestActSupplyCopper",
+      "detailId": 629,
+      "amount": 0
+     },
+     {
+      "actId": 27222,
+      "type": "QuestActSupplyExp",
+      "detailId": 182,
+      "exp": 0
+     },
+     {
+      "actId": 27224,
+      "type": "QuestActConAutoComplete",
+      "detailId": 887
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4674,
+ "name": "다루의 집",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1723
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20293,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27616,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 383,
+      "sphereId": 1723
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20295,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27617,
+      "type": "QuestActSupplyCopper",
+      "detailId": 680,
+      "amount": 0
+     },
+     {
+      "actId": 27618,
+      "type": "QuestActSupplyExp",
+      "detailId": 227,
+      "exp": 0
+     },
+     {
+      "actId": 27620,
+      "type": "QuestActConAutoComplete",
+      "detailId": 930
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

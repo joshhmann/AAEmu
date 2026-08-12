@@ -1,0 +1,93 @@
+{
+ "questId": 5413,
+ "name": "세기의 화가",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28130
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23387,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32859,
+      "type": "QuestActConAcceptItem",
+      "detailId": 291,
+      "itemId": 28130
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23388,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32860,
+      "type": "QuestActSupplyExp",
+      "detailId": 716,
+      "exp": 1000
+     },
+     {
+      "actId": 32861,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1134,
+      "amount": 0
+     },
+     {
+      "actId": 32862,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 173,
+      "appellationId": 122
+     },
+     {
+      "actId": 32863,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1384
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28130,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,136 @@
+{
+ "questId": 5901,
+ "name": "@EXPEDITION_LEADER_NAME_BY_ZONEGROUP(34)의 명령: 명예점수 500",
+ "zoneId": 149,
+ "categoryId": 73,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7261
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25483,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34833,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 271,
+      "doodadId": 7261
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25484,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34925,
+      "type": "QuestActObjZoneKill",
+      "detailId": 61,
+      "zoneId": 34,
+      "countNpc": 200,
+      "countPk": 0,
+      "teamShare": "t",
+      "useAlias": "t",
+      "questActObjAliasId": 2650,
+      "lvMin": 50,
+      "lvMax": 50,
+      "isParty": "t",
+      "lvMinNpc": 0,
+      "lvMaxNpc": 0,
+      "pcFactionId": 0,
+      "pcFactionExclusive": "f",
+      "npcFactionId": 0,
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25485,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34837,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1514
+     },
+     {
+      "actId": 34926,
+      "type": "QuestActSupplyHonorPoint",
+      "detailId": 85,
+      "point": 500
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 34,
+     "count": 200,
+     "countNpc": 200,
+     "countPk": 0,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 0,
+     "lvMaxNpc": 0,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 50,
+     "lvMax": 50
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

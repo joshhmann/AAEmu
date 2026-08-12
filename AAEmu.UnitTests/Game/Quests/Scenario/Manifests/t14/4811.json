@@ -1,0 +1,81 @@
+{
+ "questId": 4811,
+ "name": "타타닉 호의 흔적 발견",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1859
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20763,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28377,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 497,
+      "sphereId": 1859
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20765,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28378,
+      "type": "QuestActSupplyCopper",
+      "detailId": 789,
+      "amount": 0
+     },
+     {
+      "actId": 28380,
+      "type": "QuestActSupplyExp",
+      "detailId": 349,
+      "exp": 0
+     },
+     {
+      "actId": 28382,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1052
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

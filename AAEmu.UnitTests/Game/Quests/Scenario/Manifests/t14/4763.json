@@ -1,0 +1,81 @@
+{
+ "questId": 4763,
+ "name": "장기말에 오르다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1816
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20589,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28144,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 475,
+      "sphereId": 1816
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20591,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28145,
+      "type": "QuestActSupplyCopper",
+      "detailId": 769,
+      "amount": 0
+     },
+     {
+      "actId": 28147,
+      "type": "QuestActSupplyExp",
+      "detailId": 326,
+      "exp": 0
+     },
+     {
+      "actId": 28149,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1024
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

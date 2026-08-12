@@ -1,0 +1,81 @@
+{
+ "questId": 4640,
+ "name": "타오르는 용암 연구소의 용광로 압축 제어장치",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1702
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20166,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27445,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 373,
+      "sphereId": 1702
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20168,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27446,
+      "type": "QuestActSupplyCopper",
+      "detailId": 670,
+      "amount": 0
+     },
+     {
+      "actId": 27447,
+      "type": "QuestActSupplyExp",
+      "detailId": 215,
+      "exp": 0
+     },
+     {
+      "actId": 27449,
+      "type": "QuestActConAutoComplete",
+      "detailId": 918
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

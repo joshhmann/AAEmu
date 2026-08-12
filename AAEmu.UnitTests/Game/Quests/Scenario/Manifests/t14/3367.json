@@ -1,0 +1,121 @@
+{
+ "questId": 3367,
+ "name": "코산 마라 순수비는 실존하는가",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9572
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20327,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2767,
+      "npcId": 9572
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20506,
+      "type": "QuestActObjInteraction",
+      "detailId": 490,
+      "doodadId": 3917,
+      "count": 1,
+      "wiId": 19,
+      "phase": 9463
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20564,
+      "type": "QuestActConReportNpc",
+      "detailId": 3072,
+      "npcId": 9572
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14466,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3917,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9572,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

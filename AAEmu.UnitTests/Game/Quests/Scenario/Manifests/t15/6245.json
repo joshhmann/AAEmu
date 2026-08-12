@@ -1,0 +1,146 @@
+{
+ "questId": 6245,
+ "name": "[1층]에아나드 도서관 열람실의 그림",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 7994
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26764,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37259,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 305,
+      "doodadId": 7994
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26765,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37281,
+      "type": "QuestActObjItemGather",
+      "detailId": 2925,
+      "itemId": 33019,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26766,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37282,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1705
+     },
+     {
+      "actId": 37283,
+      "type": "QuestActSupplyItem",
+      "detailId": 4151,
+      "itemId": 33020,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 37932,
+      "type": "QuestActSupplyExp",
+      "detailId": 1183,
+      "exp": 125400
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 26767,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37280,
+      "type": "QuestActSupplyItem",
+      "detailId": 4150,
+      "itemId": 33018,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 33019,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 33020,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 33019,
+   "count": 1
+  }
+ ]
+}

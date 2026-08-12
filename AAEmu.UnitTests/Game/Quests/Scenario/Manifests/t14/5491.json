@@ -1,0 +1,69 @@
+{
+ "questId": 5491,
+ "name": "나차쉬가르_에픽 퀘스트_시작",
+ "zoneId": 192,
+ "categoryId": 86,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1150
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23731,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33444,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 668,
+      "sphereId": 1150
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23733,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33445,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1428
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4449,
+ "name": "마른 들판의 무지개 바위 오르기",
+ "zoneId": 13,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1561
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19456,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26458,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 241,
+      "sphereId": 1561
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19458,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26460,
+      "type": "QuestActSupplyCopper",
+      "detailId": 524,
+      "amount": 0
+     },
+     {
+      "actId": 26464,
+      "type": "QuestActConAutoComplete",
+      "detailId": 787
+     },
+     {
+      "actId": 31073,
+      "type": "QuestActSupplyExp",
+      "detailId": 538,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

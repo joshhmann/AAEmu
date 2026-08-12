@@ -1,0 +1,113 @@
+{
+ "questId": 3373,
+ "name": "골치 아픈 서리꾼",
+ "zoneId": 20,
+ "categoryId": 59,
+ "level": 46,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5813
+ },
+ "template": {
+  "level": 46,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14487,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29568,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 204,
+      "doodadId": 5813
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14488,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20553,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 764,
+      "npcId": 9549,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14490,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29567,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1122
+     },
+     {
+      "actId": 37022,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1414,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 10,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 9549,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

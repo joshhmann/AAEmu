@@ -14,6 +14,19 @@ public class GameObject : IGameObject
     protected static Logger Logger = LogManager.GetCurrentClassLogger();
     private bool _disabledSetPosition;
 
+    /// <summary>
+    /// Per-thread reused broadcast buffer — the movement-broadcast hot path
+    /// (~5k/sec with roaming bots) reuses one List per thread instead of
+    /// allocating per broadcast. Depth guard: a nested broadcast on the same
+    /// thread gets a FRESH buffer so it can never clobber the outer
+    /// enumeration (GetAround clears the list it fills).
+    /// </summary>
+    [ThreadStatic]
+    private static List<Character> t_broadcastBuffer;
+
+    [ThreadStatic]
+    private static int t_broadcastDepth;
+
     public Guid Guid { get; set; } = Guid.NewGuid();
     public uint ObjId { get; set; }
 
@@ -132,10 +145,29 @@ public class GameObject : IGameObject
     /// <param name="self">Include sending to self (only for if called from Character)</param>
     public virtual void BroadcastPacket(GamePacket packet, bool self)
     {
-        foreach (var character in WorldManager.GetAround<Character>(this))
-            character.SendPacket(packet);
-        if (self && this is Character chr)
-            chr.SendPacket(packet);
+        var nested = t_broadcastDepth > 0;
+        t_broadcastDepth++;
+
+        try
+        {
+            // Top-level: reuse the thread-local buffer (allocation-free hot path
+            // for bot movement broadcasts, ~5k/sec at 1,000 bots). Nested call on
+            // the same thread: FRESH list — GetAround clears the list it fills,
+            // so sharing the buffer would corrupt the outer enumeration.
+            var characters = nested
+                ? new List<Character>()
+                : t_broadcastBuffer ??= new List<Character>();
+
+            WorldManager.GetAround(this, characters);
+            foreach (var character in characters)
+                character.SendPacket(packet);
+            if (self && this is Character chr)
+                chr.SendPacket(packet);
+        }
+        finally
+        {
+            t_broadcastDepth--;
+        }
     }
 
     /// <summary>

@@ -1,0 +1,81 @@
+{
+ "questId": 4488,
+ "name": "낮의 눈 절벽 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1600
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19588,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26675,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 277,
+      "sphereId": 1600
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19590,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26676,
+      "type": "QuestActConAutoComplete",
+      "detailId": 824
+     },
+     {
+      "actId": 26677,
+      "type": "QuestActSupplyCopper",
+      "detailId": 559,
+      "amount": 0
+     },
+     {
+      "actId": 31079,
+      "type": "QuestActSupplyExp",
+      "detailId": 544,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4537,
+ "name": "버려진 공성병기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1645
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19743,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26938,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 324,
+      "sphereId": 1645
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19745,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26939,
+      "type": "QuestActSupplyCopper",
+      "detailId": 603,
+      "amount": 0
+     },
+     {
+      "actId": 26940,
+      "type": "QuestActSupplyExp",
+      "detailId": 163,
+      "exp": 0
+     },
+     {
+      "actId": 26942,
+      "type": "QuestActConAutoComplete",
+      "detailId": 869
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

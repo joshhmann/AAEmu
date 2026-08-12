@@ -1,0 +1,123 @@
+{
+ "questId": 4940,
+ "name": "붉은 흙 반인반사 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 1998
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21439,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29817,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1117,
+      "npcId": 1998
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 21440,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29818,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1063,
+      "npcId": 1998,
+      "count": 18
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 21441,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29819,
+      "type": "QuestActConReportJournal",
+      "detailId": 344
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21442,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29820,
+      "type": "QuestActSupplyCopper",
+      "detailId": 853,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1998,
+     "count": 18
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

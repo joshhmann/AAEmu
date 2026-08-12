@@ -1,0 +1,81 @@
+{
+ "questId": 5013,
+ "name": "동방 이슈바라 거대 봉분 위",
+ "zoneId": 20,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2110
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21701,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30365,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 631,
+      "sphereId": 2110
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21702,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30366,
+      "type": "QuestActSupplyCopper",
+      "detailId": 929,
+      "amount": 0
+     },
+     {
+      "actId": 30367,
+      "type": "QuestActSupplyExp",
+      "detailId": 471,
+      "exp": 0
+     },
+     {
+      "actId": 30369,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1236
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

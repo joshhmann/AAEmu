@@ -1,0 +1,81 @@
+{
+ "questId": 4988,
+ "name": "마틸다 트리스테의 간이 응접실",
+ "zoneId": 27,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2085
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30241,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 606,
+      "sphereId": 2085
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30237,
+      "type": "QuestActSupplyCopper",
+      "detailId": 904,
+      "amount": 0
+     },
+     {
+      "actId": 30238,
+      "type": "QuestActSupplyExp",
+      "detailId": 446,
+      "exp": 0
+     },
+     {
+      "actId": 30240,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1211
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

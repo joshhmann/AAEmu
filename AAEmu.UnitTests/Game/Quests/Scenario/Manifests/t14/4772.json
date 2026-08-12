@@ -1,0 +1,81 @@
+{
+ "questId": 4772,
+ "name": "거대 바오밥 나무의 줄기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1825
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20616,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28195,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 484,
+      "sphereId": 1825
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20618,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28196,
+      "type": "QuestActSupplyCopper",
+      "detailId": 778,
+      "amount": 0
+     },
+     {
+      "actId": 28197,
+      "type": "QuestActSupplyExp",
+      "detailId": 335,
+      "exp": 0
+     },
+     {
+      "actId": 28199,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1034
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

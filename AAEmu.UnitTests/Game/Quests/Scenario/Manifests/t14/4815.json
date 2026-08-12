@@ -1,0 +1,81 @@
+{
+ "questId": 4815,
+ "name": "대양의 주상절리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1863
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20775,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28399,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 501,
+      "sphereId": 1863
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20777,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28400,
+      "type": "QuestActSupplyCopper",
+      "detailId": 793,
+      "amount": 0
+     },
+     {
+      "actId": 28401,
+      "type": "QuestActSupplyExp",
+      "detailId": 353,
+      "exp": 0
+     },
+     {
+      "actId": 28403,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1056
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

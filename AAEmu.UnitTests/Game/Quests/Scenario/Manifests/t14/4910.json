@@ -1,0 +1,81 @@
+{
+ "questId": 4910,
+ "name": "마른 들판의 작은 웅덩이",
+ "zoneId": 13,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2031
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21327,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29691,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 558,
+      "sphereId": 2031
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21328,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29687,
+      "type": "QuestActSupplyCopper",
+      "detailId": 823,
+      "amount": 0
+     },
+     {
+      "actId": 29690,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1144
+     },
+     {
+      "actId": 31120,
+      "type": "QuestActSupplyExp",
+      "detailId": 584,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

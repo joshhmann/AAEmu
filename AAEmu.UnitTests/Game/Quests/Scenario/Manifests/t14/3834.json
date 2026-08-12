@@ -1,0 +1,119 @@
+{
+ "questId": 3834,
+ "name": "안개 괴물 처치",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10106
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16105,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22765,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3271,
+      "npcId": 10106
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16107,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22556,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 428,
+      "monsterGroupId": 394,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16108,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22766,
+      "type": "QuestActConReportNpc",
+      "detailId": 3504,
+      "npcId": 10106
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16109,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 394,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10106,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

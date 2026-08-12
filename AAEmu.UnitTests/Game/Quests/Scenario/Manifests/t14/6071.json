@@ -1,0 +1,134 @@
+{
+ "questId": 6071,
+ "name": "원활한 조사를 위한 살생",
+ "zoneId": 192,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14411
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26126,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35779,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4611,
+      "npcId": 14411
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26127,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35745,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1172,
+      "npcId": 12962,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26128,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35747,
+      "type": "QuestActSupplyItem",
+      "detailId": 4003,
+      "itemId": 28542,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26231,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35871,
+      "type": "QuestActConReportNpc",
+      "detailId": 4854,
+      "npcId": 14411
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12962,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14411,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 28542,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

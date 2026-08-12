@@ -1,0 +1,81 @@
+{
+ "questId": 4716,
+ "name": "금지된 해안의 망루",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1766
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20421,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27855,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 428,
+      "sphereId": 1766
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20423,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27856,
+      "type": "QuestActSupplyCopper",
+      "detailId": 723,
+      "amount": 0
+     },
+     {
+      "actId": 27857,
+      "type": "QuestActSupplyExp",
+      "detailId": 275,
+      "exp": 0
+     },
+     {
+      "actId": 27859,
+      "type": "QuestActConAutoComplete",
+      "detailId": 976
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

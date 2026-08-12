@@ -1,0 +1,81 @@
+{
+ "questId": 4995,
+ "name": "파비트라 대여제 기념비 뒤편",
+ "zoneId": 8,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2092
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21647,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30279,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 613,
+      "sphereId": 2092
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21648,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30274,
+      "type": "QuestActSupplyCopper",
+      "detailId": 911,
+      "amount": 0
+     },
+     {
+      "actId": 30275,
+      "type": "QuestActSupplyExp",
+      "detailId": 453,
+      "exp": 0
+     },
+     {
+      "actId": 30277,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1218
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

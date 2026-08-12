@@ -1,0 +1,185 @@
+{
+ "questId": 6571,
+ "name": "붉게 물드는 이슬 평원",
+ "zoneId": 218,
+ "categoryId": 113,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14866
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28052,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40121,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5017,
+      "npcId": 14866
+     },
+     {
+      "actId": 40136,
+      "type": "QuestActCheckTimer",
+      "detailId": 181,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40155,
+      "type": "QuestActObjZoneKill",
+      "detailId": 128,
+      "zoneId": 78,
+      "countNpc": 10,
+      "countPk": 10,
+      "teamShare": "t",
+      "useAlias": "f",
+      "questActObjAliasId": 0,
+      "lvMin": 1,
+      "lvMax": 99,
+      "isParty": "t",
+      "lvMinNpc": 1,
+      "lvMaxNpc": 99,
+      "pcFactionExclusive": "f",
+      "npcFactionExclusive": "f"
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28054,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40026,
+      "type": "QuestActConReportNpc",
+      "detailId": 5043,
+      "npcId": 14871
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28056,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40120,
+      "type": "QuestActSupplyItem",
+      "detailId": 4692,
+      "itemId": 29730,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 28063,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ZoneKill",
+     "zoneGroupId": 78,
+     "count": 10,
+     "countNpc": 10,
+     "countPk": 10,
+     "npcFactionId": 0,
+     "npcFactionExclusive": false,
+     "lvMinNpc": 1,
+     "lvMaxNpc": 99,
+     "pcFactionId": 0,
+     "pcFactionExclusive": false,
+     "lvMin": 1,
+     "lvMax": 99
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14871,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29730,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "TIMEOUT",
+   "events": [],
+   "expect": {
+    "step": "Fail"
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

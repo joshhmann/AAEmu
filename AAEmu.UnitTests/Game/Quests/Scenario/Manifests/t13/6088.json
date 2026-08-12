@@ -1,0 +1,132 @@
+{
+ "questId": 6088,
+ "name": "초심자와 함께 히에로니무스 처치",
+ "zoneId": 168,
+ "categoryId": 56,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14422
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26195,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35842,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4628,
+      "npcId": 14422
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26196,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36197,
+      "type": "QuestActObjItemGather",
+      "detailId": 2896,
+      "itemId": 31590,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26198,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36354,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1683
+     },
+     {
+      "actId": 36374,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1337,
+      "amount": 0
+     },
+     {
+      "actId": 37085,
+      "type": "QuestActSupplyItem",
+      "detailId": 4111,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 3
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 31590,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 3
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31590,
+   "count": 1
+  }
+ ]
+}

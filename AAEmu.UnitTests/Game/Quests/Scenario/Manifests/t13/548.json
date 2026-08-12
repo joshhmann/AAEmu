@@ -1,0 +1,132 @@
+{
+ "questId": 548,
+ "name": "루푸스의 보물",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2399
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2166,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3299,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 348,
+      "npcId": 2399
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2168,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6588,
+      "type": "QuestActObjItemGather",
+      "detailId": 329,
+      "itemId": 5048,
+      "count": 1
+     },
+     {
+      "actId": 17323,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 59,
+      "itemId": 4958,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2169,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3302,
+      "type": "QuestActConReportNpc",
+      "detailId": 413,
+      "npcId": 2399
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2170,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5048,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2399,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5048,
+   "count": 1
+  }
+ ]
+}

@@ -41,6 +41,15 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
                 _objects = temp;
             }
 
+            // Count-first ordering + full fence: GetList<Character> short-circuits
+            // on _charactersSize via a lock-free volatile read, so a reader must
+            // never see "count 0" while a character is already in the array.
+            // Interlocked (full barrier) BEFORE the array write makes the count
+            // store visible before the array store on ANY memory model — a reader
+            // seeing count==0 cannot yet see the character. A mid-add reader that
+            // sees count>0 just pays a wasted iteration (harmless).
+            if (obj is Character)
+                Interlocked.Increment(ref _charactersSize);
             _objects[_objectsSize] = obj;
             _objectsSize++;
         }
@@ -55,7 +64,6 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
 
         if (obj is Character)
         {
-            _charactersSize++;
             foreach (var region in GetNeighbors())
                 if (region != null)
                     Interlocked.Increment(ref region._playerCount);
@@ -101,7 +109,11 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
 
             if (obj is Character)
             {
-                _charactersSize--;
+                // Decrement AFTER the array removal (full fence): a reader seeing
+                // count==0 is guaranteed the character is already out of the array
+                // (the removal store precedes the decrement store), so the
+                // lock-free short-circuit can never skip a present character.
+                Interlocked.Decrement(ref _charactersSize);
                 foreach (var region in GetNeighbors())
                     if (region != null)
                         Interlocked.Decrement(ref region._playerCount);
@@ -307,71 +319,78 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
 
     public List<uint> GetObjectIdsList(List<uint> result, uint exclude)
     {
-        GameObject[] temp;
         lock (_objectsLock)
         {
             if (_objects == null || _objectsSize == 0)
                 return result;
-            temp = new GameObject[_objectsSize];
-            Array.Copy(_objects, 0, temp, 0, _objectsSize);
+
+            for (var i = 0; i < _objectsSize; i++)
+            {
+                var obj = _objects[i];
+                if (obj != null && obj.ObjId != exclude)
+                    result.Add(obj.ObjId);
+            }
         }
 
-        foreach (var obj in temp)
-            if (obj.ObjId != exclude)
-                result.Add(obj.ObjId);
         return result;
     }
 
     public List<GameObject> GetObjectsList(List<GameObject> result, uint exclude)
     {
-        GameObject[] temp;
         lock (_objectsLock)
         {
             if (_objects == null || _objectsSize == 0)
                 return result;
-            temp = new GameObject[_objectsSize];
-            Array.Copy(_objects, 0, temp, 0, _objectsSize);
+
+            for (var i = 0; i < _objectsSize; i++)
+            {
+                var obj = _objects[i];
+                if (obj != null && obj.ObjId != exclude)
+                    result.Add(obj);
+            }
         }
 
-        foreach (var obj in temp)
-            if (obj != null && obj.ObjId != exclude)
-                result.Add(obj);
         return result;
     }
 
     private List<uint> GetListId<T>(List<uint> result, uint exclude) where T : class
     {
-        GameObject[] temp;
         lock (_objectsLock)
         {
             if (_objects == null || _objectsSize == 0)
                 return result;
-            temp = new GameObject[_objectsSize];
-            Array.Copy(_objects, 0, temp, 0, _objectsSize);
-        }
 
-        foreach (var obj in temp)
-            if (obj is T && obj.ObjId != exclude)
-                result.Add(obj.ObjId);
+            for (var i = 0; i < _objectsSize; i++)
+            {
+                var obj = _objects[i];
+                if (obj is T && obj.ObjId != exclude)
+                    result.Add(obj.ObjId);
+            }
+        }
 
         return result;
     }
 
     public List<T> GetList<T>(List<T> result, uint exclude) where T : class
     {
-        GameObject[] temp;
+        // Broadcast short-circuit: regions without a single Character can never
+        // produce a Character result. Avoids the lock + iteration entirely for
+        // the per-neighbor scans on the movement-broadcast path (hot at
+        // ~5k broadcasts/sec with roaming bots).
+        if (typeof(T) == typeof(Character) && Volatile.Read(ref _charactersSize) <= 0)
+            return result;
+
         lock (_objectsLock)
         {
             if (_objects == null || _objectsSize == 0)
                 return result;
-            temp = new GameObject[_objectsSize];
-            Array.Copy(_objects, 0, temp, 0, _objectsSize);
-        }
 
-        foreach (var obj in temp)
-        {
-            if (obj is T item && obj.ObjId != exclude)
-                result.Add(item);
+            for (var i = 0; i < _objectsSize; i++)
+            {
+                var obj = _objects[i];
+                if (obj is T item && obj.ObjId != exclude)
+                    result.Add(item);
+            }
         }
 
         return result;
@@ -379,33 +398,40 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
 
     public List<T> GetList<T>(List<T> result, uint exclude, float x, float y, float sqrad, bool useModelSize = false) where T : class
     {
-        GameObject[] temp;
+        // M5 A1 (execution boundary, Kimi audit 2026-08-09 race witness): this
+        // overload reads obj.Transform (a position scan) while movement writers
+        // mutate it. The other overloads' snapshot pattern only protects the
+        // _objects ARRAY — the Transform read here is the race. Iterate under
+        // _objectsLock so the whole distance scan is consistent with region
+        // mutation; combined with the marshal (bot steps now run only on the
+        // game-loop thread), the witness is closed on the read side.
+        if (typeof(T) == typeof(Character) && Volatile.Read(ref _charactersSize) <= 0)
+            return result;
+
         lock (_objectsLock)
         {
             if (_objects == null || _objectsSize == 0)
                 return result;
-            temp = new GameObject[_objectsSize];
-            Array.Copy(_objects, 0, temp, 0, _objectsSize);
-        }
 
-        foreach (var obj in temp)
-        {
-            var item = obj as T;
-            if (item == null || obj.ObjId == exclude)
-                continue;
+            for (var i = 0; i < _objectsSize; i++)
+            {
+                var obj = _objects[i];
+                if (obj is not T item || obj.ObjId == exclude)
+                    continue;
 
-            var finalRad = sqrad;
-            if (useModelSize)
-                finalRad += obj.ModelSize * obj.ModelSize;
+                var finalRad = sqrad;
+                if (useModelSize)
+                    finalRad += obj.ModelSize * obj.ModelSize;
 
-            var dx = obj.Transform.World.Position.X - x;
-            dx *= dx;
-            if (dx > finalRad)
-                continue;
-            var dy = obj.Transform.World.Position.Y - y;
-            dy *= dy;
-            if (dx + dy < finalRad)
-                result.Add(item);
+                var dx = obj.Transform.World.Position.X - x;
+                dx *= dx;
+                if (dx > finalRad)
+                    continue;
+                var dy = obj.Transform.World.Position.Y - y;
+                dy *= dy;
+                if (dx + dy < finalRad)
+                    result.Add(item);
+            }
         }
 
         return result;

@@ -1,0 +1,123 @@
+{
+ "questId": 6267,
+ "name": "사역마 학살",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26848,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37422,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 442,
+      "questContextId": 6267
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26849,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37423,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 647,
+      "monsterGroupId": 585,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37424,
+      "type": "QuestActConReportJournal",
+      "detailId": 462
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26852,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38014,
+      "type": "QuestActSupplyExp",
+      "detailId": 1230,
+      "exp": 30600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 585,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

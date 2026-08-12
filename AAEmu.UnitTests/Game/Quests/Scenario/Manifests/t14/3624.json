@@ -1,0 +1,91 @@
+{
+ "questId": 3624,
+ "name": "점을 보기 좋은 때",
+ "zoneId": 3,
+ "categoryId": 53,
+ "level": 43,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1128
+ },
+ "template": {
+  "level": 43,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15108,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20702,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2872,
+      "npcId": 1128
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15110,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20704,
+      "type": "QuestActConReportNpc",
+      "detailId": 3102,
+      "npcId": 8885
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15111,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8885,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

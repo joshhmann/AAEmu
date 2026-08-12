@@ -1,0 +1,163 @@
+{
+ "questId": 5879,
+ "name": "매혹의 약탈자 제누트를 물리쳐라!",
+ "zoneId": 26,
+ "categoryId": 97,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13744
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25400,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34709,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 261,
+      "questContextId": 5879
+     },
+     {
+      "actId": 34711,
+      "type": "QuestActCheckTimer",
+      "detailId": 144,
+      "limitTime": 14400000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25401,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38832,
+      "type": "QuestActObjAggro",
+      "detailId": 64,
+      "range": 150,
+      "rank1": 100,
+      "rank2": 0,
+      "rank3": 0,
+      "rank1Ratio": 100,
+      "rank2Ratio": 0,
+      "rank3Ratio": 0,
+      "rank1Item": true,
+      "rank2Item": false,
+      "rank3Item": false,
+      "useAlias": true,
+      "questActObjAliasId": 3294
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 25402,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 25409,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34712,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1507
+     },
+     {
+      "actId": 34714,
+      "type": "QuestActSupplyItem",
+      "detailId": 3920,
+      "itemId": 29499,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 34715,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1223,
+      "amount": 0
+     },
+     {
+      "actId": 34716,
+      "type": "QuestActSupplyExp",
+      "detailId": 788,
+      "exp": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Aggro",
+     "npcId": 13744
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29499,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "TIMEOUT",
+   "events": [],
+   "expect": {
+    "step": "Fail"
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

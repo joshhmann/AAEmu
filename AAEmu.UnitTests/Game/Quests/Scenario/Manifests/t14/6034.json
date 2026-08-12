@@ -1,0 +1,140 @@
+{
+ "questId": 6034,
+ "name": "겨울 나라의 특제 우유",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActObjItemGather",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25981,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 25982,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35605,
+      "type": "QuestActObjItemGather",
+      "detailId": 2872,
+      "itemId": 30434,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25983,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Reward",
+    "id": 25987,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35599,
+      "type": "QuestActSupplyItem",
+      "detailId": 3995,
+      "itemId": 30437,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35601,
+      "type": "QuestActSupplyExp",
+      "detailId": 818,
+      "exp": 1004
+     },
+     {
+      "actId": 35602,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1264,
+      "amount": 100
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 30434,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30437,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30434,
+   "count": 12
+  }
+ ]
+}

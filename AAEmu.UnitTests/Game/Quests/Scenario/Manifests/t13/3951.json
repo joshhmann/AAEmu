@@ -1,0 +1,141 @@
+{
+ "questId": 3951,
+ "name": "물레노래 벌판 반란 진압",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 40,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9433
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16669,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22064,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 859,
+      "npcId": 9433
+     },
+     {
+      "actId": 22065,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 860,
+      "npcId": 9434
+     },
+     {
+      "actId": 22066,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 861,
+      "npcId": 9435
+     },
+     {
+      "actId": 22067,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 862,
+      "npcId": 9436
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16670,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22063,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 405,
+      "monsterGroupId": 361,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16671,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22003,
+      "type": "QuestActConReportJournal",
+      "detailId": 253
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16672,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22002,
+      "type": "QuestActSupplyCopper",
+      "detailId": 366,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 361,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

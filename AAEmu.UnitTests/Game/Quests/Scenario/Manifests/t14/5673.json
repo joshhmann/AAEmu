@@ -1,0 +1,93 @@
+{
+ "questId": 5673,
+ "name": "도깨비 공예사",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 29129
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33800,
+      "type": "QuestActConAcceptItem",
+      "detailId": 338,
+      "itemId": 29129
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24363,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33810,
+      "type": "QuestActSupplyExp",
+      "detailId": 763,
+      "exp": 1000
+     },
+     {
+      "actId": 33811,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1199,
+      "amount": 0
+     },
+     {
+      "actId": 33812,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 225,
+      "appellationId": 169
+     },
+     {
+      "actId": 33813,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1447
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29129,
+   "count": 1
+  }
+ ]
+}

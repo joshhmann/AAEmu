@@ -1,0 +1,135 @@
+{
+ "questId": 5118,
+ "name": "숨겨왔던 수줍은 마음",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26657
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22168,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31240,
+      "type": "QuestActConAcceptItem",
+      "detailId": 189,
+      "itemId": 26657
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22169,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31271,
+      "type": "QuestActSupplyItem",
+      "detailId": 3580,
+      "itemId": 26693,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22170,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31272,
+      "type": "QuestActConReportNpc",
+      "detailId": 4282,
+      "npcId": 11723
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22186,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31406,
+      "type": "QuestActSupplyItem",
+      "detailId": 3597,
+      "itemId": 26645,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 11723,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26645,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26657,
+   "count": 1
+  }
+ ]
+}

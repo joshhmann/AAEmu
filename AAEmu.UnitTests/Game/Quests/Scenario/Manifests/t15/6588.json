@@ -1,0 +1,147 @@
+{
+ "questId": 6588,
+ "name": "들녘의 야수를 물리쳐라",
+ "zoneId": 193,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28115,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40239,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 533,
+      "questContextId": 6588
+     },
+     {
+      "actId": 40240,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5031,
+      "npcId": 14927
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28116,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40241,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1304,
+      "npcId": 14909,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28117,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40242,
+      "type": "QuestActConReportNpc",
+      "detailId": 5053,
+      "npcId": 14927
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28218,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40468,
+      "type": "QuestActSupplyExp",
+      "detailId": 1545,
+      "exp": 40000
+     },
+     {
+      "actId": 40469,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1887,
+      "amount": 10500
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14909,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14927,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

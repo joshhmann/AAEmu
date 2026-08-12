@@ -1,0 +1,177 @@
+{
+ "questId": 3845,
+ "name": "검은나무 장벽의 수호자",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 45,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10084
+ },
+ "template": {
+  "level": 45,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16160,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23028,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3295,
+      "npcId": 10084
+     },
+     {
+      "actId": 23029,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1007,
+      "npcId": 3715
+     },
+     {
+      "actId": 23030,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1008,
+      "npcId": 3716
+     },
+     {
+      "actId": 23031,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1009,
+      "npcId": 10102
+     },
+     {
+      "actId": 23032,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1010,
+      "npcId": 10103
+     },
+     {
+      "actId": 23033,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1011,
+      "npcId": 3714
+     },
+     {
+      "actId": 23034,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1012,
+      "npcId": 1336
+     },
+     {
+      "actId": 23035,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1013,
+      "npcId": 10026
+     },
+     {
+      "actId": 23036,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1014,
+      "npcId": 3718
+     },
+     {
+      "actId": 23037,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1015,
+      "npcId": 3717
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16162,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23038,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 449,
+      "monsterGroupId": 411,
+      "count": 100
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16163,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23039,
+      "type": "QuestActConReportJournal",
+      "detailId": 306
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16164,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23040,
+      "type": "QuestActSupplyCopper",
+      "detailId": 397,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 411,
+     "count": 100
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

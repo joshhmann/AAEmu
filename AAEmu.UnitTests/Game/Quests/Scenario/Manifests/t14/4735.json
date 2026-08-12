@@ -1,0 +1,81 @@
+{
+ "questId": 4735,
+ "name": "침묵의 호수 창고 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1785
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20479,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27952,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 447,
+      "sphereId": 1785
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20481,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27953,
+      "type": "QuestActSupplyCopper",
+      "detailId": 742,
+      "amount": 0
+     },
+     {
+      "actId": 27955,
+      "type": "QuestActSupplyExp",
+      "detailId": 296,
+      "exp": 0
+     },
+     {
+      "actId": 27957,
+      "type": "QuestActConAutoComplete",
+      "detailId": 995
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

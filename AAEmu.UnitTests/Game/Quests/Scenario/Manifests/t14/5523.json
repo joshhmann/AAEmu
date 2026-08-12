@@ -1,0 +1,93 @@
+{
+ "questId": 5523,
+ "name": "노래의 혼",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28637
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23833,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33450,
+      "type": "QuestActConAcceptItem",
+      "detailId": 332,
+      "itemId": 28637
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23835,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33451,
+      "type": "QuestActSupplyExp",
+      "detailId": 755,
+      "exp": 1000
+     },
+     {
+      "actId": 33452,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1184,
+      "amount": 0
+     },
+     {
+      "actId": 33453,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 219,
+      "appellationId": 164
+     },
+     {
+      "actId": 33454,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1429
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28637,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,136 @@
+{
+ "questId": 4389,
+ "name": "마법의 돌",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2008
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19091,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26145,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3647,
+      "npcId": 2008
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19092,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29636,
+      "type": "QuestActObjInteraction",
+      "detailId": 632,
+      "doodadId": 5001,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19093,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26146,
+      "type": "QuestActConReportNpc",
+      "detailId": 3921,
+      "npcId": 2008
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19271,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29871,
+      "type": "QuestActSupplyItem",
+      "detailId": 3408,
+      "itemId": 24374,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 5001,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2008,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 24374,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,134 @@
+{
+ "questId": 5262,
+ "name": "루비 광산의 연구가",
+ "zoneId": 6,
+ "categoryId": 85,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8861
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31747,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4042,
+      "npcId": 8861
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31821,
+      "type": "QuestActConReportNpc",
+      "detailId": 4351,
+      "npcId": 12969
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22712,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32016,
+      "type": "QuestActSupplyItem",
+      "detailId": 3638,
+      "itemId": 27136,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 22809,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32119,
+      "type": "QuestActObjItemGather",
+      "detailId": 2530,
+      "itemId": 27136,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 27136,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12969,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 27136,
+   "count": 1
+  }
+ ]
+}

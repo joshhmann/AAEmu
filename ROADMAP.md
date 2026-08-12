@@ -262,14 +262,18 @@ the route depends on.
 **Depends on:** M1 (done). **Feeds:** M3/M4 (route + blocker backlog); M4's
 gate chains to M2's reset/seed procedure.
 
-**Detail (2026-08-09 audit):** M2 was silently redefined in practice into the
+**Detail (2026-08-10 audit):** M2 was silently redefined in practice into the
 quest-census sweep (M2a–M2d) — the band tables and ≥95% gates live only in
 progression-board.md and are adopted here by reference. Census reality:
-2,016/4,735 live contexts proven PASS (42.6%). The detailed remaining work
-list is **G1 WI-1..12** (4 harness-family closures → band sweeps 31-40/41-50/
-51-55/0-null → final census). The inherited harness track (t_f198bb0e) exits
-via WI-2..5. Census credit counts only once merged to develop (rule G0-1);
-deletion is never "fixed" — drops require register entry + Josh decision.
+**G1 GATE PASSED 2026-08-10** — 4,579 live contexts = 4,573 PASS + 6
+kept-by-ruling doc-SKIP + 0 FAIL, zero unexplained (4,876 rows − 297
+registered drops; full gate 1495/0/1 on merged develop @ 7f5c179f7). The
+detailed work list was **G1 WI-1..12** (4 harness-family closures → band
+sweeps 31-40/41-50/51-55/0-null → final census) — all landed; see the G1
+section for per-item status and kept-by-ruling SKIPs. The inherited harness
+track (t_f198bb0e) exits via WI-2..5. Census credit counts only once merged
+to develop (rule G0-1); deletion is never "fixed" — drops require register
+entry + Josh decision.
 The reset-procedure exit test is strengthened: a third party (or clean host)
 must run the reset/seed procedure from the docs — the manifest may not
 validate itself. If two humans are unavailable for the baseline, M5-contract
@@ -546,6 +550,50 @@ Decisions ladder: 10 correctness → 25 village → 50 soak → 100 only after
 profiling. M6.6 shipped consumables without currency — the exception is
 recorded here; either Josh approves it standing or a follow-up card seeds
 currency.
+
+**Physics slow-thread budget recalibrated (2026-08-10/11, t_18fccd09):** the gate's
+physics-warning budget is now ≤0.1/min + a no-sustained-slow clause (≤30
+warnings on the SAME world within any 60s window; 31+ = hard fail). Rationale:
+the detector (upstream stock, PR #1253) measures wall-clock inter-iteration
+gap on a thread that sleeps ~40ms and steps a zero-body world, so boot GC +
+host scheduling jitter trip it regardless of physics load. Measured 0.031/min
+(11 warnings / 6h soak, pre-GC-fix) and 0.067/min (4 warnings / 60 min,
+post-fix, one 3s background-GC burst) with 0 crash/disconnect/region-overrun
+— 0.1 gives ~1.5-3.3× headroom while a real overload (10-100× the measured
+rate) still fails. Same-world ceilings measured on the 6h re-soaks: 3-in-8s
+(2026-08-10, one pause event) and 8-in-59s per world / 16-in-76s across
+worlds (2026-08-11 360-min re-soak, one 75s provisioning/GC storm, all ≤82ms,
+thread recovered, 5h50m clean after) → clause at 30 ≈ 3.75× headroom; a
+genuinely stuck physics thread logs consecutive-iteration warnings (~25/s)
+and trips within ~1.2s. The 360-min re-soak additionally showed the STRICT H2
+load budgets (100ms region ceiling, 0 tick-overrun tolerance) false-RED on
+the SAME storm (one 105ms region pass, 2 overrun warnings, deferred 0
+characters) — the 10-bot idle soak now uses stage-specific SoakBudgets
+(region ceiling 200ms ≈ 1.9×, tick-overrun rate 0.1/min ≈ 18×) while the
+25/50-bot LOAD stages keep the strict budgets. In-code rationale mirrors the
+DB-write budget precedent (t_2006451f / t_b4eb35e9). Fix attempt first (GC
+latency tuning, t_eecc5604, merged) per Josh's ruling; recalibration is the
+recorded fallback.
+
+**M6 EXIT RECORD (2026-08-11, t_35167e60):** the last M6-exit blocker — the
+session/item enumeration-race class — is CLOSED and the 6h soak is GREEN.
+Merge `eb6f637e0` (no-ff) landed the 4-commit chain from t_781cdb32 +
+t_3fdd6ac3 (concurrency-safe Server `_sessions`/StreamManager tokens,
+CharacterQuests ActiveQuests/CompletedQuests → ConcurrentDictionary,
+ItemContainer `_itemsLock` + GetItemsSnapshot, ItemManager `_allItems`/
+`_allPersistentContainers` → ConcurrentDictionary, rigs adapted). Merge
+resolution preserved develop's BUG-014 uint CompletedQuests keys and the
+t_90c0d0d1 null-entry Save guard (7 develop-side rigs seeded after the chain
+parked were adapted to ConcurrentDictionary in the same merge). Full gate:
+**1592 tests, 0 failed.** Soak #4 (10 bots, 360.0-min window, isolated soak2
+stack, merged runtime hash-verified): **ALL 9 budgets PASS, 0 failures** —
+the soak3 quest-4295 reward-distribution NRE (ApplyBindRules raw-list
+iteration) does NOT reproduce; the Failures section is empty. Exit test (10
+bots / 6h / no unrecovered loops / no inventory duplication / no DB
+corruption / no tick-budget overrun) is now satisfied by recorded evidence;
+remaining M6-gate items per the 2026-08-09 audit (A1 execution boundary,
+restart-persistence scenario, observability logging, merge-to-develop G0-1)
+are tracked separately.
 
 **Detail (2026-08-09 audit):** M6 exit is blocked on **A1** (execution
 boundary — bot steps off the game loop violate M5's core rule). Added exit
@@ -978,35 +1026,46 @@ as *procedures* but never as *gates*. New standing rules:
 6. Merge-first execution: t_0fda3cd3 (merge M6 chain + record prod SHA)
    gates all new feature work.
 
-### G1 — Quest coverage to 100% (4,735 live contexts; 2,016 proven PASS = 42.6%)
+### G1 — Quest coverage to 100% ✅ GATE PASSED 2026-08-10 (4,579 live contexts; 4,573 PASS / 0 FAIL / 14 documented SKIP = 100.0% PASS-or-doc-SKIP, zero unexplained)
 
-No known engine gap blocks any live context — remaining work is 4 harness
-family closures + band sweeps + data triage. Single-threaded estimate
-7–10 working days at demonstrated cadence (family closure ≈ 4/day,
-band sweep ≈ 1/day at 600–850 quests).
+No engine gap blocked any live context — 4 harness family closures + band
+sweeps + data triage all landed 2026-08-05 → 08-10. Final census on merged
+develop @ 7f5c179f7: 4,573/4,573 runnable; full gate 1495 total / 0 failed /
+1 env-gated skip (bar ≥1473 MET).
 
-- WI-1 Push/merge M2c census to origin/develop (local aa2ef5f6d).
-- WI-2 CrimePoint closure (7 ctxs): gen-manifests ACT_TABLES + driver
-  factory case (QuestScenarioDriver.cs:284); rig asserts CrimePoint delta.
-- WI-3 AbilityLevel closure (11): rig preseeds ability exp; cover
-  AbilityId=0 all-abilities branch.
-- WI-4 MateLevel closure (6): preseed SummonMate at DetailLevel ≥ Level;
-  assert Cleanup-consume path (5464).
-- WI-5 CompleteQuest closure (11): rig pre-marks referenced quest completed
-  (synthetic-block pattern from CharacterQuestsDailyResetTests).
-- WI-6 Band 41-50 ltd triage (3419, 4967, 6069): drop-decision cards or
-  content-fix; register §8.
-- WI-7 T9 sweep band 31-40 (643; model predicts zero harness SKIPs).
-- WI-8 T10 sweep band 41-50 (1,592) — after WI-2..6.
-- WI-9 T11 sweep band 51-55 (268) + lvl-99 straggler 3465.
-- WI-10 Driver fidelity stages: TIMEOUT (fire OnTimerExpired; 45 CheckTimer
-  quests), RESET (ResetDailyQuests + re-accept; ~321 daily + 63 repeatable),
-  GUARD_DIED negative path (6 escort quests).
-- WI-11 Band 0/null triage (231; 147 modeled dead: 92 no-components /
-  52 ltd-no-report / 15 no-Start) — M2a purge playbook, Josh decision, then
-  sweep remaining ~81.
-- WI-12 Final census + denominator reconciliation: every live context PASS
-  or registered-drop, zero unexplained FAIL/SKIP across 4,735.
+- ✅ WI-1 Push/merge M2c census to origin/develop (local aa2ef5f6d) — merged.
+- ✅ WI-2 CrimePoint closure (7 ctxs) — closed the last 2 census SKIPs
+  (2916/2926); added the t9 tier.
+- ✅ WI-3 AbilityLevel closure (11) — rig preseeds ability exp; AbilityId=0
+  all-abilities branch covered.
+- ✅ WI-4 MateLevel closure (6) — SummonMate preseed + Cleanup-consume path
+  (5464) covered.
+- ✅ WI-5 CompleteQuest closure (11) — synthetic-block pattern from
+  CharacterQuestsDailyResetTests.
+- ✅ WI-6 Band 41-50 ltd triage — Josh rulings 2026-08-09: 6069 DROP
+  (executed t_6810ebd4, merged t_ec1a3326); 3419/4967 NO-GO keep
+  (register §8).
+- ✅ WI-7 T9 sweep band 31-40 (t_eb2556c3) — 643/643 PASS, zero harness
+  SKIPs as predicted.
+- ✅ WI-8 T10 sweep band 41-50 (t_fc85a317) — 1,589 PASS / 2 doc-SKIP
+  (3419/4967) / 0 FAIL.
+- ✅ WI-9 T11 sweep band 51-55 (t_867af9e4) + lvl-99 straggler 3465 —
+  269/269 PASS-or-doc-SKIP.
+- ✅ WI-10 Driver fidelity stages (t_abafd918 @ 9f785d430) — TIMEOUT /
+  RESET / GUARD_DIED, 642 probe stages, 0 new FAIL.
+- ✅ WI-11 Band 0/null — WI-11a triage (t_724ccab2; Josh Q2 ruling: 4
+  no-components NO-GO keep) + WI-11b sweep (t_8ec705f0 @ e4dcc22c7):
+  60/60 accounted, 56 PASS / 4 doc-SKIP; BUG-014 found → fixed
+  (t_8b47a3bf @ 4b73b63ac, Rei gate PASS).
+- ✅ WI-12 Final census + denominator reconciliation (t_971d275b @
+  7f5c179f7) — **G1 GATE PASS**: 4,876 rows − 297 registered drops = 4,579
+  live = 4,573 PASS + 6 doc-SKIP, zero unexplained; gate 1495/0/1.
+
+**Deferred / kept-by-ruling (documented SKIP — not actionable without Josh
+overturning):** 6 live contexts — 3419/4967 (ltd no-report, WI-6 register §8)
+and 315/1576/1728/2046 (no-components, WI-11a A2) — plus 8 orphaned contexts
+with no quest_contexts row (745/1421/1954–1958/2140, register §3,
+census-SKIP).
 
 Purged-content policy (settled by audit): the 26 engine-stuck (zone 22
 A-cluster) have no completion path in canonical 1.2 data — restoring them is
@@ -1030,6 +1089,9 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   trigger. Acceptance: 1,000-bot wake storm transition p99 < 100ms.
 - A4 (M) Save scalability: per-character dirty tracking + batching.
   Acceptance: autosave p95 < 2s at 250 characters; zero _isSaving skips.
+  ✅ implementation merged 5ed5d6493 (2026-08-10, t_8c18eb1c, Rei gate
+  t_53025996 ACCEPT — dirty-only periodic saves, force-all on shutdown + /save);
+  acceptance measurement still a milestone-gate item.
 - A5 (L) TRUE DORMANCY — the pivotal item: Dormant = DB row + metadata only,
   no Character materialized, no region presence, no per-second tick; Tier 3 =
   DB-driven scheduled simulation (harvest/travel timers advance while nobody

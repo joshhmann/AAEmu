@@ -1,0 +1,81 @@
+{
+ "questId": 4737,
+ "name": "사냥꾼 마을의 집 지붕",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1787
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20485,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27963,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 449,
+      "sphereId": 1787
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20487,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27964,
+      "type": "QuestActSupplyCopper",
+      "detailId": 744,
+      "amount": 0
+     },
+     {
+      "actId": 27965,
+      "type": "QuestActSupplyExp",
+      "detailId": 298,
+      "exp": 0
+     },
+     {
+      "actId": 27967,
+      "type": "QuestActConAutoComplete",
+      "detailId": 997
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

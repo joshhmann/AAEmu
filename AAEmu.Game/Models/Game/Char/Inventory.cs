@@ -100,7 +100,7 @@ public class Inventory
         // Wipe inventory (don't use Wipe() here)
         foreach (var container in _itemContainers)
         {
-            container.Value.Items.Clear();
+            container.Value.ClearItemsRaw();
             container.Value.UpdateFreeSlotCount();
         }
 
@@ -533,8 +533,8 @@ public class Inventory
                 itemTasks.Add(new ItemMove(fromType, fromSlot, fromItemId, toType, toSlot, toItemId));
                 if (targetContainer != sourceContainer)
                 {
-                    sourceContainer.Items.Add(itemInTargetSlot);
-                    targetContainer.Items.Remove(itemInTargetSlot);
+                    sourceContainer.AddItemRaw(itemInTargetSlot);
+                    targetContainer.RemoveItemRaw(itemInTargetSlot);
                     itemInTargetSlot._holdingContainer = sourceContainer;
                     sourceContainer.UpdateFreeSlotCount();
                     targetContainer.UpdateFreeSlotCount();
@@ -547,7 +547,7 @@ public class Inventory
                 ni.SlotType = toType;
                 ni.Slot = toSlot;
                 ni._holdingContainer = targetContainer;
-                targetContainer.Items.Add(ni);
+                targetContainer.AddItemRaw(ni);
                 itemTasks.Add(new ItemAdd(ni));
                 if (targetContainer != sourceContainer)
                     targetContainer.UpdateFreeSlotCount();
@@ -560,8 +560,8 @@ public class Inventory
                 // itemTasks.Add(new ItemMove(fromType, fromSlot, fromItem.Id, toType, toSlot, toItemId));
                 if (targetContainer != sourceContainer)
                 {
-                    sourceContainer.Items.Remove(fromItem);
-                    targetContainer.Items.Add(fromItem);
+                    sourceContainer.RemoveItemRaw(fromItem);
+                    targetContainer.AddItemRaw(fromItem);
                     fromItem._holdingContainer = targetContainer;
                     sourceContainer.UpdateFreeSlotCount();
                     targetContainer.UpdateFreeSlotCount();
@@ -593,8 +593,8 @@ public class Inventory
                 fromItem.Slot = toSlot;
                 if (sourceContainer != null && sourceContainer != targetContainer)
                 {
-                    sourceContainer.Items.Remove(fromItem);
-                    targetContainer.Items.Add(fromItem);
+                    sourceContainer.RemoveItemRaw(fromItem);
+                    targetContainer.AddItemRaw(fromItem);
                     fromItem._holdingContainer = targetContainer;
                     targetContainer.UpdateFreeSlotCount();
                 }
@@ -602,8 +602,8 @@ public class Inventory
                 itemInTargetSlot.Slot = fromSlot;
                 if (sourceContainer != targetContainer)
                 {
-                    targetContainer.Items.Remove(itemInTargetSlot);
-                    sourceContainer.Items.Add(itemInTargetSlot);
+                    targetContainer.RemoveItemRaw(itemInTargetSlot);
+                    sourceContainer.AddItemRaw(itemInTargetSlot);
                     itemInTargetSlot._holdingContainer = sourceContainer;
                     sourceContainer.UpdateFreeSlotCount();
                 }

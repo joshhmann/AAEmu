@@ -1,0 +1,181 @@
+{
+ "questId": 3782,
+ "name": "행동 강령 해독",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckCompleteComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10350
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15843,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21914,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3099,
+      "npcId": 10350
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 15844,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21917,
+      "type": "QuestActSupplyItem",
+      "detailId": 2192,
+      "itemId": 21257,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 29640,
+      "type": "QuestActSupplyItem",
+      "detailId": 3388,
+      "itemId": 24777,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15845,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21918,
+      "type": "QuestActObjItemUse",
+      "detailId": 552,
+      "itemId": 21258,
+      "count": 1
+     },
+     {
+      "actId": 30731,
+      "type": "QuestActCheckCompleteComponent",
+      "detailId": 1007,
+      "completeComponent": 17417
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15846,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21921,
+      "type": "QuestActConReportNpc",
+      "detailId": 3334,
+      "npcId": 10350
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15847,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 17417,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 23042,
+      "type": "QuestActObjItemGather",
+      "detailId": 1749,
+      "itemId": 21258,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 21258,
+     "count": 1
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 21258,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10350,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21258,
+   "count": 1
+  }
+ ]
+}

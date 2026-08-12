@@ -1,0 +1,148 @@
+{
+ "questId": 4334,
+ "name": "세월을 이겨내는 집념",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1934
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18926,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25966,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3597,
+      "npcId": 1934
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18927,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25968,
+      "type": "QuestActObjItemGather",
+      "detailId": 2070,
+      "itemId": 24283,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18928,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25967,
+      "type": "QuestActConReportNpc",
+      "detailId": 3868,
+      "npcId": 1934
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19205,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Progress",
+    "id": 21280,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29562,
+      "type": "QuestActObjItemGather",
+      "detailId": 2382,
+      "itemId": 24284,
+      "count": 8
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24283,
+     "count": 8
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 24284,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1934,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24283,
+   "count": 8
+  },
+  {
+   "itemId": 24284,
+   "count": 8
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4610,
+ "name": "타인의 창고를 탐험(?)하다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1680
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20051,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27277,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 353,
+      "sphereId": 1680
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20053,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27278,
+      "type": "QuestActSupplyCopper",
+      "detailId": 640,
+      "amount": 0
+     },
+     {
+      "actId": 27279,
+      "type": "QuestActSupplyExp",
+      "detailId": 194,
+      "exp": 0
+     },
+     {
+      "actId": 27281,
+      "type": "QuestActConAutoComplete",
+      "detailId": 898
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

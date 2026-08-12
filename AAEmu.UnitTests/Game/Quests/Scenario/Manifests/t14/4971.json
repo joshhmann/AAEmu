@@ -1,0 +1,81 @@
+{
+ "questId": 4971,
+ "name": "돌을 위한 연회장의 돌 틈",
+ "zoneId": 10,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2068
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21573,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30155,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 589,
+      "sphereId": 2068
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21574,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30151,
+      "type": "QuestActSupplyCopper",
+      "detailId": 887,
+      "amount": 0
+     },
+     {
+      "actId": 30152,
+      "type": "QuestActSupplyExp",
+      "detailId": 428,
+      "exp": 0
+     },
+     {
+      "actId": 30154,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1194
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

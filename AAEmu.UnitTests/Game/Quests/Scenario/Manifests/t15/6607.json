@@ -1,0 +1,116 @@
+{
+ "questId": 6607,
+ "name": "땅울림 바실리스크 사냥",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Kill",
+  "id": 12623
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40323,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 1304,
+      "npcId": 12623
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28173,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40324,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1313,
+      "npcId": 12623,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28174,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40325,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1882
+     },
+     {
+      "actId": 40326,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 556,
+      "questContextId": 6608
+     },
+     {
+      "actId": 40453,
+      "type": "QuestActSupplyExp",
+      "detailId": 1537,
+      "exp": 65480
+     },
+     {
+      "actId": 40455,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1880,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12623,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

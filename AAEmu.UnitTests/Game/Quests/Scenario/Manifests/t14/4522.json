@@ -1,0 +1,81 @@
+{
+ "questId": 4522,
+ "name": "베아르 야영지가 내려다보이는 바위",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1630
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19698,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26857,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 306,
+      "sphereId": 1630
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19700,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26858,
+      "type": "QuestActSupplyCopper",
+      "detailId": 588,
+      "amount": 0
+     },
+     {
+      "actId": 26861,
+      "type": "QuestActConAutoComplete",
+      "detailId": 854
+     },
+     {
+      "actId": 31101,
+      "type": "QuestActSupplyExp",
+      "detailId": 566,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

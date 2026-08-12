@@ -1,0 +1,159 @@
+{
+ "questId": 1199,
+ "name": "바닷속 별을 점령한 난폭한 무리들 처치",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2380
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6105,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17916,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 590,
+      "npcId": 2380
+     },
+     {
+      "actId": 17917,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 591,
+      "npcId": 2381
+     },
+     {
+      "actId": 17918,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 592,
+      "npcId": 2347
+     },
+     {
+      "actId": 17919,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 593,
+      "npcId": 2347
+     },
+     {
+      "actId": 17920,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 594,
+      "npcId": 2314
+     },
+     {
+      "actId": 17921,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 595,
+      "npcId": 2312
+     },
+     {
+      "actId": 17922,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 596,
+      "npcId": 2339
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6106,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17923,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 288,
+      "monsterGroupId": 259,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6107,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17924,
+      "type": "QuestActConReportJournal",
+      "detailId": 178
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6108,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17925,
+      "type": "QuestActSupplyCopper",
+      "detailId": 260,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 259,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

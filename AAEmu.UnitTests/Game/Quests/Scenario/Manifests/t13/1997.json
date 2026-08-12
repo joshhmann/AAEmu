@@ -1,0 +1,119 @@
+{
+ "questId": 1997,
+ "name": "마틸다의 푸른 야심",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 38,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8990
+ },
+ "template": {
+  "level": 38,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 9181,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 12826,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 1694,
+      "npcId": 8990
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 9182,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21697,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 395,
+      "monsterGroupId": 359,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14894,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20248,
+      "type": "QuestActConReportNpc",
+      "detailId": 2981,
+      "npcId": 8990
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14895,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 359,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8990,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,119 @@
+{
+ "questId": 2306,
+ "name": "화해의 손길",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1460
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12348,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18117,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2308,
+      "npcId": 1460
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12398,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18119,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 646,
+      "npcId": 8796,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12399,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18118,
+      "type": "QuestActConReportNpc",
+      "detailId": 2531,
+      "npcId": 1447
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12400,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8796,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1447,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

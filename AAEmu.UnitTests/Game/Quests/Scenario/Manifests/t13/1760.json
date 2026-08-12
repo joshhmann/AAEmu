@@ -1,0 +1,186 @@
+{
+ "questId": 1760,
+ "name": "탈옥한 해적을 잡아야 하는 이유",
+ "zoneId": 17,
+ "categoryId": 33,
+ "level": 33,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 2802
+ },
+ "template": {
+  "level": 33,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12623,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19236,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2557,
+      "npcId": 2802
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19233,
+      "type": "QuestActObjItemGather",
+      "detailId": 1315,
+      "itemId": 788,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12625,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19235,
+      "type": "QuestActObjItemGather",
+      "detailId": 1317,
+      "itemId": 790,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12626,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19234,
+      "type": "QuestActObjItemGather",
+      "detailId": 1316,
+      "itemId": 3891,
+      "count": 3
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13662,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19237,
+      "type": "QuestActConReportNpc",
+      "detailId": 2788,
+      "npcId": 2799
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19493,
+      "type": "QuestActSupplyItem",
+      "detailId": 1934,
+      "itemId": 4037,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 788,
+     "count": 3
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 790,
+     "count": 3
+    },
+    {
+     "type": "ItemGather",
+     "itemId": 3891,
+     "count": 3
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2799,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 4037,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 788,
+   "count": 3
+  },
+  {
+   "itemId": 790,
+   "count": 3
+  },
+  {
+   "itemId": 3891,
+   "count": 3
+  }
+ ]
+}

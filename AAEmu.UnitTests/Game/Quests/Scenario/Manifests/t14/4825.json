@@ -1,0 +1,81 @@
+{
+ "questId": 4825,
+ "name": "이니스 섬을 바라보는 작은 바위섬",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1873
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20805,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28453,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 511,
+      "sphereId": 1873
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20807,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28454,
+      "type": "QuestActSupplyCopper",
+      "detailId": 803,
+      "amount": 0
+     },
+     {
+      "actId": 28455,
+      "type": "QuestActSupplyExp",
+      "detailId": 363,
+      "exp": 0
+     },
+     {
+      "actId": 28457,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1066
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

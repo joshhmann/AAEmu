@@ -1,0 +1,93 @@
+{
+ "questId": 5412,
+ "name": "빛나는 세기의 화가",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28129
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23384,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32850,
+      "type": "QuestActConAcceptItem",
+      "detailId": 290,
+      "itemId": 28129
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23385,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32855,
+      "type": "QuestActSupplyExp",
+      "detailId": 715,
+      "exp": 1000
+     },
+     {
+      "actId": 32856,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1133,
+      "amount": 0
+     },
+     {
+      "actId": 32857,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 172,
+      "appellationId": 121
+     },
+     {
+      "actId": 32858,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1383
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28129,
+   "count": 1
+  }
+ ]
+}

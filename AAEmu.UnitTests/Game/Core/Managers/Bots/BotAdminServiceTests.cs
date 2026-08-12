@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 
 using AAEmu.Commons.Utils;
@@ -532,6 +533,53 @@ public class BotAdminServiceTests
             BotAdminService.GmRoamRadius)).IsTrue();
     }
 
+    // --------------------------------------------------------- liststatus
+
+    [Test]
+    public async Task ListStatus_WhenEmpty_ReturnsEmptyList()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+
+        var result = service.ListStatus();
+
+        await Assert.That(result).IsEmpty();
+    }
+
+    [Test]
+    public async Task ListStatus_ReturnsStructuredSnapshot_SortedByName()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+
+        var zed = rig.Manager.Seed(MakeBot(2, "Zed"), PlayerBotState.Active);
+        zed.Character.Transform.Local.SetPosition(15597.1f, 15363.4f, 135.2f);
+        rig.Director.Fidelity[zed.CharacterId] = BotFidelity.Full;
+
+        var alice = rig.Manager.Seed(MakeBot(1, "Alice"), PlayerBotState.Deactivated);
+        alice.Character.Transform.Local.SetPosition(10, 20, 30);
+
+        var result = service.ListStatus();
+
+        await Assert.That(result).HasCount().EqualTo(2);
+
+        await Assert.That(result[0].Name).IsEqualTo("Alice");
+        await Assert.That(result[0].Id).IsEqualTo(1u);
+        await Assert.That(result[0].State).IsEqualTo("Deactivated");
+        await Assert.That(result[0].Fidelity).IsEqualTo(BotFidelity.Dormant.ToString());
+        await Assert.That(result[0].X).IsEqualTo(10f);
+        await Assert.That(result[0].Y).IsEqualTo(20f);
+        await Assert.That(result[0].Z).IsEqualTo(30f);
+
+        await Assert.That(result[1].Name).IsEqualTo("Zed");
+        await Assert.That(result[1].Id).IsEqualTo(2u);
+        await Assert.That(result[1].State).IsEqualTo("Active");
+        await Assert.That(result[1].Fidelity).IsEqualTo(BotFidelity.Full.ToString());
+        await Assert.That(result[1].X).IsEqualTo(15597.1f);
+        await Assert.That(result[1].Y).IsEqualTo(15363.4f);
+        await Assert.That(result[1].Z).IsEqualTo(135.2f);
+    }
+
     // ------------------------------------------------------------- helpers
 
     private static Character MakeBot(uint id, string name)
@@ -563,9 +611,9 @@ public class BotAdminServiceTests
                 Mock.Of<IWorldManager>().Object);
             var containerField = typeof(ItemManager).GetField("_allPersistentContainers",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var existing = containerField?.GetValue(itemManager) as Dictionary<ulong, ItemContainer>;
+            var existing = containerField?.GetValue(itemManager) as ConcurrentDictionary<ulong, ItemContainer>;
             if (existing == null)
-                containerField?.SetValue(itemManager, new Dictionary<ulong, ItemContainer>());
+                containerField?.SetValue(itemManager, new ConcurrentDictionary<ulong, ItemContainer>());
             field?.SetValue(null, itemManager);
         }
         ContainerIdManager.Instance.Initialize(false);

@@ -1,0 +1,145 @@
+{
+ "questId": 5332,
+ "name": "내가 바로 장인 대장장이",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12504
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23009,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32595,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4124,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23010,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32497,
+      "type": "QuestActObjCraft",
+      "detailId": 219,
+      "craftId": 6389,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 23011,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32499,
+      "type": "QuestActConReportNpc",
+      "detailId": 4418,
+      "npcId": 12504
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23051,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32435,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 128,
+      "appellationId": 78
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 23090,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32498,
+      "type": "QuestActObjCraft",
+      "detailId": 220,
+      "craftId": 5235,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Craft",
+     "craftId": 6389,
+     "count": 1
+    },
+    {
+     "type": "Craft",
+     "craftId": 5235,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12504,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

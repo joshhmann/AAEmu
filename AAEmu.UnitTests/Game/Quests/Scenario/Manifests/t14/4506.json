@@ -1,0 +1,81 @@
+{
+ "questId": 4506,
+ "name": "코볼트 동굴의 천장 빈자리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1617
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19646,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26766,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 293,
+      "sphereId": 1617
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19648,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26767,
+      "type": "QuestActSupplyCopper",
+      "detailId": 575,
+      "amount": 0
+     },
+     {
+      "actId": 26768,
+      "type": "QuestActSupplyExp",
+      "detailId": 132,
+      "exp": 0
+     },
+     {
+      "actId": 26770,
+      "type": "QuestActConAutoComplete",
+      "detailId": 840
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

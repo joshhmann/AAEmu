@@ -1,0 +1,128 @@
+{
+ "questId": 5828,
+ "name": "[화요일] 전염병을 퍼트리는 시체 처치",
+ "zoneId": 200,
+ "categoryId": 99,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13907
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25171,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34653,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4445,
+      "npcId": 13907
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 25172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34655,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 555,
+      "monsterGroupId": 540,
+      "count": 50
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25173,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34654,
+      "type": "QuestActConReportNpc",
+      "detailId": 4713,
+      "npcId": 13913
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25368,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 540,
+     "count": 50
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13913,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,12 @@
+{
+ "questId": 315,
+ "name": "(삭제 금지) 스킬 연결용 퀘스트",
+ "family": "no-acts",
+ "zoneId": 1,
+ "template": {
+  "level": 0
+ },
+ "skip": {
+  "reason": "no components"
+ }
+}

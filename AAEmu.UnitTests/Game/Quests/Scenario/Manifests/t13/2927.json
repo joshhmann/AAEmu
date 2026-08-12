@@ -1,0 +1,98 @@
+{
+ "questId": 2927,
+ "name": "바다의 하얀 악마",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8802
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12556,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18282,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2347,
+      "npcId": 8802
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12557,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18281,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 654,
+      "npcId": 8022,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12558,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18280,
+      "type": "QuestActConAutoComplete",
+      "detailId": 613
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 8022,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,158 @@
+{
+ "questId": 2997,
+ "name": "산양의 뿔이 가진 효능",
+ "zoneId": 5,
+ "categoryId": 52,
+ "level": 40,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1254
+ },
+ "template": {
+  "level": 40,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 13106,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18824,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2426,
+      "npcId": 1254
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 13107,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18825,
+      "type": "QuestActObjItemGather",
+      "detailId": 1282,
+      "itemId": 18976,
+      "count": 8
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 13108,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18826,
+      "type": "QuestActConReportNpc",
+      "detailId": 2657,
+      "npcId": 1254
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 13109,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38468,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2707,
+      "itemId": 33920,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38469,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2708,
+      "itemId": 33924,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 38470,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 2709,
+      "itemId": 33925,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 8000168,
+      "type": "QuestActSupplySelectiveItem",
+      "detailId": 8000019,
+      "itemId": 35843,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 18976,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1254,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 1,
+ "inventory": [
+  {
+   "itemId": 18976,
+   "count": 8
+  }
+ ]
+}

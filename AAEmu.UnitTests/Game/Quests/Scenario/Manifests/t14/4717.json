@@ -1,0 +1,81 @@
+{
+ "questId": 4717,
+ "name": "금지된 해안의 뼛골",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1767
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20424,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27860,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 429,
+      "sphereId": 1767
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20426,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27861,
+      "type": "QuestActSupplyCopper",
+      "detailId": 724,
+      "amount": 0
+     },
+     {
+      "actId": 27862,
+      "type": "QuestActSupplyExp",
+      "detailId": 276,
+      "exp": 0
+     },
+     {
+      "actId": 27864,
+      "type": "QuestActConAutoComplete",
+      "detailId": 977
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4672,
+ "name": "양조장의 거대 풍차",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1721
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20287,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27605,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 381,
+      "sphereId": 1721
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20289,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27606,
+      "type": "QuestActSupplyCopper",
+      "detailId": 678,
+      "amount": 0
+     },
+     {
+      "actId": 27607,
+      "type": "QuestActSupplyExp",
+      "detailId": 224,
+      "exp": 0
+     },
+     {
+      "actId": 27610,
+      "type": "QuestActConAutoComplete",
+      "detailId": 928
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

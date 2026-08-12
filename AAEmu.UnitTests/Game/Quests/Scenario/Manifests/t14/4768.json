@@ -1,0 +1,81 @@
+{
+ "questId": 4768,
+ "name": "눈사자 바위 머리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1821
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20604,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28170,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 480,
+      "sphereId": 1821
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20606,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28171,
+      "type": "QuestActSupplyCopper",
+      "detailId": 774,
+      "amount": 0
+     },
+     {
+      "actId": 28172,
+      "type": "QuestActSupplyExp",
+      "detailId": 331,
+      "exp": 0
+     },
+     {
+      "actId": 28174,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1029
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

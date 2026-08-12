@@ -1,0 +1,135 @@
+{
+ "questId": 5114,
+ "name": "태양의 심장은 어디에?",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26649
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22156,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31236,
+      "type": "QuestActConAcceptItem",
+      "detailId": 185,
+      "itemId": 26649
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 22157,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31254,
+      "type": "QuestActSupplyItem",
+      "detailId": 3575,
+      "itemId": 26686,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 22158,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31263,
+      "type": "QuestActConReportNpc",
+      "detailId": 4278,
+      "npcId": 9040
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22182,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31402,
+      "type": "QuestActSupplyItem",
+      "detailId": 3593,
+      "itemId": 26645,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9040,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 26645,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26649,
+   "count": 1
+  }
+ ]
+}

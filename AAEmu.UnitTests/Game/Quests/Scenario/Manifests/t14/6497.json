@@ -1,0 +1,151 @@
+{
+ "questId": 6497,
+ "name": "잊혀진 자들이 보내온 편지",
+ "zoneId": 183,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34526
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 27716,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39454,
+      "type": "QuestActConAcceptItem",
+      "detailId": 449,
+      "itemId": 34526
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 27718,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39945,
+      "type": "QuestActConReportNpc",
+      "detailId": 5037,
+      "npcId": 14918
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 27776,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 39650,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1739,
+      "amount": 100
+     },
+     {
+      "actId": 39651,
+      "type": "QuestActSupplyExp",
+      "detailId": 1430,
+      "exp": 1004
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28239,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40398,
+      "type": "QuestActObjItemGather",
+      "detailId": 3029,
+      "itemId": 34526,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 34526,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14918,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34526,
+   "count": 1
+  },
+  {
+   "itemId": 34526,
+   "count": 1
+  }
+ ]
+}

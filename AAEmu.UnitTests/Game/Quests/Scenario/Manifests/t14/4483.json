@@ -1,0 +1,81 @@
+{
+ "questId": 4483,
+ "name": "시험의 봉우리 오르기",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1595
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19573,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26650,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 272,
+      "sphereId": 1595
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19575,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26651,
+      "type": "QuestActSupplyCopper",
+      "detailId": 554,
+      "amount": 0
+     },
+     {
+      "actId": 26654,
+      "type": "QuestActConAutoComplete",
+      "detailId": 819
+     },
+     {
+      "actId": 31084,
+      "type": "QuestActSupplyExp",
+      "detailId": 549,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,113 @@
+{
+ "questId": 4390,
+ "name": "여행자를 위협하는 벌레 퇴치",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 5858
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19094,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29874,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 213,
+      "doodadId": 5858
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19095,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29872,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1069,
+      "npcId": 2004,
+      "count": 12
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19272,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29873,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1157
+     },
+     {
+      "actId": 37043,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1432,
+      "amount": 0
+     }
+    ]
+   }
+  ],
+  "detailId": 10,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 2004,
+     "count": 12
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4906,
+ "name": "고대 선주민의 흔적",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2026
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21315,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29671,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 554,
+      "sphereId": 2026
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21316,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 29667,
+      "type": "QuestActSupplyCopper",
+      "detailId": 819,
+      "amount": 0
+     },
+     {
+      "actId": 29670,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1140
+     },
+     {
+      "actId": 31121,
+      "type": "QuestActSupplyExp",
+      "detailId": 585,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

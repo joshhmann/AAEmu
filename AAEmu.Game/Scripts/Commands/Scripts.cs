@@ -55,7 +55,7 @@ public class Scripts : ICommand
 
                 break;
             case "save":
-                if (SaveManager.Instance.DoSave())
+                if (SaveManager.Instance.DoSave(true))
                 {
                     CommandManager.SendNormalText(this, messageOutput, "Save - Done saving user database");
                 }
@@ -116,7 +116,7 @@ public class Scripts : ICommand
                     return;
                 }
 
-                if (SaveManager.Instance.DoSave())
+                if (SaveManager.Instance.DoSave(true))
                 {
                     SaveManager.Instance.ShutdownTask =
                         new ShutdownTask(shutdownTime.AddSeconds(5), -1); // Manual Normal Shutdown (-1)

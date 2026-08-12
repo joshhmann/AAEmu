@@ -1,0 +1,104 @@
+{
+ "questId": 3783,
+ "name": "남방의 알키미 장군",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10352
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15848,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21947,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3108,
+      "npcId": 10352
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15850,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21948,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 840,
+      "npcId": 10356,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15852,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22260,
+      "type": "QuestActConAutoComplete",
+      "detailId": 720
+     },
+     {
+      "actId": 25732,
+      "type": "QuestActSupplyCopper",
+      "detailId": 502,
+      "amount": 8000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 10356,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

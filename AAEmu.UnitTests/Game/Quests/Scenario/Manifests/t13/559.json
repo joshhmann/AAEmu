@@ -1,0 +1,128 @@
+{
+ "questId": 559,
+ "name": "살리움 포로 구출",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7521
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2203,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 7124,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 760,
+      "npcId": 7521
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2204,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6083,
+      "type": "QuestActObjInteraction",
+      "detailId": 137,
+      "doodadId": 1155,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 22820,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 98,
+      "itemId": 4967,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 4255,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 6084,
+      "type": "QuestActConReportNpc",
+      "detailId": 798,
+      "npcId": 7521
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 4256,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1155,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 7521,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

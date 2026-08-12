@@ -1,0 +1,129 @@
+{
+ "questId": 3944,
+ "name": "야자 열매는 던지지 말아줘",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 9406
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16645,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22084,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 874,
+      "npcId": 9406
+     },
+     {
+      "actId": 22085,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 875,
+      "npcId": 9407
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16646,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22083,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 409,
+      "monsterGroupId": 372,
+      "count": 16
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16647,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21990,
+      "type": "QuestActConReportJournal",
+      "detailId": 247
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16648,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21989,
+      "type": "QuestActSupplyCopper",
+      "detailId": 359,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 372,
+     "count": 16
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

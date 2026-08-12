@@ -1,0 +1,96 @@
+{
+ "questId": 4298,
+ "name": "농부들의 실종",
+ "zoneId": 169,
+ "categoryId": 63,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10850
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18766,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24761,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3548,
+      "npcId": 10850
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18768,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24768,
+      "type": "QuestActObjTalk",
+      "detailId": 961,
+      "npcId": 10066
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 18792,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 24767,
+      "type": "QuestActConAutoComplete",
+      "detailId": 767
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Talk",
+     "npcId": 10066
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

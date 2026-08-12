@@ -1,0 +1,135 @@
+{
+ "questId": 6163,
+ "name": "[2층]정원 지킴이 핀툼 처치",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckTimer",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13967
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26441,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36096,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 393,
+      "questContextId": 6163
+     },
+     {
+      "actId": 36097,
+      "type": "QuestActCheckTimer",
+      "detailId": 161,
+      "limitTime": 3600000,
+      "nextComponent": 0
+     }
+    ]
+   },
+   {
+    "kind": "Fail",
+    "id": 26442,
+    "nextComponent": 0,
+    "acts": []
+   },
+   {
+    "kind": "Ready",
+    "id": 26443,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36098,
+      "type": "QuestActConReportDoodad",
+      "detailId": 57,
+      "doodadId": 7598
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37966,
+      "type": "QuestActSupplyExp",
+      "detailId": 1200,
+      "exp": 420000
+     },
+     {
+      "actId": 38253,
+      "type": "QuestActSupplyItem",
+      "detailId": 4247,
+      "itemId": 32061,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportDoodad",
+     "doodadId": 7598,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32061,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true,
+    "failPathWired": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

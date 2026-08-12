@@ -1,0 +1,81 @@
+{
+ "questId": 4680,
+ "name": "목 없는 누이 여신의 석상을 살피다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1729
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20311,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27644,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 391,
+      "sphereId": 1729
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20313,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27645,
+      "type": "QuestActSupplyCopper",
+      "detailId": 685,
+      "amount": 0
+     },
+     {
+      "actId": 27646,
+      "type": "QuestActSupplyExp",
+      "detailId": 232,
+      "exp": 0
+     },
+     {
+      "actId": 27648,
+      "type": "QuestActConAutoComplete",
+      "detailId": 935
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

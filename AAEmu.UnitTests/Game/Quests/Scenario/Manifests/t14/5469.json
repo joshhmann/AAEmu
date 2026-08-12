@@ -1,0 +1,93 @@
+{
+ "questId": 5469,
+ "name": "멋을 아는",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28494
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23658,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33295,
+      "type": "QuestActConAcceptItem",
+      "detailId": 313,
+      "itemId": 28494
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23660,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33296,
+      "type": "QuestActSupplyExp",
+      "detailId": 736,
+      "exp": 1000
+     },
+     {
+      "actId": 33305,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1163,
+      "amount": 0
+     },
+     {
+      "actId": 33306,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 202,
+      "appellationId": 147
+     },
+     {
+      "actId": 33307,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1410
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28494,
+   "count": 1
+  }
+ ]
+}

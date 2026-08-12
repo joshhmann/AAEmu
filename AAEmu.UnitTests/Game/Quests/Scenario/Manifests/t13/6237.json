@@ -1,0 +1,165 @@
+{
+ "questId": 6237,
+ "name": "벅시루루의 진상품:희귀한 보양식",
+ "zoneId": 1,
+ "categoryId": 70,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 32786
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26738,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37221,
+      "type": "QuestActConAcceptItem",
+      "detailId": 440,
+      "itemId": 32786
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26739,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37224,
+      "type": "QuestActObjItemGather",
+      "detailId": 2924,
+      "itemId": 32786,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26740,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37225,
+      "type": "QuestActConReportNpc",
+      "detailId": 4957,
+      "npcId": 10857
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26742,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37227,
+      "type": "QuestActSupplyExp",
+      "detailId": 1130,
+      "exp": 3000
+     },
+     {
+      "actId": 37228,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1451,
+      "amount": 50000
+     },
+     {
+      "actId": 37231,
+      "type": "QuestActSupplyItem",
+      "detailId": 4148,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 32786,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10857,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 32786,
+   "count": 1
+  },
+  {
+   "itemId": 32786,
+   "count": 1
+  }
+ ]
+}

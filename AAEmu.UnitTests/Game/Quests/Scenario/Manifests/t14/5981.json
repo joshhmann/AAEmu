@@ -1,0 +1,119 @@
+{
+ "questId": 5981,
+ "name": "전래동화",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 30101
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25765,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35206,
+      "type": "QuestActConAcceptItem",
+      "detailId": 362,
+      "itemId": 30101
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25767,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35207,
+      "type": "QuestActConReportNpc",
+      "detailId": 4776,
+      "npcId": 14086
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25768,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35208,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1248,
+      "amount": 100
+     },
+     {
+      "actId": 35209,
+      "type": "QuestActSupplyExp",
+      "detailId": 804,
+      "exp": 815
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14086,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 30101,
+   "count": 1
+  }
+ ]
+}

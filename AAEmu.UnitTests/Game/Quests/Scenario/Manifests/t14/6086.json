@@ -1,0 +1,145 @@
+{
+ "questId": 6086,
+ "name": "낚시왕이 되어보자",
+ "zoneId": 183,
+ "categoryId": 84,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14325
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26182,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35826,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4622,
+      "npcId": 14325
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26184,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35827,
+      "type": "QuestActConReportNpc",
+      "detailId": 4847,
+      "npcId": 14325
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26185,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35822,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1295,
+      "amount": 0
+     },
+     {
+      "actId": 35823,
+      "type": "QuestActSupplyExp",
+      "detailId": 850,
+      "exp": 0
+     },
+     {
+      "actId": 35824,
+      "type": "QuestActSupplyItem",
+      "detailId": 4021,
+      "itemId": 30764,
+      "gradeId": 0,
+      "count": 1
+     },
+     {
+      "actId": 35825,
+      "type": "QuestActSupplyItem",
+      "detailId": 4022,
+      "itemId": 30766,
+      "gradeId": 0,
+      "count": 10
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26186,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14325,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30764,
+      "count": 1
+     },
+     {
+      "itemId": 30766,
+      "count": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

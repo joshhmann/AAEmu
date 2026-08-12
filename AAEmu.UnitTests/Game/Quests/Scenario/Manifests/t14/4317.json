@@ -1,0 +1,126 @@
+{
+ "questId": 4317,
+ "name": "떠도는 영혼의 안식",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1926
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18875,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25908,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3583,
+      "npcId": 1926
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18876,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25913,
+      "type": "QuestActObjItemUse",
+      "detailId": 640,
+      "itemId": 24321,
+      "count": 1
+     },
+     {
+      "actId": 25914,
+      "type": "QuestActEtcItemObtain",
+      "detailId": 119,
+      "itemId": 24321,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18877,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25910,
+      "type": "QuestActConReportNpc",
+      "detailId": 3851,
+      "npcId": 1926
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19184,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemUse",
+     "itemId": 24321,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1926,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

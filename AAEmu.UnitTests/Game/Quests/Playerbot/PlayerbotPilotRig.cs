@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Id;
@@ -73,7 +74,7 @@ public static class PlayerbotPilotRig
             var containerField = typeof(ItemManager).GetField("_allPersistentContainers",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             containerField?.SetValue(ItemManager.Instance,
-                new Dictionary<ulong, AAEmu.Game.Models.Game.Items.Containers.ItemContainer>());
+                new ConcurrentDictionary<ulong, AAEmu.Game.Models.Game.Items.Containers.ItemContainer>());
 
             // REAL data: quest templates + unit requirements from the
             // canonical DB. QuestManager.Load() opens FileManager.AppPath/Data/

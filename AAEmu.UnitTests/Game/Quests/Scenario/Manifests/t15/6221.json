@@ -1,0 +1,168 @@
+{
+ "questId": 6221,
+ "name": "가려진 달의 조사단의 위기",
+ "zoneId": 197,
+ "categoryId": 106,
+ "level": 52,
+ "letItDone": true,
+ "selective": false,
+ "score": 100,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14837
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26662,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37095,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4711,
+      "npcId": 14837
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26663,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37064,
+      "type": "QuestActObjItemGather",
+      "detailId": 2916,
+      "itemId": 32220,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26664,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37096,
+      "type": "QuestActConReportNpc",
+      "detailId": 4943,
+      "npcId": 14688
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26684,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 38299,
+      "type": "QuestActSupplyItem",
+      "detailId": 4268,
+      "itemId": 31778,
+      "gradeId": 0,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37094,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 626,
+      "monsterGroupId": 575,
+      "count": 10
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 32220,
+     "count": 5
+    },
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 575,
+     "count": 10
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14688,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 31778,
+      "count": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 32220,
+   "count": 5
+  }
+ ]
+}

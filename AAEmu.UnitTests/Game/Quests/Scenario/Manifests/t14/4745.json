@@ -1,0 +1,81 @@
+{
+ "questId": 4745,
+ "name": "스톨텐베르그 성채의 망루",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1797
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20533,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28047,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 457,
+      "sphereId": 1797
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20535,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28048,
+      "type": "QuestActSupplyCopper",
+      "detailId": 751,
+      "amount": 0
+     },
+     {
+      "actId": 28049,
+      "type": "QuestActSupplyExp",
+      "detailId": 306,
+      "exp": 0
+     },
+     {
+      "actId": 28051,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1005
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

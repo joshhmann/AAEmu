@@ -1,0 +1,127 @@
+{
+ "questId": 6073,
+ "name": "영원의 섬 조사 준비",
+ "zoneId": 1,
+ "categoryId": 55,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14412
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26132,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35755,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4610,
+      "npcId": 14412
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26134,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35757,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1293,
+      "amount": 0
+     },
+     {
+      "actId": 35758,
+      "type": "QuestActSupplyExp",
+      "detailId": 848,
+      "exp": 0
+     },
+     {
+      "actId": 35873,
+      "type": "QuestActSupplyItem",
+      "detailId": 4029,
+      "itemId": 30783,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26189,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35835,
+      "type": "QuestActConReportNpc",
+      "detailId": 4849,
+      "npcId": 14412
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14412,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 30783,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

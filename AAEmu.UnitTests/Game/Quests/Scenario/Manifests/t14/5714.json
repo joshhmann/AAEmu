@@ -1,0 +1,172 @@
+{
+ "questId": 5714,
+ "name": "용을 적대하는 자",
+ "zoneId": 12,
+ "categoryId": 98,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 13719
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 24579,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34122,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4366,
+      "npcId": 13719
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 24580,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34123,
+      "type": "QuestActObjItemGather",
+      "detailId": 2779,
+      "itemId": 29260,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 24581,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34124,
+      "type": "QuestActConReportNpc",
+      "detailId": 4666,
+      "npcId": 13719
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 24624,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34162,
+      "type": "QuestActSupplyItem",
+      "detailId": 3885,
+      "itemId": 29295,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 24642,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34164,
+      "type": "QuestActSupplyItem",
+      "detailId": 3887,
+      "itemId": 29296,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 29260,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13719,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29295,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 29260,
+   "count": 1
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "questId": 4636,
+ "name": "성지기 언덕의 봉우리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1698
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20154,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27426,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 370,
+      "sphereId": 1698
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20156,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27427,
+      "type": "QuestActSupplyCopper",
+      "detailId": 666,
+      "amount": 0
+     },
+     {
+      "actId": 27428,
+      "type": "QuestActSupplyExp",
+      "detailId": 211,
+      "exp": 0
+     },
+     {
+      "actId": 27430,
+      "type": "QuestActConAutoComplete",
+      "detailId": 914
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

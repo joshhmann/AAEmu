@@ -1,0 +1,81 @@
+{
+ "questId": 5008,
+ "name": "하슬라 폭포의 시작지",
+ "zoneId": 20,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2105
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21686,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30344,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 626,
+      "sphereId": 2105
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21687,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30340,
+      "type": "QuestActSupplyCopper",
+      "detailId": 924,
+      "amount": 0
+     },
+     {
+      "actId": 30341,
+      "type": "QuestActSupplyExp",
+      "detailId": 466,
+      "exp": 0
+     },
+     {
+      "actId": 30343,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1231
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

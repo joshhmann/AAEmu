@@ -1,0 +1,213 @@
+{
+ "questId": 1203,
+ "name": "보름 분화구의 죽음을 모르는 자들에게 안식을",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2320
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6123,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17892,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 572,
+      "npcId": 2320
+     },
+     {
+      "actId": 17893,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 573,
+      "npcId": 2321
+     },
+     {
+      "actId": 17894,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 574,
+      "npcId": 2322
+     },
+     {
+      "actId": 17895,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 575,
+      "npcId": 2323
+     },
+     {
+      "actId": 17896,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 576,
+      "npcId": 2324
+     },
+     {
+      "actId": 17897,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 577,
+      "npcId": 4975
+     },
+     {
+      "actId": 17898,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 578,
+      "npcId": 7521
+     },
+     {
+      "actId": 17899,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 579,
+      "npcId": 2325
+     },
+     {
+      "actId": 17900,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 580,
+      "npcId": 2326
+     },
+     {
+      "actId": 17901,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 581,
+      "npcId": 2327
+     },
+     {
+      "actId": 17902,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 582,
+      "npcId": 2328
+     },
+     {
+      "actId": 17903,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 583,
+      "npcId": 2329
+     },
+     {
+      "actId": 17904,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 584,
+      "npcId": 4974
+     },
+     {
+      "actId": 17905,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 585,
+      "npcId": 7520
+     },
+     {
+      "actId": 22700,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 925,
+      "npcId": 2441
+     },
+     {
+      "actId": 22701,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 926,
+      "npcId": 2442
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6124,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17906,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 286,
+      "monsterGroupId": 257,
+      "count": 40
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6125,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17907,
+      "type": "QuestActConReportJournal",
+      "detailId": 176
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6126,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17908,
+      "type": "QuestActSupplyCopper",
+      "detailId": 258,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 257,
+     "count": 40
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

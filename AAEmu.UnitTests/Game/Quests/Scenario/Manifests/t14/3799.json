@@ -1,0 +1,125 @@
+{
+ "questId": 3799,
+ "name": "연극 준비 돕기",
+ "zoneId": 4,
+ "categoryId": 60,
+ "level": 44,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 10539
+ },
+ "template": {
+  "level": 44,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15928,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22707,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3257,
+      "npcId": 10539
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15930,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22705,
+      "type": "QuestActObjItemGather",
+      "detailId": 1713,
+      "itemId": 21565,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15931,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22708,
+      "type": "QuestActConReportNpc",
+      "detailId": 3486,
+      "npcId": 10539
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15932,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 21565,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 10539,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 21565,
+   "count": 1
+  }
+ ]
+}

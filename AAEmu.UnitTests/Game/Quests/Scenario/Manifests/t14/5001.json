@@ -1,0 +1,81 @@
+{
+ "questId": 5001,
+ "name": "백작의 영애를 위한 간소한 간식상",
+ "zoneId": 24,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2098
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21665,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30309,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 619,
+      "sphereId": 2098
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21666,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30305,
+      "type": "QuestActSupplyCopper",
+      "detailId": 917,
+      "amount": 0
+     },
+     {
+      "actId": 30306,
+      "type": "QuestActSupplyExp",
+      "detailId": 459,
+      "exp": 0
+     },
+     {
+      "actId": 30308,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1224
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

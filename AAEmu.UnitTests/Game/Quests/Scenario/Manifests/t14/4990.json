@@ -1,0 +1,81 @@
+{
+ "questId": 4990,
+ "name": "잭 다이얼의 침대",
+ "zoneId": 27,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2087
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21630,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30251,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 608,
+      "sphereId": 2087
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21631,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30247,
+      "type": "QuestActSupplyCopper",
+      "detailId": 906,
+      "amount": 0
+     },
+     {
+      "actId": 30248,
+      "type": "QuestActSupplyExp",
+      "detailId": 448,
+      "exp": 0
+     },
+     {
+      "actId": 30250,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1213
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

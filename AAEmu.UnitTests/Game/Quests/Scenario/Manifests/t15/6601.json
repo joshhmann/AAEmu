@@ -1,0 +1,116 @@
+{
+ "questId": 6601,
+ "name": "사악한 기운을 이겨내라! 1단계",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14930
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28154,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40297,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5043,
+      "npcId": 14930
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28155,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40298,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1307,
+      "npcId": 12620,
+      "count": 20
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28156,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40299,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1878
+     },
+     {
+      "actId": 40300,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 548,
+      "questContextId": 6602
+     },
+     {
+      "actId": 40445,
+      "type": "QuestActSupplyExp",
+      "detailId": 1533,
+      "exp": 65480
+     },
+     {
+      "actId": 40446,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1876,
+      "amount": 45000
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 12620,
+     "count": 20
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

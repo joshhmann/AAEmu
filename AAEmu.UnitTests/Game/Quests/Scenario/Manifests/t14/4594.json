@@ -1,0 +1,81 @@
+{
+ "questId": 4594,
+ "name": "여름잎 강의 수원지",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1664
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20003,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27199,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 338,
+      "sphereId": 1664
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20005,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27200,
+      "type": "QuestActSupplyCopper",
+      "detailId": 625,
+      "amount": 0
+     },
+     {
+      "actId": 27201,
+      "type": "QuestActSupplyExp",
+      "detailId": 177,
+      "exp": 0
+     },
+     {
+      "actId": 27203,
+      "type": "QuestActConAutoComplete",
+      "detailId": 883
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,148 @@
+{
+ "questId": 3173,
+ "name": "헤이루의 마음",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9272
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14252,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19943,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2707,
+      "npcId": 9272
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 14253,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19944,
+      "type": "QuestActSupplyItem",
+      "detailId": 1992,
+      "itemId": 19526,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14254,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19947,
+      "type": "QuestActObjItemGather",
+      "detailId": 1405,
+      "itemId": 19526,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14255,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19946,
+      "type": "QuestActConReportNpc",
+      "detailId": 2943,
+      "npcId": 9269
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14256,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 19526,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9269,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 19526,
+   "count": 1
+  }
+ ]
+}

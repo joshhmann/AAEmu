@@ -1,0 +1,144 @@
+{
+ "questId": 3153,
+ "name": "조수의 패기",
+ "zoneId": 26,
+ "categoryId": 54,
+ "level": 37,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9266
+ },
+ "template": {
+  "level": 37,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 14170,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19883,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2687,
+      "npcId": 9266
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 14171,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19884,
+      "type": "QuestActSupplyItem",
+      "detailId": 1988,
+      "itemId": 2062,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 14172,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19885,
+      "type": "QuestActObjInteraction",
+      "detailId": 475,
+      "doodadId": 1503,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 14173,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 19886,
+      "type": "QuestActConReportNpc",
+      "detailId": 2922,
+      "npcId": 9266
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 14426,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 1503,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9266,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

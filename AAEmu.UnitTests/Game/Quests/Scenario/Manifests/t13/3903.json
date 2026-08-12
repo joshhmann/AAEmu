@@ -1,0 +1,144 @@
+{
+ "questId": 3903,
+ "name": "저주에 효과적인 발명품",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 8999
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 16462,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21741,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3065,
+      "npcId": 8999
+     }
+    ]
+   },
+   {
+    "kind": "Supply",
+    "id": 16463,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22121,
+      "type": "QuestActSupplyItem",
+      "detailId": 2201,
+      "itemId": 19620,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 16464,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 22122,
+      "type": "QuestActObjInteraction",
+      "detailId": 537,
+      "doodadId": 3859,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 16465,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 21742,
+      "type": "QuestActConReportNpc",
+      "detailId": 3288,
+      "npcId": 8999
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 16466,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "SUPPLY",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3859,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 8999,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

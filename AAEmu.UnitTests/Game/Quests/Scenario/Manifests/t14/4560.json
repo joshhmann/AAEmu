@@ -1,0 +1,81 @@
+{
+ "questId": 4560,
+ "name": "거석 뒤에 공간 있어요",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1655
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27060,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 334,
+      "sphereId": 1655
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19859,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27061,
+      "type": "QuestActSupplyCopper",
+      "detailId": 613,
+      "amount": 0
+     },
+     {
+      "actId": 27062,
+      "type": "QuestActSupplyExp",
+      "detailId": 173,
+      "exp": 0
+     },
+     {
+      "actId": 27064,
+      "type": "QuestActConAutoComplete",
+      "detailId": 879
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

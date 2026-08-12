@@ -1,0 +1,129 @@
+{
+ "questId": 6284,
+ "name": "마력이 깃든 책장 학살",
+ "zoneId": 210,
+ "categoryId": 103,
+ "level": 52,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 52,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26920,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37528,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 456,
+      "questContextId": 6284
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26921,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37529,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 1213,
+      "npcId": 14383,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26922,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37530,
+      "type": "QuestActConReportJournal",
+      "detailId": 480
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26924,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37531,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1489,
+      "amount": 0
+     },
+     {
+      "actId": 38029,
+      "type": "QuestActSupplyExp",
+      "detailId": 1245,
+      "exp": 40800
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 14383,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

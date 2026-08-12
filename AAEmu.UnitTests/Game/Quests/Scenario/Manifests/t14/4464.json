@@ -1,0 +1,81 @@
+{
+ "questId": 4464,
+ "name": "솔즈리드 수중 동굴 탐험",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1577
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19501,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26492,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 247,
+      "sphereId": 1577
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19503,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26493,
+      "type": "QuestActConAutoComplete",
+      "detailId": 795
+     },
+     {
+      "actId": 26494,
+      "type": "QuestActSupplyCopper",
+      "detailId": 530,
+      "amount": 0
+     },
+     {
+      "actId": 31055,
+      "type": "QuestActSupplyExp",
+      "detailId": 520,
+      "exp": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

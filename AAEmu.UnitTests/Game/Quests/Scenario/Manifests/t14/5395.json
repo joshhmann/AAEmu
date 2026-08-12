@@ -1,0 +1,93 @@
+{
+ "questId": 5395,
+ "name": "시간을 기록하는",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28074
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23327,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32782,
+      "type": "QuestActConAcceptItem",
+      "detailId": 281,
+      "itemId": 28074
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23329,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 32786,
+      "type": "QuestActSupplyExp",
+      "detailId": 707,
+      "exp": 1000
+     },
+     {
+      "actId": 32787,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1123,
+      "amount": 0
+     },
+     {
+      "actId": 32792,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 164,
+      "appellationId": 114
+     },
+     {
+      "actId": 32797,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1378
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28074,
+   "count": 1
+  }
+ ]
+}

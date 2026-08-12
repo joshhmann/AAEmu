@@ -1,0 +1,125 @@
+{
+ "questId": 573,
+ "name": "사라진 눈물",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptDoodad",
+ "acceptor": {
+  "type": "Doodad",
+  "id": 938
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 2444,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3675,
+      "type": "QuestActConAcceptDoodad",
+      "detailId": 17,
+      "doodadId": 938
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 2445,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3686,
+      "type": "QuestActObjItemGather",
+      "detailId": 195,
+      "itemId": 5017,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 2446,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 3689,
+      "type": "QuestActConReportNpc",
+      "detailId": 472,
+      "npcId": 2438
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 2450,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 5017,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 2438,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 5017,
+   "count": 1
+  }
+ ]
+}

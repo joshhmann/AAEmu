@@ -1,0 +1,129 @@
+{
+ "questId": 6269,
+ "name": "파괴의 거신 학살",
+ "zoneId": 209,
+ "categoryId": 103,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26856,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37431,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 444,
+      "questContextId": 6269
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26857,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37432,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 649,
+      "monsterGroupId": 586,
+      "count": 300
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 26858,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37433,
+      "type": "QuestActConReportJournal",
+      "detailId": 464
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26860,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 37434,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1475,
+      "amount": 0
+     },
+     {
+      "actId": 38016,
+      "type": "QuestActSupplyExp",
+      "detailId": 1232,
+      "exp": 30600
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 586,
+     "count": 300
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

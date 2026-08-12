@@ -1,0 +1,81 @@
+{
+ "questId": 4753,
+ "name": "악마의 탑 위에 서다",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1806
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20557,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28088,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 465,
+      "sphereId": 1806
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20559,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 28091,
+      "type": "QuestActSupplyCopper",
+      "detailId": 759,
+      "amount": 0
+     },
+     {
+      "actId": 28092,
+      "type": "QuestActSupplyExp",
+      "detailId": 314,
+      "exp": 0
+     },
+     {
+      "actId": 28094,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1013
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

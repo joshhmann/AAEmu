@@ -1,0 +1,81 @@
+{
+ "questId": 4645,
+ "name": "백색 군도의 부서진 잔해",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1707
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20181,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27470,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 378,
+      "sphereId": 1707
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20183,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27471,
+      "type": "QuestActSupplyCopper",
+      "detailId": 675,
+      "amount": 0
+     },
+     {
+      "actId": 27472,
+      "type": "QuestActSupplyExp",
+      "detailId": 220,
+      "exp": 0
+     },
+     {
+      "actId": 27474,
+      "type": "QuestActConAutoComplete",
+      "detailId": 922
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,121 @@
+{
+ "questId": 2297,
+ "name": "신속한 예방",
+ "zoneId": 6,
+ "categoryId": 35,
+ "level": 31,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1459
+ },
+ "template": {
+  "level": 31,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 12333,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18268,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2343,
+      "npcId": 1459
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 12538,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18267,
+      "type": "QuestActObjInteraction",
+      "detailId": 430,
+      "doodadId": 3351,
+      "count": 8,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 12539,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 18266,
+      "type": "QuestActConReportNpc",
+      "detailId": 2566,
+      "npcId": 1459
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 12540,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 3351,
+     "count": 8
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1459,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

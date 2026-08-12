@@ -1,0 +1,175 @@
+{
+ "questId": 3353,
+ "name": "바다의 문을 여는 종",
+ "zoneId": 27,
+ "categoryId": 36,
+ "level": 39,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActCheckCompleteComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 9003
+ },
+ "template": {
+  "level": 39,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 15213,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20849,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 2882,
+      "npcId": 9003
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15214,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20852,
+      "type": "QuestActObjInteraction",
+      "detailId": 498,
+      "doodadId": 4009,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15215,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20853,
+      "type": "QuestActObjInteraction",
+      "detailId": 499,
+      "doodadId": 4011,
+      "count": 1,
+      "wiId": 19,
+      "phase": 0
+     },
+     {
+      "actId": 21932,
+      "type": "QuestActCheckCompleteComponent",
+      "detailId": 990,
+      "completeComponent": 15214
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 15216,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20854,
+      "type": "QuestActObjInteraction",
+      "detailId": 500,
+      "doodadId": 4012,
+      "count": 1,
+      "wiId": 103,
+      "phase": 0
+     },
+     {
+      "actId": 21933,
+      "type": "QuestActCheckCompleteComponent",
+      "detailId": 991,
+      "completeComponent": 15215
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 15217,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 20848,
+      "type": "QuestActConReportNpc",
+      "detailId": 3115,
+      "npcId": 9003
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 15218,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "Interaction",
+     "doodadId": 4009,
+     "count": 1
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 4011,
+     "count": 1
+    },
+    {
+     "type": "Interaction",
+     "doodadId": 4012,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 9003,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

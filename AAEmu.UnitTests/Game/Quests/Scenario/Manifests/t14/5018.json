@@ -1,0 +1,81 @@
+{
+ "questId": 5018,
+ "name": "농경지가 한눈에 들어오는 눈사자 바위 머리 위",
+ "zoneId": 20,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 2115
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 21716,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30394,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 636,
+      "sphereId": 2115
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 21717,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 30390,
+      "type": "QuestActSupplyCopper",
+      "detailId": 934,
+      "amount": 0
+     },
+     {
+      "actId": 30391,
+      "type": "QuestActSupplyExp",
+      "detailId": 476,
+      "exp": 0
+     },
+     {
+      "actId": 30393,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1241
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

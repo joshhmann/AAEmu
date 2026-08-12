@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 using System.Reflection;
 
@@ -512,9 +513,9 @@ public class BotPresenceCoordinatorTests
         // never seed it — a null registry would NRE the Character ctor.
         var containerField = typeof(ItemManager).GetField("_allPersistentContainers",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        var existing = containerField?.GetValue(itemManager) as Dictionary<ulong, ItemContainer>;
+        var existing = containerField?.GetValue(itemManager) as ConcurrentDictionary<ulong, ItemContainer>;
         if (existing == null)
-            containerField?.SetValue(itemManager, new Dictionary<ulong, ItemContainer>());
+            containerField?.SetValue(itemManager, new ConcurrentDictionary<ulong, ItemContainer>());
 
         return itemManager;
     }

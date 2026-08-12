@@ -1,0 +1,115 @@
+{
+ "questId": 5932,
+ "name": "밀밭을 흔드는 바람",
+ "zoneId": 1,
+ "categoryId": 33,
+ "level": 41,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 7054
+ },
+ "template": {
+  "level": 41,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 25589,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34966,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4484,
+      "npcId": 7054
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 25590,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34968,
+      "type": "QuestActSupplyItem",
+      "detailId": 3940,
+      "itemId": 29730,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 25591,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 34967,
+      "type": "QuestActConReportNpc",
+      "detailId": 4741,
+      "npcId": 13652
+     }
+    ]
+   }
+  ],
+  "detailId": 1,
+  "repeatable": true
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 13652,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 29730,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

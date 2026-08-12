@@ -1,0 +1,225 @@
+{
+ "questId": 1200,
+ "name": "불탄 성의 피 묻은 손 소탕",
+ "zoneId": 14,
+ "categoryId": 13,
+ "level": 32,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpcKill",
+ "acceptor": {
+  "type": "Kill",
+  "id": 2342
+ },
+ "template": {
+  "level": 32,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 6109,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17933,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 601,
+      "npcId": 2342
+     },
+     {
+      "actId": 17934,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 602,
+      "npcId": 2343
+     },
+     {
+      "actId": 17935,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 603,
+      "npcId": 2344
+     },
+     {
+      "actId": 17936,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 604,
+      "npcId": 2345
+     },
+     {
+      "actId": 17937,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 605,
+      "npcId": 2360
+     },
+     {
+      "actId": 17938,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 606,
+      "npcId": 2361
+     },
+     {
+      "actId": 17939,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 607,
+      "npcId": 2362
+     },
+     {
+      "actId": 17940,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 608,
+      "npcId": 2363
+     },
+     {
+      "actId": 17941,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 609,
+      "npcId": 2382
+     },
+     {
+      "actId": 17942,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 610,
+      "npcId": 2383
+     },
+     {
+      "actId": 17943,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 611,
+      "npcId": 4953
+     },
+     {
+      "actId": 17944,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 612,
+      "npcId": 4955
+     },
+     {
+      "actId": 17945,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 613,
+      "npcId": 4957
+     },
+     {
+      "actId": 17946,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 614,
+      "npcId": 4980
+     },
+     {
+      "actId": 17947,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 615,
+      "npcId": 4982
+     },
+     {
+      "actId": 22702,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 927,
+      "npcId": 7547
+     },
+     {
+      "actId": 22703,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 928,
+      "npcId": 4972
+     },
+     {
+      "actId": 22704,
+      "type": "QuestActConAcceptNpcKill",
+      "detailId": 929,
+      "npcId": 4956
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 6111,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17948,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 290,
+      "monsterGroupId": 261,
+      "count": 50
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 6112,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17949,
+      "type": "QuestActConReportJournal",
+      "detailId": 180
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 6113,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 17950,
+      "type": "QuestActSupplyCopper",
+      "detailId": 262,
+      "amount": 0
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 261,
+     "count": 50
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportJournal"
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

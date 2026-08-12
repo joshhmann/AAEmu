@@ -29,16 +29,44 @@ public sealed record GateBudgets
     /// <summary>Failed scheduler steps allowed in a window (any failure is a red flag).</summary>
     public long MaxSchedulerStepFailures { get; init; } = 0;
 
-    /// <summary>Max DB writes per minute per embodied bot (catch AI-step-loop writes).
+    /// <summary>Max DB writes per minute per embodied character (catch AI-step-loop writes).
     /// Calibrated to the E2E rig's AutoSaveInterval 0.2 (12s saves): measured
     /// 277 writes/min/bot on the stage-10 golden-route run (2026-08-08), so 500
     /// gives ~2× headroom while a step-loop (per-step writes) lands 10-100×
     /// above. Prod cadence (AutoSaveInterval 5.0) is ~10× lower — tighten at
-    /// the 100-bot profiling stage, not before.</summary>
+    /// the 100-bot profiling stage, not before.
+    /// The denominator is the snapshot's embodied-character count, not the
+    /// stage's network-bot count: when the presence demo is active
+    /// (AAEMU_PRESENCE_DEMO=1), BotPresenceCoordinator adds scheduler-stepping
+    /// citizens that persist at the SAME save cadence, so their writes are
+    /// normal, load — not a write loop. Without the presence-aware denominator
+    /// a stage-10 presence run false-REDs (measured 529.06/500 on network bots
+    /// only; 264.53/500 per embodied char — t_b4eb35e9, 2026-08-09).</summary>
     public double MaxDbWritesPerBotPerMin { get; init; } = 500;
 
-    /// <summary>Max physics warnings per minute (physics thread running slow = overload signal).</summary>
-    public double MaxPhysicsWarningsPerMin { get; init; } = 0;
+    /// <summary>Max physics warnings per minute (physics thread running slow = overload signal).
+    /// Calibrated to the 2026-08-10 soak measurements (t_eecc5604 RCA): the detector is
+    /// upstream stock (PR #1253) measuring the WALL-CLOCK inter-iteration gap on a physics
+    /// thread that sleeps ~40ms and steps a zero-body world — any >65ms deschedule (GC pause,
+    /// host CPU contention, timer jitter) trips it regardless of physics load. Measured 0.031/min
+    /// on the 6h soak (11 warnings, pre-GC-fix) and 0.067/min post-fix (4 warnings / 60 min, one
+    /// 3s background-GC burst) with 0 crash/disconnect/region-overrun in both windows, so 0.1
+    /// gives ~1.5-3.3× headroom; a genuine overload fires 10-100× the measured rate and is
+    /// still caught. The same-world 60s clause below catches sustained slow (a world that
+    /// cannot keep up logs consecutive-iteration warnings). Tighten only when ship-heavy
+    /// milestones make physics latency a real gate signal.</summary>
+    public double MaxPhysicsWarningsPerMin { get; init; } = 0.1;
+
+    /// <summary>No-sustained-slow clause: max warnings on the SAME world within any 60s window.
+    /// The boot/provisioning phase of a 6h soak logs process-wide pause storms (GC STW + host
+    /// jitter) on BOTH physics threads as they catch up: measured 3-in-8s (soak #1, 2026-08-10)
+    /// and 8-in-59s per world / 16-in-76s across worlds (soak #2, 2026-08-11 — one 75s storm,
+    /// all ≤82ms, thread recovered, 0 crash/disconnect/overrun, 5h50m clean after), so 30 gives
+    /// ~3.75× headroom over the observed ceiling while a world whose physics thread genuinely
+    /// cannot keep up logs consecutive-iteration warnings (~25/s) and trips within ~1.2s of
+    /// sustained slow. The 0.1/min rate budget independently catches any stall &gt;90s
+    /// (25/min ≫ 0.1/min). Hard fail at 31+.</summary>
+    public long MaxPhysicsWarningsSameWorldPer60s { get; init; } = 30;
 
     /// <summary>Max tick-overrun warnings per minute ("Tick took Xms" + ActiveRegionTick overruns).</summary>
     public double MaxTickOverrunWarningsPerMin { get; init; } = 0;
@@ -150,15 +178,21 @@ public static class GateBudgetEvaluator
                 "scheduler not started / no steps in window (citizen path not wired) — budget not exercisable"));
         }
 
-        // DB pressure: normalized per bot per minute.
+        // DB pressure: normalized per embodied character per minute (network
+        // bots + presence-demo citizens — both persist at the same save
+        // cadence; presence citizens are load, not a write loop, t_b4eb35e9).
+        var writesUnit = s.PresenceBotCount > 0 ? "writes/min/embodied-char" : "writes/min/bot";
         verdicts.Add(s.DbWritesPerBotPerMin <= b.MaxDbWritesPerBotPerMin
-            ? BudgetVerdict.Ok("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, "writes/min/bot")
-            : BudgetVerdict.Over("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, "writes/min/bot — write-loop risk"));
+            ? BudgetVerdict.Ok("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit)
+            : BudgetVerdict.Over("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit + " — write-loop risk"));
 
         // Warning rates from the game log.
         verdicts.Add(s.PhysicsWarningsPerMin <= b.MaxPhysicsWarningsPerMin
             ? BudgetVerdict.Ok("Physics warnings", s.PhysicsWarningsPerMin, b.MaxPhysicsWarningsPerMin, "warnings/min")
             : BudgetVerdict.Over("Physics warnings", s.PhysicsWarningsPerMin, b.MaxPhysicsWarningsPerMin, "warnings/min — physics thread running slow"));
+        verdicts.Add(s.MaxSameWorldPhysicsWarningsPer60s <= b.MaxPhysicsWarningsSameWorldPer60s
+            ? BudgetVerdict.Ok("Physics warnings same-world", s.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s, "warnings in 60s on one world")
+            : BudgetVerdict.Over("Physics warnings same-world", s.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s, "warnings in 60s on one world — physics thread cannot keep up (no-sustained-slow)"));
         verdicts.Add(s.TickOverrunWarningsPerMin <= b.MaxTickOverrunWarningsPerMin
             ? BudgetVerdict.Ok("Tick overrun warnings", s.TickOverrunWarningsPerMin, b.MaxTickOverrunWarningsPerMin, "warnings/min")
             : BudgetVerdict.Over("Tick overrun warnings", s.TickOverrunWarningsPerMin, b.MaxTickOverrunWarningsPerMin, "warnings/min — world tick over budget"));

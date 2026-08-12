@@ -1,0 +1,119 @@
+{
+ "questId": 4366,
+ "name": "에키혼의 자유를 위하여",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 49,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 12394
+ },
+ "template": {
+  "level": 49,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 19022,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26065,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3627,
+      "npcId": 12394
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 19023,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26068,
+      "type": "QuestActObjMonsterHunt",
+      "detailId": 973,
+      "npcId": 1992,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 19024,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 26069,
+      "type": "QuestActConReportNpc",
+      "detailId": 3899,
+      "npcId": 12394
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19242,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterHunt",
+     "npcId": 1992,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 12394,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

@@ -1,0 +1,138 @@
+{
+ "questId": 6087,
+ "name": "숙련자와 함께 히에로니무스 처치",
+ "zoneId": 168,
+ "categoryId": 56,
+ "level": 35,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 14422
+ },
+ "template": {
+  "level": 35,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 26191,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 35841,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 4627,
+      "npcId": 14422
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 26192,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36196,
+      "type": "QuestActObjItemGather",
+      "detailId": 2895,
+      "itemId": 31589,
+      "count": 1
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 26194,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 36360,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1684
+     },
+     {
+      "actId": 36372,
+      "type": "QuestActSupplyExp",
+      "detailId": 888,
+      "exp": 26350
+     },
+     {
+      "actId": 36373,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1336,
+      "amount": 0
+     },
+     {
+      "actId": 37084,
+      "type": "QuestActSupplyItem",
+      "detailId": 4110,
+      "itemId": 23633,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 31589,
+     "count": 1
+    }
+   ],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 23633,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 31589,
+   "count": 1
+  }
+ ]
+}

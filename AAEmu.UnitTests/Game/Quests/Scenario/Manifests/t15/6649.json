@@ -1,0 +1,130 @@
+{
+ "questId": 6649,
+ "name": "[전층] 벨시온의 의뢰 에아나드 도서관 정리 10단계",
+ "zoneId": 197,
+ "categoryId": 103,
+ "level": 54,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 34895
+ },
+ "template": {
+  "level": 54,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28356,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40685,
+      "type": "QuestActConAcceptItem",
+      "detailId": 576,
+      "itemId": 34895
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28357,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40686,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 715,
+      "monsterGroupId": 626,
+      "count": 10000
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28358,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40687,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1919,
+      "amount": 0
+     },
+     {
+      "actId": 40688,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1905
+     },
+     {
+      "actId": 40689,
+      "type": "QuestActSupplyExp",
+      "detailId": 1574,
+      "exp": 2022400
+     },
+     {
+      "actId": 8000145,
+      "type": "QuestActSupplyItem",
+      "detailId": 8000125,
+      "itemId": 32787,
+      "gradeId": 0,
+      "count": 1
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 626,
+     "count": 10000
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true,
+    "rewardItems": [
+     {
+      "itemId": 32787,
+      "count": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 34895,
+   "count": 1
+  }
+ ]
+}

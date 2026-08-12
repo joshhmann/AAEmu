@@ -1,0 +1,93 @@
+{
+ "questId": 5474,
+ "name": "꽃들에게 희망을",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 28501
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 23673,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33312,
+      "type": "QuestActConAcceptItem",
+      "detailId": 318,
+      "itemId": 28501
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 23675,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 33339,
+      "type": "QuestActSupplyExp",
+      "detailId": 743,
+      "exp": 1000
+     },
+     {
+      "actId": 33340,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1168,
+      "amount": 0
+     },
+     {
+      "actId": 33341,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 207,
+      "appellationId": 152
+     },
+     {
+      "actId": 33342,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1415
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 28501,
+   "count": 1
+  }
+ ]
+}

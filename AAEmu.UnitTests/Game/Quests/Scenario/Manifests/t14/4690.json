@@ -1,0 +1,81 @@
+{
+ "questId": 4690,
+ "name": "혼자 있어 외로운 자리",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1739
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20341,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27691,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 400,
+      "sphereId": 1739
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20343,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27692,
+      "type": "QuestActSupplyCopper",
+      "detailId": 694,
+      "amount": 0
+     },
+     {
+      "actId": 27693,
+      "type": "QuestActSupplyExp",
+      "detailId": 243,
+      "exp": 0
+     },
+     {
+      "actId": 27695,
+      "type": "QuestActConAutoComplete",
+      "detailId": 944
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

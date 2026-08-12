@@ -1,0 +1,125 @@
+{
+ "questId": 4327,
+ "name": "약이 되는 식물",
+ "zoneId": 12,
+ "categoryId": 68,
+ "level": 48,
+ "letItDone": true,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptNpc",
+ "acceptor": {
+  "type": "Npc",
+  "id": 1930
+ },
+ "template": {
+  "level": 48,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 18905,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25943,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 3590,
+      "npcId": 1930
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 18906,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25945,
+      "type": "QuestActObjItemGather",
+      "detailId": 2065,
+      "itemId": 24276,
+      "count": 5
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 18907,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 25944,
+      "type": "QuestActConReportNpc",
+      "detailId": 3861,
+      "npcId": 1930
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 19196,
+    "nextComponent": 0,
+    "acts": []
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "ItemGather",
+     "itemId": 24276,
+     "count": 5
+    }
+   ],
+   "expect": {
+    "step": "Progress",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 1930,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 24276,
+   "count": 5
+  }
+ ]
+}

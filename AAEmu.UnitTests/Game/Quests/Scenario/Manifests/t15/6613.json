@@ -1,0 +1,147 @@
+{
+ "questId": 6613,
+ "name": "햇병아리가 아니랍니다!",
+ "zoneId": 191,
+ "categoryId": 114,
+ "level": 51,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptComponent",
+ "acceptor": {
+  "type": "Npc",
+  "id": 0
+ },
+ "template": {
+  "level": 51,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 28190,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40348,
+      "type": "QuestActConAcceptComponent",
+      "detailId": 563,
+      "questContextId": 6613
+     },
+     {
+      "actId": 40349,
+      "type": "QuestActConAcceptNpc",
+      "detailId": 5052,
+      "npcId": 14932
+     }
+    ]
+   },
+   {
+    "kind": "Progress",
+    "id": 28191,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40350,
+      "type": "QuestActObjMonsterGroupHunt",
+      "detailId": 701,
+      "monsterGroupId": 620,
+      "count": 30
+     }
+    ]
+   },
+   {
+    "kind": "Ready",
+    "id": 28192,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40351,
+      "type": "QuestActConReportNpc",
+      "detailId": 5063,
+      "npcId": 14932
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 28229,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 40486,
+      "type": "QuestActSupplyExp",
+      "detailId": 1554,
+      "exp": 40000
+     },
+     {
+      "actId": 40487,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1896,
+      "amount": 10500
+     }
+    ]
+   }
+  ],
+  "detailId": 7,
+  "repeatable": false
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "step": "Progress",
+    "status": "Progress"
+   }
+  },
+  {
+   "name": "PROGRESS",
+   "events": [
+    {
+     "type": "MonsterGroupHunt",
+     "npcId": 620,
+     "count": 30
+    }
+   ],
+   "expect": {
+    "step": "Ready",
+    "status": "Ready"
+   }
+  },
+  {
+   "name": "READY",
+   "events": [
+    {
+     "type": "ReportNpc",
+     "npcId": 14932,
+     "selected": 0
+    }
+   ],
+   "expect": {
+    "step": "Reward",
+    "status": "Completed"
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  },
+  {
+   "name": "RESET",
+   "events": [],
+   "expect": {
+    "reAccepted": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

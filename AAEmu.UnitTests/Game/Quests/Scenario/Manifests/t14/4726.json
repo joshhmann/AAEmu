@@ -1,0 +1,81 @@
+{
+ "questId": 4726,
+ "name": "비파 항구의 놀잇배",
+ "zoneId": 1,
+ "categoryId": 79,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptSphere",
+ "acceptor": {
+  "type": "Sphere",
+  "id": 1776
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 20451,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27905,
+      "type": "QuestActConAcceptSphere",
+      "detailId": 438,
+      "sphereId": 1776
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 20453,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 27906,
+      "type": "QuestActSupplyCopper",
+      "detailId": 733,
+      "amount": 0
+     },
+     {
+      "actId": 27907,
+      "type": "QuestActSupplyExp",
+      "detailId": 285,
+      "exp": 0
+     },
+     {
+      "actId": 27909,
+      "type": "QuestActConAutoComplete",
+      "detailId": 986
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0
+}

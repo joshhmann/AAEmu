@@ -1,0 +1,93 @@
+{
+ "questId": 5160,
+ "name": "꾸밈옷 연구가",
+ "zoneId": 1,
+ "categoryId": 82,
+ "level": 50,
+ "letItDone": false,
+ "selective": false,
+ "score": 0,
+ "family": "QuestActConAcceptItem",
+ "acceptor": {
+  "type": "Item",
+  "id": 26867
+ },
+ "template": {
+  "level": 50,
+  "components": [
+   {
+    "kind": "Start",
+    "id": 22361,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31525,
+      "type": "QuestActConAcceptItem",
+      "detailId": 198,
+      "itemId": 26867
+     }
+    ]
+   },
+   {
+    "kind": "Reward",
+    "id": 22362,
+    "nextComponent": 0,
+    "acts": [
+     {
+      "actId": 31521,
+      "type": "QuestActSupplyExp",
+      "detailId": 602,
+      "exp": 1000
+     },
+     {
+      "actId": 31522,
+      "type": "QuestActSupplyCopper",
+      "detailId": 1009,
+      "amount": 0
+     },
+     {
+      "actId": 31523,
+      "type": "QuestActSupplyAppellation",
+      "detailId": 30,
+      "appellationId": 20
+     },
+     {
+      "actId": 31524,
+      "type": "QuestActConAutoComplete",
+      "detailId": 1286
+     }
+    ]
+   }
+  ]
+ },
+ "stages": [
+  {
+   "name": "START",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "REWARD",
+   "events": [],
+   "expect": {
+    "completed": true
+   }
+  },
+  {
+   "name": "PERSIST",
+   "events": [],
+   "expect": {
+    "persistRoundTrip": true
+   }
+  }
+ ],
+ "selectedRewardIndex": 0,
+ "inventory": [
+  {
+   "itemId": 26867,
+   "count": 1
+  }
+ ]
+}
