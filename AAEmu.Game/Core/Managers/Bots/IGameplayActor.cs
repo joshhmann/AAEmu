@@ -137,16 +137,29 @@ public interface IGameplayActor
     ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null);
 
     /// <summary>
-    /// B1 SEAM (typed, fail-closed — not implemented in this slice):
-    /// interact with a world unit or doodad through the real engine path
-    /// (NpcInteraction/DOODAD interaction surface). Calling it today yields
-    /// Rejected(RejectedAction, "B1 seam …") with a full audit record; the
-    /// implementation lands with the B1 milestone. The signature IS the
-    /// contract: controllers and tests may bind against it now.
+    /// Interacts with a doodad through the real engine path (Doodad.Use —
+    /// the same call interaction skills and the CSLootOpenBagPacket
+    /// func-driven branch make; skillId 0 = the skill-less loot-func
+    /// branch). Validates: doodad resolves, in interaction range
+    /// (<see cref="GameplayActor.MaxInteractRange"/>), and not scheduled
+    /// for despawn (the engine's own #1443 guard). Doodads advance their
+    /// phase machine inside Use; a retry against the new phase is a fresh
+    /// interaction, never a re-run. Keyed retries are deduped by the shared
+    /// ledger — a Completed/Interrupted/TimedOut attempt is never
+    /// re-executed.
     /// </summary>
     ActorRequest Interact(uint targetObjId, string? idempotencyKey = null);
 
-    /// <summary>B1 SEAM (typed, fail-closed): loot a corpse container.</summary>
+    /// <summary>
+    /// Loots a corpse/bag owner through the real engine path
+    /// (LootingContainer.OpenBag with lootAll — the exact call
+    /// CSLootOpenBagPacket makes). Validates: owner resolves, in loot
+    /// range (the engine's own LootingContainer.MaxLootingRange), and the
+    /// container still holds loot. The engine removes each granted entry
+    /// (TryReserveLootItem), so a retry after a successful loot finds an
+    /// empty container and is Rejected(RejectedAction, "already looted") —
+    /// retries cannot duplicate loot.
+    /// </summary>
     ActorRequest Loot(uint corpseObjId, string? idempotencyKey = null);
 
     /// <summary>B1 SEAM (typed, fail-closed): use an inventory item (by item template id).</summary>

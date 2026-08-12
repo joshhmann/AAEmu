@@ -256,7 +256,7 @@ public class GameplayActorB1ContractLayerTests
 
     #endregion
 
-    #region B1 typed seams — fail closed
+    #region B1 typed seams — fail closed (remaining surface)
 
     [Test]
     public async Task SeamActions_FailClosed_RejectedWithAuditRecord_NoThrow()
@@ -264,13 +264,26 @@ public class GameplayActorB1ContractLayerTests
         var (actor, session) = GameplayActorTestRig.CreateActor("b1-seam-1");
         var npcObjId = GameplayActorTestRig.SpawnNpc(session, 2000);
 
+        // Interact/Loot are implemented (t_fc51af53): on a plain NPC both
+        // still fail closed — Interact because the target is not a doodad,
+        // Loot because the container holds nothing — but with real reasons,
+        // never the seam wording. UseItem/Mount/Dismount remain seams until
+        // the sibling slices land.
         var interact = actor.Interact(npcObjId);
         var loot = actor.Loot(npcObjId);
         var useItem = actor.UseItem(1234);
         var mount = actor.Mount(npcObjId);
         var dismount = actor.Dismount();
 
-        foreach (var request in new[] { interact, loot, useItem, mount, dismount })
+        await Assert.That(interact.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(interact.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(interact.Detail?.Contains("B1 seam")).IsFalse();
+
+        await Assert.That(loot.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(loot.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(loot.Detail?.Contains("B1 seam")).IsFalse();
+
+        foreach (var request in new[] { useItem, mount, dismount })
         {
             await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
             await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
@@ -278,7 +291,7 @@ public class GameplayActorB1ContractLayerTests
             await Assert.That(request.Detail?.Contains("not implemented in this slice")).IsTrue();
         }
 
-        // Every seam call emitted a full audit record; the actor is idle.
+        // Every request emitted a full audit record; the actor is idle.
         await Assert.That(actor.AuditTrace.Count).IsEqualTo(5);
         await Assert.That(actor.AuditTrace.All(r => r.Result == ActorLifecycleState.Rejected)).IsTrue();
         await Assert.That(actor.AuditTrace.Select(r => r.Action))

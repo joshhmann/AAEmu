@@ -4,6 +4,7 @@ using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills.Static;
@@ -318,14 +319,72 @@ public class GameplayActor : IGameplayActor
 
     #endregion
 
-    #region B1 seams (typed, fail-closed — implementations land with the B1 milestone)
+    #region B1 actions (M5 vocabulary — real engine paths)
+
+    /// <summary>Maximum flat distance for an Interact request (doodad interaction range).</summary>
+    public const float MaxInteractRange = 25f;
 
     public ActorRequest Interact(uint targetObjId, string? idempotencyKey = null)
-        => NotImplementedSeam(ActorActionType.Interact, targetObjId, idempotencyKey);
+    {
+        var request = NewRequest(ActorActionType.Interact, targetObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "interact"))
+            return request;
+
+        var doodad = Character.ParentWorld?.GetDoodad(targetObjId);
+        if (doodad == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {targetObjId} not found in world");
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, doodad.Transform.World.Position, false) > MaxInteractRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {targetObjId} out of interaction range");
+        // The engine's own #1443 guard: doodads scheduled for despawn refuse
+        // interaction. Mirror it pre-flight so the refusal is a Rejected
+        // instead of a silent engine no-op.
+        if (doodad.Despawn > DateTime.MinValue)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {targetObjId} scheduled for despawn");
+
+        request.Start($"interacting with doodad {targetObjId}");
+
+        // The real engine path: the same Doodad.Use call interaction skills
+        // (Alchemy/Butcher/CraftStart/…) and the CSLootOpenBagPacket
+        // func-driven branch make. skillId 0 executes the skill-less
+        // loot-func branch (LootItem/LootPack/Cutdowning). Phase advancement
+        // happens inside; a retry against the new phase is a fresh
+        // interaction, never a re-run of the old one.
+        doodad.Use(Character, 0);
+        return Complete(request, true, $"doodad {targetObjId} interacted (phase {doodad.FuncGroupId})");
+    }
 
     public ActorRequest Loot(uint corpseObjId, string? idempotencyKey = null)
-        => NotImplementedSeam(ActorActionType.Loot, corpseObjId, idempotencyKey);
+    {
+        var request = NewRequest(ActorActionType.Loot, corpseObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "loot"))
+            return request;
 
+        var owner = Character.ParentWorld?.GetBaseUnit(corpseObjId);
+        if (owner == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"loot owner {corpseObjId} not found in world");
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, owner.Transform.World.Position, false) > LootingContainer.MaxLootingRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"loot owner {corpseObjId} out of loot range");
+
+        var container = owner.LootingContainer;
+        if (container.Items.Count <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"nothing to loot from {corpseObjId} (empty or already looted)");
+
+        var before = container.Items.Count;
+        request.Start($"looting {corpseObjId} (bag entries {before})");
+
+        // The exact call CSLootOpenBagPacket makes with lootAll=true. The
+        // engine removes each granted entry (TryReserveLootItem), so a retry
+        // after success sees an empty container and is rejected above —
+        // retries cannot duplicate loot.
+        container.OpenBag(Character, owner, lootAll: true);
+
+        var granted = before - container.Items.Count;
+        return Complete(request, granted, $"looted {granted} item(s) from {corpseObjId}");
+    }
+
+    // B1 seams for the remaining surface — implemented by the sibling
+    // slices (UseItem/Mount/Dismount); fail closed until then.
     public ActorRequest UseItem(uint itemId, string? idempotencyKey = null)
         => NotImplementedSeam(ActorActionType.UseItem, itemId, idempotencyKey);
 
@@ -336,11 +395,12 @@ public class GameplayActor : IGameplayActor
         => NotImplementedSeam(ActorActionType.Dismount, 0, idempotencyKey);
 
     /// <summary>
-    /// Fail-closed seam behavior: the request walks the normal lifecycle
-    /// (single-writer gate, audit emission) but is Rejected(RejectedAction)
-    /// before any execution — the typed surface exists so controllers and
-    /// tests bind against the B1 vocabulary today, and a call can never
-    /// silently no-op or crash.
+    /// Fail-closed seam behavior for actions still landing with the B1
+    /// milestone: the request walks the normal lifecycle (single-writer
+    /// gate, audit emission) but is Rejected(RejectedAction) before any
+    /// execution — the typed surface exists so controllers and tests bind
+    /// against the B1 vocabulary today, and a call can never silently
+    /// no-op or crash.
     /// </summary>
     private ActorRequest NotImplementedSeam(ActorActionType action, uint targetId, string? idempotencyKey)
     {
