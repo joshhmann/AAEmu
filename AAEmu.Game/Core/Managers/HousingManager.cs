@@ -91,6 +91,18 @@ public class HousingManager(
     }
 
     /// <summary>
+    /// Gets every loaded house. Additive test-control seam: the E2E bridge
+    /// "save" trigger dirties them so a forced save pass holds real writes.
+    /// </summary>
+    public List<House> GetAllHouses()
+    {
+        lock (_housesLock)
+        {
+            return _houses.Values.ToList();
+        }
+    }
+
+    /// <summary>
     /// Decides whether a `housings` DB row should be loaded into the world at boot.
     /// Rows whose template is missing from the game data, or whose owner/account is
     /// gone (demolished/expired rows that survived a crash), are unrecoverable and

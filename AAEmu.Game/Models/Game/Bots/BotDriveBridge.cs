@@ -214,6 +214,8 @@ public sealed class BotDriveBridge
                 return Ok(CollectGateMetrics());
             case "drive":
                 return HandleDrive(root);
+            case "save":
+                return HandleSave(root);
             case "scenario":
                 return HandleScenario(root);
             default:
@@ -564,6 +566,48 @@ public sealed class BotDriveBridge
             default:
                 return Err($"unknown drive op '{op}'");
         }
+    }
+
+    /// <summary>
+    /// M3b test-hardening seam (t_1329a833): deterministic save trigger.
+    /// Marks every loaded house dirty — the same flag real gameplay
+    /// mutations set (nothing is written until the save pass runs) — then
+    /// executes the REAL save path (<see cref="SaveManager.DoSave"/>). This
+    /// guarantees the save pass holds a real transaction with real housings
+    /// writes even in a world where nothing changed through gameplay: under
+    /// A4 dirty-tracking a clean world's autosave executes zero statements,
+    /// so no InnoDB transaction is ever visible to observe a mid-save kill.
+    /// The M3b exit test holds a row lock so the pass blocks in flight for
+    /// the kill observation; the response only returns after the pass
+    /// completes, so the test fires this command fire-and-forget.
+    /// </summary>
+    private string HandleSave(JsonElement root)
+    {
+        var housesDirtied = 0;
+        foreach (var house in HousingManager.Instance.GetAllHouses())
+        {
+            house.IsDirty = true;
+            housesDirtied++;
+        }
+
+        // DoSave returns false only while another pass is already running
+        // (SaveManager._isSaving — including a pass blocked on a slow/pool-
+        // starved DB acquire); retry so this trigger always lands a pass.
+        // With the test's row lock held, the pass blocks in-flight and this
+        // call returns only after the game dies or the lock is released.
+        var saved = false;
+        var attempts = 0;
+        for (; attempts < 30 && !saved; attempts++)
+        {
+            saved = SaveManager.Instance.DoSave(true);
+            if (!saved)
+                Thread.Sleep(500);
+        }
+        Logger.Info("E2E save trigger: dirtied {Houses} house(s), DoSave pass {Result} after {Attempts} attempt(s)",
+            housesDirtied, saved ? "ran" : "never ran", attempts);
+        if (!saved)
+            Logger.Warn("E2E save trigger: DoSave never landed a pass in 15s (persistent _isSaving) — dirtied {Houses} house(s) remain pending the next tick", housesDirtied);
+        return Ok(new { saved, housesDirtied });
     }
 
     private static string Ok(object data)
