@@ -2,27 +2,27 @@
   "environment": "aaemu-.165",
   "image": {
     "tag": "aaemu-game:presence-demo",
-    "digest": "sha256:3ddcf7a4bdbcaf6b96628b7ac0f3ea7f2e496f68603101ce094331c7a4905dc2",
-    "built_at": "2026-08-11T22:53:33-07:00 (PDT)"
+    "digest": "sha256:6d5a07cf49a59ed68c682da128eafebf903732a948f0acac1e2c5ef4c6129a4e",
+    "built_at": "2026-08-12T11:04-07:00 (PDT)"
   },
   "source": {
-    "commit": "4ded92c61",
+    "commit": "95bb1c78e",
     "branch": "develop (fork joshhmann/AAEmu)",
-    "lineage": "fork develop @ 4ded92c61 (verified tip: M3b-1..4 + exit gate f5b00c686 + SaveManager + quest-save NRE + race-fix chain + bot-control fixes; audit ACCEPT t_4b4e9fbe; M1-M3 audit PASS t_5b1f5494)",
-    "verified": "4ded92c61 = fork develop tip at card time; ff-only merge from f4adbadcb (prior prod HEAD); hotfix ancestors verified (exit gate f5b00c686, SaveManager 5ed5d6493, adopt-heal 960ef8479, patrol-home 96e45252a all ANCESTOR OK, 2026-08-11 t_fec9b36f)"
+    "lineage": "fork develop @ 95bb1c78e (M4 EXIT integrated playable release t_97e59ffc; Rei gate PASS t_abe87eaf ACCEPT 2026-08-12; M3b 4ded92c61 ancestor)",
+    "verified": "95bb1c78e = M4 merge commit audited by Rei (audit-m4-scorecard.md, t_abe87eaf ACCEPT: 1778/0/1 gate, scorecard CRAFT-01/PACK-01/SLAVE-01=2, no M5-lane leak). Pinned deploy: fork develop has since moved to 836d25d06 (M5-lane B1 merges + docs) which is NOT part of this deploy."
   },
-  "git_sha": "72b807e47",
-  "git_sha_note": "prod tree HEAD after ff-merge to fork develop tip (docs-only delta 4ded92c61..72b807e47: scorecard/roadmap merges, non-runtime). Runtime image built from source.commit 4ded92c61.",
-  "deployed_at": "2026-08-11T22:54:00-07:00",
-  "milestone": "M3b deploy (t_fec9b36f) \u2014 M3b furniture persistence + phase-crop recovery + restart restore + property repair + exit gate + M2/M3a fixes; quest census drops applied (SQL/patches overlays)",
-  "database_backup": "compact.sqlite3.bak-pre-m3b-20260811 (in .server_files/AAEmu.Game/Data/) \u2014 pre-overlay pristine copy; MySQL untouched (bot rows additive, accounts reused)",
+  "git_sha": "95bb1c78e",
+  "git_sha_note": "prod tree HEAD = M4 merge commit 95bb1c78e (deploy pin). fork develop tip is 836d25d06 (contains M5-lane B1 merges d25332063/feb6c7861 + docs) \u2014 deliberately NOT deployed; M5 resumes on t_659f891f.",
+  "deployed_at": "2026-08-12T11:05-07:00",
+  "milestone": "M4 deploy (t_442f3016) \u2014 M4 EXIT integrated playable release: crafting integrity + trade packs + vehicle lifecycle + integrated session; M3b content (furniture persistence, phase-crop recovery, property repair) carried forward",
+  "database_backup": "compact.sqlite3.bak-pre-m3b-20260811 (in .server_files/AAEmu.Game/Data/) \u2014 sqlite untouched by M4 (no SQL/patches changes since 4ded92c61; overlay state 4579/17480/26802/13214 confirmed intact); MySQL untouched (bot rows additive, accounts reused)",
   "services": {
     "db": "Up (healthy) - untouched",
     "login": "Up (healthy) - untouched",
-    "game": "Up (healthy) - presence-demo image 3ddcf7a4bdbc, 3/3 citizen bots adopted+roaming (positions change across save cycles), QuestSanity SUMMARY OK 0 errors, 0 FATAL, client connection from 192.168.0.186 accepted post-boot",
+    "game": "Up (healthy) - presence-demo image 6d5a07cf49a5, 3/3 citizen bots adopted+roaming, QuestSanity SUMMARY OK 0 errors, 0 FATAL, client connection from 192.168.0.186 accepted post-boot",
     "adminer": "Up"
   },
-  "build_path": "in-repo overlay recipe: `cd /root/AAEmu && git merge --ff-only 4ded92c61 && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml up -d --no-deps --force-recreate game` (presence overlay carries AAEMU_PRESENCE_DEMO=1 + patrol-home 15572/15364/126.5). Rollback tag: aaemu-game:presence-demo-rollback-pre-m3b = 096593111afc.",
-  "notes": "Deploy t_fec9b36f (2026-08-11, Mai): rollback tag snapshotted FIRST from running image 096593111afc (pre-build, per thinpool/GC pitfall). SQL overlays applied to runtime compact.sqlite3 only (dev tree stays pristine reference per rule 3); overlay script at /tmp/overlay-apply.py on CT 133 (idempotent, guarded deletes). npc_spawns.json (main_world) md5 5f6e57efcf5a0df46914f90de49c2d1a matches previous deploy. NLog caps confirmed: Sequence/26214400/20 + env-Info rule. No upstream PRs (lane gate).",
+  "build_path": "cd /root/AAEmu && git merge --ff-only 95bb1c78e && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml build game && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml up -d --no-deps --force-recreate game (presence overlay carries AAEMU_PRESENCE_DEMO=1 + patrol-home 15572/15364/126.5). Rollback tag: aaemu-game:presence-demo-rollback-pre-m4 = 3ddcf7a4bdbc.",
+  "notes": "Deploy t_442f3016 (2026-08-12, Mai): rollback tag snapshotted FIRST from running image 3ddcf7a4bdbc (pre-build). SQL overlays: none new (git log 4ded92c61..95bb1c78e -- SQL/patches = 0 commits); runtime sqlite overlay state verified. npc_spawns.json (main_world) md5 5f6e57efcf5a0df46914f90de49c2d1a matches previous deploy. NLog caps confirmed: Sequence/26214400/20. PROD STARTUP TEST: fresh boot smoke PASS \u2014 login accepts connections (client from .186 post-boot), bots enter world via real provisioning path, 0 FATAL, no crash-loop. No upstream PRs (lane gate).",
   "sql_overlays": "SQL/patches/compact/*.sql applied to runtime compact.sqlite3 (12 patches, FK OFF per authors' env): quest_contexts 4876->4579, quest_components 17851->17480, quest_acts 26886->26802, unit_reqs 13354->13214; dropped ids 1391/6069/1533-1548 cluster/2148-2229 reserve etc verified 0 rows; census-only drops (2026/2230/2607/2684/3491/3503/3569/3758/5812) remain live DB rows by design (WI-11b deferred/KEEP register)"
 }
