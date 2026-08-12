@@ -38,6 +38,19 @@ public class GateHarnessTests
     }
 
     /// <summary>
+    /// M3b gate-scale save budget — 25 bots + TWO seeded homesteads, autosave
+    /// p95 &lt; 2s enforced (ROADMAP M3b). The homestead seed is applied before
+    /// the window so the save path carries real property state.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "e2e")]
+    public async Task Gate_Stage25_HomesteadSaveBudget()
+    {
+        var result = await GateSoakRunner.RunStageAsync(GateStages.Stage25Homesteads);
+        Assert.True(result.Passed, result.Detail + "\nEvidence: " + result.EvidencePath);
+    }
+
+    /// <summary>
     /// Stage 3 — 50 bots soak. Default window ≥6h (deliverable 8 stage 3).
     /// Override with GATE_SOAK_MINUTES for smoke runs (e.g. =5). Skipped
     /// unless explicitly requested: a full 6h soak is a scheduled gate run,

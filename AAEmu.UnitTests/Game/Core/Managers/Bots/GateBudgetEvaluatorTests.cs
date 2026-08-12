@@ -24,6 +24,10 @@ public class GateBudgetEvaluatorTests
         SchedulerStepsFailed = 0,
         SchedulerAvgWakeLatencyMs = 12,
         SchedulerMaxWakeLatencyMs = 88,
+        SaveMetricsAvailable = true,
+        SaveSampleCount = 40,
+        SaveP95Ms = 800,
+        SaveMaxMs = 1500,
         DbWrites = 2500,          // 50/min/bot
         PhysicsWarnings = 0,
         MaxSameWorldPhysicsWarningsPer60s = 0,
@@ -310,6 +314,83 @@ public class GateBudgetEvaluatorTests
         var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
 
         await Assert.That(verdicts.All(v => !double.IsNaN(v.Measured) && !double.IsInfinity(v.Measured))).IsTrue();
+    }
+
+    // -- M3b autosave-duration budget (autosave p95 < 2s at gate scale) -----
+
+    [Test]
+    public async Task Evaluate_AutosaveUnderBudget_Passes()
+    {
+        // Gate-scale save path: p95 800ms over 40 saves — comfortably under 2s.
+        var s = BaseSnapshot() with
+        {
+            SaveMetricsAvailable = true,
+            SaveSampleCount = 40,
+            SaveP95Ms = 800,
+            SaveMaxMs = 1500
+        };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var p95 = verdicts.Single(v => v.Name == "Autosave duration p95");
+        await Assert.That(p95.Passed).IsTrue();
+        await Assert.That(p95.NotApplicable).IsFalse();
+        var max = verdicts.Single(v => v.Name == "Autosave duration max");
+        await Assert.That(max.Passed).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_AutosaveP95OverTwoSeconds_FailsHard()
+    {
+        // The M3b exit budget: two homesteads + 25 bots must autosave p95 < 2s.
+        var s = BaseSnapshot() with
+        {
+            SaveMetricsAvailable = true,
+            SaveSampleCount = 40,
+            SaveP95Ms = 2100,
+            SaveMaxMs = 2500
+        };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var p95 = verdicts.Single(v => v.Name == "Autosave duration p95");
+        await Assert.That(p95.Passed).IsFalse();
+        await Assert.That(p95.Measured).IsEqualTo(2100);
+        await Assert.That(p95.Limit).IsEqualTo(2000);
+    }
+
+    [Test]
+    public async Task Evaluate_AutosaveSinglePassStall_FailsMaxCeiling()
+    {
+        // A single 30s commit stall slips under p95 but must still fail the max ceiling.
+        var s = BaseSnapshot() with
+        {
+            SaveMetricsAvailable = true,
+            SaveSampleCount = 40,
+            SaveP95Ms = 900,
+            SaveMaxMs = 30000
+        };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var p95 = verdicts.Single(v => v.Name == "Autosave duration p95");
+        await Assert.That(p95.Passed).IsTrue();
+        var max = verdicts.Single(v => v.Name == "Autosave duration max");
+        await Assert.That(max.Passed).IsFalse();
+    }
+
+    [Test]
+    public async Task Evaluate_SaveMetricsAbsent_ReportedNotApplicable()
+    {
+        // A server build without save instrumentation must report n/a — never
+        // a silent pass, never a hard fail (same contract as H2).
+        var s = BaseSnapshot() with { SaveMetricsAvailable = false };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var p95 = verdicts.Single(v => v.Name == "Autosave duration p95");
+        await Assert.That(p95.Passed).IsTrue();
+        await Assert.That(p95.NotApplicable).IsTrue();
     }
 
     [Test]

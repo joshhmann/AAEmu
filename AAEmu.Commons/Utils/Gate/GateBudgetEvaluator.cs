@@ -70,6 +70,15 @@ public sealed record GateBudgets
 
     /// <summary>Max tick-overrun warnings per minute ("Tick took Xms" + ActiveRegionTick overruns).</summary>
     public double MaxTickOverrunWarningsPerMin { get; init; } = 0;
+
+    /// <summary>Autosave (SaveManager.DoSave) p95 duration in ms. M3b gate-scale
+    /// budget: two homesteads + 25 embodied bots must autosave under 2s p95 so
+    /// the save path can't kill M8-scale worlds later.</summary>
+    public double AutosaveP95Ms { get; init; } = 2000;
+
+    /// <summary>Autosave worst single pass ceiling (ms). A one-off 30s commit
+    /// stall would slip under p95 but still freeze the world tick — hard fail.</summary>
+    public double AutosaveMaxMs { get; init; } = 10000;
 }
 
 /// <summary>
@@ -185,6 +194,21 @@ public static class GateBudgetEvaluator
         verdicts.Add(s.DbWritesPerBotPerMin <= b.MaxDbWritesPerBotPerMin
             ? BudgetVerdict.Ok("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit)
             : BudgetVerdict.Over("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit + " — write-loop risk"));
+
+        // Autosave duration (M3b gate-scale budget): p95 < 2s, hard max ceiling.
+        if (s.SaveMetricsAvailable)
+        {
+            verdicts.Add(s.SaveP95Ms <= b.AutosaveP95Ms
+                ? BudgetVerdict.Ok("Autosave duration p95", s.SaveP95Ms, b.AutosaveP95Ms, $"ms over {s.SaveSampleCount} saves")
+                : BudgetVerdict.Over("Autosave duration p95", s.SaveP95Ms, b.AutosaveP95Ms, $"ms over {s.SaveSampleCount} saves — save path too slow at gate scale"));
+            verdicts.Add(s.SaveMaxMs <= b.AutosaveMaxMs
+                ? BudgetVerdict.Ok("Autosave duration max", s.SaveMaxMs, b.AutosaveMaxMs, "ms worst pass")
+                : BudgetVerdict.Over("Autosave duration max", s.SaveMaxMs, b.AutosaveMaxMs, "ms worst pass — single-pass stall"));
+        }
+        else
+        {
+            verdicts.Add(BudgetVerdict.Nx("Autosave duration p95", 0, b.AutosaveP95Ms, "save metrics absent on server"));
+        }
 
         // Warning rates from the game log.
         verdicts.Add(s.PhysicsWarningsPerMin <= b.MaxPhysicsWarningsPerMin

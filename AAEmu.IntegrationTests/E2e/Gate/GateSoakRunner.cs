@@ -60,6 +60,17 @@ public static class GateSoakRunner
         Console.WriteLine($"[gate] stage {stage.Name}: {stage.BotCount} bots, window {(stage.SoakMinutes > 0 ? stage.SoakMinutes : stage.WindowMinutes)}min (soak={stage.SoakMinutes > 0})");
         E2eStack.EnsureUp();
 
+        // M3b gate-scale scenario: seed homesteads BEFORE the metrics window so
+        // the autosave budget measures a world that contains real property
+        // state. The game reads housings at boot (LoadPlayerHousing), so the
+        // seeded rows need a server restart to be picked up.
+        if (stage.SeedHomesteads > 0)
+        {
+            Console.WriteLine($"[gate] seeding {stage.SeedHomesteads} homesteads + restarting game for load");
+            SeedHomesteads(stage.SeedHomesteads);
+            E2eStack.RestartGameServer();
+        }
+
         var failures = new List<string>();
         var windowMinutes = stage.SoakMinutes > 0 ? stage.SoakMinutes : stage.WindowMinutes;
 
@@ -195,6 +206,10 @@ public static class GateSoakRunner
                 SchedulerStepsFailed = tickWorst.SchedulerStepsFailed,
                 SchedulerAvgWakeLatencyMs = tickWorst.SchedulerAvgWakeLatencyMs,
                 SchedulerMaxWakeLatencyMs = tickWorst.SchedulerMaxWakeLatencyMs,
+                SaveMetricsAvailable = tickWorst.SaveMetricsAvailable,
+                SaveSampleCount = tickWorst.SaveSampleCount,
+                SaveP95Ms = tickWorst.SaveP95Ms,
+                SaveMaxMs = tickWorst.SaveMaxMs,
                 DbWrites = Math.Max(0, dbWritesEnd - dbWritesStart),
                 PhysicsWarnings = logTail.PhysicsWarnings,
                 MaxSameWorldPhysicsWarningsPer60s = logTail.MaxSameWorldPhysicsWarningsPer60s,
@@ -276,6 +291,10 @@ public static class GateSoakRunner
         public long SchedulerStepsFailed;
         public double SchedulerAvgWakeLatencyMs;
         public double SchedulerMaxWakeLatencyMs;
+        public bool SaveMetricsAvailable;
+        public long SaveSampleCount;
+        public double SaveP95Ms;
+        public double SaveMaxMs;
 
         public void Merge(GateMetricsProbe s)
         {
@@ -299,13 +318,25 @@ public static class GateSoakRunner
                 SchedulerAvgWakeLatencyMs = Math.Max(SchedulerAvgWakeLatencyMs, s.Scheduler.AvgWakeLatencyMs);
                 SchedulerMaxWakeLatencyMs = Math.Max(SchedulerMaxWakeLatencyMs, s.Scheduler.MaxWakeLatencyMs);
             }
+
+            // M3b autosave budget: the server's ring buffer accumulates across
+            // the window, so p95/max only grow — taking the worst observed
+            // sample is the honest window value.
+            if (s.Save?.Available == true)
+            {
+                SaveMetricsAvailable = true;
+                SaveSampleCount = Math.Max(SaveSampleCount, s.Save.SampleCount);
+                SaveP95Ms = Math.Max(SaveP95Ms, s.Save.P95Ms);
+                SaveMaxMs = Math.Max(SaveMaxMs, s.Save.MaxMs);
+            }
         }
     }
 
     private sealed record TickProbe(bool Available, int SubscriberCount, double InvokeP50Ms, double InvokeP95Ms, double InvokeMaxMs);
     private sealed record RegionTickProbe(bool Available, int CharactersTotal, int CharactersProcessed, int SpawnersTotal, int SpawnersProcessed, double ElapsedMs, int BudgetMs);
     private sealed record SchedulerProbe(bool Available, bool IsRunning, int WorkerCount, long TotalStepsRun, long TotalStepsFailed, long TotalStepsSkipped, double AvgWakeLatencyMs, double MaxWakeLatencyMs);
-    private sealed record GateMetricsProbe(TickProbe Tick, RegionTickProbe RegionTick, SchedulerProbe Scheduler, long UptimeMs);
+    private sealed record SaveProbe(bool Available, long SampleCount, double P95Ms, double MaxMs);
+    private sealed record GateMetricsProbe(TickProbe Tick, RegionTickProbe RegionTick, SchedulerProbe Scheduler, SaveProbe Save, long UptimeMs);
 
     private static async Task<GateMetricsProbe> ProbeMetricsAsync(BotDriveClient bridge, CancellationToken ct)
     {
@@ -319,12 +350,78 @@ public static class GateSoakRunner
         var sched = json.TryGetProperty("scheduler", out var sc) && sc.ValueKind == JsonValueKind.Object && sc.TryGetProperty("available", out var sa) && sa.GetBoolean()
             ? new SchedulerProbe(true, sc.GetProperty("isRunning").GetBoolean(), sc.GetProperty("workerCount").GetInt32(), sc.GetProperty("totalStepsRun").GetInt64(), sc.GetProperty("totalStepsFailed").GetInt64(), sc.GetProperty("totalStepsSkipped").GetInt64(), sc.GetProperty("avgWakeLatencyMs").GetDouble(), sc.GetProperty("maxWakeLatencyMs").GetDouble())
             : new SchedulerProbe(false, false, 0, 0, 0, 0, 0, 0);
+        var save = json.TryGetProperty("save", out var sv) && sv.ValueKind == JsonValueKind.Object && sv.TryGetProperty("available", out var sva) && sva.GetBoolean()
+            ? new SaveProbe(true, sv.GetProperty("sampleCount").GetInt64(), sv.GetProperty("p95Ms").GetDouble(), sv.GetProperty("maxMs").GetDouble())
+            : new SaveProbe(false, 0, 0, 0);
         var uptime = json.TryGetProperty("uptimeMs", out var u) ? u.GetInt64() : 0;
 
         // ActiveRegionTick overruns are counted from the LOG (per-pass warning
         // lines), not from the point-in-time stats — the runner scans the log
         // delta separately; the probe only carries worst-pass elapsed.
-        return new GateMetricsProbe(tick, region, sched, uptime);
+        return new GateMetricsProbe(tick, region, sched, save, uptime);
+    }
+
+    // ------------------------------------------------------------------ homestead seeding (M3b gate-scale)
+
+    /// <summary>
+    /// Seeds N player homesteads (housings rows) into the e2e MySQL so the
+    /// gate-stage world contains real property state. Templates 1/2
+    /// (house_design_1/2) are used — both have build steps and no binding
+    /// doodads, so the load path spawns nothing extra. The game reads
+    /// housings at boot, so callers restart the game after seeding.
+    /// </summary>
+    private static void SeedHomesteads(int count)
+    {
+        using var conn = E2eStack.OpenDb("aaemu_game");
+        using var tx = conn.BeginTransaction();
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText =
+            "INSERT INTO housings " +
+            "(`id`,`account_id`,`owner`,`co_owner`,`template_id`,`name`,`x`,`y`,`z`,`yaw`,`pitch`,`roll`," +
+            "`current_step`,`current_action`,`permission`,`place_date`,`protected_until`,`faction_id`," +
+            "`sell_to`,`sell_price`,`allow_recover`) VALUES " +
+            "(@id,@account,@owner,@co,@template,@name,@x,@y,@z,@yaw,@pitch,@roll," +
+            "@step,@action,@perm,@place,@protected,@faction,@sellto,@sellprice,@recover)";
+
+        // Base positions taken from the SQL seed's lodestone rows — known-good
+        // world coordinates that resolve to a real zone at load.
+        (float X, float Y, float Z)[] basePositions =
+        [
+            (19643f, 24385.4f, 168.9f),
+            (19952.6f, 24275.5f, 140.4f)
+        ];
+
+        for (var i = 0; i < count; i++)
+        {
+            var pos = basePositions[i % basePositions.Length];
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@id", 99000 + i); // above seed rows 1-12
+            cmd.Parameters.AddWithValue("@account", 1);
+            cmd.Parameters.AddWithValue("@owner", 1);
+            cmd.Parameters.AddWithValue("@co", 0);
+            cmd.Parameters.AddWithValue("@template", i % 2 == 0 ? 1 : 2);
+            cmd.Parameters.AddWithValue("@name", $"Gate Homestead {i + 1}");
+            cmd.Parameters.AddWithValue("@x", pos.X + i * 2);
+            cmd.Parameters.AddWithValue("@y", pos.Y + i * 2);
+            cmd.Parameters.AddWithValue("@z", pos.Z);
+            cmd.Parameters.AddWithValue("@yaw", 0f);
+            cmd.Parameters.AddWithValue("@pitch", 0f);
+            cmd.Parameters.AddWithValue("@roll", 0f);
+            cmd.Parameters.AddWithValue("@step", -1); // finished house
+            cmd.Parameters.AddWithValue("@action", 0);
+            cmd.Parameters.AddWithValue("@perm", 0);
+            cmd.Parameters.AddWithValue("@place", DateTime.UtcNow);
+            cmd.Parameters.AddWithValue("@protected", DateTime.UtcNow.AddDays(14));
+            cmd.Parameters.AddWithValue("@faction", 2);
+            cmd.Parameters.AddWithValue("@sellto", 0);
+            cmd.Parameters.AddWithValue("@sellprice", 0);
+            cmd.Parameters.AddWithValue("@recover", 1);
+            cmd.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+        Console.WriteLine($"[gate] seeded {count} homestead(s) into e2e MySQL");
     }
 
     // ------------------------------------------------------------------ DB / log
