@@ -575,6 +575,26 @@ DB-write budget precedent (t_2006451f / t_b4eb35e9). Fix attempt first (GC
 latency tuning, t_eecc5604, merged) per Josh's ruling; recalibration is the
 recorded fallback.
 
+**M6 EXIT RECORD (2026-08-11, t_35167e60):** the last M6-exit blocker — the
+session/item enumeration-race class — is CLOSED and the 6h soak is GREEN.
+Merge `eb6f637e0` (no-ff) landed the 4-commit chain from t_781cdb32 +
+t_3fdd6ac3 (concurrency-safe Server `_sessions`/StreamManager tokens,
+CharacterQuests ActiveQuests/CompletedQuests → ConcurrentDictionary,
+ItemContainer `_itemsLock` + GetItemsSnapshot, ItemManager `_allItems`/
+`_allPersistentContainers` → ConcurrentDictionary, rigs adapted). Merge
+resolution preserved develop's BUG-014 uint CompletedQuests keys and the
+t_90c0d0d1 null-entry Save guard (7 develop-side rigs seeded after the chain
+parked were adapted to ConcurrentDictionary in the same merge). Full gate:
+**1592 tests, 0 failed.** Soak #4 (10 bots, 360.0-min window, isolated soak2
+stack, merged runtime hash-verified): **ALL 9 budgets PASS, 0 failures** —
+the soak3 quest-4295 reward-distribution NRE (ApplyBindRules raw-list
+iteration) does NOT reproduce; the Failures section is empty. Exit test (10
+bots / 6h / no unrecovered loops / no inventory duplication / no DB
+corruption / no tick-budget overrun) is now satisfied by recorded evidence;
+remaining M6-gate items per the 2026-08-09 audit (A1 execution boundary,
+restart-persistence scenario, observability logging, merge-to-develop G0-1)
+are tracked separately.
+
 **Detail (2026-08-09 audit):** M6 exit is blocked on **A1** (execution
 boundary — bot steps off the game loop violate M5's core rule). Added exit
 requirements: (a) restart-persistence scenario per the standing rule —
