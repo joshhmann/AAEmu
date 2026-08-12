@@ -14,7 +14,7 @@ using TUnit.Core.Interfaces;
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 /// <summary>Serializes a test class (the ExecutionBoundary static state must not race across parallel tests).</summary>
-public sealed class SequentialParallelLimit : IParallelLimit
+public sealed class SchedulerSequentialParallelLimit : IParallelLimit
 {
     public int Limit => 1;
 }
@@ -34,7 +34,7 @@ public sealed class SequentialParallelLimit : IParallelLimit
 /// <see cref="ExecutionBoundary"/> static state is reset per test.
 /// </summary>
 [NotInParallel]
-[ParallelLimiter<SequentialParallelLimit>]
+[ParallelLimiter<SchedulerSequentialParallelLimit>]
 public class PlayerBotSchedulerTests
 {
     /// <summary>Deterministic lifecycle seam (same shape as the manager rig).</summary>
