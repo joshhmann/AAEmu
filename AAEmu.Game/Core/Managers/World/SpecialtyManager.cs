@@ -2,6 +2,7 @@
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Mails;
@@ -59,7 +60,7 @@ public class SpecialtyManager : Singleton<SpecialtyManager>, ISpecialtyManager
                             ColZoneGroupId = reader.GetUInt32("col_zone_group_id"),
                             Ratio = reader.GetUInt32("ratio"),
                             Profit = reader.GetUInt32("profit"),
-                            VendorExist = reader.GetBoolean("id", true)
+                            VendorExist = reader.GetBoolean("vendor_exist", true)
                         };
                         _specialties.Add(template.Id, template);
                     }
@@ -124,6 +125,9 @@ public class SpecialtyManager : Singleton<SpecialtyManager>, ISpecialtyManager
 
         var ratioRegenTask = new SpecialtyRatioRegenTask();
         TaskManager.Instance.Schedule(ratioRegenTask, TimeSpan.FromMinutes(AppConfiguration.Instance.Specialty.RatioRegenTickMinutes), TimeSpan.FromMinutes(AppConfiguration.Instance.Specialty.RatioRegenTickMinutes));
+
+        var tradePackExpiryTask = new TradePackExpiryTask();
+        TaskManager.Instance.Schedule(tradePackExpiryTask, TimeSpan.FromMinutes(AppConfiguration.Instance.Specialty.PlacedPackExpiryCheckMinutes), TimeSpan.FromMinutes(AppConfiguration.Instance.Specialty.PlacedPackExpiryCheckMinutes));
     }
 
     private void OnItemsLoaded(object sender, EventArgs e)
@@ -200,11 +204,22 @@ public class SpecialtyManager : Singleton<SpecialtyManager>, ISpecialtyManager
 
         if (!_specialtyNpc.TryGetValue(npc.TemplateId, out var specialtyNpc))
         {
-            player.SendErrorMessage(ErrorMessageType.StoreCantSellSameZone);
+            player.SendErrorMessage(ErrorMessageType.Invalid);
             return 0;
         }
 
         var bundleIdAtNpc = specialtyNpc.SpecialtyBundleId;
+
+        // Canonical 1.2: a pack can never be sold at the trader of its own production
+        // zone ("생산지 교역상에게는 판매 불가" — the tooltip rule; the pack is also absent
+        // from its own zone's bundle, which is the real gate). Report the dedicated error
+        // instead of the generic Invalid.
+        var npcZoneGroupId = ZoneManager.Instance.GetZoneByKey(npc.Transform.ZoneId)?.GroupId ?? 0;
+        if (npcZoneGroupId != 0 && npcZoneGroupId == backpack.Template.SpecialtyZoneId)
+        {
+            player.SendErrorMessage(ErrorMessageType.StoreCantSellSameZone);
+            return 0;
+        }
 
         if (!_specialtyBundleItemsMapped.TryGetValue(backpack.TemplateId, out var bundleMapping))
         {
@@ -231,6 +246,13 @@ public class SpecialtyManager : Singleton<SpecialtyManager>, ISpecialtyManager
 
     public int SellSpecialty(Character player, uint npcObjId)
     {
+        // Canonical 1.2: "10레벨 미만은 특산품 제작/판매 불가" — under level 10 no pack craft/sell.
+        if (player.Level < AppConfiguration.Instance.Specialty.MinLevelToCraftSell)
+        {
+            player.SendErrorMessage(ErrorMessageType.LevelLowToUse);
+            return 0;
+        }
+
         if (player.LaborPower < 60)
         {
             player.SendErrorMessage(ErrorMessageType.NotEnoughLaborPower);
@@ -388,5 +410,60 @@ public class SpecialtyManager : Singleton<SpecialtyManager>, ISpecialtyManager
     public static int GetValueOfOne()
     {
         return 1;
+    }
+
+    /// <summary>
+    /// True when a placed doodad is a trade pack past its canonical 6-day despawn time.
+    /// A placed pack is a persistent doodad carrying the pack item (<see cref="Doodad.ItemId"/>)
+    /// whose template is an auto-equip trade pack; <see cref="Doodad.PlantTime"/> is set at
+    /// placement (PutDownBackpackEffect) and restored at boot, so the timer survives restarts.
+    /// Picking the pack up deletes the doodad; re-placing resets PlantTime (canonical: picking
+    /// a pack up and placing it back down resets the timer).
+    /// </summary>
+    public static bool IsExpiredPlacedPack(Doodad doodad, DateTime now)
+    {
+        if (doodad == null || doodad.ItemId <= 0 || doodad.ItemTemplateId <= 0)
+            return false;
+
+        if (!ItemManager.Instance.IsAutoEquipTradePack(doodad.ItemTemplateId))
+            return false;
+
+        if (doodad.PlantTime == DateTime.MinValue)
+            return false;
+
+        var expiry = TimeSpan.FromHours(AppConfiguration.Instance.Specialty.PlacedPackExpiryHours);
+        return doodad.PlantTime.Add(expiry) < now;
+    }
+
+    /// <summary>
+    /// Sweeps all worlds for expired placed trade packs and despawns them (deletes the
+    /// doodad row + its system-container pack item). Canonical 1.2: "내려놓은 등짐은 6일 후 소멸".
+    /// Runs on the scheduled <see cref="TradePackExpiryTask"/>; the check interval is a
+    /// server-side precision choice (config <c>PlacedPackExpiryCheckMinutes</c>).
+    /// </summary>
+    public void SweepExpiredPlacedPacks(DateTime? now = null)
+    {
+        var currentTime = now ?? DateTime.UtcNow;
+        var swept = 0;
+
+        foreach (var world in WorldManager.Instance.GetWorlds())
+        {
+            var playerDoodads = world.SpawnManager?.GetAllPlayerDoodads();
+            if (playerDoodads == null)
+                continue;
+
+            foreach (var doodad in playerDoodads.ToList())
+            {
+                if (!IsExpiredPlacedPack(doodad, currentTime))
+                    continue;
+
+                Logger.Info($"Trade pack doodad {doodad.ObjId} (template {doodad.TemplateId}, item {doodad.ItemId}, placed {doodad.PlantTime:O}) expired after {AppConfiguration.Instance.Specialty.PlacedPackExpiryHours}h — despawning");
+                doodad.Delete();
+                swept++;
+            }
+        }
+
+        if (swept > 0)
+            Logger.Info($"Trade pack expiry sweep: {swept} placed pack(s) despawned");
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Crafts;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
@@ -51,6 +52,14 @@ public class CharacterCraft(Character owner)
         {
             // TODO verified
             Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.BackpackOccupied, 0, false);
+            CancelCraft();
+            return;
+        }
+
+        // Canonical 1.2: "10레벨 미만은 특산품 제작/판매 불가" — trade packs require level 10 to craft.
+        if (craft.ResultsInBackpack && Owner.Level < AppConfiguration.Instance.Specialty.MinLevelToCraftSell)
+        {
+            Owner.SendErrorMessage(ErrorMessageType.LevelLowToUse);
             CancelCraft();
             return;
         }
