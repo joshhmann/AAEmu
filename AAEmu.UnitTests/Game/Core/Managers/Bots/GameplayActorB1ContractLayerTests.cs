@@ -379,7 +379,7 @@ public class GameplayActorB1ContractLayerTests
         await Assert.That(root.TryGetProperty("trace_id", out var traceIdProp)).IsTrue();
         await Assert.That(traceIdProp.GetGuid()).IsEqualTo(record.TraceId);
         await Assert.That(root.TryGetProperty("actor_id", out var actorIdProp)).IsTrue();
-        await Assert.That(actorIdProp.GetUInt32()).IsEqualTo(GameplayActorTestRig.ActorObjId);
+        await Assert.That(actorIdProp.GetUInt32()).IsEqualTo(actor.ActorId);
         await Assert.That(root.GetProperty("action").GetString()).IsEqualTo("Target");
         await Assert.That(root.GetProperty("target_id").GetUInt32()).IsEqualTo(npcObjId);
         await Assert.That(root.GetProperty("requested_at").GetDateTimeOffset()).IsNotEqualTo(default);

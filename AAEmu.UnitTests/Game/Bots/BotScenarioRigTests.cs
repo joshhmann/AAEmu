@@ -358,24 +358,29 @@ public class BotScenarioRigTests
         var advance = actor.AdvanceQuest(168);
         await Assert.That(advance.State, "advance must complete: " + advance.Detail).IsEqualTo(ActorLifecycleState.Completed);
 
-        // Turn-in at the report NPC (spawned into the session world).
+        // Turn-in at the report NPC (spawned into the session world). The
+        // actor drains the engine's post-report evaluations (report → Ready →
+        // Reward → completed+drop) the same way the real evaluation queue
+        // does, so ONE turn-in both completes the quest and awards rewards.
         var npcObjId = session.SpawnNpc(639);
         var turnIn = actor.TurnInQuest(168, npcObjId, 0);
         await Assert.That(turnIn.State, "turn-in must complete: " + turnIn.Detail).IsEqualTo(ActorLifecycleState.Completed);
-
-        // The report event takes Ready→Reward; the REWARD-stage advance is
-        // what distributes rewards and drops the quest (the same stage
-        // semantics the scenario runner applies per drive stage).
-        var rewardAdvance = actor.AdvanceQuest(168);
-        await Assert.That(rewardAdvance.State, "reward advance must complete: " + rewardAdvance.Detail).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(turnIn.Result, "turn-in must report completion: " + turnIn.Detail).IsEqualTo(true);
         await Assert.That(session.Character.Quests.HasQuestCompleted(168)).IsTrue();
         await Assert.That(session.Character.Quests.HasQuest(168), "completed quest must drop from ActiveQuests").IsFalse();
 
-        // Audits: accept + advance + turn-in + reward advance all recorded
-        // with §17-clean states.
+        // A follow-up advance after completion hits the terminal state
+        // (quest dropped) — Rejected(StateTransition), never re-executed.
+        var afterCompletion = actor.AdvanceQuest(168);
+        await Assert.That(afterCompletion.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(afterCompletion.Failure).IsEqualTo(ActorFailureReason.StateTransition);
+
+        // Audits: accept + advance + turn-in all recorded Completed; the
+        // post-completion advance is recorded as its own Rejected record.
         var questAudits = actor.AuditTrace.Where(a => a.Action is ActorActionType.AcceptQuest or ActorActionType.AdvanceQuest or ActorActionType.TurnInQuest).ToList();
-        await Assert.That(questAudits.Count, "expected accept+advance+turn-in+reward audit records").IsEqualTo(4);
-        await Assert.That(questAudits.All(a => a.Result is ActorLifecycleState.Completed), "all quest audits Completed").IsTrue();
+        await Assert.That(questAudits.Count, "expected accept+advance+turn-in+rejected-advance audit records").IsEqualTo(4);
+        await Assert.That(questAudits.Count(a => a.Result is ActorLifecycleState.Completed), "expected 3 completed quest audits").IsEqualTo(3);
+        await Assert.That(questAudits.Single(a => a.Result is ActorLifecycleState.Rejected).Action).IsEqualTo(ActorActionType.AdvanceQuest);
     }
 
     #endregion
