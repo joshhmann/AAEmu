@@ -129,17 +129,33 @@ public class MateManager(WorldInstance parentWorldInstance)
     }
 
     /// <summary>
-    /// Mounts the active character of a connection on target mount by its TlId
+    /// Mounts the active character of a connection on target mount by its TlId.
+    /// Packet-path wrapper over the shared character-based entry.
     /// </summary>
     /// <param name="connection"></param>
     /// <param name="tlId"></param>
     /// <param name="attachPoint"></param>
     /// <param name="reason"></param>
     public void MountMate(GameConnection connection, uint tlId, AttachPointKind attachPoint, AttachUnitReason reason)
+        => MountMate(connection.ActiveChar, tlId, attachPoint, reason);
+
+    /// <summary>
+    /// Mounts a character on target mount by its TlId — the shared engine
+    /// entry for BOTH the packet handler above and the headless bot path
+    /// (IGameplayActor.Mount). Narrow core hook (AGENTS.md #10): same body
+    /// the connection wrapper used, parameterized by Character instead of
+    /// reaching through the connection; no parallel gameplay path.
+    /// </summary>
+    /// <param name="character">Character to mount.</param>
+    /// <param name="tlId">Target mount's TlId.</param>
+    /// <param name="attachPoint">Requested seat.</param>
+    /// <param name="reason">Attach reason.</param>
+    /// <returns>True when the character ended up mounted on the requested seat.</returns>
+    public bool MountMate(Character character, uint tlId, AttachPointKind attachPoint, AttachUnitReason reason)
     {
-        var character = connection.ActiveChar;
         var mateInfo = GetActiveMateByTlId(tlId);
-        if (mateInfo == null) return;
+        if (mateInfo == null)
+            return false;
 
         // Request seat position
         if (mateInfo.Passengers.TryGetValue(attachPoint, out var seatInfo))
@@ -148,7 +164,7 @@ public class MateManager(WorldInstance parentWorldInstance)
             if (attachPoint == AttachPointKind.Driver && mateInfo.OwnerObjId != character.ObjId)
             {
                 Logger.Warn($"MountMate. Non-owner {character.Name} ({character.ObjId}) tried to take the first seat on mount {mateInfo.Name} ({mateInfo.ObjId})");
-                return;
+                return false;
             }
 
             // Check if seat is empty
@@ -164,16 +180,20 @@ public class MateManager(WorldInstance parentWorldInstance)
                 character.AttachedPoint = attachPoint;
 
                 character.IsVisible = true; // When we're on a horse, you can see us
+
+                character.Buffs.TriggerRemoveOn(BuffRemoveOn.Mount);
+                Logger.Debug($"MountMate. mountTlId: {mateInfo.TlId}, attachPoint: {attachPoint}, reason: {reason}, seats: {string.Join(", ", mateInfo.Passengers.Values.ToList())}");
+                return true;
             }
+
+            Logger.Warn($"MountMate. Seat {attachPoint} on mount {mateInfo.Name} ({mateInfo.ObjId}) is already taken by {seatInfo._objId}");
+            return false;
         }
         else
         {
             Logger.Warn($"MountMate. Player {character.Name} ({character.ObjId}) tried to take a invalid seat {attachPoint} on mount {mateInfo.Name} ({mateInfo.ObjId})");
-            return;
+            return false;
         }
-
-        character.Buffs.TriggerRemoveOn(BuffRemoveOn.Mount);
-        Logger.Debug($"MountMate. mountTlId: {mateInfo.TlId}, attachPoint: {attachPoint}, reason: {reason}, seats: {string.Join(", ", mateInfo.Passengers.Values.ToList())}");
     }
 
     /// <summary>

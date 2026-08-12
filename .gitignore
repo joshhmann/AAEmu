@@ -24,3 +24,4 @@ publish/
 .env
 graphify-out/
 graphify-out/
+scorecard-explorations/generated/

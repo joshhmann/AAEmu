@@ -188,7 +188,6 @@ public interface IGameplayActor
     /// </summary>
     ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null);
 
-    /// <summary>
     /// Idempotency correlation lookup: the audit record of the terminal
     /// attempt recorded under an explicit idempotency key, or null when the
     /// key was never used (or its record was evicted). Lets a controller

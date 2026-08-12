@@ -180,21 +180,21 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task UseItem_ConsumableItem_CompletesAndConsumesThroughRealEnginePath()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-useitem-1");
-        GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.UseItemTemplateId,
-            GameplayActorTestRig.UseItemSkillId, useSkillAsReagent: true);
-        GameplayActorTestRig.SeedSkillTemplate(GameplayActorTestRig.UseItemSkillId);
-        GameplayActorTestRig.GrantItem(actor, GameplayActorTestRig.UseItemTemplateId, 2);
+        // Uses the rig's canonical usable item (TestItemTemplateId + real
+        // reagent mapping on TestItemUseSkillId — the merged B1 rig setup):
+        // consumption flows through the ordinary skill-pipeline reagent path.
+        var (actor, session) = GameplayActorTestRig.CreateActor("b1-useitem-1");
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 2);
 
-        var request = actor.UseItem(GameplayActorTestRig.UseItemTemplateId);
+        var request = actor.UseItem(GameplayActorTestRig.TestItemTemplateId);
 
         await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed, request.Detail ?? "");
-        // The engine consumed the source item (use-skill-as-reagent fallback).
-        await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.UseItemTemplateId)).IsEqualTo(1);
+        // The engine consumed one unit through the skill's reagent entry.
+        await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.TestItemTemplateId)).IsEqualTo(1);
 
         var record = actor.AuditTrace[^1];
         await Assert.That(record.Action).IsEqualTo(ActorActionType.UseItem);
-        await Assert.That(record.TargetId).IsEqualTo(GameplayActorTestRig.UseItemTemplateId);
+        await Assert.That(record.TargetId).IsEqualTo(GameplayActorTestRig.TestItemTemplateId);
         await Assert.That(record.Result).IsEqualTo(ActorLifecycleState.Completed);
         await Assert.That(record.Failure).IsNull();
     }
@@ -202,18 +202,15 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task UseItem_RetryAfterConsumption_RejectedWithoutDoubleUse_ProvesIdempotency()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-useitem-2");
-        GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.UseItemTemplateId,
-            GameplayActorTestRig.UseItemSkillId, useSkillAsReagent: true);
-        GameplayActorTestRig.SeedSkillTemplate(GameplayActorTestRig.UseItemSkillId);
-        GameplayActorTestRig.GrantItem(actor, GameplayActorTestRig.UseItemTemplateId, 1);
+        var (actor, session) = GameplayActorTestRig.CreateActor("b1-useitem-2");
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 1);
 
-        var first = actor.UseItem(GameplayActorTestRig.UseItemTemplateId);
+        var first = actor.UseItem(GameplayActorTestRig.TestItemTemplateId);
         await Assert.That(first.State).IsEqualTo(ActorLifecycleState.Completed);
-        await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.UseItemTemplateId)).IsEqualTo(0);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.TestItemTemplateId)).IsEqualTo(0);
 
         // Retry: the item is gone — Rejected BEFORE any engine execution.
-        var retry = actor.UseItem(GameplayActorTestRig.UseItemTemplateId);
+        var retry = actor.UseItem(GameplayActorTestRig.TestItemTemplateId);
         await Assert.That(retry.State).IsEqualTo(ActorLifecycleState.Rejected);
         await Assert.That(retry.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
         await Assert.That(actor.AuditTrace.Count).IsEqualTo(2);
@@ -288,16 +285,19 @@ public class GameplayActorSurfaceB1Tests
     }
 
     [Test]
-    public async Task Mount_WithoutConnection_RejectedWithRejectedAction()
+    public async Task Mount_Headless_CompletesThroughCharacterDrivenPath()
     {
+        // Merged contract (t_a5edc1e6): Mount is character-driven through the
+        // shared MateManager.MountMate(Character, …) entry — the same engine
+        // call the packet wrapper reaches via connection.ActiveChar. Headless
+        // pilots mount without a GameConnection; no fabricated session needed.
         var (actor, _) = GameplayActorTestRig.CreateActor("b1-mount-2");
         GameplayActorTestRig.SpawnMate(actor, MateObjId, 1);
 
         var request = actor.Mount(MateObjId);
 
-        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
-        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-        await Assert.That(actor.Character.IsRiding).IsFalse();
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.IsRiding).IsTrue();
     }
 
     [Test]

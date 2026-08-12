@@ -25,6 +25,7 @@ using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Team;
 using AAEmu.Game.Models.Game.Units;
@@ -61,6 +62,15 @@ public static class GameplayActorTestRig
     /// <summary>Seeded skill id for the Cast accept-path test.</summary>
     public const uint TestSkillId = 90001;
 
+    /// <summary>
+    /// Item-use pipeline seeds (B1 UseItem tests): an ordinary usable item
+    /// template whose use skill is a real skill template, plus a reagent
+    /// mapping so a successful use consumes one unit through the normal
+    /// skill pipeline.
+    /// </summary>
+    public const uint TestItemTemplateId = 1234;
+    public const uint TestItemUseSkillId = 90002;
+
     /// <summary>Object id assigned to the actor character (nonzero, registered in its world).</summary>
     public const uint ActorObjId = 0x1001;
 
@@ -81,6 +91,9 @@ public static class GameplayActorTestRig
     // its world was invisible to world-wide sweeps.
     private static int _nextWorldInstanceId = 0x4000_0000;
 
+    /// <summary>Default objId for a rig-summoned test mount (SummonMate).</summary>
+    public const uint MateObjId = 0x2001;
+
     private static bool s_seeded;
 
     /// <summary>
@@ -97,6 +110,7 @@ public static class GameplayActorTestRig
             SeedBaseSurface();
             EnsureIncrementingItemIds();
             SeedSkillManager();
+            SeedItemManager();
             FormulaManager.Instance.Load();
 
             s_seeded = true;
@@ -159,9 +173,17 @@ public static class GameplayActorTestRig
 
         if (!SingletonSeeded(typeof(Singleton<ItemManager>)))
         {
+            // Item ids MUST be unique and incrementing: ItemManager.Create
+            // registers items in _allItems by id, and the B1 UseItem path
+            // resolves the caster item through that registry. A default
+            // mock returns 0 for every item — the second created item would
+            // collide with the first and silently fail to stock. Use the
+            // real id manager (same pattern as QuestIdManager /
+            // ContainerIdManager below).
+            ItemIdManager.Instance.Initialize(true);
             var itemManager = new ItemManager(
                 Mock.Of<ISkillManager>().Object,
-                Mock.Of<IItemIdManager>().Object,
+                ItemIdManager.Instance,
                 Mock.Of<IContainerIdManager>().Object,
                 Mock.Of<ILocalizationManager>().Object,
                 Mock.Of<ITaskManager>().Object,
@@ -225,9 +247,11 @@ public static class GameplayActorTestRig
                 new AccountManager(Mock.Of<ITickManager>().Object, Mock.Of<ITimedRewardsManager>().Object));
         }
 
-        // Transform.SetParent → Character.SendDebugMessage → CharacterManager.Instance
-        // (the mount attach path). DI singleton with no parameterless ctor —
-        // seed with mocked deps, missing-only.
+        // CharacterManager backs Character.SendDebugMessage (called from
+        // Transform.SetParent when the mount pipeline parents the rider's
+        // transform). All-mock deps; AccountDetails is a struct so
+        // GetEffectiveAccessLevel resolves to (AccessLevel, 0) without a
+        // setup.
         if (!SingletonSeeded(typeof(Singleton<CharacterManager>)))
         {
             SeedSingleton(typeof(Singleton<CharacterManager>),
@@ -350,6 +374,68 @@ public static class GameplayActorTestRig
                 TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target
             };
         }
+
+        // Item-use skill (B1 UseItem tests): a separate skill id so the
+        // item reagent mapping never touches the Cast tests' TestSkillId.
+        if (!skills.ContainsKey(TestItemUseSkillId))
+        {
+            skills[TestItemUseSkillId] = new SkillTemplate
+            {
+                Id = TestItemUseSkillId,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 100,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Self,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target
+            };
+        }
+
+        // Reagent mapping: using the item consumes one unit of the item
+        // template through the ordinary skill-pipeline consumption path.
+        var reagents = (Dictionary<uint, SkillReagent>?)typeof(SkillManager)
+            .GetField("_skillReagents", flags)!.GetValue(manager);
+        if (reagents != null && !reagents.ContainsKey(TestItemUseSkillId))
+        {
+            reagents[TestItemUseSkillId] = new SkillReagent
+            {
+                SkillId = TestItemUseSkillId,
+                ItemId = TestItemTemplateId,
+                Amount = 1
+            };
+        }
+    }
+
+    /// <summary>
+    /// Seeds the ordinary usable item template the B1 UseItem tests stock
+    /// and use (ItemManager._templates — the same registry the real
+    /// item-use path resolves). Idempotent; never replaces an existing
+    /// template.
+    /// </summary>
+    private static void SeedItemManager()
+    {
+        var manager = ItemManager.Instance;
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var templatesField = typeof(ItemManager).GetField("_templates", flags);
+        var templates = (Dictionary<uint, ItemTemplate>?)templatesField!.GetValue(manager);
+        if (templates == null)
+        {
+            templates = [];
+            templatesField.SetValue(manager, templates);
+        }
+
+        if (!templates.ContainsKey(TestItemTemplateId))
+        {
+            templates[TestItemTemplateId] = new ItemTemplate
+            {
+                Id = TestItemTemplateId,
+                UseSkillId = TestItemUseSkillId,
+                UseSkillAsReagent = false,
+                MaxCount = 99,
+                FixedGrade = -1
+            };
+        }
     }
 
     private static bool SingletonSeeded(Type singletonBase)
@@ -384,41 +470,43 @@ public static class GameplayActorTestRig
         character.MaxHp = 100;
         character.Mp = 100;
         character.MaxMp = 100;
-        // Prod assigns MateManager right after world creation (WorldManager.cs
-        // — the CSMountMatePacket path resolves it via ParentWorld.MateManager);
-        // the headless world does not, so mirror prod here.
+        // Prod world shape: MateManager + SlaveManager are assigned right
+        // after world creation (WorldManager.cs:528 area); headless session
+        // worlds don't. The mount pipeline (IGameplayActor.Mount/Dismount)
+        // resolves through ParentWorld.MateManager.
         session.World.MateManager = new MateManager(session.World);
-        // Prod fills the region grid right after world creation too
-        // (WorldManager.CreateInstance — new Region[CellX*SECTORS_PER_CELL,
-        // CellY*SECTORS_PER_CELL], pre-filled). The headless world leaves it
-        // null, so the real SetPosition → AddVisibleObject → GetRegionByPos
-        // chain (dismount repositions the character) NREs. Missing-only
-        // guard: never replace a grid another rig already seeded. ZoneKeys is
-        // empty in the headless template, so use 0 like prod's first key.
-        if (session.World.Regions == null)
-        {
-            var dx = session.World.Template.CellX * WorldManager.SECTORS_PER_CELL;
-            var dy = session.World.Template.CellY * WorldManager.SECTORS_PER_CELL;
-            session.World.Regions = new Region[dx, dy];
-            for (var y = 0; y < dy; y++)
-            for (var x = 0; x < dx; x++)
-                session.World.Regions[x, y] = new Region(session.World, x, y, 0);
-        }
-        // Prod registers every world instance in WorldManager._worlds at
-        // creation (CreateInstance) with a UNIQUE instance id. The headless
-        // world ctor hardcodes instanceId 1 for every session, so the real
-        // Transform.InstanceId → ParentWorld → GetWorld chain (region
-        // AddObject after a SetPosition) would resolve the FIRST session's
-        // world for all later actors. Bump the id until free, then register.
-        var worlds = (ConcurrentDictionary<uint, WorldInstance>)GetField(WorldManager.Instance, "_worlds");
-        while (worlds.ContainsKey(session.World.Id))
-        {
-            var nextId = (uint)Interlocked.Increment(ref _nextWorldInstanceId);
-            typeof(WorldInstance).GetProperty(nameof(WorldInstance.Id))!.SetValue(session.World, nextId);
-        }
-        worlds.TryAdd(session.World.Id, session.World);
+        session.World.SlaveManager = new SlaveManager(session.World);
+        // Prod allocates the world's region grid at creation
+        // (WorldManager.cs:565-574); headless session worlds don't.
+        // Character.SetPosition → AddVisibleObject → GetRegionByPos
+        // dereferences it — the dismount engine path repositions the rider.
+        var regionDx = session.World.Template.CellX * WorldManager.SECTORS_PER_CELL;
+        var regionDy = session.World.Template.CellY * WorldManager.SECTORS_PER_CELL;
+        session.World.Regions = new Region[regionDx, regionDy];
+        var zoneKey = session.World.Template.ZoneKeys.Count > 0 ? session.World.Template.ZoneKeys[0] : 0u;
+        for (var y = 0; y < regionDy; y++)
+        for (var x = 0; x < regionDx; x++)
+            session.World.Regions[x, y] = new Region(session.World, x, y, zoneKey);
+        // Keep the character's Transform in sync with its world WITHOUT the
+        // global WorldManager registry: Region.AddObject sets
+        // Transform.InstanceId → the public setter resolves
+        // WorldManager.Instance.GetWorld(instanceId) and would NRE when the
+        // headless world is not (or no longer) in the shared _worlds
+        // registry — concurrent suites register/remove id-1 worlds mid-run.
+        // Pre-setting the backing field makes Region.AddObject's assignment
+        // a no-op, so the dismount engine path (SetPosition →
+        // AddVisibleObject → Region.AddObject) never touches the registry.
+        // Same bypass pattern as HeadlessSession.SetParentWorld.
+        typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
+            .GetField("_instanceId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(character.Transform, session.World.Id);
         // Register the character in its world (the production activation path
-        // does this; the headless session alone does not).
+        // does this; the headless session alone does not). WorldInstance
+        // AddObject also registers the character with WorldManager.Instance —
+        // REFRESH the fixed ActorObjId slot first so a stale character from
+        // an earlier test never shadows this one (UnMountMate resolves the
+        // rider via WorldManager.Instance.GetCharacterByObjId).
+        WorldManager.Instance.TryRemoveCharacter(character.ObjId);
         session.World.AddObject(character);
         // Surfaces the real activation path initializes but the E2E-fixture
         // session does not.
@@ -432,6 +520,53 @@ public static class GameplayActorTestRig
     /// <summary>Convenience: spawns an NPC in the session world and returns its objId.</summary>
     public static uint SpawnNpc(HeadlessSession session, uint npcTemplateId = 1000)
         => session.SpawnNpc(npcTemplateId);
+
+    /// <summary>
+    /// Stocks items through the REAL acquisition path
+    /// (ItemContainer.AcquireDefaultItem — the same path the engine uses
+    /// for quest supplies and the pilot's StockInventory).
+    /// </summary>
+    public static void StockItem(HeadlessSession session, uint itemTemplateId, int count, byte grade = 0)
+        => session.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.QuestSupplyItems, itemTemplateId, count, grade);
+
+    /// <summary>
+    /// Summons a test mount: a real Mate object registered in the session
+    /// world AND in the world's MateManager active registry — the two
+    /// normal lookup surfaces the mount pipeline resolves (by objId for
+    /// Mount, by rider for Dismount). The mate is owned by the actor and
+    /// carries an empty driver seat, exactly like a freshly summoned mount.
+    /// </summary>
+    public static uint SummonMate(HeadlessSession session, GameplayActor actor, uint mateObjId = MateObjId, ushort tlId = 1, uint? ownerObjId = null)
+    {
+        var mate = new Mate
+        {
+            ObjId = mateObjId,
+            TlId = tlId,
+            Name = "test-mount",
+            OwnerObjId = ownerObjId ?? actor.ActorId,
+            Hp = 100,
+            MaxHp = 100,
+            // Transform.InternalAttachChild reads the parent unit's Scale
+            // when the rider's transform is parented (Mate.Scale →
+            // Template.Scale); a template-less mate would NRE mid-mount.
+            Template = new NpcTemplate { Scale = 1f }
+        };
+        session.World.AddObject(mate);
+
+        // Register in MateManager._activeMates keyed by the owner character
+        // Id — the same dictionary AddActiveMateAndSpawn fills (registration
+        // only; the spawn/broadcast half of that method needs a live
+        // client session).
+        var registry = (Dictionary<uint, List<Mate>>?)typeof(MateManager)
+            .GetField("_activeMates", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(session.World.MateManager);
+        if (registry == null)
+            throw new InvalidOperationException("MateManager._activeMates not found");
+        if (!registry.TryGetValue(actor.Character.Id, out var mates))
+            registry[actor.Character.Id] = mates = [];
+        mates.Add(mate);
+        return mate.ObjId;
+    }
 
     /// <summary>Moves the character to a known start position via the ordinary Transform.</summary>
     public static void SetPosition(GameplayActor actor, Vector3 position)
@@ -642,6 +777,7 @@ public static class GameplayActorTestRig
     }
 
     /// <summary>
+    /// <summary>
     /// Registers a mate with the world's MateManager through the real
     /// registry shape (_activeMates, ownerId → list) without the spawn/sleep
     /// side effects of AddActiveMateAndSpawn. The mate carries a Driver seat
@@ -682,5 +818,33 @@ public static class GameplayActorTestRig
             ActiveChar = actor.Character
         };
         actor.Character.Connection = connection;
+    }
+
+    /// <summary>
+    /// Registers an additional item template in the shared ItemManager
+    /// registry (used by tests that need a NON-usable item — no use skill).
+    /// Idempotent; never replaces an existing template.
+    /// </summary>
+    public static void RegisterPlainItemTemplate(uint templateId)
+    {
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var templatesField = typeof(ItemManager).GetField("_templates", flags);
+        var templates = (Dictionary<uint, ItemTemplate>?)templatesField!.GetValue(ItemManager.Instance);
+        if (templates == null)
+        {
+            templates = [];
+            templatesField.SetValue(ItemManager.Instance, templates);
+        }
+
+        if (!templates.ContainsKey(templateId))
+        {
+            templates[templateId] = new ItemTemplate
+            {
+                Id = templateId,
+                UseSkillId = 0,
+                MaxCount = 99,
+                FixedGrade = -1
+            };
+        }
     }
 }

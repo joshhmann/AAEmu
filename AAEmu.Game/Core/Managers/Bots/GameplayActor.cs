@@ -6,6 +6,7 @@ using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
@@ -425,6 +426,9 @@ public class GameplayActor : IGameplayActor
         if (!TryBegin(request, "use item"))
             return request;
 
+        // 1. Resolve the item through NORMAL inventory services — the same
+        //    template lookup the client's use-item path performs. Only the
+        //    character's own inventory bag is usable.
         var inventory = Character.Inventory;
         if (inventory == null)
             return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
@@ -432,14 +436,18 @@ public class GameplayActor : IGameplayActor
         inventory.Bag.GetAllItemsByTemplate(itemTemplateId, -1, out var items, out _);
         var item = items.FirstOrDefault();
         if (item == null)
-            return Reject(request, ActorFailureReason.RejectedAction, $"no item with template {itemTemplateId} in inventory");
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} not found in inventory");
 
-        var useSkillId = item.Template.UseSkillId;
-        if (useSkillId == 0)
-            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} has no use skill");
-        var skillTemplate = SkillManager.Instance.GetSkillTemplate(useSkillId);
+        // 2. Usage rules: the item must carry a use skill and the skill
+        //    template must exist (same gate the SkillItem packet branch
+        //    relies on — a template-less use would silently no-op there).
+        var itemTemplate = item.Template;
+        if (itemTemplate == null || itemTemplate.UseSkillId == 0)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} is not usable (no use skill)");
+        var skillTemplate = SkillManager.Instance.GetSkillTemplate(itemTemplate.UseSkillId);
         if (skillTemplate == null)
-            return Reject(request, ActorFailureReason.RejectedAction, $"use skill {useSkillId} of item {itemTemplateId} not found");
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"item {itemTemplateId} use skill {itemTemplate.UseSkillId} not found");
 
         // Explicit targets must resolve; the default is self (most item uses
         // are self-targeted).
@@ -451,25 +459,33 @@ public class GameplayActor : IGameplayActor
                 return Reject(request, ActorFailureReason.RejectedAction, $"use target {targetObjId} not found in world");
         }
 
-        request.Start($"using item {itemTemplateId} (itemId {item.Id}, skill {useSkillId})");
+        request.Start($"using item {itemTemplateId} (instance {item.Id}, skill {itemTemplate.UseSkillId})");
 
-        // The exact CSStartSkillPacket SkillItem branch: skill.Use with a
-        // SkillItem caster. Reagent validation/consumption, OnItemUse quest
-        // events and use-skill-as-reagent consumption all live inside this
-        // call — the item disappearing is what makes retries safe.
-        // NOTE: the 3-arg ctor is required — it sets Type = SkillCasterType.Item,
-        // which the engine's GetInitialTarget relies on to skip the
-        // unit-lookup hackfix (a parameterless SkillItem defaults to
-        // SkillCasterType.Unit and NoTargets through GetUnit(0)).
-        var skillCaster = new SkillItem(Character.ObjId, item.Id, itemTemplateId);
-        var skillCastTarget = SkillCastTarget.GetByType(SkillCastTargetType.Unit);
-        skillCastTarget.ObjId = target.ObjId;
+        // 3. Apply through the REAL gameplay pipeline — the exact path the
+        //    CSStartSkillPacket SkillItem branch takes: Skill.Use with a
+        //    SkillItem caster. The engine evaluates requirements, cooldown,
+        //    GCD, mana and reagents through the ordinary inventory; no
+        //    bot-only resource path (spec §8 / AGENTS.md #9-#10). A refusal
+        //    (CooldownTime, LackMana, …) happens BEFORE any consumption.
+        //    NOTE: the 3-arg ctor is required — it sets Type = SkillCasterType.Item,
+        //    which the engine's GetInitialTarget relies on to skip the
+        //    unit-lookup hackfix (a parameterless SkillItem defaults to
+        //    SkillCasterType.Unit and NoTargets through GetUnit(0)).
         var skill = new Skill(skillTemplate);
-        var result = skill.Use(Character, skillCaster, skillCastTarget, null, false, out _);
+        var caster = new SkillItem(Character.ObjId, item.Id, item.TemplateId);
+        var castTarget = SkillCastTarget.GetByType(SkillCastTargetType.Unit);
+        castTarget.ObjId = target.ObjId;
+        var result = skill.Use(Character, caster, castTarget, null, false, out _);
+        if (result != SkillResult.Success)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} use refused by engine: {result}");
 
-        return result == SkillResult.Success
-            ? Complete(request, true, $"item {itemTemplateId} used (skill {useSkillId})")
-            : Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} use refused: {result}");
+        // 4. Record the applied-effect fingerprint (B1 idempotency layer):
+        //    correlation for the M8 economic audit. The request-level key
+        //    dedupe is the PRIMARY retry guard — a same-key retry is
+        //    rejected pre-flight, so the item can never be consumed twice
+        //    by a retry; the item charge count is the engine-true backstop.
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("itemuse", itemTemplateId, item.Id.ToString()), request.TraceId);
+        return Complete(request, result, $"item {itemTemplateId} used (skill {itemTemplate.UseSkillId})");
     }
 
     public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null)
@@ -480,32 +496,36 @@ public class GameplayActor : IGameplayActor
 
         var mateManager = Character.ParentWorld?.MateManager;
         if (mateManager == null)
-            return Reject(request, ActorFailureReason.RejectedAction, "world has no mate manager");
-        var mate = mateManager.GetActiveMateByMateObjId(mateObjId);
-        if (mate == null)
-            return Reject(request, ActorFailureReason.RejectedAction, $"mate {mateObjId} not found in world");
+            return Reject(request, ActorFailureReason.RejectedAction, "no mate manager in world");
 
-        // Idempotency: already riding is a StateTransition rejection — the
-        // engine is never re-entered, so a retry cannot double-mount.
-        if (Character.IsRiding)
+        // 1. Already mounted → StateTransition (mount-state discipline). A
+        //    retry that got past the key gate is refused here before any
+        //    engine call, so the mount state can never flip twice.
+        if (mateManager.GetIsMounted(Character.ObjId, out _) != null)
             return Reject(request, ActorFailureReason.StateTransition, "already mounted");
 
-        // The real CSMountMatePacket path is connection-driven: MountMate
-        // resolves the rider from connection.ActiveChar. Network-session bots
-        // (M2b-E2E bridge) carry a real GameConnection; pure-headless pilots
-        // without one get a clean Rejected — the embodiment layer decides
-        // whether a bot can mount, not a fabricated session.
-        var connection = Character.Connection;
-        if (connection == null)
-            return Reject(request, ActorFailureReason.RejectedAction,
-                "character has no game connection (mount needs the real session path)");
+        // 2. The target mount must be an active mate in the normal registry,
+        //    owned by the actor, with a free driver seat.
+        var mate = mateManager.GetActiveMateByMateObjId(mateObjId);
+        if (mate == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mateObjId} not found or not active");
+        if (mate.OwnerObjId != Character.ObjId)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mateObjId} not owned by actor");
+        if (!mate.Passengers.TryGetValue(AttachPointKind.Driver, out var driverSeat) || driverSeat._objId != 0)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mateObjId} driver seat unavailable");
 
-        request.Start($"mounting mate {mateObjId} (tlId {mate.TlId})");
-        mateManager.MountMate(connection, mate.TlId, AttachPointKind.Driver, AttachUnitReason.MountMateRight);
+        request.Start($"mounting mate {mate.ObjId} (tl {mate.TlId})");
 
-        return Character.IsRiding
-            ? Complete(request, true, $"mounted mate {mateObjId}")
-            : Reject(request, ActorFailureReason.RejectedAction, $"mount of mate {mateObjId} refused by engine (seat taken or not owner)");
+        // 3. Real engine path — the same MountMate the CSMountMatePacket
+        //    handler drives (character-based entry; packets no-op headless).
+        if (!mateManager.MountMate(Character, mate.TlId, AttachPointKind.Driver, AttachUnitReason.None))
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mateObjId} refused by engine");
+
+        // 4. Post-state verification: the engine must have attached the rider.
+        if (mateManager.GetIsMounted(Character.ObjId, out _) == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mateObjId} did not take effect");
+
+        return Complete(request, true, $"mounted mate {mate.ObjId}");
     }
 
     public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null)
@@ -516,23 +536,29 @@ public class GameplayActor : IGameplayActor
 
         var mateManager = Character.ParentWorld?.MateManager;
         if (mateManager == null)
-            return Reject(request, ActorFailureReason.RejectedAction, "world has no mate manager");
+            return Reject(request, ActorFailureReason.RejectedAction, "no mate manager in world");
 
-        // Idempotency: not mounted is a StateTransition rejection — a retry
-        // after a successful dismount cannot double-dismount.
-        var current = mateManager.GetIsMounted(Character.ObjId, out var seat);
-        if (current == null)
+        // 1. Not mounted → StateTransition (nothing to dismount). A retry
+        //    after a successful dismount is refused here — the state can
+        //    never flip back by re-running the request.
+        var mate = mateManager.GetIsMounted(Character.ObjId, out var attachPoint);
+        if (mate == null)
             return Reject(request, ActorFailureReason.StateTransition, "not mounted");
-        if (mateObjId != 0 && current.ObjId != mateObjId)
+        if (mateObjId != 0 && mate.ObjId != mateObjId)
             return Reject(request, ActorFailureReason.StateTransition,
-                $"mounted on mate {current.ObjId}, not {mateObjId}");
+                $"mounted on mate {mate.ObjId}, not {mateObjId}");
 
-        request.Start($"dismounting mate {current.ObjId} (tlId {current.TlId}, seat {seat})");
-        mateManager.UnMountMate(Character, current.TlId, seat, AttachUnitReason.None);
+        request.Start($"dismounting mate {mate.ObjId} (tl {mate.TlId}, seat {attachPoint})");
 
-        return !Character.IsRiding
-            ? Complete(request, true, $"dismounted mate {current.ObjId}")
-            : Reject(request, ActorFailureReason.RejectedAction, "dismount refused by engine (still riding)");
+        // 2. Real engine path — the exact UnMountMate the CSUnMountMatePacket
+        //    handler uses (already character-based).
+        mateManager.UnMountMate(Character, mate.TlId, attachPoint, AttachUnitReason.None);
+
+        // 3. Post-state verification: the engine must have detached the rider.
+        if (mateManager.GetIsMounted(Character.ObjId, out _) != null)
+            return Reject(request, ActorFailureReason.RejectedAction, "dismount did not take effect");
+
+        return Complete(request, true, $"dismounted mate {mate.ObjId}");
     }
 
     #endregion

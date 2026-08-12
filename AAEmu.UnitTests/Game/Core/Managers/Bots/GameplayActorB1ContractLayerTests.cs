@@ -15,8 +15,10 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///    TimedOut lock the key; Rejected attempts are retryable); the
 ///    effect-fingerprint ledger dedupes items/currency/labor/quest
 ///    credit/interactions at the B1 action layer;
-///  - typed B1 seams: the five not-yet-implemented actions fail closed
-///    (Rejected(RejectedAction) + audit record), never throw, never no-op;
+///  - typed B1 seams: every B1 action (Interact · Loot · UseItem ·
+///    Mount/Dismount) is implemented on real engine paths and fails closed
+///    on invalid input (Rejected + audit record), never throws, never
+///    no-ops — the fail-closed contract the seams originally staked out;
 ///  - timeout support on every action (Move → Navigation, others →
 ///    Starvation, spec §17 only);
 ///  - trace record JSON form usable by the control-plane API.
@@ -256,10 +258,10 @@ public class GameplayActorB1ContractLayerTests
 
     #endregion
 
-    #region B1 typed seams — fail closed (remaining surface)
+    #region B1 actions — fail closed on invalid input (full surface)
 
     [Test]
-    public async Task B1Actions_RealPaths_RejectWithRealTaxonomy_NoThrow()
+    public async Task B1Actions_InvalidInputs_FailClosed_WithAuditRecords_NoThrow()
     {
         // B1 actions are REAL implementations now (this branch merged the
         // surface commit): unresolvable targets reject with the REAL
@@ -268,36 +270,33 @@ public class GameplayActorB1ContractLayerTests
         var (actor, session) = GameplayActorTestRig.CreateActor("b1-real-1");
         var npcObjId = GameplayActorTestRig.SpawnNpc(session, 2000);
 
-        var interact = actor.Interact(npcObjId); // NPC objId is not a doodad → doodad lookup fails
-        var loot = actor.Loot(999_999); // unknown loot owner
-        var useItem = actor.UseItem(1234); // no such item in inventory
-        var mount = actor.Mount(npcObjId); // NPC is not an active mate
-        var dismount = actor.Dismount(); // not mounted
+        // All five B1 actions are implemented on real engine paths
+        // (Interact/Loot t_fc51af53; UseItem/Mount/Dismount t_a5edc1e6).
+        // On invalid input each still fails closed with a REAL reason —
+        // never the seam wording, never a throw, never a silent no-op.
+        var interact = actor.Interact(npcObjId);
+        var loot = actor.Loot(npcObjId);
+        var useItem = actor.UseItem(1234);
+        var mount = actor.Mount(npcObjId);
+        var dismount = actor.Dismount();
 
-        await Assert.That(interact.State).IsEqualTo(ActorLifecycleState.Rejected);
-        await Assert.That(interact.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-        await Assert.That(interact.Detail?.Contains("B1 seam")).IsFalse();
-
-        await Assert.That(loot.State).IsEqualTo(ActorLifecycleState.Rejected);
-        await Assert.That(loot.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-        await Assert.That(loot.Detail?.Contains("B1 seam")).IsFalse();
-
-        foreach (var request in new[] { useItem, mount, dismount })
+        // Interact (target not a doodad), Loot (container holds nothing),
+        // UseItem (no such item in inventory) and Mount (target not an
+        // active owned mate) reject with RejectedAction.
+        foreach (var request in new[] { interact, loot, useItem, mount })
         {
             await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+            await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
             await Assert.That(request.Detail?.Contains("B1 seam")).IsFalse();
             await Assert.That(request.Detail?.Contains("not implemented in this slice")).IsFalse();
         }
 
-        // Rejection reasons are real-path taxonomies: unresolvable target →
-        // RejectedAction; state mismatch (not mounted) → StateTransition.
-        await Assert.That(interact.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-        await Assert.That(loot.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-        await Assert.That(useItem.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
-        await Assert.That(mount.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        // Dismount with no active mount is a StateTransition rejection.
+        await Assert.That(dismount.State).IsEqualTo(ActorLifecycleState.Rejected);
         await Assert.That(dismount.Failure).IsEqualTo(ActorFailureReason.StateTransition);
+        await Assert.That(dismount.Detail?.Contains("B1 seam")).IsFalse();
 
-        // Every call emitted a full audit record; the actor is idle.
+        // Every request emitted a full audit record; the actor is idle.
         await Assert.That(actor.AuditTrace.Count).IsEqualTo(5);
         await Assert.That(actor.AuditTrace.All(r => r.Result == ActorLifecycleState.Rejected)).IsTrue();
         await Assert.That(actor.AuditTrace.Select(r => r.Action))
