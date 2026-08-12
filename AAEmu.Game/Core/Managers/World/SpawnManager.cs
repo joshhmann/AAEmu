@@ -730,7 +730,6 @@ public class SpawnManager(WorldInstance parentWorld)
 
                     //doodad.Spawner = new DoodadSpawner();
                     //doodad.Spawner.UnitId = templateId;
-                    doodad.IsPersistent = true;
                     doodad.DbId = dbId;
                     doodad.FuncGroupId = phaseId;
                     doodad.OwnerId = ownerId;
@@ -804,6 +803,14 @@ public class SpawnManager(WorldInstance parentWorld)
 
                     doodad.Transform.Local.SetPosition(x, y, z);
                     doodad.Transform.Local.SetRotation(roll, pitch, yaw);
+
+                    // Arm persistence ONLY after the full row state (owner, house,
+                    // attachment, phase, times, transform) is restored. Arming earlier
+                    // made the FuncGroupId setter (assigned above) fire Save() with a
+                    // zeroed transform/owner/house whenever the stored phase differed
+                    // from the template start group, permanently clobbering the row
+                    // on every boot (M3b-1 audit finding).
+                    doodad.IsPersistent = true;
 
                     // Attach ItemContainer to coffer if needed
                     if (doodad is DoodadCoffer coffer)

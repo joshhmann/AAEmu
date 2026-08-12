@@ -34,7 +34,13 @@ public class IdManager
         _objTables = objTables;
         _exclude = exclude;
         _distinct = distinct;
-        _freeIdSize = (int)(_lastId - _firstId);
+        // _lastId - _firstId can overflow int for full-uint spans (e.g.
+        // DoodadIdManager LastId=0xFFFFFFFF → (int)0xFFFFFFFE = -2), which made
+        // every capacity-growth path fail or allocate absurd sizes once a table
+        // passed ~100k rows (M3b-1 E2E finding). Clamp to a positive bound that
+        // keeps NextPrime growth steps sane; the field is only used as a ceiling
+        // and free-count base, never as an allocation size.
+        _freeIdSize = (int)Math.Min((long)_lastId - _firstId, int.MaxValue / 4);
         PrimeFinder.Init();
     }
 
@@ -56,7 +62,6 @@ public class IdManager
             _freeIds = new BitSet(PrimeFinder.NextPrime(100000));
             _freeIds.Clear();
             _freeIdCount = _freeIdSize;
-
             var allUsedObjects = Array.Empty<uint>();
             try
             {
