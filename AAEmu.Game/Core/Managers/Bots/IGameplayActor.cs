@@ -10,10 +10,11 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// Action vocabulary of the gameplay actor contract (M5 v1 — slice #8 of the
 /// PlayerBot scale review, ARCHITECTURE_REVIEW deliverable 10).
 ///
-/// v1 surface: Observe · Move · Stop · Target · Cast. The full M5 vocabulary
-/// (Interact/Loot/UseItem/Mount/AcceptQuest/TurnInQuest + M5.1 economic
-/// actions) is defined by the roadmap but lands in later slices; the
-/// lifecycle, rejection taxonomy and audit machinery below are final.
+/// v2 surface (B1, ROADMAP §M5): Observe · Move · Stop · Target · Cast ·
+/// Interact · Loot · UseItem · Mount/Dismount · AcceptQuest · TurnInQuest.
+/// The M5.1 economic extension (Plant/Harvest/Craft/PackPickup/BoardVehicle/
+/// Buy-Sell/Deposit-Withdraw) lands in a later slice; the lifecycle,
+/// rejection taxonomy and audit machinery below are final.
 ///
 /// Contract rules (ROADMAP M5, spec §16-17):
 ///  - Actions are VALIDATED gameplay requests. Every request tracks the
@@ -84,6 +85,57 @@ public interface IGameplayActor
     /// resolves. Engine refusal maps to Rejected(RejectedAction).
     /// </summary>
     ActorRequest Cast(uint skillId, uint targetObjId);
+
+    /// <summary>
+    /// Interacts with a doodad through the real engine path (Doodad.Use —
+    /// the same call the interaction skills / Interactions make). skillId 0
+    /// executes the skill-less loot-func branch (LootItem/LootPack/
+    /// Cutdowning); a nonzero interaction skill executes the skill branch.
+    /// Validates: doodad resolves, skill template exists (when given), and
+    /// the doodad is not scheduled for despawn (the engine's own #1443
+    /// guard). Doodads advance their phase machine inside Use; a retry
+    /// against the new phase is a fresh interaction, never a re-run.
+    /// </summary>
+    ActorRequest Interact(uint doodadObjId, uint skillId = 0);
+
+    /// <summary>
+    /// Loots a corpse/bag owner through the real engine path
+    /// (LootingContainer.OpenBag with lootAll — the exact call
+    /// CSLootOpenBagPacket makes). The engine removes each granted entry
+    /// (TryReserveLootItem), so a retry after a successful loot finds an
+    /// empty container and grants nothing — retries cannot duplicate loot.
+    /// </summary>
+    ActorRequest Loot(uint lootOwnerObjId);
+
+    /// <summary>
+    /// Uses an inventory item through the real engine path — the exact
+    /// CSStartSkillPacket SkillItem branch: skill.Use with a SkillItem
+    /// caster (reagent validation + consumption + OnItemUse quest events).
+    /// Validates: item present in inventory, item has a use skill, skill
+    /// template exists, target resolves (0 = self). Item consumption by the
+    /// engine makes retries land on Rejected("no item …") instead of a
+    /// second use.
+    /// </summary>
+    ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0);
+
+    /// <summary>
+    /// Mounts a mate through the real engine path (MateManager.MountMate —
+    /// the CSMountMatePacket call). Requires the character's real
+    /// GameConnection (the packet path resolves the rider from
+    /// connection.ActiveChar); headless pilots without a network connection
+    /// get Rejected(RejectedAction). Already-mounted is
+    /// Rejected(StateTransition) — the engine is never re-entered, so a
+    /// retry cannot double-mount.
+    /// </summary>
+    ActorRequest Mount(uint mateObjId);
+
+    /// <summary>
+    /// Dismounts through the real engine path (MateManager.UnMountMate —
+    /// the CSUnMountMatePacket call). mateObjId 0 = whatever the actor is
+    /// currently riding. Not-mounted is Rejected(StateTransition) — retries
+    /// cannot double-dismount.
+    /// </summary>
+    ActorRequest Dismount(uint mateObjId = 0);
 
     /// <summary>
     /// Cancels a running request by trace id. Returns false when no request
@@ -160,7 +212,22 @@ public enum ActorActionType : byte
     TurnInDoodad = 8,
 
     /// <summary>Auto-complete turn-in (real packet path third branch).</summary>
-    AutoTurnIn = 9
+    AutoTurnIn = 9,
+
+    /// <summary>Doodad interaction through Doodad.Use (real engine path).</summary>
+    Interact = 10,
+
+    /// <summary>Loot a corpse/bag through LootingContainer.OpenBag (real engine path).</summary>
+    Loot = 11,
+
+    /// <summary>Item use through the CSStartSkillPacket SkillItem branch.</summary>
+    UseItem = 12,
+
+    /// <summary>Mate mounting through MateManager.MountMate (CSMountMatePacket path).</summary>
+    Mount = 13,
+
+    /// <summary>Mate dismounting through MateManager.UnMountMate (CSUnMountMatePacket path).</summary>
+    Dismount = 14
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

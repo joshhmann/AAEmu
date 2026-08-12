@@ -1,11 +1,14 @@
+using System.Linq;
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Utils;
@@ -308,6 +311,177 @@ public class GameplayActor : IGameplayActor
         return Complete(request, completed, completed
             ? $"quest {questId} completed by turn-in"
             : $"quest {questId} turn-in executed (still active)");
+    }
+
+    #endregion
+
+    #region B1 actions (M5 vocabulary — real engine paths)
+
+    public ActorRequest Interact(uint doodadObjId, uint skillId = 0)
+    {
+        var request = NewRequest(ActorActionType.Interact, doodadObjId, skillId: skillId);
+        if (!TryBegin(request, "interact"))
+            return request;
+
+        var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
+        if (doodad == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} not found in world");
+        if (skillId != 0 && SkillManager.Instance.GetSkillTemplate(skillId) == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"unknown interaction skill {skillId}");
+        // The engine's own #1443 guard: doodads scheduled for despawn refuse
+        // interaction. Mirror it pre-flight so the refusal is a Rejected
+        // instead of a silent engine no-op.
+        if (doodad.Despawn > DateTime.MinValue)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} scheduled for despawn");
+
+        request.Start($"interacting with doodad {doodadObjId} (skill {skillId})");
+
+        // The real engine path: the same Doodad.Use call interaction skills
+        // (Alchemy/Butcher/CraftStart/…) and the CSLootOpenBagPacket
+        // func-driven branch make. Phase advancement happens inside.
+        doodad.Use(Character, skillId);
+        return Complete(request, true, $"doodad {doodadObjId} interacted (phase {doodad.FuncGroupId})");
+    }
+
+    public ActorRequest Loot(uint lootOwnerObjId)
+    {
+        var request = NewRequest(ActorActionType.Loot, lootOwnerObjId);
+        if (!TryBegin(request, "loot"))
+            return request;
+
+        var owner = Character.ParentWorld?.GetBaseUnit(lootOwnerObjId);
+        if (owner == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"loot owner {lootOwnerObjId} not found in world");
+
+        var container = owner.LootingContainer;
+        var before = container.Items.Count;
+        request.Start($"looting {lootOwnerObjId} (bag entries {before})");
+
+        // The exact call CSLootOpenBagPacket makes with lootAll=true. The
+        // engine removes each granted entry (TryReserveLootItem), so a retry
+        // after success sees an empty container and grants nothing.
+        container.OpenBag(Character, owner, lootAll: true);
+
+        var granted = before - container.Items.Count;
+        return Complete(request, granted, granted > 0
+            ? $"looted {granted} item(s) from {lootOwnerObjId}"
+            : $"nothing to loot from {lootOwnerObjId} (empty or already looted)");
+    }
+
+    public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0)
+    {
+        var request = NewRequest(ActorActionType.UseItem, itemTemplateId);
+        if (!TryBegin(request, "use item"))
+            return request;
+
+        var inventory = Character.Inventory;
+        if (inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        inventory.Bag.GetAllItemsByTemplate(itemTemplateId, -1, out var items, out _);
+        var item = items.FirstOrDefault();
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"no item with template {itemTemplateId} in inventory");
+
+        var useSkillId = item.Template.UseSkillId;
+        if (useSkillId == 0)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} has no use skill");
+        var skillTemplate = SkillManager.Instance.GetSkillTemplate(useSkillId);
+        if (skillTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"use skill {useSkillId} of item {itemTemplateId} not found");
+
+        // Explicit targets must resolve; the default is self (most item uses
+        // are self-targeted).
+        Unit target = Character;
+        if (targetObjId != 0)
+        {
+            target = ResolveUnit(targetObjId);
+            if (target == null)
+                return Reject(request, ActorFailureReason.RejectedAction, $"use target {targetObjId} not found in world");
+        }
+
+        request.Start($"using item {itemTemplateId} (itemId {item.Id}, skill {useSkillId})");
+
+        // The exact CSStartSkillPacket SkillItem branch: skill.Use with a
+        // SkillItem caster. Reagent validation/consumption, OnItemUse quest
+        // events and use-skill-as-reagent consumption all live inside this
+        // call — the item disappearing is what makes retries safe.
+        // NOTE: the 3-arg ctor is required — it sets Type = SkillCasterType.Item,
+        // which the engine's GetInitialTarget relies on to skip the
+        // unit-lookup hackfix (a parameterless SkillItem defaults to
+        // SkillCasterType.Unit and NoTargets through GetUnit(0)).
+        var skillCaster = new SkillItem(Character.ObjId, item.Id, itemTemplateId);
+        var skillCastTarget = SkillCastTarget.GetByType(SkillCastTargetType.Unit);
+        skillCastTarget.ObjId = target.ObjId;
+        var skill = new Skill(skillTemplate);
+        var result = skill.Use(Character, skillCaster, skillCastTarget, null, false, out _);
+
+        return result == SkillResult.Success
+            ? Complete(request, true, $"item {itemTemplateId} used (skill {useSkillId})")
+            : Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} use refused: {result}");
+    }
+
+    public ActorRequest Mount(uint mateObjId)
+    {
+        var request = NewRequest(ActorActionType.Mount, mateObjId);
+        if (!TryBegin(request, "mount"))
+            return request;
+
+        var mateManager = Character.ParentWorld?.MateManager;
+        if (mateManager == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "world has no mate manager");
+        var mate = mateManager.GetActiveMateByMateObjId(mateObjId);
+        if (mate == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mate {mateObjId} not found in world");
+
+        // Idempotency: already riding is a StateTransition rejection — the
+        // engine is never re-entered, so a retry cannot double-mount.
+        if (Character.IsRiding)
+            return Reject(request, ActorFailureReason.StateTransition, "already mounted");
+
+        // The real CSMountMatePacket path is connection-driven: MountMate
+        // resolves the rider from connection.ActiveChar. Network-session bots
+        // (M2b-E2E bridge) carry a real GameConnection; pure-headless pilots
+        // without one get a clean Rejected — the embodiment layer decides
+        // whether a bot can mount, not a fabricated session.
+        var connection = Character.Connection;
+        if (connection == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                "character has no game connection (mount needs the real session path)");
+
+        request.Start($"mounting mate {mateObjId} (tlId {mate.TlId})");
+        mateManager.MountMate(connection, mate.TlId, AttachPointKind.Driver, AttachUnitReason.MountMateRight);
+
+        return Character.IsRiding
+            ? Complete(request, true, $"mounted mate {mateObjId}")
+            : Reject(request, ActorFailureReason.RejectedAction, $"mount of mate {mateObjId} refused by engine (seat taken or not owner)");
+    }
+
+    public ActorRequest Dismount(uint mateObjId = 0)
+    {
+        var request = NewRequest(ActorActionType.Dismount, mateObjId);
+        if (!TryBegin(request, "dismount"))
+            return request;
+
+        var mateManager = Character.ParentWorld?.MateManager;
+        if (mateManager == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "world has no mate manager");
+
+        // Idempotency: not mounted is a StateTransition rejection — a retry
+        // after a successful dismount cannot double-dismount.
+        var current = mateManager.GetIsMounted(Character.ObjId, out var seat);
+        if (current == null)
+            return Reject(request, ActorFailureReason.StateTransition, "not mounted");
+        if (mateObjId != 0 && current.ObjId != mateObjId)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"mounted on mate {current.ObjId}, not {mateObjId}");
+
+        request.Start($"dismounting mate {current.ObjId} (tlId {current.TlId}, seat {seat})");
+        mateManager.UnMountMate(Character, current.TlId, seat, AttachUnitReason.None);
+
+        return !Character.IsRiding
+            ? Complete(request, true, $"dismounted mate {current.ObjId}")
+            : Reject(request, ActorFailureReason.RejectedAction, "dismount refused by engine (still riding)");
     }
 
     #endregion

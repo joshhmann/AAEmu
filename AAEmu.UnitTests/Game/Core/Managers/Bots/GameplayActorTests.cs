@@ -35,7 +35,7 @@ public class GameplayActorTests
 
         var observation = actor.Observe();
 
-        await Assert.That(observation.ActorId).IsEqualTo(GameplayActorTestRig.ActorObjId);
+        await Assert.That(observation.ActorId).IsEqualTo(actor.ActorId);
         await Assert.That(observation.Position).IsEqualTo(new Vector3(10, 20, 30));
         await Assert.That(observation.Hp).IsEqualTo(55);
         await Assert.That(observation.Mp).IsEqualTo(44);
@@ -46,7 +46,7 @@ public class GameplayActorTests
         var record = actor.AuditTrace[0];
         await Assert.That(record.Action).IsEqualTo(ActorActionType.Observe);
         await Assert.That(record.Result).IsEqualTo(ActorLifecycleState.Completed);
-        await Assert.That(record.ActorId).IsEqualTo(GameplayActorTestRig.ActorObjId);
+        await Assert.That(record.ActorId).IsEqualTo(actor.ActorId);
         await Assert.That(record.Failure).IsNull();
         await Assert.That(record.StateChanges.Any(s => s.Contains("Completed"))).IsTrue();
         await Assert.That(record.RequestedAtUtc != default).IsTrue();
@@ -231,7 +231,7 @@ public class GameplayActorTests
         var (actor, _) = GameplayActorTestRig.CreateActor("cast-1");
         // Self-cast: the character is registered in its world, so the engine
         // resolves the caster as its own target (TargetType.Self).
-        var request = actor.Cast(GameplayActorTestRig.TestSkillId, GameplayActorTestRig.ActorObjId);
+        var request = actor.Cast(GameplayActorTestRig.TestSkillId, actor.ActorId);
 
         await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
         await Assert.That(request.Result).IsEqualTo(SkillResult.Success);
@@ -240,7 +240,7 @@ public class GameplayActorTests
         await Assert.That(record.Action).IsEqualTo(ActorActionType.Cast);
         await Assert.That(record.Result).IsEqualTo(ActorLifecycleState.Completed);
         // Audit TargetId = the cast TARGET objId (self here), not the skill id.
-        await Assert.That(record.TargetId).IsEqualTo(GameplayActorTestRig.ActorObjId);
+        await Assert.That(record.TargetId).IsEqualTo(actor.ActorId);
     }
 
     [Test]
@@ -248,7 +248,7 @@ public class GameplayActorTests
     {
         var (actor, _) = GameplayActorTestRig.CreateActor("cast-2");
 
-        var request = actor.Cast(123_456, GameplayActorTestRig.ActorObjId);
+        var request = actor.Cast(123_456, actor.ActorId);
 
         await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
         await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
@@ -262,7 +262,7 @@ public class GameplayActorTests
         // Forget the seeded skill (fresh rig without AddSkill).
         actor.Character.Skills.Skills.Clear();
 
-        var request = actor.Cast(GameplayActorTestRig.TestSkillId, GameplayActorTestRig.ActorObjId);
+        var request = actor.Cast(GameplayActorTestRig.TestSkillId, actor.ActorId);
 
         await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
         await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
@@ -298,7 +298,7 @@ public class GameplayActorTests
         // {trace_id, actor_id, action, target_id, requested_at, started_at,
         //  completed_at, result, state_changes}
         await Assert.That(record.TraceId).IsNotEqualTo(Guid.Empty);
-        await Assert.That(record.ActorId).IsEqualTo(GameplayActorTestRig.ActorObjId);
+        await Assert.That(record.ActorId).IsEqualTo(actor.ActorId);
         await Assert.That(record.Action).IsEqualTo(ActorActionType.Target);
         await Assert.That(record.TargetId).IsEqualTo(npcObjId);
         await Assert.That(record.RequestedAtUtc <= record.StartedAtUtc).IsTrue();

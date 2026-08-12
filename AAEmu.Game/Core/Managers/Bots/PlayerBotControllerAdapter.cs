@@ -56,6 +56,17 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public ActorRequest Cast(uint skillId, uint targetObjId) => Actor.Cast(skillId, targetObjId);
 
+    public ActorRequest Interact(uint doodadObjId, uint skillId = 0) => Actor.Interact(doodadObjId, skillId);
+
+    public ActorRequest Loot(uint lootOwnerObjId) => Actor.Loot(lootOwnerObjId);
+
+    public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0)
+        => Actor.UseItem(itemTemplateId, targetObjId);
+
+    public ActorRequest Mount(uint mateObjId) => Actor.Mount(mateObjId);
+
+    public ActorRequest Dismount(uint mateObjId = 0) => Actor.Dismount(mateObjId);
+
     public bool Interrupt(Guid traceId) => Actor.Interrupt(traceId);
 
     public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId)

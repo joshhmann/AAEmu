@@ -27,7 +27,7 @@ public class PlayerBotControllerAdapterTests
         GameplayActorTestRig.Seed();
         var session = HeadlessSession.Create(0x41AD, "adapter-bot", 1);
         var character = session.Character;
-        character.ObjId = GameplayActorTestRig.ActorObjId;
+        character.ObjId = GameplayActorTestRig.NextActorObjId();
         session.World.AddObject(character);
         character.Skills = new CharacterSkills(character);
         character.Actability = new CharacterActability(character);
@@ -75,7 +75,7 @@ public class PlayerBotControllerAdapterTests
         await Assert.That(targetReq.State).IsEqualTo(ActorLifecycleState.Completed);
         await Assert.That(adapter.Character.CurrentTarget?.ObjId).IsEqualTo(npcObjId);
 
-        var castReq = adapter.Cast(GameplayActorTestRig.TestSkillId, GameplayActorTestRig.ActorObjId);
+        var castReq = adapter.Cast(GameplayActorTestRig.TestSkillId, adapter.Character.ObjId);
         await Assert.That(castReq.State).IsEqualTo(ActorLifecycleState.Completed);
     }
 

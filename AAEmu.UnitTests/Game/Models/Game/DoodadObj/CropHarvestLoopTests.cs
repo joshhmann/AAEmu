@@ -470,7 +470,11 @@ public static class CropHarvestLoopRig
 
     private static void SeedDoodadManager()
     {
-        if (SingletonSeeded(typeof(Singleton<DoodadManager>)))
+        // A bare placeholder — a DoodadManager seeded by a sibling rig
+        // WITHOUT templates (the Bots rig's lazy surface) — does not count
+        // as established: the rich chain below must win so Create() resolves
+        // this rig's templates regardless of which rig seeded first.
+        if (SingletonSeeded(typeof(Singleton<DoodadManager>)) && !IsBareDoodadManager())
             return;
 
         var objectIdManager = Mock.Of<IObjectIdManager>();
@@ -493,7 +497,19 @@ public static class CropHarvestLoopRig
         SetField(manager, "_phaseFuncs", BuildPhaseFuncs());
         SetField(manager, "_phaseFuncTemplates", BuildPhaseFuncTemplates());
 
-        SeedSingleton(typeof(Singleton<DoodadManager>), manager);
+        // SeedSingleton is missing-only; when a sibling rig's bare placeholder
+        // is installed, force-replace it with this rich chain.
+        var field = typeof(Singleton<DoodadManager>).GetField("s_instance",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        field?.SetValue(null, manager);
+    }
+
+    /// <summary>True when the seeded DoodadManager has no templates at all — a
+    /// sibling rig's bare placeholder rather than an established rich chain.</summary>
+    private static bool IsBareDoodadManager()
+    {
+        var templates = GetField(DoodadManager.Instance, "_templates") as Dictionary<uint, DoodadTemplate>;
+        return templates == null || templates.Count == 0;
     }
 
     private static Dictionary<uint, DoodadTemplate> BuildTemplates()
