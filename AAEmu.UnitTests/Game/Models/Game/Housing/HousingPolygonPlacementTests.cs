@@ -178,6 +178,22 @@ public class HousingPolygonPlacementTests
         await Assert.That(error).IsEqualTo(HousingPlacementError.None);
     }
 
+    [Test]
+    public async Task DuplicateShapeNames_DoNotThrow_ReturnsNone()
+    {
+        // Prod zone 283 (freedom island) ships THREE housing_area.xml locale copies
+        // (root/cn/na) with IDENTICAL shape entity names (LevelDesignShape_211_jsw2u_1/_3).
+        // The old shapeByRule ToDictionary threw on the duplicate key — placement inside
+        // those polygons crashed + kicked the player. Dedupe by name must make this pass.
+        var rootCopy = Square("LevelDesignShape_211_jsw2u_1");
+        var cnCopy = Square("LevelDesignShape_211_jsw2u_1");
+        var naCopy = Square("LevelDesignShape_211_jsw2u_1");
+        var rule = Rule("LevelDesignShape_211_jsw2u_1", GroupGeneral, (1, 0));
+        var error = Validate([rootCopy, cnCopy, naCopy], RuleMap(("LevelDesignShape_211_jsw2u_1", rule)),
+            House(110, 1), new Vector3(10, 10, 5));
+        await Assert.That(error).IsEqualTo(HousingPlacementError.None);
+    }
+
     // ---------------------------------------------------------------- max_construct_count
 
     [Test]
