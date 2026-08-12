@@ -853,7 +853,12 @@ public class M4ExitIntegratedSessionTests
             worlds = new ConcurrentDictionary<uint, WorldInstance>();
             SetField(WorldManager.Instance, "_worlds", worlds);
         }
-        worlds.TryAdd(world.Id, world);
+        // Headless worlds share instanceId 1 — a leaked sibling entry would make
+        // TryAdd a silent no-op and SlaveManager.Delete's GetWorld would resolve the
+        // wrong (or null) world. Indexer-set: OUR world must win for OUR test; the
+        // sibling is done at this point (sequential limiter) and my TearDown only
+        // removes the entry when it still references our world.
+        worlds[world.Id] = world;
     }
 
     private void UnregisterWorld(WorldInstance world)
