@@ -263,15 +263,14 @@ public class M4_2TradePackRestartE2eTests
 
     private static void InsertPlacedPackDoodad(MySqlConnection conn, string plantedAtSql)
     {
-        // Exactly the row PutDownBackpackEffect writes: persistent doodad 6068 carrying
-        // the pack item, owner_type Character (open field), plant_time = the maturation
-        // timer base (seeded 5 days ago — canonical 6-day despawn clock).
+        // Seeds the doodad with owner_type 254 = DoodadOwnerType.Character (the value
+        // PutDownBackpackEffect writes for an open-field pack).
         using var cmd = conn.CreateCommand();
         cmd.CommandText =
             "INSERT IGNORE INTO doodads (id, owner_id, owner_type, attach_point, template_id, current_phase_id, " +
             "plant_time, growth_time, phase_time, x, y, z, roll, pitch, yaw, scale, item_id, house_id, " +
             "parent_doodad, item_template_id, item_container_id, data, farm_type) " +
-            "VALUES (@id, @ownerId, 2, 0, @templateId, @phaseId, @plantTime, @plantTime, @plantTime, " +
+            "VALUES (@id, @ownerId, 254, 0, @templateId, @phaseId, @plantTime, @plantTime, @plantTime, " +
             "@x, @y, @z, 0, 0, 0, 1, @itemId, 0, 0, @itemTemplateId, 0, 0, 0)";
         cmd.Parameters.AddWithValue("@id", DoodadDbId);
         cmd.Parameters.AddWithValue("@ownerId", PackOwnerCharId);
