@@ -385,6 +385,34 @@ integrated session scripted through M5.1 economic actions (B2) — humans
 confirm feel, not function. "Clean reset state" chains to the M2 deliverable
 by name.
 
+**M4 EXIT RECORD (2026-08-12, t_97e59ffc — Rei gate):** integrated playable
+release delivered on `release/m4-exit` (merged slices: fix/m4a-crafting-
+integrity f28b93fc1, fix/m4-2-trade-packs e4af04a49, fix/m4-3-vehicle-
+lifecycle 2907f46ff; one conflict resolution in CharacterCraft.cs keeping
+both the bag-scope material check and the level-10 pack gate). Exit evidence
+on the merged tree:
+- **Full unit gate 1778 total / 0 failed / 1 pre-existing skip** (Release,
+  real clone, compact.sqlite3 present).
+- **M4ExitIntegratedSessionTests** (new, 4 scripted actors = the M2 release-
+  validation group, M5-stand-in rule): one session drives group harvest
+  (potato 2259 real growth + Doodad.Use harvest chain, 2-4× 7992 + 1× 19887
+  per crop) → craft pack 26489 via REAL CharacterCraft.Craft → CraftEffect →
+  EndCraft (level-9 negative: LevelLowToUse; materials consumed before grant;
+  pack to Backpack slot) → load onto slave cargo (801 despawn gate negative)
+  → 3-leg travel route → unload → sell at Solzreed gold trader (base
+  floor(14500×4913/1000)+20000 = 91238; payout round(91238×130%×1.05) =
+  124540; labor −60; pack consumed; same-zone StoreCantSellSameZone negative
+  with pack retained) → repeat second pack, 2× 124540 mails.
+- **Per-object-type restart E2E on the real stack (MySQL+Login+Game):**
+  M4_2TradePackRestartE2eTests (placed-pack plant_time + made_unit_id survive
+  kill -9) PASS 2m12s; M4VehiclesE2eTests (slave row intact, exactly 1 row,
+  TWO kill -9 restarts) PASS 3m09s; M3bExitPersistenceE2eTests (crop/house
+  rows × 3 crash cycles incl. kill -9 mid-save and container kill) PASS 7m03s.
+- **Scorecard:** CRAFT-01, PACK-01, SLAVE-01 → C/W/H/A/R=2 (H via the
+  scripted-actor automated fallback; humans confirm feel, not function).
+- Human playtest of the integrated release (the M2 "feel" leg) remains the
+  deployment-lane follow-up once Josh GO's the release merge.
+
 ---
 
 ## M5 — Gameplay Actor Contract
