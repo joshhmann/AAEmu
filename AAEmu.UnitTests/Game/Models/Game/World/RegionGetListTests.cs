@@ -44,7 +44,12 @@ public class RegionGetListTests
     private static WorldInstance CreateWorld()
     {
         _ = SeededWorldManager.Value;
-        return new WorldInstance(null, 0, true, 1);
+        // Template must be non-null: WorldInstance.Finalize() → ToString()
+        // dereferences Template.Name at process exit — a null template NREs
+        // in the GC finalizer and crashes the test host (exit 134, session
+        // never ends). Same shape as WorldManagerTests.CreateWorldTemplate.
+        var template = new WorldTemplate { Id = 1, Name = "region-getlist-test-world" };
+        return new WorldInstance(template, 0, true, 1);
     }
 
     private static GameObject ObjectAt(uint objId, Vector3 position)
