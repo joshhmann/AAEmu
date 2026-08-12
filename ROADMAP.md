@@ -373,24 +373,33 @@ ArcheAge here.**
 
 **Depends on:** M3b (property persistence), M2's reset/seed procedure
 validated by the third-party check, **A2 (broadcast economics)** — vehicle +
-pack + group movement is where allocation churn first becomes visible; M4
-owns confirming the short-circuit works for convoy traffic. **Feeds:** M8
+pack + group movement is where allocation churn first becomes visible. The
+convoy-traffic confirmation is covered by the A2 gate at M4 entry
+(t_921a7be5, Rei ACCEPT, merged f9572e1a8 — ancestor of develop): mechanism
+verified (allocation-free short-circuit, wake-storm scans budgeted) and the
+broadcast allocation profile is unit-verified flat. Convoy-volume
+measurement is a soak-scale item owned by the M6 soak lane. **Feeds:** M8
 (hauler/trader bots), M9 (trade economy).
 
 **Detail (2026-08-09 audit):** persistence criteria are per-object-type, not
 one "repeats after restart" line: Slave/vehicle attachment, pack maturation
 timers, cargo ownership each get a restart assertion in the automated
 scenario. The four-player gate gets an automated fallback: the full
-integrated session scripted through M5.1 economic actions (B2) — humans
-confirm feel, not function. "Clean reset state" chains to the M2 deliverable
-by name.
+integrated session driven by scripted actors on real engine paths
+(M5-stand-in rule); the M5.1 contract-vocabulary evidence remains open
+for the M5.1 lane — humans confirm feel, not function. "Clean reset
+state" chains to the M2 deliverable by name.
 
 **M4 EXIT RECORD (2026-08-12, t_97e59ffc — Rei gate):** integrated playable
 release delivered on `release/m4-exit` (merged slices: fix/m4a-crafting-
 integrity f28b93fc1, fix/m4-2-trade-packs e4af04a49, fix/m4-3-vehicle-
 lifecycle 2907f46ff; one conflict resolution in CharacterCraft.cs keeping
 both the bag-scope material check and the level-10 pack gate). Exit evidence
-on the merged tree:
+— merged-tree provenance: the E2E-leg binaries were re-published from the
+exact merge commit by the M4 audit (t_abe87eaf, E2E_REBUILD=1); the original
+E2E binaries predated the merge (04:40 PDT vs merge 07:17 PDT), so the
+first-run E2E legs sat on the pre-merge release-branch tree — identical
+except the CharacterCraft conflict resolution + docs:
 - **Full unit gate 1778 total / 0 failed / 1 pre-existing skip** (Release,
   real clone, compact.sqlite3 present).
 - **M4ExitIntegratedSessionTests** (new, 4 scripted actors = the M2 release-
@@ -408,8 +417,22 @@ on the merged tree:
   kill -9) PASS 2m12s; M4VehiclesE2eTests (slave row intact, exactly 1 row,
   TWO kill -9 restarts) PASS 3m09s; M3bExitPersistenceE2eTests (crop/house
   rows × 3 crash cycles incl. kill -9 mid-save and container kill) PASS 7m03s.
+  Merged-tree re-run (audit t_abe87eaf): M4Vehicles 1/1, M4_2 1/1, M2b 5/5
+  (clean rerun; first chain 4/5 on the documented MySQL bring-up stream
+  flake); M3b Cycle-1 PASS every attempt, Cycle-2 observation-race miss on a
+  loaded host — not a regression (M4 diff touches zero save code), tracked
+  at t_1329a833; the 7m03s PASS above stands as this tree's own evidence.
 - **Scorecard:** CRAFT-01, PACK-01, SLAVE-01 → C/W/H/A/R=2 (H via the
   scripted-actor automated fallback; humans confirm feel, not function).
+- **A2 convoy-traffic confirmation:** covered by the A2 gate at M4 entry
+  (t_921a7be5, Rei ACCEPT, merged f9572e1a8 — ancestor of develop) — the
+  short-circuit mechanism is verified (RegionBroadcastAllocationTests 9/9:
+  allocation-free region iteration + character short-circuit, GC delta
+  < 1KB per 100k scans; PopulationDirectorTests 26/26: wake-storm scans
+  ≤ O(cap)) and the broadcast allocation profile is unit-verified flat.
+  Live convoy volume (bots + vehicle convoy under broadcast load) is a
+  soak-scale measurement that belongs to the M6 soak lane (numeric budgets
+  + staged gate: 1 bot/30 min → 10 bots/1 h → 10 bots/6 h).
 - Human playtest of the integrated release (the M2 "feel" leg) remains the
   deployment-lane follow-up once Josh GO's the release merge.
 

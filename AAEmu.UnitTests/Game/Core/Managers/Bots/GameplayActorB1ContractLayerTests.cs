@@ -256,7 +256,7 @@ public class GameplayActorB1ContractLayerTests
 
     #endregion
 
-    #region B1 typed seams — fail closed
+    #region B1 typed seams — fail closed (remaining surface)
 
     [Test]
     public async Task B1Actions_RealPaths_RejectWithRealTaxonomy_NoThrow()
@@ -274,7 +274,15 @@ public class GameplayActorB1ContractLayerTests
         var mount = actor.Mount(npcObjId); // NPC is not an active mate
         var dismount = actor.Dismount(); // not mounted
 
-        foreach (var request in new[] { interact, loot, useItem, mount, dismount })
+        await Assert.That(interact.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(interact.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(interact.Detail?.Contains("B1 seam")).IsFalse();
+
+        await Assert.That(loot.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(loot.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(loot.Detail?.Contains("B1 seam")).IsFalse();
+
+        foreach (var request in new[] { useItem, mount, dismount })
         {
             await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
             await Assert.That(request.Detail?.Contains("B1 seam")).IsFalse();

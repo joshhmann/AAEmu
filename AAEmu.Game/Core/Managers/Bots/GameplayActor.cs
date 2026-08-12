@@ -6,6 +6,7 @@ using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
@@ -356,6 +357,9 @@ public class GameplayActor : IGameplayActor
 
     #region B1 actions (M5 vocabulary — real engine paths)
 
+    /// <summary>Maximum flat distance for an Interact request (doodad interaction range).</summary>
+    public const float MaxInteractRange = 25f;
+
     public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null)
     {
         var request = NewRequest(ActorActionType.Interact, doodadObjId, skillId: skillId, idempotencyKey: idempotencyKey);
@@ -367,6 +371,8 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} not found in world");
         if (skillId != 0 && SkillManager.Instance.GetSkillTemplate(skillId) == null)
             return Reject(request, ActorFailureReason.RejectedAction, $"unknown interaction skill {skillId}");
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, doodad.Transform.World.Position, false) > MaxInteractRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} out of interaction range");
         // The engine's own #1443 guard: doodads scheduled for despawn refuse
         // interaction. Mirror it pre-flight so the refusal is a Rejected
         // instead of a silent engine no-op.
@@ -391,8 +397,14 @@ public class GameplayActor : IGameplayActor
         var owner = Character.ParentWorld?.GetBaseUnit(lootOwnerObjId);
         if (owner == null)
             return Reject(request, ActorFailureReason.RejectedAction, $"loot owner {lootOwnerObjId} not found in world");
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, owner.Transform.World.Position, false) > LootingContainer.MaxLootingRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"loot owner {lootOwnerObjId} out of loot range");
 
         var container = owner.LootingContainer;
+        if (container.Items.Count <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"nothing to loot from {lootOwnerObjId} (empty or already looted)");
+
         var before = container.Items.Count;
         request.Start($"looting {lootOwnerObjId} (bag entries {before})");
 

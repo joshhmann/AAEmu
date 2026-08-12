@@ -448,6 +448,9 @@ public static class GameplayActorTestRig
     /// <summary>Func id of the Interact rig loot func.</summary>
     public const uint InteractLootFuncId = 99_301;
 
+    /// <summary>Item template granted by the Loot rig's seeded corpse.</summary>
+    public const uint LootItemTemplateId = 91_003;
+
     /// <summary>
     /// Seeds an item template into ItemManager. The template is created when
     /// missing and its B1-relevant properties are ALWAYS set (idempotent) —
