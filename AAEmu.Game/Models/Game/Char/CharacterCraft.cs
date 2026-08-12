@@ -9,11 +9,14 @@ using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Tasks.Skills;
+using NLog;
 
 namespace AAEmu.Game.Models.Game.Char;
 
 public class CharacterCraft(Character owner)
 {
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+
     private int Count { get; set; }
     private Craft CurrentCraft { get; set; }
     /// <summary>
@@ -23,6 +26,19 @@ public class CharacterCraft(Character owner)
     private int ConsumeLaborPower { get; set; }
     private Character Owner => owner;
     public bool IsCrafting { get; set; }
+
+    /// <summary>
+    /// True while a craft queue is active — either a step is currently casting (IsCrafting)
+    /// or a continuation is scheduled for a remaining Count. Guards CSExecuteCraft against
+    /// overwriting CurrentCraft/Count/DoodadId mid-queue (a scheduled CraftTask would then
+    /// clobber the new craft's state when it fires).
+    /// </summary>
+    public bool IsCraftQueueActive => IsCrafting || Count > 0;
+
+    /// <summary>
+    /// Default interaction range for craft skills that do not define a max range (MaxRange == 0).
+    /// </summary>
+    private const float DefaultCraftRange = 5f;
 
     public void Craft(Craft craft, int count, uint doodadId)
     {
@@ -39,8 +55,8 @@ public class CharacterCraft(Character owner)
             return;
         }
 
-        // Check if we have enough materials
-        var hasMaterials = craft.CraftMaterials.Count == 0 || craft.CraftMaterials.All(craftMaterial => Owner.Inventory.GetItemsCount(craftMaterial.ItemId) >= craftMaterial.Amount);
+        // Check if we have enough materials (in the bag only — bank/equipment materials are NOT consumable for crafting)
+        var hasMaterials = craft.CraftMaterials.Count == 0 || craft.CraftMaterials.All(craftMaterial => Owner.Inventory.GetItemsCount(SlotType.Inventory, craftMaterial.ItemId) >= craftMaterial.Amount);
         if (!hasMaterials)
         {
             // TODO not verified
@@ -49,9 +65,51 @@ public class CharacterCraft(Character owner)
             return;
         }
 
+        var skillTemplate = SkillManager.Instance.GetSkillTemplate(craft.SkillId);
+        if (skillTemplate == null)
+        {
+            // Crafts with a missing skill template (data gap) must not NRE the server
+            Logger.Warn("Craft {0} references missing skill {1} for {2}", craft.Id, craft.SkillId, Owner.Name);
+            Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.CraftInvalidCraftType, 0, false);
+            CancelCraft();
+            return;
+        }
+
+        var doodad = Owner.ParentWorld?.GetDoodad(doodadId);
+
+        // Workstation integrity: a craft whose skill targets a doodad MUST be executed at a
+        // real, in-range workbench. This closes the objId=0 / bogus-objId bypass where
+        // hasPermission stayed true and the recipe ran with no workstation at all.
+        if (skillTemplate.TargetType == SkillTargetType.Doodad)
+        {
+            if (doodad == null)
+            {
+                Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.CraftPermissionDeny, 0, false);
+                CancelCraft();
+                return;
+            }
+
+            // Recipe requires a specific workbench template
+            if (craft.ReqDoodadId > 0 && doodad.TemplateId != craft.ReqDoodadId)
+            {
+                Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.CraftPermissionDeny, 0, false);
+                CancelCraft();
+                return;
+            }
+
+            // Range check — the client normally enforces this, but the skill's own range
+            // check exempts doodads, so the server must enforce it explicitly.
+            var maxRange = skillTemplate.MaxRange > 0 ? skillTemplate.MaxRange : DefaultCraftRange;
+            if (Owner.GetDistanceTo(doodad, true) > maxRange)
+            {
+                Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.CraftPermissionDeny, 0, false);
+                CancelCraft();
+                return;
+            }
+        }
+
         // Check if we have permission to actually use the doodad (mostly sanity check since the client already checks this before you can craft)
         var hasPermission = true;
-        var doodad = Owner.ParentWorld.GetDoodad(doodadId);
         if (doodad != null && doodad.FuncPermission != DoodadFuncPermission.Any && Owner != null)
         {
             switch (doodad.FuncPermission)
@@ -59,13 +117,16 @@ public class CharacterCraft(Character owner)
                 case DoodadFuncPermission.Any:
                 case DoodadFuncPermission.Permission1:
                 case DoodadFuncPermission.Permission2:
-                case DoodadFuncPermission.OwnerOnly:
                 case DoodadFuncPermission.Permission4:
                 case DoodadFuncPermission.OwnerRaidMembers:
                     break;
+                case DoodadFuncPermission.OwnerOnly:
+                    // OwnerOnly workstations are usable by the owner only (or the house owner)
+                    hasPermission = IsDoodadOwner(doodad);
+                    break;
                 case DoodadFuncPermission.SameAccount:
-                    if (doodad.OwnerType == DoodadOwnerType.Character)
-                        hasPermission = WorldManager.Instance.GetCharacterById(doodad.OwnerId).AccountId == Owner.AccountId;
+                    var ownerAccountId = GetDoodadOwnerAccountId(doodad);
+                    hasPermission = ownerAccountId > 0 && ownerAccountId == Owner.AccountId;
                     break;
                 case DoodadFuncPermission.ZoneResidents:
                     hasPermission = false;
@@ -86,7 +147,11 @@ public class CharacterCraft(Character owner)
 
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(Convert.ToString(doodad.FuncPermission));
+                    // Unknown permission values must not crash the server; fail closed.
+                    Logger.Warn("Crafting: unknown doodad permission {0} on doodad template {1} (objId {2}) for {3} — denied",
+                        doodad.FuncPermission, doodad.TemplateId, doodad.ObjId, Owner.Name);
+                    hasPermission = false;
+                    break;
             }
 
             Owner.SendDebugMessage($"Crafting using @DOODAD_NAME({doodad.TemplateId}) - {doodad.TemplateId} (objId: {doodad.ObjId}) with current permission {doodad.FuncPermission} = {hasPermission}");
@@ -108,8 +173,8 @@ public class CharacterCraft(Character owner)
         var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
         target.ObjId = doodadId;
 
-        var skill = new Skill(SkillManager.Instance.GetSkillTemplate(craft.SkillId));
-        ConsumeLaborPower = skill.Template.ConsumeLaborPower;
+        var skill = new Skill(skillTemplate);
+        ConsumeLaborPower = skill.GetLaborCost(Owner);
         var speedMultiplier = 1f;
         if (skill.Template.ActabilityGroupId > 0)
         {
@@ -154,7 +219,38 @@ public class CharacterCraft(Character owner)
         skill.Use(Owner, caster, target, null, false, out _);
     }
 
-    public void EndCraft()
+    /// <summary>
+    /// Returns true when the doodad is owned by the crafting character (or by a house owned by them).
+    /// </summary>
+    private bool IsDoodadOwner(Doodad doodad)
+    {
+        var ownerCharacter = doodad.GetOwnerCharacter();
+        return ownerCharacter != null && ownerCharacter.Id == Owner.Id;
+    }
+
+    /// <summary>
+    /// Returns the account id that owns the doodad, or 0 when the owner cannot be resolved
+    /// (e.g. owner character not online). Never throws for offline owners.
+    /// </summary>
+    private uint GetDoodadOwnerAccountId(Doodad doodad)
+    {
+        switch (doodad.OwnerType)
+        {
+            case DoodadOwnerType.Character:
+                return WorldManager.Instance.GetCharacterById(doodad.OwnerId)?.AccountId ?? 0;
+            case DoodadOwnerType.Housing:
+                return HousingManager.Instance.GetHouseById(doodad.OwnerDbId)?.AccountId ?? 0;
+            default:
+                return 0;
+        }
+    }
+
+    /// <summary>
+    /// Called when a single craft step completes (via CraftEffect). Returns true when the step
+    /// succeeded (products granted + materials consumed). On failure the caller should cancel
+    /// the skill so its EndSkill does not burn labor for a step that produced nothing.
+    /// </summary>
+    public bool EndCraft()
     {
         Count--;
         IsCrafting = false;
@@ -162,24 +258,38 @@ public class CharacterCraft(Character owner)
         if (CurrentCraft == null)
         {
             CancelCraft();
-            return;
+            return false;
         }
 
+        // Labor check — uses the same adjusted cost as Skill.EndSkill, so a step that passes
+        // this check will always have its labor actually consumed, and a step that fails here
+        // will not have labor burned by the skill ending afterwards.
         if (Owner.LaborPower < ConsumeLaborPower)
         {
             Owner.SendDebugMessage("|cFFFFFF00[Craft] Not enough Labor Powers for crafting! Performing a fictitious crafting step...|r");
             // TODO not verified
             Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.NotEnoughLaborPower, 0, false);
             CraftOrCancel();
-            return;
+            return false;
         }
 
-        if (Owner.Inventory.FreeSlotCount(SlotType.Inventory) < CurrentCraft.CraftProducts.Count)
+        // Check we still have the materials (they might have been spent elsewhere between
+        // Craft() and this step's completion)
+        var hasMaterials = CurrentCraft.CraftMaterials.Count == 0 || CurrentCraft.CraftMaterials.All(craftMaterial => Owner.Inventory.GetItemsCount(SlotType.Inventory, craftMaterial.ItemId) >= craftMaterial.Amount);
+        if (!hasMaterials)
+        {
+            Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.NotEnoughRequiredItem, 0, false);
+            CancelCraft();
+            return false;
+        }
+
+        // Check if all products can physically fit (stack-aware, matches AcquireDefaultItem math)
+        if (!CanGrantAllProducts(CurrentCraft))
         {
             // TODO not verified
             Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.NotEnoughSpace, 0, false);
-            CraftOrCancel();
-            return;
+            CancelCraft();
+            return false;
         }
 
         /*
@@ -280,34 +390,65 @@ public class CharacterCraft(Character owner)
             }
         }
 
+        // Consume the materials BEFORE granting any product. A product is only ever granted
+        // after its full material cost has been paid — this closes the duplicate-item vector
+        // by construction (the old code granted first and ignored both return values).
+        foreach (var material in CurrentCraft.CraftMaterials)
+        {
+            var consumed = Owner.Inventory.Bag.ConsumeItem(ItemTaskType.CraftActSaved, material.ItemId, material.Amount, null);
+            if (consumed < material.Amount)
+            {
+                Logger.Warn("Craft {0} step for {1} consumed {2}/{3} of material {4} — cancelling queue",
+                    CurrentCraft.Id, Owner.Name, consumed, material.Amount, material.ItemId);
+                Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.NotEnoughRequiredItem, 0, false);
+                CancelCraft();
+                return false;
+            }
+        }
+
         foreach (var product in CurrentCraft.CraftProducts)
         {
+            // Chance-based products (rate < 100): roll per craft step. A failed roll grants
+            // nothing for this product row — the craft itself still succeeded, so materials
+            // and labor are consumed as usual (canonical 1.2 behavior for rate-gated items).
+            if (product.Rate < 100 && Random.Shared.Next(100) >= product.Rate)
+            {
+                Owner.SendDebugMessage($"Craft {CurrentCraft.Id} product {product.ItemId} chance roll failed ({product.Rate}%) — no item granted");
+                continue;
+            }
+
             // Determine if this product should inherit grade  
             var productTemplate = ItemManager.Instance.GetTemplate(product.ItemId);
             var gradeToUse = -1;
 
-            // If we found an equipment material, inherit grade and roll for free regrade
-            if (gradeMaterial != null)
-            {
-                gradeToUse = FreeRegrade(inheritedGrade);
-            }
-            else if (product.ItemGradeId > 0)
+            // Explicitly fixed grades win over the material-inheritance heuristic
+            if (product.ItemGradeId > 0)
             {
                 // Use specified grade if set  
                 gradeToUse = (int)product.ItemGradeId;
             }
-
-            // Check if template allows grade changes  
-            var template = ItemManager.Instance.GetTemplate(product.ItemId);
-            if (template != null)
+            else if (gradeMaterial != null)
             {
-                Owner.SendDebugMessage($"Product template {product.ItemId} - FixedGrade: {template.FixedGrade}, Gradable: {template.Gradable}");
+                // If we found an equipment material, inherit grade and roll for free regrade
+                gradeToUse = FreeRegrade(inheritedGrade);
             }
 
-            // Check if we're crafting a trade pack, if so, try to remove currently equipped backpack slot
+            // Check if template allows grade changes  
+            if (productTemplate != null)
+            {
+                Owner.SendDebugMessage($"Product template {product.ItemId} - FixedGrade: {productTemplate.FixedGrade}, Gradable: {productTemplate.Gradable}");
+            }
+
             if (ItemManager.Instance.IsAutoEquipTradePack(product.ItemId) == false)
             {
-                Owner.Inventory.Bag.AcquireDefaultItem(ItemTaskType.CraftActSaved, product.ItemId, product.Amount, gradeToUse, Owner.Id);
+                if (!Owner.Inventory.Bag.AcquireDefaultItem(ItemTaskType.CraftActSaved, product.ItemId, product.Amount, gradeToUse, Owner.Id))
+                {
+                    // Capacity was pre-checked in CanGrantAllProducts — this is a data/race anomaly
+                    Logger.Error("Craft {0} step for {1} failed to grant product {2} after capacity check — cancelling queue", CurrentCraft.Id, Owner.Name, product.ItemId);
+                    Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.NotEnoughSpace, 0, false);
+                    CancelCraft();
+                    return false;
+                }
             }
             else
             {
@@ -315,14 +456,9 @@ public class CharacterCraft(Character owner)
                 {
                     Owner.SendErrorMessage(ErrorMessageType.CraftCantActAnyMore, ErrorMessageType.BackpackOccupied, 0, false);
                     CancelCraft();
-                    return;
+                    return false;
                 }
             }
-        }
-
-        foreach (var material in CurrentCraft.CraftMaterials)
-        {
-            Owner.Inventory.Bag.ConsumeItem(ItemTaskType.CraftActSaved, material.ItemId, material.Amount, null);
         }
 
         //Owner.Quests.OnCraft(_craft); // TODO added for quest Id=6024
@@ -345,6 +481,49 @@ public class CharacterCraft(Character owner)
         {
             CancelCraft();
         }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Stack-aware capacity check for all products of the craft. Matches the math used by
+    /// ItemContainer.AcquireDefaultItemEx (existing stacks' headroom + free slots × MaxCount).
+    /// Backpack products additionally require the backpack slot to be replaceable.
+    /// </summary>
+    private bool CanGrantAllProducts(Craft craft)
+    {
+        foreach (var product in craft.CraftProducts)
+        {
+            var template = ItemManager.Instance.GetTemplate(product.ItemId);
+            if (template == null)
+                return false; // Invalid template — cannot grant
+
+            if (ItemManager.Instance.IsAutoEquipTradePack(product.ItemId))
+            {
+                // Trade pack goes to the backpack slot: the current backpack (if any) must be
+                // replaceable, and the takeoff needs at least one free bag slot.
+                if (!Owner.Inventory.CanReplaceGliderInBackpackSlot())
+                    return false;
+                if (Owner.Inventory.FreeSlotCount(SlotType.Inventory) < 1)
+                    return false;
+                continue;
+            }
+
+            // Free space for this template: headroom in existing stacks + free slots × MaxCount
+            var totalUnits = 0;
+            var totalCapacity = 0;
+            if (Owner.Inventory.Bag.GetAllItemsByTemplate(product.ItemId, -1, out var existingItems, out var existingUnits))
+            {
+                totalUnits = existingUnits;
+                totalCapacity = existingItems.Count * template.MaxCount;
+            }
+
+            var freeSpace = totalCapacity - totalUnits + Owner.Inventory.Bag.FreeSlotCount * template.MaxCount;
+            if (product.Amount > freeSpace)
+                return false;
+        }
+
+        return true;
     }
 
     private void CraftOrCancel()
@@ -368,7 +547,10 @@ public class CharacterCraft(Character owner)
         TaskManager.Instance.Schedule(newCraft, nextCraftDelay);
     }
 
-    private void CancelCraft()
+    /// <summary>
+    /// Stops the current craft queue and interrupts the related skill.
+    /// </summary>
+    public void CancelCraft()
     {
         IsCrafting = false;
         CurrentCraft = null;

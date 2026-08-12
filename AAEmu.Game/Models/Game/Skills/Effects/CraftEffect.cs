@@ -78,16 +78,19 @@ public class CraftEffect : EffectTemplate
                             }
 
                             character.BroadcastPacket(new SCShipyardStatePacket(shipyard.ShipyardData), true);
-                            character.Craft.EndCraft();
+                            if (!character.Craft.EndCraft())
+                                source.Skill.Cancelled = true;
                         }
                     }
                     else
                     {
-                        character.Craft.EndCraft();
+                        if (!character.Craft.EndCraft())
+                            source.Skill.Cancelled = true;
                     }
                     break;
                 case WorldInteractionGroup.Collect:
-                    character.Craft.EndCraft();
+                    if (!character.Craft.EndCraft())
+                        source.Skill.Cancelled = true;
                     break;
                 case WorldInteractionGroup.Building when target is House house:
                     // Get the house's current build step.
@@ -149,7 +152,8 @@ public class CraftEffect : EffectTemplate
                     }
                     else
                     {
-                        character.Craft.EndCraft();
+                        if (!character.Craft.EndCraft())
+                            source.Skill.Cancelled = true;
                     }
                     break;
             }

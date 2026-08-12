@@ -1377,6 +1377,28 @@ public class Skill
     }
 
     /// <summary>
+    /// Gets the labor cost of this skill for the given character, after actability
+    /// cost multipliers are applied (mirrors the consumption logic in EndSkill).
+    /// </summary>
+    /// <param name="character">Character to compute the cost for</param>
+    /// <returns>Adjusted labor cost, 0 when the skill costs no labor</returns>
+    public int GetLaborCost(Character character)
+    {
+        var laborCost = Template.ConsumeLaborPower;
+        // Adjust labor cost if needed
+        if (character.Actability.Actabilities.TryGetValue((byte)Template.ActabilityGroupId, out var actAbility))
+        {
+            laborCost = (int)Math.Round(laborCost * actAbility.GetLaborCostMultiplier());
+        }
+
+        // Lower cap at 1
+        if (Template.ConsumeLaborPower > 0 && laborCost < 1)
+            laborCost = 1;
+
+        return laborCost;
+    }
+
+    /// <summary>
     /// End skill in a normal way
     /// </summary>
     /// <param name="caster"></param>
@@ -1387,16 +1409,7 @@ public class Skill
 
         if (caster is Character character)
         {
-            var laborCost = Template.ConsumeLaborPower;
-            // Adjust labor cost if needed
-            if (character.Actability.Actabilities.TryGetValue((byte)Template.ActabilityGroupId, out var actAbility))
-            {
-                laborCost = (int)Math.Round(laborCost * actAbility.GetLaborCostMultiplier());
-            }
-
-            // Lower cap at 1
-            if (Template.ConsumeLaborPower > 0 && laborCost < 1)
-                laborCost = 1;
+            var laborCost = GetLaborCost(character);
 
             if (laborCost > 0 && !Cancelled && character.LaborPower >= laborCost)
             {
