@@ -1,3 +1,5 @@
+using AAEmu.Game.Models.Game.Quests.Static;
+
 namespace AAEmu.Game.Core.Managers.Bots;
 
 /// <summary>
@@ -23,6 +25,14 @@ public sealed class ActorRequest
 
     /// <summary>Skill id (Cast only; 0 otherwise).</summary>
     public uint SkillId { get; }
+
+    /// <summary>
+    /// Action-specific parameters (quest actions): null for the v1
+    /// vocabulary (Observe/Move/Stop/Target/Cast). Quest actions carry
+    /// <see cref="QuestAcceptParams"/> / <see cref="QuestTurnInParams"/>.
+    /// Payloads are execution inputs, never serialized into audit output.
+    /// </summary>
+    public object? Payload { get; }
 
     /// <summary>Max wall-clock budget; TimedOut when Running exceeds it (null = no timeout).</summary>
     public TimeSpan? Timeout { get; }
@@ -51,13 +61,14 @@ public sealed class ActorRequest
     public object? Result { get; private set; }
 
     public ActorRequest(ActorActionType action, uint targetId, System.Numerics.Vector3? destination,
-        uint skillId, TimeSpan? timeout)
+        uint skillId, TimeSpan? timeout, object? payload = null)
     {
         TraceId = Guid.NewGuid();
         Action = action;
         TargetId = targetId;
         Destination = destination;
         SkillId = skillId;
+        Payload = payload;
         Timeout = timeout;
         RequestedAtUtc = DateTime.UtcNow;
         // The lifecycle starts here: Requested is the initial state and must
@@ -142,3 +153,13 @@ public sealed class ActorRequest
         _stateChanges.Add($"{next}{(!string.IsNullOrEmpty(detail) ? $" ({detail})" : "")}");
     }
 }
+
+/// <summary>AcceptQuest request payload — the real-gate acceptor spec.</summary>
+/// <param name="AcceptorType">QuestAcceptorType passed to CharacterQuests.AddQuest.</param>
+/// <param name="AcceptorId">Acceptor id (NPC objId-ish template id, item template id, …).</param>
+public sealed record QuestAcceptParams(QuestAcceptorType AcceptorType, uint AcceptorId);
+
+/// <summary>Turn-in request payload — the world target + reward selection.</summary>
+/// <param name="TargetObjId">Live world objId of the turn-in NPC/doodad (0 for auto turn-in).</param>
+/// <param name="SelectedReward">1-based selected reward index, -1 = default.</param>
+public sealed record QuestTurnInParams(uint TargetObjId, int SelectedReward);

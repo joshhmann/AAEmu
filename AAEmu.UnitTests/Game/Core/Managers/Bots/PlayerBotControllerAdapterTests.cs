@@ -85,7 +85,7 @@ public class PlayerBotControllerAdapterTests
         var (adapter, controller, _) = CreateAdaptedBot();
 
         // Unknown quest: the real engine gate refuses (no crash, no fake state).
-        var accepted = adapter.AcceptQuest(9_999_999, QuestAcceptorType.Npc, 0);
+        var accepted = adapter.TryAcceptQuest(9_999_999, QuestAcceptorType.Npc, 0);
 
         await Assert.That(accepted).IsFalse();
         await Assert.That(adapter.IsActive(9_999_999)).IsFalse();

@@ -58,13 +58,33 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public bool Interrupt(Guid traceId) => Actor.Interrupt(traceId);
 
+    public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId)
+        => Actor.AcceptQuest(questId, acceptorType, acceptorId);
+
+    public ActorRequest AdvanceQuest(uint questId) => Actor.AdvanceQuest(questId);
+
+    public ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1)
+        => Actor.TurnInQuest(questId, npcObjId, selectedReward);
+
+    public ActorRequest TurnInAtDoodad(uint questId, uint doodadObjId, int selectedReward = -1)
+        => Actor.TurnInAtDoodad(questId, doodadObjId, selectedReward);
+
+    public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1)
+        => Actor.AutoTurnInQuest(questId, selectedReward);
+
     public void Tick(TimeSpan elapsed) => Actor.Tick(elapsed);
 
     #endregion
 
     #region Quest-drive surface (pilot engine paths, unchanged)
 
-    public bool AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId)
+    /// <summary>
+    /// Raw bool accept (the pilot controller's convenience surface — the
+    /// contract's validated <see cref="IGameplayActor.AcceptQuest"/> is the
+    /// preferred entry). Renamed from AcceptQuest when the contract gained
+    /// the validated request overload.
+    /// </summary>
+    public bool TryAcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId)
         => Controller.AcceptQuest(questId, acceptorType, acceptorId);
 
     public bool AcceptFromNpc(uint questId, uint npcObjId)

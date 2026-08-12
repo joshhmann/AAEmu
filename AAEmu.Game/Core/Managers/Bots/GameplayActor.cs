@@ -1,9 +1,11 @@
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Utils;
@@ -202,6 +204,112 @@ public class GameplayActor : IGameplayActor
 
     #endregion
 
+    #region Quest actions (M5 vocabulary — real engine paths)
+
+    private PlayerBotController? _questController;
+
+    /// <summary>
+    /// Quest ops compose around the shared PlayerBotController, which is
+    /// itself a thin wrapper over the ordinary character's quest surfaces
+    /// (CharacterQuests.AddQuest / UnitEvents / QuestManager.DoReportEvents).
+    /// No bot-only quest state is created here.
+    /// </summary>
+    private PlayerBotController QuestController => _questController ??= new PlayerBotController(Character);
+
+    public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId)
+    {
+        var request = NewRequest(ActorActionType.AcceptQuest, questId,
+            payload: new QuestAcceptParams(acceptorType, acceptorId));
+        if (!TryBegin(request, "accept quest"))
+            return request;
+
+        request.Start($"accepting quest {questId} via {acceptorType}/{acceptorId}");
+        var accepted = QuestController.AcceptQuest(questId, acceptorType, acceptorId);
+        if (accepted)
+            return Complete(request, accepted, $"quest {questId} accepted ({acceptorType}/{acceptorId})");
+        return Reject(request, ActorFailureReason.RejectedAction,
+            $"quest {questId} accept refused by engine gate ({acceptorType}/{acceptorId})");
+    }
+
+    public ActorRequest AdvanceQuest(uint questId)
+    {
+        var request = NewRequest(ActorActionType.AdvanceQuest, questId);
+        if (!TryBegin(request, "advance quest"))
+            return request;
+
+        var quest = Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"quest {questId} not active (cannot advance)");
+
+        request.Start($"advancing quest {questId} (step {quest.Step}, status {quest.Status})");
+        _ = quest.RunCurrentStep();
+        return Complete(request, true,
+            $"quest {questId} advanced (step {quest.Step}, status {quest.Status})");
+    }
+
+    public ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1)
+        => TurnIn(questId, ActorActionType.TurnInQuest, npcObjId, selectedReward);
+
+    public ActorRequest TurnInAtDoodad(uint questId, uint doodadObjId, int selectedReward = -1)
+        => TurnIn(questId, ActorActionType.TurnInDoodad, doodadObjId, selectedReward);
+
+    public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1)
+        => TurnIn(questId, ActorActionType.AutoTurnIn, 0, selectedReward);
+
+    /// <summary>
+    /// Turn-in through the real packet path (QuestManager.DoReportEvents),
+    /// then the same single step-machine advance the world pipeline performs
+    /// after a report event. The world target must resolve when one is
+    /// given; 0 (auto turn-in) always resolves.
+    /// </summary>
+    private ActorRequest TurnIn(uint questId, ActorActionType action, uint targetObjId, int selectedReward)
+    {
+        var request = NewRequest(action, questId, payload: new QuestTurnInParams(targetObjId, selectedReward));
+        if (!TryBegin(request, "turn in"))
+            return request;
+
+        var quest = Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"quest {questId} not active (cannot turn in)");
+
+        if (action != ActorActionType.AutoTurnIn && targetObjId != 0)
+        {
+            var target = ResolveUnit(targetObjId);
+            if (target == null)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"turn-in target {targetObjId} not found in world (quest {questId})");
+        }
+
+        request.Start($"turning in quest {questId} (target {targetObjId}, selected {selectedReward})");
+        switch (action)
+        {
+            case ActorActionType.TurnInQuest:
+                _ = QuestController.ReportTurnIn(questId, targetObjId, selectedReward);
+                break;
+            case ActorActionType.TurnInDoodad:
+                _ = QuestController.ReportDoodadTurnIn(questId, targetObjId, selectedReward);
+                break;
+            default:
+                _ = QuestController.AutoTurnIn(questId, selectedReward);
+                break;
+        }
+
+        // The report event drives the step machine; the world pipeline's
+        // post-event advance is the last leg (completion path drops the quest
+        // from ActiveQuests — terminal state, correct engine behavior).
+        if (Character.Quests?.ActiveQuests.ContainsKey(questId) == true)
+            _ = quest.RunCurrentStep();
+
+        var completed = Character.Quests?.HasQuestCompleted(questId) == true;
+        return Complete(request, completed, completed
+            ? $"quest {questId} completed by turn-in"
+            : $"quest {questId} turn-in executed (still active)");
+    }
+
+    #endregion
+
     #region Tick / movement
 
     private Vector3? _moveTarget;
@@ -267,8 +375,8 @@ public class GameplayActor : IGameplayActor
     #region Internals
 
     private ActorRequest NewRequest(ActorActionType action, uint targetId,
-        Vector3? destination = null, uint skillId = 0, TimeSpan? timeout = null)
-        => new(action, targetId, destination, skillId, timeout);
+        Vector3? destination = null, uint skillId = 0, TimeSpan? timeout = null, object? payload = null)
+        => new(action, targetId, destination, skillId, timeout, payload);
 
     /// <summary>
     /// Single-writer gate: accepts the request as the new active one, or

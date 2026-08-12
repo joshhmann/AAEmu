@@ -113,9 +113,15 @@ calibration band, 2026-08-09). A plain run (`AAEMU_PRESENCE_DEMO` unset) has
        RequireH2 = true,
        WindowMinutes = 5,
        QuestSubset = 1,               // profiling focus, not correctness
+       ScenarioTemplates = ["level22-gate", "ability-gate", "cat34-daily"], // P1 t_5efae4f1
        Budgets = new GateBudgets()    // or tighter per-stage budgets
    };
    ```
+   `ScenarioTemplates` runs the template rig (parameterized bot test rigs:
+   level/abilities/prereq-gated quest scenarios through the IGameplayActor
+   contract) against the live stack as part of the stage — every template
+   must PASS or the stage is red. Empty array = skip (the pre-template
+   stages' behavior).
 2. Add a test entry point in `GateHarnessTests.cs`:
    ```csharp
    [Fact] [Trait("Category", "e2e")]
