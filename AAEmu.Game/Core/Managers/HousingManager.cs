@@ -19,9 +19,11 @@ using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Mails;
+using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
+using AAEmu.Game.Models.Game.World.Zones;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Models.Tasks.Housing;
 using AAEmu.Game.Utils;
@@ -58,6 +60,7 @@ public class HousingManager(
     private Dictionary<ushort, House> _housesTl = []; // TODO or so mb tlId is id in the active zone? or type of house
     private List<uint> _removedHousings = [];
     private bool _isCheckingTaxTiming;
+    private readonly object _housesLock = new();
 
     /// <summary>
     /// Gets all houses for a given Account
@@ -445,7 +448,7 @@ public class HousingManager(
     {
         var houseTemplate = HousingGameData.Instance.GetTemplate(designId);
 
-        // Placement zone validation (zone-level; overlap is re-checked at Build).
+        // Placement zone validation (zone-level fast path; full checks run at Build).
         var zoneKey = worldManager.GetZoneId(connection.ActiveChar.ParentWorld.Template, x, y);
         var zone = zoneKey > 0 ? zoneManager.GetZoneByKey(zoneKey) : null;
         var landZone = HousingGameData.Instance.GetLandZoneByZoneName(zone?.Name);
@@ -461,7 +464,48 @@ public class HousingManager(
             []);
         if (placementError != HousingPlacementError.None)
         {
-            connection.ActiveChar.SendErrorMessage(ErrorMessageType.HouseCannotLocateInvalidArea);
+            connection.ActiveChar.SendErrorMessage(ToPlacementErrorMessage(placementError));
+            return;
+        }
+
+        // Polygon-level checks (FIX-2): containment + per-shape rules + unit overlap + terrain
+        // band. Mirrors Build so the tax preview rejects what the real placement would reject.
+        var world = connection.ActiveChar.ParentWorld;
+        var zoneShapes = zone != null && world.Template.HousingZones.TryGetValue(zone.Id, out var zoneAreaShapes)
+            ? zoneAreaShapes
+            : [];
+
+        float? groundHeight = null;
+        if ((AppConfiguration.Instance.World.GeoDataMode && world.Template.GeoData != null)
+            || AppConfiguration.Instance.HeightMapsEnable)
+        {
+            groundHeight = WorldManager.Instance.GetHeight(zoneKey, x, y, z);
+        }
+
+        var unitPositions = new List<Vector3>();
+        var region = world.GetRegionByPos(new Vector3(x, y, z));
+        if (region != null)
+        {
+            var probeRadius = MathF.Max(houseTemplate?.GardenRadius ?? 0f, HousingPlacementValidator.MinHouseSpacing);
+            var nearbyNpcs = new List<Npc>();
+            region.GetList(nearbyNpcs, 0, x, y, probeRadius * probeRadius);
+            unitPositions.AddRange(nearbyNpcs
+                .Where(n => n?.Transform != null)
+                .Select(n => n.Transform.World.Position));
+        }
+
+        var polygonError = HousingPlacementValidator.ValidatePolygonPlacement(
+            zoneShapes,
+            HousingGameData.Instance.GetAreaRuleByShapeName,
+            houseTemplate,
+            new Vector3(x, y, z),
+            _houses.Values.Any(h => h.OwnerId == connection.ActiveChar.Id),
+            groundHeight,
+            unitPositions,
+            _houses.Values);
+        if (polygonError != HousingPlacementError.None)
+        {
+            connection.ActiveChar.SendErrorMessage(ToPlacementErrorMessage(polygonError));
             return;
         }
 
@@ -528,6 +572,20 @@ public class HousingManager(
     }
 
     /// <summary>
+    /// Maps a placement-rule failure to the canonical 1.2 client error string.
+    /// </summary>
+    private static ErrorMessageType ToPlacementErrorMessage(HousingPlacementError error) => error switch
+    {
+        HousingPlacementError.OverlapHouse => ErrorMessageType.HouseCannotLocateOverlapHouse,
+        HousingPlacementError.OverlapUnit => ErrorMessageType.HouseCannotLocateOverlapUnit,
+        HousingPlacementError.TerrainTooHigh => ErrorMessageType.HouseCannotLocateTerrainTooHigh,
+        HousingPlacementError.TerrainTooLow => ErrorMessageType.HouseCannotLocateTerrainTooLow,
+        HousingPlacementError.NoHousingArea => ErrorMessageType.NoHousingArea,
+        HousingPlacementError.MaxConstructCount => ErrorMessageType.HouseCannotConstructInAreaByMaxConstructCount,
+        _ => ErrorMessageType.HouseCannotLocateInvalidArea
+    };
+
+    /// <summary>
     /// Start building a house at target location using design
     /// </summary>
     /// <param name="connection"></param>
@@ -558,130 +616,186 @@ public class HousingManager(
 
         var houseTemplate = HousingGameData.Instance.GetTemplate(designId);
 
-        // Placement zone validation (M3a-1): land zone + zone-type rules + ownership claim rules + overlap.
-        // Grounded in 1.2 data: housing_areas/housing_groups/housing_group_categories joined to
-        // world zones by exact zone-name match; spacing = garden radius sum (floor MinHouseSpacing).
-        var zoneKey = worldManager.GetZoneId(connection.ActiveChar.ParentWorld.Template, posX, posY);
-        var zone = zoneKey > 0 ? zoneManager.GetZoneByKey(zoneKey) : null;
-        var landZone = HousingGameData.Instance.GetLandZoneByZoneName(zone?.Name);
-        var placementError = HousingPlacementValidator.ValidatePlacement(
-            landZone,
-            zone?.FactionId ?? FactionsEnum.Invalid,
-            houseTemplate,
-            new Vector3(posX, posY, posZ),
-            connection.ActiveChar.Faction.MotherId != FactionsEnum.Invalid
-                ? connection.ActiveChar.Faction.MotherId
-                : connection.ActiveChar.Faction.Id,
-            _houses.Values.Any(h => h.OwnerId == connection.ActiveChar.Id),
-            _houses.Values);
-        if (placementError != HousingPlacementError.None)
+        // The house is created inside the lock (its id/tlId allocation is part of the
+        // check-then-insert critical section); the post-insert packet/spawn/save run
+        // unlocked so the MySQL persistence never blocks concurrent placements.
+        House house = null;
+
+        // Check-then-insert must be atomic: two simultaneous placements of the same plot
+        // would both pass validation and both insert. The lock spans the placement checks
+        // (which read _houses) through _houses.Add/_housesTl.Add (the insert); the design
+        // item / tax consumption in between is per-player and idempotent under retry.
+        // MySQL persistence (house.Save) happens after the lock is released.
+        lock (_housesLock)
         {
-            Logger.Warn($"House placement rejected for {connection.ActiveChar.Name}: {placementError} at <{posX:0.#}, {posY:0.#}, {posZ:0.#}> (zone: {zone?.Name ?? "unknown"})");
-            connection.ActiveChar.SendErrorMessage(placementError == HousingPlacementError.OverlapHouse
-                ? ErrorMessageType.HouseCannotLocateOverlapHouse
-                : ErrorMessageType.HouseCannotLocateInvalidArea);
-            return;
-        }
-
-        CalculateBuildingTaxInfo(connection.ActiveChar.AccountId, houseTemplate, true, out var totalTaxAmountDue, out _, out _, out _, out _);
-
-        if (FeaturesManager.Fsets.Check(Models.Game.Features.Feature.taxItem))
-        {
-            // Pay in Tax Certificate
-
-            var userTaxCount = connection.ActiveChar.Inventory.GetItemsCount(SlotType.Inventory, Item.TaxCertificate);
-            var userBoundTaxCount = connection.ActiveChar.Inventory.GetItemsCount(SlotType.Inventory, Item.BoundTaxCertificate);
-            var totalUserTaxCount = userTaxCount + userBoundTaxCount;
-            var totalCertsCost = (int)Math.Ceiling(totalTaxAmountDue / 10000f);
-
-            // Annoyingly complex item consumption, maybe we need a separate function in inventory to handle this kind of thing
-            var consumedCerts = totalCertsCost;
-            if (totalCertsCost > totalUserTaxCount)
+            // Placement zone validation (M3a-1): land zone + zone-type rules + ownership claim rules + overlap.
+            // Grounded in 1.2 data: housing_areas/housing_groups/housing_group_categories joined to
+            // world zones by exact zone-name match; spacing = garden radius sum (floor MinHouseSpacing).
+            var zoneKey = worldManager.GetZoneId(connection.ActiveChar.ParentWorld.Template, posX, posY);
+            var zone = zoneKey > 0 ? zoneManager.GetZoneByKey(zoneKey) : null;
+            var landZone = HousingGameData.Instance.GetLandZoneByZoneName(zone?.Name);
+            var placementError = HousingPlacementValidator.ValidatePlacement(
+                landZone,
+                zone?.FactionId ?? FactionsEnum.Invalid,
+                houseTemplate,
+                new Vector3(posX, posY, posZ),
+                connection.ActiveChar.Faction.MotherId != FactionsEnum.Invalid
+                    ? connection.ActiveChar.Faction.MotherId
+                    : connection.ActiveChar.Faction.Id,
+                _houses.Values.Any(h => h.OwnerId == connection.ActiveChar.Id),
+                _houses.Values);
+            if (placementError != HousingPlacementError.None)
             {
-                connection.ActiveChar.SendErrorMessage(ErrorMessageType.MailNotEnoughMoneyToPayTaxes);
+                Logger.Warn($"House placement rejected for {connection.ActiveChar.Name}: {placementError} at <{posX:0.#}, {posY:0.#}, {posZ:0.#}> (zone: {zone?.Name ?? "unknown"})");
+                connection.ActiveChar.SendErrorMessage(ToPlacementErrorMessage(placementError));
                 return;
+            }
+
+            // Polygon-level validation (FIX-2): point-in-polygon containment against the pak
+            // housing_area.xml AreaShapes of this zone, then per-shape group rules
+            // (category / houseless / max_construct_count), unit overlap and the terrain band.
+            var world = connection.ActiveChar.ParentWorld;
+            var zoneShapes = zone != null && world.Template.HousingZones.TryGetValue(zone.Id, out var zoneAreaShapes)
+                ? zoneAreaShapes
+                : [];
+            var characterOwnsHouses = _houses.Values.Any(h => h.OwnerId == connection.ActiveChar.Id);
+
+            float? groundHeight = null;
+            if ((AppConfiguration.Instance.World.GeoDataMode && world.Template.GeoData != null)
+                || AppConfiguration.Instance.HeightMapsEnable)
+            {
+                groundHeight = WorldManager.Instance.GetHeight(zoneKey, posX, posY, posZ);
+            }
+
+            var unitPositions = new List<Vector3>();
+            var region = world.GetRegionByPos(new Vector3(posX, posY, posZ));
+            if (region != null)
+            {
+                var probeRadius = MathF.Max(houseTemplate?.GardenRadius ?? 0f, HousingPlacementValidator.MinHouseSpacing);
+                var nearbyNpcs = new List<Npc>();
+                region.GetList(nearbyNpcs, 0, posX, posY, probeRadius * probeRadius);
+                unitPositions.AddRange(nearbyNpcs
+                    .Where(n => n?.Transform != null)
+                    .Select(n => n.Transform.World.Position));
+            }
+
+            var polygonError = HousingPlacementValidator.ValidatePolygonPlacement(
+                zoneShapes,
+                HousingGameData.Instance.GetAreaRuleByShapeName,
+                houseTemplate,
+                new Vector3(posX, posY, posZ),
+                characterOwnsHouses,
+                groundHeight,
+                unitPositions,
+                _houses.Values);
+            if (polygonError != HousingPlacementError.None)
+            {
+                Logger.Warn($"House placement rejected for {connection.ActiveChar.Name}: {polygonError} at <{posX:0.#}, {posY:0.#}, {posZ:0.#}> (zone: {zone?.Name ?? "unknown"})");
+                connection.ActiveChar.SendErrorMessage(ToPlacementErrorMessage(polygonError));
+                return;
+            }
+
+            CalculateBuildingTaxInfo(connection.ActiveChar.AccountId, houseTemplate, true, out var totalTaxAmountDue, out _, out _, out _, out _);
+
+            if (FeaturesManager.Fsets.Check(Models.Game.Features.Feature.taxItem))
+            {
+                // Pay in Tax Certificate
+
+                var userTaxCount = connection.ActiveChar.Inventory.GetItemsCount(SlotType.Inventory, Item.TaxCertificate);
+                var userBoundTaxCount = connection.ActiveChar.Inventory.GetItemsCount(SlotType.Inventory, Item.BoundTaxCertificate);
+                var totalUserTaxCount = userTaxCount + userBoundTaxCount;
+                var totalCertsCost = (int)Math.Ceiling(totalTaxAmountDue / 10000f);
+
+                // Annoyingly complex item consumption, maybe we need a separate function in inventory to handle this kind of thing
+                var consumedCerts = totalCertsCost;
+                if (totalCertsCost > totalUserTaxCount)
+                {
+                    connection.ActiveChar.SendErrorMessage(ErrorMessageType.MailNotEnoughMoneyToPayTaxes);
+                    return;
+                }
+                else
+                {
+                    var c = consumedCerts;
+                    // Use Bound First
+                    if (userBoundTaxCount > 0 && c > 0)
+                    {
+                        if (c > userBoundTaxCount)
+                            c = userBoundTaxCount;
+                        connection.ActiveChar.Inventory.Bag.ConsumeItem(ItemTaskType.HouseCreation, Item.BoundTaxCertificate, c, null);
+                        consumedCerts -= c;
+                    }
+                    c = consumedCerts;
+                    if (userTaxCount > 0 && c > 0)
+                    {
+                        if (c > userTaxCount)
+                            c = userTaxCount;
+                        connection.ActiveChar.Inventory.Bag.ConsumeItem(ItemTaskType.HouseCreation, Item.TaxCertificate, c, null);
+                        consumedCerts -= c;
+                    }
+
+                    if (consumedCerts != 0)
+                        Logger.Error($"Something went wrong when paying tax for new building for player {connection.ActiveChar.Name}");
+                }
             }
             else
             {
-                var c = consumedCerts;
-                // Use Bound First
-                if (userBoundTaxCount > 0 && c > 0)
+                // Pay in Gold
+                // TODO: test house with actual gold tax
+                if (totalTaxAmountDue > connection.ActiveChar.Money)
                 {
-                    if (c > userBoundTaxCount)
-                        c = userBoundTaxCount;
-                    connection.ActiveChar.Inventory.Bag.ConsumeItem(ItemTaskType.HouseCreation, Item.BoundTaxCertificate, c, null);
-                    consumedCerts -= c;
+                    connection.ActiveChar.SendErrorMessage(ErrorMessageType.MailNotEnoughMoneyToPayTaxes);
+                    return;
                 }
-                c = consumedCerts;
-                if (userTaxCount > 0 && c > 0)
-                {
-                    if (c > userTaxCount)
-                        c = userTaxCount;
-                    connection.ActiveChar.Inventory.Bag.ConsumeItem(ItemTaskType.HouseCreation, Item.TaxCertificate, c, null);
-                    consumedCerts -= c;
-                }
-
-                if (consumedCerts != 0)
-                    Logger.Error($"Something went wrong when paying tax for new building for player {connection.ActiveChar.Name}");
+                connection.ActiveChar.SubtractMoney(SlotType.Inventory, totalTaxAmountDue, ItemTaskType.HouseCreation);
             }
-        }
-        else
-        {
-            // Pay in Gold
-            // TODO: test house with actual gold tax
-            if (totalTaxAmountDue > connection.ActiveChar.Money)
+
+            if (connection.ActiveChar.Inventory.Bag.ConsumeItem(ItemTaskType.HouseBuilding, sourceDesignItem.TemplateId, 1, sourceDesignItem) <= 0)
             {
-                connection.ActiveChar.SendErrorMessage(ErrorMessageType.MailNotEnoughMoneyToPayTaxes);
+                connection.ActiveChar.SendErrorMessage(ErrorMessageType.BagInvalidItem);
                 return;
             }
-            connection.ActiveChar.SubtractMoney(SlotType.Inventory, totalTaxAmountDue, ItemTaskType.HouseCreation);
-        }
 
-        if (connection.ActiveChar.Inventory.Bag.ConsumeItem(ItemTaskType.HouseBuilding, sourceDesignItem.TemplateId, 1, sourceDesignItem) <= 0)
-        {
-            connection.ActiveChar.SendErrorMessage(ErrorMessageType.BagInvalidItem);
-            return;
-        }
+            // Spawn the actual house
+            house = Create(designId, connection.ActiveChar.Faction.Id, connection.ActiveChar.ParentWorld);
 
-        // Spawn the actual house
-        var house = Create(designId, connection.ActiveChar.Faction.Id, connection.ActiveChar.ParentWorld);
+            // Fallback for un-translated buildings (en_us)
+            if (house.Name == string.Empty)
+            {
+                var fakeLocalizedName = localizationManager.Get("items", "name", sourceDesignItem.Template.Id, houseTemplate.Name);
+                if (fakeLocalizedName.EndsWith(" Design"))
+                    fakeLocalizedName = fakeLocalizedName.Replace(" Design", "");
+                house.Name = fakeLocalizedName;
+            }
 
-        // Fallback for un-translated buildings (en_us)
-        if (house.Name == string.Empty)
-        {
-            var fakeLocalizedName = localizationManager.Get("items", "name", sourceDesignItem.Template.Id, houseTemplate.Name);
-            if (fakeLocalizedName.EndsWith(" Design"))
-                fakeLocalizedName = fakeLocalizedName.Replace(" Design", "");
-            house.Name = fakeLocalizedName;
-        }
+            house.Id = housingIdManager.GetNextId();
+            house.Transform.Local.SetPosition(posX, posY, posZ);
+            // In 1.2 the rotation in SCUnitStatePacket is sent as X, Y, Z using 1 byte each.
+            // This limits us to 256 unique rotations around Z (up) that can be represented.
+            // When placing the house with the preview and then finalizing it, this causes the actual rotation to be different from the preview.
+            // 3.0 sends a full 32-bit float for the Z-rotation for BaseUnitType.Housing, so this seems to have been fixed in later versions.
+            // The fact the server has a more accurate view of the rotation than the client means positions of objects (doodads) placed in the house
+            // can be offset.
+            // To make the server and client agree on the rotation, we convert the float zRot to a sbyte, then back to a float.
+            // The server then knows the rotation as one of the 256 unique rotations that the client can be sent.
+            var (_, _, yaw) = PositionAndRotation.ToRollPitchYawSBytes(new Vector3(0, 0, zRot));
+            zRot = PositionAndRotation.FromRollPitchYawSBytes(0, 0, yaw).Z;
+            house.Transform.Local.SetRotation(0, 0, zRot);
 
-        house.Id = housingIdManager.GetNextId();
-        house.Transform.Local.SetPosition(posX, posY, posZ);
-        // In 1.2 the rotation in SCUnitStatePacket is sent as X, Y, Z using 1 byte each.
-        // This limits us to 256 unique rotations around Z (up) that can be represented.
-        // When placing the house with the preview and then finalizing it, this causes the actual rotation to be different from the preview.
-        // 3.0 sends a full 32-bit float for the Z-rotation for BaseUnitType.Housing, so this seems to have been fixed in later versions.
-        // The fact the server has a more accurate view of the rotation than the client means positions of objects (doodads) placed in the house
-        // can be offset.
-        // To make the server and client agree on the rotation, we convert the float zRot to a sbyte, then back to a float.
-        // The server then knows the rotation as one of the 256 unique rotations that the client can be sent.
-        var (_, _, yaw) = PositionAndRotation.ToRollPitchYawSBytes(new Vector3(0, 0, zRot));
-        zRot = PositionAndRotation.FromRollPitchYawSBytes(0, 0, yaw).Z;
-        house.Transform.Local.SetRotation(0, 0, zRot);
+            if (house.Template.BuildSteps.Count > 0)
+                house.CurrentStep = 0;
+            else
+                house.CurrentStep = -1;
+            house.OwnerId = connection.ActiveChar.Id;
+            house.CoOwnerId = connection.ActiveChar.Id;
+            house.AccountId = connection.AccountId;
+            house.Permission = HousingPermission.Private;
+            house.AllowRecover = true;
+            house.PlaceDate = DateTime.UtcNow;
+            house.ProtectionEndDate = DateTime.UtcNow.AddDays(AppConfiguration.Instance.World.DaysForTaxPayment);
+            _houses.Add(house.Id, house);
+            _housesTl.Add(house.TlId, house);
+        } // lock (_housesLock) — check-then-insert is atomic; persistence below runs unlocked
 
-        if (house.Template.BuildSteps.Count > 0)
-            house.CurrentStep = 0;
-        else
-            house.CurrentStep = -1;
-        house.OwnerId = connection.ActiveChar.Id;
-        house.CoOwnerId = connection.ActiveChar.Id;
-        house.AccountId = connection.AccountId;
-        house.Permission = HousingPermission.Private;
-        house.AllowRecover = true;
-        house.PlaceDate = DateTime.UtcNow;
-        house.ProtectionEndDate = DateTime.UtcNow.AddDays(AppConfiguration.Instance.World.DaysForTaxPayment);
-        _houses.Add(house.Id, house);
-        _housesTl.Add(house.TlId, house);
         connection.ActiveChar.SendPacket(new SCMyHousePacket(house));
         house.Spawn();
         UpdateTaxInfo(house);
