@@ -58,15 +58,18 @@ public class M3bFurniturePersistenceE2eTests
     private const string OwnerAccountName = "m3b1_account";
     private const uint HouseDbId = 900001;
 
-    // Distinct positions so a clobber to 0,0,0 (or to origin) is unambiguous.
+    // Distinct LOCAL positions (relative to the house at 20010/20020/100 — the
+    // DB stores local position/rotation; Doodad.Save writes Transform.Local) so
+    // a clobber to 0,0,0 (or to origin) is unambiguous and world positions stay
+    // in bounds (GetZoneId FATALs otherwise).
     private static readonly (float X, float Y, float Z, float Roll, float Pitch, float Yaw)[] Spawns =
     [
-        (20010f, 20020f, 100f, 0.1f, 0.2f, 0.3f),
-        (20010f, 20020f, 100f, 0f, 0f, 0.5f),
-        (20010f, 20020f, 100f, 0f, 0f, 1.0f),
-        (20010f, 20020f, 100f, 0f, 0f, 1.5f),
-        (20010f, 20020f, 100f, 0f, 0f, 2.0f),
-        (20010f, 20020f, 100f, 0.05f, 0.05f, 2.5f),
+        (2.5f, 0.5f, 1.0f, 0.1f, 0.2f, 0.3f),
+        (0.5f, 2.5f, 1.5f, 0f, 0f, 0.5f),
+        (-0.5f, 2.5f, 1.5f, 0f, 0f, 1.0f),
+        (0.5f, 0.5f, 2.5f, 0f, 0f, 1.5f),
+        (-2.0f, 0.5f, 3.0f, 0f, 0f, 2.0f),
+        (1.0f, -1.0f, 2.0f, 0.05f, 0.05f, 2.5f),
     ];
 
     private static void EnsureStack() => E2eStack.EnsureUp();
@@ -101,7 +104,7 @@ public class M3bFurniturePersistenceE2eTests
 
             // furniture (chandelier) — attach point None, own rotation
             InsertDoodad(game, (uint)dbId, ChandelierDoodadId, ChandelierPhaseId, 0,
-                (20010f, 20020f, 103f, 0f, 0f, 2.9f), HouseDbId, OwnerCharId);
+                (0.5f, 0.5f, 4.0f, 0f, 0f, 2.9f), HouseDbId, OwnerCharId);
         }
 
         try
