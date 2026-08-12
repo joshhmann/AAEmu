@@ -146,6 +146,14 @@ public class CharacterLifecycleService : Singleton<CharacterLifecycleService>, I
         // Do a manual save here as it's no longer in _characters at this point
         // TODO: might need a better option like saving this transaction for later to be used by the SaveManager
         character.SaveDirectlyToDatabase();
+
+        // Flush this character's dirty houses immediately (own connection). A logout or
+        // disconnect followed by a server crash before the next save tick must not lose
+        // pending house state (build progress, permissions, names). (M3b-3: disconnect/
+        // logout cleanup.)
+        var savedHouses = HousingManager.Instance.SaveDirtyHousesForCharacter(character.Id);
+        if (savedHouses > 0)
+            Logger.Debug($"Deactivate: Flushed {savedHouses} dirty house(s) for {character.Name} (id {character.Id}) on {reason}.");
     }
 
     /// <summary>

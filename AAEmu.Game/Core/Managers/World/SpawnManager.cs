@@ -8,7 +8,9 @@ using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Gimmicks;
+using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Slaves;
@@ -674,6 +676,47 @@ public class SpawnManager(WorldInstance parentWorld)
     }
 
     /// <summary>
+    /// Decides whether a persistent `doodads` DB row should be loaded at boot.
+    /// Rows whose template is missing from the game data, whose owning house is gone
+    /// (house row deleted but the doodad row survived a mid-save kill), or whose parent
+    /// doodad is gone (Housing batches only — furniture parents are always in the same
+    /// plant_time-ordered batch) are orphans: spawning them would either NRE the boot
+    /// loader or drop a floating, un-parented doodad into the world. (M3b-3: orphan
+    /// prevention after mid-save kill.)
+    /// </summary>
+    /// <param name="template">Resolved doodad template (null if missing)</param>
+    /// <param name="ownerTypeToSpawn">Owner type being loaded</param>
+    /// <param name="houseId">Owning house DbId from the row (0 if none)</param>
+    /// <param name="owningHouse">Resolved owning house (null if missing)</param>
+    /// <param name="parentDoodad">Parent doodad DbId from the row (0 if none)</param>
+    /// <param name="parentFound">Whether the parent doodad was found among already-loaded rows</param>
+    /// <param name="skipReason">Human-readable reason, set when returning false</param>
+    /// <returns>True if the row should be loaded</returns>
+    internal static bool ShouldLoadPersistentDoodad(DoodadTemplate template, DoodadOwnerType ownerTypeToSpawn, uint houseId, House owningHouse, uint parentDoodad, bool parentFound, out string skipReason)
+    {
+        if (template == null)
+        {
+            skipReason = "template not in game data";
+            return false;
+        }
+
+        if (houseId > 0 && ownerTypeToSpawn == DoodadOwnerType.Housing && owningHouse == null)
+        {
+            skipReason = $"owning house {houseId} no longer exists";
+            return false;
+        }
+
+        if (parentDoodad > 0 && ownerTypeToSpawn == DoodadOwnerType.Housing && !parentFound)
+        {
+            skipReason = $"parent doodad {parentDoodad} no longer exists";
+            return false;
+        }
+
+        skipReason = null;
+        return true;
+    }
+
+    /// <summary>
     /// Load Persistent Doodads from the DataBase
     /// </summary>
     /// <param name="ownerTypeToSpawn">Only spawn doodads that have this ownerType</param>
@@ -684,6 +727,7 @@ public class SpawnManager(WorldInstance parentWorld)
     public int SpawnPersistentDoodads(DoodadOwnerType ownerTypeToSpawn, int ownerToSpawnId = -1, GameObject useParentObject = null, bool doSpawn = false)
     {
         var spawnCount = 0;
+        var skippedCount = 0;
         var newCoffers = new List<Doodad>();
         using var connection = MySQL.CreateConnection();
         using (var command = connection.CreateCommand())
@@ -726,6 +770,28 @@ public class SpawnManager(WorldInstance parentWorld)
                     var data = reader.GetInt32("data");
                     var farmType = (FarmType)reader.GetUInt32("farm_type");
 
+                    // Skip orphan rows: a doodad whose template no longer exists in the
+                    // game data, whose owning house is gone (house row deleted but the
+                    // doodad row survived a mid-save kill), or whose parent doodad is
+                    // gone. Spawning these would either NRE the boot loader (null
+                    // template) or drop a floating, un-parented doodad into the world.
+                    // (M3b-3: orphan prevention after mid-save kill.)
+                    var owningHouse = houseId > 0 ? HousingManager.Instance.GetHouseById(houseId) : null;
+                    var pDoodad = parentDoodad > 0 ? PlayerDoodads.FirstOrDefault(d => d.DbId == parentDoodad) : null;
+                    if (!ShouldLoadPersistentDoodad(
+                            DoodadManager.Instance.GetTemplate(templateId),
+                            ownerTypeToSpawn,
+                            houseId,
+                            owningHouse,
+                            parentDoodad,
+                            pDoodad != null,
+                            out var skipReason))
+                    {
+                        Logger.Warn($"SpawnPersistentDoodads: Skipping orphaned/unloadable doodad {dbId} (templateId={templateId}) — {skipReason}.");
+                        skippedCount++;
+                        continue;
+                    }
+
                     var doodad = DoodadManager.Instance.Create(World, 0, templateId, null, true);
 
                     //doodad.Spawner = new DoodadSpawner();
@@ -748,27 +814,20 @@ public class SpawnManager(WorldInstance parentWorld)
                     doodad.UccId = sourceItem?.UccId ?? 0;
 
                     // Apparently this is only a reference value, so might not actually need to parent it
-                    if (parentDoodad > 0)
+                    if (parentDoodad > 0 && pDoodad != null)
                     {
-                        // var pDoodad = WorldManager.Instance.GetDoodadByDbId(parentDoodad);
-                        var pDoodad = PlayerDoodads.FirstOrDefault(d => d.DbId == parentDoodad);
-                        if (pDoodad == null)
-                        {
-                            Logger.Warn($"Unable to place doodad {dbId} can't find it's parent doodad {parentDoodad}");
-                        }
-                        else
-                        {
-                            doodad.Transform.Parent = pDoodad.Transform;
-                            doodad.ParentObj = pDoodad;
-                            doodad.ParentObjId = pDoodad.ObjId;
-                        }
+                        doodad.Transform.Parent = pDoodad.Transform;
+                        doodad.ParentObj = pDoodad;
+                        doodad.ParentObjId = pDoodad.ObjId;
                     }
 
                     if (houseId > 0 && doodad.ParentObjId <= 0)
                     {
-                        var owningHouse = HousingManager.Instance.GetHouseById(doodad.OwnerDbId);
                         if (owningHouse == null)
                         {
+                            // Non-Housing owner types (crops/packs etc.) are still loaded
+                            // even when their owning house is gone — only Housing-type
+                            // orphans are skipped (see ShouldLoadPersistentDoodad).
                             Logger.Warn($"Unable to place doodad {dbId} can't find it's owning house {houseId}");
                         }
                         else
@@ -846,6 +905,9 @@ public class SpawnManager(WorldInstance parentWorld)
         // Save Coffer Doodads that had a new ItemContainer created for them (should only happen on first run if there were already coffers placed)
         foreach (var coffer in newCoffers)
             coffer.Save();
+
+        if (skippedCount > 0)
+            Logger.Warn($"SpawnPersistentDoodads: Skipped {skippedCount} orphaned/unloadable doodad row(s) for ownerType={ownerTypeToSpawn} ownerId={ownerToSpawnId} (missing template, house, or parent).");
 
         return spawnCount;
     }
