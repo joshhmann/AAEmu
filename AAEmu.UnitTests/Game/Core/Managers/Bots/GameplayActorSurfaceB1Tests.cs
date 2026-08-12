@@ -29,7 +29,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Interact_LootFuncDoodad_GrantsItemThroughRealEnginePath()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-interact-1");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sb1-interact-1");
         GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.InteractItemTemplateId);
 
         var doodadObjId = GameplayActorTestRig.SpawnInteractableDoodad(
@@ -58,7 +58,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Interact_UnknownDoodad_RejectedWithRejectedAction()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-interact-2");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sb1-interact-2");
 
         var request = actor.Interact(0x7FFF_FFFF, skillId: 0);
 
@@ -70,7 +70,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Interact_UnknownInteractionSkill_RejectedWithRejectedAction()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-interact-3");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sb1-interact-3");
         GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.InteractItemTemplateId);
         var doodadObjId = GameplayActorTestRig.SpawnInteractableDoodad(
             session, GameplayActorTestRig.InteractDoodadGroupId,
@@ -87,7 +87,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Interact_DespawnScheduled_RejectedBeforeEngine()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-interact-4");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sb1-interact-4");
         GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.InteractItemTemplateId);
         var doodadObjId = GameplayActorTestRig.SpawnInteractableDoodad(
             session, GameplayActorTestRig.InteractDoodadGroupId,
@@ -120,7 +120,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Loot_SeededCorpse_GrantsItemsThroughRealEnginePath_AndEmptiesContainer()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-loot-1");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sb1-loot-1");
         var npcObjId = SeedCorpse(actor, session);
 
         var request = actor.Loot(npcObjId);
@@ -139,17 +139,21 @@ public class GameplayActorSurfaceB1Tests
     }
 
     [Test]
-    public async Task Loot_RetryAfterSuccess_GrantsNothing_ProvesIdempotency()
+    public async Task Loot_RetryAfterSuccess_RejectedAlreadyLooted_NoDuplicate()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("b1-loot-2");
+        var (actor, session) = GameplayActorTestRig.CreateActor("sb1-loot-2");
         var npcObjId = SeedCorpse(actor, session);
 
         var first = actor.Loot(npcObjId);
         await Assert.That(first.State).IsEqualTo(ActorLifecycleState.Completed);
 
+        // Unkeyed retry: the engine container is now empty (the merged tree
+        // carries the empty-container pre-flight from fork/develop), so the
+        // request is rejected with a clear reason — no duplicate loot.
         var retry = actor.Loot(npcObjId);
-        await Assert.That(retry.State).IsEqualTo(ActorLifecycleState.Completed);
-        await Assert.That(retry.Result).IsEqualTo(0); // granted nothing
+        await Assert.That(retry.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(retry.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(retry.Detail).Contains("already looted");
 
         // Retry did NOT duplicate the loot.
         await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.InteractItemTemplateId)).IsEqualTo(2);
@@ -160,7 +164,7 @@ public class GameplayActorSurfaceB1Tests
     [Test]
     public async Task Loot_UnknownOwner_RejectedWithRejectedAction()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("b1-loot-3");
+        var (actor, _) = GameplayActorTestRig.CreateActor("sb1-loot-3");
 
         var request = actor.Loot(0x7FFF_FFFF);
 

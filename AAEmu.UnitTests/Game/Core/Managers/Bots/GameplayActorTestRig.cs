@@ -73,7 +73,13 @@ public static class GameplayActorTestRig
     /// <summary>Next unique actor objId (starts at <see cref="ActorObjId"/>).</summary>
     public static uint NextActorObjId() => _nextActorObjId++;
 
-    private static int _nextWorldInstanceId = 1;
+    // High base so rig worlds never collide with the small fixed instance
+    // ids other test files register (e.g. SpecialtyManagerTests' 77,
+    // M3bFurniturePersistenceTests' 7, HousingM3aConstructionTests' 1) —
+    // the rig bumps through 1,2,3,… per CreateActor, and once it reached a
+    // fixed id before that file ran, the file's TryAdd silently failed and
+    // its world was invisible to world-wide sweeps.
+    private static int _nextWorldInstanceId = 0x4000_0000;
 
     private static bool s_seeded;
 
