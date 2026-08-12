@@ -80,8 +80,10 @@ public class PlayerbotPilotTests
         return (new PlayerBotController(session.Character), session);
     }
 
-    /// <summary>Emits the M2b metrics table to scorecard-explorations/m2b-pilot-metrics.md
-    /// (deterministic header — no wall-clock churn, same discipline as the census).</summary>
+    /// <summary>Emits the M2b metrics table to scorecard-explorations/generated/m2b-pilot-metrics.md
+    /// (deterministic header — no wall-clock churn, same discipline as the census).
+    /// The committed scorecard-explorations/m2b-pilot-metrics.md is CURATED content
+    /// (quest-cycle correction notes) and must never be rewritten by the tests.</summary>
     private static void EmitMetricsTable(PilotRun run, string curriculumLabel)
     {
         var sb = new StringBuilder();
@@ -132,7 +134,7 @@ public class PlayerbotPilotTests
                 sb.AppendLine("- " + f.Replace("\n", " "));
         }
 
-        var outPath = Path.Combine(RepoRoot(), "scorecard-explorations", "m2b-pilot-metrics.md");
+        var outPath = Path.Combine(RepoRoot(), "scorecard-explorations", "generated", "m2b-pilot-metrics.md");
         Directory.CreateDirectory(Path.GetDirectoryName(outPath)!);
         File.WriteAllText(outPath, sb.ToString());
         Console.WriteLine("M2b metrics table written to " + outPath);
