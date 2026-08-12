@@ -11,6 +11,7 @@ using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.UnitTests.Game.Bots;
 using AAEmu.UnitTests.Utils.Mocks;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
@@ -24,6 +25,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// BotRoamStepExecutor is used for route arming (SetRoamRoute is pure
 /// state) and routes are observed through the internal GetRoamRoute seam.
 /// </summary>
+[ParallelLimiter<BodyPartSequentialParallelLimit>] // t_eb9d8b30: state-neutral rig — serialize + per-test cleanup; limiter class lives in BotBodyPartEquipmentTests.cs (develop's t_743866f9 version)
 [NotInParallel]
 public class BotAdminServiceTests
 {
@@ -168,7 +170,7 @@ public class BotAdminServiceTests
                 provisioner: (account, name, race, gender, level) =>
                 {
                     Provisions.Add((account, name, race, gender, level));
-                    var session = HeadlessSession.Create(_nextId++, name, level, race);
+                    var session = MakeHeadlessSession(_nextId++, name, level, race);
                     session.Character.Transform.Local.SetPosition(100, 200, 30);
                     return session;
                 },
@@ -511,7 +513,7 @@ public class BotAdminServiceTests
             provisioner: (account, name, race, gender, level) =>
             {
                 SeedFixtureSingletons();
-                var session = HeadlessSession.Create(9000, name, level, race);
+                var session = MakeHeadlessSession(9000, name, level, race);
                 session.Character.Transform.Local.SetPosition(100, 200, 30);
                 return session;
             },
@@ -585,8 +587,82 @@ public class BotAdminServiceTests
     private static Character MakeBot(uint id, string name)
     {
         SeedFixtureSingletons();
-        var session = HeadlessSession.Create(id, name, BotAdminService.GmBotLevel);
+        var session = MakeHeadlessSession(id, name, BotAdminService.GmBotLevel);
         return session.Character;
+    }
+
+    /// <summary>
+    /// HeadlessSession.Create wrapper that TRACKS the exact persistent
+    /// container keys the rig registered (Inventory ctor →
+    /// GetItemContainerForCharacter, keyed by ContainerId) so the per-test
+    /// cleanup ([After(Test)]) can remove precisely this rig's state from the
+    /// shared ItemManager singleton — the rig is state-neutral (t_eb9d8b30
+    /// ListStatus isolation rework). The tracker is cumulative and cleared by
+    /// every cleanup pass, so even a test that fails mid-run has its
+    /// containers removed by the next test's cleanup.
+    /// </summary>
+    private static readonly ConcurrentDictionary<ulong, byte> TrackedContainerKeys = new();
+
+    private static HeadlessSession MakeHeadlessSession(uint id, string name, byte level, Race race = Race.Nuian)
+    {
+        var session = HeadlessSession.Create(id, name, level, race);
+        if (session.Character.Inventory is { } inventory)
+        {
+            // Every container Inventory resolved for this character is keyed
+            // by ContainerId in _allPersistentContainers. Tracking keys — not
+            // owner ids — keeps the cleanup blast radius to THIS rig's exact
+            // containers (low character ids like 1/2/42 are not rig-exclusive).
+            foreach (var container in new[]
+                     {
+                         inventory.Equipment, inventory.Bag, inventory.Warehouse,
+                         inventory.MailAttachments, inventory.AuctionAttachments, inventory.SystemContainer
+                     })
+            {
+                if (container != null)
+                    TrackedContainerKeys.TryAdd(container.ContainerId, 0);
+            }
+        }
+        return session;
+    }
+
+    [After(Test)]
+    public void AfterTest_CleanupTrackedContainers()
+    {
+        // State-neutral rig: HeadlessSession.Create → Character → Inventory
+        // registers persistent containers in the SHARED ItemManager singleton
+        // (GetItemContainerForCharacter). Leaving them behind perturbs other
+        // suite classes (t_eb9d8b30). Remove exactly the containers this rig
+        // registered (tracked by ContainerId key), plus their items.
+        // The singleton is shared process-wide — guard before touching
+        // Instance: unseeded it THROWS (ItemManager has no parameterless
+        // ctor, Singleton<T>.OnInit), and other classes' seeds must never be
+        // replaced (t_4f11a519).
+        var singletonField = typeof(Singleton<ItemManager>).GetField("s_instance",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        if (singletonField?.GetValue(null) is not ItemManager itemManager)
+            return;
+
+        // Production field type is ConcurrentDictionary (ItemManager.cs:77-79).
+        var containersField = typeof(ItemManager).GetField("_allPersistentContainers",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var itemsField = typeof(ItemManager).GetField("_allItems",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (containersField?.GetValue(itemManager) is not ConcurrentDictionary<ulong, ItemContainer> containers)
+            return;
+        var allItems = itemsField?.GetValue(itemManager) as ConcurrentDictionary<ulong, Item>;
+
+        foreach (var key in TrackedContainerKeys.Keys.ToList())
+        {
+            if (!containers.TryGetValue(key, out var container))
+                continue;
+            if (allItems != null)
+            {
+                foreach (var item in container.Items.ToList())
+                    allItems.TryRemove(item.Id, out _);
+            }
+            containers.TryRemove(key, out _);
+        }
+        TrackedContainerKeys.Clear();
     }
 
     /// <summary>
