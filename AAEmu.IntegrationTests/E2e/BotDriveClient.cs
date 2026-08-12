@@ -57,6 +57,18 @@ public sealed class BotDriveClient : IDisposable
         return Call(doc.RootElement.Clone(), timeoutMs);
     }
 
+    /// <summary>
+    /// Writes a command without waiting for a response (fire-and-forget
+    /// trigger — e.g. the bridge "save" command, whose reply only returns
+    /// after the save pass completes, which may be after the test kills
+    /// the server).
+    /// </summary>
+    public void Send(string json)
+    {
+        _writer.WriteLine(json);
+        _writer.Flush();
+    }
+
     public void Dispose()
     {
         try
