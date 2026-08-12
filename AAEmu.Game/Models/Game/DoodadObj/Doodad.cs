@@ -130,10 +130,13 @@ public class Doodad : BaseUnit
             if (value != _funcGroupId)
             {
                 _funcGroupId = value;
-                PhaseTime = DateTime.UtcNow; // Save PhaseTime at start of new phase (group)
-                if (IsPersistent)
+                if (!_loadingFromDb)
                 {
-                    Save();
+                    PhaseTime = DateTime.UtcNow; // Save PhaseTime at start of new phase (group)
+                    if (IsPersistent)
+                    {
+                        Save();
+                    }
                 }
 
                 CurrentFuncs = DoodadManager.Instance.GetFuncsForGroup(_funcGroupId);
@@ -235,7 +238,7 @@ public class Doodad : BaseUnit
             if (value != _data)
             {
                 _data = value;
-                if (IsPersistent)
+                if (IsPersistent && !_loadingFromDb)
                 {
                     Save();
                 }
@@ -338,6 +341,13 @@ public class Doodad : BaseUnit
     public DateTime OverridePhaseTime { get; set; } = DateTime.MinValue;
 
     private bool _deleted;
+
+    /// <summary>
+    /// When true, the FuncGroupId/Data setters suppress their persistence side
+    /// effects (Save() + PhaseTime refresh). Set ONLY while a database row's
+    /// persisted state is being applied at boot load — see ApplyLoadedState.
+    /// </summary>
+    private bool _loadingFromDb;
 
     /// <summary>
     /// Seat data for this Doodad
@@ -984,9 +994,56 @@ public class Doodad : BaseUnit
     }
 
     /// <summary>
+    /// Applies the persisted state of a <c>doodads</c> row during boot load
+    /// (SpawnManager.SpawnPersistentDoodads). While this runs, the
+    /// FuncGroupId/Data setters suppress their persistence side effects
+    /// (Save() + PhaseTime refresh) so a load NEVER writes the row: the
+    /// stored phase_time must survive to the next restart (it is the base of
+    /// the growth/phase timer catch-up), and at this point the transform is
+    /// still the pre-load default (0,0,0) — the real position is applied by
+    /// the caller afterwards. A boot-time write would persist
+    /// phase_time = now and a zeroed position, drifting the growth clock on
+    /// every restart and teleporting the object if it never changes phase
+    /// again. The caller is responsible for IsPersistent, transform
+    /// parenting/position, ItemTemplateId/UccId resolution, coffer
+    /// attachment and InitDoodad.
+    /// </summary>
+    public void ApplyLoadedState(
+        uint dbId, uint phaseId,
+        DateTime plantTime, DateTime growthTime, DateTime phaseTime,
+        uint ownerId, DoodadOwnerType ownerType, AttachPointKind attachPoint,
+        ulong itemId, uint ownerDbId, float scale, int data, FarmType farmType)
+    {
+        DbId = dbId;
+        _loadingFromDb = true;
+        try
+        {
+            // Same field order as the original loader (FuncGroupId first so
+            // the func-group refresh happens before any owner-dependent lookups).
+            FuncGroupId = phaseId;
+            OwnerId = ownerId;
+            OwnerType = ownerType;
+            AttachPoint = attachPoint;
+            PlantTime = plantTime;
+            GrowthTime = growthTime;
+            OverridePhaseTime = phaseTime;
+            PhaseTime = phaseTime;
+            ItemId = itemId;
+            OwnerDbId = ownerDbId;
+            SetScale(scale != 0f ? scale : 1f);
+            SetData(data);
+            FarmType = farmType;
+        }
+        finally
+        {
+            _loadingFromDb = false;
+        }
+    }
+
+    /// <summary>
     /// Save this Doodad to database if it's marked as persistent
     /// </summary>
-    public void Save()
+    public virtual void Save()
     {
         if (!IsPersistent)
         {

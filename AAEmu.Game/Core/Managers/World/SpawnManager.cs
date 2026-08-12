@@ -730,25 +730,22 @@ public class SpawnManager(WorldInstance parentWorld)
 
                     //doodad.Spawner = new DoodadSpawner();
                     //doodad.Spawner.UnitId = templateId;
-                    doodad.DbId = dbId;
-                    doodad.FuncGroupId = phaseId;
-                    doodad.OwnerId = ownerId;
-                    doodad.OwnerType = ownerType;
-                    doodad.AttachPoint = attachPoint;
-                    doodad.PlantTime = plantTime;
-                    doodad.GrowthTime = growthTime;
-                    doodad.OverridePhaseTime = phaseTime;
-                    doodad.PhaseTime = phaseTime;
-                    doodad.ItemId = itemId;
-                    doodad.OwnerDbId = houseId;
-                    doodad.SetScale(scale != 0f ? scale : 1f);
+                    // M3b merge reconciliation (M3b-1 + M3b-2, belt and suspenders):
+                    // ApplyLoadedState restores every persisted field with Save()
+                    // side effects suppressed (_loadingFromDb), so the early arm
+                    // cannot fire a mid-load Save() — and the late IsPersistent=true
+                    // arm below (M3b-1) keeps the flag off until the transform is
+                    // restored as well. Both guards verified independent; no
+                    // double-Save (ApplyLoadedState suppresses all setters).
+                    doodad.IsPersistent = true;
+                    doodad.ApplyLoadedState(
+                        dbId, phaseId, plantTime, growthTime, phaseTime,
+                        ownerId, ownerType, attachPoint, itemId, houseId, scale, data, farmType);
                     // Try to grab info from the actual item if it still exists
                     var sourceItem = ItemManager.Instance.GetItemByItemId(itemId);
                     doodad.ItemTemplateId = sourceItem?.TemplateId ?? itemTemplateId;
                     // Grab Ucc from its old source item
                     doodad.UccId = sourceItem?.UccId ?? 0;
-                    doodad.SetData(data); // Directly assigning to Data property would trigger a .Save()
-                    doodad.FarmType = farmType;
 
                     // Apparently this is only a reference value, so might not actually need to parent it
                     if (parentDoodad > 0)
