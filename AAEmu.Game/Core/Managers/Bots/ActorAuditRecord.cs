@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace AAEmu.Game.Core.Managers.Bots;
 
 /// <summary>
@@ -34,4 +36,27 @@ public sealed record ActorAuditRecord(
         => $"actor={ActorId} trace={TraceId} action={Action} target={TargetId} " +
            $"req={RequestedAtUtc:O} start={StartedAtUtc:O} done={CompletedAtUtc:O} " +
            $"result={Result} failure={Failure} detail={Detail}";
+
+    /// <summary>
+    /// Stable JSON form for the control-plane API (ROADMAP M5 field names,
+    /// snake_case, declaration-ordered). The API consumes this shape; field
+    /// names are contract and must not change without a version bump. Times
+    /// are ISO-8601 (UTC), enums render as names, state_changes is the full
+    /// transition log oldest-first.
+    /// </summary>
+    public string ToJson()
+        => JsonSerializer.Serialize(new
+        {
+            trace_id = TraceId,
+            actor_id = ActorId,
+            action = Action.ToString(),
+            target_id = TargetId,
+            requested_at = RequestedAtUtc,
+            started_at = StartedAtUtc,
+            completed_at = CompletedAtUtc,
+            result = Result.ToString(),
+            failure = Failure?.ToString(),
+            detail = Detail,
+            state_changes = StateChanges
+        });
 }

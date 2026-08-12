@@ -15,6 +15,16 @@ public sealed class ActorRequest
     /// <summary>Correlation id — retries/timeouts must reuse or reference it; never re-execute a terminal request.</summary>
     public Guid TraceId { get; }
 
+    /// <summary>
+    /// Explicit idempotency key (null = no retry semantics; the request
+    /// always executes and is recorded only in the audit trace). When a
+    /// caller reuses a key, the actor dedupes against the effect ledger:
+    /// a prior Completed/Interrupted/TimedOut attempt is never re-executed
+    /// (the duplicate is Rejected(StateTransition) pre-flight). See
+    /// <see cref="ActorEffectLedger"/> for the exact rule.
+    /// </summary>
+    public string? IdempotencyKey { get; }
+
     public ActorActionType Action { get; }
 
     /// <summary>Primary target objId (0 when not applicable, e.g. Move to position).</summary>
@@ -60,8 +70,16 @@ public sealed class ActorRequest
     /// <summary>Result payload of a Completed request (e.g. SkillResult for Cast).</summary>
     public object? Result { get; private set; }
 
+    /// <summary>
+    /// True when this request was refused by the idempotency gate (a
+    /// duplicate of a key that may have executed). Such a refusal must not
+    /// replace the original attempt's ledger outcome — the lock survives
+    /// so a third retry is still refused.
+    /// </summary>
+    internal bool IsDedupeRejection { get; set; }
+
     public ActorRequest(ActorActionType action, uint targetId, System.Numerics.Vector3? destination,
-        uint skillId, TimeSpan? timeout, object? payload = null)
+        uint skillId, TimeSpan? timeout, object? payload = null, string? idempotencyKey = null)
     {
         TraceId = Guid.NewGuid();
         Action = action;
@@ -70,6 +88,7 @@ public sealed class ActorRequest
         SkillId = skillId;
         Payload = payload;
         Timeout = timeout;
+        IdempotencyKey = idempotencyKey;
         RequestedAtUtc = DateTime.UtcNow;
         // The lifecycle starts here: Requested is the initial state and must
         // appear in the audit state_changes (full transition log, oldest first).
@@ -141,6 +160,16 @@ public sealed class ActorRequest
         if (State == ActorLifecycleState.Running)
             Elapsed += elapsed;
     }
+
+    /// <summary>
+    /// Appends a quest-context entry to the state_changes log so the audit
+    /// record of a quest action carries the quest id explicitly
+    /// (ROADMAP M5: "state_changes with quest_id"). Quest actions call this
+    /// right after creation; the entry sits in the transition log after the
+    /// initial Requested marker.
+    /// </summary>
+    internal void AddQuestContext(uint questId)
+        => _stateChanges.Add($"quest_id={questId}");
 
     private bool CanTerminate() => State is ActorLifecycleState.Accepted or ActorLifecycleState.Running;
 

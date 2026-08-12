@@ -44,44 +44,52 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public ActorObservation Observe() => Actor.Observe();
 
-    public ActorRequest MoveTo(System.Numerics.Vector3 destination, float speed = 5f, TimeSpan? timeout = null)
-        => Actor.MoveTo(destination, speed, timeout);
+    public ActorRequest MoveTo(System.Numerics.Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+        => Actor.MoveTo(destination, speed, timeout, idempotencyKey);
 
-    public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null)
-        => Actor.MoveToUnit(targetObjId, speed, timeout);
+    public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+        => Actor.MoveToUnit(targetObjId, speed, timeout, idempotencyKey);
 
     public ActorRequest Stop() => Actor.Stop();
 
     public ActorRequest SetTarget(uint targetObjId) => Actor.SetTarget(targetObjId);
 
-    public ActorRequest Cast(uint skillId, uint targetObjId) => Actor.Cast(skillId, targetObjId);
+    public ActorRequest Cast(uint skillId, uint targetObjId, string? idempotencyKey = null)
+        => Actor.Cast(skillId, targetObjId, idempotencyKey);
 
-    public ActorRequest Interact(uint doodadObjId, uint skillId = 0) => Actor.Interact(doodadObjId, skillId);
+    public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null)
+        => Actor.Interact(doodadObjId, skillId, idempotencyKey);
 
-    public ActorRequest Loot(uint lootOwnerObjId) => Actor.Loot(lootOwnerObjId);
+    public ActorRequest Loot(uint lootOwnerObjId, string? idempotencyKey = null)
+        => Actor.Loot(lootOwnerObjId, idempotencyKey);
 
-    public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0)
-        => Actor.UseItem(itemTemplateId, targetObjId);
+    public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0, string? idempotencyKey = null)
+        => Actor.UseItem(itemTemplateId, targetObjId, idempotencyKey);
 
-    public ActorRequest Mount(uint mateObjId) => Actor.Mount(mateObjId);
+    public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null)
+        => Actor.Mount(mateObjId, idempotencyKey);
 
-    public ActorRequest Dismount(uint mateObjId = 0) => Actor.Dismount(mateObjId);
+    public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null)
+        => Actor.Dismount(mateObjId, idempotencyKey);
 
     public bool Interrupt(Guid traceId) => Actor.Interrupt(traceId);
 
-    public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId)
-        => Actor.AcceptQuest(questId, acceptorType, acceptorId);
+    public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId, string? idempotencyKey = null)
+        => Actor.AcceptQuest(questId, acceptorType, acceptorId, idempotencyKey);
 
-    public ActorRequest AdvanceQuest(uint questId) => Actor.AdvanceQuest(questId);
+    public ActorRequest AdvanceQuest(uint questId, string? idempotencyKey = null)
+        => Actor.AdvanceQuest(questId, idempotencyKey);
 
-    public ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1)
-        => Actor.TurnInQuest(questId, npcObjId, selectedReward);
+    public ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1, string? idempotencyKey = null)
+        => Actor.TurnInQuest(questId, npcObjId, selectedReward, idempotencyKey);
 
-    public ActorRequest TurnInAtDoodad(uint questId, uint doodadObjId, int selectedReward = -1)
-        => Actor.TurnInAtDoodad(questId, doodadObjId, selectedReward);
+    public ActorRequest TurnInAtDoodad(uint questId, uint doodadObjId, int selectedReward = -1, string? idempotencyKey = null)
+        => Actor.TurnInAtDoodad(questId, doodadObjId, selectedReward, idempotencyKey);
 
-    public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1)
-        => Actor.AutoTurnInQuest(questId, selectedReward);
+    public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null)
+        => Actor.AutoTurnInQuest(questId, selectedReward, idempotencyKey);
+
+    public ActorAuditRecord? FindByKey(string idempotencyKey) => Actor.FindByKey(idempotencyKey);
 
     public void Tick(TimeSpan elapsed) => Actor.Tick(elapsed);
 

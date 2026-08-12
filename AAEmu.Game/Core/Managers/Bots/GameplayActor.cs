@@ -23,6 +23,11 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///    while Running is Rejected(StateTransition, "busy"). Stop() is the
 ///    only request allowed while busy — it interrupts the active one.
 ///  - Every terminal transition emits an <see cref="ActorAuditRecord"/>.
+///  - Retries are deduped through the <see cref="ActorEffectLedger"/>: an
+///    explicit idempotency key whose prior attempt may have executed
+///    (Completed/Interrupted/TimedOut) is never re-executed; the duplicate
+///    is Rejected(StateTransition) pre-flight. Every action supports a
+///    timeout budget (§17 reason: Move → Navigation, else Starvation).
 ///  - All execution goes through normal gameplay services: movement applies
 ///    the ordinary Transform (same facility Simulation.MoveTo / the M2b
 ///    pilot use), targeting sets Unit.CurrentTarget, casting calls
@@ -47,6 +52,7 @@ public class GameplayActor : IGameplayActor
     private const int MaxTraceRecords = 512;
 
     private readonly List<ActorAuditRecord> _trace = [];
+    private readonly ActorEffectLedger _ledger = new();
     private ActorRequest? _active;
 
     public uint ActorId => Character.ObjId;
@@ -94,9 +100,9 @@ public class GameplayActor : IGameplayActor
 
     #region Actions
 
-    public ActorRequest MoveTo(Vector3 destination, float speed = 5f, TimeSpan? timeout = null)
+    public ActorRequest MoveTo(Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.Move, 0, destination, timeout: timeout ?? DefaultMoveTimeout);
+        var request = NewRequest(ActorActionType.Move, 0, destination, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "move"))
             return request;
 
@@ -123,9 +129,9 @@ public class GameplayActor : IGameplayActor
         return request;
     }
 
-    public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null)
+    public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.Move, targetObjId, timeout: timeout ?? DefaultMoveTimeout);
+        var request = NewRequest(ActorActionType.Move, targetObjId, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "move"))
             return request;
 
@@ -163,9 +169,9 @@ public class GameplayActor : IGameplayActor
         return Complete(request, $"targeting {unit.ObjId}");
     }
 
-    public ActorRequest Cast(uint skillId, uint targetObjId)
+    public ActorRequest Cast(uint skillId, uint targetObjId, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.Cast, targetObjId, skillId: skillId);
+        var request = NewRequest(ActorActionType.Cast, targetObjId, skillId: skillId, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "cast"))
             return request;
 
@@ -221,24 +227,42 @@ public class GameplayActor : IGameplayActor
     /// </summary>
     private PlayerBotController QuestController => _questController ??= new PlayerBotController(Character);
 
-    public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId)
+    public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId, string? idempotencyKey = null)
     {
         var request = NewRequest(ActorActionType.AcceptQuest, questId,
-            payload: new QuestAcceptParams(acceptorType, acceptorId));
+            payload: new QuestAcceptParams(acceptorType, acceptorId), idempotencyKey: idempotencyKey);
+        request.AddQuestContext(questId);
         if (!TryBegin(request, "accept quest"))
             return request;
+
+        // Quest-credit idempotency marker (ROADMAP M5): a quest that was
+        // ALREADY accepted by a prior attempt (fresh-key retry after a
+        // timeout ambiguity) must never re-enter AddQuest. The engine's own
+        // duplicate check would refuse it too, but the ledger probe makes
+        // the refusal pre-flight and explicit — the audit record shows no
+        // Running transition.
+        if (_ledger.IsEffectApplied(ActorIdempotency.EffectKey("questcredit", questId, "accept"))
+            && Character.Quests?.ActiveQuests.ContainsKey(questId) == true)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"quest {questId} accept credit already applied (duplicate accept refused pre-flight)");
 
         request.Start($"accepting quest {questId} via {acceptorType}/{acceptorId}");
         var accepted = QuestController.AcceptQuest(questId, acceptorType, acceptorId);
         if (accepted)
+        {
+            // Record the accept credit AFTER the engine applied it, so a
+            // fresh-key retry can prove the credit already landed.
+            _ledger.RecordEffect(ActorIdempotency.EffectKey("questcredit", questId, "accept"), request.TraceId);
             return Complete(request, accepted, $"quest {questId} accepted ({acceptorType}/{acceptorId})");
+        }
         return Reject(request, ActorFailureReason.RejectedAction,
             $"quest {questId} accept refused by engine gate ({acceptorType}/{acceptorId})");
     }
 
-    public ActorRequest AdvanceQuest(uint questId)
+    public ActorRequest AdvanceQuest(uint questId, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.AdvanceQuest, questId);
+        var request = NewRequest(ActorActionType.AdvanceQuest, questId, idempotencyKey: idempotencyKey);
+        request.AddQuestContext(questId);
         if (!TryBegin(request, "advance quest"))
             return request;
 
@@ -253,24 +277,25 @@ public class GameplayActor : IGameplayActor
             $"quest {questId} advanced (step {quest.Step}, status {quest.Status})");
     }
 
-    public ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1)
-        => TurnIn(questId, ActorActionType.TurnInQuest, npcObjId, selectedReward);
+    public ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1, string? idempotencyKey = null)
+        => TurnIn(questId, ActorActionType.TurnInQuest, npcObjId, selectedReward, idempotencyKey);
 
-    public ActorRequest TurnInAtDoodad(uint questId, uint doodadObjId, int selectedReward = -1)
-        => TurnIn(questId, ActorActionType.TurnInDoodad, doodadObjId, selectedReward);
+    public ActorRequest TurnInAtDoodad(uint questId, uint doodadObjId, int selectedReward = -1, string? idempotencyKey = null)
+        => TurnIn(questId, ActorActionType.TurnInDoodad, doodadObjId, selectedReward, idempotencyKey);
 
-    public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1)
-        => TurnIn(questId, ActorActionType.AutoTurnIn, 0, selectedReward);
+    public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null)
+        => TurnIn(questId, ActorActionType.AutoTurnIn, 0, selectedReward, idempotencyKey);
 
     /// <summary>
     /// Turn-in through the real packet path (QuestManager.DoReportEvents),
-    /// then the same single step-machine advance the world pipeline performs
-    /// after a report event. The world target must resolve when one is
-    /// given; 0 (auto turn-in) always resolves.
+    /// then the same step-machine advances the world pipeline performs after
+    /// a report event. The world target must resolve when one is given;
+    /// 0 (auto turn-in) always resolves.
     /// </summary>
-    private ActorRequest TurnIn(uint questId, ActorActionType action, uint targetObjId, int selectedReward)
+    private ActorRequest TurnIn(uint questId, ActorActionType action, uint targetObjId, int selectedReward, string? idempotencyKey)
     {
-        var request = NewRequest(action, questId, payload: new QuestTurnInParams(targetObjId, selectedReward));
+        var request = NewRequest(action, questId, payload: new QuestTurnInParams(targetObjId, selectedReward), idempotencyKey: idempotencyKey);
+        request.AddQuestContext(questId);
         if (!TryBegin(request, "turn in"))
             return request;
 
@@ -302,24 +327,38 @@ public class GameplayActor : IGameplayActor
         }
 
         // The report event drives the step machine; the world pipeline's
-        // post-event advance is the last leg (completion path drops the quest
-        // from ActiveQuests — terminal state, correct engine behavior).
-        if (Character.Quests?.ActiveQuests.ContainsKey(questId) == true)
-            _ = quest.RunCurrentStep();
+        // post-event evaluations (the QuestManager evaluation queue) are the
+        // last legs — completion drops the quest from ActiveQuests (terminal
+        // state, correct engine behavior). Drain the same evaluations while
+        // the step machine still advances, bounded — a turn-in can take more
+        // than one pass (report → Ready → Reward → completed+drop) and each
+        // pass is the engine's own evaluation. Stopping on a false advance
+        // keeps a not-ready quest (objectives unmet) from being force-advanced.
+        var guard = 0;
+        while (Character.Quests?.ActiveQuests.ContainsKey(questId) == true && guard++ < 8)
+        {
+            if (!quest.RunCurrentStep())
+                break;
+        }
 
         var completed = Character.Quests?.HasQuestCompleted(questId) == true;
-        return Complete(request, completed, completed
-            ? $"quest {questId} completed by turn-in"
-            : $"quest {questId} turn-in executed (still active)");
+        if (completed)
+        {
+            // Reward idempotency marker: recorded AFTER the reward landed so
+            // a fresh-key retry can prove the reward was already credited.
+            _ledger.RecordEffect(ActorIdempotency.EffectKey("questcredit", questId, "reward"), request.TraceId);
+            return Complete(request, completed, $"quest {questId} completed by turn-in");
+        }
+        return Complete(request, completed, $"quest {questId} turn-in executed (still active)");
     }
 
     #endregion
 
     #region B1 actions (M5 vocabulary — real engine paths)
 
-    public ActorRequest Interact(uint doodadObjId, uint skillId = 0)
+    public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.Interact, doodadObjId, skillId: skillId);
+        var request = NewRequest(ActorActionType.Interact, doodadObjId, skillId: skillId, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "interact"))
             return request;
 
@@ -343,9 +382,9 @@ public class GameplayActor : IGameplayActor
         return Complete(request, true, $"doodad {doodadObjId} interacted (phase {doodad.FuncGroupId})");
     }
 
-    public ActorRequest Loot(uint lootOwnerObjId)
+    public ActorRequest Loot(uint lootOwnerObjId, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.Loot, lootOwnerObjId);
+        var request = NewRequest(ActorActionType.Loot, lootOwnerObjId, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "loot"))
             return request;
 
@@ -368,9 +407,9 @@ public class GameplayActor : IGameplayActor
             : $"nothing to loot from {lootOwnerObjId} (empty or already looted)");
     }
 
-    public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0)
+    public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.UseItem, itemTemplateId);
+        var request = NewRequest(ActorActionType.UseItem, itemTemplateId, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "use item"))
             return request;
 
@@ -421,9 +460,9 @@ public class GameplayActor : IGameplayActor
             : Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} use refused: {result}");
     }
 
-    public ActorRequest Mount(uint mateObjId)
+    public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.Mount, mateObjId);
+        var request = NewRequest(ActorActionType.Mount, mateObjId, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "mount"))
             return request;
 
@@ -457,9 +496,9 @@ public class GameplayActor : IGameplayActor
             : Reject(request, ActorFailureReason.RejectedAction, $"mount of mate {mateObjId} refused by engine (seat taken or not owner)");
     }
 
-    public ActorRequest Dismount(uint mateObjId = 0)
+    public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.Dismount, mateObjId);
+        var request = NewRequest(ActorActionType.Dismount, mateObjId, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "dismount"))
             return request;
 
@@ -498,11 +537,13 @@ public class GameplayActor : IGameplayActor
 
         request.AddElapsed(elapsed);
 
-        // Timeout enforcement (navigation budget — spec §17 Navigation).
-        if (request.Action == ActorActionType.Move && request.Timeout is { } budget
-            && request.Elapsed > budget)
+        // Timeout enforcement on EVERY action that carries a budget — not
+        // just movement. The §17 reason maps per action kind (Move →
+        // Navigation; everything else → Starvation, budget exhaustion).
+        if (request.Timeout is { } budget && request.Elapsed > budget)
         {
-            Finish(request, request.Expire(ActorFailureReason.Navigation, "navigation budget exceeded"));
+            Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action),
+                request.Action == ActorActionType.Move ? "navigation budget exceeded" : "action budget exceeded"));
             _moveTarget = null;
             return;
         }
@@ -551,8 +592,9 @@ public class GameplayActor : IGameplayActor
     #region Internals
 
     private ActorRequest NewRequest(ActorActionType action, uint targetId,
-        Vector3? destination = null, uint skillId = 0, TimeSpan? timeout = null, object? payload = null)
-        => new(action, targetId, destination, skillId, timeout, payload);
+        Vector3? destination = null, uint skillId = 0, TimeSpan? timeout = null, object? payload = null,
+        string? idempotencyKey = null)
+        => new(action, targetId, destination, skillId, timeout, payload, idempotencyKey);
 
     /// <summary>
     /// Single-writer gate: accepts the request as the new active one, or
@@ -570,6 +612,25 @@ public class GameplayActor : IGameplayActor
         }
 
         request.Accept(what);
+
+        // Idempotency gate: an explicit key whose prior attempt ended in a
+        // state that may have executed (Completed/Interrupted/TimedOut) is
+        // NEVER re-executed — the duplicate is rejected pre-flight and its
+        // audit record shows no Running transition (the roadmap's "retries
+        // and timeouts cannot duplicate" guarantee). Rejected attempts are
+        // retryable (v1 rejections all occur before engine execution). The
+        // refusal is flagged so it cannot replace the locked outcome.
+        if (!string.IsNullOrEmpty(request.IdempotencyKey)
+            && _ledger.TryGetOutcome(request.IdempotencyKey, out var prior)
+            && prior.Result != ActorLifecycleState.Rejected)
+        {
+            request.IsDedupeRejection = true;
+            Reject(request, ActorFailureReason.StateTransition,
+                $"duplicate idempotency key '{request.IdempotencyKey}' — original trace {prior.TraceId} " +
+                $"already {prior.Result}; retry is not re-executed");
+            return false;
+        }
+
         _active = request;
         return true;
     }
@@ -602,6 +663,10 @@ public class GameplayActor : IGameplayActor
     {
         if (!transitioned || request == null || !request.IsTerminal)
             return;
+        // A dedupe refusal is not an attempt of its own: it must not
+        // replace the original (possibly locked) outcome under the key.
+        if (!request.IsDedupeRejection)
+            _ledger.TryRecordOutcome(request.IdempotencyKey, request.TraceId, request.State, request.Failure);
         _trace.Add(new ActorAuditRecord(
             request.TraceId, ActorId, request.Action, request.TargetId,
             request.RequestedAtUtc, request.StartedAtUtc, request.CompletedAtUtc,
@@ -611,6 +676,11 @@ public class GameplayActor : IGameplayActor
         if (ReferenceEquals(_active, request))
             _active = null;
     }
+
+    public ActorAuditRecord? FindByKey(string idempotencyKey)
+        => _ledger.TryGetOutcome(idempotencyKey, out var entry)
+            ? _trace.LastOrDefault(r => r.TraceId == entry.TraceId)
+            : null;
 
     private Unit? ResolveUnit(uint objId)
     {
@@ -629,4 +699,17 @@ internal static class VectorMath
 {
     public static bool IsFinite(this Vector3 v)
         => float.IsFinite(v.X) && float.IsFinite(v.Y) && float.IsFinite(v.Z);
+}
+
+/// <summary>
+/// §17 reason mapping for action timeouts. Every action supports a timeout
+/// budget; the taxonomy reason is per action kind: movement timeouts are
+/// Navigation failures, every other action that exceeds its budget is
+/// Starvation (resource/budget exhaustion). No new reasons — only spec §17
+/// vocabulary.
+/// </summary>
+public static class ActorTimeoutPolicy
+{
+    public static ActorFailureReason ReasonFor(ActorActionType action)
+        => action == ActorActionType.Move ? ActorFailureReason.Navigation : ActorFailureReason.Starvation;
 }
