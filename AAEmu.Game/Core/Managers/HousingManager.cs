@@ -88,6 +88,37 @@ public class HousingManager(
     }
 
     /// <summary>
+    /// Decides whether a `housings` DB row should be loaded into the world at boot.
+    /// Rows whose template is missing from the game data, or whose owner/account is
+    /// gone (demolished/expired rows that survived a crash), are unrecoverable and
+    /// must be skipped — loading them would either NRE the boot loader or spawn a
+    /// zombie house that can never be saved again. (M3b-3: clean restart restore +
+    /// orphan prevention.)
+    /// </summary>
+    /// <param name="template">Resolved housing template for the row (null if missing)</param>
+    /// <param name="ownerId">Row owner (character) id</param>
+    /// <param name="accountId">Row account id</param>
+    /// <param name="skipReason">Human-readable reason, set when returning false</param>
+    /// <returns>True if the row should be loaded</returns>
+    internal static bool ShouldLoadHouseRow(HousingTemplate template, uint ownerId, uint accountId, out string skipReason)
+    {
+        if (template == null)
+        {
+            skipReason = "template not in game data";
+            return false;
+        }
+
+        if (ownerId <= 0 || accountId <= 0)
+        {
+            skipReason = "owner-less row (demolished/expired, left behind by a crash); repair tooling can purge it";
+            return false;
+        }
+
+        skipReason = null;
+        return true;
+    }
+
+    /// <summary>
     /// Creates House and set it's untouchable buff
     /// </summary>
     /// <param name="templateId"></param>
@@ -139,6 +170,7 @@ public class HousingManager(
         // var houseTaxes = new Dictionary<uint, HouseTax>();
 
         Logger.Info("Loading Player Buildings ...");
+        var skippedRows = 0;
         using (var connection = MySQL.CreateConnection())
         {
             using (var command = connection.CreateCommand())
@@ -151,6 +183,22 @@ public class HousingManager(
                     {
                         var templateId = reader.GetUInt32("template_id");
                         var factionId = (FactionsEnum)reader.GetUInt32("faction_id");
+                        var ownerId = reader.GetUInt32("owner");
+                        var accountId = reader.GetUInt32("account_id");
+
+                        // Skip + log rows that can't be restored. A house row whose
+                        // template is missing from the game data (or whose owner is gone,
+                        // e.g. a demolished house whose row survived a crash) would
+                        // otherwise either NRE the boot loader or spawn a zombie house
+                        // that can never be saved again. (M3b-3: clean restart restore +
+                        // orphan prevention.)
+                        if (!ShouldLoadHouseRow(HousingGameData.Instance.GetTemplate(templateId), ownerId, accountId, out var skipReason))
+                        {
+                            Logger.Warn($"LoadPlayerHousing: Skipping house row id={reader.GetUInt32("id")} templateId={templateId} — {skipReason}");
+                            skippedRows++;
+                            continue;
+                        }
+
                         var house = Create(templateId, factionId, worldInstance);
                         house.ParentWorld = worldInstance;
                         house.Id = reader.GetUInt32("id");
@@ -193,6 +241,9 @@ public class HousingManager(
                 }
             }
         }
+
+        if (skippedRows > 0)
+            Logger.Warn($"LoadPlayerHousing: Skipped {skippedRows} unrecoverable house row(s) (unknown template or owner-less).");
 
         Logger.Info($"Loaded {_houses.Count} Player Buildings");
 
@@ -634,10 +685,54 @@ public class HousingManager(
         connection.ActiveChar.SendPacket(new SCMyHousePacket(house));
         house.Spawn();
         UpdateTaxInfo(house);
+        // Persist the new house row immediately. The periodic SaveManager tick would
+        // eventually write it (the house is dirty), but a kill -9 / container kill before
+        // that tick would lose the placement while the design item is already consumed.
+        // (M3b-3: restart restoration — placement must survive a crash.)
+        try
+        {
+            using var saveConnection = MySQL.CreateConnection();
+            house.Save(saveConnection);
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e, $"Build: Failed to immediately persist new house {house.Id} ({house.Name}) — will be retried by the next save tick.");
+        }
     }
 
     /// <summary>
-    /// Update house permission settings
+    /// Saves all dirty houses owned by the given character immediately (own connection,
+    /// outside the periodic SaveManager tick). Used on character deactivation so a
+    /// logout/disconnect followed by a crash cannot lose pending house state (build
+    /// progress, permissions, names) before the next tick. (M3b-3: disconnect/logout
+    /// cleanup.)
+    /// </summary>
+    /// <param name="characterId">Owner character to flush houses for</param>
+    /// <returns>Number of houses actually persisted</returns>
+    public int SaveDirtyHousesForCharacter(uint characterId)
+    {
+        var saved = 0;
+        try
+        {
+            using var connection = MySQL.CreateConnection();
+            foreach (var house in _houses.Values)
+            {
+                if (house.OwnerId != characterId)
+                    continue;
+                if (house.Save(connection))
+                    saved++;
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e, $"SaveDirtyHousesForCharacter: Failed to flush houses for character {characterId} — will be retried by the next save tick.");
+        }
+
+        return saved;
+    }
+
+    /// <summary>
+    /// Updates house permission settings
     /// </summary>
     /// <param name="connection"></param>
     /// <param name="tlId"></param>
@@ -727,11 +822,36 @@ public class HousingManager(
 
             // TODO: better house killing handling
             _removedHousings.Add(house.Id);
+            DeleteHouseRowImmediately(house);
         }
         else
         {
             // Non-owner should not be able to press demolish
             connection.ActiveChar?.SendErrorMessage(ErrorMessageType.InvalidHouseInfo);
+        }
+    }
+
+    /// <summary>
+    /// Removes the house row from the database immediately, outside the periodic
+    /// SaveManager tick. The tick's _removedHousings sweep would delete it eventually,
+    /// but a kill -9 / container kill between Demolish() and the next tick would leave
+    /// the row behind — resurrecting a demolished house (owner 0) on the next restart.
+    /// (M3b-3: orphan prevention after mid-save kill.)
+    /// </summary>
+    private static void DeleteHouseRowImmediately(House house)
+    {
+        try
+        {
+            using var connection = MySQL.CreateConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM housings WHERE id = @id";
+            command.Parameters.AddWithValue("@id", house.Id);
+            command.Prepare();
+            command.ExecuteNonQuery();
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e, $"DeleteHouseRowImmediately: Failed to delete house row {house.Id} ({house.Name}) — will be retried by the next save tick.");
         }
     }
 
@@ -747,6 +867,9 @@ public class HousingManager(
         _housesTl.Remove(house.TlId);
         housingTldManager.ReleaseId(house.TlId);
         housingIdManager.ReleaseId(house.Id);
+        // Delete the row immediately as well — the tick sweep would do it, but a
+        // crash before the next tick must not resurrect the house on restart.
+        DeleteHouseRowImmediately(house);
         // TODO: not sure how to handle this, just instant delete it for now
         house.Delete();
         // TODO: Add to despawn handler

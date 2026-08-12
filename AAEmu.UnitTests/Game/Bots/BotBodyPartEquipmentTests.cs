@@ -18,6 +18,8 @@ using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
 
+using TUnit.Core.Interfaces;
+
 namespace AAEmu.UnitTests.Game.Bots;
 
 /// <summary>
@@ -47,6 +49,7 @@ namespace AAEmu.UnitTests.Game.Bots;
 ///  the client can assemble the mesh.
 /// </summary>
 [NotInParallel]
+[ParallelLimiter<BodyPartSequentialParallelLimit>] // t_f3700374 pattern: within-class tests share the ItemManager container registry (fail-before id 900001 vs equip tests same id) — must not run in parallel
 public class BotBodyPartEquipmentTests
 {
     // ------------------------------------------------------------------ fail-before evidence
@@ -328,20 +331,32 @@ public class BotBodyPartEquipmentTests
             BindingFlags.NonPublic | BindingFlags.Instance);
         var itemsField = typeof(ItemManager).GetField("_allItems",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        if (containersField?.GetValue(itemManager) is not Dictionary<ulong, ItemContainer> containers)
+        // The fixture seeds BOTH shapes across the suite's history:
+        // _allPersistentContainers / _allItems are ConcurrentDictionary since
+        // the t_3fdd6ac3 race fix, but the t_6bad0654-era plain-Dictionary shape
+        // still appears in older rig paths. The old `is not Dictionary<...>`
+        // pattern-match silently no-op'd on the ConcurrentDictionary shape —
+        // every test left its 900000+ containers in the SHARED ItemManager
+        // singleton, so a later serialized test saw the previous test's items
+        // (t_743866f9 deterministic full-suite failure once the class-level
+        // parallel limiter made execution order stable). The non-generic
+        // IDictionary interface covers both implementations.
+        if (containersField?.GetValue(itemManager) is not System.Collections.IDictionary containers)
+            return;
+        if (itemsField?.GetValue(itemManager) is not System.Collections.IDictionary allItems)
             return;
 
-        var toRemove = containers.Where(kv => kv.Value.OwnerId >= RigOwnerIdBase).Select(kv => kv.Key).ToList();
-        foreach (var key in toRemove)
+        var toRemove = new List<object>();
+        foreach (System.Collections.DictionaryEntry entry in containers)
         {
-            var container = containers[key];
-            if (itemsField?.GetValue(itemManager) is Dictionary<ulong, Item> allItems)
-            {
-                foreach (var item in container.Items.ToList())
-                    allItems.Remove(item.Id);
-            }
-            containers.Remove(key);
+            if (entry.Value is not ItemContainer container || container.OwnerId < RigOwnerIdBase)
+                continue;
+            toRemove.Add(entry.Key);
+            foreach (var item in container.Items.ToList())
+                allItems.Remove(item.Id);
         }
+        foreach (var key in toRemove)
+            containers.Remove(key);
     }
 
     private static void SeedFixtureSingletons()
@@ -525,4 +540,16 @@ public class BotBodyPartEquipmentTests
             return; // never replace an established singleton (t_4f11a519)
         field.SetValue(null, instance);
     }
+}
+
+/// <summary>
+/// Serializes this class's tests (Limit = 1) — the rig shares the ItemManager
+/// container registry across tests (fail-before asserts id 900001 has EMPTY
+/// equipment while the equip tests write body parts into the SAME owner id),
+/// so within-class parallelism is a data race. [NotInParallel] alone does NOT
+/// serialize within a class (t_f3700374); this limiter is required.
+/// </summary>
+public sealed class BodyPartSequentialParallelLimit : IParallelLimit
+{
+    public int Limit => 1;
 }
