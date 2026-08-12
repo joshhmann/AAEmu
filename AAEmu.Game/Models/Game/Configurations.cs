@@ -294,13 +294,28 @@ public class SpecialtyConfig
     public double RatioRegenTickMinutes { get; set; } = 60f;
 
     /// <summary>
-    /// Time in minutes to delay trade pack reward mail delivery. Default is 8 hours.
+    /// Time in minutes to delay trade pack reward mail delivery. Canonical 1.2:
+    /// payment is mailed 22 hours after the sale (item tooltip "판매 시 22시간 후 우편으로 대금 지급").
     /// </summary>
-    /// <remarks>
-    /// The default value is 8 hours. This setting controls how long after delivery 
-    /// a player must wait before receiving their trade pack reward via mail.
-    /// </remarks>
-    public double TradePackMailDelayInMinutes { get; set; } = 480f;
+    public double TradePackMailDelayInMinutes { get; set; } = 1320f;
+
+    /// <summary>
+    /// Time in hours a placed trade pack stays on the ground before it despawns.
+    /// Canonical 1.2: "내려놓은 등짐은 6일 후 소멸" (a placed pack disappears after 6 days;
+    /// re-placing resets the timer).
+    /// </summary>
+    public double PlacedPackExpiryHours { get; set; } = 144f;
+
+    /// <summary>
+    /// Minutes between placed-pack expiry sweeps.
+    /// </summary>
+    public double PlacedPackExpiryCheckMinutes { get; set; } = 60f;
+
+    /// <summary>
+    /// Minimum character level required to craft and sell trade packs.
+    /// Canonical 1.2 tooltip: "10레벨 미만은 특산품 제작/판매 불가".
+    /// </summary>
+    public int MinLevelToCraftSell { get; set; } = 10;
 }
 
 public class ScriptsConfig
