@@ -4,10 +4,16 @@ using System.Text;
 using System.Text.Json;
 using AAEmu.Commons.IO;
 using AAEmu.Commons.Utils;
+using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Id;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Connections;
+using AAEmu.Game.Models;
+using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Static;
 using Microsoft.Extensions.DependencyInjection;
@@ -208,6 +214,8 @@ public sealed class BotDriveBridge
                 return Ok(CollectGateMetrics());
             case "drive":
                 return HandleDrive(root);
+            case "scenario":
+                return HandleScenario(root);
             default:
                 return Err($"unknown cmd '{cmd}'");
         }
@@ -541,6 +549,238 @@ public sealed class BotDriveBridge
 
     private static string Err(string error)
         => JsonSerializer.Serialize(new { ok = false, error });
+
+    #region Scenario templates (P1 t_5efae4f1 — gate-harness scenario stage)
+
+    /// <summary>
+    /// Live-world adapter for the scenario runner: turn-in targets resolve
+    /// through the REAL world (spawned NPCs from spawners). When a target
+    /// NPC is not currently spawned, teleport the bot to the NPC's spawner
+    /// position — the world then spawns it through its NORMAL spawn path
+    /// (the same facility the "teleportToNpc" drive op uses). The runner
+    /// still fails the stage when the target cannot be resolved at all.
+    /// </summary>
+    private sealed class LiveScenarioWorldAdapter : BotScenarioRunner.IScenarioWorldAdapter
+    {
+        private readonly Character _character;
+
+        public LiveScenarioWorldAdapter(Character character) => _character = character;
+
+        public uint ResolveNpcObjId(uint npcTemplateId)
+        {
+            if (npcTemplateId == 0)
+                return 0;
+
+            var world = _character.ParentWorld;
+            var npc = world.GetNpcByTemplateId(npcTemplateId);
+            if (npc != null)
+                return npc.ObjId;
+
+            // Prefer the NORMAL spawn path: move to the spawner so the world
+            // spawns it through the NpcSpawner proximity logic, then poll for
+            // the materialized NPC (spawns are async — spawn tick + radius
+            // cache; the same 20s poll the E2E quest driver uses).
+            var spawner = world.SpawnManager.GetAllSpawners()
+                .SelectMany(s => s.Value)
+                .FirstOrDefault(s => s.UnitId == npcTemplateId);
+            if (spawner != null)
+            {
+                _character.Transform.Local.Position = new System.Numerics.Vector3(
+                    spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
+                _character.Transform.ZoneId = spawner.Position.ZoneId;
+
+                var deadline = Environment.TickCount64 + 20_000;
+                while (Environment.TickCount64 < deadline)
+                {
+                    var spawned = world.GetNpcByTemplateId(npcTemplateId);
+                    if (spawned != null)
+                        return spawned.ObjId;
+                    Thread.Sleep(1000);
+                }
+
+                Logger.Warn("scenario: NPC {NpcId} spawner {SpawnerId} blocked (schedule/cooldown) — direct-spawn fallback as report target",
+                    npcTemplateId, spawner.SpawnerId);
+            }
+            else
+            {
+                Logger.Warn("scenario: NPC {NpcId} has NO spawner in the booted world data (main_world/npc_spawns.json) — direct-spawn as report target (world-data gap, not quest-engine defect)",
+                    npcTemplateId);
+            }
+
+            // The quest report act validates the NPC TEMPLATE id only — the
+            // spawner schedule / world placement is world simulation, not
+            // quest-engine semantics. Use the REAL engine factory (the same
+            // NpcManager.Create the spawner path calls — template, faction,
+            // model all attached) so the NPC is a fully-formed world unit
+            // (a template-less Npc would NRE the TimeManager time-of-day
+            // scan on the next time change).
+            var fallbackNpc = NpcManager.Instance.Create(world, 0, npcTemplateId);
+            if (fallbackNpc == null)
+                return 0; // template missing — the runner fails with a clear reason
+            world.AddObject(fallbackNpc);
+            return fallbackNpc.ObjId;
+        }
+
+        public uint ResolveDoodadObjId(uint doodadTemplateId)
+        {
+            if (doodadTemplateId == 0)
+                return 0;
+            var world = _character.ParentWorld;
+            return world.GetAllDoodads().FirstOrDefault(d => d.TemplateId == doodadTemplateId)?.ObjId ?? 0;
+        }
+    }
+
+    /// <summary>
+    /// Runs a scenario template on a PROVISIONED bot (real managed account +
+    /// character rows through HeadlessSession.Provision, embodied through
+    /// the shared lifecycle) and returns the structured verdict. Request:
+    /// {"cmd":"scenario","template":"level22-gate","bot":"tpl-l22-01"}.
+    /// The bot name is optional (defaults to the template name).
+    ///
+    /// Templates are FRESH RIGS by default ("fresh": true): prior runs'
+    /// persisted quest state (active quests, completed flags) would poison
+    /// the accept gates, so the bot's rows + registry entry are wiped
+    /// before provisioning. Pass "fresh": false to adopt a prior boot's row
+    /// (restart-idempotency, server-reboot scenario). The bot is
+    /// deactivated after the run.
+    /// </summary>
+    private string HandleScenario(JsonElement root)
+    {
+        var templateName = root.GetProperty("template").GetString();
+        var template = templateName != null ? BotScenarioTemplates.Get(templateName) : null;
+        if (template == null)
+            return Err($"scenario: unknown template '{templateName}' (library: {string.Join(", ", BotScenarioTemplates.Library.Keys)})");
+
+        var botName = (root.TryGetProperty("bot", out var b) && b.GetString() is { Length: > 0 } bn
+            ? bn
+            : "tpl" + template.Name.Replace("-", "")).NormalizeName();
+        var username = BotAccountProvisioningService.ManagedUsernamePrefix + botName.ToLowerInvariant();
+
+        // Fresh-rig contract: wipe prior rows unless the caller opts into
+        // adoption (server-reboot idempotency).
+        var fresh = !root.TryGetProperty("fresh", out var freshEl) || freshEl.GetBoolean();
+        if (fresh)
+        {
+            try
+            {
+                EnsureFreshBotRow(botName, username);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "scenario '{Template}': fresh wipe failed for '{Bot}' — continuing with adoption semantics", templateName, botName);
+            }
+        }
+
+        HeadlessSession session;
+        try
+        {
+            session = HeadlessSession.Provision(username, botName, template.Race, template.Gender, template.Level);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': provisioning failed for '{Bot}'", templateName, botName);
+            return Err($"scenario: provisioning failed for '{botName}': {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            var result = BotScenarioRunner.Run(template, session.Character, new LiveScenarioWorldAdapter(session.Character));
+            var payload = new
+            {
+                template = result.Template,
+                passed = result.Passed,
+                failStage = result.FailStage,
+                failure = result.Failure?.ToString(),
+                failReason = result.FailReason,
+                gates = result.Gates,
+                stages = result.Stages,
+                criteria = result.Criteria,
+                actorRequests = result.ActorRequests,
+                rigNotes = result.RigNotes,
+                evidence = result.Evidence(),
+                character = new
+                {
+                    name = session.Character.Name,
+                    level = session.Character.Level,
+                    objId = session.Character.ObjId
+                }
+            };
+            Logger.Info("scenario '{Template}': {Verdict} on '{Bot}' ({Stage}{Failure})",
+                templateName, result.Passed ? "PASS" : "FAIL", botName,
+                result.FailStage, result.Failure is { } f ? $", {f}" : "");
+            return Ok(payload);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': run crashed on '{Bot}'", templateName, botName);
+            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            try
+            {
+                CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "scenario '{Template}': deactivate failed for '{Bot}'", templateName, botName);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Fresh provisioning (template rig hygiene)
+
+    /// <summary>
+    /// Wipes the bot's persisted rows so the next provisioning call creates
+    /// a FRESH rig: quests + completed_quests + characters (aaemu_game) and
+    /// the managed account row (aaemu_login), plus the in-memory NameManager
+    /// registry entry. The same row set the E2E harness cleanup deletes —
+    /// scoped strictly to THIS bot's account. A template run must start
+    /// from a clean slate: prior runs' accepted quests / completed flags
+    /// would be enforced by the real accept gates and poison the rig.
+    /// </summary>
+    private static void EnsureFreshBotRow(string botName, string username)
+    {
+        var characterId = NameManager.Instance.GetCharacterId(botName);
+        if (characterId == 0)
+            return; // unregistered — nothing to wipe (fresh name)
+
+        using var connection = MySQL.CreateConnection();
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = "DELETE FROM quests WHERE owner = @charId";
+            cmd.Parameters.AddWithValue("@charId", characterId);
+            try { cmd.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
+        }
+
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = "DELETE FROM completed_quests WHERE owner = @charId";
+            cmd.Parameters.AddWithValue("@charId", characterId);
+            try { cmd.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
+        }
+
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = "DELETE FROM characters WHERE id = @charId";
+            cmd.Parameters.AddWithValue("@charId", characterId);
+            cmd.ExecuteNonQuery();
+        }
+
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.CommandText = "DELETE FROM aaemu_login.users WHERE username = @username";
+            cmd.Parameters.AddWithValue("@username", username);
+            cmd.ExecuteNonQuery();
+        }
+
+        NameManager.Instance.RemoveCharacterId(characterId);
+        Logger.Info("scenario: fresh provisioning wiped prior rows for '{Bot}' (char {CharId})", botName, characterId);
+    }
+
+    #endregion
 
     private static uint GetUInt(JsonElement root, string name)
         => root.TryGetProperty(name, out var el) && el.TryGetUInt32(out var v) ? v : 0u;

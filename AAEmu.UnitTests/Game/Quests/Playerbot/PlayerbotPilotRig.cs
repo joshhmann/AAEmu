@@ -31,13 +31,25 @@ public static class PlayerbotPilotRig
     /// <summary>
     /// Seeds every singleton the AddQuest -> new Quest(template, owner) path
     /// resolves. Idempotent; must run before any bot is created.
+    ///
+    /// The idempotency guard is ORDER-ROBUST: the census tier
+    /// (QuestScenarioTierTests) calls QuestScenarioDriver.SeedSingletons()
+    /// with NO guard on every run, REPLACING QuestManager /
+    /// UnitRequirementsGameData with empty mocks. If a census class runs
+    /// between our first seed and a later pilot test in the shared process,
+    /// the real data is gone and a naive "already seeded" guard would
+    /// silently keep the mocks (GetTemplate -> null, gates never enforced).
+    /// Re-seed whenever the QuestManager no longer holds real templates
+    /// (quest 251 is in the canonical DB and in the t1 manifests).
     /// </summary>
     public static void SeedPilotSingletons()
     {
         lock (s_seedLock)
         {
-            if (s_seeded)
+            if (s_seeded && QuestManager.Instance.GetTemplate(251) != null)
                 return;
+
+            s_seeded = false;
 
             // Base rig (mocked QuestManager with empty tables, ItemManager,
             // QuestIdManager, TeamManager, TaskManager, ExperienceManager,

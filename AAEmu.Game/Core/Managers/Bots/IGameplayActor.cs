@@ -1,6 +1,7 @@
 using System.Numerics;
 
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units;
 
 namespace AAEmu.Game.Core.Managers.Bots;
@@ -91,6 +92,45 @@ public interface IGameplayActor
     bool Interrupt(Guid traceId);
 
     /// <summary>
+    /// Requests quest acceptance through the REAL engine gate
+    /// (CharacterQuests.AddQuest — level, race, quest-completion chains,
+    /// repeatable/daily re-accept checks all evaluate). Acceptance executes
+    /// synchronously: Completed(accepted=true) on success,
+    /// Rejected(RejectedAction) with the gate detail when the engine
+    /// refuses. Payload: <see cref="QuestAcceptParams"/>.
+    /// </summary>
+    ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId);
+
+    /// <summary>
+    /// Advances the quest step machine ONE stage (the same RunCurrentStep
+    /// evaluation the engine performs after world events). Completed when
+    /// the step ran; Rejected(StateTransition, "quest not active") when the
+    /// quest is not in ActiveQuests (terminal quests included).
+    /// </summary>
+    ActorRequest AdvanceQuest(uint questId);
+
+    /// <summary>
+    /// Turn-in at an NPC — the exact path CSCompleteQuestContextPacket
+    /// takes (QuestManager.DoReportEvents), followed by the same single
+    /// step-machine advance the world pipeline performs. The npcObjId must
+    /// resolve to a live NPC in the owning world; an unresolvable objId is
+    /// Rejected(RejectedAction). Payload: <see cref="QuestTurnInParams"/>.
+    /// </summary>
+    ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1);
+
+    /// <summary>
+    /// Turn-in at a doodad (DoReportEvents doodad branch). Payload:
+    /// <see cref="QuestTurnInParams"/>.
+    /// </summary>
+    ActorRequest TurnInAtDoodad(uint questId, uint doodadObjId, int selectedReward = -1);
+
+    /// <summary>
+    /// Auto-complete turn-in (DoReportEvents third branch — no world
+    /// target required). Payload: <see cref="QuestTurnInParams"/>.
+    /// </summary>
+    ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1);
+
+    /// <summary>
     /// Advances the active request one step (movement legs, timeout
     /// accounting). Safe to call with no active request. Driven by the
     /// scheduler worker (IBotStepExecutor seam) or a test loop.
@@ -105,7 +145,22 @@ public enum ActorActionType : byte
     Move = 1,
     Stop = 2,
     Target = 3,
-    Cast = 4
+    Cast = 4,
+
+    /// <summary>Quest acceptance through the real AddQuest gate.</summary>
+    AcceptQuest = 5,
+
+    /// <summary>One step-machine advance on an active quest.</summary>
+    AdvanceQuest = 6,
+
+    /// <summary>Turn-in at an NPC (real packet path).</summary>
+    TurnInQuest = 7,
+
+    /// <summary>Turn-in at a doodad (real packet path).</summary>
+    TurnInDoodad = 8,
+
+    /// <summary>Auto-complete turn-in (real packet path third branch).</summary>
+    AutoTurnIn = 9
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>
