@@ -176,10 +176,15 @@ route. Individual peripheral quest bugs → Lane B (maintenance).
   SKIPs) — **MOVED TO M2 (Josh 2026-08-05)**: enhancement track, not a
   defect; M1 closes on the defect backlog + playtest.
 
-**M1 status (2026-08-04 → 08-05):** ✅ core delivered — Josh playtest in
-progress (milestone decision pending, NOT closed). M1 WIDENED 2026-08-04
-(Josh): the verifier data-defect backlog rides in M1; **harness extension
-MOVED to M2 (Josh 2026-08-05)** — M1 closes on defects + playtest.
+**M1 status (2026-08-04 → 08-05; reconciled 2026-08-11):** ✅ core
+delivered — **CLOSED on automated evidence** (automated exit GREEN —
+153/153 runnable, superseded by G1 4,573/4,573 — plus restart-persistence
+retroactively evidenced via the M2 restart baseline t_cca63225 and live
+probe t_92a41fe6; M1-M3 audit t_5b1f5494). Human playtest verdict REMAINS
+OPEN — board Open Decision #1, pending Josh's walk of Solzreed (C5,
+tracked separately). M1 WIDENED 2026-08-04 (Josh): the verifier
+data-defect backlog rides in M1; **harness extension MOVED to M2 (Josh
+2026-08-05)** — M1 closes on defects + playtest.
 M2 remains the world-broadening release gate. All work items done: shared
 engine defects fixed, golden route curated, doodad phase/interaction family
 resolved. Automated exit test GREEN — scenario-harness census
@@ -295,6 +300,15 @@ placement · growth + harvest · selected storage and furniture interactions.
 **Exit condition:** two players establish adjacent homesteads and use the
 curated objects during ONE uninterrupted session.
 
+**M3a status (2026-08-11):** ✅ **COMPLETE** — merged to develop @
+4d0427b96 (2026-08-10); Rei gates t_72c787c8 / t_449875bd ACCEPT.
+`M3aExitScenarioTests` on develop: 2 scripted actors (M5-stand-in rule),
+adjacent homesteads (16m enforced, 10m overlap REJECTED), curated objects
+in ONE uninterrupted session (placement → construction → crops → storage →
+furniture), real engine paths (HousingManager.Build / CraftEffect /
+Doodad.Use / CofferContainer). Scorecard: `HOUSING-01` / `FARM-01`
+C/W/H/A = 2.
+
 ### M3b — Property persistence and recovery (engineering-heavy)
 
 Furniture + bound doodad persistence · door/window phase state · crop +
@@ -326,6 +340,15 @@ and container kill during harvest, both defined in the scenario. Add a
 save-duration budget at gate scale (autosave p95 < 2s with the two
 homesteads + 25 bots embodied) so M3b can't pass on a save path that kills
 M8 later. M3a's two-player gate may use the M5-stand-in rule.
+
+**M3b status (2026-08-11):** ✅ **COMPLETE** — M3b-1..4 merged to develop
+(5dc7c2fbd / 71b43e09f / 3913932bf / 5981246ea, 2026-08-11); EXIT gate
+t_accb1c63 PASS 7m08s (merge f5b00c686): N=3 crash cycles — restart,
+kill -9 mid-save (open autosave transaction observed in MySQL
+INNODB_TRX), container kill during open save — 16 rows asserted per boot,
+no loss/dup. Save-duration budget PASS: autosave p95 1301ms < 2000ms at
+25 bots + 2 homesteads. Scorecard: `PROPERTY-01` R = 2 (U→2 in
+f5b00c686).
 
 ---
 
