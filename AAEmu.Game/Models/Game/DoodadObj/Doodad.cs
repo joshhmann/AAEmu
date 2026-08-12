@@ -986,7 +986,7 @@ public class Doodad : BaseUnit
     /// <summary>
     /// Save this Doodad to database if it's marked as persistent
     /// </summary>
-    public void Save()
+    public virtual void Save()
     {
         if (!IsPersistent)
         {
