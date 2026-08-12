@@ -69,7 +69,9 @@ public class CropHarvestLoopTests
     internal const uint PotatoItemId = 7992;        // 감자 (2-4 per harvest)
     internal const uint GoldenPotatoItemId = 19887; // 샛노란 감자 (1 per harvest)
     internal const uint PotatoDoodadId = 2259;      // 감자 doodad almighty
-    internal const uint WateringSkillId = 13625;    // 물 뿌리기
+    internal const uint WateringSkillId = 13625;    // 물 뿌리기 (row-matched DoodadFuncUse 5205)
+    internal const uint SkillHitWateringSkillId = 15601; // 물 뿌리기 (DoodadFuncSkillHit 174 template gate)
+    internal const uint WateringInteractionSkillId = 10126; // 물 주기 (InteractionEffect → Watering action)
     internal const uint HarvestSkillId = 13980;     // 작물 수확
     internal const uint SeedlingPhase = 4379;       // 감자 모종 (start group)
     internal const uint SmallPhase = 4456;          // 조그만 감자
@@ -215,6 +217,79 @@ public class CropHarvestLoopTests
         await Assert.That(doodad.ToNextPhase).IsTrue();
     }
 
+    /// <summary>
+    /// FARM-01 watering pin (M3 canonical audit §2.3, t_f564d986): a potato
+    /// seedling (4379) carries DoodadFuncSkillHit 174 (doodad_funcs row 7815,
+    /// row func_skill_id NULL, template skill 15601 물 뿌리기) with next phase
+    /// 4456. The engine matches the un-gated SkillHit row via
+    /// DoodadManager.GetFunc's fallback and the template's SkillId gate sets
+    /// ToNextPhase — one watering interaction advances the seedling exactly
+    /// one phase (4379 → 4456), no double-advance, no loot, and the small
+    /// phase's real 9-min growth func (584) is armed (the "watering advances
+    /// growth" contract quest 4417 documents).
+    /// </summary>
+    [Test]
+    public async Task Watering_SkillHitChain_AdvancesSeedlingToSmallExactlyOnce()
+    {
+        _actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.DoodadCreate, PotatoSeedItemId, 5);
+        _doodad = CropHarvestLoopRig.Plant(_actor.Character, _session.World,
+            CropHarvestLoopRig.MakeHouse(_actor.Character));
+        await Assert.That(_doodad.FuncGroupId).IsEqualTo(SeedlingPhase);
+
+        _doodad.Use(_actor.Character, SkillHitWateringSkillId); // 물 뿌리기 hits the seedling
+
+        // Advanced EXACTLY one phase: seedling → small (never 4457 or the final group)
+        await Assert.That(_doodad.FuncGroupId).IsEqualTo(SmallPhase);
+
+        // The small phase's growth func (584, 9 min → mature) is armed:
+        // watering advanced the growth clock.
+        await Assert.That(_doodad.FuncTask is DoodadFuncGrowthTask).IsTrue();
+        var remaining = (_doodad.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(remaining).IsGreaterThan(539_000);
+        await Assert.That(remaining).IsLessThanOrEqualTo(540_500);
+
+        // Watering grants no items (relative: the rig's inventory containers
+        // are cached by character id, so the class shares one bag — the same
+        // relative pattern as the harvest test).
+        var potatoBefore = BagCount(PotatoItemId);
+        var goldenBefore = BagCount(GoldenPotatoItemId);
+        var seedBefore = BagCount(PotatoSeedItemId);
+        await Assert.That(BagCount(PotatoItemId)).IsEqualTo(potatoBefore);
+        await Assert.That(BagCount(GoldenPotatoItemId)).IsEqualTo(goldenBefore);
+        await Assert.That(BagCount(PotatoSeedItemId)).IsEqualTo(seedBefore);
+
+        // No double-advance: the small phase has no SkillHit func and no
+        // func matching skill 15601 (its only func is the 13789-gated
+        // DoodadFuncUse 627), so a second watering is a phase no-op.
+        _doodad.Use(_actor.Character, SkillHitWateringSkillId);
+        await Assert.That(_doodad.FuncGroupId).IsEqualTo(SmallPhase);
+    }
+
+    /// <summary>
+    /// FARM-01 watering contract pin (M3 canonical audit §2.3): the canonical
+    /// watering skill 10126 (물 주기) carries InteractionEffect → the Watering
+    /// world-interaction (WorldInteractionType.Watering = 3) → doodad.Use(caster,
+    /// 10126). The seedling's SkillHit func gates on hit skill 15601 (물 뿌리기),
+    /// so the generic interaction skill alone does NOT advance the crop — the
+    /// engine contract is that the advance requires the SkillHit chain
+    /// (skill 15601) or the row-matched DoodadFuncUse (skill 13625). This pins
+    /// the actual engine behavior so a future data change (e.g. 10126 becoming
+    /// the SkillHit gate) fails this test deliberately.
+    /// </summary>
+    [Test]
+    public async Task Watering_InteractionSkill10126_DoesNotAdvanceSeedling()
+    {
+        _actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.DoodadCreate, PotatoSeedItemId, 5);
+        _doodad = CropHarvestLoopRig.Plant(_actor.Character, _session.World,
+            CropHarvestLoopRig.MakeHouse(_actor.Character));
+
+        _doodad.Use(_actor.Character, WateringInteractionSkillId); // 물 주기 interaction
+
+        await Assert.That(_doodad.FuncGroupId).IsEqualTo(SeedlingPhase);
+        // The seedling's own 60 s growth timer is still the armed task
+        await Assert.That(_doodad.FuncTask is DoodadFuncGrowthTask).IsTrue();
+    }
+
     private void GrowToMature()
     {
         (_doodad.FuncTask as DoodadFuncGrowthTask)?.Execute();
@@ -241,6 +316,7 @@ public static class CropHarvestLoopRig
                 return;
 
             GameplayActorTestRig.Seed(); // base surface (missing-only)
+            SeedObjectIdManager();
             SeedItemTemplates();
             SeedIncrementingItemIds();
             SeedItemDoodadMapping();
@@ -321,6 +397,16 @@ public static class CropHarvestLoopRig
     }
 
     #region Singleton seeding
+
+    /// <summary>
+    /// The DoodadFuncSkillHit path allocates a caster ObjId via
+    /// ObjectIdManager.Instance.GetNextId(); the singleton's bitset only
+    /// exists after Initialize(). Initialize(false) is the missing-only
+    /// pattern: a no-op once initialized (t_6bad0654 lesson), a full init
+    /// (with a graceful no-DB fallback) on first use.
+    /// </summary>
+    private static void SeedObjectIdManager()
+        => ObjectIdManager.Instance.Initialize(false);
 
     private static void SeedItemTemplates()
     {
@@ -615,7 +701,13 @@ public static class CropHarvestLoopRig
             skills = [];
             SetField(manager, "_skills", skills);
         }
-        foreach (var skillId in new[] { CropHarvestLoopTests.WateringSkillId, CropHarvestLoopTests.HarvestSkillId })
+        foreach (var skillId in new[]
+                 {
+                     CropHarvestLoopTests.WateringSkillId,
+                     CropHarvestLoopTests.SkillHitWateringSkillId,
+                     CropHarvestLoopTests.WateringInteractionSkillId,
+                     CropHarvestLoopTests.HarvestSkillId
+                 })
         {
             if (!skills.ContainsKey(skillId))
                 skills[skillId] = new SkillTemplate { Id = skillId };

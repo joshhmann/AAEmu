@@ -67,6 +67,14 @@ public class PhaseStateRestartRecoveryTests
     internal const uint DoorRevertTimerFuncId = 3923;
     internal const int DoorRevertDelayMs = 1600;
 
+    // Potato wilt/spoil (FARM-01 rot chain, M3 canonical audit §2.2) — canonical 1.2
+    internal const uint WiltedPhase = 10042;    // 소멸 전환 (wilt transition group)
+    internal const uint SpoiledPhase = 6112;    // 변질된 감자 (spoiled potato)
+    internal const uint WiltTimerFuncId = 3403; // wilted group timer: 500 ms → spoiled
+    internal const int WiltTimerDelayMs = 500;
+    internal const uint SpoilTimerFuncId = 1352; // spoiled timer: 48 h → final 4459 (despawn)
+    internal const int SpoilDelayMs = 172_800_000;
+
     private WorldConfig _previousWorldConfig;
     private GameplayActor _actor;
     private HeadlessSession _session;
@@ -276,6 +284,89 @@ public class PhaseStateRestartRecoveryTests
 
         (recovered.FuncTask as DoodadFuncTimerTask)!.Execute();
         await Assert.That(recovered.FuncGroupId).IsEqualTo(PhaseStateRestartRecoveryTests.DoorClosedPhase);
+    }
+
+    /// <summary>
+    /// FARM-01 rot pin (M3 canonical audit §2.2): an unharvested mature
+    /// potato (4457) carries DoodadFuncTimer 1350 (174,000,000 ms = 48.33 h →
+    /// wilted phase 10042). Entering the mature phase arms the rot timer —
+    /// the crop does NOT stay mature forever.
+    /// </summary>
+    [Test]
+    public async Task UnharvestedMatureCrop_ArmsFortyEightHourRotTimer()
+    {
+        var house = CropHarvestLoopRig.MakeHouse(_actor.Character);
+        _actor.Character.Inventory.Bag.AcquireDefaultItem(AAEmu.Game.Models.Game.Items.Actions.ItemTaskType.DoodadCreate, CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var planted = CropHarvestLoopRig.Plant(_actor.Character, _session.World, house);
+        (planted.FuncTask as DoodadFuncGrowthTask)?.Execute(); // seedling → small
+        (planted.FuncTask as DoodadFuncGrowthTask)?.Execute(); // small → mature
+
+        await Assert.That(planted.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+
+        // The mature phase's phase funcs armed the rot timer (1350), not a growth task
+        var rotTimer = planted.FuncTask as DoodadFuncTimerTask;
+        await Assert.That(rotTimer).IsNotNull();
+
+        // 48.33 h = 174,000,000 ms of rot window from the mature-phase entry
+        var remaining = (planted.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(remaining).IsGreaterThan(173_998_000);
+        await Assert.That(remaining).IsLessThanOrEqualTo(174_000_000);
+    }
+
+    /// <summary>
+    /// FARM-01 rot pin (M3 canonical audit §2.2): a mature crop left past the
+    /// 48.33 h rot window transitions to the wilted phase (10042) when the
+    /// overdue timer fires — elapsed phase_time simulated via the restart-load
+    /// path (same as the door-overdue test). The wilted group's
+    /// DoodadFuncRatioChange funcs (408 → recover to 4457, 409 → spoiled 6112)
+    /// roll a random 0-9999 chance against Ratio 5000 in DoPhaseFuncs;
+    /// CumulativePhaseRatio (the engine's public shift for those rolls) is
+    /// forced above the ratio so BOTH checks deterministically fail and the
+    /// chain's deterministic leg — timer 3403 (500 ms) → spoiled 6112 — fires.
+    /// The spoiled phase then arms the 48 h despawn timer (1352 → final 4459).
+    /// </summary>
+    [Test]
+    public async Task OverdueMatureCrop_RotTimer_TransitionsToWiltedThenSpoiled()
+    {
+        var house = CropHarvestLoopRig.MakeHouse(_actor.Character);
+        _actor.Character.Inventory.Bag.AcquireDefaultItem(AAEmu.Game.Models.Game.Items.Actions.ItemTaskType.DoodadCreate, CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var planted = CropHarvestLoopRig.Plant(_actor.Character, _session.World, house);
+        (planted.FuncTask as DoodadFuncGrowthTask)?.Execute();
+        (planted.FuncTask as DoodadFuncGrowthTask)?.Execute();
+        await Assert.That(planted.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+
+        // Server was down 49 h: the mature phase's phase_time predates the
+        // 48.33 h rot window → on load the rot timer clamps to a 1 ms catch-up.
+        planted.PhaseTime = DateTime.UtcNow.AddHours(-49);
+        planted.OverridePhaseTime = planted.PhaseTime;
+
+        var recovered = SimulateRestartLoad(planted, house);
+
+        var remaining = (recovered.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(remaining).IsLessThanOrEqualTo(2_000); // clamped catch-up, no fresh 48.33 h wait
+
+        recovered.CumulativePhaseRatio = 10_000; // wilt checks deterministically fail (see docblock)
+
+        (recovered.FuncTask as DoodadFuncTimerTask)!.Execute(); // rot timer fires (48.33 h elapsed)
+
+        // Wilted phase entered (소멸 전환)
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(WiltedPhase);
+
+        // The wilted group armed its own 500 ms timer (3403 → spoiled 6112)
+        await Assert.That(recovered.FuncTask is DoodadFuncTimerTask).IsTrue();
+        var wiltRemaining = (recovered.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(wiltRemaining).IsGreaterThan(0);
+        await Assert.That(wiltRemaining).IsLessThanOrEqualTo(1_500);
+
+        (recovered.FuncTask as DoodadFuncTimerTask)!.Execute(); // 500 ms later → spoiled
+
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(SpoiledPhase); // 변질된 감자
+
+        // The spoiled phase arms the 48 h despawn timer (1352 → final 4459)
+        await Assert.That(recovered.FuncTask is DoodadFuncTimerTask).IsTrue();
+        var spoilRemaining = (recovered.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(spoilRemaining).IsGreaterThan(172_798_000);
+        await Assert.That(spoilRemaining).IsLessThanOrEqualTo(172_800_000);
     }
 
     /// <summary>
@@ -506,12 +597,58 @@ public static class PhaseStateRestartRecoveryRig
         phaseFuncTemplates["DoodadFuncAnimate"].TryAdd(562, new DoodadFuncAnimate { Name = "closed", PlayOnce = false });
         phaseFuncTemplates["DoodadFuncAnimate"].TryAdd(563, new DoodadFuncAnimate { Name = "open2", PlayOnce = false });
 
-        _ = funcsByGroups; // door/calf chains have no interaction funcs — phase funcs only
+        // --- Potato wilt/spoil (FARM-01 rot chain) — canonical 1.2 ---
+        // mature 4457 phase funcs already carry Timer 1350 (174,000,000 ms →
+        // 10042, rigged by CropHarvestLoopRig). The wilted group 10042 (소멸
+        // 전환) carries: RatioChange 408 (ratio 5000 → 4457 recover) +
+        // RatioChange 409 (ratio 5000 → 6112 spoil) + Timer 3403 (500 ms →
+        // 6112). Spoiled 6112 (변질된 감자) carries Timer 1352 (172,800,000 ms
+        // → final 4459, despawn). The ratio funcs roll a random chance in
+        // DoPhaseFuncs; tests pin the deterministic timer leg via
+        // CumulativePhaseRatio (see OverdueMatureCrop_RotTimer...).
+        if (templates.TryGetValue(CropHarvestLoopTests.PotatoDoodadId, out var potato))
+        {
+            potato.FuncGroups.Add(MakeGroup(PhaseStateRestartRecoveryTests.WiltedPhase,
+                DoodadFuncGroups.DoodadFuncGroupKind.Normal, CropHarvestLoopTests.PotatoDoodadId));
+            potato.FuncGroups.Add(MakeGroup(PhaseStateRestartRecoveryTests.SpoiledPhase,
+                DoodadFuncGroups.DoodadFuncGroupKind.Normal, CropHarvestLoopTests.PotatoDoodadId));
+        }
+        phaseFuncs.TryAdd(PhaseStateRestartRecoveryTests.WiltedPhase,
+        [
+            P(PhaseStateRestartRecoveryTests.WiltedPhase, 408, "DoodadFuncRatioChange"),
+            P(PhaseStateRestartRecoveryTests.WiltedPhase, 409, "DoodadFuncRatioChange"),
+            P(PhaseStateRestartRecoveryTests.WiltedPhase, PhaseStateRestartRecoveryTests.WiltTimerFuncId, "DoodadFuncTimer")
+        ]);
+        phaseFuncs.TryAdd(PhaseStateRestartRecoveryTests.SpoiledPhase,
+            [P(PhaseStateRestartRecoveryTests.SpoiledPhase, PhaseStateRestartRecoveryTests.SpoilTimerFuncId, "DoodadFuncTimer")]);
+        phaseFuncTemplates.TryAdd("DoodadFuncRatioChange", new Dictionary<uint, DoodadPhaseFuncTemplate>());
+        phaseFuncTemplates["DoodadFuncRatioChange"].TryAdd(408, new DoodadFuncRatioChange
+        {
+            Ratio = 5000,
+            NextPhase = (int)CropHarvestLoopTests.MaturePhase
+        });
+        phaseFuncTemplates["DoodadFuncRatioChange"].TryAdd(409, new DoodadFuncRatioChange
+        {
+            Ratio = 5000,
+            NextPhase = (int)PhaseStateRestartRecoveryTests.SpoiledPhase
+        });
+        phaseFuncTemplates["DoodadFuncTimer"].TryAdd(PhaseStateRestartRecoveryTests.WiltTimerFuncId, new DoodadFuncTimer
+        {
+            Delay = PhaseStateRestartRecoveryTests.WiltTimerDelayMs,
+            NextPhase = (int)PhaseStateRestartRecoveryTests.SpoiledPhase
+        });
+        phaseFuncTemplates["DoodadFuncTimer"].TryAdd(PhaseStateRestartRecoveryTests.SpoilTimerFuncId, new DoodadFuncTimer
+        {
+            Delay = PhaseStateRestartRecoveryTests.SpoilDelayMs,
+            NextPhase = (int)CropHarvestLoopTests.FinalPhase
+        });
+
+        _ = funcsByGroups; // door/calf/wilt chains have no interaction funcs — phase funcs only
         _ = funcsById;
     }
 
-    private static DoodadFuncGroups MakeGroup(uint id, DoodadFuncGroups.DoodadFuncGroupKind kind)
-        => new() { Id = id, Almighty = 0, GroupKindId = kind };
+    private static DoodadFuncGroups MakeGroup(uint id, DoodadFuncGroups.DoodadFuncGroupKind kind, uint almighty = 0)
+        => new() { Id = id, Almighty = almighty, GroupKindId = kind };
 
     private static DoodadPhaseFunc P(uint groupId, uint funcId, string funcType)
         => new() { GroupId = groupId, FuncId = funcId, FuncType = funcType };
