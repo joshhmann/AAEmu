@@ -502,6 +502,37 @@ public class IdManagerTests
         await Assert.That(ids.Count).IsEqualTo(count);
     }
 
+    /// <summary>
+    /// M3b-1 (t_fb3e5f8c): allocating past the initial bitset capacity must GROW,
+    /// not throw. The initial capacity is PrimeFinder.NextPrime(100000) = 102877
+    /// bits. Pre-fix, managers with a full-uint span (DoodadIdManager,
+    /// ItemIdManager, AuctionIdManager — LastId=0xFFFFFFFF) computed
+    /// _freeIdSize = (int)(_lastId - _firstId) which OVERFLOWS to a negative
+    /// number (-2 for Doodad/Auction). The growth guard
+    /// `_freeIds.Count < _freeIdSize` was then never true, so the 102,878th
+    /// allocation threw GameException("Ran out of valid Id's.") — and the init
+    /// path threw BitArray(-2) the moment any existing row id exceeded the
+    /// initial capacity (E2E restart evidence: DoodadIdManager init failed on a
+    /// boot with seeded ids 900100+, and GetNextId would then have collided with
+    /// existing rows, silently failing placed-furniture persistence).
+    /// </summary>
+    [Test]
+    [MethodDataSource(nameof(IdManagerData))]
+    public async Task GetNextId_PastInitialCapacity_GrowsInsteadOfThrowing(IIdManager manager)
+    {
+        // Arrange
+        manager.Initialize(true);
+        const int count = 110_000; // > 102877 initial bitset capacity
+
+        // Act — must not throw "Ran out of valid Id's." at ~102,878
+        var ids = new HashSet<uint>();
+        for (var i = 0; i < count; i++)
+            ids.Add(manager.GetNextId());
+
+        // Assert
+        await Assert.That(ids.Count).IsEqualTo(count);
+    }
+
     [Test]
     [MethodDataSource(nameof(IdManagerData))]
     public async Task Initialize_MultipleCalls_DoesNotResetIds(IIdManager manager)

@@ -174,7 +174,6 @@ public class M3bFurniturePersistenceE2eTests
         }
 
         Assert.Equal(7, rows.Count);
-        var byTemplate = rows.ToDictionary(r => r.TemplateId);
         var byAttach = rows.GroupBy(r => r.Attach).ToDictionary(g => g.Key, g => g.First());
 
         // Bound doodads: rotation/attachment/ownership must be untouched.
@@ -198,8 +197,10 @@ public class M3bFurniturePersistenceE2eTests
             Assert.True(row.Parent == 0, $"[{phase}] {name}: parent_doodad wrong {row.Parent}");
         }
 
-        // Furniture: the chandelier keeps its own rotation.
-        var furniture = byTemplate[ChandelierDoodadId];
+        // Furniture: the chandelier keeps its own rotation. (Template id is NOT a
+        // unique key — two windows share template 4322 — so find it by id.)
+        var furniture = rows.FirstOrDefault(r => r.TemplateId == ChandelierDoodadId);
+        Assert.NotNull(furniture);
         Assert.True(furniture.Phase == ChandelierPhaseId, $"[{phase}] chandelier: phase {furniture.Phase}");
         Assert.True(Math.Abs(furniture.Yaw - 2.9f) < 0.001f, $"[{phase}] chandelier: yaw clobbered to {furniture.Yaw}");
         Assert.True(furniture.OwnerType == (int)DoodadOwnerType.Housing, $"[{phase}] chandelier: owner_type {furniture.OwnerType}");
