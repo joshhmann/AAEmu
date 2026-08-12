@@ -2,6 +2,7 @@ using System.Numerics;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
@@ -15,6 +16,8 @@ using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
+using AAEmu.Game.Models.Game.World.Zones;
+using AAEmu.Game.Models.Tasks.Doodads;
 using AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 namespace AAEmu.UnitTests.Game.Models.Game.DoodadObj;
@@ -86,40 +89,302 @@ public class PhaseStateRestartRecoveryTests
     }
 
     /// <summary>
-    /// FAIL-BEFORE (2026-08-11): the loader's current field order
-    /// (SpawnManager.SpawnPersistentDoodads) assigns FuncGroupId while the
-    /// doodad is already IsPersistent — the setter fires Save() mid-load.
-    /// That boot-time write persists phase_time = DateTime.UtcNow (clobbering
-    /// the stored phase start, so a SECOND restart drifts the growth clock by
-    /// the previous boot time) and the fresh doodad's still-default position
-    /// (0,0,0 — the real position is applied later in the loader). A restart
-    /// must never write the row; the stored phase_time/position stay until
-    /// the next real gameplay mutation.
+    /// PASS-AFTER: the fixed loader path (ApplyLoadedState) is read-only —
+    /// no row write at boot, stored phase_time survives untouched, phase and
+    /// owner state land on the instance.
     /// </summary>
     [Test]
-    public async Task CurrentLoadOrder_OnPersistentDoodad_WritesRowMidLoad()
+    public async Task ApplyLoadedState_OnPersistentDoodad_IsReadOnly_AndPreservesPhaseTime()
     {
         var storedPhaseTime = DateTime.UtcNow.AddMinutes(-3);
         var doodad = new CountingDoodad { IsPersistent = true, DbId = 4242 };
 
-        // EXACT field order of SpawnManager.SpawnPersistentDoodads today:
-        doodad.FuncGroupId = CropHarvestLoopTests.SmallPhase;   // setter fires Save() + PhaseTime = now
-        doodad.OwnerId = 11;
-        doodad.OwnerType = DoodadOwnerType.Housing;
-        doodad.AttachPoint = AttachPointKind.None;
-        doodad.PlantTime = storedPhaseTime.AddHours(-1);
-        doodad.GrowthTime = storedPhaseTime.AddHours(-1);
-        doodad.OverridePhaseTime = storedPhaseTime;
-        doodad.PhaseTime = storedPhaseTime;
-        doodad.SetScale(1f);
-        doodad.SetData(0);
-        doodad.FarmType = FarmType.Invalid;
+        doodad.ApplyLoadedState(
+            4242, CropHarvestLoopTests.SmallPhase,
+            storedPhaseTime.AddHours(-1), storedPhaseTime.AddHours(-1), storedPhaseTime,
+            11, DoodadOwnerType.Housing, AttachPointKind.None,
+            itemId: 0, ownerDbId: 77, scale: 1f, data: 0, FarmType.Invalid);
 
-        // A boot load must be read-only: no mid-load row write.
-        await Assert.That(doodad.SaveCount).IsEqualTo(0);
-        // And the (hypothetical) write must not carry a clobbered phase_time.
-        await Assert.That(doodad.CapturedWrite is null || doodad.CapturedWrite.Value.PhaseTime == storedPhaseTime).IsTrue();
+        await Assert.That(doodad.SaveCount).IsEqualTo(0);          // no boot-time write
+        await Assert.That(doodad.CapturedWrite).IsNull();
+        await Assert.That(doodad.FuncGroupId).IsEqualTo(CropHarvestLoopTests.SmallPhase);
+        await Assert.That(doodad.PhaseTime).IsEqualTo(storedPhaseTime); // no clobber
+        await Assert.That(doodad.OverridePhaseTime).IsEqualTo(storedPhaseTime);
+        await Assert.That(doodad.OwnerType).IsEqualTo(DoodadOwnerType.Housing);
+        await Assert.That(doodad.OwnerDbId).IsEqualTo(77u);
     }
+
+    /// <summary>
+    /// The load suppression must NOT leak into gameplay: once loaded, a real
+    /// phase change (door open/close, crop growth step) still persists the
+    /// row and resets the phase clock — exactly once per change.
+    /// </summary>
+    [Test]
+    public async Task ApplyLoadedState_ThenGameplayPhaseChange_SavesExactlyOnce()
+    {
+        var storedPhaseTime = DateTime.UtcNow.AddMinutes(-3);
+        var doodad = new CountingDoodad { IsPersistent = true, DbId = 4242 };
+        doodad.ApplyLoadedState(
+            4242, CropHarvestLoopTests.SeedlingPhase,
+            storedPhaseTime.AddHours(-1), storedPhaseTime.AddHours(-1), storedPhaseTime,
+            11, DoodadOwnerType.Housing, AttachPointKind.None,
+            itemId: 0, ownerDbId: 77, scale: 1f, data: 0, FarmType.Invalid);
+
+        doodad.FuncGroupId = CropHarvestLoopTests.SmallPhase; // gameplay phase change
+
+        await Assert.That(doodad.SaveCount).IsEqualTo(1);     // persisted once
+        await Assert.That(doodad.PhaseTime).IsGreaterThan(storedPhaseTime); // new phase clock
+    }
+
+    /// <summary>
+    /// Restart cycle — crop: plant → grow to "small" (4456) → server restart
+    /// (fresh doodad instance, loader field order) → the growth timer resumes
+    /// with the REMAINING time (delay − elapsed), not the full delay and not
+    /// a reset; executing the resumed task reaches the mature phase (4457).
+    /// </summary>
+    [Test]
+    public async Task MidGrowthCrop_Restart_ResumesTimerWithRemainingTime()
+    {
+        var house = CropHarvestLoopRig.MakeHouse(_actor.Character);
+        _actor.Character.Inventory.Bag.AcquireDefaultItem(AAEmu.Game.Models.Game.Items.Actions.ItemTaskType.DoodadCreate, CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var planted = CropHarvestLoopRig.Plant(_actor.Character, _session.World, house);
+        (planted.FuncTask as DoodadFuncGrowthTask)?.Execute(); // → small phase
+
+        await Assert.That(planted.FuncGroupId).IsEqualTo(CropHarvestLoopTests.SmallPhase);
+
+        // ---- restart: new process would read the row and build a new instance ----
+        var recovered = SimulateRestartLoad(planted, house);
+
+        await Assert.That(recovered).IsNotEqualTo(planted);               // genuinely new instance
+        await Assert.That(recovered.DbId).IsEqualTo(planted.DbId);        // same row id (REPLACE, no dup row)
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(CropHarvestLoopTests.SmallPhase);
+        await Assert.That(recovered.PhaseTime).IsEqualTo(planted.PhaseTime); // stored phase start, unclobbered
+        await Assert.That(recovered.PlantTime).IsEqualTo(planted.PlantTime);
+        await Assert.That(recovered.FuncTask is DoodadFuncGrowthTask).IsTrue(); // timer resumed
+
+        // 9 min small-phase delay minus the few ms the test took: remaining ≈ 9 min
+        var remaining = (recovered.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(remaining).IsGreaterThan(539_000);
+        await Assert.That(remaining).IsLessThanOrEqualTo(540_500);
+
+        // Growth continues after restart: executing the resumed task matures the crop
+        (recovered.FuncTask as DoodadFuncGrowthTask)!.Execute();
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+    }
+
+    /// <summary>
+    /// Restart cycle — overdue crop: the server was down longer than the
+    /// phase delay (phase_time older than 9 min while the small-phase delay
+    /// is 9 min). On load the catch-up clamps to 1 ms — the crop recovers to
+    /// the correct NEXT growth stage immediately instead of waiting a full
+    /// fresh delay.
+    /// </summary>
+    [Test]
+    public async Task OverdueCrop_Restart_CatchesUpToMatureImmediately()
+    {
+        var house = CropHarvestLoopRig.MakeHouse(_actor.Character);
+        _actor.Character.Inventory.Bag.AcquireDefaultItem(AAEmu.Game.Models.Game.Items.Actions.ItemTaskType.DoodadCreate, CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var planted = CropHarvestLoopRig.Plant(_actor.Character, _session.World, house);
+        (planted.FuncTask as DoodadFuncGrowthTask)?.Execute(); // → small phase
+
+        // Simulate downtime: the stored phase start predates the delay by 60s
+        planted.PhaseTime = DateTime.UtcNow.AddMinutes(-10);
+        planted.OverridePhaseTime = planted.PhaseTime;
+
+        var recovered = SimulateRestartLoad(planted, house);
+
+        var remaining = (recovered.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(remaining).IsLessThanOrEqualTo(2_000); // clamped catch-up, no fresh 9-min wait
+
+        (recovered.FuncTask as DoodadFuncGrowthTask)!.Execute();
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+    }
+
+    /// <summary>
+    /// Restart cycle — livestock (dairy calf 2672): calf stage 5780 has a
+    /// 12,348,000 ms growth func. A calf 1 h into that stage recovers with
+    /// ~8,748,000 ms remaining and continues to 5781 on the resumed task.
+    /// </summary>
+    [Test]
+    public async Task LivestockCalf_Restart_RecoversGrowthStage()
+    {
+        var calf = NewChainDoodad(PhaseStateRestartRecoveryTests.DairyCalfDoodadId, PhaseStateRestartRecoveryTests.CalfStartPhase);
+        calf.PlantTime = DateTime.UtcNow.AddHours(-2);
+        calf.PhaseTime = DateTime.UtcNow.AddMinutes(-60); // 1 h into the 3.43 h calf stage
+        calf.OverridePhaseTime = calf.PhaseTime;
+
+        var recovered = SimulateRestartLoad(calf, house: null);
+
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(PhaseStateRestartRecoveryTests.CalfStartPhase);
+        await Assert.That(recovered.PhaseTime).IsEqualTo(calf.PhaseTime);
+        await Assert.That(recovered.FuncTask is DoodadFuncGrowthTask).IsTrue();
+
+        // 12,348,000 ms delay − 3,600,000 ms elapsed = 8,748,000 ms remaining
+        var remaining = (recovered.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(remaining).IsGreaterThan(8_745_000);
+        await Assert.That(remaining).IsLessThanOrEqualTo(8_750_000);
+
+        (recovered.FuncTask as DoodadFuncGrowthTask)!.Execute();
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(PhaseStateRestartRecoveryTests.CalfGrowPhase);
+    }
+
+    /// <summary>
+    /// Restart cycle — door/window phase state: the house door 4278 toggles
+    /// open (10522) with a 1.6 s auto-revert timer to the closed frame
+    /// (10563). A door open at restart restores phase 10522 AND the revert
+    /// timer's remaining time; executing it closes the door.
+    /// </summary>
+    [Test]
+    public async Task Door_Restart_RestoresOpenPhase_AndSchedulesRevert()
+    {
+        var door = NewChainDoodad(PhaseStateRestartRecoveryTests.DoorDoodadId, PhaseStateRestartRecoveryTests.DoorOpenPhase);
+        door.PlantTime = DateTime.UtcNow.AddHours(-1);
+        door.PhaseTime = DateTime.UtcNow.AddMilliseconds(-800); // 800 ms into the 1.6 s revert
+        door.OverridePhaseTime = door.PhaseTime;
+
+        var recovered = SimulateRestartLoad(door, house: null);
+
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(PhaseStateRestartRecoveryTests.DoorOpenPhase); // open state survives
+        await Assert.That(recovered.PhaseTime).IsEqualTo(door.PhaseTime);
+        await Assert.That(recovered.FuncTask is DoodadFuncTimerTask).IsTrue(); // revert timer resumed
+
+        var remaining = (recovered.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(remaining).IsGreaterThan(700);   // ≈ 800 ms left of the 1.6 s revert
+        await Assert.That(remaining).IsLessThanOrEqualTo(1_600);
+
+        (recovered.FuncTask as DoodadFuncTimerTask)!.Execute();
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(PhaseStateRestartRecoveryTests.DoorClosedPhase); // door closes
+    }
+
+    /// <summary>
+    /// Restart cycle — door overdue: the server was down longer than the
+    /// revert window, so on load the door recovers straight to the closed
+    /// frame (correct state, no stale open phase).
+    /// </summary>
+    [Test]
+    public async Task Door_OverdueRestart_RevertsToClosedImmediately()
+    {
+        var door = NewChainDoodad(PhaseStateRestartRecoveryTests.DoorDoodadId, PhaseStateRestartRecoveryTests.DoorOpenPhase);
+        door.PlantTime = DateTime.UtcNow.AddHours(-1);
+        door.PhaseTime = DateTime.UtcNow.AddSeconds(-5); // overdue vs the 1.6 s revert
+        door.OverridePhaseTime = door.PhaseTime;
+
+        var recovered = SimulateRestartLoad(door, house: null);
+
+        var remaining = (recovered.GrowthTime - DateTime.UtcNow).TotalMilliseconds;
+        await Assert.That(remaining).IsLessThanOrEqualTo(2_000);
+
+        (recovered.FuncTask as DoodadFuncTimerTask)!.Execute();
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(PhaseStateRestartRecoveryTests.DoorClosedPhase);
+    }
+
+    /// <summary>
+    /// Full restart cycle — place → grow → restart → recover → harvest with
+    /// NO duplication: the recovered crop shares the persisted row id (the
+    /// loader never re-inserts), yields exactly once after restart, and the
+    /// plot resets (doodad removed from the world).
+    /// </summary>
+    [Test]
+    public async Task FullRestartCycle_PlantGrowRestartHarvest_NoDuplication()
+    {
+        var house = CropHarvestLoopRig.MakeHouse(_actor.Character);
+        _actor.Character.Inventory.Bag.AcquireDefaultItem(AAEmu.Game.Models.Game.Items.Actions.ItemTaskType.DoodadCreate, CropHarvestLoopTests.PotatoSeedItemId, 5);
+
+        // Session 1: place + grow to small
+        var planted = CropHarvestLoopRig.Plant(_actor.Character, _session.World, house);
+        (planted.FuncTask as DoodadFuncGrowthTask)?.Execute();
+        await Assert.That(planted.FuncGroupId).IsEqualTo(CropHarvestLoopTests.SmallPhase);
+
+        // ---- restart ----
+        var recovered = SimulateRestartLoad(planted, house);
+        await Assert.That(recovered.DbId).IsEqualTo(planted.DbId); // one row, stable id
+
+        // Grow out after restart (small → mature)
+        (recovered.FuncTask as DoodadFuncGrowthTask)!.Execute();
+        await Assert.That(recovered.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+
+        // Harvest after restart: exactly one yield
+        var potatoBefore = BagCount(CropHarvestLoopTests.PotatoItemId);
+        recovered.Use(_actor.Character, CropHarvestLoopTests.HarvestSkillId);
+        await Assert.That(BagCount(CropHarvestLoopTests.PotatoItemId)).IsGreaterThanOrEqualTo(potatoBefore + 2);
+        await Assert.That(BagCount(CropHarvestLoopTests.PotatoItemId)).IsLessThanOrEqualTo(potatoBefore + 4);
+
+        // No double yield on a second interaction (terminal phase is a no-op)
+        var potatoAfter = BagCount(CropHarvestLoopTests.PotatoItemId);
+        recovered.Use(_actor.Character, CropHarvestLoopTests.HarvestSkillId);
+        await Assert.That(BagCount(CropHarvestLoopTests.PotatoItemId)).IsEqualTo(potatoAfter);
+
+        // Plot reset: the recovered crop is gone from the world
+        await Assert.That(_session.World.GetDoodad(recovered.ObjId)).IsNull();
+    }
+
+    /// <summary>
+    /// Builds a fresh doodad in a chain phase WITHOUT planting (door/calf
+    /// chains have no item path) and registers the session world so the
+    /// ParentWorld/Transform chains resolve.
+    /// </summary>
+    private Doodad NewChainDoodad(uint templateId, uint phaseId)
+    {
+        RegisterWorld(_session.World);
+        var doodad = DoodadManager.Instance.Create(_session.World, 0, templateId, null, true);
+        doodad.Transform = _actor.Character.Transform.CloneDetached(doodad);
+        doodad.Transform.InstanceId = _session.World.Id;
+        doodad.Transform.Local.SetPosition(2000f, 2000f, 100f);
+        doodad.IsPersistent = false; // unit tests: no MySQL save tail
+        doodad.FuncGroupId = phaseId;
+        return doodad;
+    }
+
+    /// <summary>
+    /// Applies the loader's exact restart sequence to a fresh instance:
+    /// Create → IsPersistent + ApplyLoadedState → (house parenting when the
+    /// original was house-bound) → position → InitDoodad. Mirrors
+    /// SpawnManager.SpawnPersistentDoodads.
+    /// </summary>
+    private Doodad SimulateRestartLoad(Doodad source, House house)
+    {
+        RegisterWorld(_session.World);
+        var doodad = DoodadManager.Instance.Create(_session.World, 0, source.TemplateId, null, true);
+        doodad.IsPersistent = false; // unit tests: the MySQL tail is the CountingDoodad concern
+        doodad.ApplyLoadedState(
+            source.DbId, source.FuncGroupId,
+            source.PlantTime, source.GrowthTime, source.PhaseTime,
+            source.OwnerId, source.OwnerType, source.AttachPoint,
+            source.ItemId, source.OwnerDbId, source.Scale, source.Data, source.FarmType);
+
+        doodad.Transform = source.Transform.CloneDetached(doodad);
+        doodad.Transform.InstanceId = _session.World.Id;
+        if (house != null)
+        {
+            doodad.ParentObj = house;
+            doodad.ParentObjId = house.ObjId;
+            doodad.Transform.Parent = house.Transform;
+        }
+        doodad.Transform.Local.SetPosition(source.Transform.Local.Position);
+        var r = source.Transform.Local.Rotation;
+        doodad.Transform.Local.SetRotation(r.X, r.Y, r.Z);
+
+        doodad.InitDoodad();
+        doodad.Spawn(); // the loader spawns slave doodads; the rig spawns so world lookups work
+        _session.World.SpawnManager?.AddPlayerDoodad(doodad);
+        return doodad;
+    }
+
+    private static void RegisterWorld(WorldInstance world)
+    {
+        if (world.Regions == null)
+        {
+            world.Regions = new Region[
+                world.Template.CellX * WorldManager.SECTORS_PER_CELL,
+                world.Template.CellY * WorldManager.SECTORS_PER_CELL];
+        }
+        var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)
+            typeof(WorldManager).GetField("_worlds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(WorldManager.Instance);
+        worlds?.TryAdd(world.Id, world);
+    }
+
+    private int BagCount(uint templateId)
+        => _actor.Character.Inventory.Bag.Items.Where(i => i.TemplateId == templateId).Sum(i => i.Count);
 
     /// <summary>
     /// Doodad subclass that replaces the MySQL write tail with an in-memory
@@ -186,15 +451,17 @@ public static class PhaseStateRestartRecoveryRig
             [P(PhaseStateRestartRecoveryTests.CalfStartPhase, PhaseStateRestartRecoveryTests.CalfGrowthFuncId, "DoodadFuncGrowth")]);
         phaseFuncs.TryAdd(PhaseStateRestartRecoveryTests.CalfGrowPhase,
             [P(PhaseStateRestartRecoveryTests.CalfGrowPhase, 792, "DoodadFuncGrowth")]);
-        phaseFuncTemplates.TryAdd("DoodadFuncGrowth", new Dictionary<uint, DoodadPhaseFuncTemplate>
+        // Inner dicts may already exist (potato rig registers DoodadFuncGrowth/Timer) — add INTO them
+        phaseFuncTemplates.TryAdd("DoodadFuncGrowth", new Dictionary<uint, DoodadPhaseFuncTemplate>());
+        phaseFuncTemplates["DoodadFuncGrowth"].TryAdd(PhaseStateRestartRecoveryTests.CalfGrowthFuncId, new DoodadFuncGrowth
         {
-            [PhaseStateRestartRecoveryTests.CalfGrowthFuncId] = new DoodadFuncGrowth
-            {
-                Delay = PhaseStateRestartRecoveryTests.CalfStartDelayMs,
-                StartScale = 1000, EndScale = 1000,
-                NextPhase = (int)PhaseStateRestartRecoveryTests.CalfGrowPhase
-            },
-            [792] = new DoodadFuncGrowth { Delay = 111_132_000, StartScale = 1000, EndScale = 1000, NextPhase = 12774 }
+            Delay = PhaseStateRestartRecoveryTests.CalfStartDelayMs,
+            StartScale = 1000, EndScale = 1000,
+            NextPhase = (int)PhaseStateRestartRecoveryTests.CalfGrowPhase
+        });
+        phaseFuncTemplates["DoodadFuncGrowth"].TryAdd(792, new DoodadFuncGrowth
+        {
+            Delay = 111_132_000, StartScale = 1000, EndScale = 1000, NextPhase = 12774
         });
 
         // --- House door 4278: start → open (auto-revert 1.6s) → closed frame → open (auto-revert) ---
@@ -223,22 +490,21 @@ public static class PhaseStateRestartRecoveryRig
             P(PhaseStateRestartRecoveryTests.DoorOpen2Phase, 563, "DoodadFuncAnimate"),
             P(PhaseStateRestartRecoveryTests.DoorOpen2Phase, 3924, "DoodadFuncTimer")
         ]);
-        phaseFuncTemplates.TryAdd("DoodadFuncTimer", new Dictionary<uint, DoodadPhaseFuncTemplate>
+        phaseFuncTemplates.TryAdd("DoodadFuncTimer", new Dictionary<uint, DoodadPhaseFuncTemplate>());
+        phaseFuncTemplates["DoodadFuncTimer"].TryAdd(PhaseStateRestartRecoveryTests.DoorRevertTimerFuncId, new DoodadFuncTimer
         {
-            [PhaseStateRestartRecoveryTests.DoorRevertTimerFuncId] = new DoodadFuncTimer
-            {
-                Delay = PhaseStateRestartRecoveryTests.DoorRevertDelayMs,
-                NextPhase = (int)PhaseStateRestartRecoveryTests.DoorClosedPhase
-            },
-            [3924] = new DoodadFuncTimer { Delay = 1600, NextPhase = (int)PhaseStateRestartRecoveryTests.DoorStartPhase }
+            Delay = PhaseStateRestartRecoveryTests.DoorRevertDelayMs,
+            NextPhase = (int)PhaseStateRestartRecoveryTests.DoorClosedPhase
         });
-        phaseFuncTemplates.TryAdd("DoodadFuncAnimate", new Dictionary<uint, DoodadPhaseFuncTemplate>
+        phaseFuncTemplates["DoodadFuncTimer"].TryAdd(3924, new DoodadFuncTimer
         {
-            [560] = new DoodadFuncAnimate { Name = "start", PlayOnce = false },
-            [561] = new DoodadFuncAnimate { Name = "open", PlayOnce = false },
-            [562] = new DoodadFuncAnimate { Name = "closed", PlayOnce = false },
-            [563] = new DoodadFuncAnimate { Name = "open2", PlayOnce = false }
+            Delay = 1600, NextPhase = (int)PhaseStateRestartRecoveryTests.DoorStartPhase
         });
+        phaseFuncTemplates.TryAdd("DoodadFuncAnimate", new Dictionary<uint, DoodadPhaseFuncTemplate>());
+        phaseFuncTemplates["DoodadFuncAnimate"].TryAdd(560, new DoodadFuncAnimate { Name = "start", PlayOnce = false });
+        phaseFuncTemplates["DoodadFuncAnimate"].TryAdd(561, new DoodadFuncAnimate { Name = "open", PlayOnce = false });
+        phaseFuncTemplates["DoodadFuncAnimate"].TryAdd(562, new DoodadFuncAnimate { Name = "closed", PlayOnce = false });
+        phaseFuncTemplates["DoodadFuncAnimate"].TryAdd(563, new DoodadFuncAnimate { Name = "open2", PlayOnce = false });
 
         _ = funcsByGroups; // door/calf chains have no interaction funcs — phase funcs only
         _ = funcsById;
