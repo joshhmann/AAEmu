@@ -844,8 +844,16 @@ public class M4ExitIntegratedSessionTests
     {
         if (world.Regions == null)
             world.Regions = new Region[world.Template.CellX * WorldManager.SECTORS_PER_CELL, world.Template.CellY * WorldManager.SECTORS_PER_CELL];
+        // In full-suite order the WorldManager singleton may be a fresh instance
+        // whose _worlds dict is null (restored by a sibling rig) — seed it rather
+        // than silently skipping (GetWorld → null → SlaveManager.Delete NRE).
         var worlds = (ConcurrentDictionary<uint, WorldInstance>)GetField(WorldManager.Instance, "_worlds");
-        worlds?.TryAdd(world.Id, world);
+        if (worlds == null)
+        {
+            worlds = new ConcurrentDictionary<uint, WorldInstance>();
+            SetField(WorldManager.Instance, "_worlds", worlds);
+        }
+        worlds.TryAdd(world.Id, world);
     }
 
     private void UnregisterWorld(WorldInstance world)
