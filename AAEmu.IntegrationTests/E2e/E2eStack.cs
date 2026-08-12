@@ -344,7 +344,7 @@ public static class E2eStack
               },
               "ClientData": { "Sources": [ "./ClientData/game_pak" ] },
               "HeightMapsEnable": true,
-              "World": { "AutoSaveInterval": 0.2 },
+              "World": { "AutoSaveInterval": 0.2, "UsePersistentHouseDoodads": true },
               "Bots": { "EnableE2EBridge": true, "E2EBridgePort": {{BridgePort}} }
             }
             """;
