@@ -12,6 +12,6 @@ public class CSDestroySlavePacket() : GamePacket(CSOffsets.CSDestroySlavePacket,
         var tl = stream.ReadUInt16();
 
         Logger.Debug($"DestroySlave, Tl: {tl}");
-        Connection.ActiveChar.ParentWorld.SlaveManager.RemoveActiveSlave(Connection.ActiveChar, tl, false);
+        Connection.ActiveChar.ParentWorld.SlaveManager.TryDespawnOwnedSlave(Connection.ActiveChar, tl);
     }
 }

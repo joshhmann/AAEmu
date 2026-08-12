@@ -172,6 +172,13 @@ public class SlaveManager(WorldInstance parentWorldInstance)
         if (slave == null || slave.AttachedCharacters.ContainsKey(attachPoint))
             return;
 
+        // Canonical: cannot bind to a dead/destroyed vehicle (324)
+        if (slave.IsDead)
+        {
+            character.SendErrorMessage(ErrorMessageType.SlaveCannotBindWhileIsDead);
+            return;
+        }
+
         // Check if the vehicle has the MasterOwnership buff and if the character is not the owner, block the attachment.
         if (attachPoint == AttachPointKind.Driver && slave.Buffs.CheckBuff((uint)BuffConstants.OwnersMark) && slave.Summoner?.ObjId != character.ObjId)
         {
@@ -865,6 +872,63 @@ public class SlaveManager(WorldInstance parentWorldInstance)
     }
 
     /// <summary>
+    /// Canonical owner-initiated despawn (client despawn button paths).
+    /// Enforces the canonical 1.2 gates before delegating to <see cref="Delete"/>:
+    /// owner-only (no gate, silently refused for non-owners), range (312), combat (288).
+    /// The 801 cargo gate lives inside Delete.
+    /// </summary>
+    private const float DespawnRangeMeters = 5f;
+
+    /// <summary>
+    /// Canonical Rider's Escape range (ArcheRage DB skill 22130: "within 20m of the trapped vehicle").
+    /// </summary>
+    private const float RidersEscapeRangeMeters = 20f;
+
+    /// <summary>
+    /// Canonical owner despawn by slave objId (CSDespawnSlavePacket path).
+    /// Enforces: owner check, proximity (312), not-in-combat (288) — then Delete (801 cargo gate).
+    /// </summary>
+    public void TryDespawnOwnedSlave(Character character, uint slaveObjId)
+    {
+        var slave = GetSlaveByObjId(slaveObjId);
+        if (slave == null)
+            return;
+
+        if (slave.Summoner?.ObjId != character.ObjId)
+        {
+            Logger.Warn($"Non-owner {character.Name} tried to despawn slave {slave.Name} (ObjId: {slave.ObjId})");
+            return;
+        }
+
+        if (Vector3.Distance(character.Transform.World.Position, slave.Transform.World.Position) > DespawnRangeMeters)
+        {
+            character.SendErrorMessage(ErrorMessageType.SlaveDespawnNearTheSlave);
+            return;
+        }
+
+        if (character.IsInBattle)
+        {
+            character.SendErrorMessage(ErrorMessageType.SlaveCannotRemoveWhileInCombat);
+            return;
+        }
+
+        Delete(character, slaveObjId, false);
+    }
+
+    /// <summary>
+    /// Canonical owner despawn by slave TlId (CSDestroySlavePacket path).
+    /// Enforces: owner check, proximity (312), not-in-combat (288) — then Delete (801 cargo gate).
+    /// </summary>
+    public void TryDespawnOwnedSlave(Character character, ushort slaveTlId)
+    {
+        var slave = GetSlaveByTlId(slaveTlId);
+        if (slave == null)
+            return;
+
+        TryDespawnOwnedSlave(character, slave.ObjId);
+    }
+
+    /// <summary>
     /// Un-summons a vehicle
     /// </summary>
     /// <param name="character"></param>
@@ -901,6 +965,15 @@ public class SlaveManager(WorldInstance parentWorldInstance)
         if (mySlave == null)
         {
             Logger.Warn($"{player.Name} using Rider's Escape with no slave active!");
+            return;
+        }
+
+        // Canonical: Rider's Escape only works within 20m of the trapped vehicle (640)
+        var escapeTarget = new Vector3(skillCastPositionTarget.PosX, skillCastPositionTarget.PosY, skillCastPositionTarget.PosZ);
+        if (Vector3.Distance(player.Transform.World.Position, escapeTarget) > RidersEscapeRangeMeters ||
+            Vector3.Distance(player.Transform.World.Position, mySlave.Transform.World.Position) > RidersEscapeRangeMeters)
+        {
+            player.SendErrorMessage(ErrorMessageType.SlaveEscapeTooFarFromSlave);
             return;
         }
 

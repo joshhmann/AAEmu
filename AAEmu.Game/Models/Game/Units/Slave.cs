@@ -984,7 +984,7 @@ public class Slave : Unit
     /// Creates a new DB connection and calls the Save function
     /// </summary>
     /// <returns></returns>
-    public bool Save()
+    public virtual bool Save()
     {
         if (Id <= 0 || SummoningItem == null)
             return false;
