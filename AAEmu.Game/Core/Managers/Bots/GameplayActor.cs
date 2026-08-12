@@ -4,9 +4,12 @@ using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Utils;
@@ -383,32 +386,126 @@ public class GameplayActor : IGameplayActor
         return Complete(request, granted, $"looted {granted} item(s) from {corpseObjId}");
     }
 
-    // B1 seams for the remaining surface — implemented by the sibling
-    // slices (UseItem/Mount/Dismount); fail closed until then.
+    // UseItem — the client's item-use path (CSStartSkillPacket SkillItem
+    // branch): resolves through ordinary inventory, validates existence /
+    // charges / use skill, applies via Skill.Use with a SkillItem caster.
     public ActorRequest UseItem(uint itemId, string? idempotencyKey = null)
-        => NotImplementedSeam(ActorActionType.UseItem, itemId, idempotencyKey);
+    {
+        var request = NewRequest(ActorActionType.UseItem, itemId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "use item"))
+            return request;
+
+        // 1. Resolve the item through NORMAL inventory services — the same
+        //    template lookup the client's use-item path performs. Only the
+        //    character's own inventory bag is usable.
+        if (!Character.Inventory.GetAllItemsByTemplate([SlotType.Inventory], itemId, -1, out var items, out _))
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemId} not found in inventory");
+        var item = items.FirstOrDefault(i => i.Count > 0);
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemId} has no charges left");
+
+        // 2. Usage rules: the item must carry a use skill and the skill
+        //    template must exist (same gate the SkillItem packet branch
+        //    relies on — a template-less use would silently no-op there).
+        var itemTemplate = item.Template;
+        if (itemTemplate == null || itemTemplate.UseSkillId == 0)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemId} is not usable (no use skill)");
+        var skillTemplate = SkillManager.Instance.GetSkillTemplate(itemTemplate.UseSkillId);
+        if (skillTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"item {itemId} use skill {itemTemplate.UseSkillId} not found");
+
+        request.Start($"using item {itemId} (instance {item.Id}, skill {itemTemplate.UseSkillId})");
+
+        // 3. Apply through the REAL gameplay pipeline — the exact path the
+        //    CSStartSkillPacket SkillItem branch takes: Skill.Use with a
+        //    SkillItem caster. The engine evaluates requirements, cooldown,
+        //    GCD, mana and reagents through the ordinary inventory; no
+        //    bot-only resource path (spec §8 / AGENTS.md #9-#10). A refusal
+        //    (CooldownTime, LackMana, …) happens BEFORE any consumption.
+        var skill = new Skill(skillTemplate);
+        var caster = new SkillItem(Character.ObjId, item.Id, item.TemplateId);
+        var result = skill.Use(Character, caster, new SkillCastUnitTarget(Character.ObjId), null, false, out _);
+        if (result != SkillResult.Success)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemId} use refused by engine: {result}");
+
+        // 4. Record the applied-effect fingerprint (B1 idempotency layer):
+        //    correlation for the M8 economic audit. The request-level key
+        //    dedupe is the PRIMARY retry guard — a same-key retry is
+        //    rejected pre-flight, so the item can never be consumed twice
+        //    by a retry; the item charge count is the engine-true backstop.
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("itemuse", itemId, item.Id.ToString()), request.TraceId);
+        return Complete(request, result, $"item {itemId} used (skill {itemTemplate.UseSkillId})");
+    }
 
     public ActorRequest Mount(uint mountObjId, string? idempotencyKey = null)
-        => NotImplementedSeam(ActorActionType.Mount, mountObjId, idempotencyKey);
+    {
+        var request = NewRequest(ActorActionType.Mount, mountObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "mount"))
+            return request;
+
+        var mateManager = Character.ParentWorld?.MateManager;
+        if (mateManager == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "no mate manager in world");
+
+        // 1. Already mounted → StateTransition (mount-state discipline). A
+        //    retry that got past the key gate is refused here before any
+        //    engine call, so the mount state can never flip twice.
+        if (mateManager.GetIsMounted(Character.ObjId, out _) != null)
+            return Reject(request, ActorFailureReason.StateTransition, "already mounted");
+
+        // 2. The target mount must be an active mate in the normal registry,
+        //    owned by the actor, with a free driver seat.
+        var mate = mateManager.GetActiveMateByMateObjId(mountObjId);
+        if (mate == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mountObjId} not found or not active");
+        if (mate.OwnerObjId != Character.ObjId)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mountObjId} not owned by actor");
+        if (!mate.Passengers.TryGetValue(AttachPointKind.Driver, out var driverSeat) || driverSeat._objId != 0)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mountObjId} driver seat unavailable");
+
+        request.Start($"mounting mate {mate.ObjId} (tl {mate.TlId})");
+
+        // 3. Real engine path — the same MountMate the CSMountMatePacket
+        //    handler drives (character-based entry; packets no-op headless).
+        if (!mateManager.MountMate(Character, mate.TlId, AttachPointKind.Driver, AttachUnitReason.None))
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mountObjId} refused by engine");
+
+        // 4. Post-state verification: the engine must have attached the rider.
+        if (mateManager.GetIsMounted(Character.ObjId, out _) == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mount {mountObjId} did not take effect");
+
+        return Complete(request, true, $"mounted mate {mate.ObjId}");
+    }
 
     public ActorRequest Dismount(string? idempotencyKey = null)
-        => NotImplementedSeam(ActorActionType.Dismount, 0, idempotencyKey);
-
-    /// <summary>
-    /// Fail-closed seam behavior for actions still landing with the B1
-    /// milestone: the request walks the normal lifecycle (single-writer
-    /// gate, audit emission) but is Rejected(RejectedAction) before any
-    /// execution — the typed surface exists so controllers and tests bind
-    /// against the B1 vocabulary today, and a call can never silently
-    /// no-op or crash.
-    /// </summary>
-    private ActorRequest NotImplementedSeam(ActorActionType action, uint targetId, string? idempotencyKey)
     {
-        var request = NewRequest(action, targetId, idempotencyKey: idempotencyKey);
-        if (!TryBegin(request, "b1 seam"))
+        var request = NewRequest(ActorActionType.Dismount, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "dismount"))
             return request;
-        return Reject(request, ActorFailureReason.RejectedAction,
-            $"B1 seam: {action} is not implemented in this slice (lands with the B1 milestone)");
+
+        var mateManager = Character.ParentWorld?.MateManager;
+        if (mateManager == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "no mate manager in world");
+
+        // 1. Not mounted → StateTransition (nothing to dismount). A retry
+        //    after a successful dismount is refused here — the state can
+        //    never flip back by re-running the request.
+        var mate = mateManager.GetIsMounted(Character.ObjId, out var attachPoint);
+        if (mate == null)
+            return Reject(request, ActorFailureReason.StateTransition, "not mounted");
+
+        request.Start($"dismounting mate {mate.ObjId} (tl {mate.TlId}, seat {attachPoint})");
+
+        // 2. Real engine path — the exact UnMountMate the CSUnMountMatePacket
+        //    handler uses (already character-based).
+        mateManager.UnMountMate(Character, mate.TlId, attachPoint, AttachUnitReason.None);
+
+        // 3. Post-state verification: the engine must have detached the rider.
+        if (mateManager.GetIsMounted(Character.ObjId, out _) != null)
+            return Reject(request, ActorFailureReason.RejectedAction, "dismount did not take effect");
+
+        return Complete(request, true, $"dismounted mate {mate.ObjId}");
     }
 
     #endregion
