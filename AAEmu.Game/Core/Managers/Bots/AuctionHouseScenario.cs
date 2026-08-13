@@ -269,7 +269,8 @@ public static class AuctionHouseScenario
                 Gates = [],
                 Stages = stages,
                 Criteria = criteria,
-                ActorRequests = traceRecords.Count
+                ActorRequests = traceRecords.Count,
+                TraceRecords = traceRecords
             };
         }
         catch (Exception ex)
@@ -447,6 +448,7 @@ public static class AuctionHouseScenario
             Gates = [],
             Stages = stages,
             Criteria = criteria,
-            ActorRequests = traceRecords.Count
+            ActorRequests = traceRecords.Count,
+            TraceRecords = traceRecords
         };
 }

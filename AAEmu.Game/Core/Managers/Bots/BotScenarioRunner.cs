@@ -81,6 +81,17 @@ public static class BotScenarioRunner
 
         public List<CriterionVerdict> Criteria { get; init; } = [];
 
+        /// <summary>
+        /// The per-action audit records for this run, in execution order
+        /// (M5 trace shape via <see cref="ActorAuditRecord.ToJson"/> — real
+        /// server timestamps requested_at/started_at/completed_at). Quest
+        /// drives leave this empty; fleet scenarios (ah-conservation) fill
+        /// it so the E2E writer can emit trace evidence directly from the
+        /// bridge response (evidence hygiene t_6e2725b5: no worker-side
+        /// transcription of the deterministic evidence block).
+        /// </summary>
+        public List<ActorAuditRecord> TraceRecords { get; init; } = [];
+
         public int ActorRequests { get; init; }
 
         /// <summary>Human-readable evidence block (deterministic — no wall-clock).</summary>
