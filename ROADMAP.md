@@ -54,9 +54,14 @@
   (does it look right, is it fun, does the village feel alive); ② bot-passed
   evidence must survive independent audit (the Rei/auditor lane reviews the
   trace, not the claim) — a bot can pass broken content if the harness can't
-  see the failure (the runnable-≠-playable lesson). This rule is why the bot
-  track and Lane D run in parallel: M5 isn't a detour from feature
-  completeness, it's the staffing plan for it.
+ see the failure (the runnable-≠-playable lesson). This rule is why the bot
+ track and Lane D run in parallel: M5 isn't a detour from feature
+ completeness, it's the staffing plan for it.
+ **H-grade boundary (reconciled 2026-08-12, bot-backtrack program):**
+ SCORECARD's H dimension means an ACTUAL PLAYER. A bot or scripted actor
+ completing a scenario is functional evidence (A dimension) — never H=2.
+ Bot/scripted-actor evidence is labeled proxy/bot-functional (H=1 at most),
+ and actual H stays UNKNOWN until Josh runs the curated scenario.
 - **THREE TIERS OF INTELLIGENCE (never mix them):**
   - **Game AI (deterministic):** combat, farming, crafting, trade packs,
     navigation, prison, juries, schedules, economy, recovery, parties —
@@ -182,7 +187,8 @@ delivered — **CLOSED on automated evidence** (automated exit GREEN —
 retroactively evidenced via the M2 restart baseline t_cca63225 and live
 probe t_92a41fe6; M1-M3 audit t_5b1f5494). Human playtest verdict REMAINS
 OPEN — board Open Decision #1, pending Josh's walk of Solzreed (C5,
-tracked separately). M1 WIDENED 2026-08-04 (Josh): the verifier
+tracked separately) — **recorded as an explicit deferred gate (M1 human
+route; bot-backtrack program, see deferred gates below).** M1 WIDENED 2026-08-04 (Josh): the verifier
 data-defect backlog rides in M1; **harness extension MOVED to M2 (Josh
 2026-08-05)** — M1 closes on defects + playtest.
 M2 remains the world-broadening release gate. All work items done: shared
@@ -282,7 +288,10 @@ entry + Josh decision.
 The reset-procedure exit test is strengthened: a third party (or clean host)
 must run the reset/seed procedure from the docs — the manifest may not
 validate itself. If two humans are unavailable for the baseline, M5-contract
-bots may stand in once M5 lands (human-capacity rule, G0).
+bots may stand in once M5 lands (human-capacity rule, G0) — **for the
+AUTOMATED baseline only: a bot-driven baseline is proxy/bot-functional
+evidence, never H=2. The ORIGINAL human baseline (two players, no GM repair)
+remains an explicit deferred gate (bot-backtrack program; Josh-owned).**
 
 ---
 
@@ -300,14 +309,16 @@ placement · growth + harvest · selected storage and furniture interactions.
 **Exit condition:** two players establish adjacent homesteads and use the
 curated objects during ONE uninterrupted session.
 
-**M3a status (2026-08-11):** ✅ **COMPLETE** — merged to develop @
+**M3a status (2026-08-11, H reconciled 2026-08-12):** ✅ **COMPLETE (bot-functional/proxy evidence)** — merged to develop @
 4d0427b96 (2026-08-10); Rei gates t_72c787c8 / t_449875bd ACCEPT.
 `M3aExitScenarioTests` on develop: 2 scripted actors (M5-stand-in rule),
 adjacent homesteads (16m enforced, 10m overlap REJECTED), curated objects
 in ONE uninterrupted session (placement → construction → crops → storage →
 furniture), real engine paths (HousingManager.Build / CraftEffect /
 Doodad.Use / CofferContainer). Scorecard: `HOUSING-01` / `FARM-01`
-C/W/H/A = 2.
+C/W/A = 2; **H = UNKNOWN (proxy/bot-functional only — scripted actors;
+no actual-player evidence yet)**. M3a human route + contract replay are
+explicit deferred gates (below).
 
 ### M3b — Property persistence and recovery (engineering-heavy)
 
@@ -320,10 +331,12 @@ prevention · administrative repair tooling.
 restart, crash-recovery, and re-entry tests WITHOUT state loss or
 duplication.
 
-**Scorecard targets:** `HOUSING-01` and `FARM-01` reach `C/W/H/A = 2` for the
-curated homestead at M3a; `PROPERTY-01` and the same curated objects reach
-`R = 2` with recovery/load evidence at M3b. No percentage substitutes for a
-missing scenario dimension.
+**Scorecard targets:** `HOUSING-01` and `FARM-01` reach `C/W/A = 2` for the
+curated homestead at M3a (A via the scripted-actor stand-in; **H = actual
+player only — H reaches 2 only when Josh runs the curated scenario; until
+then H stays U (proxy/bot-functional evidence, never H=2)**); `PROPERTY-01`
+and the same curated objects reach `R = 2` with recovery/load evidence at
+M3b. No percentage substitutes for a missing scenario dimension.
 
 **Depends on:** M2 (route + blocker backlog). **A4 (SaveManager dirty
 tracking) is a hard prerequisite for M3b** — the single-sync-transaction save
@@ -422,8 +435,11 @@ except the CharacterCraft conflict resolution + docs:
   flake); M3b Cycle-1 PASS every attempt, Cycle-2 observation-race miss on a
   loaded host — not a regression (M4 diff touches zero save code), tracked
   at t_1329a833; the 7m03s PASS above stands as this tree's own evidence.
-- **Scorecard:** CRAFT-01, PACK-01, SLAVE-01 → C/W/H/A/R=2 (H via the
-  scripted-actor automated fallback; humans confirm feel, not function).
+- **Scorecard:** CRAFT-01, PACK-01, SLAVE-01 → C/W/A/R=2; **H = UNKNOWN
+  (proxy/bot-functional only — the exit session was driven by 4 scripted
+  actors under the M5-stand-in rule; humans confirm feel, not function)**.
+  M4 economic/navigation replay + the original M2 human baseline are
+  explicit deferred gates (below).
 - **A2 convoy-traffic confirmation:** covered by the A2 gate at M4 entry
   (t_921a7be5, Rei ACCEPT, merged f9572e1a8 — ancestor of develop) — the
   short-circuit mechanism is verified (RegionBroadcastAllocationTests 9/9:
@@ -434,7 +450,9 @@ except the CharacterCraft conflict resolution + docs:
   soak-scale measurement that belongs to the M6 soak lane (numeric budgets
   + staged gate: 1 bot/30 min → 10 bots/1 h → 10 bots/6 h).
 - Human playtest of the integrated release (the M2 "feel" leg) remains the
-  deployment-lane follow-up once Josh GO's the release merge.
+  deployment-lane follow-up once Josh GO's the release merge — **recorded as
+  an explicit deferred gate (M2 original human baseline + M4 human route;
+  bot-backtrack program, see deferred gates below).**
 
 ---
 
@@ -649,7 +667,7 @@ DB-write budget precedent (t_2006451f / t_b4eb35e9). Fix attempt first (GC
 latency tuning, t_eecc5604, merged) per Josh's ruling; recalibration is the
 recorded fallback.
 
-**M6 EXIT RECORD (2026-08-11, t_35167e60):** the last M6-exit blocker — the
+**M6 EXIT RECORD (2026-08-11, t_35167e60; H/exit-label reconciled 2026-08-12):** the last M6-exit blocker — the
 session/item enumeration-race class — is CLOSED and the 6h soak is GREEN.
 Merge `eb6f637e0` (no-ff) landed the 4-commit chain from t_781cdb32 +
 t_3fdd6ac3 (concurrency-safe Server `_sessions`/StreamManager tokens,
@@ -667,7 +685,13 @@ bots / 6h / no unrecovered loops / no inventory duplication / no DB
 corruption / no tick-budget overrun) is now satisfied by recorded evidence;
 remaining M6-gate items per the 2026-08-09 audit (A1 execution boundary,
 restart-persistence scenario, observability logging, merge-to-develop G0-1)
-are tracked separately.
+are tracked separately. **Exit-label note (bot-backtrack program):** the
+6h soak verdict stands as "passed revised approved budgets" — the original
+zero-warning threshold was not met (physics-warning budget 0.03/min vs 0,
+t_eecc5604) and A1 landed AFTER the soak (merged 761d1e81a); the full M6
+exit label is NOT claimed — the **B4 restart-persistence scenario (bot
+identity/inventory/position/schedule survive restart) is an explicit
+deferred gate** (below).
 
 **Detail (2026-08-09 audit):** M6 exit is blocked on **A1** (execution
 boundary — bot steps off the game loop violate M5's core rule). Added exit
@@ -677,6 +701,28 @@ bots survive server restart with identity/inventory/position/schedule intact
 (:212/:225) and BotE2EBridgeBootstrap (:32-35) must log before any 25+-bot
 gate; a silently gearless or bridge-dead bot population is a failed gate;
 (c) merge-to-develop is a closing condition (G0-1).
+
+---
+
+## Deferred validation gates (bot-backtrack program, 2026-08-12)
+
+Josh's directive: prior human-test waivers are **authorized sequencing, not
+misconduct**. The engineering evidence above stands untouched; these gates
+are deferred validation, explicitly tracked. Bots prove function; Josh
+proves feel. Replayed via normal gameplay services + auditable traces
+(Phases 1-3, dependency-blocked on M5/M5.1 acceptance cards).
+
+| # | Deferred gate | Original evidence | Replay/validation plan |
+|---|---|---|---|
+| 1 | **M1 human route** (Solzreed walk, Open Decision #1) | Automated + restart evidence CLOSED M1; human verdict OPEN | Phase 1: golden route replayed through the M5 actor contract (real request lifecycle, normal services, machine-readable traces); Josh's feel verdict batched with other gates |
+| 2 | **Original M2 human baseline** (two players, no GM repair) | Amended census/reset scope COMPLETE (G1 2026-08-10); human baseline open | Phase 1: contract-level replay of the curated route from reproducible reset; Josh's two-player baseline remains Josh-owned (bots may stand in for the AUTOMATED baseline only — never H=2) |
+| 3 | **M3a contract replay** (housing/farming through contract actions) | M3a closed on scripted-actor proxy evidence (in-memory actors, reflection, GM inventory, direct service calls — predates A1/B1) | Phase 2: replay via M5.1 contract actions (Plant/Harvest/Craft/PackPickup/PutDown) on a real server, real engine paths, no direct DB/reflection/GM repair |
+| 4 | **M4 economic/navigation replay** (farm → craft → pack → load → navigate → unload → sell → reward) | M4 closed on M4ExitIntegratedSessionTests (4 scripted actors; integrated rig assigns zones/transforms directly, manually attaches cargo) | Phase 2: replay via M5.1 contract actions; navigation/travel from normal movement/vehicle controls — direct Transform/ZoneId assignment FAILS the gate; preserve + rerun process-level restart E2Es; Rei verifies traces + conservation |
+| 5 | **M6 B4 restart scenario** (bot identity/inventory/position/schedule survive restart) | 6h soak PASSED under revised approved budgets; A1 landed after soak; B4 metadata store not yet built | Phase 3: A1/B1 verified on merged develop; B4 metadata persistence implemented; bot-world restart test (2 checkpoints); soak verdict stays "passed revised approved budgets" |
+
+**SCORECARD H rule (reconciled):** H = actual player only. Scripted-actor /
+bot evidence is proxy/bot-functional (A dimension) and is NEVER recorded as
+H=2. H stays UNKNOWN until Josh runs the curated scenario.
 
 ---
 
@@ -970,7 +1016,10 @@ victory state + reward settlement reconciled in the audit trail.
     CRIME/TRIAL/PRISON/EXPEDITION gate M9 and M10, so their C/W audits start
     now even though the milestones are late.
   - **Rules:** grades promote only with linked evidence (C/W/H/A/R/S per the
-    mechanic model); H may use the M5-stand-in rule once M5 lands; nothing
+    mechanic model); **bots/scripted actors may stand in for the A (functional)
+    dimension once M5 lands — H remains actual-player-only and is NEVER
+    recorded as H=2 (proxy/bot-functional evidence only; H UNKNOWN until Josh
+    runs it)**; nothing
     lands unmerged (G0-1); Lane D never breaks an active Lane A gate —
     shared engine fixes route through Lane B; upstream-sourced fixes follow
     the upstream alignment rules.

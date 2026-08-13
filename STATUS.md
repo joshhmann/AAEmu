@@ -1,7 +1,21 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-11 22:40 PDT · by Nei
-Branch of record: develop @ 4ded92c61
+Updated: 2026-08-12 18:20 PDT · by Nei (t_773f9651; bot-backtrack reconcile t_4ec066d3)
+Branch of record: develop @ 761d1e81a (ls-remote verified 2026-08-12 18:00 PT)
+
+## Deferred validation gates (bot-backtrack program, 2026-08-12)
+
+Prior human-test waivers are **authorized sequencing, not misconduct**.
+Earned engineering evidence stands; these are explicitly deferred
+validation. Bots prove function; Josh proves feel. H = actual player only —
+scripted-actor/bot evidence is proxy/bot-functional, never H=2. Full table:
+ROADMAP.md "Deferred validation gates".
+
+1. **M1 human route** — Josh walks Solzreed (Open Decision #1).
+2. **Original M2 human baseline** — two players, no GM repair; Josh-owned.
+3. **M3a contract replay** — Phase 2 via M5.1 actions (Plant/Harvest/Craft/PackPickup/PutDown).
+4. **M4 economic/navigation replay** — Phase 2 contract replay; normal movement/vehicle controls (direct Transform/ZoneId assignment FAILS the gate).
+5. **M6 B4 restart scenario** — Phase 3; bot identity/inventory/position/schedule survive restart.
 
 ## Milestone state
 
@@ -19,7 +33,8 @@ Items 1-8 delivered; automated exit test GREEN — census headline
 release — BUG-007/008/009/010/011/012 live). Deploy incident (39GB
 container json.log) resolved; rotation fix shipped (t_264e1984 ✅).
 M1 closed on automated evidence (M1-M3 audit t_5b1f5494); human playtest
-verdict open (Open Decision #1, pending Josh — C5).
+verdict open (Open Decision #1, pending Josh — C5) — **explicit deferred
+gate: M1 human route (bot-backtrack program)**.
 
 **M2 — Golden-path baseline: ✅ DONE — G1 census gate PASSED (2026-08-10)**
 M2 redefined (2026-08-10 audit, in ROADMAP) into the M2a–M2d census sweep.
@@ -27,18 +42,61 @@ G1 GATE @ 7f5c179f7: 4,579 live = 4,573 PASS + 6 doc-SKIP, 0 unexplained;
 full gate 1495/0/1 (t_971d275b / gate card t_4221f85c). Baseline legs
 Rei-gated: automated (t_c6eb12ec / t_1998cfd8 PASS), restart (t_cca63225 /
 t_c069bacd PASS + live probe t_92a41fe6 2/2), clean-host (t_52755daa /
-t_819930ef PASS-WITH-FIXES). Human leg DEFERRED to M4 close (t_46bf9b84).
+t_819930ef PASS-WITH-FIXES). Human leg DEFERRED to M4 close (t_46bf9b84) —
+**explicit deferred gate: original M2 human baseline, Josh-owned
+(bot-backtrack program; bots may stand in for the AUTOMATED baseline only,
+never H=2)**.
 
-**M3a — Homestead shell: ✅ CLOSED (2026-08-10, Rei gate t_449875bd ACCEPT)**
+**M3a — Homestead shell: ✅ CLOSED on scripted-actor (proxy) evidence (2026-08-10, Rei gate t_449875bd ACCEPT; H reconciled 2026-08-12)**
 Merged @ 4d0427b96; two-player exit via M3aExitScenarioTests (M5-stand-in:
 2 scripted actors, adjacent 16m, ONE session — placement → construction →
-crops → storage → furniture). Scorecard HOUSING-01 / FARM-01 C/W/H/A = 2.
+crops → storage → furniture). Scorecard HOUSING-01 / FARM-01 C/W/A = 2;
+**H = U (proxy/bot-functional only — scripted actors; H UNKNOWN until Josh
+runs it; M3a contract replay = explicit deferred gate)**.
 
 **M3b — Property persistence and recovery: ✅ CLOSED (2026-08-11, EXIT gate t_accb1c63 PASS)**
 M3b-1..4 merged (5dc7c2fbd / 71b43e09f / 3913932bf / 5981246ea); EXIT E2E
 f5b00c686 PASS 7m08s — N=3 crash cycles incl. kill -9 mid-save (INNODB_TRX-
 observed) + container kill, 16 rows/boot, no loss/dup; autosave p95 1301ms
 < 2000ms at 25 bots + 2 homesteads. PROPERTY-01 R = 2 (U→2 in f5b00c686).
+
+**M4 — Trade, crafting and transport integrity: ✅ MERGED + DEPLOYED (2026-08-12; H reconciled 2026-08-12)**
+Pinned audited SHA **95bb1c78e** (merge: M4 EXIT integrated playable release,
+t_97e59ffc, **Rei gate PASS** t_abe87eaf ACCEPT) — crafting integrity
+(bag-scope material check + level-10 pack gate) + trade packs + vehicle
+lifecycle + integrated session evidence. **PROD DEPLOYED** to CT 133 by Mai
+(t_442f3016): image `aaemu-game:presence-demo` @ 6d5a07cf49a5 built from
+pinned 95bb1c78e; rollback tag `presence-demo-rollback-pre-m4` (3ddcf7a4bdbc);
+prod startup test PASS 37 min (0 restarts, 0 FATAL, 3/3 bots roaming, real
+client accepted); manifest deploy/m4-manifest @ 03d3442bd (deliberately NOT
+develop — fork develop carries M5-lane content). Gates: unit 1778/0/1;
+M4ExitIntegratedSessionTests (4 scripted actors: harvest → craft pack →
+slave cargo → 3-leg route → sell, 2× 124540 mails); restart E2E kill -9 PASS
+(2m12s/3m09s/7m03s); CRAFT-01 / PACK-01 / SLAVE-01 C/W/A/R = 2, **H = U
+(proxy/bot-functional only — scripted actors; H UNKNOWN until Josh runs it;
+M4 economic/navigation replay = explicit deferred gate)**. Human playtest of
+the integrated release remains the deployment-lane follow-up pending Josh GO.
+
+**M5 — Gameplay Actor Contract: 🔶 A1 + B1 COMPLETE on develop — B2 + exit tests open**
+A1 (marshal bot steps onto the game loop — the M6-exit-blocking retroactive
+fix) + B1 core action surface (Interact · Loot · UseItem · Mount/Dismount ·
+AcceptQuest · TurnInQuest, each through real engine paths) merged to fork
+develop @ **761d1e81a** (ls-remote joshhmann/AAEmu develop verified
+2026-08-12 18:00 PT; Rei gates t_d06d8dd9 / t_ebfc9b35 done). Remaining:
+B2 (M5.1 economic actions), threading-boundary verification, M5 core exit
+test. Control-plane API t_7b6d7a4b running (Tai) — contract-backed surface
+replacing BotDriveBridge (token auth, enqueue-only, no-admin, crash
+isolation); MCP sidecar t_446228b5 + first consumer t_52b2b084 queued.
+
+**M6 exit blockers (soak limitations):** regression t_eecc5604 (physics-warning
+budget 0.03/min vs 0 in 6h soak) · PlayerBotScheduler NOT enabled in the soak
+run — scheduler-driven soak still required if M6 exit mandates it · adopt-heal
+fix t_555ed207 awaiting Rei gate. **Exit-label note (reconciled 2026-08-12,
+bot-backtrack):** soak verdict = "passed revised approved budgets" (original
+zero-warning threshold not met; A1 landed AFTER the soak, merged 761d1e81a) —
+full M6 exit label NOT claimed; **B4 restart-persistence scenario (bot
+identity/inventory/position/schedule survive restart) = explicit deferred
+gate**.
 
 **M6 — Deterministic playerbot framework: 🔶 presence-demo hotfix chain DONE — parity + soak open**
 Presence demo (3 citizen bots embody + roam AT Josh's spawn, zone 179)
@@ -88,10 +146,10 @@ skips at the milestone gate.
 
 | Lane | Sister | Current work | Status |
 |------|--------|--------------|--------|
-| Builds | Tai | presence-demo image aaemu-game:presence-demo live via hotfix3 overlay; overlay now in-repo | ✅ deployed |
-| Verifies | Rei | e2e gates 10-bot correctness + 25-bot stability PASS (2026-08-09) | ✅ done |
-| Dispatches | Mai | presence-demo hotfix chain deployed (hotfix3 overlay) | ✅ done |
-| Tracks | Nei | M1-M3 audit C4 tracking refresh 08-11 (t_b3980118) — STATUS M2/M3 rows, ROADMAP M3 closeout + M1 reconcile, progression-board M3 rows | ✅ this commit |
+| Builds | Tai | M4 prod image 6d5a07cf49a5 live (t_442f3016); control-plane API t_7b6d7a4b running — contract-backed surface replacing BotDriveBridge | 🔶 running |
+| Verifies | Rei | M4 gate PASS t_abe87eaf; M5 gates t_d06d8dd9 / t_ebfc9b35 done | ✅ done |
+| Dispatches | Mai | M4 deploy to CT 133 + prod startup verification (t_442f3016) | ✅ done |
+| Tracks | Nei | 08-12 (t_773f9651): M4/M5 rows + branch-of-record 761d1e81a (ls-remote verified); SLO window relabel sidecar/shadow baseline (hermes-ops f31f829/8a0fb09) | ✅ this card |
 
 ## Open tasks (kanban, AAEmu lane)
 
@@ -103,6 +161,10 @@ skips at the milestone gate.
 | t_555ed207 | Fix: adopt-heal force-stamps demo blob — looks collapse to 1 on reboot | tai | 🔶 blocked — fix pushed cdf6d4a62, awaiting Rei gate |
 | t_f198bb0e | M1-5d: harness extension — 14 unsupported act families (T3 SKIPs) | hx-coder | ⏳ ready |
 | t_913c1d4a | verifier stale stub-registry false positives (CheckGuard/ItemGroup — the 3 WARNs) | hx-coder | ⏳ ready |
+| t_7b6d7a4b | Control plane API: contract-backed surface (replaces BotDriveBridge) — token auth, enqueue-only, no-admin, crash isolation | tai | 🔶 running |
+| t_446228b5 | MCP sidecar: contract action tools (observe/move/interact/accept_quest/...) | tai | ⏳ ready |
+| t_52b2b084 | First consumer: scripted Lane D auction-house scenario via contract API | tai | ⏳ ready |
+| t_5999b370 | AAEMU authority envelope: draft + validate + Josh decision packet | nei | 🔶 running (draft done, pending Josh approval) |
 | t_bcf976ad | Wiki M0/M1 update — implement wiki-audit.md proposals | hx-researcher | blocked |
 | — | feat/quest-scenario-harness (6e367585: T3 census + runnability.md + SCORECARD M1-5 entry) merge to develop | Tai | ⏳ no card yet |
 
@@ -113,6 +175,18 @@ skips at the milestone gate.
 
 ## Last scorecard update
 
+- 2026-08-12 — **bot-backtrack Phase 0.2 reconciliation (t_4ec066d3)**: M3a/M4
+  H grades corrected — scripted-actor evidence is proxy/bot-functional, H =
+  UNKNOWN until Josh runs it; SCORECARD H dimension = actual player only
+  (never H=2); deferred gates recorded (M1 human route, original M2 human
+  baseline, M3a contract replay, M4 economic/navigation replay, M6 B4 restart
+  scenario); waivers visible in ROADMAP/SCORECARD/STATUS — branch
+  docs/phase0-2-reconcile, Rei gate t_ee64e86b.
+- 2026-08-12 — tracking refresh (t_773f9651): STATUS.md M4 row (merged +
+  deployed @ pinned 95bb1c78e, Rei PASS, prod 6d5a07cf49a5, t_442f3016) +
+  M5 A1/B1 row (develop @ 761d1e81a, ls-remote verified) + M6 exit blockers;
+  branch-of-record → 761d1e81a; hermes-ops SLO window relabeled sidecar/shadow
+  baseline (f31f829, decision log 8a0fb09).
 - 2026-08-11 — this commit: M1-M3 audit C4 tracking refresh (t_b3980118,
   audit t_5b1f5494 PASS WITH NOTES) — STATUS.md M2/M3a/M3b rows +
   branch-of-record 4ded92c61; ROADMAP.md M3a/M3b closeout lines + M1

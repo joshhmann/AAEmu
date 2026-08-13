@@ -1,6 +1,6 @@
 # HYRAXKNOT — AAEmu Progression Board
 
-**Updated:** 2026-08-11 · **Owner:** Aya (director) / Nei (tracking) · **Data basis:** census + board, all Rei-gated · **G1 gate PASSED** (WI-12, merged develop @ 7f5c179f7) · **M1-M3 audit 2026-08-11** (t_5b1f5494): PASS WITH NOTES — tracking refreshed per C4
+**Updated:** 2026-08-12 · **Owner:** Aya (director) / Nei (tracking) · **Data basis:** census + board, all Rei-gated · **G1 gate PASSED** (WI-12, merged develop @ 7f5c179f7) · **M1-M3 audit 2026-08-11** (t_5b1f5494): PASS WITH NOTES — tracking refreshed per C4 · **bot-backtrack Phase 0.2 reconciliation (t_4ec066d3): H = actual player only — scripted-actor evidence is proxy/bot-functional, never H=2; deferred gates below**
 
 ---
 
@@ -27,17 +27,18 @@
 
 | Milestone | Meaning | Status |
 |---|---|---|
-| **M1** | Solzreed golden route + engine defects (BUG-007→013) | ✅ **CLOSED (automated evidence)** — engine-health release live @ 94f498fc; human playtest verdict still open (Open Decision #1, pending Josh — C5) |
-| **M2 / G1 gate** | Quest coverage to 100% — every live context PASS or registered-drop or doc-SKIP, zero unexplained | ✅ **GATE PASSED 2026-08-10** — 4,573 PASS / 0 FAIL / 14 doc-SKIP over 4,587 census quests (4,579 live); gate.sh 1495/0/1 @ 7f5c179f7 |
+| **M1** | Solzreed golden route + engine defects (BUG-007→013) | ✅ **CLOSED (automated evidence)** — engine-health release live @ 94f498fc; human playtest verdict still open (Open Decision #1, pending Josh — C5) = **deferred gate: M1 human route** |
+| **M2 / G1 gate** | Quest coverage to 100% — every live context PASS or registered-drop or doc-SKIP, zero unexplained | ✅ **GATE PASSED 2026-08-10** — 4,573 PASS / 0 FAIL / 14 doc-SKIP over 4,587 census quests (4,579 live); gate.sh 1495/0/1 @ 7f5c179f7. **Deferred gate: original M2 human baseline (Josh-owned; bots stand in for the AUTOMATED baseline only)** |
 | **M2a** | Band 1–20 census ≥95% | ✅ **DONE** — final: 1,169 PASS / 0 FAIL / 0 doc-SKIP (560 + 609) |
 | **M2b** | Playerbot repeatability pilot (Solzreed) | ✅ **DONE** — 30/30 |
 | **M2b-E2E** | Live-server bot harness (Login+Game+MySQL) | ✅ **DONE** — harness + gates: 10-bot correctness PASS, 25-bot stability PASS (08-09); Scripts/e2e + presence overlay in-repo (06e6fcb4a, 615c3719c) |
 | **M2c** | Band 21–30 sweep | ✅ **DONE** — 847/847 PASS (absorbed into G1 gate; see ROADMAP G1) |
 | **M2d** (proposed) | Band 41–50 sweep | ✅ **DONE** — 1,589 PASS / 2 doc-SKIP (3419/4967 kept-by-ruling); absorbed into G1 gate |
-| **M3a** | Homestead shell — two players, adjacent homesteads, curated objects, ONE session | ✅ **CLOSED 2026-08-10** — Rei gate t_449875bd ACCEPT (t_72c787c8); merged @ 4d0427b96; M3aExitScenarioTests (M5-stand-in, 2 scripted actors, 16m adjacency); HOUSING-01 / FARM-01 C/W/H/A = 2 |
+| **M3a** | Homestead shell — two players, adjacent homesteads, curated objects, ONE session | ✅ **CLOSED on scripted-actor (proxy) evidence 2026-08-10** — Rei gate t_449875bd ACCEPT (t_72c787c8); merged @ 4d0427b96; M3aExitScenarioTests (M5-stand-in, 2 scripted actors, 16m adjacency); HOUSING-01 / FARM-01 C/W/A = 2, **H = U (proxy/bot-functional — H UNKNOWN until Josh runs it; M3a contract replay = deferred gate)** |
 | **M3b** | Property persistence — N≥3 crash cycles, no loss/dup, save budget | ✅ **CLOSED 2026-08-11** — M3b-1..4 merged (5dc7c2fbd / 71b43e09f / 3913932bf / 5981246ea); EXIT E2E f5b00c686 PASS 7m08s (kill -9 mid-save + container kill hard-asserted, 16 rows/boot); autosave p95 1301ms < 2000ms @ 25 bots + 2 homesteads; PROPERTY-01 R = 2 (t_accb1c63) |
+| **M4** | Trade, crafting, transport — integrated playable release | ✅ **MERGED + DEPLOYED 2026-08-12** — pinned 95bb1c78e (Rei gate t_abe87eaf ACCEPT); prod CT 133 by Mai (t_442f3016); M4ExitIntegratedSessionTests (4 scripted actors = M5-stand-in); restart E2E kill -9 PASS ×3; CRAFT-01 / PACK-01 / SLAVE-01 C/W/A/R = 2, **H = U (proxy/bot-functional — H UNKNOWN until Josh runs it; M4 economic/navigation replay = deferred gate)** |
 | **M6-light** | Bot roam/safety/behaviors | ✅ **DONE** (t_5aec3250) |
-| **M6** | Deterministic playerbot framework | 🔶 hotfix chain **DONE** — 3 citizens live at Josh's spawn (terrain-Z + patrol-home + factory looks + restart-idempotent); e2e 10/25-bot gates PASS; GM cmds P0 (t_7b4f9423); M6.6 parity seeding landed (t_747a1c44/t_120bb6c9); 6h/10-bot soak COMPLETE (t_1ed9881f): 10/10 bots full window, 0 crash/disconnect, RSS flat 3418–3453MB — harness verdict **FAIL** on physics-warning budget (0.03/min vs 0, boot-spike WARNs) → regression card t_eecc5604; adopt-heal fix in Rei review (t_555ed207) |
+| **M6** | Deterministic playerbot framework | 🔶 hotfix chain **DONE** — 3 citizens live at Josh's spawn (terrain-Z + patrol-home + factory looks + restart-idempotent); e2e 10/25-bot gates PASS; GM cmds P0 (t_7b4f9423); M6.6 parity seeding landed (t_747a1c44/t_120bb6c9); 6h/10-bot soak COMPLETE (t_1ed9881f): 10/10 bots full window, 0 crash/disconnect, RSS flat 3418–3453MB — harness verdict **FAIL** on physics-warning budget (0.03/min vs 0, boot-spike WARNs) → regression card t_eecc5604; adopt-heal fix in Rei review (t_555ed207). **Exit-label note (reconciled 2026-08-12): soak verdict = "passed revised approved budgets"; full M6 exit label NOT claimed — B4 restart-persistence scenario = deferred gate** |
 | **M6 full** | 1,000-citizen living world | ⏳ queued — after soak regression RCA (t_eecc5604) + G2 ladder |
 
 ---
@@ -56,8 +57,22 @@
 
 ## Open Decisions (Josh)
 
-1. **M1 playtest verdict** — after you walk Solzreed (your pace, your receipts).
+1. **M1 playtest verdict** — after you walk Solzreed (your pace, your receipts). [deferred gate]
 2. ~~**Soak exit report**~~ — ✅ filed 2026-08-10 (t_1ed9881f): 6h/10-bot full window clean (0 crash/disconnect, RSS flat) but harness verdict FAIL on physics-warning budget → regression card t_eecc5604 (RCA or budget recalibration); **M6 exit pending that card's outcome.**
 3. **Sit-pose in-game check** — backlog (Tue 08-11 or later).
+
+## Deferred validation gates (bot-backtrack program, 2026-08-12)
+
+Prior human-test waivers are **authorized sequencing, not misconduct**;
+nothing erased, earned engineering evidence untouched. H = actual player
+only — scripted-actor/bot evidence is proxy/bot-functional, never H=2.
+Replays run through normal gameplay services + auditable traces,
+dependency-blocked on M5/M5.1 acceptance cards (ROADMAP.md full table):
+
+- **M1 human route** — Josh walks Solzreed (Open Decision #1).
+- **Original M2 human baseline** — two players, no GM repair; Josh-owned.
+- **M3a contract replay** — Phase 2 via M5.1 actions (Plant/Harvest/Craft/PackPickup/PutDown).
+- **M4 economic/navigation replay** — Phase 2; normal movement/vehicle controls (direct Transform/ZoneId assignment FAILS the gate).
+- **M6 B4 restart scenario** — Phase 3; bot identity/inventory/position/schedule survive restart.
 
 *Progress = forward motion with receipts. Every row above is evidence-gated.*
