@@ -763,6 +763,14 @@ public sealed class BotDriveBridge
                 criteria = result.Criteria,
                 actorRequests = result.ActorRequests,
                 rigNotes = result.RigNotes,
+                // Per-action audit records (M5 trace contract shape via
+                // ActorAuditRecord.ToJson — real server timestamps). The
+                // deterministic evidence block intentionally carries no
+                // wall-clock; the structured trace is the timestamped
+                // artifact (evidence hygiene t_6e2725b5).
+                trace = result.TraceRecords
+                    .Select(r => JsonSerializer.Deserialize<JsonElement>(r.ToJson()))
+                    .ToArray(),
                 evidence = result.Evidence(),
                 character = new
                 {

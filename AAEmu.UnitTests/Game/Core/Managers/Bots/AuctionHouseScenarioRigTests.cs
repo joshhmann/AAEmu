@@ -224,6 +224,45 @@ public class AuctionHouseScenarioRigTests
     }
 
     [Test]
+    public async Task AuctionHouse_TraceRecords_ExposeRealServerTimestamps()
+    {
+        SeedSurfaceAndReset();
+        var fleetSize = 3;
+        var (primary, fleet) = RigFleet(fleetSize);
+        SeedWorkingAuctionMail(fleet);
+
+        var result = AuctionHouseScenario.Run(primary, FixtureProvisioner(fleet),
+            new AuctionHouseScenario.AuctionScenarioOptions(
+                ItemTemplateId: RigItemTemplateId,
+                SeedMoney: RigSeedMoney,
+                BuyoutPrice: RigBuyout,
+                Duration: AuctionDuration.AuctionDuration6Hours,
+                FleetSize: fleetSize));
+
+        await Assert.That(result.Passed).IsTrue().Because(result.Evidence());
+        // Evidence hygiene (t_6e2725b5): the result must expose the
+        // per-action audit records in execution order — 2N completed
+        // (posts + buys) + 1 dedupe-refusal — each carrying REAL server
+        // timestamps, so a trace artifact written from these records is
+        // attestable as "real output with timestamps" without any
+        // worker-side transcription of the deterministic evidence block.
+        var records = result.TraceRecords;
+        await Assert.That(records.Count).IsEqualTo(2 * fleetSize + 1);
+        await Assert.That(records.Count(r => r.Result == ActorLifecycleState.Completed)).IsEqualTo(2 * fleetSize);
+        // Every record was requested server-side; every completed record
+        // has a terminal time at/after its request time (real engine
+        // transitions, not fabricated zeros).
+        await Assert.That(records.All(r => r.RequestedAtUtc != default)).IsTrue();
+        var completed = records.Where(r => r.Result == ActorLifecycleState.Completed).ToList();
+        await Assert.That(completed.All(r =>
+            r.CompletedAtUtc is { } done && done >= r.RequestedAtUtc)).IsTrue();
+        // The trace preserves ring order: the first record is the primary's
+        // post and the last completed record is the primary's closure buy.
+        await Assert.That(records[0].Action).IsEqualTo(ActorActionType.AuctionPost);
+        await Assert.That(completed[^1].Action).IsEqualTo(ActorActionType.AuctionBuy);
+    }
+
+    [Test]
     public async Task AuctionHouse_FleetSizeBelowTwo_Fails()
     {
         SeedSurfaceAndReset();
