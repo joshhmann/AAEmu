@@ -221,6 +221,31 @@ public static class BotScenarioTemplates
     };
 
     /// <summary>
+    /// BACKTRACK Phase 1 (t_61a0eebb): M1/M2 contract replay — the curated
+    /// Solzreed golden route (16 quests through the first-mount chain)
+    /// driven headless through IGameplayActor CONTRACT ACTIONS ONLY
+    /// (accept/advance/use_item/turn_in/auto_turn_in/mount). The runner
+    /// routes this name to <see cref="M1M2ReplayScenario"/> before the
+    /// quest machinery — the same dispatch pattern as the auction-house
+    /// scenario. Drive placeholder never executes.
+    /// </summary>
+    public static BotScenarioTemplate M1M2Replay { get; } = new()
+    {
+        Name = M1M2ReplayScenario.ScenarioName,
+        Description = "BACKTRACK Phase 1: M1 route + M2 baseline replay — curated Solzreed golden route through contract actions only; proxy/bot-functional evidence, H stays UNKNOWN.",
+        Race = Race.Nuian,
+        Gender = Gender.Male,
+        Level = 6,
+        Drive = new QuestDriveSpec
+        {
+            QuestId = 0,
+            AcceptorType = nameof(QuestAcceptorType.Npc),
+            AcceptorId = 0,
+            Stages = []
+        }
+    };
+
+    /// <summary>
     /// The library — templates by name.
     /// </summary>
     public static IReadOnlyDictionary<string, BotScenarioTemplate> Library { get; } =
@@ -229,7 +254,8 @@ public static class BotScenarioTemplates
             [Level22QuestGate.Name] = Level22QuestGate,
             [AbilityPrerequisiteGate.Name] = AbilityPrerequisiteGate,
             [Cat34DailyCycle.Name] = Cat34DailyCycle,
-            [AuctionHouseConservation.Name] = AuctionHouseConservation
+            [AuctionHouseConservation.Name] = AuctionHouseConservation,
+            [M1M2Replay.Name] = M1M2Replay
         };
 
     public static BotScenarioTemplate? Get(string name)
