@@ -252,6 +252,14 @@ public static class Program
                 services.AddSingleton<BotRoamStepExecutor>();
                 services.AddSingleton<IBotStepExecutor>(sp => sp.GetRequiredService<BotRoamStepExecutor>());
 
+                // Control-plane action queue (M5 stage 3): the enqueue-only
+                // path from the WebApi into bot execution. SINGLETON — it
+                // owns the command queue + trace history; its drain runs on
+                // the execution boundary via the game-loop tick. Disabled by
+                // default (AAEMU_BOT_CTRL gate at the API layer); the
+                // subscription is lazy (first enqueue only).
+                services.AddSingleton<BotActionCommandQueue>();
+
                 // Due-time scheduler + bounded worker pool (4-8, spec §5). Not
                 // auto-started: the BotPresenceCoordinator (or admin command)
                 // calls Start(), so an unwired deployment stays inert.
