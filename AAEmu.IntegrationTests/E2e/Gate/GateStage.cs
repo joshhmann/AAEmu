@@ -106,9 +106,13 @@ public static class GateStages
     /// <summary>
     /// Stage 2-homestead — the M3b gate-scale save budget: 25 bots embodied
     /// with TWO seeded homesteads in the world, enforcing the autosave p95
-    /// &lt; 2s budget (ROADMAP M3b). Same density as stage 25 plus homestead
-    /// state; the exit scenario (t_accb1c63) re-runs this after the full
-    /// place → decorate → plant → harvest → restart cycles.
+    /// budget (ROADMAP M3b; recalibrated 2000 → 4000 ms 2026-08-13,
+    /// t_0d576fdb). Same density as stage 25 plus homestead state; the exit
+    /// scenario (t_accb1c63) re-runs this after the full
+    /// place → decorate → plant → harvest → restart cycles. Runs no
+    /// ScenarioTemplates, so the global default raise doubles its budget by
+    /// inheritance — bounded (H2-gated, no hardcoded 2s assertions, 10000 ms
+    /// ceiling still the stall guard); revisit a per-stage override when H2 lands.
     /// </summary>
     public static GateStageConfig Stage25Homesteads { get; } = new()
     {

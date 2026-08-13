@@ -119,14 +119,21 @@ baseline) to ~2 s at gate scale. `AuctionManager.Save` persists only dirty
 lots (REPLACE INTO) — the cost is fleet state, not an auction-write loop.
 
 **Measurement.** 8 post-rebuild Stage10 runs on 2026-08-13 (10 bots, 3-min
-window): steady p95 band **1945–2666 ms**, 5 of 8 over the old 2000 limit;
+window): steady p95 band **1945–2666 ms**, 4 of 8 over the old 2000 limit;
 one run at 543 ms (fleet not in its active phase — pass cost is
 fleet-overlap-dependent). No quest regressions in any run; the ah-conservation
 scenario itself passes in-gate (conservation exact 247250/247250).
 
-**Why 4000.** ~1.5× headroom over the worst measured pass (2666 ms) while the
-plain shape (34 ms) keeps ~100× margin. The 10000 ms single-pass ceiling is
+**Why 4000.** ~1.5× headroom over the worst measured pass (2666 ms); the
+plain shape (no ah-conservation template) measured 547 ms — ~7.3× margin
+(34 ms is the pre-scenario baseline). The 10000 ms single-pass ceiling is
 unchanged — a genuine save-path stall still trips the max verdict.
+
+**25-homesteads note.** The M3b homesteads stage declares no
+ScenarioTemplates, so the global default raise doubles its budget by
+inheritance (2000 → 4000). Bounded: H2-gated, no hardcoded 2s assertions,
+10000 ms ceiling still the stall guard. Revisit a per-stage override when
+H2 lands.
 
 ## How to add a stage (100/250/500/1000)
 

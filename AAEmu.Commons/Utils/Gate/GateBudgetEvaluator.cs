@@ -81,9 +81,10 @@ public sealed record GateBudgets
     /// calls DoSave(true) (saveAllCharacters=true), and pass cost scales with
     /// in-world character state. Measured 8 post-rebuild Stage10 runs:
     /// steady band 1945–2666 ms p95 (543 ms when the fleet isn't in its
-    /// active phase), 5 of 8 over the old 2000 limit; pre-scenario baseline
-    /// was 34 ms. 4000 gives ~1.5× headroom over the worst measured pass
-    /// while the plain shape (34 ms) keeps ~100× margin. AuctionManager.Save
+    /// active phase), 4 of 8 over the old 2000 limit. 4000 gives ~1.5×
+    /// headroom over the worst measured pass; the plain (no-scenario) shape
+    /// measured 547 ms (~7.3× margin; 34 ms is the pre-scenario baseline).
+    /// AuctionManager.Save
     /// persists only dirty lots (REPLACE INTO) — not a write loop, so the
     /// cost is fleet state, not auction-write amplification.</summary>
     public double AutosaveP95Ms { get; init; } = 4000;
