@@ -109,24 +109,37 @@ public static class GameplayActorTestRig
     private static bool s_seeded;
 
     /// <summary>
-    /// Seeds missing singletons + the minimal skill template. Idempotent;
-    /// must run before any actor is created. Safe in any suite ordering.
+    /// Seeds missing singletons + the minimal skill template. The singleton
+    /// surface is one-shot (s_seeded); the idempotent dict/template healing
+    /// (SeedSkillManager + SeedItemManager) runs on EVERY call so actor
+    /// tests re-heal the shared managers after a sibling rig swaps them
+    /// (t_277eaa57: PlayerbotPilotRig.SeedPilotSingletons →
+    /// QuestScenarioDriver.SeedSingletons UNCONDITIONALLY replaces
+    /// SkillManager/ItemManager with fresh instances whose dictionaries are
+    /// null/empty; the one-shot guard alone would leave every later actor
+    /// test dereferencing null _skills / empty _templates — the combined
+    /// GameplayActor run's order dependence). Must run before any actor is
+    /// created. Safe in any suite ordering.
     /// </summary>
     public static void Seed()
     {
         lock (typeof(GameplayActorTestRig))
         {
-            if (s_seeded)
-                return;
+            if (!s_seeded)
+            {
+                SeedBaseSurface();
+                EnsureIncrementingItemIds();
+                SeedTradeSurface();
+                FormulaManager.Instance.Load();
 
-            SeedBaseSurface();
-            EnsureIncrementingItemIds();
+                s_seeded = true;
+            }
+
+            // Idempotent + additive (missing-only per dict/template), so
+            // re-running after a sibling singleton swap is safe and never
+            // clobbers established data (t_4f11a519 discipline).
             SeedSkillManager();
             SeedItemManager();
-            SeedTradeSurface();
-            FormulaManager.Instance.Load();
-
-            s_seeded = true;
         }
     }
 
