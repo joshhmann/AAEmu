@@ -720,6 +720,30 @@ proves feel. Replayed via normal gameplay services + auditable traces
 | 4 | **M4 economic/navigation replay** (farm → craft → pack → load → navigate → unload → sell → reward) | M4 closed on M4ExitIntegratedSessionTests (4 scripted actors; integrated rig assigns zones/transforms directly, manually attaches cargo) | Phase 2: replay via M5.1 contract actions; navigation/travel from normal movement/vehicle controls — direct Transform/ZoneId assignment FAILS the gate; preserve + rerun process-level restart E2Es; Rei verifies traces + conservation |
 | 5 | **M6 B4 restart scenario** (bot identity/inventory/position/schedule survive restart) | 6h soak PASSED under revised approved budgets; A1 landed after soak; B4 metadata store not yet built | Phase 3: A1/B1 verified on merged develop; B4 metadata persistence implemented; bot-world restart test (2 checkpoints); soak verdict stays "passed revised approved budgets" |
 
+**Deferred-gate execution (2026-08-12, Phase 3 t_9340e85d):** gate #5 (M6 B4
+restart scenario) EXECUTED:
+- **A1/B1 re-verified on the merged develop tree** (fork tip 857fbae20,
+  lineage c6d8f93a0 + 761d1e81a): fresh-clone full gate **1850 passed / 0
+  failed / 1 pre-existing skip** (`./scripts/gate.sh`, contract classes
+  PlayerBotSchedulerTests + GameplayActorB1* included).
+- **Bot-world restart test (2 checkpoints) PASS** — `B4BotRestartPersistenceE2eTests`
+  (AAEmu.IntegrationTests/E2e/, bot-backtrack Phase 3): 2 process-level
+  restarts; bot roster byte-identical (same account ids / character ids,
+  exactly 3 Citizen rows, no re-creation/accumulation); identity/inventory/
+  position persisted (adopt path, distinct factory looks, byte-identical
+  item set, position NOT reset to the creation spawn — 6.4 km away); roam
+  route re-armed deterministically (schedule); zero NameAlreadyExists.
+  Evidence: `gate-m6-reconcile-b4-20260813-022040.md` (E2E logs).
+- **Soak verdict PRESERVED verbatim as "passed revised approved budgets"** —
+  M6 EXIT RECORD above and the EVIDENCE-LEDGER M6 soak-passed cell are
+  untouched; this execution note records the preservation, no history
+  rewritten.
+- **H stays UNKNOWN** — no bot/scripted evidence recorded as H=2.
+- Follow-up (NOT in this card — no feature work): the B4 playerbot_metadata
+  store (schedule/profession/home as persisted data) is still not built;
+  the restart replay proves persistence through the ordinary Character/save
+  path + deterministic schedule re-arm.
+
 **SCORECARD H rule (reconciled):** H = actual player only. Scripted-actor /
 bot evidence is proxy/bot-functional (A dimension) and is NEVER recorded as
 H=2. H stays UNKNOWN until Josh runs the curated scenario.
