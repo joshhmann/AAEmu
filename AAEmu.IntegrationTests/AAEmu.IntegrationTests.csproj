@@ -10,6 +10,8 @@
     <ProjectReference Include="..\AAEmu.Commons\AAEmu.Commons.csproj" />
     <ProjectReference Include="..\AAEmu.Game\AAEmu.Game.csproj" />
     <ProjectReference Include="..\AAEmu.Login\AAEmu.Login.csproj" />
+    <!-- Sidecar binary for the subprocess e2e (M5 stage 4, t_446228b5). -->
+    <ProjectReference Include="..\AAEmu.BotControlMcp\AAEmu.BotControlMcp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
