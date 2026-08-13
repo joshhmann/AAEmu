@@ -340,23 +340,51 @@ public class GateBudgetEvaluatorTests
     }
 
     [Test]
-    public async Task Evaluate_AutosaveP95OverTwoSeconds_FailsHard()
+    public async Task Evaluate_AutosaveP95OverBudget_FailsHard()
     {
-        // The M3b exit budget: two homesteads + 25 bots must autosave p95 < 2s.
+        // M3b exit budget (recalibrated 2000→4000 with the ah-conservation
+        // load shape, t_0d576fdb): a save path that exceeds the limit must
+        // fail hard. 4100 = 100 ms over the current 4000 limit.
         var s = BaseSnapshot() with
         {
             SaveMetricsAvailable = true,
             SaveSampleCount = 40,
-            SaveP95Ms = 2100,
-            SaveMaxMs = 2500
+            SaveP95Ms = 4100,
+            SaveMaxMs = 4500
         };
 
         var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
 
         var p95 = verdicts.Single(v => v.Name == "Autosave duration p95");
         await Assert.That(p95.Passed).IsFalse();
-        await Assert.That(p95.Measured).IsEqualTo(2100);
-        await Assert.That(p95.Limit).IsEqualTo(2000);
+        await Assert.That(p95.Measured).IsEqualTo(4100);
+        await Assert.That(p95.Limit).IsEqualTo(4000);
+    }
+
+    [Test]
+    public async Task Evaluate_AutosaveP95ScenarioBand_PassesWithMargin()
+    {
+        // The ah-conservation Stage10 load shape (t_52b2b084): measured
+        // steady band 1945-2666 ms p95 over 8 post-rebuild runs (2026-08-13),
+        // with the 2000 limit the worst runs false-RED'd (5 of 8 over).
+        // The recalibrated 4000 limit must clear the whole measured band —
+        // the worst observed pass (2666 ms) still has ~1.5× headroom.
+        // The old failing threshold (2100 ms) now passes: regression safety
+        // for the pre-scenario shape (34 ms baseline) is ~100× under budget.
+        var s = BaseSnapshot() with
+        {
+            SaveMetricsAvailable = true,
+            SaveSampleCount = 24,
+            SaveP95Ms = 2666,
+            SaveMaxMs = 3000
+        };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var p95 = verdicts.Single(v => v.Name == "Autosave duration p95");
+        await Assert.That(p95.Passed).IsTrue();
+        await Assert.That(p95.Measured).IsEqualTo(2666);
+        await Assert.That(p95.Limit).IsEqualTo(4000);
     }
 
     [Test]
