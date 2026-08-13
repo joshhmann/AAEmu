@@ -191,15 +191,17 @@ public sealed class BotActionCommandQueue
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    /// <summary>Production wiring (same lookup BotAdminService uses).</summary>
+    /// <summary>
+    /// Production wiring — MUST return the DI SINGLETON (stateful: queue +
+    /// trace history live on the instance; a per-call instance would strand
+    /// every trace in an unreachable queue). BotAdminService's stateless
+    /// FromContainer pattern does NOT apply here.
+    /// </summary>
     public static BotActionCommandQueue FromContainer()
     {
         var sp = SingletonContainer.ServiceProvider
             ?? throw new InvalidOperationException("BotActionCommandQueue: DI container not ready");
-        return new BotActionCommandQueue(
-            sp.GetRequiredService<IPlayerBotManager>(),
-            sp.GetRequiredService<IPlayerBotScheduler>(),
-            sp.GetRequiredService<BotRoamStepExecutor>());
+        return sp.GetRequiredService<BotActionCommandQueue>();
     }
 
     // ------------------------------------------------------------ enqueue
