@@ -8,6 +8,7 @@ using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Managers.Stream;
 using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
@@ -22,10 +23,14 @@ using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.Items.Templates;
+using AAEmu.Game.Models.Game.Housing;
+using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Team;
 using AAEmu.Game.Models.Game.Units;
@@ -818,6 +823,257 @@ public static class GameplayActorTestRig
             ActiveChar = actor.Character
         };
         actor.Character.Connection = connection;
+    }
+
+    // ------------------------------------------------------------------ M5.1 pack rig
+
+    /// <summary>Test trade-pack item template (BackpackTemplate, BackpackType.TradePack).</summary>
+    public const uint PackTemplateId = 92_001;
+
+    /// <summary>Put-down use skill of <see cref="PackTemplateId"/> (canonical shape: pack 26488 → skill 20412).</summary>
+    public const uint PackPutDownSkillId = 92_101;
+
+    /// <summary>Placed-pack doodad template (canonical shape: pack 26488 → doodad 6068).</summary>
+    public const uint PlacedPackDoodadTemplateId = 92_201;
+
+    /// <summary>Func group (phase) of the placed-pack doodad's recover func.</summary>
+    public const uint PlacedPackFuncGroupId = 92_301;
+
+    /// <summary>Func id of the recover row in <see cref="PlacedPackFuncGroupId"/>.</summary>
+    public const uint PlacedPackRecoverFuncId = 92_401;
+
+    /// <summary>Effect id under which the put-down effect registers in SkillManager._effects.</summary>
+    public const uint PlacedPackEffectId = 92_501;
+
+    /// <summary>
+    /// Seeds the M5.1 pack surface (missing-only, additive — never replaces
+    /// an established seed): the trade-pack item template, the put-down
+    /// skill template + its PutDownBackpackEffect, the recoverable
+    /// placed-pack doodad funcs, and the PublicFarm/Housing singletons the
+    /// put-down effect dereferences (DI singletons with no parameterless
+    /// ctor — unseeded access throws).
+    /// </summary>
+    public static void SeedPackSurface()
+    {
+        Seed();
+        SeedPackItemTemplate();
+        SeedPutDownSkill();
+        SeedPackManagers();
+    }
+
+    /// <summary>
+    /// Seeds the trade-pack item template (BackpackTemplate + TradePack so
+    /// IsAutoEquipTradePack resolves true, UseSkillId = put-down skill).
+    /// Idempotent; properties are ALWAYS applied (a sibling bare seed must
+    /// not shadow the pack shape).
+    /// </summary>
+    public static void SeedPackItemTemplate()
+    {
+        var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
+        if (!templates.TryGetValue(PackTemplateId, out var template))
+        {
+            template = new BackpackTemplate { Id = PackTemplateId, Name = "Test Trade Pack" };
+            templates[PackTemplateId] = template;
+        }
+        template.MaxCount = 1;
+        template.FixedGrade = 0;
+        template.Gradable = false;
+        template.UseSkillId = PackPutDownSkillId;
+        ((BackpackTemplate)template).BackpackType = BackpackType.TradePack;
+    }
+
+    /// <summary>
+    /// Seeds the put-down skill template + its PutDownBackpackEffect. The
+    /// skill carries ONE effect (ApplicationMethod SourceOnce — the effect
+    /// uses only the caster + SkillItem), gated for all levels, always
+    /// rolling. Also registers the effect under SkillManager._effects
+    /// ("PutDownBackpackEffect") for loader parity.
+    /// </summary>
+    public static void SeedPutDownSkill()
+    {
+        var manager = SkillManager.Instance;
+        var skills = (Dictionary<uint, SkillTemplate>)GetField(manager, "_skills");
+        if (!skills.TryGetValue(PackPutDownSkillId, out var template))
+        {
+            template = new SkillTemplate
+            {
+                Id = PackPutDownSkillId,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 100,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Self,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target
+            };
+            skills[PackPutDownSkillId] = template;
+        }
+        var effect = new PutDownBackpackEffect
+        {
+            Id = PlacedPackEffectId,
+            BackpackDoodadId = PlacedPackDoodadTemplateId
+        };
+        template.Effects =
+        [
+            new SkillEffect
+            {
+                EffectId = PlacedPackEffectId,
+                Template = effect,
+                StartLevel = 1,
+                EndLevel = 55,
+                Chance = 10_000, // ≥ 100 → the dice gate never skips
+                ApplicationMethod = SkillEffectApplicationMethod.SourceOnce
+            }
+        ];
+
+        var effects = (Dictionary<string, Dictionary<uint, EffectTemplate>>)GetField(manager, "_effects");
+        if (effects == null)
+        {
+            effects = [];
+            typeof(SkillManager).GetField("_effects",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .SetValue(manager, effects);
+        }
+        if (!effects.TryGetValue("PutDownBackpackEffect", out var effectDict))
+        {
+            effectDict = [];
+            effects["PutDownBackpackEffect"] = effectDict;
+        }
+        effectDict[PlacedPackEffectId] = effect;
+    }
+
+    /// <summary>
+    /// Seeds the singleton surfaces PutDownBackpackEffect dereferences:
+    /// PublicFarmManager (InPublicFarm → subzone list) and HousingManager
+    /// (GetHouseAtLocation). Mock-backed; the farm probe returns an empty
+    /// zone list (never a public farm) and the housing registry is empty
+    /// (no house at the placement position). Missing-only per singleton.
+    /// </summary>
+    public static void SeedPackManagers()
+    {
+        if (!SingletonSeeded(typeof(Singleton<PublicFarmManager>)))
+        {
+            var subZoneManager = Mock.Of<ISubZoneManager>();
+            subZoneManager.GetSubZoneByPosition(Any<WorldTemplate>(), Any<Vector3>()).Returns([]);
+            var farmManager = new PublicFarmManager(
+                Mock.Of<ITaskManager>().Object, Mock.Of<IWorldManager>().Object, subZoneManager.Object);
+            SetField(farmManager, "_farmZones", new Dictionary<uint, FarmType>());
+            SeedSingleton(typeof(Singleton<PublicFarmManager>), farmManager);
+        }
+
+        if (!SingletonSeeded(typeof(Singleton<HousingManager>)))
+        {
+            var manager = new HousingManager(
+                Mock.Of<IObjectIdManager>().Object,
+                Mock.Of<IFactionManager>().Object,
+                Mock.Of<ILocalizationManager>().Object,
+                Mock.Of<IWorldManager>().Object,
+                Mock.Of<ITaskManager>().Object,
+                Mock.Of<ISkillManager>().Object,
+                Mock.Of<IHousingIdManager>().Object,
+                Mock.Of<IHousingTldManager>().Object,
+                Mock.Of<IItemManager>().Object,
+                Mock.Of<IMailManager>().Object,
+                Mock.Of<INameManager>().Object,
+                Mock.Of<IZoneManager>().Object,
+                Mock.Of<IDoodadManager>().Object,
+                Mock.Of<IUccManager>().Object);
+            SetField(manager, "_houses", new Dictionary<uint, House>());
+            SeedSingleton(typeof(Singleton<HousingManager>), manager);
+        }
+    }
+
+    /// <summary>
+    /// Seeds the DoodadManager func surface for one recoverable placed-pack
+    /// doodad: a DoodadFuncRecoverItem row with the generic world recover
+    /// skill (11361 — the exact routing rule CSLootOpenBagPacket uses).
+    /// Missing-only per dictionary.
+    /// </summary>
+    public static void SeedRecoverablePackDoodad(uint groupId = PlacedPackFuncGroupId, uint funcId = PlacedPackRecoverFuncId)
+    {
+        SeedDoodadManager();
+        var manager = DoodadManager.Instance;
+        var funcsByGroups = (Dictionary<uint, List<DoodadFunc>>)GetField(manager, "_funcsByGroups");
+        var funcsById = (Dictionary<uint, DoodadFunc>)GetField(manager, "_funcsById");
+        var funcTemplates = (Dictionary<string, Dictionary<uint, DoodadFuncTemplate>>)GetField(manager, "_funcTemplates");
+
+        var func = new DoodadFunc
+        {
+            GroupId = groupId,
+            FuncId = funcId,
+            FuncKey = funcId,
+            FuncType = "DoodadFuncRecoverItem",
+            NextPhase = -1,
+            SkillId = GameplayActor.GenericRecoverItemSkillId
+        };
+        if (!funcsById.ContainsKey(funcId))
+            funcsById[funcId] = func;
+        if (!funcsByGroups.TryGetValue(groupId, out var group))
+        {
+            group = [];
+            funcsByGroups[groupId] = group;
+        }
+        if (group.All(f => f.FuncId != funcId))
+            group.Add(func);
+
+        if (!funcTemplates.TryGetValue("DoodadFuncRecoverItem", out var recoverTemplates))
+        {
+            recoverTemplates = [];
+            funcTemplates["DoodadFuncRecoverItem"] = recoverTemplates;
+        }
+        if (!recoverTemplates.ContainsKey(funcId))
+            recoverTemplates[funcId] = new DoodadFuncRecoverItem { Id = funcId };
+    }
+
+    /// <summary>
+    /// Equips a trade pack into the actor's Backpack equipment slot through
+    /// the REAL acquisition path (Equipment.AcquireDefaultItem — the same
+    /// call pack crafting uses). Requires the equip surface (ItemGameData /
+    /// BuffGameData registries) seeded — see SeedEquipSurface in the pack
+    /// test class.
+    /// </summary>
+    public static void EquipPack(GameplayActor actor, uint templateId = PackTemplateId, uint crafterId = 0)
+    {
+        var equipped = actor.Character.Inventory.Equipment.AcquireDefaultItem(
+            ItemTaskType.CraftPickupProduct, templateId, 1, -1, crafterId);
+        if (!equipped)
+            throw new InvalidOperationException($"EquipPack: AcquireDefaultItem failed for {templateId}");
+    }
+
+    /// <summary>
+    /// Seeds a placed trade-pack doodad exactly as PutDownBackpackEffect
+    /// leaves one: a world-registered doodad on the recover func group with
+    /// ItemId/ItemTemplateId pointing at a pack item that lives in the
+    /// actor's System container (the engine's anti-dupe invariant). The
+    /// doodad is NON-persistent so the headless Delete()/Save() MySQL tails
+    /// stay out of unit tests (the persistent row path is the M4 E2E
+    /// restart rig's concern). Positions the doodad 1 m in front of the
+    /// actor (the canonical placement offset) so range checks pass.
+    /// </summary>
+    public static uint PlacePackDoodad(HeadlessSession session, GameplayActor actor, Item packItem,
+        uint groupId = PlacedPackFuncGroupId, uint funcId = PlacedPackRecoverFuncId)
+    {
+        SeedRecoverablePackDoodad(groupId, funcId);
+        var doodadObjId = session.SpawnDoodad(groupId); // template id doubles as the group here
+        var doodad = session.World.GetDoodad(doodadObjId);
+        doodad.TemplateId = PlacedPackDoodadTemplateId;
+        doodad.FuncGroupId = groupId; // setter populates CurrentFuncs from the seeded DoodadManager
+        doodad.ItemId = packItem.Id;
+        doodad.ItemTemplateId = packItem.TemplateId;
+        doodad.PlantTime = DateTime.UtcNow;
+        doodad.OwnerId = actor.Character.Id;
+        doodad.OwnerType = DoodadOwnerType.Character;
+        var actorPos = actor.Character.Transform.World.Position;
+        doodad.Transform.Local.SetPosition(new Vector3(actorPos.X + 1f, actorPos.Y, actorPos.Z));
+        // ParentWorld is normally assigned through Transform.InstanceId's
+        // setter, which re-enters WorldManager.GetWorld — the headless
+        // world is not (or no longer) in the shared registry, so the
+        // HeadlessSession pattern reflection-sets the backing field.
+        // Without it, the engine's Delete() NREs at ParentWorld.RemoveObject.
+        typeof(AAEmu.Game.Models.Game.World.GameObject)
+            .GetField("_parentWorld", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(doodad, session.World);
+        return doodadObjId;
     }
 
     /// <summary>

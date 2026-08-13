@@ -86,6 +86,26 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     private readonly ConcurrentDictionary<uint, DateTime> _lastStepUtc = [];
 
     /// <summary>
+    /// Resolves the actor instance for a bot character — the SAME actor the
+    /// scheduler ticks (control-plane API seam: the queue drives this actor
+    /// on the execution boundary, never a second instance). Creates the
+    /// per-bot state on first access; never touches the route.
+    /// </summary>
+    public IGameplayActor GetOrCreateActor(Character character)
+    {
+        ArgumentNullException.ThrowIfNull(character);
+
+        var characterId = character.Id;
+        if (!_states.TryGetValue(characterId, out var state))
+        {
+            state = new BotRoamState { Actor = ActorFactory(character) };
+            _states[characterId] = state;
+        }
+
+        return state.Actor;
+    }
+
+    /// <summary>
     /// Assigns a roam route to a bot. The route is walked as consecutive
     /// MoveTo legs (Loop mode = patrol forever). Passing null clears the route
     /// (bot returns to tick-only / dormant behavior). Creates the per-bot
