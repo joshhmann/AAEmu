@@ -192,3 +192,15 @@ public sealed record QuestAcceptParams(QuestAcceptorType AcceptorType, uint Acce
 /// <param name="TargetObjId">Live world objId of the turn-in NPC/doodad (0 for auto turn-in).</param>
 /// <param name="SelectedReward">1-based selected reward index, -1 = default.</param>
 public sealed record QuestTurnInParams(uint TargetObjId, int SelectedReward);
+
+/// <summary>
+/// Plant request payload — placement parameters for a seed/young-tree
+/// planting (M5.1). The seed item is addressed by the request TargetId;
+/// the doodad template id is resolved by the actor from the item's
+/// item_spawn_doodads mapping (the same data the client's use-skill
+/// placement reads).
+/// </summary>
+/// <param name="Position">World position where the growing-crop doodad is placed.</param>
+/// <param name="ZRot">Yaw rotation (radians) of the placed doodad.</param>
+/// <param name="Scale">Doodad scale (0 = template default).</param>
+public sealed record PlantParams(System.Numerics.Vector3 Position, float ZRot, float Scale);

@@ -1,11 +1,13 @@
 using System.Linq;
 using System.Numerics;
 
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Items;
@@ -941,6 +943,124 @@ public class GameplayActor : IGameplayActor
         return Complete(request, lot.DirectMoney, $"bought auction lot {lotId} for {lot.DirectMoney}");
     }
 
+    public ActorRequest Plant(uint seedItemTemplateId, Vector3 position, float zRot = 0f, float scale = 1f, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Plant, seedItemTemplateId,
+            payload: new PlantParams(position, zRot, scale), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "plant"))
+            return request;
+
+        if (!position.IsFinite())
+            return Reject(request, ActorFailureReason.RejectedAction, "plant position must be finite");
+
+        // 1. The seed must be in the actor's own bag (normal inventory
+        //    lookup — the same resolution the client's use-item path does).
+        var inventory = Character.Inventory;
+        if (inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        inventory.Bag.GetAllItemsByTemplate(seedItemTemplateId, -1, out var seedItems, out _);
+        var seedItem = seedItems.FirstOrDefault();
+        if (seedItem == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"seed item {seedItemTemplateId} not found in inventory");
+
+        // 2. The item must be a plantable seed/young-tree: resolve the
+        //    doodad template id from the canonical item_spawn_doodads
+        //    mapping (the same data the client's placement UI reads) and
+        //    require the doodad template to exist.
+        var doodadId = ItemManager.Instance.GetDoodadIdFromItem(seedItemTemplateId);
+        if (doodadId == 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"item {seedItemTemplateId} is not a plantable seed (no item_spawn_doodads row)");
+        if (DoodadManager.Instance.GetTemplate(doodadId) == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"doodad template {doodadId} not found in game data");
+
+        var world = Character.ParentWorld;
+        if (world == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no world");
+
+        // 3. Placement gates — mirror CSCreateDoodadPacket exactly.
+        //    Labor cost comes from the seed item's use skill (packet line
+        //    37-42); public-farm and owned-land placement zero it (packet
+        //    lines 44-73).
+        var laborCost = 0;
+        var useSkill = SkillManager.Instance.GetSkillTemplate(seedItem.Template?.UseSkillId ?? 0);
+        if (useSkill != null)
+            laborCost = useSkill.ConsumeLaborPower;
+
+        var farmType = PublicFarmManager.Instance.InPublicFarm(world.Template, position)
+            ? PublicFarmManager.Instance.GetFarmType(world, position)
+            : FarmType.Invalid;
+        if (farmType != FarmType.Invalid)
+        {
+            if (!PublicFarmManager.Instance.CanPlace(Character, farmType, doodadId))
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"doodad {doodadId} not allowed on public farm {farmType}");
+            laborCost = 0;
+        }
+
+        var house = HousingManager.Instance.GetHouseAtLocation(position.X, position.Y);
+        if (house != null)
+        {
+            if (!house.AllowedToInteract(Character))
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"no permission to plant on house {house.Id}");
+            laborCost = 0;
+        }
+
+        // Labor gate (packet line 76-86: insufficient labor refuses before
+        // any consumption).
+        if (Character.LaborPower < laborCost)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"insufficient labor ({Character.LaborPower} < {laborCost})");
+        if (laborCost != 0)
+            Character.ChangeLabor((short)-laborCost, 0);
+
+        request.Start($"planting doodad {doodadId} from seed {seedItemTemplateId} at {position}");
+
+        // 4. THE real engine path — the same CreatePlayerDoodad call the
+        //    CSCreateDoodadPacket handler makes (line 89). The engine
+        //    consumes the seed item (ItemUse + ConsumeItem per mapped item
+        //    template), binds to the house when one is at the position,
+        //    spawns the growing-crop doodad and persists it (Doodad.Save).
+        //    No bot-side consumption, no direct DB access.
+        Doodad doodad;
+        try
+        {
+            doodad = DoodadManager.Instance.CreatePlayerDoodad(Character, doodadId,
+                position.X, position.Y, position.Z, zRot, scale, seedItem.Id, farmType);
+        }
+        catch (MySql.Data.MySqlClient.MySqlException ex)
+        {
+            // Persistence-boundary failure: the engine landed the placement
+            // in-memory (seed consumed, crop doodad spawned) but the
+            // Doodad.Save() write failed. This is deliberately NOT a
+            // Rejected — the B1 invariant is "Rejected ⇒ nothing applied",
+            // and here the effect WAS applied and the outcome is ambiguous.
+            // Interrupted locks the idempotency key (the same rule as
+            // Interrupted/TimedOut after a timeout ambiguity), so a
+            // same-key retry is refused pre-flight and one logical plant
+            // can never consume its seed twice. The engine-true backstop
+            // (seed gone from the bag) covers fresh-key retries.
+            return Interrupt(request,
+                $"planting doodad {doodadId} failed at the persistence boundary: {ex.Message}");
+        }
+
+        if (doodad == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"engine refused to plant doodad {doodadId}");
+
+        // 5. Record the applied effect (crop doodad spawned from the seed)
+        //    for M8 audit correlation. The request-level key dedupe is the
+        //    PRIMARY retry guard; the engine-true seed consumption is the
+        //    backstop (a new-key retry finds no seed).
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("plant", doodadId, seedItemTemplateId.ToString()), request.TraceId);
+        return Complete(request, doodad.ObjId,
+            $"planted doodad {doodad.ObjId} (template {doodadId}) from seed {seedItemTemplateId}");
+    }
+
     #endregion
 
     #region Tick / movement
@@ -1074,6 +1194,19 @@ public class GameplayActor : IGameplayActor
     private ActorRequest Reject(ActorRequest request, ActorFailureReason reason, string detail)
     {
         Finish(request, request.Reject(reason, detail));
+        return request;
+    }
+
+    /// <summary>
+    /// Terminal <see cref="ActorLifecycleState.Interrupted"/> for a request
+    /// whose execution STARTED but could not confirm its outcome (engine
+    /// persistence-boundary failure, controller interrupt). Interrupted
+    /// locks the idempotency key — a same-key retry is refused pre-flight
+    /// because the effect may have been applied.
+    /// </summary>
+    private ActorRequest Interrupt(ActorRequest request, string detail)
+    {
+        Finish(request, request.Interrupt(detail));
         return request;
     }
 

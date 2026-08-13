@@ -261,6 +261,23 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
         return _itemDoodadTemplates.TryGetValue(doodadId, out var template) ? template.ItemIds : [];
     }
 
+    /// <summary>
+    /// Reverse of <see cref="GetItemIdsFromDoodad"/>: the doodad template id
+    /// a seed item plants (item_spawn_doodads mapping — the same data the
+    /// client's placement UI reads), or 0 when the item is not a plantable
+    /// seed/young-tree.
+    /// </summary>
+    public uint GetDoodadIdFromItem(uint itemTemplateId)
+    {
+        foreach (var (doodadId, template) in _itemDoodadTemplates)
+        {
+            if (template.ItemIds.Contains(itemTemplateId))
+                return doodadId;
+        }
+
+        return 0;
+    }
+
     public ItemTemplate GetItemTemplateFromItemId(uint itemId)
     {
         return _templates.GetValueOrDefault(itemId);

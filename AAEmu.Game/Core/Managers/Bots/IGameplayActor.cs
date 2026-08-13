@@ -181,6 +181,29 @@ public interface IGameplayActor
     ActorRequest PutDown(uint packItemTemplateId, string? idempotencyKey = null);
 
     /// <summary>
+    /// Plants a seed/young-tree item at a world position through the REAL
+    /// engine path — the same DoodadManager.CreatePlayerDoodad call the
+    /// CSCreateDoodadPacket handler makes. The actor resolves the doodad
+    /// template id from the seed item (item_spawn_doodads), mirrors the
+    /// packet's placement gates (use-skill labor cost, public-farm
+    /// CanPlace, owned-land AllowedToInteract), charges labor, and the
+    /// engine consumes the seed and spawns the growing-crop doodad.
+    /// Rejections: missing seed → RejectedAction; item not plantable
+    /// (no doodad mapping) → RejectedAction; unknown doodad template →
+    /// RejectedAction; public-farm refusal → RejectedAction; no
+    /// permission on owned land → RejectedAction; insufficient labor →
+    /// RejectedAction. A MySQL write failure inside the engine's
+    /// persistence tail (Doodad.Save) INTERRUPTS the request (the
+    /// placement landed in-memory but the outcome is unconfirmed) —
+    /// Interrupted locks the idempotency key so a same-key retry is
+    /// refused pre-flight and the seed is never consumed twice. The seed
+    /// is consumed inside the engine call, so a fresh-key retry after
+    /// success finds no seed — retries cannot double-plant. Payload:
+    /// <see cref="PlantParams"/>.
+    /// </summary>
+    ActorRequest Plant(uint seedItemTemplateId, Vector3 position, float zRot = 0f, float scale = 1f, string? idempotencyKey = null);
+
+    /// <summary>
     /// Cancels a running request by trace id. Returns false when no request
     /// with that id is active (idempotent — retries cannot double-interrupt).
     /// </summary>
@@ -352,7 +375,10 @@ public enum ActorActionType : byte
     AuctionPost = 19,
 
     /// <summary>Auction buy-now purchase through CSBidAuctionPacket / AuctionManager.BidOnAuctionLot.</summary>
-    AuctionBuy = 20
+    AuctionBuy = 20,
+
+    /// <summary>Seed planting through DoodadManager.CreatePlayerDoodad (CSCreateDoodadPacket path).</summary>
+    Plant = 21
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>
