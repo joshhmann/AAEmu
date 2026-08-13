@@ -84,6 +84,8 @@ Notes:
 | Physics warnings | ≤ 0.1/min | physics thread running slow (calibrated: 0.031/min 6h soak pre-fix, 0.067/min post-fix — t_eecc5604; 0.1 ≈ 1.5-3.3× headroom) |
 | Physics warnings same-world | ≤ 30 in any 60s | no-sustained-slow clause: 31+ warnings on one world within 60s = thread cannot keep up (hard fail; ceilings 3-in-8s on the 2026-08-10 re-soak and 8-in-59s per world on the 2026-08-11 360-min re-soak boot storm → 30 ≈ 3.75× headroom) |
 | Tick overrun warnings | 0/min | "Tick took" / over-budget lines |
+| Autosave duration p95 | ≤ 4000 ms | save-pass p95 (recalibrated 2000→4000 — see below) |
+| Autosave duration max | ≤ 10000 ms | worst single pass ceiling: a one-off commit stall under p95 still freezes the tick — hard fail |
 
 Budgets live in `AAEmu.Commons/Utils/Gate/GateBudgetEvaluator.cs`
 (`GateBudgets` record). Tune per stage in `GateStage.cs` — never in the
@@ -101,6 +103,30 @@ presence-aware denominator a stage-10 presence run false-REDs (measured
 529.06/500 on bots only vs 264.53/500 per embodied char — inside the 266-277
 calibration band, 2026-08-09). A plain run (`AAEMU_PRESENCE_DEMO` unset) has
 `PresenceBotCount=0` and normalizes per bot exactly as before.
+
+### Autosave budget recalibration (ah-conservation load shape, t_0d576fdb)
+
+The autosave p95 budget is 4000 ms — recalibrated from 2000 ms on 2026-08-13
+because the Stage10 load shape changed, not because the save path regressed.
+
+**Mechanism.** The bridge `save` trigger (`BotDriveBridge.HandleSave`) dirties
+ALL houses and calls `DoSave(true)` → `saveAllCharacters=true`, which forces
+EVERY in-world character through the save pass (not just dirty ones). The
+`ah-conservation` auction scenario (t_52b2b084) provisions a 25-actor fleet
+(money + items + auction lots + mail), so each forced full save persists the
+fleet's accumulated state → pass cost grows from ~34 ms (pre-scenario
+baseline) to ~2 s at gate scale. `AuctionManager.Save` persists only dirty
+lots (REPLACE INTO) — the cost is fleet state, not an auction-write loop.
+
+**Measurement.** 8 post-rebuild Stage10 runs on 2026-08-13 (10 bots, 3-min
+window): steady p95 band **1945–2666 ms**, 5 of 8 over the old 2000 limit;
+one run at 543 ms (fleet not in its active phase — pass cost is
+fleet-overlap-dependent). No quest regressions in any run; the ah-conservation
+scenario itself passes in-gate (conservation exact 247250/247250).
+
+**Why 4000.** ~1.5× headroom over the worst measured pass (2666 ms) while the
+plain shape (34 ms) keeps ~100× margin. The 10000 ms single-pass ceiling is
+unchanged — a genuine save-path stall still trips the max verdict.
 
 ## How to add a stage (100/250/500/1000)
 

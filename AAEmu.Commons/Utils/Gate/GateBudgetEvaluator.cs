@@ -72,9 +72,21 @@ public sealed record GateBudgets
     public double MaxTickOverrunWarningsPerMin { get; init; } = 0;
 
     /// <summary>Autosave (SaveManager.DoSave) p95 duration in ms. M3b gate-scale
-    /// budget: two homesteads + 25 embodied bots must autosave under 2s p95 so
-    /// the save path can't kill M8-scale worlds later.</summary>
-    public double AutosaveP95Ms { get; init; } = 2000;
+    /// budget: two homesteads + 25 embodied bots must autosave under budget so
+    /// the save path can't kill M8-scale worlds later.
+    /// Recalibrated 2000 → 4000 (2026-08-13, t_0d576fdb): the Stage10 load
+    /// shape now includes the ah-conservation auction scenario (t_52b2b084),
+    /// whose 25-actor fleet (characters/items/mail/lots) is forced through
+    /// every save pass — the bridge `save` trigger dirties all houses and
+    /// calls DoSave(true) (saveAllCharacters=true), and pass cost scales with
+    /// in-world character state. Measured 8 post-rebuild Stage10 runs:
+    /// steady band 1945–2666 ms p95 (543 ms when the fleet isn't in its
+    /// active phase), 5 of 8 over the old 2000 limit; pre-scenario baseline
+    /// was 34 ms. 4000 gives ~1.5× headroom over the worst measured pass
+    /// while the plain shape (34 ms) keeps ~100× margin. AuctionManager.Save
+    /// persists only dirty lots (REPLACE INTO) — not a write loop, so the
+    /// cost is fleet state, not auction-write amplification.</summary>
+    public double AutosaveP95Ms { get; init; } = 4000;
 
     /// <summary>Autosave worst single pass ceiling (ms). A one-off 30s commit
     /// stall would slip under p95 but still freeze the world tick — hard fail.</summary>
