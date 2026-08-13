@@ -89,6 +89,18 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null)
         => Actor.AutoTurnInQuest(questId, selectedReward, idempotencyKey);
 
+    public ActorRequest Buy(uint merchantNpcObjId, uint itemTemplateId, int count, string? idempotencyKey = null)
+        => Actor.Buy(merchantNpcObjId, itemTemplateId, count, idempotencyKey);
+
+    public ActorRequest Sell(uint merchantNpcObjId, ulong itemId, string? idempotencyKey = null)
+        => Actor.Sell(merchantNpcObjId, itemId, idempotencyKey);
+
+    public ActorRequest PostAuction(ulong itemId, int startPrice, int buyoutPrice, Models.Game.Auction.AuctionDuration duration, string? idempotencyKey = null)
+        => Actor.PostAuction(itemId, startPrice, buyoutPrice, duration, idempotencyKey);
+
+    public ActorRequest BuyAuction(ulong lotId, int price, string? idempotencyKey = null)
+        => Actor.BuyAuction(lotId, price, idempotencyKey);
+
     public ActorAuditRecord? FindByKey(string idempotencyKey) => Actor.FindByKey(idempotencyKey);
 
     public void Tick(TimeSpan elapsed) => Actor.Tick(elapsed);

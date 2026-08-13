@@ -12,6 +12,7 @@ using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
+using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
@@ -22,6 +23,8 @@ using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.Items.Templates;
+using AAEmu.Game.Models.Game.Mails;
+using AAEmu.Game.Models.Game.Merchant;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Templates;
@@ -111,6 +114,7 @@ public static class GameplayActorTestRig
             EnsureIncrementingItemIds();
             SeedSkillManager();
             SeedItemManager();
+            SeedTradeSurface();
             FormulaManager.Instance.Load();
 
             s_seeded = true;
@@ -512,6 +516,10 @@ public static class GameplayActorTestRig
         // session does not.
         character.Skills = new CharacterSkills(character);
         character.Actability = new CharacterActability(character);
+        // BuyBackItems is created by Character.Load() (line 2615); the
+        // headless fixture path never runs Load, and the M5.1 Sell engine
+        // path (CSSellItemsPacket branch) moves the sold item into it.
+        character.BuyBackItems = new ItemContainer(character.Id, SlotType.None, false, character);
         // Learn the seeded skill (real engine gate: Character.Skills).
         character.Skills.AddSkill(new SkillTemplate { Id = TestSkillId }, 1, false);
         return (new GameplayActor(character), session);
@@ -846,5 +854,242 @@ public static class GameplayActorTestRig
                 FixedGrade = -1
             };
         }
+    }
+
+    // ------------------------------------------------------- M5.1 trade rig
+
+    /// <summary>Merchant pack id used by the Buy/Sell merchant rig.</summary>
+    public const uint MerchantPackId = 88_001;
+
+    /// <summary>Item template the Buy rig's merchant sells (Price set).</summary>
+    public const uint BuyItemTemplateId = 88_101;
+
+    /// <summary>Item template the Sell rig stocks (Refund + Sellable set).</summary>
+    public const uint SellItemTemplateId = 88_102;
+
+    /// <summary>Item template the auction rig lists (Refund + Sellable set).</summary>
+    public const uint AuctionItemTemplateId = 88_103;
+
+    /// <summary>
+    /// Seeds the M5.1 trade singleton surface (missing-only): NpcManager
+    /// (merchant goods), AuctionManager (auction lots + ids), MailManager
+    /// (the auction purchase path mails through the engine's own Send),
+    /// and the ItemManager grade registry (the sell refund formula
+    /// dereferences GetGradeTemplate). Safe in any suite ordering; never
+    /// replaces an established singleton.
+    /// </summary>
+    public static void SeedTradeSurface()
+    {
+        SeedNpcManager();
+        SeedAuctionManager();
+        SeedMailManager();
+        SeedGrades();
+        SeedTradeItemTemplates();
+    }
+
+    private static void SeedNpcManager()
+    {
+        if (!SingletonSeeded(typeof(Singleton<NpcManager>)))
+        {
+            var npcManager = new NpcManager(
+                Mock.Of<IObjectIdManager>().Object,
+                Mock.Of<IModelManager>().Object,
+                Mock.Of<IFactionManager>().Object,
+                ItemManager.Instance,
+                Mock.Of<IAIManager>().Object);
+            SeedSingleton(typeof(Singleton<NpcManager>), npcManager);
+        }
+
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var goodsField = typeof(NpcManager).GetField("Goods", flags)
+                         ?? typeof(NpcManager).GetField("<Goods>k__BackingField", flags);
+        if (goodsField?.GetValue(NpcManager.Instance) == null)
+            goodsField?.SetValue(NpcManager.Instance, new Dictionary<uint, MerchantGoods>());
+    }
+
+    private static void SeedAuctionManager()
+    {
+        if (!SingletonSeeded(typeof(Singleton<AuctionManager>)))
+        {
+            var auctionIdMock = Mock.Of<IAuctionIdManager>();
+            var nextLotId = 100u;
+            auctionIdMock.GetNextId().Returns(() => nextLotId++);
+            var auctionManager = new AuctionManager(
+                ItemManager.Instance,
+                Mock.Of<INameManager>().Object,
+                auctionIdMock.Object,
+                Mock.Of<ILocalizationManager>().Object,
+                Mock.Of<ITaskManager>().Object);
+            SeedSingleton(typeof(Singleton<AuctionManager>), auctionManager);
+        }
+    }
+
+    /// <summary>
+    /// Seeds MailManager so the auction purchase path's engine mail delivery
+    /// (MailManager.Instance.Send) does not throw in tests: the engine's
+    /// Send verifies the receiver through its own INameManager — the mock
+    /// fails the name/id verification and returns false cleanly (no mail is
+    /// stored, no DB touched). The auction state change (money deducted,
+    /// lot removed) happens BEFORE the mail attempt in the engine path.
+    /// </summary>
+    private static void SeedMailManager()
+    {
+        if (SingletonSeeded(typeof(Singleton<MailManager>)))
+            return;
+        var nameMock = Mock.Of<INameManager>();
+        nameMock.GetCharacterName(Arg.Any<uint>()).Returns((string)null);
+        nameMock.GetCharacterId(Arg.Any<string>()).Returns(1u); // != 0 → id verification fails → Send returns false
+        var mailManager = new MailManager(
+            Mock.Of<IMailIdManager>().Object,
+            nameMock.Object,
+            ItemManager.Instance,
+            Mock.Of<ITaskManager>().Object,
+            Mock.Of<IWorldManager>().Object,
+            new Lazy<IHousingManager>(() => Mock.Of<IHousingManager>().Object),
+            Mock.Of<ILocalizationManager>().Object);
+        // The engine's Send stores into _allPlayerMails only after name
+        // verification passes — with the failing mock it never does, but the
+        // field is also only initialized by Load(); seed the empty dict so
+        // any path that reaches it cannot NRE.
+        typeof(MailManager).GetField("_allPlayerMails",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            ?.SetValue(mailManager, new Dictionary<long, BaseMail>());
+        SeedSingleton(typeof(Singleton<MailManager>), mailManager);
+    }
+
+    /// <summary>Seeds the ItemManager grade registry (grade 0 → 100% refund).</summary>
+    private static void SeedGrades()
+    {
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var gradesField = typeof(ItemManager).GetField("_grades", flags);
+        if (gradesField?.GetValue(ItemManager.Instance) == null)
+        {
+            gradesField?.SetValue(ItemManager.Instance, new Dictionary<int, GradeTemplate>
+            {
+                [0] = new GradeTemplate { Grade = 0, RefundMultiplier = 100 }
+            });
+        }
+    }
+
+    /// <summary>
+    /// Seeds the trade item templates (Buy/Sell/Auction). Property updates
+    /// are ALWAYS applied (idempotent) so a sibling rig's bare seed cannot
+    /// shadow the Price/Refund/Sellable values this surface needs.
+    /// </summary>
+    private static void SeedTradeItemTemplates()
+    {
+        SeedTradeItemTemplate(BuyItemTemplateId, price: 50, refund: 0, sellable: false);
+        SeedTradeItemTemplate(SellItemTemplateId, price: 0, refund: 25, sellable: true);
+        SeedTradeItemTemplate(AuctionItemTemplateId, price: 0, refund: 25, sellable: true);
+    }
+
+    /// <summary>
+    /// Registers (or updates) an item template with explicit trade
+    /// properties: Price (merchant buy cost), Refund (merchant sell payout
+    /// before grade multiplier), Sellable (merchant sell gate).
+    /// </summary>
+    public static void SeedTradeItemTemplate(uint templateId, int price, int refund, bool sellable)
+    {
+        var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
+        if (!templates.TryGetValue(templateId, out var template))
+        {
+            template = new ItemTemplate { Id = templateId, MaxCount = 100, FixedGrade = -1 };
+            templates[templateId] = template;
+        }
+
+        template.Price = price;
+        template.Refund = refund;
+        template.Sellable = sellable;
+    }
+
+    /// <summary>
+    /// Registers a merchant goods pack (NpcManager.Goods) that sells the
+    /// given item template ids, and returns the pack id.
+    /// </summary>
+    public static uint SeedMerchantPack(params uint[] itemTemplateIds)
+    {
+        SeedNpcManager();
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var goodsField = typeof(NpcManager).GetField("Goods", flags)
+                         ?? typeof(NpcManager).GetField("<Goods>k__BackingField", flags)
+                         ?? throw new InvalidOperationException("Cannot locate NpcManager.Goods backing field");
+        var goods = (Dictionary<uint, MerchantGoods>)goodsField.GetValue(NpcManager.Instance)!;
+        if (!goods.TryGetValue(MerchantPackId, out var pack))
+        {
+            pack = new MerchantGoods(MerchantPackId);
+            goods[MerchantPackId] = pack;
+        }
+
+        foreach (var templateId in itemTemplateIds)
+            pack.AddItemToStock(templateId, 0);
+        return MerchantPackId;
+    }
+
+    /// <summary>
+    /// Spawns a merchant NPC (Template.Merchant + MerchantPackId set — the
+    /// gates both the Buy and Sell engine paths check) at the actor's
+    /// position. Returns the NPC objId.
+    /// </summary>
+    public static uint SpawnMerchantNpc(HeadlessSession session, uint npcTemplateId = 1000, uint packId = MerchantPackId)
+    {
+        var objId = session.SpawnNpc(npcTemplateId);
+        var npc = session.World.GetNpc(objId);
+        if (npc != null)
+        {
+            npc.Template = new NpcTemplate
+            {
+                Id = npcTemplateId,
+                Merchant = true,
+                MerchantPackId = packId
+            };
+        }
+
+        return objId;
+    }
+
+    /// <summary>Sets the actor's money balance (ordinary Character.Money).</summary>
+    public static void SetMoney(GameplayActor actor, long amount)
+        => actor.Character.Money = amount;
+
+    /// <summary>Sets an NPC's world position (shop-range tests).</summary>
+    public static void SetNpcPosition(HeadlessSession session, uint npcObjId, System.Numerics.Vector3 position)
+    {
+        var npc = session.World.GetNpc(npcObjId);
+        if (npc != null)
+            npc.Transform.Local.SetPosition(position);
+    }
+
+    /// <summary>
+    /// Seeds an auction lot directly into AuctionManager.AuctionLots with
+    /// the given terms (the purchase path resolves lots from that registry).
+    /// The lot's item is created through the REAL ItemManager.Create so the
+    /// engine's post-sale item lookup (GetItemByItemId) resolves it.
+    /// </summary>
+    public static ulong SeedAuctionLot(uint lotId, uint itemTemplateId, int count, int startPrice, int buyoutPrice,
+        uint clientId, string clientName, AuctionDuration duration = AuctionDuration.AuctionDuration6Hours)
+    {
+        SeedAuctionManager();
+        var item = ItemManager.Instance.Create(itemTemplateId, count, 0);
+        var lot = new AuctionLot
+        {
+            Id = lotId,
+            Duration = duration,
+            Item = item,
+            EndTime = DateTime.UtcNow.AddHours(6),
+            WorldId = 1,
+            ClientId = clientId,
+            ClientName = clientName,
+            StartMoney = startPrice,
+            DirectMoney = buyoutPrice,
+            PostDate = DateTime.UtcNow,
+            BidWorldId = 255,
+            BidderId = 0,
+            BidderName = "",
+            BidMoney = 0,
+            Extra = 0,
+            IsDirty = true
+        };
+        AuctionManager.Instance.AuctionLots[lotId] = lot;
+        return lotId;
     }
 }
