@@ -633,11 +633,26 @@ internal class BotActionController : BaseController
     {
         var result = Queue.Enqueue(bot, spec);
         if (!result.Ok)
-            return JsonResponse(HttpStatusCode.NotFound,
-                new BotActionEnqueueResponse(false, result.Error, Bot: bot, Action: spec.Kind.ToString()));
+            return JsonResponse(HttpStatusCode.NotFound, new JObject
+            {
+                ["success"] = false,
+                ["message"] = result.Error,
+                ["bot"] = bot,
+                ["action"] = spec.Kind.ToString()
+            });
 
-        return OkJson(new BotActionEnqueueResponse(
-            true, "accepted", result.TraceId, result.BotName, spec.Kind.ToString(), nameof(ActorLifecycleState.Requested)));
+        // Wire shape (lowercase, mirrors the poll response): the caller
+        // polls lifecycle transitions by trace_id — execution is server-side
+        // and survives client disconnect.
+        return OkJson(new JObject
+        {
+            ["success"] = true,
+            ["message"] = "accepted",
+            ["trace_id"] = result.TraceId,
+            ["bot"] = result.BotName,
+            ["action"] = spec.Kind.ToString(),
+            ["state"] = nameof(ActorLifecycleState.Requested)
+        });
     }
 
     /// <summary>

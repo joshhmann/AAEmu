@@ -59,15 +59,9 @@ public sealed record InterruptRequest(string? Bot, string? TraceId);
 
 // ----------------------------------------------------------------- responses
 
-/// <summary>
-/// Enqueue acknowledgement: the caller polls lifecycle transitions by
-/// <see cref="TraceId"/> (GET /api/actors/actions/{traceId}); execution is
-/// server-side and survives client disconnect.
-/// </summary>
-public sealed record BotActionEnqueueResponse(
-    bool Success,
-    string Message,
-    Guid? TraceId = null,
-    string? Bot = null,
-    string? Action = null,
-    string? State = null);
+// Action responses are shaped in the controller as lowercase JSON (JObject):
+// enqueue → { success, message, trace_id, bot, action, state } where the
+// caller polls lifecycle transitions by trace_id
+// (GET /api/actors/actions/{traceId}); poll/trace → { trace_id, actor_id,
+// bot, action, state, failure, detail, requested_at, started_at,
+// completed_at, state_changes, audit, result_payload }.
