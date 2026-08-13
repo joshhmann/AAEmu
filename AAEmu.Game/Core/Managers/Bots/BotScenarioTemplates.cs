@@ -1,5 +1,6 @@
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
 
@@ -195,13 +196,40 @@ public static class BotScenarioTemplates
         ]
     };
 
-    /// <summary>The library — templates by name.</summary>
+    /// <summary>
+    /// Lane D auction-house conservation scenario (t_52b2b084) — the first
+    /// scripted fleet consumer. The template's quest Drive is a placeholder
+    /// (never executed): BotScenarioRunner routes this name to
+    /// <see cref="AuctionHouseScenario"/> before the quest machinery.
+    /// Declared BEFORE the Library so static-init ordering keeps the
+    /// dictionary initializer from reading a null property.
+    /// </summary>
+    public static BotScenarioTemplate AuctionHouseConservation { get; } = new()
+    {
+        Name = AuctionHouseScenario.ScenarioName,
+        Description = "Auction-house conservation: a fleet posts and buys lots through the contract actions; items/currency conserved (documented engine sinks only), per-action trace complete.",
+        Race = Race.Nuian,
+        Gender = Gender.Male,
+        Level = 1,
+        Drive = new QuestDriveSpec
+        {
+            QuestId = 0,
+            AcceptorType = nameof(QuestAcceptorType.Npc),
+            AcceptorId = 0,
+            Stages = []
+        }
+    };
+
+    /// <summary>
+    /// The library — templates by name.
+    /// </summary>
     public static IReadOnlyDictionary<string, BotScenarioTemplate> Library { get; } =
         new Dictionary<string, BotScenarioTemplate>(StringComparer.Ordinal)
         {
             [Level22QuestGate.Name] = Level22QuestGate,
             [AbilityPrerequisiteGate.Name] = AbilityPrerequisiteGate,
-            [Cat34DailyCycle.Name] = Cat34DailyCycle
+            [Cat34DailyCycle.Name] = Cat34DailyCycle,
+            [AuctionHouseConservation.Name] = AuctionHouseConservation
         };
 
     public static BotScenarioTemplate? Get(string name)

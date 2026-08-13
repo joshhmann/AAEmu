@@ -120,6 +120,13 @@ public static class BotScenarioRunner
         ArgumentNullException.ThrowIfNull(template);
         ArgumentNullException.ThrowIfNull(character);
 
+        // Lane D auction-house conservation scenario (t_52b2b084) — a
+        // fleet-driven trade scenario, not a quest drive: dispatch to the
+        // auction runner when the template is the auction-house template.
+        // The quest machinery below is never entered for it.
+        if (template.Name == AuctionHouseScenario.ScenarioName)
+            return AuctionHouseScenario.Run(character);
+
         var rigNotes = new List<string>();
         var actor = new GameplayActor(character);
         var controller = new PlayerBotController(character);
