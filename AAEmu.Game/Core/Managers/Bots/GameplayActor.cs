@@ -2,11 +2,14 @@ using System.Linq;
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
@@ -710,6 +713,232 @@ public class GameplayActor : IGameplayActor
         _ledger.RecordEffect(ActorIdempotency.EffectKey("packputdown", packItemTemplateId, pack.Id.ToString()), request.TraceId);
         return Complete(request, true,
             $"trade pack {packItemTemplateId} placed (instance {pack.Id}, now in System container)");
+    }
+
+    #endregion
+
+    #region M5.1 trade actions (Buy/Sell — real engine trade paths)
+
+    /// <summary>Merchant shop interaction range (the packet's 3m NPC-shop check).</summary>
+    public const float MaxShopRange = 3f;
+
+    /// <summary>Auction listing fee cap (the engine's MaxListingFee — 100g).</summary>
+    public const int MaxListingFee = 1_000_000;
+
+    public ActorRequest Buy(uint merchantNpcObjId, uint itemTemplateId, int count, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Buy, merchantNpcObjId,
+            payload: new BuyParams(itemTemplateId, count), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "buy"))
+            return request;
+
+        // 1. The target must be a live merchant NPC with a goods pack (the
+        //    packet's npc.Template.Merchant + MerchantPackId gate).
+        var npc = Character.ParentWorld?.GetNpc(merchantNpcObjId);
+        if (npc == null || npc.Template == null || !npc.Template.Merchant || npc.Template.MerchantPackId == 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"merchant {merchantNpcObjId} not found or not a merchant");
+
+        // 2. Shop range — the packet's 3m check (SendErrorMessage(TooFarAway)
+        //    in the packet becomes a Rejected here).
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, npc.Transform.World.Position) > MaxShopRange)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"merchant {merchantNpcObjId} out of shop range");
+
+        // 3. The merchant's pack must actually sell the requested template
+        //    (packet: pack == null || !pack.SellsItem(itemId) → skip).
+        var pack = NpcManager.Instance.GetGoods(npc.Template.MerchantPackId);
+        if (pack == null || !pack.SellsItem(itemTemplateId))
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"merchant {merchantNpcObjId} does not sell item {itemTemplateId}");
+
+        // 4. Count must be positive and the template must exist (the packet
+        //    dereferences template.Price; the actor fails closed instead).
+        if (count <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "count must be positive");
+        var template = ItemManager.Instance.GetTemplate(itemTemplateId);
+        if (template == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"unknown item template {itemTemplateId}");
+
+        // 5. Money gate (money pool only; honor/vocation currency is out of
+        //    the v1 surface). The packet's check is buggy (uses && instead
+        //    of ||); the actor performs the correct pre-flight so the engine
+        //    is never entered without funds.
+        var money = (long)template.Price * count;
+        if (money > Character.Money)
+            return Reject(request, ActorFailureReason.RejectedAction, $"not enough money ({money} needed)");
+        if (money > int.MaxValue)
+            return Reject(request, ActorFailureReason.RejectedAction, "purchase total exceeds currency range");
+
+        request.Start($"buying {count} x item {itemTemplateId} from merchant {merchantNpcObjId} (pack {npc.Template.MerchantPackId})");
+
+        // 6. Real engine path — the packet's exact calls: grant the item,
+        //    then charge the money. Both are ordinary inventory/currency
+        //    services; no direct DB or GM path.
+        if (!Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.StoreBuy, itemTemplateId, count, -1))
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} grant refused by engine");
+        if (!Character.ChangeMoney(SlotType.Inventory, -(int)money))
+            return Reject(request, ActorFailureReason.RejectedAction, $"currency transfer refused by engine ({money})");
+
+        // 7. Effect fingerprint for the M8 audit (retry correlation: the
+        //    request-key dedupe is the primary retry guard; the fingerprint
+        //    proves the purchase landed).
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("tradebuy", itemTemplateId, $"{merchantNpcObjId}:{count}"), request.TraceId);
+        return Complete(request, money, $"bought {count} x item {itemTemplateId} for {money}");
+    }
+
+    public ActorRequest Sell(uint merchantNpcObjId, ulong itemId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Sell, merchantNpcObjId,
+            payload: new SellParams(itemId), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "sell"))
+            return request;
+
+        // 1. The target must be a live merchant NPC (packet: npc.Template.Merchant).
+        var npc = Character.ParentWorld?.GetNpc(merchantNpcObjId);
+        if (npc == null || npc.Template == null || !npc.Template.Merchant)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"merchant {merchantNpcObjId} not found or not a merchant");
+
+        // 2. The item must exist in the actor's OWN inventory (bag or
+        //    equipment — the same containers the packet reads slots from).
+        var item = Character.Inventory.Bag.GetItemByItemId(itemId)
+                   ?? Character.Inventory.Equipment.GetItemByItemId(itemId);
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemId} not found in inventory");
+
+        // 3. The template must be sellable (packet: !item.Template.Sellable → skip).
+        if (item.Template == null || !item.Template.Sellable)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemId} is not sellable");
+
+        // 4. Refund formula — the packet's exact computation.
+        var gradeTemplate = ItemManager.Instance.GetGradeTemplate(item.Grade);
+        if (gradeTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemId} has unknown grade {item.Grade}");
+        var refund = (int)(item.Template.Refund * gradeTemplate.RefundMultiplier / 100f) * item.Count;
+
+        request.Start($"selling item {itemId} (template {item.TemplateId}, count {item.Count}) to merchant {merchantNpcObjId}");
+
+        // 5. Real engine path — the packet's exact calls: move the item into
+        //    BuyBackItems (which REMOVES it from the bag — the engine-true
+        //    idempotency backstop: a retry after success finds no item),
+        //    mark the DB row for deletion, then pay the refund.
+        if (!Character.BuyBackItems.AddOrMoveExistingItem(ItemTaskType.StoreSell, item))
+            return Reject(request, ActorFailureReason.RejectedAction, $"sell of item {itemId} refused by engine (buyback)");
+        ItemManager.Instance.MarkItemForDbDeletion(item.Id);
+        if (!Character.ChangeMoney(SlotType.Inventory, refund))
+            return Reject(request, ActorFailureReason.RejectedAction, $"refund transfer refused by engine ({refund})");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("tradesell", item.TemplateId, itemId.ToString()), request.TraceId);
+        return Complete(request, refund, $"sold item {itemId} for {refund}");
+    }
+
+    public ActorRequest PostAuction(ulong itemId, int startPrice, int buyoutPrice, AuctionDuration duration, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.AuctionPost, 0,
+            payload: new AuctionPostParams(itemId, startPrice, buyoutPrice, duration), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "post auction"))
+            return request;
+
+        // 1. The item must be in the actor's OWN inventory — listing is a
+        //    transfer of ownership, so a foreign item is Rejected pre-flight
+        //    (the packet trusts the client; the actor fails closed).
+        var item = Character.Inventory.Bag.GetItemByItemId(itemId)
+                   ?? Character.Inventory.Equipment.GetItemByItemId(itemId);
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemId} not found in inventory");
+
+        // 2. Price terms: non-negative, at least one positive, defined duration.
+        if (startPrice < 0 || buyoutPrice < 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "prices must be non-negative");
+        if (startPrice == 0 && buyoutPrice == 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "at least one price must be positive");
+        if (!Enum.IsDefined(typeof(AuctionDuration), duration))
+            return Reject(request, ActorFailureReason.RejectedAction, $"invalid auction duration {duration}");
+
+        // 3. Listing fee pre-flight — the engine's own formula (buyout × 1% ×
+        //    (duration+1), capped). The engine bails SILENTLY when the fee is
+        //    unaffordable (CanNotPutupMoney + return); the actor converts that
+        //    into a clean Rejected before entering the engine.
+        var fee = (int)(buyoutPrice * 0.01 * ((int)duration + 1));
+        if (fee > MaxListingFee)
+            fee = MaxListingFee;
+        if (fee > Character.Money)
+            return Reject(request, ActorFailureReason.RejectedAction, $"not enough money for listing fee ({fee})");
+
+        request.Start($"posting item {itemId} on auction (start {startPrice}, buyout {buyoutPrice}, {duration})");
+
+        // 4. Real engine path — the exact call CSAuctionPostPacket makes
+        //    (npcId/npcId2 are unused by the engine; the auction house is a
+        //    global service). The engine moves the item into
+        //    AuctionAttachments (the engine-true idempotency backstop: a
+        //    retry after success finds no item), deducts the fee and
+        //    registers the lot.
+        AuctionManager.Instance.PostLotOnAuction(Character, 0, 0, itemId, startPrice, buyoutPrice, duration);
+
+        // 5. Post-state verification: the lot must actually be registered.
+        var lot = AuctionManager.Instance.AuctionLots.Values.FirstOrDefault(l =>
+            l.Item?.Id == itemId && l.ClientId == Character.Id);
+        if (lot == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "auction listing did not take effect");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("tradeauctionpost", 0, itemId.ToString()), request.TraceId);
+        return Complete(request, lot.Id, $"listed item {itemId} on auction (lot {lot.Id})");
+    }
+
+    public ActorRequest BuyAuction(ulong lotId, int price, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.AuctionBuy, 0,
+            payload: new AuctionBuyParams(lotId, price), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "buy auction"))
+            return request;
+
+        // 1. The lot must exist (the packet's GetAuctionLotFromId gate).
+        var lot = AuctionManager.Instance.AuctionLots.GetValueOrDefault(lotId);
+        if (lot == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"auction lot {lotId} not found (already sold or expired)");
+
+        // 2. Buy-now terms: the lot must carry a buyout and the offer must
+        //    meet it (the packet's buy-now branch: bid.Money >= DirectMoney
+        //    && DirectMoney != 0). Below-buyout offers are the BID branch —
+        //    this surface is purchase, not bidding, so they are Rejected.
+        if (lot.DirectMoney <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction, $"auction lot {lotId} has no buyout price");
+        if (price < lot.DirectMoney)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"offer {price} below buyout {lot.DirectMoney} (purchase requires buy-now)");
+
+        // 3. Money gate pre-flight — REQUIRED: the engine's buy-now branch
+        //    calls player.SubtractMoney and IGNORES its return before
+        //    removing the lot, so an unaffordable purchase would grant the
+        //    item without payment. The actor refuses before the engine call.
+        if (Character.Money < lot.DirectMoney)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"not enough money for buyout {lot.DirectMoney}");
+
+        request.Start($"buying auction lot {lotId} (item {lot.Item?.TemplateId}) for {lot.DirectMoney}");
+
+        // 4. Real engine path — the exact call CSBidAuctionPacket makes. The
+        //    buy-now branch deducts the buyout and removes the lot; delivery
+        //    of the item is the engine's own mail path.
+        AuctionManager.Instance.BidOnAuctionLot(Character, 0, 0, lot, new AuctionBid
+        {
+            LotId = lotId,
+            WorldId = (byte)(Character.Transform?.WorldId ?? 0),
+            BidderId = Character.Id,
+            BidderName = Character.Name,
+            Money = price
+        });
+
+        // 5. Post-state verification: the engine must have removed the lot
+        //    (buy-now is terminal — the engine-true idempotency backstop: a
+        //    retry after success finds no lot and cannot double-buy).
+        if (AuctionManager.Instance.AuctionLots.ContainsKey(lotId))
+            return Reject(request, ActorFailureReason.RejectedAction, "auction purchase did not take effect");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("tradeauctionbuy", 0, lotId.ToString()), request.TraceId);
+        return Complete(request, lot.DirectMoney, $"bought auction lot {lotId} for {lot.DirectMoney}");
     }
 
     #endregion

@@ -1,5 +1,6 @@
 using System.Numerics;
 
+using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units;
@@ -13,8 +14,10 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// v2 surface (B1, ROADMAP §M5): Observe · Move · Stop · Target · Cast ·
 /// Interact · Loot · UseItem · Mount/Dismount · AcceptQuest · TurnInQuest.
 /// The M5.1 economic extension (Plant/Harvest/Craft/PackPickup/BoardVehicle/
-/// Buy-Sell/Deposit-Withdraw) lands in a later slice; the lifecycle,
-/// rejection taxonomy and audit machinery below are final.
+/// Buy-Sell/Deposit-Withdraw) lands in slices; the Buy/Sell slice
+/// (t_8741b03d) adds merchant buy/sell + auction listing/purchase through
+/// the real engine trade paths; the lifecycle, rejection taxonomy and audit
+/// machinery below are final.
 ///
 /// Contract rules (ROADMAP M5, spec §16-17):
 ///  - Actions are VALIDATED gameplay requests. Every request tracks the
@@ -182,7 +185,6 @@ public interface IGameplayActor
     /// with that id is active (idempotent — retries cannot double-interrupt).
     /// </summary>
     bool Interrupt(Guid traceId);
-
     /// <summary>
     /// Requests quest acceptance through the REAL engine gate
     /// (CharacterQuests.AddQuest — level, race, quest-completion chains,
@@ -221,6 +223,63 @@ public interface IGameplayActor
     /// target required). Payload: <see cref="QuestTurnInParams"/>.
     /// </summary>
     ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Buys goods from a merchant NPC through the REAL engine path — the
+    /// same CSBuyItemsPacket branch: validates the NPC merchant + its goods
+    /// pack (NpcManager.GetGoods), grants the item through
+    /// ItemContainer.AcquireDefaultItem and charges money through
+    /// Character.ChangeMoney (the packet's exact calls). The pack must sell
+    /// the requested template; price = template.Price × count. Currency is
+    /// the ordinary money pool only (no honor/vocation currency in v1).
+    /// Rejections: merchant not found / not a merchant / not selling the
+    /// item / insufficient money / non-positive count. Idempotency: the
+    /// money gate is engine-true (a retry after a successful buy has less
+    /// money; insufficient funds are Rejected), and the request-key dedupe
+    /// is the primary retry guard — a same-key retry is never re-executed.
+    /// Payload: <see cref="BuyParams"/>.
+    /// </summary>
+    ActorRequest Buy(uint merchantNpcObjId, uint itemTemplateId, int count, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Sells an item to a merchant NPC through the REAL engine path — the
+    /// same CSSellItemsPacket branch: validates the NPC merchant, moves the
+    /// item into the character's BuyBackItems container (the exact
+    /// AddOrMoveExistingItem call), marks the DB row for deletion, and pays
+    /// the refund through Character.ChangeMoney. The item must be in the
+    /// actor's own inventory (Bag or Equipment) and template Sellable.
+    /// Engine-true idempotency: the engine MOVES the item out of the bag on
+    /// success, so a fresh-key retry finds no item and is Rejected — the
+    /// item can never be sold twice. Payload: <see cref="SellParams"/>.
+    /// </summary>
+    ActorRequest Sell(uint merchantNpcObjId, ulong itemId, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Lists an item on the auction house through the REAL engine path —
+    /// the same CSAuctionPostPacket call (AuctionManager.PostLotOnAuction):
+    /// validates the item is in the actor's inventory, computes the listing
+    /// fee (buyout × 1% × (duration+1), capped), and the engine moves the
+    /// item into AuctionAttachments, deducts the fee and registers the lot.
+    /// Rejections: item not owned / invalid prices / fee unaffordable.
+    /// Engine-true idempotency: the item leaves the bag on success, so a
+    /// fresh-key retry finds no item and cannot double-list. Payload:
+    /// <see cref="AuctionPostParams"/>.
+    /// </summary>
+    ActorRequest PostAuction(ulong itemId, int startPrice, int buyoutPrice, AuctionDuration duration, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Purchases an auction lot at the buy-now price through the REAL
+    /// engine path — the same CSBidAuctionPacket call (AuctionManager.
+    /// BidOnAuctionLot buy-now branch): validates the lot exists and has a
+    /// buyout, pre-flights the money gate (the engine's SubtractMoney
+    /// return is ignored — the actor refuses insufficient funds BEFORE the
+    /// engine call so no lot can be granted without payment), then the
+    /// engine deducts the buyout and removes the lot (mail delivery is the
+    /// engine's own). Engine-true idempotency: the lot is removed on
+    /// purchase, so a fresh-key retry finds no lot and cannot double-buy.
+    /// Payload: <see cref="AuctionBuyParams"/>.
+    /// </summary>
+    ActorRequest BuyAuction(ulong lotId, int price, string? idempotencyKey = null);
 
     /// Idempotency correlation lookup: the audit record of the terminal
     /// attempt recorded under an explicit idempotency key, or null when the
@@ -281,7 +340,19 @@ public enum ActorActionType : byte
     PackPickup = 15,
 
     /// <summary>Trade-pack put-down through the pack's use skill (CSStartSkillPacket SkillItem branch).</summary>
-    PutDown = 16
+    PutDown = 16,
+
+    /// <summary>Merchant buy through CSBuyItemsPacket (real engine trade path).</summary>
+    Buy = 17,
+
+    /// <summary>Merchant sell through CSSellItemsPacket (real engine trade path).</summary>
+    Sell = 18,
+
+    /// <summary>Auction listing through CSAuctionPostPacket / AuctionManager.PostLotOnAuction.</summary>
+    AuctionPost = 19,
+
+    /// <summary>Auction buy-now purchase through CSBidAuctionPacket / AuctionManager.BidOnAuctionLot.</summary>
+    AuctionBuy = 20
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>
