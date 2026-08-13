@@ -16,6 +16,7 @@ using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.Items.Templates;
+using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Tasks.Doodads;
 using AAEmu.UnitTests.Game.Core.Managers.Bots;
@@ -359,6 +360,24 @@ public sealed class LivestockSequentialParallelLimit : IParallelLimit
 }
 
 /// <summary>
+/// Deterministic stand-in for DoodadFuncRatioChange func 853 (mature cow
+/// 12774 → cow 5782, canonical Ratio 9160/10000). The real template rolls
+/// PhaseRatio = Random.Shared.Next(0, 10000) on EVERY phase-func execution
+/// (Doodad.DoPhaseFuncs), so the canonical chain flakes ~8% of the time
+/// (t_4132ea07). This pin mirrors the real success branch — set
+/// OverridePhase to NextPhase and stop — without touching product code.
+/// Funcs 854/855 stay canonical; no test drives their phases (5787/5788).
+/// </summary>
+public sealed class AlwaysFireRatioChange : DoodadFuncRatioChange
+{
+    public override bool Use(BaseUnit caster, Doodad owner)
+    {
+        owner.OverridePhase = NextPhase;
+        return true;
+    }
+}
+
+/// <summary>
 /// Additive rig for the livestock interaction suite. Builds on
 /// CropHarvestLoopRig (base surface) and PhaseStateRestartRecoveryRig (which
 /// may already have registered the calf chain) — every insert is
@@ -547,7 +566,7 @@ public static class LivestockInteractionRig
             (3295, new DoodadFuncTimer { Delay = 180_000, NextPhase = (int)LivestockInteractionTests.ButcherFinalPhase }),
             (3297, new DoodadFuncTimer { Delay = 180_000, NextPhase = (int)LivestockInteractionTests.MilkedFinalPhase }));
         AddPhaseFuncTemplates(phaseFuncTemplates, "DoodadFuncRatioChange",
-            (853, new DoodadFuncRatioChange { Ratio = 9160, NextPhase = (int)LivestockInteractionTests.CowPhase }),
+            (853, new AlwaysFireRatioChange { NextPhase = (int)LivestockInteractionTests.CowPhase }),
             (854, new DoodadFuncRatioChange { Ratio = 560, NextPhase = 5787 }),
             (855, new DoodadFuncRatioChange { Ratio = 280, NextPhase = 5788 }));
         AddPhaseFuncTemplates(phaseFuncTemplates, "DoodadFuncAnimate",
