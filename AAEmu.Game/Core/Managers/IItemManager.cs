@@ -37,6 +37,7 @@ public interface IItemManager : ILoadable
     float GetStatValueConst();
     AttributeModifiers GetAttributeModifiers(uint id);
     List<uint> GetItemIdsFromDoodad(uint doodadId);
+    uint GetDoodadIdFromItem(uint itemTemplateId);
     ItemTemplate GetItemTemplateFromItemId(uint itemId);
     List<ItemTemplate> GetItemTemplatesForAuctionSearch(AuctionSearch searchTemplate);
     ItemProcTemplate GetItemProcTemplate(uint templateId);

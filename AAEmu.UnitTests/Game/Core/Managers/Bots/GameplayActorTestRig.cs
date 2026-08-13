@@ -6,6 +6,7 @@ using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
+using AAEmu.Game.Core.Managers.Stream;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Connections;
@@ -14,9 +15,12 @@ using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.CommonFarm;
+using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
+using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Containers;
@@ -846,5 +850,238 @@ public static class GameplayActorTestRig
                 FixedGrade = -1
             };
         }
+    }
+
+    // ------------------------------------------------------------------ M5.1 plant rig
+
+    /// <summary>Plantable seed item template (mapped to <see cref="TestCropDoodadId"/>).</summary>
+    public const uint TestSeedItemId = 93_001;
+
+    /// <summary>Seed whose doodad mapping points at an UNSEEDED template (GetTemplate returns null).</summary>
+    public const uint TestUnseededSeedItemId = 93_002;
+
+    /// <summary>Use skill of the plant seeds (ConsumeLaborPower = <see cref="TestPlantLaborCost"/>).</summary>
+    public const uint TestPlantSkillId = 93_101;
+
+    /// <summary>Growing-crop doodad template the seeds map to.</summary>
+    public const uint TestCropDoodadId = 93_201;
+
+    /// <summary>Mapped doodad id for <see cref="TestUnseededSeedItemId"/> — deliberately NOT in DoodadManager._templates.</summary>
+    public const uint TestUnseededDoodadId = 93_202;
+
+    /// <summary>Public-farm subzone key (farm_type 1 = Farm).</summary>
+    public const uint TestFarmSubZoneId = 93_301;
+
+    /// <summary>ObjId the rigged DoodadManager hands out (constant — one planted doodad per test world).</summary>
+    public const uint TestDoodadObjId = 0x200000;
+
+    /// <summary>Labor the plant use skill consumes (mirrors canonical seeds like potato 15659 → skill 25536).</summary>
+    public const int TestPlantLaborCost = 5;
+
+    /// <summary>
+    /// Seeds the M5.1 plant surface (additive, missing-only — never replaces
+    /// an established seed): the seed item templates, the plant use skill
+    /// (labor 5, no effects/reagents so the engine consumes exactly one seed
+    /// via CreatePlayerDoodad's ConsumeItem), the item_spawn_doodads mapping,
+    /// the growing-crop doodad template, and the PublicFarm/Housing/
+    /// CommonFarmGameData singletons the CSCreateDoodadPacket gates
+    /// dereference. Also initializes DoodadIdManager (missing-only) so the
+    /// engine's Doodad.Save() reaches its MySQL write — plant tests point
+    /// MySQL at a dead port (M3b convention) so that write fails fast and
+    /// deterministically.
+    /// </summary>
+    public static void SeedPlantSurface()
+    {
+        Seed();
+        SeedPlantItemTemplates();
+        SeedPlantSkill();
+        SeedPlantDoodadSurface();
+        SeedPlantFarmSurface();
+        SeedNameManager();
+    }
+
+    private static void SeedPlantItemTemplates()
+    {
+        var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
+        foreach (var templateId in new[] { TestSeedItemId, TestUnseededSeedItemId })
+        {
+            if (!templates.TryGetValue(templateId, out var template))
+            {
+                template = new ItemTemplate { Id = templateId, Name = $"Test Seed {templateId}" };
+                templates[templateId] = template;
+            }
+            // Properties are ALWAYS applied (a sibling bare seed must not
+            // shadow the plant shape).
+            template.MaxCount = 100; // stackable — the engine stores template-only item refs
+            template.FixedGrade = -1;
+            template.UseSkillId = TestPlantSkillId;
+        }
+    }
+
+    private static void SeedPlantSkill()
+    {
+        var skills = (Dictionary<uint, SkillTemplate>)GetField(SkillManager.Instance, "_skills");
+        if (!skills.TryGetValue(TestPlantSkillId, out var template))
+        {
+            template = new SkillTemplate
+            {
+                Id = TestPlantSkillId,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 100,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Self,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target,
+                ConsumeLaborPower = TestPlantLaborCost
+            };
+            skills[TestPlantSkillId] = template;
+        }
+        else
+        {
+            template.ConsumeLaborPower = TestPlantLaborCost;
+        }
+        // No Effects and no reagent mapping: the seed's use-skill pipeline
+        // must NOT consume anything by itself — CreatePlayerDoodad's
+        // ConsumeItem is the single consumption point under test.
+    }
+
+    private static void SeedPlantDoodadSurface()
+    {
+        SeedDoodadManager();
+        var templates = (Dictionary<uint, DoodadTemplate>)GetField(DoodadManager.Instance, "_templates");
+        if (!templates.ContainsKey(TestCropDoodadId))
+            templates[TestCropDoodadId] = new DoodadTemplate { Id = TestCropDoodadId };
+
+        var itemDoodad = (Dictionary<uint, ItemDoodadTemplate>?)GetField(ItemManager.Instance, "_itemDoodadTemplates");
+        if (itemDoodad == null)
+        {
+            itemDoodad = [];
+            SetField(ItemManager.Instance, "_itemDoodadTemplates", itemDoodad);
+        }
+        if (!itemDoodad.ContainsKey(TestCropDoodadId))
+            itemDoodad[TestCropDoodadId] = new ItemDoodadTemplate { DoodadId = TestCropDoodadId, ItemIds = [TestSeedItemId] };
+        if (!itemDoodad.ContainsKey(TestUnseededDoodadId))
+            itemDoodad[TestUnseededDoodadId] = new ItemDoodadTemplate { DoodadId = TestUnseededDoodadId, ItemIds = [TestUnseededSeedItemId] };
+
+        // Doodad.Save() allocates the row id via DoodadIdManager BEFORE the
+        // MySQL write; the plant tests point MySQL at a dead port so the
+        // write fails fast, and the id manager must be initialized to reach
+        // it (missing-only, t_6bad0654 discipline).
+        var freeIdsField = typeof(IdManager).GetField("_freeIds",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (freeIdsField?.GetValue(DoodadIdManager.Instance) == null)
+            DoodadIdManager.Instance.Initialize(false);
+    }
+
+    /// <summary>
+    /// Seeds the singleton surfaces the CSCreateDoodadPacket mirrors touch:
+    /// PublicFarmManager, HousingManager (empty registry — no house at the
+    /// placement position), CommonFarmGameData (empty farm-group tables).
+    /// Missing-only per singleton, with null-dict hardening for the case
+    /// where a Singleton auto-created the instance before this seed ran.
+    /// The PublicFarmManager's subzone probe is ALWAYS rewired to a
+    /// flag-driven mock (same field-swap pattern as
+    /// <see cref="EnsureIncrementingItemIds"/>): with the gate off it
+    /// reports "not a farm" — behaviorally identical to whatever mock was
+    /// seeded — and <see cref="SetFarmGateEnabled"/> flips it per test.
+    /// </summary>
+    private static void SeedPlantFarmSurface()
+    {
+        if (!SingletonSeeded(typeof(Singleton<PublicFarmManager>)))
+        {
+            var farmManager = new PublicFarmManager(
+                Mock.Of<ITaskManager>().Object, Mock.Of<IWorldManager>().Object, Mock.Of<ISubZoneManager>().Object);
+            SeedSingleton(typeof(Singleton<PublicFarmManager>), farmManager);
+        }
+        var subZone = Mock.Of<ISubZoneManager>();
+        subZone.GetSubZoneByPosition(Any<WorldTemplate>(), Any<Vector3>()).Returns(() =>
+            s_farmGateEnabled ? new List<uint> { TestFarmSubZoneId } : []);
+        SetField(PublicFarmManager.Instance, "<subZoneManager>P", subZone);
+        if ((Dictionary<uint, FarmType>?)GetField(PublicFarmManager.Instance, "_farmZones") == null)
+            SetField(PublicFarmManager.Instance, "_farmZones", new Dictionary<uint, FarmType>());
+
+        if (!SingletonSeeded(typeof(Singleton<HousingManager>)))
+        {
+            var manager = new HousingManager(
+                Mock.Of<IObjectIdManager>().Object,
+                Mock.Of<IFactionManager>().Object,
+                Mock.Of<ILocalizationManager>().Object,
+                Mock.Of<IWorldManager>().Object,
+                Mock.Of<ITaskManager>().Object,
+                Mock.Of<ISkillManager>().Object,
+                Mock.Of<IHousingIdManager>().Object,
+                Mock.Of<IHousingTldManager>().Object,
+                Mock.Of<IItemManager>().Object,
+                Mock.Of<IMailManager>().Object,
+                Mock.Of<INameManager>().Object,
+                Mock.Of<IZoneManager>().Object,
+                Mock.Of<IDoodadManager>().Object,
+                Mock.Of<IUccManager>().Object);
+            SeedSingleton(typeof(Singleton<HousingManager>), manager);
+        }
+        if ((Dictionary<uint, House>?)GetField(HousingManager.Instance, "_houses") == null)
+            SetField(HousingManager.Instance, "_houses", new Dictionary<uint, House>());
+
+        var farmData = CommonFarmGameData.Instance;
+        if ((Dictionary<uint, FarmGroup>?)GetField(farmData, "_farmGroup") == null)
+            SetField(farmData, "_farmGroup", new Dictionary<uint, FarmGroup>());
+        if ((Dictionary<uint, FarmGroupDoodads>?)GetField(farmData, "_farmGroupDoodads") == null)
+            SetField(farmData, "_farmGroupDoodads", new Dictionary<uint, FarmGroupDoodads>());
+        if ((Dictionary<uint, DoodadGroups>?)GetField(farmData, "_doodadGroups") == null)
+            SetField(farmData, "_doodadGroups", new Dictionary<uint, DoodadGroups>());
+    }
+
+    private static bool s_farmGateEnabled;
+
+    /// <summary>
+    /// Flips the public-farm gate for the plant tests: enabled reports
+    /// <see cref="TestFarmSubZoneId"/> (FarmType.Farm) at every position,
+    /// disabled reports no subzone at all. Restore to false in TearDown —
+    /// the flag is read by the shared subzone mock every probe.
+    /// </summary>
+    public static void SetFarmGateEnabled(bool enabled)
+    {
+        s_farmGateEnabled = enabled;
+        var farmZones = (Dictionary<uint, FarmType>)GetField(PublicFarmManager.Instance, "_farmZones");
+        if (enabled)
+            farmZones[TestFarmSubZoneId] = FarmType.Farm;
+        else
+            farmZones.Remove(TestFarmSubZoneId);
+    }
+
+    /// <summary>
+    /// Adds/removes <see cref="TestCropDoodadId"/> on the CommonFarmGameData
+    /// Farm allowlist (the table CanPlace's GetAllowedDoodads reads).
+    /// </summary>
+    public static void SetFarmAllowlist(bool allowed)
+    {
+        var data = CommonFarmGameData.Instance;
+        var doodads = (Dictionary<uint, FarmGroupDoodads>)GetField(data, "_farmGroupDoodads");
+        if (allowed)
+        {
+            doodads[1] = new FarmGroupDoodads
+            {
+                Id = 1,
+                FarmGroupId = FarmType.Farm,
+                DoodadId = TestCropDoodadId,
+                ItemId = TestSeedItemId
+            };
+        }
+        else
+        {
+            doodads.Remove(1);
+        }
+    }
+
+    /// <summary>
+    /// Seeds NameManager (parameterless ctor — all deps optional) so the
+    /// house-permission model's GetCharacterAccount lookup resolves instead
+    /// of hitting an unseeded singleton.
+    /// </summary>
+    private static void SeedNameManager()
+    {
+        if (!SingletonSeeded(typeof(Singleton<NameManager>)))
+            SeedSingleton(typeof(Singleton<NameManager>), new NameManager());
     }
 }
