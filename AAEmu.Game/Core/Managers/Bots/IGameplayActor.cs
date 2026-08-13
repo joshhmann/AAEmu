@@ -144,6 +144,40 @@ public interface IGameplayActor
     ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null);
 
     /// <summary>
+    /// Picks up a placed trade pack through the real engine path
+    /// (RecoverItem.Execute — the exact call CSLootOpenBagPacket makes for
+    /// pack-style pickup with the generic world recover skill 11361).
+    /// Validates: the doodad resolves, is a recoverable pack doodad (its
+    /// current phase carries a DoodadFuncRecoverItem with the generic
+    /// recover skill), is in interaction range, and the actor's backpack
+    /// slot can accept the pack (a carried pack blocks pickup with
+    /// Rejected(StateTransition)). The engine grants the pack back into
+    /// the Backpack equipment slot and deletes the doodad; the post-state
+    /// container transition is the completion proof (the engine signals
+    /// refusal only via error packets). Retries cannot duplicate packs:
+    /// after a success the doodad is gone, and the System-container check
+    /// inside DoodadFuncRecoverItem refuses a re-grant.
+    /// </summary>
+    ActorRequest PackPickup(uint doodadObjId, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Puts down the carried trade pack through the real engine path — the
+    /// pack item's use skill (item_template.use_skill_id) via the exact
+    /// CSStartSkillPacket SkillItem branch: Skill.Use with a SkillItem
+    /// caster, whose PutDownBackpackEffect moves the pack from the
+    /// Backpack equipment slot into the System container and spawns the
+    /// placed-pack doodad. Validates: pack carried in the backpack slot,
+    /// is an auto-equip trade pack, put-down skill exists. Engine refusals
+    /// (public-farm exclusion, house permission, invalid item) leave the
+    /// pack in the slot and are detected by post-state verification —
+    /// Rejected(RejectedAction) with the placement proof absent. The move
+    /// to the System container is the retry-proof state: a retry finds no
+    /// pack in the slot and is refused pre-flight, so the pack can never
+    /// be placed twice.
+    /// </summary>
+    ActorRequest PutDown(uint packItemTemplateId, string? idempotencyKey = null);
+
+    /// <summary>
     /// Cancels a running request by trace id. Returns false when no request
     /// with that id is active (idempotent — retries cannot double-interrupt).
     /// </summary>
@@ -241,7 +275,13 @@ public enum ActorActionType : byte
     Mount = 13,
 
     /// <summary>Mate dismounting through MateManager.UnMountMate (CSUnMountMatePacket path).</summary>
-    Dismount = 14
+    Dismount = 14,
+
+    /// <summary>Trade-pack pickup through RecoverItem (CSLootOpenBagPacket pack path).</summary>
+    PackPickup = 15,
+
+    /// <summary>Trade-pack put-down through the pack's use skill (CSStartSkillPacket SkillItem branch).</summary>
+    PutDown = 16
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

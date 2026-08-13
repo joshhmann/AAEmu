@@ -13,6 +13,7 @@ using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.World.Interactions;
 using AAEmu.Game.Utils;
 
 namespace AAEmu.Game.Core.Managers.Bots;
@@ -559,6 +560,156 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.RejectedAction, "dismount did not take effect");
 
         return Complete(request, true, $"dismounted mate {mate.ObjId}");
+    }
+
+    /// <summary>
+    /// Generic recover skill used by the world trade-pack pickup path —
+    /// the same constant CSLootOpenBagPacket routes pack-style pickups
+    /// through (11361). Housing-crate recover (15309) stays on the normal
+    /// doodad interaction path and is intentionally NOT a pack pickup.
+    /// </summary>
+    public const uint GenericRecoverItemSkillId = 11361u;
+
+    public ActorRequest PackPickup(uint doodadObjId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.PackPickup, doodadObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "pack pickup"))
+            return request;
+
+        if (Character.Inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
+        if (doodad == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"placed pack doodad {doodadObjId} not found in world");
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, doodad.Transform.World.Position, false) > MaxInteractRange)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"placed pack doodad {doodadObjId} out of interaction range");
+
+        // The same routing rule CSLootOpenBagPacket applies: only a doodad
+        // whose CURRENT phase carries a DoodadFuncRecoverItem with the
+        // generic world recover skill is a recoverable trade pack. Housing
+        // crate recover (15309) and other RecoverItem doodads are not
+        // pack pickups — rejecting them here keeps the action vocabulary
+        // honest instead of hijacking the engine's other recover paths.
+        var recoverable = doodad.CurrentFuncs.Any(func =>
+            func.FuncType == "DoodadFuncRecoverItem" && func.SkillId == GenericRecoverItemSkillId);
+        if (!recoverable)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"doodad {doodadObjId} is not a recoverable trade pack (no DoodadFuncRecoverItem/{GenericRecoverItemSkillId} on phase {doodad.FuncGroupId})");
+
+        // Engine pre-flight mirror: RecoverItem refuses to run when the
+        // backpack slot cannot accept the pack (a carried pack, or a
+        // glider with no bag space). Reject pre-flight with the taxonomy
+        // reason instead of a silent engine error-packet no-op.
+        if (!Character.Inventory.CanReplaceGliderInBackpackSlot())
+            return Reject(request, ActorFailureReason.StateTransition,
+                "backpack slot occupied — take off the carried pack/glider before picking up");
+
+        var packItemId = doodad.ItemId;
+        var packTemplateId = doodad.ItemTemplateId;
+        request.Start($"picking up placed pack {doodadObjId} (item {packItemId}, template {packTemplateId})");
+
+        // The REAL engine path — the exact call CSLootOpenBagPacket makes
+        // for pack-style pickup. DoodadFuncRecoverItem grants the pack back
+        // into the Backpack slot (IsAutoEquipTradePack → TakeoffBackpack +
+        // AddOrMoveExistingItem) and clears the doodad's item refs; the
+        // System-container check inside the func refuses a re-grant when
+        // somebody already picked the pack up; RecoverItem then deletes the
+        // doodad. All engine-true — no direct container writes here.
+        new RecoverItem().Execute(Character, null, doodad, null, GenericRecoverItemSkillId, 0, null);
+
+        // Post-state verification: the pack must have left the System
+        // container and be equipped in the Backpack slot. The engine path
+        // signals refusal only via error packets (silent headless), so the
+        // container transition is the completion proof — and the retry
+        // proof: a fresh-key retry finds the doodad gone (deleted) or the
+        // item no longer in a System container, and grants nothing.
+        var packItem = ItemManager.Instance.GetItemByItemId(packItemId);
+        if (packItem == null
+            || packItem._holdingContainer?.ContainerType != SlotType.Equipment
+            || Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack)?.Id != packItemId)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"pack pickup from {doodadObjId} did not take effect (already picked up or slot unavailable)");
+
+        // Applied-effect fingerprint (M8 economic-audit correlation): the
+        // pack instance is now actor-carried. The request-level key dedupe
+        // is the PRIMARY retry guard; the deleted doodad is the
+        // engine-true backstop.
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("packpickup", packTemplateId, packItemId.ToString()), request.TraceId);
+        return Complete(request, packItemId,
+            $"picked up placed pack {doodadObjId} (item {packItemId}, template {packTemplateId})");
+    }
+
+    public ActorRequest PutDown(uint packItemTemplateId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.PutDown, packItemTemplateId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "put down pack"))
+            return request;
+
+        if (Character.Inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        // 1. The pack must be carried in the Backpack equipment slot — the
+        //    state PackPickup / pack crafting leave it in, and the exact
+        //    lookup PutDownBackpackEffect performs on the SkillItem caster
+        //    (Inventory.Equipment.GetItemByItemId). A pack in the bag is
+        //    not placeable.
+        var pack = Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+        if (pack == null || pack.TemplateId != packItemTemplateId)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"trade pack {packItemTemplateId} not carried in the backpack slot");
+        if (!ItemManager.Instance.IsAutoEquipTradePack(packItemTemplateId))
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"item {packItemTemplateId} is not an auto-equip trade pack");
+
+        // 2. Usage rules: the pack must carry a put-down use skill and the
+        //    skill template must exist (the same gate the SkillItem packet
+        //    branch relies on — a template-less use would silently no-op).
+        var packTemplate = pack.Template;
+        if (packTemplate == null || packTemplate.UseSkillId == 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"trade pack {packItemTemplateId} has no put-down use skill");
+        var skillTemplate = SkillManager.Instance.GetSkillTemplate(packTemplate.UseSkillId);
+        if (skillTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"trade pack {packItemTemplateId} put-down skill {packTemplate.UseSkillId} not found");
+
+        request.Start($"putting down trade pack {packItemTemplateId} (instance {pack.Id}, skill {packTemplate.UseSkillId})");
+
+        // 3. Apply through the REAL gameplay pipeline — the exact path the
+        //    CSStartSkillPacket SkillItem branch takes: Skill.Use with a
+        //    SkillItem caster (3-arg ctor sets SkillCasterType.Item, which
+        //    the engine's GetInitialTarget relies on). The effect
+        //    (PutDownBackpackEffect) moves the pack into the System
+        //    container and spawns the placed-pack doodad through the
+        //    normal doodad spawn services.
+        var skill = new Skill(skillTemplate);
+        var caster = new SkillItem(Character.ObjId, pack.Id, pack.TemplateId);
+        var castTarget = SkillCastTarget.GetByType(SkillCastTargetType.Unit);
+        castTarget.ObjId = Character.ObjId;
+        var result = skill.Use(Character, caster, castTarget, null, false, out _);
+        if (result != SkillResult.Success)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"trade pack {packItemTemplateId} put-down refused by engine: {result}");
+
+        // 4. Post-state verification: PutDownBackpackEffect early-returns
+        //    (public-farm exclusion, house permission, invalid item)
+        //    WITHOUT failing the skill — the pack must have LEFT the
+        //    Backpack slot (moved to the System container). That move is
+        //    also the retry-proof state: a retry finds no pack in the slot
+        //    and is refused pre-flight, so the pack can never be placed
+        //    twice.
+        if (Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack)?.Id == pack.Id)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"trade pack {packItemTemplateId} put-down did not take effect (engine refused placement)");
+
+        // Applied-effect fingerprint (M8 economic-audit correlation): the
+        // pack instance transitioned to a placed pack.
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("packputdown", packItemTemplateId, pack.Id.ToString()), request.TraceId);
+        return Complete(request, true,
+            $"trade pack {packItemTemplateId} placed (instance {pack.Id}, now in System container)");
     }
 
     #endregion
