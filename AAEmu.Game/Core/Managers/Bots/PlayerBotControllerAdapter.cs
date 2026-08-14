@@ -1,5 +1,6 @@
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Static;
 
@@ -74,6 +75,12 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null)
         => Actor.Dismount(mateObjId, idempotencyKey);
+
+    public ActorRequest BoardVehicle(uint vehicleObjId, AttachPointKind attachPoint = AttachPointKind.Driver, string? idempotencyKey = null)
+        => Actor.BoardVehicle(vehicleObjId, attachPoint, idempotencyKey);
+
+    public ActorRequest UnboardVehicle(uint vehicleObjId = 0, string? idempotencyKey = null)
+        => Actor.UnboardVehicle(vehicleObjId, idempotencyKey);
 
     public ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null)
         => Actor.Harvest(doodadObjId, idempotencyKey);

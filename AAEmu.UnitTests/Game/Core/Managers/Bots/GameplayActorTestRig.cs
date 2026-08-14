@@ -19,6 +19,7 @@ using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.CommonFarm;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
+using AAEmu.Game.Models.Game.Crafts;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
@@ -33,15 +34,18 @@ using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.Mails;
 using AAEmu.Game.Models.Game.Merchant;
+using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Buffs;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Slaves;
 using AAEmu.Game.Models.Game.Team;
+using AAEmu.Game.Models.Game.Transfers;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
@@ -135,6 +139,7 @@ public static class GameplayActorTestRig
                 SeedBaseSurface();
                 EnsureIncrementingItemIds();
                 SeedTradeSurface();
+                SeedItemGameData();
                 FormulaManager.Instance.Load();
 
                 s_seeded = true;
@@ -381,7 +386,7 @@ public static class GameplayActorTestRig
         // Skill tag dictionaries (SkillModifiers → GetSkillTags /
         // GetBuffsByTagId / GetSkillsByTag / GetBuffTags dereference
         // these during ManaCost / range / modifier evaluation).
-        foreach (var field in new[] { "_skillTags", "_taggedSkills", "_buffTags", "_taggedBuffs" })
+        foreach (var field in new[] { "_skillTags", "_taggedSkills", "_buffTags", "_taggedBuffs", "_buffs", "_buffTriggers", "_skillModifiers", "_combatBuffs" })
         {
             var f = typeof(SkillManager).GetField(field, flags);
             if (f!.GetValue(manager) == null)
@@ -469,6 +474,35 @@ public static class GameplayActorTestRig
         }
     }
 
+    /// <summary>
+    /// Seeds the ItemGameData singleton's grade-buff map so the real equip
+    /// path (EquipmentContainer.OnEnterContainer → UpdateGearBonuses →
+    /// ApplyEquipEffects → GetItemBuff) does not NRE on a null dictionary.
+    /// Empty is correct for unit surfaces: GetItemBuff returns null, and the
+    /// equip path skips the buff application (Unit.cs:1411 guards the null).
+    /// </summary>
+    private static void SeedItemGameData()
+    {
+        var manager = ItemGameData.Instance;
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var field = typeof(ItemGameData).GetField("_itemGradeBuffs", flags);
+        if (field == null)
+            throw new InvalidOperationException("Cannot locate ItemGameData._itemGradeBuffs");
+        if (field.GetValue(manager) == null)
+            field.SetValue(manager, new Dictionary<uint, Dictionary<byte, uint>>());
+
+        // BuffGameData is loaded by the same GameData pipeline; the real
+        // buff pipeline (Buffs.AddBuff → BuffModifiers.AddModifiers →
+        // BuffGameData.GetModifiersForBuff) NREs on its null dicts too.
+        var buffManager = BuffGameData.Instance;
+        var buffModifiers = typeof(BuffGameData).GetField("_buffModifiers", flags);
+        if (buffModifiers?.GetValue(buffManager) == null)
+            buffModifiers?.SetValue(buffManager, new Dictionary<uint, List<BuffModifier>>());
+        var buffTolerances = typeof(BuffGameData).GetField("_buffTolerances", flags);
+        if (buffTolerances?.GetValue(buffManager) == null)
+            buffTolerances?.SetValue(buffManager, new Dictionary<uint, BuffTolerance>());
+    }
+
     internal static bool SingletonSeeded(Type singletonBase)
         => singletonBase.GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             ?.GetValue(null) != null;
@@ -507,6 +541,10 @@ public static class GameplayActorTestRig
         // resolves through ParentWorld.MateManager.
         session.World.MateManager = new MateManager(session.World);
         session.World.SlaveManager = new SlaveManager(session.World);
+        // The M5.1 vehicle pipeline (BoardVehicle/UnboardVehicle) resolves
+        // transfers through ParentWorld.TransferManager — prod assigns it
+        // right after world creation, headless session worlds don't.
+        session.World.TransferManager = new TransferManager();
         // Prod allocates the world's region grid at creation
         // (WorldManager.cs:565-574); headless session worlds don't.
         // Character.SetPosition → AddVisibleObject → GetRegionByPos
@@ -543,6 +581,7 @@ public static class GameplayActorTestRig
         // session does not.
         character.Skills = new CharacterSkills(character);
         character.Actability = new CharacterActability(character);
+        character.Craft ??= new CharacterCraft(character);
         // BuyBackItems is created by Character.Load() (line 2615); the
         // headless fixture path never runs Load, and the M5.1 Sell engine
         // path (CSSellItemsPacket branch) moves the sold item into it.
@@ -664,6 +703,187 @@ public static class GameplayActorTestRig
     /// </summary>
     public static void BindSlaveDriver(HeadlessSession session, GameplayActor actor, uint slaveObjId)
         => session.World.SlaveManager.BindSlave(actor.Character, slaveObjId, AttachPointKind.Driver, AttachUnitReason.NewMaster);
+
+    // ------------------------------------------------------------------ M5.1 vehicle rig (BoardVehicle/UnboardVehicle)
+
+    /// <summary>Default objId for a rig-spawned route-carriage transfer.</summary>
+    public const uint TransferObjId = 0x3002;
+
+    /// <summary>Default objId for the seat doodad of a rig transfer.</summary>
+    public const uint TransferSeatDoodadObjId = 0x3003;
+
+    /// <summary>Glider item template id used by the BoardVehicle glider rig.</summary>
+    public const uint GliderItemTemplateId = 91_004;
+
+    /// <summary>
+    /// Seeds a DoodadFuncAttachment func row + template for a transfer seat:
+    /// the bond path (BondChairSingle &gt; BondInvalid) with the given attach
+    /// point and the seeded interaction skill, so the seat interaction
+    /// (Doodad.Use → GetFunc) resolves the row exactly like a real route
+    /// carriage seat.
+    /// </summary>
+    public static void SeedDoodadAttachmentFunc(uint groupId, uint funcId, uint skillId,
+        AttachPointKind attachPoint = AttachPointKind.Passenger0)
+    {
+        SeedDoodadManager();
+        var manager = DoodadManager.Instance;
+        var funcsByGroups = (Dictionary<uint, List<DoodadFunc>>)GetField(manager, "_funcsByGroups");
+        var funcsById = (Dictionary<uint, DoodadFunc>)GetField(manager, "_funcsById");
+        var funcTemplates = (Dictionary<string, Dictionary<uint, DoodadFuncTemplate>>)GetField(manager, "_funcTemplates");
+
+        var func = new DoodadFunc
+        {
+            GroupId = groupId,
+            FuncId = funcId,
+            FuncKey = funcId,
+            FuncType = "DoodadFuncAttachment",
+            NextPhase = -1, // bond rows never advance the phase
+            SkillId = skillId
+        };
+        if (!funcsById.ContainsKey(funcId))
+            funcsById[funcId] = func;
+        if (!funcsByGroups.TryGetValue(groupId, out var group))
+        {
+            group = [];
+            funcsByGroups[groupId] = group;
+        }
+        if (group.All(f => f.FuncId != funcId))
+            group.Add(func);
+
+        if (!funcTemplates.TryGetValue("DoodadFuncAttachment", out var attachmentTemplates))
+        {
+            attachmentTemplates = [];
+            funcTemplates["DoodadFuncAttachment"] = attachmentTemplates;
+        }
+        if (!attachmentTemplates.ContainsKey(funcId))
+        {
+            attachmentTemplates[funcId] = new DoodadFuncAttachment
+            {
+                AttachPointId = attachPoint,
+                Space = 1, // single seat (a chair)
+                BondKindId = BondKind.BondChairSingle
+            };
+        }
+    }
+
+    /// <summary>
+    /// Spawns a route-carriage transfer with a seat doodad attached at the
+    /// given attach point: a real Transfer in the world + registered in the
+    /// world's TransferManager active registry (the surface
+    /// IGameplayActor.BoardVehicle resolves), and a seat doodad whose func
+    /// group carries a DoodadFuncAttachment (bond path) row for the seat
+    /// interaction skill.
+    /// </summary>
+    public static uint SpawnTransferWithSeat(HeadlessSession session, GameplayActor actor,
+        uint transferObjId = TransferObjId, uint seatDoodadObjId = TransferSeatDoodadObjId,
+        AttachPointKind attachPoint = AttachPointKind.Passenger0, uint groupId = 99_102, uint funcId = 99_302)
+    {
+        // The seat's DoodadFuncAttachment func row + template (bond path:
+        // BondChairSingle > BondInvalid). SkillId = TestSkillId so the
+        // seat interaction resolves through the seeded skill.
+        SeedDoodadAttachmentFunc(groupId, funcId, TestSkillId, attachPoint);
+
+        var seatDoodad = new Doodad
+        {
+            ObjId = seatDoodadObjId,
+            Id = seatDoodadObjId,
+            FuncGroupId = groupId,
+            // DoFunc → HasOnlyGroupKindStart() reads Template.FuncGroups; an
+            // empty list keeps the one-shot seat alive (start-only rule).
+            Template = new DoodadTemplate { Id = groupId, FuncGroups = [] }
+        };
+
+        var transfer = new Transfer
+        {
+            ObjId = transferObjId,
+            TlId = 1,
+            Id = transferObjId,
+            Name = "test-carriage",
+            Template = new TransferTemplate { Id = 6, Name = "test-carriage", ModelId = 653 }
+        };
+        // The seat bond parents the passenger's transform to the seat's
+        // StickyParent — point it at the transfer (the engine's transfer
+        // spawner wires this through DoodadManager.Create + TransferSpawner).
+        seatDoodad.Seat = new VehicleSeat(transfer);
+        seatDoodad.ParentObjId = transfer.ObjId;
+        transfer.AttachedDoodads.Add(seatDoodad);
+
+        // Same instance-id bypass as SummonSlave: the headless world is not
+        // in the shared WorldManager registry, so the public setters would
+        // NRE — pre-set the backing fields (bypass BEFORE ParentWorld).
+        foreach (var obj in new GameObject[] { seatDoodad, transfer })
+        {
+            typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
+                .GetField("_instanceId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .SetValue(obj.Transform, session.World.Id);
+            typeof(AAEmu.Game.Models.Game.World.GameObject)
+                .GetField("_parentWorld", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .SetValue(obj, session.World);
+        }
+        session.World.AddObject(seatDoodad);
+        session.World.AddObject(transfer);
+
+        // Register in TransferManager._activeTransfers (the registry
+        // TransferSpawner.AddActiveTransfer fills in prod; WorldInstance
+        // AddObject alone does not register transfers).
+        var registry = (Dictionary<uint, Transfer>?)typeof(TransferManager)
+            .GetField("_activeTransfers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(session.World.TransferManager);
+        if (registry == null)
+            throw new InvalidOperationException("TransferManager._activeTransfers not found");
+        registry[transfer.ObjId] = transfer;
+        return transfer.ObjId;
+    }
+
+    /// <summary>
+    /// Stocks a glider item (BackpackType.Glider) into the actor's bag
+    /// through the real acquisition path. The item template is a
+    /// BackpackTemplate so ItemManager.Create instantiates a real Backpack
+    /// (the glider's ClassType) — the equip path the BoardVehicle glider
+    /// branch drives resolves it as an equippable glider.
+    /// </summary>
+    public static void StockGlider(HeadlessSession session, GameplayActor actor, uint templateId = GliderItemTemplateId)
+    {
+        SeedItemManager();
+        var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
+        if (!templates.TryGetValue(templateId, out var existing) || existing is not BackpackTemplate)
+        {
+            templates[templateId] = new BackpackTemplate
+            {
+                Id = templateId,
+                Name = "test-glider",
+                BackpackType = BackpackType.Glider,
+                MaxCount = 1,
+                FixedGrade = -1
+            };
+        }
+        else
+        {
+            // Idempotent: always a glider (a sibling bare seed must not
+            // shadow this test's equip surface).
+            ((BackpackTemplate)existing).BackpackType = BackpackType.Glider;
+        }
+        StockItem(session, templateId, 1);
+    }
+
+    /// <summary>
+    /// Seeds a buff template into SkillManager so the REAL buff pipeline
+    /// (Buffs.AddBuff → SkillManager.GetBuffTemplate → new Buff) can apply
+    /// it. Used by the BoardVehicle driver-lock rig (Owner's-Mark 4867).
+    /// </summary>
+    public static void SeedBuffTemplate(uint buffId)
+    {
+        SeedSkillManager();
+        var manager = SkillManager.Instance;
+        var buffs = (Dictionary<uint, BuffTemplate>?)GetField(manager, "_buffs");
+        if (buffs == null)
+        {
+            buffs = [];
+            SetField(manager, "_buffs", buffs);
+        }
+        if (!buffs.ContainsKey(buffId))
+            buffs[buffId] = new BuffTemplate { Id = buffId };
+    }
 
     // ------------------------------------------------------------------ B1 rig
 
@@ -2033,6 +2253,178 @@ public static class GameplayActorTestRig
         if (field == null)
             throw new InvalidOperationException($"Cannot locate HousingManager field '{name}'");
         field.SetValue(target, value);
+    }
+
+    // ---------------------------------------------------------- Craft rig (M5.1)
+
+    /// <summary>Test craft id of the Craft contract rig (2× material → 1× product).</summary>
+    public const uint CraftTestCraftId = 90_501;
+
+    /// <summary>Material template of the rig craft (amount 2 per step).</summary>
+    public const uint CraftMaterialTemplateId = 91_201;
+
+    /// <summary>Product template of the rig craft (1 per step, rate 100 → deterministic grant).</summary>
+    public const uint CraftProductTemplateId = 91_202;
+
+    /// <summary>Craft skill of the rig craft (Doodad target, labor 10, instant cast, no effects).</summary>
+    public const uint CraftTestSkillId = 90_502;
+
+    /// <summary>Bench doodad template of the rig craft (the recipe's req_doodad_id).</summary>
+    public const uint CraftBenchTemplateId = 91_301;
+
+    /// <summary>A different bench template — wrong for the rig recipe (template-mismatch tests).</summary>
+    public const uint CraftWrongBenchTemplateId = 91_302;
+
+    /// <summary>
+    /// Seeds the craft engine surface (missing-only, additive): CraftManager
+    /// singleton + the rig recipe, the craft skill template, material/product
+    /// item templates, the CraftStart world-interaction group (CraftEffect
+    /// resolves it), and the ModelManager surface Character.GetDistanceTo
+    /// reads in the engine's craft range gate.
+    ///
+    /// NOTE: NO DoodadManager template mutation here — the shared singleton
+    /// may be the crop rig's rich chain (potato templates) or the Bots bare
+    /// placeholder, and either must keep its state exactly as found: adding
+    /// bench templates to a bare manager would make it look "established" to
+    /// the crop rig's IsBareDoodadManager() guard, which then skips its rich
+    /// re-seed and NREs Plant() (the shared _templates must stay count==0 OR
+    /// carry the crop rig's ids). The bench is spawned as a plain Doodad
+    /// instance (M4 cargo-doodad shape) — CraftEffect only needs the world
+    /// target, never the bench's template entry. The bare singleton itself IS
+    /// seeded when missing (SeedDoodadManager) because the skill cast path
+    /// (Doodad.OnSkillHit) dereferences DoodadManager.Instance even with no
+    /// func groups.
+    /// </summary>
+    public static void SeedCraftSurface()
+    {
+        // Character.ChangeLabor (negative) reads World.ExpRate — the real
+        // config surface is null headless (M4 exit-session rig lesson).
+        AppConfiguration.Instance.World ??= new WorldConfig();
+
+        if (!SingletonSeeded(typeof(Singleton<CraftManager>)))
+        {
+            var craftManager = new CraftManager();
+            SetField(craftManager, "_crafts", new Dictionary<uint, Craft>());
+            SeedSingleton(typeof(Singleton<CraftManager>), craftManager);
+        }
+
+        var crafts = (Dictionary<uint, Craft>)GetField(CraftManager.Instance, "_crafts");
+        if (!crafts.ContainsKey(CraftTestCraftId))
+        {
+            crafts[CraftTestCraftId] = new Craft
+            {
+                Id = CraftTestCraftId,
+                SkillId = CraftTestSkillId,
+                ReqDoodadId = CraftBenchTemplateId,
+                ActabilityLimit = 0,
+                CraftMaterials = [new CraftMaterial { ItemId = CraftMaterialTemplateId, Amount = 2 }],
+                CraftProducts = [new CraftProduct { ItemId = CraftProductTemplateId, Amount = 1, Rate = 100 }]
+            };
+        }
+
+        var manager = SkillManager.Instance;
+        var skills = (Dictionary<uint, SkillTemplate>)GetField(manager, "_skills");
+        if (!skills.ContainsKey(CraftTestSkillId))
+        {
+            skills[CraftTestSkillId] = new SkillTemplate
+            {
+                Id = CraftTestSkillId,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 100,
+                ConsumeLaborPower = 10,
+                ActabilityGroupId = 0,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Doodad,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target
+            };
+        }
+
+        SeedItemTemplate(CraftMaterialTemplateId);
+        SeedItemTemplate(CraftProductTemplateId);
+
+        var groups = (Dictionary<uint, WorldInteractionGroup>?)GetField(WorldManager.Instance, "_worldInteractionGroups");
+        if (groups == null)
+        {
+            groups = [];
+            SetField(WorldManager.Instance, "_worldInteractionGroups", groups);
+        }
+        groups[(uint)WorldInteractionType.CraftStart] = WorldInteractionGroup.Craft;
+
+        // DoodadManager singleton, BARE (missing-only, never replace): the
+        // skill cast path (Doodad.OnSkillHit → DoodadManager.Instance)
+        // dereferences the singleton even when the bench has no func groups.
+        // Seed only the empty dictionaries — NEVER templates (the crop rig's
+        // IsBareDoodadManager guard requires _templates to stay count==0 OR
+        // carry the crop rig's ids, so a bench template here would make the
+        // crop rig skip its rich re-seed and NRE Plant()).
+        SeedDoodadManager();
+
+        // ModelManager (empty tables) — Character.GetDistanceTo (the engine
+        // craft range gate) resolves actor-model radius through it; empty
+        // tables resolve to 0 radius. Missing-only.
+        if (!SingletonSeeded(typeof(Singleton<ModelManager>)))
+        {
+            var modelManager = new ModelManager();
+            SetField(modelManager, "_models", new Dictionary<string, Dictionary<uint, Model>>());
+            SetField(modelManager, "_modelTypes", new Dictionary<uint, ModelType>());
+            SeedSingleton(typeof(Singleton<ModelManager>), modelManager);
+        }
+    }
+
+    /// <summary>Unique ObjId source for rig benches (collides with no sibling rig's ids).</summary>
+    private static uint _nextBenchObjId = 0x300100;
+
+    /// <summary>
+    /// Spawns a crafting bench 1 m in front of the actor as a plain Doodad
+    /// instance (M4 cargo-doodad shape) — NOT DoodadManager.Create, because
+    /// Create() resolves the bench template through the shared singleton's
+    /// _templates and would force this rig to mutate it (breaking the crop
+    /// rig's IsBareDoodadManager guard — see SeedCraftSurface). The engine
+    /// craft chain (CharacterCraft.Craft → cast → CraftEffect → EndCraft)
+    /// only ever reads the bench as a world target by ObjId; the template
+    /// entry is not dereferenced. No world-registry dance is needed — the
+    /// headless world is already the character's ParentWorld.
+    ///
+    /// t_0fc3a550 NRE lesson: assign Transform FIRST, then ParentWorld. The
+    /// ParentWorld setter writes Transform.InstanceId, whose setter resolves
+    /// ParentWorld through WorldManager.Instance.GetWorld — the headless
+    /// world is not (or no longer) in the shared registry, so a null world
+    /// would be written back and NRE on the recursion. CloneDetached already
+    /// carries the actor's world id (InstanceId == world.Id), so the
+    /// InstanceId write short-circuits (value == _instanceId → no-op) and
+    /// the registry is never touched — same bypass pattern as CreateActor.
+    /// </summary>
+    public static uint SpawnCraftBench(HeadlessSession session, GameplayActor actor, uint benchTemplateId = CraftBenchTemplateId)
+    {
+        SeedCraftSurface();
+        var world = session.World;
+        var bench = new Doodad
+        {
+            ObjId = _nextBenchObjId++,
+            TemplateId = benchTemplateId
+        };
+        // Transform FIRST, then ParentWorld (t_0fc3a550 NRE lesson).
+        bench.Transform = actor.Character.Transform.CloneDetached(bench);
+        bench.ParentWorld = world;
+        bench.Transform.Local.SetPosition(actor.Character.Transform.World.Position + new Vector3(1f, 0f, 0f));
+        world.AddObject(bench);
+        return bench.ObjId;
+    }
+
+    /// <summary>
+    /// Drives the engine-side completion of one in-flight craft step — the
+    /// same CraftEffect.Apply → EndCraft chain the skill pipeline runs after
+    /// a cast (M4 exit-session rig precedent). Call AFTER the actor has
+    /// started the craft (CharacterCraft.Craft accepted the step).
+    /// </summary>
+    public static void CompleteCraftStep(GameplayActor actor, uint benchObjId)
+    {
+        var bench = actor.Character.ParentWorld?.GetDoodad(benchObjId);
+        var effect = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart };
+        effect.Apply(actor.Character, null, bench, null,
+            new CastSkill(CraftTestSkillId, 0), new EffectSource(), null, DateTime.UtcNow);
     }
 }
 
