@@ -207,6 +207,26 @@ public interface IGameplayActor
     ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null);
 
     /// <summary>
+    /// Crafts ONE engine step through the real engine path
+    /// (CharacterCraft.Craft — the exact call CSExecuteCraft makes, with
+    /// count=1). Validates: recipe exists in CraftManager, engine craft
+    /// queue idle (the CSExecuteCraft guard — a re-entry would overwrite
+    /// the queue mid-step), recipe skill template exists, materials present
+    /// in the bag (the engine's scope rule), workbench exists/template
+    /// matches/in range (when the skill targets doodads), labor, and the
+    /// trade-pack level gate. The request stays Running while the engine
+    /// craft queue is active and completes when the queue drains (the
+    /// normal skill pipeline's CraftEffect → EndCraft ran): Completed with
+    /// a <see cref="CraftResult"/> when materials were consumed, Rejected
+    /// when the engine refused the step mid-flight. Retries cannot
+    /// duplicate items/labor: a same-key retry is refused pre-flight by the
+    /// effect ledger, and a fresh-key retry after a completed step finds
+    /// the materials consumed (engine-true backstop). Payload:
+    /// <see cref="CraftParams"/>.
+    /// </summary>
+    ActorRequest Craft(uint craftId, uint doodadObjId, TimeSpan? timeout = null, string? idempotencyKey = null);
+
+    /// <summary>
     /// Drives a boarded vehicle (Slave ground vehicle or Mate mount) to an
     /// absolute world position through the client-authored vehicle movement
     /// model — the SAME engine path a client driver's CSMoveUnitPacket
@@ -586,7 +606,13 @@ public enum ActorActionType : byte
     BoardVehicle = 30,
 
     /// <summary>Vehicle unboarding through the vehicle/transfer managers (M5.1 — slave unbind, seat unbond, glider takeoff).</summary>
-    UnboardVehicle = 31
+    UnboardVehicle = 31,
+
+    /// <summary>
+    /// One engine craft step through CharacterCraft.Craft (the CSExecuteCraft
+    /// path, count=1) — M5.1 economy surface.
+    /// </summary>
+    Craft = 32
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

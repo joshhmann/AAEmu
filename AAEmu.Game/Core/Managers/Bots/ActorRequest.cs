@@ -228,3 +228,17 @@ public sealed record HouseBuildParams(System.Numerics.Vector3 Position, float ZR
 /// <summary>BoardVehicle request payload — the requested vehicle seat.</summary>
 /// <param name="AttachPoint">Seat on the vehicle (Driver for slave driver seats, Passenger* for route-carriage seats).</param>
 public sealed record BoardVehicleParams(AttachPointKind AttachPoint);
+
+/// <summary>Craft request payload — the workbench doodad the engine step runs at.</summary>
+/// <param name="DoodadObjId">Live world objId of the crafting station (0 when the recipe's skill targets no doodad).</param>
+public sealed record CraftParams(uint DoodadObjId);
+
+/// <summary>One product row granted by a completed craft step (engine truth, read from the bag).</summary>
+/// <param name="ItemId">Item template id of the granted product.</param>
+/// <param name="Amount">Units granted by this step (stack-aware delta).</param>
+public sealed record CraftProductGrant(uint ItemId, int Amount);
+
+/// <summary>Result payload of a Completed craft request.</summary>
+/// <param name="CraftId">Recipe id that ran.</param>
+/// <param name="Products">Product rows granted by the step (rate-failed rows absent).</param>
+public sealed record CraftResult(uint CraftId, IReadOnlyList<CraftProductGrant> Products);

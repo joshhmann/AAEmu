@@ -76,6 +76,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null)
         => Actor.Dismount(mateObjId, idempotencyKey);
 
+    public ActorRequest Craft(uint craftId, uint doodadObjId, TimeSpan? timeout = null, string? idempotencyKey = null)
+        => Actor.Craft(craftId, doodadObjId, timeout, idempotencyKey);
+
     public ActorRequest BoardVehicle(uint vehicleObjId, AttachPointKind attachPoint = AttachPointKind.Driver, string? idempotencyKey = null)
         => Actor.BoardVehicle(vehicleObjId, attachPoint, idempotencyKey);
 

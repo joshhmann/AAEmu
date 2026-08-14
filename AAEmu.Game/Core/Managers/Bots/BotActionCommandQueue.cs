@@ -35,7 +35,10 @@ public enum BotActionKind : byte
     TurnInQuest = 13,
     TurnInDoodad = 14,
     AutoTurnIn = 15,
-    Interrupt = 16
+    Interrupt = 16,
+
+    /// <summary>One engine craft step (M5.1 economy surface — workbench in the payload).</summary>
+    Craft = 17
 }
 
 /// <summary>Move speed for Move/MoveToUnit commands.</summary>
@@ -49,6 +52,9 @@ public sealed record InteractActionParams(uint SkillId = 0);
 
 /// <summary>Dismount mate objId (0 = whatever the actor is riding).</summary>
 public sealed record DismountActionParams(uint MateObjId = 0);
+
+/// <summary>Craft workbench doodad objId (the station the engine step runs at).</summary>
+public sealed record CraftActionParams(uint DoodadObjId);
 
 /// <summary>Interrupt target: the trace id of the running request to cancel.</summary>
 public sealed record InterruptActionParams(Guid TraceId);
@@ -518,6 +524,12 @@ public sealed class BotActionCommandQueue
                 return (null, interrupted);
             }
 
+            case BotActionKind.Craft:
+            {
+                var doodad = spec.Payload is CraftActionParams p ? p.DoodadObjId : 0u;
+                return (actor.Craft(spec.TargetId, doodad, spec.Timeout, key), null);
+            }
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(spec), spec.Kind, "unknown bot action kind");
         }
@@ -648,6 +660,7 @@ public sealed class BotActionCommandQueue
             BotActionKind.TurnInQuest => ActorActionType.TurnInQuest,
             BotActionKind.TurnInDoodad => ActorActionType.TurnInDoodad,
             BotActionKind.AutoTurnIn => ActorActionType.AutoTurnIn,
+            BotActionKind.Craft => ActorActionType.Craft,
             BotActionKind.Interrupt => ActorActionType.Stop, // control op; never constructed via a running request
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "unknown bot action kind")
         };

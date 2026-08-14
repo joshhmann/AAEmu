@@ -1,6 +1,7 @@
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 
 using Microsoft.Extensions.Time.Testing;
@@ -77,6 +78,7 @@ public class BotActionCommandQueueTests
     private sealed class Rig
     {
         public required GameplayActor Actor { get; init; }
+        public required HeadlessSession Session { get; init; }
         public required PlayerBotRuntime Runtime { get; init; }
         public required FakeManager Manager { get; init; }
         public required FakeScheduler Scheduler { get; init; }
@@ -87,7 +89,7 @@ public class BotActionCommandQueueTests
 
     private static Rig CreateRig(string name = "api-bot", PlayerBotState state = PlayerBotState.Active)
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor(name);
+        var (actor, session) = GameplayActorTestRig.CreateActor(name);
         GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
 
         var manager = new FakeManager();
@@ -113,6 +115,7 @@ public class BotActionCommandQueueTests
         return new Rig
         {
             Actor = actor,
+            Session = session,
             Runtime = runtime,
             Manager = manager,
             Scheduler = scheduler,
@@ -432,5 +435,39 @@ public class BotActionCommandQueueTests
         await Assert.That(snap.State).IsEqualTo(nameof(ActorLifecycleState.Rejected));
         await Assert.That(snap.Failure).IsEqualTo(nameof(ActorFailureReason.RejectedAction));
         await Assert.That(snap.Detail).Contains("unknown skill");
+    }
+
+    // ------------------------------------------------------ M5.1 craft seam
+
+    [Test]
+    public async Task Craft_EnqueueThenDrain_ExecutesThroughActorRealEnginePath()
+    {
+        // The M5.1 replay seam: a Craft command on the queue is executed by
+        // the actor through the REAL engine craft path (CharacterCraft.Craft
+        // → CraftEffect → EndCraft), independent of any controller.
+        var rig = CreateRig();
+        GameplayActorTestRig.SeedCraftSurface();
+        var benchObjId = GameplayActorTestRig.SpawnCraftBench(rig.Session, rig.Actor);
+        rig.Actor.Character.LaborPower = 100;
+        GameplayActorTestRig.GrantItem(rig.Actor, GameplayActorTestRig.CraftMaterialTemplateId, 2);
+
+        var result = rig.Queue.Enqueue("api-bot",
+            new BotActionSpec(BotActionKind.Craft, TargetId: GameplayActorTestRig.CraftTestCraftId,
+                Payload: new CraftActionParams(benchObjId)));
+        rig.Queue.DrainCommands();
+
+        // The engine accepted the step — the command is Running.
+        await Assert.That(rig.Queue.TryGetSnapshot(result.TraceId, out var snap)).IsTrue();
+        await Assert.That(snap.State).IsEqualTo(nameof(ActorLifecycleState.Running));
+        await Assert.That(snap.Action).IsEqualTo(nameof(ActorActionType.Craft));
+
+        // Engine-side completion + the actor Tick the scheduler would drive.
+        GameplayActorTestRig.CompleteCraftStep(rig.Actor, benchObjId);
+        rig.Actor.Tick(TimeSpan.Zero);
+
+        await Assert.That(rig.Actor.AuditTrace[^1].Action).IsEqualTo(ActorActionType.Craft);
+        await Assert.That(rig.Actor.AuditTrace[^1].Result).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(GameplayActorTestRig.BagCount(rig.Actor, GameplayActorTestRig.CraftProductTemplateId)).IsEqualTo(1);
+        await Assert.That(GameplayActorTestRig.BagCount(rig.Actor, GameplayActorTestRig.CraftMaterialTemplateId)).IsEqualTo(0);
     }
 }
