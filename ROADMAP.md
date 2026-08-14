@@ -537,6 +537,59 @@ PlayerBotScheduler.cs:84) would pass the trace tests while violating the
 rule at L332-333. **A1 (marshal bot steps onto the game loop) is the
 retroactive fix and is M6-exit-blocking.**
 
+**M5.1 status — Kimi+Codex-verified recovery plan (2026-08-13; memo
+`.hermes-ops/docs/m51-backtrack-recovery-memo-2026-08-13.md`; canonical sync
+card t_c9f0d7f6):** remaining M5.1 work is NOT over-complex and needs NO
+redesign — 3 of 4 families reached green/near-green inside one 160-iteration
+budget before dying of operational causes (oversized 8-worker wave at
+15:11:31 UTC incl. 3 already-merged cards re-verifying, 4+ concurrent Release
+builds on one host, stale workspace bases 18 commits behind develop, mass
+kill at 16:06:08 UTC — host/orchestrator-level). Work product survives in
+kanban workspaces and is largely good → **SALVAGE AND SERIALLY MERGE; do not
+re-implement.**
+- **Completed M5.1 (merged to develop):** Plant (t_b1d7c430 — successful
+  continuation; supersedes t_a69e4998, blocked "do not redispatch") ·
+  PackPickup/PutDown (t_64ecf525, Rei gate t_9ca4aa07) · Buy/Sell
+  (t_8741b03d) · control-plane API (t_7b6d7a4b, Rei gate t_29d2273b) · MCP
+  sidecar (t_446228b5, Rei gate t_b5467288) · first consumer — scripted Lane
+  D auction-house scenario (t_52b2b084, Rei gate t_0e01ef42).
+- **Salvage wave — serial merge queue, readiness order (one tree = one merge;
+  worktree-parallel prep OK):**
+  1. **Deposit/Withdraw — t_78ce17a2 (blocked):** greenest; rebase, DROP
+     out-of-scope livestock flake change (dup of develop c51b33645), renumber
+     actions 22-25, keep-or-split EconomyDrive extras (stop condition).
+  2. **Harvest — t_234da01a (todo):** small, green; rebase/renumber; add or
+     justify the missing IntegrationTests replay hook.
+  3. **BoardVehicle — t_15343fdd (todo):** real BindSlave path; rebase/
+     renumber ×2; needs a full-gate run (19/19 targeted only today).
+  4. **Craft — SPLIT (t_6b5ac43e rig repair + t_cffb71ad implementation):**
+     only technical blocker is the rig world-registration NRE; develop's rig
+     rework 11978eafd is the fix substrate — fix the rig first, rebase the
+     implementation onto it.
+  All four diffs collide textually on the same enum tail (15-18 vs develop's
+  15-21) and the GameplayActor insertion ~:563 — every one renumbers on
+  rebase (textual coupling, not architectural). Doctrine: never wave >2
+  builders at the shared tree; never dispatch already-merged cards; no global
+  budget increase (3/4 reached green in one budget).
+- **Genuine Phase-2 prerequisites — previously in NO card's scope (memo
+  F.1/F.2):**
+  - **LoadPackOntoVehicle — t_a7756a00 (blocked):** no engine path loads a
+    placed pack onto a vehicle. `PutDownBackpackEffect.cs:51-88` attaches
+    packs only to housing; nothing re-parents a placed pack to a slave (the
+    old M4 rig hand-attached: M4ExitIntegratedSessionTests.cs:328). Retail
+    1.2 snaps put-down-near-vehicle to cargo points.
+  - **DriveVehicle — t_eaf1754d (blocked):** contract MoveTo is
+    character-walking only; vehicle movement is client-authoritative
+    (CSMoveUnitPacket/VehicleMoveType). BoardVehicle = boarding only — needs
+    a drive action or move-when-boarded semantics.
+- **Housing.Build — t_94761d55 (running):** a separate **M5.2 contract card**,
+  included in the current Josh-approved Phase-2 scope (marker t_2625be99).
+  Inclusion is approved; **implementation remains OPEN** (card running, not
+  merged; deferred gate #3 lists only farming actions — HousingManager.Build
+  has no contract action until this card lands).
+- **H stays UNKNOWN** everywhere — no bot/scripted evidence is H=2 (human
+  packet t_2b654349, Rei).
+
 ---
 
 ## M6 — Deterministic playerbot framework
@@ -716,8 +769,8 @@ proves feel. Replayed via normal gameplay services + auditable traces
 |---|---|---|---|
 | 1 | **M1 human route** (Solzreed walk, Open Decision #1) | Automated + restart evidence CLOSED M1; human verdict OPEN | Phase 1: golden route replayed through the M5 actor contract (real request lifecycle, normal services, machine-readable traces); Josh's feel verdict batched with other gates |
 | 2 | **Original M2 human baseline** (two players, no GM repair) | Amended census/reset scope COMPLETE (G1 2026-08-10); human baseline open | Phase 1: contract-level replay of the curated route from reproducible reset; Josh's two-player baseline remains Josh-owned (bots may stand in for the AUTOMATED baseline only — never H=2) |
-| 3 | **M3a contract replay** (housing/farming through contract actions) | M3a closed on scripted-actor proxy evidence (in-memory actors, reflection, GM inventory, direct service calls — predates A1/B1) | Phase 2: replay via M5.1 contract actions (Plant/Harvest/Craft/PackPickup/PutDown) on a real server, real engine paths, no direct DB/reflection/GM repair |
-| 4 | **M4 economic/navigation replay** (farm → craft → pack → load → navigate → unload → sell → reward) | M4 closed on M4ExitIntegratedSessionTests (4 scripted actors; integrated rig assigns zones/transforms directly, manually attaches cargo) | Phase 2: replay via M5.1 contract actions; navigation/travel from normal movement/vehicle controls — direct Transform/ZoneId assignment FAILS the gate; preserve + rerun process-level restart E2Es; Rei verifies traces + conservation |
+| 3 | **M3a contract replay** (housing/farming through contract actions) | M3a closed on scripted-actor proxy evidence (in-memory actors, reflection, GM inventory, direct service calls — predates A1/B1) | Phase 2: replay via M5.1 contract actions (Plant/Harvest/Craft/PackPickup/PutDown) + **Housing.Build (M5.2 contract card t_94761d55, Josh-approved Phase-2 scope, implementation open)** on a real server, real engine paths, no direct DB/reflection/GM repair |
+| 4 | **M4 economic/navigation replay** (farm → craft → pack → load → navigate → unload → sell → reward) | M4 closed on M4ExitIntegratedSessionTests (4 scripted actors; integrated rig assigns zones/transforms directly, manually attaches cargo) | Phase 2: replay via M5.1 contract actions incl. **LoadPackOntoVehicle (t_a7756a00) + DriveVehicle (t_eaf1754d) — genuine Phase-2 prerequisites**; navigation/travel from normal movement/vehicle controls — direct Transform/ZoneId assignment FAILS the gate; **labor (−60/pack) + mail payout (124540/pack, SpecialtyManager) conservation required**; preserve + rerun process-level restart E2Es (M4_2TradePackRestart, M4Vehicles); Rei verifies traces + conservation |
 | 5 | **M6 B4 restart scenario** (bot identity/inventory/position/schedule survive restart) | 6h soak PASSED under revised approved budgets; A1 landed after soak; B4 metadata store not yet built | Phase 3: A1/B1 verified on merged develop; B4 metadata persistence implemented; bot-world restart test (2 checkpoints); soak verdict stays "passed revised approved budgets" |
 
 **Deferred-gate execution (2026-08-12, Phase 3 t_9340e85d):** gate #5 (M6 B4
@@ -743,6 +796,37 @@ restart scenario) EXECUTED:
   store (schedule/profession/home as persisted data) is still not built;
   the restart replay proves persistence through the ordinary Character/save
   path + deterministic schedule re-arm.
+
+**Reconciliation note (2026-08-13, canonical sync t_c9f0d7f6 — provenance:
+Kimi independent engineering memo `m51-backtrack-recovery-memo-2026-08-13.md`
+(read-only investigation, verified against source/git/tests, not card claims)
++ Codex reconciliation supplied by Josh + live kanban card states queried
+2026-08-13):**
+- **Phase 1 (M1/M2 contract replay, t_61a0eebb) REMAINS OPEN.** Live evidence
+  is min-slice only — 1 quest (`/root/aaemu-e2e/logs/m1m2-contract-replay-report.json`
+  PASS); the full 16-quest route passed only on the in-memory rig. Full-route
+  LIVE replay is not yet evidenced; follow-up card **t_15787275** (full-route
+  live replay) is queued. No Phase-1 completion claim is made.
+- **Phase 2 (M3a/M4 economic replay, root t_b4f455b0; scope t_2625be99):
+  Housing.Build then farm/storage → craft → pack → load/drive → unload →
+  sell/reward**, via M5.1 contract actions on a real server. Hard constraints:
+  no direct Transform/ZoneId/GM/reflection/DB shortcuts; labor and mail payout
+  conservation required (−60/pack, 124540/pack mail, SpecialtyManager);
+  process-level restart suites re-run as-is (M4_2TradePackRestart,
+  M4Vehicles, M3bExitPersistence). Phase 2's originally listed parent
+  t_a69e4998 is blocked "do not redispatch" — the dependency re-points to
+  t_b1d7c430 (done); the vehicle leg additionally depends on the new
+  prerequisites t_a7756a00 (LoadPackOntoVehicle) + t_eaf1754d (DriveVehicle).
+- **Prior shortcut rigs are SUPERSEDED for authentic acceptance — NOT erased.**
+  M3a's in-memory actors/reflection/GM inventory/direct service calls and
+  M4's direct zone/transform assignment + manual cargo attach remain visible
+  as historical evidence (this table's "Original evidence" column + the M4
+  EXIT RECORD); their grades stand as proxy/bot-functional until the
+  authentic replay lands.
+- **H stays UNKNOWN** in every dimension until Josh tests feel (human packet
+  t_2b654349, Rei).
+- No doc was silently rewritten: every change in this sync is an additive,
+  dated annotation of this form.
 
 **SCORECARD H rule (reconciled):** H = actual player only. Scripted-actor /
 bot evidence is proxy/bot-functional (A dimension) and is NEVER recorded as

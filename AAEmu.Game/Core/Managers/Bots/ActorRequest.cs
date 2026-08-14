@@ -213,3 +213,13 @@ public sealed record PlantParams(System.Numerics.Vector3 Position, float ZRot, f
 /// <param name="PlacedPackDoodadObjId">ObjId of the standing placed-pack doodad to load;
 /// null = load the pack carried in the Backpack equipment slot.</param>
 public sealed record LoadPackOntoVehicleParams(uint? PlacedPackDoodadObjId);
+
+/// House-build request payload — placement parameters for a house design
+/// (M5.2). The design id is addressed by the request TargetId (the same
+/// design id CSCreateHousePacket carries); the design item INSTANCE is
+/// resolved by the actor from the bag by the request's design-item
+/// template (the client holds the item and sends its instance id).
+/// </summary>
+/// <param name="Position">World position where the house is placed.</param>
+/// <param name="ZRot">Yaw rotation (radians) of the placed house.</param>
+public sealed record HouseBuildParams(System.Numerics.Vector3 Position, float ZRot);

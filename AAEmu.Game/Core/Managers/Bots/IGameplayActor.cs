@@ -147,6 +147,31 @@ public interface IGameplayActor
     ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null);
 
     /// <summary>
+    /// Drives a boarded vehicle (Slave ground vehicle or Mate mount) to an
+    /// absolute world position through the client-authored vehicle movement
+    /// model — the SAME engine path a client driver's CSMoveUnitPacket
+    /// executes (driver attach + position apply + SCOneUnitMovementPacket
+    /// broadcast + FinalizeTransform via VehicleMovementModel). The vehicle
+    /// Transform is NEVER assigned by the actor: every leg is applied through
+    /// the shared model, so observers see real movement broadcasts and
+    /// passengers/packs follow the vehicle.
+    ///
+    /// Preconditions (pre-flight, engine never re-entered without them):
+    ///  - the objId resolves to a Slave or Mate in the actor's world —
+    ///    otherwise Rejected(RejectedAction, "vehicle not found"),
+    ///  - the actor occupies the DRIVER seat (Slave.AttachedCharacters[Driver]
+    ///    / Mate.Passengers[Driver]) — otherwise
+    ///    Rejected(StateTransition, "not in driver seat"),
+    ///  - speed positive and destination finite.
+    ///
+    /// Completes on arrival (ArrivalRadius 0.5f); TimedOut(Navigation) when
+    /// the budget expires. Composes with BoardVehicle (driver seat) and
+    /// LoadPackOntoVehicle (cargo) for the Phase 2 farm → craft → pack →
+    /// drive → unload → sell route.
+    /// </summary>
+    ActorRequest DriveVehicle(uint vehicleObjId, Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null);
+
+    /// <summary>
     /// Picks up a placed trade pack through the real engine path
     /// (RecoverItem.Execute — the exact call CSLootOpenBagPacket makes for
     /// pack-style pickup with the generic world recover skill 11361).
@@ -227,6 +252,33 @@ public interface IGameplayActor
     /// <see cref="PlantParams"/>.
     /// </summary>
     ActorRequest Plant(uint seedItemTemplateId, Vector3 position, float zRot = 0f, float scale = 1f, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Starts building a house design at a world position through the REAL
+    /// engine path — the same HousingManager.Build call the
+    /// CSCreateHousePacket handler makes. The actor resolves the design
+    /// item INSTANCE from its own bag by template (the client holds the
+    /// item and sends its instance id), mirrors the packet's tax gate
+    /// (CalculateBuildingTaxInfo + gold/certificate affordability via the
+    /// engine's own computation), and the engine enforces the canonical
+    /// placement rules (land zone / faction / category / houseless-only /
+    /// overlap, then the polygon layer), charges tax, consumes the design
+    /// item, creates the house in construction state (CurrentStep 0 for
+    /// multi-step designs) and registers it. Rejections: design item not
+    /// in inventory → RejectedAction; unknown design → RejectedAction;
+    /// no game connection (the real path is connection-mediated) →
+    /// RejectedAction; insufficient money/certificates for the tax →
+    /// RejectedAction; engine refusal (zone/category/overlap/ownership/
+    /// tax gate — silent error packets) → RejectedAction detected by
+    /// post-state verification. A thrown engine exception after Start
+    /// INTERRUPTS the request (execution began, outcome ambiguous) and
+    /// locks the idempotency key. Idempotency: the design item is
+    /// consumed inside the engine call, so a fresh-key retry finds no
+    /// item and is refused pre-flight — one logical build can never
+    /// consume its design twice; the request-key dedupe is the primary
+    /// retry guard. Payload: <see cref="HouseBuildParams"/>.
+    /// </summary>
+    ActorRequest BuildHouse(uint designId, uint designItemTemplateId, Vector3 position, float zRot = 0f, string? idempotencyKey = null);
 
     /// <summary>
     /// Cancels a running request by trace id. Returns false when no request
@@ -405,8 +457,17 @@ public enum ActorActionType : byte
     /// <summary>Seed planting through DoodadManager.CreatePlayerDoodad (CSCreateDoodadPacket path).</summary>
     Plant = 21,
 
+    /// <summary>House construction through HousingManager.Build (CSCreateHousePacket path).</summary>
+    HouseBuild = 22,
+
+    /// <summary>
+    /// Vehicle driving through the client-authored vehicle movement model
+    /// (VehicleMovementModel — the CSMoveUnitPacket path).
+    /// </summary>
+    Drive = 23,
+
     /// <summary>Trade-pack → vehicle cargo loading through PackVehicleService (real gameplay path, snap-to-cargo-point).</summary>
-    LoadPackOntoVehicle = 22
+    LoadPackOntoVehicle = 24
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

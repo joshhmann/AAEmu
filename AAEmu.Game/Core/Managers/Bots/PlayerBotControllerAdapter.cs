@@ -50,6 +50,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
         => Actor.MoveToUnit(targetObjId, speed, timeout, idempotencyKey);
 
+    public ActorRequest DriveVehicle(uint vehicleObjId, System.Numerics.Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+        => Actor.DriveVehicle(vehicleObjId, destination, speed, timeout, idempotencyKey);
+
     public ActorRequest Stop() => Actor.Stop();
 
     public ActorRequest SetTarget(uint targetObjId) => Actor.SetTarget(targetObjId);
@@ -83,6 +86,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public ActorRequest Plant(uint seedItemTemplateId, System.Numerics.Vector3 position, float zRot = 0f, float scale = 1f, string? idempotencyKey = null)
         => Actor.Plant(seedItemTemplateId, position, zRot, scale, idempotencyKey);
+
+    public ActorRequest BuildHouse(uint designId, uint designItemTemplateId, System.Numerics.Vector3 position, float zRot = 0f, string? idempotencyKey = null)
+        => Actor.BuildHouse(designId, designItemTemplateId, position, zRot, idempotencyKey);
 
     public bool Interrupt(Guid traceId) => Actor.Interrupt(traceId);
 

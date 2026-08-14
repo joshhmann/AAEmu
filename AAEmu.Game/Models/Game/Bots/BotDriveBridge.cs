@@ -761,6 +761,7 @@ public sealed class BotDriveBridge
                 gates = result.Gates,
                 stages = result.Stages,
                 criteria = result.Criteria,
+                traceRecords = result.TraceRecords.Select(r => r.ToJson()).ToList(),
                 actorRequests = result.ActorRequests,
                 rigNotes = result.RigNotes,
                 // Per-action audit records (M5 trace contract shape via

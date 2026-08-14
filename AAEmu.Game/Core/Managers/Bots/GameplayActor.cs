@@ -4,12 +4,14 @@ using System.Numerics;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Containers;
@@ -18,6 +20,7 @@ using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.Units.Movements;
 using AAEmu.Game.Models.Game.World.Interactions;
 using AAEmu.Game.Utils;
 
@@ -565,6 +568,45 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.RejectedAction, "dismount did not take effect");
 
         return Complete(request, true, $"dismounted mate {mate.ObjId}");
+    }
+
+    public ActorRequest DriveVehicle(uint vehicleObjId, Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Drive, vehicleObjId, destination, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "drive"))
+            return request;
+
+        if (speed <= 0f)
+            return Reject(request, ActorFailureReason.RejectedAction, "speed must be positive");
+        if (!destination.IsFinite())
+            return Reject(request, ActorFailureReason.RejectedAction, "destination must be finite");
+
+        // 1. The target must resolve to a driveable vehicle (Slave ground
+        //    vehicle or Mate mount) in the actor's world.
+        var vehicle = Character.ParentWorld?.GetBaseUnit(vehicleObjId);
+        if (vehicle is not (Slave or Mate))
+            return Reject(request, ActorFailureReason.RejectedAction, $"vehicle {vehicleObjId} not found in world");
+
+        // 2. Driver-seat preflight — the engine is never re-entered without
+        //    the seat, so a retry cannot start a second drive.
+        var inDriverSeat = vehicle switch
+        {
+            Slave slave => slave.AttachedCharacters.TryGetValue(AttachPointKind.Driver, out var driver) && driver == Character,
+            Mate mate => mate.Passengers.TryGetValue(AttachPointKind.Driver, out var seat) && seat._objId == Character.ObjId,
+            _ => false
+        };
+        if (!inDriverSeat)
+            return Reject(request, ActorFailureReason.StateTransition, $"not in driver seat of vehicle {vehicleObjId}");
+
+        if (MathUtil.CalculateDistance(vehicle.Transform.World.Position, destination, false) <= ArrivalRadius
+            && Math.Abs(vehicle.Transform.World.Position.Z - destination.Z) <= ArrivalRadius)
+            return Complete(request, "already at destination");
+
+        _driveTarget = destination;
+        _driveSpeed = speed;
+        _driveVehicle = vehicle;
+        request.Start($"driving vehicle {vehicle.ObjId} ({vehicle.Name})");
+        return request;
     }
 
     /// <summary>
@@ -1163,12 +1205,129 @@ public class GameplayActor : IGameplayActor
             $"planted doodad {doodad.ObjId} (template {doodadId}) from seed {seedItemTemplateId}");
     }
 
+    public ActorRequest BuildHouse(uint designId, uint designItemTemplateId, Vector3 position, float zRot = 0f, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.HouseBuild, designId,
+            payload: new HouseBuildParams(position, zRot), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "build house"))
+            return request;
+
+        if (!position.IsFinite())
+            return Reject(request, ActorFailureReason.RejectedAction, "build position must be finite");
+
+        // 1. The design item must be in the actor's own bag (the same
+        //    resolution the client's housing UI performs before it sends
+        //    CSCreateHousePacket with the item's instance id).
+        var inventory = Character.Inventory;
+        if (inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        inventory.Bag.GetAllItemsByTemplate(designItemTemplateId, -1, out var designItems, out _);
+        var designItem = designItems.FirstOrDefault();
+        if (designItem == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"design item {designItemTemplateId} not found in inventory");
+
+        // 2. The design id must resolve to a canonical housing template
+        //    (HousingManager.Build's GetTemplate is silently
+        //    null-tolerant — the validator would reject, but the actor
+        //    refuses pre-flight with a taxonomy reason instead of an
+        //    unobservable engine no-op).
+        var houseTemplate = HousingGameData.Instance.GetTemplate(designId);
+        if (houseTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"unknown house design {designId}");
+
+        // 3. Connection gate — the real Build path is connection-mediated
+        //    (the CSCreateHousePacket handler's connection; every engine
+        //    refusal is an error packet on it). Headless characters
+        //    without a network connection get Rejected (the same rule as
+        //    Mount).
+        var connection = Character.Connection;
+        if (connection == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                "no game connection (the house-build path is connection-mediated)");
+
+        // 4. Tax gate pre-flight — mirror the packet's tax branch exactly
+        //    (HousingManager.Build): the engine checks affordability and
+        //    refuses SILENTLY via an error packet, so the actor computes
+        //    the same numbers through the engine's own
+        //    CalculateBuildingTaxInfo and refuses with a taxonomy reason
+        //    before the engine call. Nothing is consumed pre-flight.
+        HousingManager.Instance.CalculateBuildingTaxInfo(Character.AccountId, houseTemplate, true,
+            out var totalTaxAmountDue, out _, out _, out _, out _);
+        if (FeaturesManager.Fsets?.Check(Models.Game.Features.Feature.taxItem) == true)
+        {
+            var userTaxCount = inventory.GetItemsCount(SlotType.Inventory, Item.TaxCertificate);
+            var userBoundTaxCount = inventory.GetItemsCount(SlotType.Inventory, Item.BoundTaxCertificate);
+            var totalCertsCost = (int)Math.Ceiling(totalTaxAmountDue / 10000f);
+            if (totalCertsCost > userTaxCount + userBoundTaxCount)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"not enough tax certificates ({totalCertsCost} required)");
+        }
+        else if (totalTaxAmountDue > Character.Money)
+        {
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"not enough money for the house tax ({totalTaxAmountDue} required)");
+        }
+
+        request.Start($"building house design {designId} (design item {designItem.Id}) at {position}");
+
+        // 5. THE real engine path — the same HousingManager.Build call the
+        //    CSCreateHousePacket handler makes. The engine enforces the
+        //    canonical placement rules (land zone / faction / category /
+        //    houseless-only / overlap via HousingPlacementValidator, then
+        //    the polygon layer), charges the tax, consumes the design
+        //    item, creates the house in construction state and registers
+        //    it. No bot-side placement, no direct DB, no Transform/ZoneId
+        //    shortcut.
+        var housesBefore = HousingManager.Instance.GetAllHouses();
+        try
+        {
+            HousingManager.Instance.Build(connection, designId,
+                position.X, position.Y, position.Z, zRot,
+                designItem.Id, 0, 0, false);
+        }
+        catch (Exception ex)
+        {
+            // Execution began and the engine threw. The placement may or
+            // may not have been applied — the outcome is ambiguous, so
+            // Interrupted locks the idempotency key (the same rule as
+            // Plant's persistence boundary; a same-key retry is refused
+            // pre-flight and the design item is never consumed twice).
+            return Interrupt(request,
+                $"building house {designId} failed inside the engine: {ex.Message}");
+        }
+
+        // 6. Post-state verification: the engine signals refusals via
+        //    error packets (invisible headless), so the applied-effect
+        //    proof is a NEW house registered under the actor (absent from
+        //    the pre-call snapshot). No new house → the engine rejected
+        //    the placement at one of its gates.
+        var newHouse = HousingManager.Instance.GetAllHouses()
+            .FirstOrDefault(h => h.OwnerId == Character.Id && housesBefore.All(b => b.Id != h.Id));
+        if (newHouse == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                "engine refused the house placement (zone/category/overlap/ownership/tax gate)");
+
+        // 7. Record the applied effect (house registered from the design)
+        //    for M8 audit correlation. The request-level key dedupe is the
+        //    PRIMARY retry guard; the engine-true design-item consumption
+        //    is the backstop (a new-key retry finds no design item).
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("housebuild", designId, designItemTemplateId.ToString()), request.TraceId);
+        return Complete(request, newHouse.Id,
+            $"built house {newHouse.Id} (design {designId}) at {position} — construction step {newHouse.CurrentStep}");
+    }
+
     #endregion
 
     #region Tick / movement
 
     private Vector3? _moveTarget;
     private float _moveSpeed;
+    private Vector3? _driveTarget;
+    private float _driveSpeed;
+    private BaseUnit? _driveVehicle;
 
     public void Tick(TimeSpan elapsed)
     {
@@ -1178,13 +1337,13 @@ public class GameplayActor : IGameplayActor
         request.AddElapsed(elapsed);
 
         // Timeout enforcement on EVERY action that carries a budget — not
-        // just movement. The §17 reason maps per action kind (Move →
+        // just movement. The §17 reason maps per action kind (Move/Drive →
         // Navigation; everything else → Starvation, budget exhaustion).
         if (request.Timeout is { } budget && request.Elapsed > budget)
         {
             Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action),
-                request.Action == ActorActionType.Move ? "navigation budget exceeded" : "action budget exceeded"));
-            _moveTarget = null;
+                request.Action is ActorActionType.Move or ActorActionType.Drive ? "navigation budget exceeded" : "action budget exceeded"));
+            ClearMovementState();
             return;
         }
 
@@ -1216,6 +1375,43 @@ public class GameplayActor : IGameplayActor
                 var zStep = Math.Min(step, zDistance);
                 ApplyPosition(new Vector3(position.X, position.Y, position.Z + dir * zStep));
             }
+            return;
+        }
+
+        if (request.Action == ActorActionType.Drive && _driveVehicle is { } vehicle && _driveTarget is { } driveDestination)
+        {
+            var position = vehicle.Transform.World.Position;
+            var flatDistance = MathUtil.CalculateDistance(position, driveDestination, false);
+            var zDistance = Math.Abs(driveDestination.Z - position.Z);
+
+            if (flatDistance <= ArrivalRadius && zDistance <= ArrivalRadius)
+            {
+                Finish(request, request.Complete(detail: "arrived"));
+                ClearDriveState();
+                return;
+            }
+
+            var step = Math.Min(_driveSpeed * (float)Math.Max(elapsed.TotalSeconds, 0.05), flatDistance);
+            Vector3 next;
+            if (flatDistance > 0.0001f)
+            {
+                var angle = (float)MathUtil.CalculateAngleFrom(position, driveDestination).DegToRad();
+                var (newX, newY) = MathUtil.AddDistanceToFront(step, position.X, position.Y, angle);
+                var fraction = step / flatDistance;
+                next = new Vector3(newX, newY, position.Z + (driveDestination.Z - position.Z) * fraction);
+            }
+            else
+            {
+                var dir = driveDestination.Z >= position.Z ? 1f : -1f;
+                next = new Vector3(position.X, position.Y, position.Z + dir * Math.Min(step, zDistance));
+            }
+
+            // Player-equivalent drive: every leg is applied through the
+            // client-authored vehicle movement model (the CSMoveUnitPacket
+            // engine path) — position set + SCOneUnitMovementPacket
+            // broadcast + FinalizeTransform. The vehicle Transform is never
+            // assigned directly here.
+            ApplyVehicleMove(vehicle, next);
         }
     }
 
@@ -1225,6 +1421,42 @@ public class GameplayActor : IGameplayActor
         var angle = (float)MathUtil.CalculateAngleFrom(transform.World.Position, next);
         transform.Local.SetRotationDegree(0f, 0f, angle - 90);
         transform.Local.SetPosition(next);
+    }
+
+    /// <summary>
+    /// Applies one drive leg through the shared client-authored movement
+    /// model. Slave ground vehicles move via VehicleMoveType (rotation
+    /// shorts + velocity), Mates via UnitMoveType — the exact payloads a
+    /// client driver/rider would send, applied by the SAME engine path
+    /// CSMoveUnitPacket executes.
+    /// </summary>
+    private void ApplyVehicleMove(BaseUnit vehicle, Vector3 next)
+    {
+        var from = vehicle.Transform.World.Position;
+        var angle = (float)MathUtil.CalculateAngleFrom(from, next);
+        switch (vehicle)
+        {
+            case Slave slave:
+                VehicleMovementModel.ApplySlaveMove(Character, slave,
+                    VehicleMovementModel.BuildVehicleMove(next, (angle - 90).DegToRad(), _driveSpeed));
+                break;
+            case Mate mate:
+                VehicleMovementModel.ApplyUnitMove(Character, mate,
+                    VehicleMovementModel.BuildUnitMove(next, angle.DegToRad(), _driveSpeed));
+                break;
+        }
+    }
+
+    private void ClearMovementState()
+    {
+        _moveTarget = null;
+        ClearDriveState();
+    }
+
+    private void ClearDriveState()
+    {
+        _driveTarget = null;
+        _driveVehicle = null;
     }
 
     #endregion
@@ -1281,7 +1513,7 @@ public class GameplayActor : IGameplayActor
         {
             Finish(request, request.Interrupt(detail));
         }
-        _moveTarget = null;
+        ClearMovementState();
     }
 
     private ActorRequest Complete(ActorRequest request, string detail)
@@ -1364,5 +1596,5 @@ internal static class VectorMath
 public static class ActorTimeoutPolicy
 {
     public static ActorFailureReason ReasonFor(ActorActionType action)
-        => action == ActorActionType.Move ? ActorFailureReason.Navigation : ActorFailureReason.Starvation;
+        => action is ActorActionType.Move or ActorActionType.Drive ? ActorFailureReason.Navigation : ActorFailureReason.Starvation;
 }
