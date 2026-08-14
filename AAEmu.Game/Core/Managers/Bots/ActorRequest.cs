@@ -204,3 +204,14 @@ public sealed record QuestTurnInParams(uint TargetObjId, int SelectedReward);
 /// <param name="ZRot">Yaw rotation (radians) of the placed doodad.</param>
 /// <param name="Scale">Doodad scale (0 = template default).</param>
 public sealed record PlantParams(System.Numerics.Vector3 Position, float ZRot, float Scale);
+
+/// <summary>
+/// House-build request payload — placement parameters for a house design
+/// (M5.2). The design id is addressed by the request TargetId (the same
+/// design id CSCreateHousePacket carries); the design item INSTANCE is
+/// resolved by the actor from the bag by the request's design-item
+/// template (the client holds the item and sends its instance id).
+/// </summary>
+/// <param name="Position">World position where the house is placed.</param>
+/// <param name="ZRot">Yaw rotation (radians) of the placed house.</param>
+public sealed record HouseBuildParams(System.Numerics.Vector3 Position, float ZRot);

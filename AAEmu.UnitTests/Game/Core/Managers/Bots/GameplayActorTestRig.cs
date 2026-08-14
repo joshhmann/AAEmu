@@ -42,8 +42,11 @@ using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Team;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.World.Transform;
+using AAEmu.Game.Models.Game.World.Zones;
 using AAEmu.Game.Utils;
 using AAEmu.UnitTests.Utils.Mocks;
+using AAEmu.UnitTests.Game.Housing;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -464,11 +467,11 @@ public static class GameplayActorTestRig
         }
     }
 
-    private static bool SingletonSeeded(Type singletonBase)
+    internal static bool SingletonSeeded(Type singletonBase)
         => singletonBase.GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             ?.GetValue(null) != null;
 
-    private static void SeedSingleton(Type singletonBase, object instance)
+    internal static void SeedSingleton(Type singletonBase, object instance)
     {
         var field = singletonBase.GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
                     ?? throw new InvalidOperationException($"Cannot locate singleton field on {singletonBase.Name}");
@@ -1598,4 +1601,195 @@ public static class GameplayActorTestRig
         if (!SingletonSeeded(typeof(Singleton<NameManager>)))
             SeedSingleton(typeof(Singleton<NameManager>), new NameManager());
     }
+
+    // ------------------------------------------------------------------ M5.2 housing rig
+
+    /// <summary>Canonical 1.2 '아담한 누이아 주택' design id (cat 1, garden 7.5, 3 build steps × 1 action).</summary>
+    public const uint TestHouseDesignId = 172;
+
+    /// <summary>Test house design item template (Build checks presence + ownership; the engine consumes it).</summary>
+    public const uint TestDesignItemTemplateId = 93_501;
+
+    /// <summary>Canonical w_solzreed_1 zone key (faction 148 NuiaAlliance; group 1 allows category 1).</summary>
+    public const uint TestHouseZoneKey = 9;
+
+    /// <summary>
+    /// Seeds the M5.2 house-build surface (additive, missing-only):
+    /// FeaturesManager (Initialize → Fsets — the Build tax branch reads
+    /// taxItem), the HousingManager singleton with INCREMENTING id
+    /// managers (a mock GetNextId would give every house ObjId/TlId/Id 0
+    /// and collapse _housesTl on the 0 key), and the design item template.
+    /// The canonical HousingGameData + zone wiring are per-test
+    /// (save/restore) — see GameplayActorHouseBuildActionsTests.
+    /// </summary>
+    public static void SeedHouseBuildSurface()
+    {
+        Seed();
+        if (!SingletonSeeded(typeof(Singleton<FeaturesManager>)))
+        {
+            var features = new FeaturesManager(Mock.Of<IExperienceManager>().Object);
+            features.Initialize();
+            // Gold tax path for the M5.2 surface — the engine's own
+            // documented toggle (FeaturesManager.cs: "Use gold instead of
+            // tax certificates to pay house tax"). The Build pre-flight and
+            // the engine branch read the same bit, so the tests exercise
+            // the money branch end to end.
+            global::AAEmu.Game.Models.Game.Features.Feature taxItem = global::AAEmu.Game.Models.Game.Features.Feature.taxItem;
+            FeaturesManager.Fsets.Set(taxItem, false);
+            SeedSingleton(typeof(Singleton<FeaturesManager>), features);
+        }
+        if (!SingletonSeeded(typeof(Singleton<HousingManager>)))
+        {
+            var manager = new HousingManager(
+                Mock.Of<IObjectIdManager>().Object,
+                Mock.Of<IFactionManager>().Object,
+                Mock.Of<ILocalizationManager>().Object,
+                Mock.Of<IWorldManager>().Object,
+                Mock.Of<ITaskManager>().Object,
+                Mock.Of<ISkillManager>().Object,
+                Mock.Of<IHousingIdManager>().Object,
+                Mock.Of<IHousingTldManager>().Object,
+                Mock.Of<IItemManager>().Object,
+                Mock.Of<IMailManager>().Object,
+                Mock.Of<INameManager>().Object,
+                Mock.Of<IZoneManager>().Object,
+                Mock.Of<IDoodadManager>().Object,
+                Mock.Of<IUccManager>().Object);
+            SeedSingleton(typeof(Singleton<HousingManager>), manager);
+        }
+
+        // Incrementing id managers (FakeObjectIdManager pattern) — the
+        // engine allocates house ObjId/TlId/Id from these on every Build.
+        SetHousingManagerField("objectIdManager", new FakeObjectIdManager(0xB000));
+        SetHousingManagerField("housingIdManager", new FakeIdManager(0xB100));
+        SetHousingManagerField("housingTldManager", new FakeIdManager(0xB200));
+        // The engine resolves the placement zone through its injected
+        // worldManager (GetZoneId over the world template's
+        // ZoneKeyByRegions grid) — a Mock<IWorldManager> would return 0
+        // and every placement would fail the zone gate, so the real
+        // WorldManager.Instance is wired in (same rule as the zone fake).
+        SetHousingManagerField("worldManager", WorldManager.Instance);
+        // House is a Unit: Region.AddObject writes Transform.ZoneId, whose
+        // setter fires Unit.OnZoneChange → ZoneManager.Instance — the
+        // concrete singleton is never seeded headless (production seeds it
+        // at boot). An unloaded instance is enough: GetZoneByKey returns
+        // null, both zone-group ids read 0, and OnZoneChange early-returns
+        // before touching buffs (M5.1 doodads never hit this — Doodad is
+        // not a Unit).
+        if (!SingletonSeeded(typeof(Singleton<ZoneManager>)))
+        {
+            var zoneManager = new ZoneManager(WorldManager.Instance);
+            // Unloaded singleton: _zones/_groups stay null and
+            // GetZoneByKey NREs — seed empty dicts so zone lookups return
+            // null, both OnZoneChange zone-group ids read 0, and the
+            // method early-returns (loading real zones WITHOUT groups
+            // would NRE deeper in OnZoneChange's buff branch).
+            SetField(zoneManager, "_zones", new Dictionary<uint, Zone>());
+            SetField(zoneManager, "_groups", new Dictionary<uint, ZoneGroup>());
+            SeedSingleton(typeof(Singleton<ZoneManager>), zoneManager);
+        }
+        if (GetField(HousingManager.Instance, "_houses") is not Dictionary<uint, House>)
+            SetField(HousingManager.Instance, "_houses", new Dictionary<uint, House>());
+        if (GetField(HousingManager.Instance, "_housesTl") is not Dictionary<ushort, House>)
+            SetField(HousingManager.Instance, "_housesTl", new Dictionary<ushort, House>());
+
+        // The design item template (Build resolves it for the consume; the
+        // canonical item_housings mapping is NOT consulted — the actor
+        // takes the design id explicitly, exactly like the packet).
+        // MaxCount 100 / FixedGrade -1 mirror the plant-seed templates:
+        // AcquireDefaultItem computes free space from template.MaxCount
+        // (0 would refuse every stock).
+        var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
+        if (!templates.TryGetValue(TestDesignItemTemplateId, out var designTemplate))
+        {
+            designTemplate = new ItemTemplate { Id = TestDesignItemTemplateId };
+            templates[TestDesignItemTemplateId] = designTemplate;
+        }
+        designTemplate.Name = "Test House Design";
+        designTemplate.MaxCount = 100;
+        designTemplate.FixedGrade = -1;
+
+        SeedNameManager();
+    }
+
+    /// <summary>
+    /// Wires the house-build zone path for a session: fills the world
+    /// template's ZoneKeyByRegions so WorldManager.GetZoneId resolves the
+    /// test position to the given canonical zone key, and points the
+    /// HousingManager's zone manager at a fake resolving that key to the
+    /// given Zone record (Build reads zone?.Name for the canonical
+    /// land-zone join and zone?.FactionId for the faction gate).
+    /// </summary>
+    public static void WireHouseZone(HeadlessSession session, uint zoneKey, Zone zone)
+    {
+        var template = session.World.Template;
+        var grid = template.ZoneKeyByRegions;
+        if (grid == null)
+            grid = new uint[template.CellX * WorldManager.SECTORS_PER_CELL, template.CellY * WorldManager.SECTORS_PER_CELL];
+        for (var y = 0; y < grid.GetLength(1); y++)
+        for (var x = 0; x < grid.GetLength(0); x++)
+            grid[x, y] = zoneKey;
+        template.ZoneKeyByRegions = grid;
+        SetHousingManagerField("zoneManager", new FakeZoneManager(zoneKey, zone));
+    }
+
+    private static void SetHousingManagerField(string name, object value)
+    {
+        var target = HousingManager.Instance;
+        var field = target.GetType().GetField($"<{name}>P",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?? target.GetType().GetField(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (field == null)
+            throw new InvalidOperationException($"Cannot locate HousingManager field '{name}'");
+        field.SetValue(target, value);
+    }
+}
+
+/// <summary>
+/// Incrementing id manager for the housing rig (FakeObjectIdManager
+/// pattern). Implements the housing marker interfaces too — the
+/// HousingManager ctor parameters are typed IHousingIdManager /
+/// IHousingTldManager (both `: IIdManager`).
+/// </summary>
+public sealed class FakeIdManager : IIdManager, IHousingIdManager, IHousingTldManager
+{
+    private uint _next;
+
+    public FakeIdManager(uint start = 0xA000) => _next = start;
+
+    public void Load() { }
+    public bool Initialize(bool forceReset = false) => true;
+    public uint GetNextId() => _next++;
+    public uint[] GetNextId(int count) => Enumerable.Range(0, count).Select(_ => _next++).ToArray();
+    public void ReleaseId(uint usedObjectId) { }
+    public void ReleaseId(IEnumerable<uint> usedObjectIds) { }
+}
+
+/// <summary>
+/// Zone-key → Zone fake for the housing rig. Build's zone path only
+/// resolves GetZoneByKey (zone?.Name / zone?.FactionId); everything else
+/// returns inert defaults so the manager never throws headless.
+/// </summary>
+public sealed class FakeZoneManager : IZoneManager
+{
+    private readonly uint _zoneKey;
+    private readonly Zone _zone;
+
+    public FakeZoneManager(uint zoneKey, Zone zone)
+    {
+        _zoneKey = zoneKey;
+        _zone = zone;
+    }
+
+    public Zone GetZoneByKey(uint zoneKey) => zoneKey == _zoneKey ? _zone : null;
+    public Zone GetZoneById(uint zoneId) => zoneId == _zone.Id ? _zone : null;
+    public ZoneConflict[] GetConflicts() => [];
+    public ZoneGroup GetZoneGroupById(uint zoneId) => null;
+    public List<uint> GetZoneKeysInZoneGroupById(uint zoneGroupId) => [];
+    public uint GetTargetIdByZoneId(uint zoneId) => 0;
+    public Vector2 GetZoneOriginCell(uint zoneId) => default;
+    public Vector3 ConvertToWorldCoordinates(uint zoneId, Vector3 point) => point;
+    public bool DoodadHasMatchingClimate(Doodad doodad) => true;
+    public List<Climate> GetClimatesByZone(Zone zone) => [];
+    public void Load() { }
 }

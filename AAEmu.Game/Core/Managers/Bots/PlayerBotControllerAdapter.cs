@@ -81,6 +81,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest Plant(uint seedItemTemplateId, System.Numerics.Vector3 position, float zRot = 0f, float scale = 1f, string? idempotencyKey = null)
         => Actor.Plant(seedItemTemplateId, position, zRot, scale, idempotencyKey);
 
+    public ActorRequest BuildHouse(uint designId, uint designItemTemplateId, System.Numerics.Vector3 position, float zRot = 0f, string? idempotencyKey = null)
+        => Actor.BuildHouse(designId, designItemTemplateId, position, zRot, idempotencyKey);
+
     public bool Interrupt(Guid traceId) => Actor.Interrupt(traceId);
 
     public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId, string? idempotencyKey = null)

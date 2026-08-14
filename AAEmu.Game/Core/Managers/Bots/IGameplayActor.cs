@@ -204,6 +204,33 @@ public interface IGameplayActor
     ActorRequest Plant(uint seedItemTemplateId, Vector3 position, float zRot = 0f, float scale = 1f, string? idempotencyKey = null);
 
     /// <summary>
+    /// Starts building a house design at a world position through the REAL
+    /// engine path — the same HousingManager.Build call the
+    /// CSCreateHousePacket handler makes. The actor resolves the design
+    /// item INSTANCE from its own bag by template (the client holds the
+    /// item and sends its instance id), mirrors the packet's tax gate
+    /// (CalculateBuildingTaxInfo + gold/certificate affordability via the
+    /// engine's own computation), and the engine enforces the canonical
+    /// placement rules (land zone / faction / category / houseless-only /
+    /// overlap, then the polygon layer), charges tax, consumes the design
+    /// item, creates the house in construction state (CurrentStep 0 for
+    /// multi-step designs) and registers it. Rejections: design item not
+    /// in inventory → RejectedAction; unknown design → RejectedAction;
+    /// no game connection (the real path is connection-mediated) →
+    /// RejectedAction; insufficient money/certificates for the tax →
+    /// RejectedAction; engine refusal (zone/category/overlap/ownership/
+    /// tax gate — silent error packets) → RejectedAction detected by
+    /// post-state verification. A thrown engine exception after Start
+    /// INTERRUPTS the request (execution began, outcome ambiguous) and
+    /// locks the idempotency key. Idempotency: the design item is
+    /// consumed inside the engine call, so a fresh-key retry finds no
+    /// item and is refused pre-flight — one logical build can never
+    /// consume its design twice; the request-key dedupe is the primary
+    /// retry guard. Payload: <see cref="HouseBuildParams"/>.
+    /// </summary>
+    ActorRequest BuildHouse(uint designId, uint designItemTemplateId, Vector3 position, float zRot = 0f, string? idempotencyKey = null);
+
+    /// <summary>
     /// Cancels a running request by trace id. Returns false when no request
     /// with that id is active (idempotent — retries cannot double-interrupt).
     /// </summary>
@@ -378,7 +405,10 @@ public enum ActorActionType : byte
     AuctionBuy = 20,
 
     /// <summary>Seed planting through DoodadManager.CreatePlayerDoodad (CSCreateDoodadPacket path).</summary>
-    Plant = 21
+    Plant = 21,
+
+    /// <summary>House construction through HousingManager.Build (CSCreateHousePacket path).</summary>
+    HouseBuild = 22
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

@@ -770,6 +770,13 @@ public class HousingManager(
             // Spawn the actual house
             house = Create(designId, connection.ActiveChar.Faction.Id, connection.ActiveChar.ParentWorld);
 
+            // The load path assigns ParentWorld explicitly (LoadPlayerHousing);
+            // Build must too — GameObject.Spawn throws without it. Latent
+            // upstream bug inherited by the fork: Build registered the house
+            // and sent SCMyHousePacket, then Spawn crashed on the null
+            // ParentWorld (M5.2 real-path verification caught it headless).
+            house.ParentWorld = connection.ActiveChar.ParentWorld;
+
             // Fallback for un-translated buildings (en_us)
             if (house.Name == string.Empty)
             {
