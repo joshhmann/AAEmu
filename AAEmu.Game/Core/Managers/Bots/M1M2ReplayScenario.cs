@@ -174,16 +174,31 @@ public static class M1M2ReplayScenario
             }
 
             // Item conservation: each quest's reward items were granted
-            // exactly once (present in bag, no double grant).
+            // exactly once. A reward item that a LATER route quest's
+            // use-objective consumes (natural chain, e.g. 23635 granted by
+            // 4292 → used by 4294) is counted against the chain — the
+            // grant is proven by held + chain-consumed >= expected.
             foreach (var spec in Route)
             {
-                var held = character.Inventory.GetItemsCount(spec.RewardItems.Count > 0 ? spec.RewardItems[0].ItemId : 0);
-                var expected = spec.RewardItems.Count > 0 ? spec.RewardItems[0].Count : 0;
-                var passed = spec.RewardItems.Count == 0 || held >= expected;
+                if (spec.RewardItems.Count == 0)
+                {
+                    criteria.Add(new BotScenarioRunner.CriterionVerdict(
+                        $"quest-{spec.QuestId}-reward-conserved", true,
+                        $"quest {spec.QuestId} grants no reward items"));
+                    continue;
+                }
+
+                var (rewardItemId, expected) = spec.RewardItems[0];
+                var held = character.Inventory.GetItemsCount(rewardItemId);
+                var chainConsumed = Route
+                    .Where(s => s.QuestId != spec.QuestId)
+                    .Sum(s => s.UseItems.Count(i => i == rewardItemId));
+                var passed = held + chainConsumed >= expected;
                 criteria.Add(new BotScenarioRunner.CriterionVerdict(
                     $"quest-{spec.QuestId}-reward-conserved", passed,
-                    passed ? $"reward items for {spec.QuestId} held (need {expected})"
-                           : $"reward items for {spec.QuestId} MISSING: held {held} of {expected}"));
+                    passed
+                        ? $"reward item {rewardItemId} for {spec.QuestId} accounted (held {held} + chain-consumed {chainConsumed} >= {expected})"
+                        : $"reward item {rewardItemId} for {spec.QuestId} MISSING: held {held} + chain-consumed {chainConsumed} of {expected}"));
             }
 
             // Lifecycle: every completed action carried the full transition
@@ -467,6 +482,17 @@ public static class M1M2ReplayScenario
                 return $"use_item {itemId} failed: {use.Detail}";
             stages.Add(Stage($"USE:{itemId}", spec.QuestId, use));
 
+            // The REAL skill pipeline registers the quest's item-use
+            // objective in Skill.ApplyEffects — which for a skill with
+            // CastingTime > 0 runs when the scheduled CastTask completes,
+            // NOT inside Skill.Use (that returns Success as soon as the
+            // cast is scheduled). A turn-in inside the cast window sees
+            // the objective at 0 and the report act's isReady gate
+            // refuses (live failure: quest 4294 / skill 13139 / 4000ms
+            // cast, 2026-08-13). Wait (bounded) for the objective to
+            // register before settling/advancing.
+            WaitForItemUseObjective(actor, spec.QuestId, itemId);
+
             if (characterHasQuest(actor, spec.QuestId))
             {
                 SettleEvaluation(actor, spec.QuestId);
@@ -479,24 +505,32 @@ public static class M1M2ReplayScenario
         }
 
         // Turn-in — report at the REAL NPC (template-validated report act).
-        if (spec.ReportNpcId != 0)
+        // Auto-complete quests (QuestActConAutoComplete, e.g. 252) may
+        // already have completed the moment their use objective registers
+        // (the engine's own evaluation fires the auto-complete act) —
+        // skip the turn-in for those; the completion criterion at VERIFY
+        // still asserts the flag.
+        if (characterHasQuest(actor, spec.QuestId))
         {
-            var npcObjId = world.ResolveNpcObjId(spec.ReportNpcId);
-            if (npcObjId == 0)
-                return $"report NPC {spec.ReportNpcId} unresolvable in world";
-            var turnIn = actor.TurnInQuest(spec.QuestId, npcObjId, spec.Selected);
-            traceRecords.Add(actor.AuditTrace.Last());
-            if (turnIn.State != ActorLifecycleState.Completed)
-                return $"turn_in at NPC {spec.ReportNpcId} refused: {turnIn.Detail}";
-            stages.Add(Stage("TURNIN", spec.QuestId, turnIn));
-        }
-        else
-        {
-            var auto = actor.AutoTurnInQuest(spec.QuestId, spec.Selected);
-            traceRecords.Add(actor.AuditTrace.Last());
-            if (auto.State != ActorLifecycleState.Completed)
-                return $"auto turn-in refused: {auto.Detail}";
-            stages.Add(Stage("AUTOTURNIN", spec.QuestId, auto));
+            if (spec.ReportNpcId != 0)
+            {
+                var npcObjId = world.ResolveNpcObjId(spec.ReportNpcId);
+                if (npcObjId == 0)
+                    return $"report NPC {spec.ReportNpcId} unresolvable in world";
+                var turnIn = actor.TurnInQuest(spec.QuestId, npcObjId, spec.Selected);
+                traceRecords.Add(actor.AuditTrace.Last());
+                if (turnIn.State != ActorLifecycleState.Completed)
+                    return $"turn_in at NPC {spec.ReportNpcId} refused: {turnIn.Detail}";
+                stages.Add(Stage("TURNIN", spec.QuestId, turnIn));
+            }
+            else
+            {
+                var auto = actor.AutoTurnInQuest(spec.QuestId, spec.Selected);
+                traceRecords.Add(actor.AuditTrace.Last());
+                if (auto.State != ActorLifecycleState.Completed)
+                    return $"auto turn-in refused: {auto.Detail}";
+                stages.Add(Stage("AUTOTURNIN", spec.QuestId, auto));
+            }
         }
 
         // The report event drives the step machine; drain the engine's
@@ -559,6 +593,44 @@ public static class M1M2ReplayScenario
 
     private static string? QuestStep(GameplayActor actor, uint questId)
         => actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId)?.Step.ToString();
+
+    /// <summary>
+    /// Waits (bounded) for the item-use objective to register after a
+    /// successful use_item. The engine fires the quest's OnItemUse event
+    /// in Skill.ApplyEffects — for a skill with CastingTime &gt; 0 that
+    /// happens when the scheduled cast completes, NOT when Skill.Use
+    /// returns Success (the contract action's completion signal). A
+    /// report inside the cast window sees the objective at 0 and the
+    /// report act's isReady gate refuses (live failure: quest 4294 /
+    /// skill 13139 / 4000ms cast, 2026-08-13). The census fired
+    /// synthetic ItemUse events and never hit the real cast window; the
+    /// contract path does. Bounded: a stuck queue must not hang the
+    /// replay (mirrors SettleEvaluation's deadline discipline).
+    /// </summary>
+    private static void WaitForItemUseObjective(GameplayActor actor, uint questId, uint itemId)
+    {
+        // Resolve the use skill's cast time so the wait is bounded by the
+        // REAL pipeline delay (template CastingTime; modifiers are applied
+        // on the live cast and only lengthen the window, hence the margin).
+        var castMs = 0;
+        var itemTemplate = ItemManager.Instance.GetTemplate(itemId);
+        if (itemTemplate?.UseSkillId > 0)
+        {
+            var skillTemplate = SkillManager.Instance.GetSkillTemplate(itemTemplate.UseSkillId);
+            castMs = skillTemplate?.CastingTime ?? 0;
+        }
+
+        var deadline = Environment.TickCount64 + castMs + 2000; // cast window + settle margin
+        while (Environment.TickCount64 < deadline)
+        {
+            var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+            if (quest == null)
+                return; // quest dropped/completed — nothing left to wait for
+            if (quest.GetQuestObjectiveStatus() >= QuestObjectiveStatus.QuestComplete)
+                return;
+            Thread.Sleep(100);
+        }
+    }
 
     /// <summary>
     /// Use-item with a bounded GCD/cooldown retry: the real skill pipeline
