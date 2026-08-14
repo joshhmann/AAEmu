@@ -759,6 +759,108 @@ public class GameplayActor : IGameplayActor
             $"trade pack {packItemTemplateId} placed (instance {pack.Id}, now in System container)");
     }
 
+    public ActorRequest LoadPackOntoVehicle(uint slaveObjId, uint? placedPackDoodadObjId = null, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.LoadPackOntoVehicle, slaveObjId,
+            payload: new LoadPackOntoVehicleParams(placedPackDoodadObjId), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "load pack onto vehicle"))
+            return request;
+
+        if (Character.Inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        // 1. The vehicle must resolve in the actor's own world (the same
+        //    registry the slave packet handlers use).
+        var slave = Character.ParentWorld?.GetSlaveByObjId(slaveObjId);
+        if (slave == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"vehicle {slaveObjId} not found in world");
+        if (slave.Hp <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"vehicle {slaveObjId} is dead");
+
+        // 2. Range — the same adjacency gate the engine applies (retail
+        //    load happens at the vehicle's side).
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, slave.Transform.World.Position, false) > PackVehicleService.MaxLoadRange)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"vehicle {slaveObjId} out of interaction range");
+
+        // 3. The placed-pack doodad must resolve pre-flight (the engine
+        //    maps an unresolvable doodad to PlacedPackNotFound).
+        Doodad? placedPack = null;
+        if (placedPackDoodadObjId is { } doodadObjId)
+        {
+            placedPack = Character.ParentWorld?.GetDoodad(doodadObjId);
+            if (placedPack == null)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"placed pack doodad {doodadObjId} not found in world");
+            // Retry-proof state: an already-attached doodad is refused
+            // pre-flight so the pack can never be loaded twice.
+            if (placedPack.ParentObjId != 0 || placedPack.AttachPoint != AttachPointKind.None)
+                return Reject(request, ActorFailureReason.StateTransition,
+                    $"placed pack doodad {doodadObjId} is already attached");
+        }
+        else
+        {
+            // 3b. Carried-pack pre-flight (the same checks the engine path
+            //     performs — the PutDown contract shape): the pack must be
+            //     in the Backpack equipment slot and be a real auto-equip
+            //     trade pack. Rejections land BEFORE the request starts so
+            //     no Running work is recorded for them.
+            var carriedPack = Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+            if (carriedPack == null)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    "no trade pack carried in the backpack slot");
+            if (carriedPack is not Backpack || !ItemManager.Instance.IsAutoEquipTradePack(carriedPack.TemplateId))
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    "carried item is not a trade pack");
+        }
+
+        request.Start($"loading pack onto vehicle {slaveObjId} (obj {slave.ObjId}, model {slave.ModelId}, {(placedPackDoodadObjId is null ? "carried" : $"placed {placedPackDoodadObjId}")})");
+
+        // 4. The REAL gameplay path — PackVehicleService drives the engine:
+        //    container moves through the ordinary inventory, the pack
+        //    doodad through DoodadManager.Create/Spawn, the snap onto the
+        //    cargo point through the SlaveManager attach seam (model
+        //    attach-point data). No manual attachment, no direct Transform
+        //    write, no GM/reflection/DB shortcut.
+        var result = placedPackDoodadObjId is null
+            ? PackVehicleService.TryLoadCarriedPack(Character, slave, out var carried)
+            : PackVehicleService.TryLoadPlacedPack(Character, slave, placedPack!, out carried);
+        var data = carried;
+
+        switch (result)
+        {
+            case PackVehicleService.PackLoadResult.Success:
+                _ledger.RecordEffect(ActorIdempotency.EffectKey("packload", slave.TemplateId,
+                    data?.PackItem?.Id.ToString() ?? "placed"), request.TraceId);
+                return Complete(request, data,
+                    $"pack loaded onto vehicle {slaveObjId} at cargo point {data?.AttachPoint} (item {data?.PackItem?.Id})");
+            case PackVehicleService.PackLoadResult.DeadSlave:
+                return Reject(request, ActorFailureReason.RejectedAction, $"vehicle {slaveObjId} is dead");
+            case PackVehicleService.PackLoadResult.OutOfRange:
+                return Reject(request, ActorFailureReason.RejectedAction, $"vehicle {slaveObjId} out of interaction range");
+            case PackVehicleService.PackLoadResult.NotACargoVehicle:
+                return Reject(request, ActorFailureReason.RejectedAction, $"vehicle {slaveObjId} has no cargo points");
+            case PackVehicleService.PackLoadResult.CargoFull:
+                return Reject(request, ActorFailureReason.RejectedAction, $"vehicle {slaveObjId} cargo is full");
+            case PackVehicleService.PackLoadResult.NoCarriedPack:
+                return Reject(request, ActorFailureReason.RejectedAction, "no trade pack carried in the backpack slot");
+            case PackVehicleService.PackLoadResult.NotATradePack:
+                return Reject(request, ActorFailureReason.RejectedAction, "carried item is not a trade pack");
+            case PackVehicleService.PackLoadResult.PlacedPackNotFound:
+                return Reject(request, ActorFailureReason.RejectedAction, "placed pack not found in world");
+            case PackVehicleService.PackLoadResult.PlacedPackOutOfRange:
+                return Reject(request, ActorFailureReason.RejectedAction, "placed pack out of interaction range");
+            case PackVehicleService.PackLoadResult.PlacedPackAlreadyAttached:
+                return Reject(request, ActorFailureReason.StateTransition, "placed pack is already attached");
+            case PackVehicleService.PackLoadResult.PlacedPackNotRecoverable:
+                return Reject(request, ActorFailureReason.RejectedAction, "placed pack is not a recoverable trade pack");
+            default:
+                return Reject(request, ActorFailureReason.RejectedAction, "engine refused the pack load");
+        }
+    }
+
     #endregion
 
     #region M5.1 trade actions (Buy/Sell — real engine trade paths)

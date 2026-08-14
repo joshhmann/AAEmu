@@ -81,6 +81,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest PutDown(uint packItemTemplateId, string? idempotencyKey = null)
         => Actor.PutDown(packItemTemplateId, idempotencyKey);
 
+    public ActorRequest LoadPackOntoVehicle(uint slaveObjId, uint? placedPackDoodadObjId = null, string? idempotencyKey = null)
+        => Actor.LoadPackOntoVehicle(slaveObjId, placedPackDoodadObjId, idempotencyKey);
+
     public ActorRequest Plant(uint seedItemTemplateId, System.Numerics.Vector3 position, float zRot = 0f, float scale = 1f, string? idempotencyKey = null)
         => Actor.Plant(seedItemTemplateId, position, zRot, scale, idempotencyKey);
 

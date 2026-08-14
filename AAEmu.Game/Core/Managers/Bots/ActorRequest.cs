@@ -206,6 +206,14 @@ public sealed record QuestTurnInParams(uint TargetObjId, int SelectedReward);
 public sealed record PlantParams(System.Numerics.Vector3 Position, float ZRot, float Scale);
 
 /// <summary>
+/// LoadPackOntoVehicle request payload — the pack source selection for the
+/// vehicle cargo load (Phase 2 prerequisite, t_a7756a00). The vehicle is
+/// addressed by the request TargetId (slave objId).
+/// </summary>
+/// <param name="PlacedPackDoodadObjId">ObjId of the standing placed-pack doodad to load;
+/// null = load the pack carried in the Backpack equipment slot.</param>
+public sealed record LoadPackOntoVehicleParams(uint? PlacedPackDoodadObjId);
+
 /// House-build request payload — placement parameters for a house design
 /// (M5.2). The design id is addressed by the request TargetId (the same
 /// design id CSCreateHousePacket carries); the design item INSTANCE is

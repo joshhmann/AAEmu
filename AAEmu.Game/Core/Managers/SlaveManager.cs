@@ -787,6 +787,35 @@ public class SlaveManager(WorldInstance parentWorldInstance)
     }
 
     /// <summary>
+    /// Attaches an existing doodad (e.g. a loaded trade pack) to a slave at
+    /// a cargo/attach point — the same snap-to-attach-point behavior the
+    /// binding spawn uses (<see cref="ApplyAttachPointLocation"/>): the
+    /// doodad parents to the slave's transform, its local position/rotation
+    /// are taken from the model's attach-point data (retail cargo snap) and
+    /// it is registered in the slave's AttachedDoodads. The caller decides
+    /// visibility timing (hide before, spawn/show after) and persistence.
+    /// Part of the real gameplay path behind PackVehicleService /
+    /// IGameplayActor.LoadPackOntoVehicle (t_a7756a00).
+    /// </summary>
+    public void AttachDoodadAtPoint(Slave slave, Doodad doodad, AttachPointKind attachPoint)
+    {
+        if (slave == null || doodad == null)
+            return;
+
+        doodad.ParentObj = slave;
+        doodad.ParentObjId = slave.ObjId;
+        doodad.AttachPoint = attachPoint;
+        doodad.Data = (byte)attachPoint; // copy of AttachPointId (binding-spawn convention)
+
+        ApplyAttachPointLocation(slave, doodad, attachPoint);
+
+        if (!slave.AttachedDoodads.Contains(doodad))
+            slave.AttachedDoodads.Add(doodad);
+
+        Logger.Info($"Trade pack doodad {doodad.ObjId} (item {doodad.ItemId}) loaded onto slave {slave.ObjId} at attach point {attachPoint}");
+    }
+
+    /// <summary>
     /// Applies buff and bonuses to Slave
     /// </summary>
     /// <param name="summonedSlave"></param>
