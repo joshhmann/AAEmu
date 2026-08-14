@@ -13,11 +13,11 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///
 /// v2 surface (B1, ROADMAP §M5): Observe · Move · Stop · Target · Cast ·
 /// Interact · Loot · UseItem · Mount/Dismount · AcceptQuest · TurnInQuest.
-/// The M5.1 economic extension (Plant/Harvest/Craft/PackPickup/BoardVehicle/
-/// Buy-Sell/Deposit-Withdraw) lands in slices; the Buy/Sell slice
-/// (t_8741b03d) adds merchant buy/sell + auction listing/purchase through
-/// the real engine trade paths; the lifecycle, rejection taxonomy and audit
-/// machinery below are final.
+/// The M5.1 economic extension (Deposit/Withdraw, t_7c224245) adds the
+/// bank actions through the real engine paths; the PackPickup/PutDown,
+/// Buy/Sell and Plant slices have landed; Harvest/Craft/BoardVehicle land
+/// in later slices; the lifecycle, rejection taxonomy and audit machinery
+/// below are final.
 ///
 /// Contract rules (ROADMAP M5, spec §16-17):
 ///  - Actions are VALIDATED gameplay requests. Every request tracks the
@@ -280,6 +280,44 @@ public interface IGameplayActor
     /// </summary>
     ActorRequest BuildHouse(uint designId, uint designItemTemplateId, Vector3 position, float zRot = 0f, string? idempotencyKey = null);
 
+    /// Deposits copper from the inventory into the bank through the real
+    /// engine path (Character.ChangeMoney — the exact call
+    /// CSDepositMoneyPacket makes). The engine validates the inventory
+    /// balance and refuses when insufficient, so a fresh-key retry after a
+    /// timeout ambiguity lands on Rejected(RejectedAction) instead of a
+    /// second deposit — the balance is the engine-true backstop.
+    /// </summary>
+    ActorRequest DepositMoney(long amount, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Withdraws copper from the bank into the inventory through the real
+    /// engine path (Character.ChangeMoney — the exact call
+    /// CSWithdrawMoneyPacket makes). Engine-validated the same way as
+    /// <see cref="DepositMoney"/>.
+    /// </summary>
+    ActorRequest WithdrawMoney(long amount, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Deposits an item stack from the inventory bag into the bank
+    /// warehouse through the real engine container-move path
+    /// (Inventory.SplitOrMoveItem — the exact call CSSwapItemsPacket makes
+    /// for Inventory→Bank moves; whole stack). Resolves the first bag
+    /// stack of the template; unknown templates are
+    /// Rejected(RejectedAction, "not found in bag"). After a successful
+    /// deposit the source stack is gone, so a fresh-key retry finds
+    /// nothing to move — retries cannot double-deposit.
+    /// </summary>
+    ActorRequest DepositItem(uint itemTemplateId, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Withdraws an item stack from the bank warehouse into the inventory
+    /// bag through the real engine container-move path
+    /// (Inventory.SplitOrMoveItem — the exact call CSSwapItemsPacket makes
+    /// for Bank→Inventory moves; whole stack). Mirror of
+    /// <see cref="DepositItem"/>.
+    /// </summary>
+    ActorRequest WithdrawItem(uint itemTemplateId, string? idempotencyKey = null);
+
     /// <summary>
     /// Cancels a running request by trace id. Returns false when no request
     /// with that id is active (idempotent — retries cannot double-interrupt).
@@ -467,7 +505,19 @@ public enum ActorActionType : byte
     Drive = 23,
 
     /// <summary>Trade-pack → vehicle cargo loading through PackVehicleService (real gameplay path, snap-to-cargo-point).</summary>
-    LoadPackOntoVehicle = 24
+    LoadPackOntoVehicle = 24,
+
+    /// <summary>Bank deposit of copper through Character.ChangeMoney (CSDepositMoneyPacket path).</summary>
+    DepositMoney = 25,
+
+    /// <summary>Bank withdrawal of copper through Character.ChangeMoney (CSWithdrawMoneyPacket path).</summary>
+    WithdrawMoney = 26,
+
+    /// <summary>Bank deposit of an item stack through Inventory.SplitOrMoveItem (CSSwapItemsPacket path).</summary>
+    DepositItem = 27,
+
+    /// <summary>Bank withdrawal of an item stack through Inventory.SplitOrMoveItem (CSSwapItemsPacket path).</summary>
+    WithdrawItem = 28
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>
