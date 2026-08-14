@@ -2,14 +2,16 @@ using System.Linq;
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers.UnitManagers;
-using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.GameData;
+using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
+using AAEmu.Game.Models.Game.Crafts;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
@@ -1885,6 +1887,142 @@ public class GameplayActor : IGameplayActor
 
     #endregion
 
+    #region M5.1 craft action (real engine path)
+
+    /// <summary>Default craft budget (one engine step: cast + queue drain).</summary>
+    public static readonly TimeSpan DefaultCraftTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>Mirror of CharacterCraft.DefaultCraftRange for skills that define no max range.</summary>
+    private const float DefaultCraftRange = 5f;
+
+    /// <summary>
+    /// Bag-state snapshot taken right before the engine craft step starts:
+    /// material counts (the success signal — EndCraft consumes materials
+    /// BEFORE granting any product) and product counts (the granted delta).
+    /// Null while no craft request awaits its queue drain.
+    /// </summary>
+    private Dictionary<uint, int>? _craftMaterialSnapshot;
+    private Dictionary<uint, int>? _craftProductSnapshot;
+
+    public ActorRequest Craft(uint craftId, uint doodadObjId, TimeSpan? timeout = null, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Craft, craftId,
+            payload: new CraftParams(doodadObjId), timeout: timeout ?? DefaultCraftTimeout, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "craft"))
+            return request;
+
+        // Validation gate 1: the recipe must exist — the same manager the
+        // CSExecuteCraft packet handler resolves through.
+        var craft = CraftManager.Instance.GetCraftById(craftId);
+        if (craft == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"unknown craft {craftId}");
+
+        // Validation gate 2: the ENGINE craft queue must be idle — the
+        // CSExecuteCraft guard. A re-entry while a queue is active would
+        // overwrite CurrentCraft/Count/DoodadId mid-step, so it is refused
+        // here pre-flight (StateTransition — the queue belongs to the
+        // engine, not to this actor).
+        var craftSurface = Character.Craft;
+        if (craftSurface == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character craft surface not initialized");
+        if (craftSurface.IsCraftQueueActive)
+            return Reject(request, ActorFailureReason.StateTransition, "craft queue already active");
+
+        // Validation gate 3: the recipe's skill template must exist.
+        var skillTemplate = SkillManager.Instance.GetSkillTemplate(craft.SkillId);
+        if (skillTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"craft {craftId} references missing skill {craft.SkillId}");
+
+        // Validation gate 4: materials must be in the BAG — the engine's
+        // scope rule (bank/equipment materials are not consumable for
+        // crafting).
+        var hasMaterials = craft.CraftMaterials.Count == 0 || craft.CraftMaterials.All(m =>
+            Character.Inventory.GetItemsCount(SlotType.Inventory, m.ItemId) >= m.Amount);
+        if (!hasMaterials)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"craft {craftId} materials not present in bag");
+
+        // Validation gate 5: workbench integrity when the recipe's skill
+        // targets doodads — exists, correct template (ReqDoodadId), in
+        // range. Mirrors the CharacterCraft.Craft gates so the refusal is a
+        // clean Rejected instead of an engine error-message no-op.
+        if (skillTemplate.TargetType == SkillTargetType.Doodad)
+        {
+            var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
+            if (doodad == null)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"craft bench {doodadObjId} not found in world");
+            if (craft.ReqDoodadId > 0 && doodad.TemplateId != craft.ReqDoodadId)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"craft {craftId} requires bench template {craft.ReqDoodadId} (found {doodad.TemplateId})");
+            var maxRange = skillTemplate.MaxRange > 0 ? skillTemplate.MaxRange : DefaultCraftRange;
+            if (MathUtil.CalculateDistance(Character.Transform.World.Position, doodad.Transform.World.Position, false) > maxRange)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"craft bench {doodadObjId} out of range");
+        }
+
+        // Validation gate 6: labor — the engine's own EndCraft gate (same
+        // adjusted cost formula), pre-flighted so a step that could never
+        // complete is refused before the engine queue starts (EndCraft's
+        // labor refusal would otherwise burn the queue slot with a
+        // "fictitious" step).
+        var laborCost = new Skill(skillTemplate).GetLaborCost(Character);
+        if (Character.LaborPower < laborCost)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"craft {craftId} requires {laborCost} labor (has {Character.LaborPower})");
+
+        // Validation gate 7: the trade-pack level gate — the engine's own
+        // Craft() check (canonical 1.2: packs require level 10 to craft).
+        if (craft.ResultsInBackpack && Character.Level < AppConfiguration.Instance.Specialty.MinLevelToCraftSell)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"craft {craftId} requires level {AppConfiguration.Instance.Specialty.MinLevelToCraftSell} (trade-pack recipe)");
+
+        // Bag-state snapshot taken right before the engine craft step
+        // starts: material counts (the success signal — EndCraft consumes
+        // materials BEFORE granting any product) and product counts (the
+        // granted delta). The outcome check can then distinguish a
+        // completed step (materials consumed) from an engine-side refusal
+        // (nothing consumed).
+        _craftMaterialSnapshot = craft.CraftMaterials.ToDictionary(m => m.ItemId,
+            m => GetCraftItemCount(m.ItemId));
+        _craftProductSnapshot = craft.CraftProducts.GroupBy(p => p.ItemId)
+            .ToDictionary(g => g.Key, g => GetCraftItemCount(g.Key));
+
+        request.Start($"crafting {craftId} (bench {doodadObjId}, skill {craft.SkillId})");
+
+        // The REAL engine entry: the exact call CSExecuteCraft makes
+        // (count=1 — one engine step). The queue runs through the normal
+        // skill pipeline (CraftTask → cast → CraftEffect.Apply → EndCraft);
+        // Tick() observes the queue drain and completes the request.
+        Character.Craft.Craft(craft, 1, doodadObjId);
+        return request;
+    }
+
+    /// <summary>
+    /// Engine-true count of one item template on the character: the bag
+    /// (the engine's scope rule — materials must be in the bag) PLUS the
+    /// Backpack equipment slot, because EndCraft grants trade packs into
+    /// Equipment.Backpack, not the bag. A pack-only delta would otherwise
+    /// read as 0 and the grant row would vanish from the CraftResult.
+    /// </summary>
+    private int GetCraftItemCount(uint itemId)
+    {
+        var count = Character.Inventory.GetItemsCount(SlotType.Inventory, itemId);
+        var pack = Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+        if (pack != null && pack.TemplateId == itemId)
+            count += pack.Count;
+        return count;
+    }
+
+    private void ClearCraftSnapshot()
+    {
+        _craftMaterialSnapshot = null;
+        _craftProductSnapshot = null;
+    }
+
+    #endregion
+
     #region Tick / movement
 
     private Vector3? _moveTarget;
@@ -1908,6 +2046,59 @@ public class GameplayActor : IGameplayActor
             Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action),
                 request.Action is ActorActionType.Move or ActorActionType.Drive ? "navigation budget exceeded" : "action budget exceeded"));
             ClearMovementState();
+            ClearCraftSnapshot();
+            return;
+        }
+
+        // Craft completion: the request is Running while the engine craft
+        // queue is active. When the queue drains, the engine step finished
+        // (EndCraft ran — products granted + materials consumed, or the
+        // engine refused mid-step). Outcome is read from the bag snapshot
+        // taken before the step.
+        if (request.Action == ActorActionType.Craft && _craftMaterialSnapshot != null)
+        {
+            var craft = CraftManager.Instance.GetCraftById(request.TargetId);
+            if (craft == null)
+            {
+                ClearCraftSnapshot();
+                Finish(request, request.Reject(ActorFailureReason.RejectedAction,
+                    $"craft {request.TargetId} vanished from manager"));
+                return;
+            }
+
+            if (Character.Craft?.IsCraftQueueActive == true)
+                return; // engine step still running — keep waiting
+
+            // Queue drained. Success signal: every material row was
+            // consumed (EndCraft consumes BEFORE granting, so consumption
+            // proves the step executed). A rate-failed product row still
+            // counts as a completed step (canonical behavior).
+            var consumedAll = craft.CraftMaterials.All(m =>
+                _craftMaterialSnapshot.GetValueOrDefault(m.ItemId, 0)
+                - GetCraftItemCount(m.ItemId) >= m.Amount);
+
+            if (!consumedAll)
+            {
+                ClearCraftSnapshot();
+                Finish(request, request.Reject(ActorFailureReason.RejectedAction,
+                    $"craft {request.TargetId} step refused by engine (materials not consumed)"));
+                return;
+            }
+
+            var granted = _craftProductSnapshot
+                .Where(kv => GetCraftItemCount(kv.Key) > kv.Value)
+                .Select(kv => new CraftProductGrant(kv.Key,
+                    GetCraftItemCount(kv.Key) - kv.Value))
+                .ToList();
+            // Record the applied-effect fingerprint (B1 idempotency layer):
+            // correlation for the M8 economic audit — the trace that
+            // crafted this recipe. The request-level key dedupe is the
+            // PRIMARY retry guard; the consumed materials are the
+            // engine-true backstop (a fresh-key retry finds nothing left).
+            _ledger.RecordEffect(ActorIdempotency.EffectKey("craft", request.TargetId), request.TraceId);
+            ClearCraftSnapshot();
+            Finish(request, request.Complete(new CraftResult(request.TargetId, granted),
+                $"craft {request.TargetId} step completed (materials consumed, {granted.Count} product row(s) granted)"));
             return;
         }
 
@@ -2078,6 +2269,11 @@ public class GameplayActor : IGameplayActor
             Finish(request, request.Interrupt(detail));
         }
         ClearMovementState();
+        // An interrupted craft request stops watching the engine queue; the
+        // queue itself is engine truth and keeps running (the step either
+        // lands or not — a fresh-key retry is protected by the consumed
+        // materials / active-queue gates).
+        ClearCraftSnapshot();
     }
 
     private ActorRequest Complete(ActorRequest request, string detail)
