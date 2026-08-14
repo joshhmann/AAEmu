@@ -120,9 +120,20 @@ public class BotScenarioRigTests
 
         foreach (var item in template.StartingItems)
             Register(item.ItemId);
-        foreach (var stage in template.Drive.Stages)
+        foreach (var stage in template.Drive?.Stages ?? [])
         {
             foreach (var scenarioEvent in stage.Events)
+            {
+                Register(scenarioEvent.ItemId);
+                Register(scenarioEvent.ItemGroupId);
+            }
+        }
+
+        // M5.1 economy-replay templates carry no quest drive; register the
+        // item templates their Deposit/Withdraw events touch.
+        foreach (var step in template.EconomyDrive?.Steps ?? [])
+        {
+            foreach (var scenarioEvent in step.Events)
             {
                 Register(scenarioEvent.ItemId);
                 Register(scenarioEvent.ItemGroupId);
@@ -275,6 +286,37 @@ public class BotScenarioRigTests
         session.Character.Quests.CheckDailyResetAtLogin();
         await Assert.That(session.Character.Quests.HasQuestCompleted(1959),
             "cat-34 (detail Task=6) completed flag must SURVIVE the daily reset").IsTrue();
+    }
+
+    /// <summary>
+    /// (d) M5.1 deposit/withdraw economy cycle (t_7c224245): the
+    /// deposit-withdraw-cycle template drives money + item through the REAL
+    /// engine paths (ChangeMoney — CSDepositMoneyPacket/CSWithdrawMoneyPacket
+    /// — and SplitOrMoveItem — CSSwapItemsPacket) on a live bot. Every
+    /// economy event must be Completed through the actor contract, and the
+    /// acceptance criteria (bank balance + per-container quantities) must
+    /// hold. Retries can never double-move: after each successful move the
+    /// source container is empty of the template.
+    /// </summary>
+    [Test]
+    public async Task DepositWithdrawCycle_EconomyDrive_Completes_BalancesVerified()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (result, session) = RunRigged(BotScenarioTemplates.DepositWithdrawCycle, "tpl-m51-econ", 1);
+        AppendEvidence(result);
+
+        await Assert.That(result.Passed, "template FAILED:\n" + result.Evidence()).IsTrue();
+        // All four economy events ran as Completed actor requests.
+        await Assert.That(result.Stages.Count, "expected 4 economy steps").IsEqualTo(4);
+        await Assert.That(result.Stages.All(s => s.EventsFired == 1), "one event per step").IsTrue();
+        await Assert.That(result.ActorRequests, "4 deposit/withdraw requests on the actor trace").IsGreaterThanOrEqualTo(4);
+        // Criteria verified bank balance 600 + round-tripped item quantities.
+        await Assert.That(result.Criteria.All(c => c.Passed), "all criteria must pass: " +
+            string.Join("; ", result.Criteria.Where(c => !c.Passed).Select(c => c.Detail))).IsTrue();
+        // Direct state proof on the ordinary character record.
+        await Assert.That(session.Character.Money2).IsEqualTo(600);
+        await Assert.That(session.Character.Inventory.GetItemsCount(SlotType.Inventory, 15589)).IsEqualTo(5);
+        await Assert.That(session.Character.Inventory.GetItemsCount(SlotType.Bank, 15589)).IsEqualTo(0);
     }
 
     /// <summary>

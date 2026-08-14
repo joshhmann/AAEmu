@@ -81,6 +81,18 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest Plant(uint seedItemTemplateId, System.Numerics.Vector3 position, float zRot = 0f, float scale = 1f, string? idempotencyKey = null)
         => Actor.Plant(seedItemTemplateId, position, zRot, scale, idempotencyKey);
 
+    public ActorRequest DepositMoney(long amount, string? idempotencyKey = null)
+        => Actor.DepositMoney(amount, idempotencyKey);
+
+    public ActorRequest WithdrawMoney(long amount, string? idempotencyKey = null)
+        => Actor.WithdrawMoney(amount, idempotencyKey);
+
+    public ActorRequest DepositItem(uint itemTemplateId, string? idempotencyKey = null)
+        => Actor.DepositItem(itemTemplateId, idempotencyKey);
+
+    public ActorRequest WithdrawItem(uint itemTemplateId, string? idempotencyKey = null)
+        => Actor.WithdrawItem(itemTemplateId, idempotencyKey);
+
     public bool Interrupt(Guid traceId) => Actor.Interrupt(traceId);
 
     public ActorRequest AcceptQuest(uint questId, QuestAcceptorType acceptorType, uint acceptorId, string? idempotencyKey = null)

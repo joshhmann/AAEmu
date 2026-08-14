@@ -1104,9 +1104,11 @@ public static class GameplayActorTestRig
     /// <summary>
     /// Registers an additional item template in the shared ItemManager
     /// registry (used by tests that need a NON-usable item — no use skill).
-    /// Idempotent; never replaces an existing template.
+    /// Idempotent; never replaces an existing template. maxCount controls
+    /// stackability (1 = non-stackable — each unit occupies its own slot,
+    /// e.g. the M5.1 bank-full rig).
     /// </summary>
-    public static void RegisterPlainItemTemplate(uint templateId)
+    public static void RegisterPlainItemTemplate(uint templateId, int maxCount = 99)
     {
         var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
         var templatesField = typeof(ItemManager).GetField("_templates", flags);
@@ -1123,7 +1125,7 @@ public static class GameplayActorTestRig
             {
                 Id = templateId,
                 UseSkillId = 0,
-                MaxCount = 99,
+                MaxCount = maxCount,
                 FixedGrade = -1
             };
         }

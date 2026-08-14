@@ -1063,6 +1063,196 @@ public class GameplayActor : IGameplayActor
 
     #endregion
 
+    #region M5.1 economy actions (Deposit/Withdraw — real engine paths)
+
+    public ActorRequest DepositMoney(long amount, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.DepositMoney, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "deposit money"))
+            return request;
+
+        if (amount <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "amount must be positive");
+        // The engine's money-transfer path is int32 (the packets read
+        // Int32); balances are long but a single transfer is capped.
+        if (amount > int.MaxValue)
+            return Reject(request, ActorFailureReason.RejectedAction, "amount exceeds the engine transfer limit (int32)");
+
+        // Currency-credit idempotency marker (ROADMAP M5): when a prior
+        // attempt already applied the deposit (recorded AFTER the engine
+        // move) and the inventory balance can no longer cover the amount,
+        // the deposit is already done — refuse pre-flight so the audit
+        // record shows no Running transition (AcceptQuest pattern).
+        if (_ledger.IsEffectApplied(ActorIdempotency.EffectKey("currency", 0, $"deposit:{amount}"))
+            && Character.Money < amount)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"deposit of {amount} copper already applied (duplicate refused pre-flight)");
+
+        // Balance mirror pre-flight (the engine's own check — the same
+        // refusal the packet path produces, surfaced as a clean Rejected
+        // before any engine call; the engine call below remains the
+        // authoritative backstop, e.g. after ledger eviction).
+        if (Character.Money < amount)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"deposit of {amount} copper refused by engine (insufficient balance)");
+
+        request.Start($"depositing {amount} copper into bank");
+
+        // REAL engine path — the exact call CSDepositMoneyPacket makes.
+        // The engine validates the inventory balance (SendErrorMessage +
+        // false when insufficient); the balance is the engine-true backstop
+        // for fresh-key retries after a timeout ambiguity.
+        if (!Character.ChangeMoney(SlotType.Inventory, SlotType.Bank, (int)amount))
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"deposit of {amount} copper refused by engine (insufficient balance)");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("currency", 0, $"deposit:{amount}"), request.TraceId);
+        return Complete(request, amount, $"deposited {amount} copper into bank");
+    }
+
+    public ActorRequest WithdrawMoney(long amount, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.WithdrawMoney, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "withdraw money"))
+            return request;
+
+        if (amount <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "amount must be positive");
+        // The engine's money-transfer path is int32 (the packets read
+        // Int32); balances are long but a single transfer is capped.
+        if (amount > int.MaxValue)
+            return Reject(request, ActorFailureReason.RejectedAction, "amount exceeds the engine transfer limit (int32)");
+
+        if (_ledger.IsEffectApplied(ActorIdempotency.EffectKey("currency", 0, $"withdraw:{amount}"))
+            && Character.Money2 < amount)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"withdrawal of {amount} copper already applied (duplicate refused pre-flight)");
+
+        // Balance mirror pre-flight (the engine's own check — see DepositMoney).
+        if (Character.Money2 < amount)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"withdrawal of {amount} copper refused by engine (insufficient bank balance)");
+
+        request.Start($"withdrawing {amount} copper from bank");
+
+        // REAL engine path — the exact call CSWithdrawMoneyPacket makes.
+        if (!Character.ChangeMoney(SlotType.Bank, SlotType.Inventory, (int)amount))
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"withdrawal of {amount} copper refused by engine (insufficient bank balance)");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("currency", 0, $"withdraw:{amount}"), request.TraceId);
+        return Complete(request, amount, $"withdrew {amount} copper from bank");
+    }
+
+    public ActorRequest DepositItem(uint itemTemplateId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.DepositItem, itemTemplateId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "deposit item"))
+            return request;
+
+        var inventory = Character.Inventory;
+        if (inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        // Resolve the stack through NORMAL inventory services (the same
+        // lookup the client's move path performs) — first bag stack of the
+        // template.
+        inventory.Bag.GetAllItemsByTemplate(itemTemplateId, -1, out var items, out _);
+        var item = items.FirstOrDefault();
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} not found in bag");
+
+        // Item-credit idempotency marker: when a prior attempt already
+        // moved this exact item instance and the bag no longer holds it,
+        // the deposit is already done — refuse pre-flight. (The conjunctive
+        // check keeps a legitimately re-acquired item — withdrawn and
+        // re-deposited later — retryable.)
+        if (_ledger.IsEffectApplied(ActorIdempotency.EffectKey("deposit", itemTemplateId, item.Id.ToString()))
+            && inventory.Bag.GetItemByItemId(item.Id) == null)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"item {itemTemplateId} (instance {item.Id}) already deposited (duplicate refused pre-flight)");
+
+        // Target slot: a same-template stack with room (the engine's
+        // doMerge branch), else the first empty bank slot (doMoveAllToEmpty).
+        var targetSlot = FindContainerTargetSlot(inventory.Warehouse, item);
+        if (targetSlot < 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "bank is full");
+
+        request.Start($"depositing item {itemTemplateId} (instance {item.Id}, count {item.Count}) into bank");
+
+        // REAL engine path — the exact call CSSwapItemsPacket makes for an
+        // Inventory→Bank move: Inventory.SplitOrMoveItem (whole stack).
+        // The engine validates the source item, slot, container acceptance
+        // and target capacity; a refusal happens BEFORE any item moves.
+        if (!inventory.SplitOrMoveItem(ItemTaskType.SwapItems, item.Id, SlotType.Inventory, (byte)item.Slot,
+                0, SlotType.Bank, (byte)targetSlot))
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"deposit of item {itemTemplateId} refused by engine");
+
+        var moved = item.Count;
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("deposit", itemTemplateId, item.Id.ToString()), request.TraceId);
+        return Complete(request, moved, $"deposited {moved} of item {itemTemplateId} into bank");
+    }
+
+    public ActorRequest WithdrawItem(uint itemTemplateId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.WithdrawItem, itemTemplateId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "withdraw item"))
+            return request;
+
+        var inventory = Character.Inventory;
+        if (inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        inventory.Warehouse.GetAllItemsByTemplate(itemTemplateId, -1, out var items, out _);
+        var item = items.FirstOrDefault();
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} not found in bank");
+
+        if (_ledger.IsEffectApplied(ActorIdempotency.EffectKey("withdraw", itemTemplateId, item.Id.ToString()))
+            && inventory.Warehouse.GetItemByItemId(item.Id) == null)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"item {itemTemplateId} (instance {item.Id}) already withdrawn (duplicate refused pre-flight)");
+
+        var targetSlot = FindContainerTargetSlot(inventory.Bag, item);
+        if (targetSlot < 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "inventory is full");
+
+        request.Start($"withdrawing item {itemTemplateId} (instance {item.Id}, count {item.Count}) from bank");
+
+        // REAL engine path — the exact call CSSwapItemsPacket makes for a
+        // Bank→Inventory move.
+        if (!inventory.SplitOrMoveItem(ItemTaskType.SwapItems, item.Id, SlotType.Bank, (byte)item.Slot,
+                0, SlotType.Inventory, (byte)targetSlot))
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"withdrawal of item {itemTemplateId} refused by engine");
+
+        var moved = item.Count;
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("withdraw", itemTemplateId, item.Id.ToString()), request.TraceId);
+        return Complete(request, moved, $"withdrew {moved} of item {itemTemplateId} from bank");
+    }
+
+    /// <summary>
+    /// Target slot for a container move: a same-template stack with room
+    /// (the engine's doMerge branch — the client's stack-merge behavior),
+    /// else the first empty slot (doMoveAllToEmpty). -1 when the target
+    /// container is full.
+    /// </summary>
+    private static int FindContainerTargetSlot(ItemContainer container, Item item)
+    {
+        if (item.Template.MaxCount > 1)
+        {
+            var existing = container.Items.FirstOrDefault(i =>
+                i.TemplateId == item.TemplateId && i.Count < item.Template.MaxCount);
+            if (existing != null)
+                return existing.Slot;
+        }
+
+        return container.GetUnusedSlot(-1);
+    }
+
+    #endregion
+
     #region Tick / movement
 
     private Vector3? _moveTarget;

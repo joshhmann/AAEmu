@@ -162,8 +162,19 @@ public static class BotScenarioRunner
             }
 
             // ---------------------------------------------------------- 3. DRIVE
+            // A template carries exactly ONE drive: the quest shape (P1) or
+            // the M5.1 economy-replay shape. Both fire through the actor
+            // contract; the economy shape verifies every request Completed
+            // before the next step runs.
+            if (template.Drive != null && template.EconomyDrive != null)
+                return Fail(template, "RIG", ActorFailureReason.WrongDecision,
+                    "template carries both a quest drive and an economy drive — exactly one is allowed",
+                    rigNotes, actor, gates);
+
             var stages = new List<ScenarioStageVerdict>();
-            var driveFailure = Drive(template, character, controller, actor, world, stages);
+            (string Stage, ActorFailureReason Failure, string Reason)? driveFailure = template.Drive != null
+                ? Drive(template, character, controller, actor, world, stages)
+                : EconomyDrive(template, character, controller, actor, world, stages);
             if (driveFailure != null)
                 return Fail(template, driveFailure.Value.Stage, driveFailure.Value.Failure,
                     driveFailure.Value.Reason, rigNotes, actor, gates, stages);
@@ -208,6 +219,10 @@ public static class BotScenarioRunner
     {
         // Level (ordinary character record — the field level gates evaluate).
         character.Level = template.Level;
+
+        // Copper balance (ordinary character record — the M5.1 bank
+        // actions read/write the same balance the client sees).
+        character.Money = template.Money;
 
         // Ability trees ("class").
         if (template.AbilityTrees.Count > 0)
@@ -416,76 +431,122 @@ public static class BotScenarioRunner
     }
 
     /// <summary>
+    /// Economy replay drive (M5.1, t_7c224245): fires each step's
+    /// Deposit/Withdraw events through the actor contract and requires
+    /// every request Completed before the next step runs — a refused or
+    /// failed event fails the template with its §17 reason and detail.
+    /// This is the replay vocabulary the Phase 2 M3a/M4 economic replay
+    /// drives (recorded deposit/withdraw sequences replayed through normal
+    /// gameplay services on a live bot).
+    /// </summary>
+    private static (string Stage, ActorFailureReason Failure, string Reason)? EconomyDrive(
+        BotScenarioTemplate template, Character character, PlayerBotController controller,
+        GameplayActor actor, IScenarioWorldAdapter world, List<ScenarioStageVerdict> stages)
+    {
+        foreach (var step in template.EconomyDrive!.Steps)
+        {
+            var fired = 0;
+            var lastEvent = "";
+            var lastDetail = "";
+            foreach (var scenarioEvent in step.Events)
+            {
+                lastEvent = scenarioEvent.Type;
+                var request = FireEvent(scenarioEvent, 0, character, controller, actor, world);
+                fired++;
+                if (request is not { State: ActorLifecycleState.Completed })
+                    return (step.Name, request?.Failure ?? ActorFailureReason.RejectedAction,
+                        $"economy event '{scenarioEvent.Type}' not completed: {request?.Detail ?? "no request returned"}");
+                lastDetail = request.Detail ?? "completed";
+            }
+
+            stages.Add(new ScenarioStageVerdict(step.Name, fired, "n/a", lastEvent, lastDetail));
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Fires one scenario event through the world pipeline surface. Report
     /// events resolve their target via the world adapter and drive the REAL
-    /// turn-in path (DoReportEvents) through the actor contract.
+    /// turn-in path (DoReportEvents) through the actor contract. Quest
+    /// events return null; M5.1 economy events (DepositMoney/WithdrawMoney/
+    /// DepositItem/WithdrawItem) return the actor request so the economy
+    /// drive can verify every request Completed.
     /// </summary>
-    private static void FireEvent(ScenarioEvent scenarioEvent, uint questId, Character character,
+    private static ActorRequest? FireEvent(ScenarioEvent scenarioEvent, uint questId, Character character,
         PlayerBotController controller, GameplayActor actor, IScenarioWorldAdapter world)
     {
         switch (scenarioEvent.Type)
         {
             case "MonsterHunt":
                 controller.KillNpc(scenarioEvent.NpcId, scenarioEvent.Count);
-                break;
+                return null;
             case "MonsterGroupHunt":
                 controller.KillNpcGroup(scenarioEvent.NpcId, scenarioEvent.Count);
-                break;
+                return null;
             case "ItemGather":
                 controller.GatherItem(questId, scenarioEvent.ItemId, scenarioEvent.Count);
-                break;
+                return null;
             case "ItemGroupGather":
                 character.Events.OnItemGroupGather(character, new OnItemGroupGatherArgs
                 {
                     ItemId = scenarioEvent.ItemId, ItemGroupId = scenarioEvent.ItemGroupId, Count = scenarioEvent.Count
                 });
-                break;
+                return null;
             case "ItemUse":
                 controller.UseItem(scenarioEvent.ItemId, scenarioEvent.Count);
-                break;
+                return null;
             case "ItemGroupUse":
                 character.Events.OnItemGroupUse(character, new OnItemGroupUseArgs
                 {
                     ItemGroupId = scenarioEvent.ItemGroupId, Count = scenarioEvent.Count
                 });
-                break;
+                return null;
             case "Talk":
                 controller.TalkToNpc(questId, scenarioEvent.NpcId);
-                break;
+                return null;
             case "TalkNpcGroup":
                 character.Events.OnTalkNpcGroupMade(character, new OnTalkNpcGroupMadeArgs
                 {
                     NpcGroupId = scenarioEvent.NpcGroupId, NpcId = scenarioEvent.NpcId, QuestComponentId = scenarioEvent.ComponentId
                 });
-                break;
+                return null;
             case "Interaction":
                 controller.InteractWithDoodad(scenarioEvent.DoodadId, scenarioEvent.Count);
-                break;
+                return null;
             case "EnterSphere":
                 controller.EnterSphere(questId, scenarioEvent.ComponentId);
-                break;
+                return null;
             case "Craft":
                 for (var i = 0; i < scenarioEvent.Count; i++)
                     character.Events.OnCraft(character, new OnCraftArgs { CraftId = scenarioEvent.CraftId });
-                break;
+                return null;
             case "ExpressFire":
                 controller.ExpressEmotion(scenarioEvent.NpcId, scenarioEvent.EmotionId);
-                break;
+                return null;
             case "LevelUp":
                 controller.LevelUp();
-                break;
+                return null;
             case "Aggro":
                 controller.AggroNpc(scenarioEvent.NpcId);
-                break;
+                return null;
             case "ZoneKill":
                 controller.ZoneKill(scenarioEvent.ZoneGroupId);
-                break;
+                return null;
             case "CinemaStarted":
                 controller.CinemaStarted(scenarioEvent.CinemaId);
-                break;
+                return null;
             case "CinemaEnded":
                 controller.CinemaEnded(scenarioEvent.CinemaId);
-                break;
+                return null;
+            case "DepositMoney":
+                return actor.DepositMoney(scenarioEvent.Amount);
+            case "WithdrawMoney":
+                return actor.WithdrawMoney(scenarioEvent.Amount);
+            case "DepositItem":
+                return actor.DepositItem(scenarioEvent.ItemId);
+            case "WithdrawItem":
+                return actor.WithdrawItem(scenarioEvent.ItemId);
             case "ReportNpc":
             {
                 var objId = world.ResolveNpcObjId(scenarioEvent.NpcId);
@@ -496,7 +557,7 @@ public static class BotScenarioRunner
                 
                 if (request.State != ActorLifecycleState.Completed)
                     throw new InvalidOperationException($"ReportNpc turn-in refused: {request.Detail}");
-                break;
+                return null;
             }
             case "ReportDoodad":
             {
@@ -508,7 +569,7 @@ public static class BotScenarioRunner
                 
                 if (request.State != ActorLifecycleState.Completed)
                     throw new InvalidOperationException($"ReportDoodad turn-in refused: {request.Detail}");
-                break;
+                return null;
             }
             case "ReportJournal":
             {
@@ -516,7 +577,7 @@ public static class BotScenarioRunner
                 
                 if (request.State != ActorLifecycleState.Completed)
                     throw new InvalidOperationException($"ReportJournal turn-in refused: {request.Detail}");
-                break;
+                return null;
             }
             default:
                 throw new InvalidOperationException($"unknown scenario event type '{scenarioEvent.Type}'");
@@ -586,6 +647,19 @@ public static class BotScenarioRunner
                             $"re-accept of completed quest {reAccept.QuestId} refused by engine (repeatable/daily gate)")
                         : new CriterionVerdict(criterion.Name, false,
                             $"re-accept of completed quest {reAccept.QuestId} was ACCEPTED — repeatable gate not enforced");
+                }
+                case BankMoneyCriterion bankMoney:
+                    return character.Money2 == bankMoney.Expected
+                        ? new CriterionVerdict(criterion.Name, true, $"bank money {character.Money2} == {bankMoney.Expected}")
+                        : new CriterionVerdict(criterion.Name, false, $"bank money {character.Money2} != {bankMoney.Expected}");
+                case ContainerItemCriterion containerItem:
+                {
+                    var held = character.Inventory.GetItemsCount(containerItem.Container, containerItem.ItemId);
+                    return held == containerItem.Count
+                        ? new CriterionVerdict(criterion.Name, true,
+                            $"{containerItem.Container} holds {held} of item {containerItem.ItemId} (expected {containerItem.Count})")
+                        : new CriterionVerdict(criterion.Name, false,
+                            $"{containerItem.Container} holds {held} of item {containerItem.ItemId} (expected {containerItem.Count})");
                 }
                 default:
                     return new CriterionVerdict(criterion.Name, false, $"unknown criterion type {criterion.GetType().Name}");

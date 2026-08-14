@@ -1,5 +1,6 @@
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
@@ -221,15 +222,75 @@ public static class BotScenarioTemplates
     };
 
     /// <summary>
-    /// The library — templates by name.
+    /// M5.1 deposit/withdraw replay hook (t_7c224245): a scripted economy
+    /// cycle driven through the REAL engine paths on a live bot —
+    /// Character.ChangeMoney (the exact CSDepositMoneyPacket /
+    /// CSWithdrawMoneyPacket calls) and Inventory.SplitOrMoveItem (the
+    /// exact CSSwapItemsPacket container-move call). The bot starts with
+    /// 5000 copper and 5 of item 15589 in the bag, runs
+    /// deposit→withdraw→deposit→withdraw, and the acceptance criteria
+    /// verify the final balances. This is the replay vocabulary the Phase 2
+    /// M3a/M4 economic replay builds on.
     /// </summary>
+    public static BotScenarioTemplate DepositWithdrawCycle { get; } = new()
+    {
+        Name = "deposit-withdraw-cycle",
+        Description = "M5.1 economy cycle: deposit/withdraw money + item through the real engine paths, balances verified.",
+        Race = Race.Nuian,
+        Gender = Gender.Male,
+        Level = 1,
+        Money = 5000,
+        StartingItems =
+        [
+            new ScenarioStockItem(15589, 5)
+        ],
+        EconomyDrive = new EconomyDriveSpec
+        {
+            Steps =
+            [
+                new EconomyDriveStep
+                {
+                    Name = "deposit-money",
+                    Events = [new ScenarioEvent { Type = "DepositMoney", Amount = 1000 }]
+                },
+                new EconomyDriveStep
+                {
+                    Name = "withdraw-money",
+                    Events = [new ScenarioEvent { Type = "WithdrawMoney", Amount = 400 }]
+                },
+                new EconomyDriveStep
+                {
+                    Name = "deposit-item",
+                    Events = [new ScenarioEvent { Type = "DepositItem", ItemId = 15589 }]
+                },
+                new EconomyDriveStep
+                {
+                    Name = "withdraw-item",
+                    Events = [new ScenarioEvent { Type = "WithdrawItem", ItemId = 15589 }]
+                }
+            ]
+        },
+        Criteria =
+        [
+            // 5000 - 1000 + 400 = 4400 copper in the bag; the bank holds
+            // the deposited 1000 minus the withdrawn 400 = 600.
+            new BankMoneyCriterion("bank-money-600", 600),
+            // The item cycle is a round trip: the bag holds the full stack
+            // again, the bank holds none.
+            new ContainerItemCriterion("bag-item-restored", SlotType.Inventory, 15589, 5),
+            new ContainerItemCriterion("bank-item-empty", SlotType.Bank, 15589, 0)
+        ]
+    };
+
+    /// <summary>The library — templates by name.</summary>
     public static IReadOnlyDictionary<string, BotScenarioTemplate> Library { get; } =
         new Dictionary<string, BotScenarioTemplate>(StringComparer.Ordinal)
         {
             [Level22QuestGate.Name] = Level22QuestGate,
             [AbilityPrerequisiteGate.Name] = AbilityPrerequisiteGate,
             [Cat34DailyCycle.Name] = Cat34DailyCycle,
-            [AuctionHouseConservation.Name] = AuctionHouseConservation
+            [AuctionHouseConservation.Name] = AuctionHouseConservation,
+            [DepositWithdrawCycle.Name] = DepositWithdrawCycle
         };
 
     public static BotScenarioTemplate? Get(string name)
