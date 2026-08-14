@@ -72,7 +72,7 @@ public class M1M2ReplayScenarioRigTests
                ?? throw new InvalidOperationException("Cannot locate repo root from " + AppContext.BaseDirectory);
     }
 
-    private sealed class FixtureWorldAdapter : BotScenarioRunner.IScenarioWorldAdapter
+    internal sealed class FixtureWorldAdapter : BotScenarioRunner.IScenarioWorldAdapter
     {
         private readonly HeadlessSession _session;
 
@@ -90,7 +90,7 @@ public class M1M2ReplayScenarioRigTests
     /// guards — it never replaces the pilot's QuestManager), then the
     /// route's item + use-skill templates.
     /// </summary>
-    private static void SeedReplaySurface()
+    internal static void SeedReplaySurface()
     {
         PlayerbotPilotRig.SeedPilotSingletons();
         GameplayActorTestRig.Seed();
@@ -286,7 +286,7 @@ public class M1M2ReplayScenarioRigTests
     private static bool s_evidenceInitialized;
     private static readonly object s_evidenceLock = new();
 
-    private static void AppendEvidence(BotScenarioRunner.ScenarioRunResult result)
+    internal static void AppendEvidence(BotScenarioRunner.ScenarioRunResult result)
     {
         lock (s_evidenceLock)
         {
@@ -314,5 +314,124 @@ public class M1M2ReplayScenarioRigTests
             File.AppendAllText(path, sb.ToString());
             Console.WriteLine("m1m2 replay rig evidence appended to " + path);
         }
+    }
+}
+
+/// <summary>
+/// CAST-WINDOW pin (t_15787275, 2026-08-13) — the live full-route replay
+/// failed at quest 4294 because skill 13139 (씨앗 심기) has a REAL
+/// 4000ms cast: Skill.Use returns Success the moment the cast is
+/// SCHEDULED, but the quest's OnItemUse objective only registers when the
+/// cast completes (ApplyEffects). The base rig seeds CastingTime = 0
+/// (instant — fixture-safe), which masks exactly this window. This rig
+/// seeds the REAL cast time and ticks the seeded TaskManager (the same
+/// private Tick the live game loop drives via ITickManager.OnTick), so
+/// the scheduled CastTask actually completes mid-scenario. The scenario's
+/// bounded WaitForItemUseObjective must hold the advance/turn-in until
+/// the objective registers — without it, the turn-in lands inside the
+/// cast window and the report act's isReady gate refuses (the live
+/// failure signature).
+/// </summary>
+[NotInParallel]
+public class M1M2ReplayCastWindowRigTests
+{
+    /// <summary>
+    /// The full route completes when the route's use-skills carry their
+    /// REAL casting times (252's tree-plant 11596 = 5000ms, 4294's
+    /// seed-plant 13139 = 4000ms) and the TaskManager ticks like the live
+    /// game loop. Fail-before (no WaitForItemUseObjective + no turn-in
+    /// guard): the use-item objective is still 0 when the turn-in runs →
+    /// report act refuses → quest 4294 stuck at Progress; and quest 252
+    /// auto-completes the moment its objective registers, so an
+    /// unconditional turn-in refuses with "not active". Pass-after: the
+    /// wait holds the drive until the cast completes and the guard skips
+    /// turn-ins for already-completed quests.
+    /// </summary>
+    [Test]
+    public async Task M1M2Replay_RealCastTime_TurnInWaitsForObjective()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+
+        // Seed the REAL casting times on the route's use-skills.
+        var skillsField = typeof(SkillManager).GetField("_skills", BindingFlags.NonPublic | BindingFlags.Instance);
+        var skills = (Dictionary<uint, SkillTemplate>)skillsField!.GetValue(SkillManager.Instance)!;
+        var original11596 = skills[11596].CastingTime;
+        var original13139 = skills[13139].CastingTime;
+        skills[11596].CastingTime = 5000;
+        skills[13139].CastingTime = 4000;
+
+        // The LIVE item 23635 is a use-as-reagent item (the plant-seed
+        // skill consumes the seed from the bag — that is the natural
+        // 4292→4294 chain). The base rig seeds useSkillAsReagent=false,
+        // which masks the consumption and would let a naive
+        // "reward must still be held" conservation check pass. Match the
+        // real template so the chain-consumption criterion is exercised.
+        GameplayActorTestRig.SeedItemTemplate(23635, 13139, useSkillAsReagent: true);
+        try
+        {
+            var (_, session) = GameplayActorTestRig.CreateActor("m1m2rigcast");
+            session.Character.Level = 6;
+
+            // Tick the seeded TaskManager on a background loop — the
+            // fixture's mock ITickManager never fires OnTick, so the
+            // scheduled CastTask would otherwise never run.
+            using var ticker = new TaskManagerTicker();
+
+            var result = BotScenarioRunner.Run(
+                BotScenarioTemplates.M1M2Replay, session.Character,
+                new M1M2ReplayScenarioRigTests.FixtureWorldAdapter(session));
+
+            M1M2ReplayScenarioRigTests.AppendEvidence(result);
+
+            await Assert.That(result.Passed, "replay with REAL 4000ms cast FAILED:\n" + result.Evidence()).IsTrue();
+
+            // The quest-4294 completion + lifecycle criteria must be green —
+            // the exact live failure point.
+            var q4294 = result.Criteria.FirstOrDefault(c => c.Name == "quest-4294-completed");
+            await Assert.That(q4294, "cast-window replay must carry the quest-4294-completed criterion").IsNotNull();
+            await Assert.That(q4294!.Passed, "quest 4294 must complete with a real cast time").IsTrue();
+            var lifecycle = result.Criteria.FirstOrDefault(c => c.Name == "lifecycle-trace-complete");
+            await Assert.That(lifecycle, "cast-window replay must carry the lifecycle criterion").IsNotNull();
+            await Assert.That(lifecycle!.Passed, "lifecycle must stay complete through the cast window").IsTrue();
+        }
+        finally
+        {
+            skills[11596].CastingTime = original11596;
+            skills[13139].CastingTime = original13139;
+        }
+    }
+
+    /// <summary>Fires the seeded TaskManager's private Tick repeatedly so
+    /// scheduled CastTasks complete (the live game loop's role).</summary>
+    private sealed class TaskManagerTicker : IDisposable
+    {
+        private readonly CancellationTokenSource _cts = new();
+        private readonly Thread _thread;
+
+        public TaskManagerTicker()
+        {
+            _thread = new Thread(TickLoop) { IsBackground = true };
+            _thread.Start();
+        }
+
+        private void TickLoop()
+        {
+            var tick = typeof(TaskManager).GetMethod("Tick", BindingFlags.NonPublic | BindingFlags.Instance);
+            while (!_cts.IsCancellationRequested)
+            {
+                try
+                {
+                    tick?.Invoke(TaskManager.Instance, [TimeSpan.FromMilliseconds(50)]);
+                }
+                catch
+                {
+                    // The ticker is best-effort; a failed tick must not kill
+                    // the loop (the cast deadline is the real bound).
+                }
+                Thread.Sleep(50);
+            }
+        }
+
+        public void Dispose() => _cts.Cancel();
     }
 }
