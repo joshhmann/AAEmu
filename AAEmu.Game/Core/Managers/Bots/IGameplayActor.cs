@@ -181,6 +181,31 @@ public interface IGameplayActor
     ActorRequest PutDown(uint packItemTemplateId, string? idempotencyKey = null);
 
     /// <summary>
+    /// Loads a trade pack onto a vehicle's cargo point through the REAL
+    /// gameplay path (PackVehicleService → SlaveManager attach seam) with
+    /// retail snap-to-cargo-point behavior: the pack doodad parents to the
+    /// slave's transform and its local position/rotation are taken from the
+    /// model's attach-point data. Two pack sources:
+    ///  - carried pack (placedPackDoodadObjId == null): the pack in the
+    ///    Backpack equipment slot moves into the System container and a new
+    ///    pack doodad spawns attached to the slave;
+    ///  - placed pack (placedPackDoodadObjId set): the standing pack doodad
+    ///    re-parents to the slave and snaps onto the free cargo point.
+    /// Validates: the vehicle resolves and is alive, is in interaction
+    /// range, is a cargo vehicle (pack-storage-box bindings on its slave
+    /// template — canonical 1.2), and has a free cargo point (not occupied
+    /// by another pack). Rejections: unknown/dead vehicle, out of range,
+    /// not a cargo vehicle, cargo full, no carried pack, not a trade pack,
+    /// placed pack not found / out of range / not recoverable → RejectedAction;
+    /// already-attached placed pack or duplicate idempotency key →
+    /// StateTransition. Engine-true idempotency: after a carried load the
+    /// Backpack slot is empty (retry finds no pack); after a placed load the
+    /// doodad is attached (retry is refused StateTransition); a full vehicle
+    /// refuses further packs. Payload: <see cref="LoadPackOntoVehicleParams"/>.
+    /// </summary>
+    ActorRequest LoadPackOntoVehicle(uint slaveObjId, uint? placedPackDoodadObjId = null, string? idempotencyKey = null);
+
+    /// <summary>
     /// Plants a seed/young-tree item at a world position through the REAL
     /// engine path — the same DoodadManager.CreatePlayerDoodad call the
     /// CSCreateDoodadPacket handler makes. The actor resolves the doodad
@@ -378,7 +403,10 @@ public enum ActorActionType : byte
     AuctionBuy = 20,
 
     /// <summary>Seed planting through DoodadManager.CreatePlayerDoodad (CSCreateDoodadPacket path).</summary>
-    Plant = 21
+    Plant = 21,
+
+    /// <summary>Trade-pack → vehicle cargo loading through PackVehicleService (real gameplay path, snap-to-cargo-point).</summary>
+    LoadPackOntoVehicle = 22
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

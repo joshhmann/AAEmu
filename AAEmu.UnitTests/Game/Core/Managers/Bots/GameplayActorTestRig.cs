@@ -21,6 +21,7 @@ using AAEmu.Game.Models.Game.CommonFarm;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
@@ -39,9 +40,11 @@ using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Templates;
+using AAEmu.Game.Models.Game.Slaves;
 using AAEmu.Game.Models.Game.Team;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.World.Transform;
 using AAEmu.Game.Utils;
 using AAEmu.UnitTests.Utils.Mocks;
 
@@ -1099,6 +1102,230 @@ public static class GameplayActorTestRig
             .GetField("_parentWorld", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .SetValue(doodad, session.World);
         return doodadObjId;
+    }
+
+    /// <summary>
+    /// Seeds the trade-pack surface for the LoadPackOntoVehicle tests
+    /// (t_a7756a00) — a DEDICATED pack template + put-down skill + doodad
+    /// template, isolated from the M5.1 pack surface (PackTemplateId /
+    /// PlacedPackDoodadTemplateId) so registering the placed-pack doodad
+    /// template in the DoodadManager cannot change PackPickup/PutDown
+    /// behavior (those tests rely on Create() returning null there). Also
+    /// seeds the slave cargo surface (SlaveGameData attach points).
+    /// </summary>
+    public static void SeedCargoPackSurface()
+    {
+        Seed();
+        SeedCargoPackItemTemplate();
+        SeedCargoPutDownSkill();
+        SeedCargoPackDoodadTemplate();
+        SeedSlaveCargoSurface();
+    }
+
+    /// <summary>Dedicated trade-pack template for the cargo-load tests.</summary>
+    public const uint CargoPackTemplateId = 264_901;
+
+    /// <summary>Put-down use skill of <see cref="CargoPackTemplateId"/>.</summary>
+    public const uint CargoPutDownSkillId = 290_901;
+
+    /// <summary>Placed-pack doodad template of <see cref="CargoPackTemplateId"/> — REGISTERED
+    /// in the DoodadManager so the carried-load path can spawn it through the real factory.</summary>
+    public const uint CargoPackDoodadTemplateId = 290_902;
+
+    /// <summary>Slave template id of the rig cargo vehicle.</summary>
+    public const uint CargoSlaveTemplateId = 290_100;
+
+    /// <summary>Model id of the rig cargo vehicle (Farm Wagon shape — canonical 1.2
+    /// Farm Wagon model 1008 attach-point data is seeded under this id).</summary>
+    public const uint CargoSlaveModelId = 290_101;
+
+    /// <summary>Canonical pack-storage-box doodad (1.2: "등짐 보관 상자", model
+    /// interaction.xml/container.empty) — the cargo-point marker of slave_doodad_bindings.</summary>
+    public const uint CanonicalPackStorageBoxDoodadId = 3446;
+
+    private static void SeedCargoPackItemTemplate()
+    {
+        var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
+        if (!templates.TryGetValue(CargoPackTemplateId, out var template))
+        {
+            template = new BackpackTemplate { Id = CargoPackTemplateId, Name = "Test Cargo Trade Pack" };
+            templates[CargoPackTemplateId] = template;
+        }
+
+        template.MaxCount = 1;
+        template.FixedGrade = 0;
+        template.Gradable = false;
+        template.UseSkillId = CargoPutDownSkillId;
+        ((BackpackTemplate)template).BackpackType = BackpackType.TradePack;
+    }
+
+    private static void SeedCargoPutDownSkill()
+    {
+        var manager = SkillManager.Instance;
+        var skills = (Dictionary<uint, SkillTemplate>)GetField(manager, "_skills");
+        if (!skills.TryGetValue(CargoPutDownSkillId, out var template))
+        {
+            template = new SkillTemplate
+            {
+                Id = CargoPutDownSkillId,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 100,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Self,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target
+            };
+            skills[CargoPutDownSkillId] = template;
+        }
+
+        var effect = new PutDownBackpackEffect
+        {
+            Id = 290_903,
+            BackpackDoodadId = CargoPackDoodadTemplateId
+        };
+        template.Effects =
+        [
+            new SkillEffect
+            {
+                EffectId = effect.Id,
+                Template = effect,
+                StartLevel = 1,
+                EndLevel = 55,
+                Chance = 10_000,
+                ApplicationMethod = SkillEffectApplicationMethod.SourceOnce
+            }
+        ];
+
+        var effects = (Dictionary<string, Dictionary<uint, EffectTemplate>>)GetField(manager, "_effects");
+        if (effects == null)
+        {
+            effects = [];
+            typeof(SkillManager).GetField("_effects",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .SetValue(manager, effects);
+        }
+
+        if (!effects.TryGetValue("PutDownBackpackEffect", out var effectDict))
+        {
+            effectDict = [];
+            effects["PutDownBackpackEffect"] = effectDict;
+        }
+
+        effectDict[effect.Id] = effect;
+    }
+
+    /// <summary>
+    /// Registers the cargo pack's placed-pack doodad template in the
+    /// DoodardManager so DoodadManager.Create can materialize it (the
+    /// carried-load path spawns the pack through the real factory).
+    /// Missing-only; a minimal template (no func groups → GetFuncGroupId
+    /// returns 0 → InitDoodad has no phase funcs to run).
+    /// </summary>
+    private static void SeedCargoPackDoodadTemplate()
+    {
+        SeedDoodadManager();
+        var templates = (Dictionary<uint, DoodadTemplate>)GetField(DoodadManager.Instance, "_templates");
+        if (!templates.ContainsKey(CargoPackDoodadTemplateId))
+            templates[CargoPackDoodadTemplateId] = new DoodadTemplate { Id = CargoPackDoodadTemplateId };
+    }
+
+    /// <summary>
+    /// Seeds the SlaveGameData singleton (missing-only) with the canonical
+    /// 1.2 Farm Wagon (model 1008) attach points under the rig model id —
+    /// the exact slave_attach_points.json values (points 9-12, the cart
+    /// cargo points). SlaveManager.ApplyAttachPointLocation reads this map
+    /// to snap loaded packs onto the cargo point (retail snap behavior).
+    /// </summary>
+    public static void SeedSlaveCargoSurface()
+    {
+        if (!SingletonSeeded(typeof(Singleton<SlaveGameData>)))
+        {
+            var gameData = new SlaveGameData();
+            SetField(gameData, "_attachPoints",
+                new Dictionary<uint, Dictionary<AttachPointKind, WorldSpawnPosition>>());
+            SeedSingleton(typeof(Singleton<SlaveGameData>), gameData);
+        }
+
+        var attachPoints = (Dictionary<uint, Dictionary<AttachPointKind, WorldSpawnPosition>>?)
+            GetField(SlaveGameData.Instance, "_attachPoints");
+        if (attachPoints == null)
+        {
+            attachPoints = [];
+            SetField(SlaveGameData.Instance, "_attachPoints", attachPoints);
+        }
+
+        if (!attachPoints.ContainsKey(CargoSlaveModelId))
+        {
+            attachPoints[CargoSlaveModelId] = new Dictionary<AttachPointKind, WorldSpawnPosition>
+            {
+                [AttachPointKind.Cannon0] = new WorldSpawnPosition { X = -0.55f, Y = -2.0f, Z = 1.15f },
+                [AttachPointKind.Cannon1] = new WorldSpawnPosition { X = 0.55f, Y = -2.0f, Z = 1.15f },
+                [AttachPointKind.Cannon2] = new WorldSpawnPosition { X = 0.55f, Y = -3.15f, Z = 1.15f },
+                [AttachPointKind.Cannon3] = new WorldSpawnPosition { X = -0.55f, Y = -3.15f, Z = 1.15f },
+            };
+        }
+    }
+
+    /// <summary>
+    /// Summons the rig cargo vehicle (Farm Wagon shape): a real Slave with
+    /// a template carrying the canonical pack-storage-box bindings (cargo
+    /// points 9-12), registered in the session world. The slave spawns at
+    /// the actor's position so range checks pass.
+    /// </summary>
+    public static Slave SummonCargoSlave(HeadlessSession session, GameplayActor actor,
+        uint slaveObjId, int cargoPoints = 4)
+    {
+        var template = new SlaveTemplate
+        {
+            Id = CargoSlaveTemplateId,
+            Name = "test-farm-wagon",
+            ModelId = CargoSlaveModelId,
+            Mountable = true,
+            SlaveKind = SlaveKind.Machine,
+            Level = 1,
+        };
+        for (var i = 0; i < cargoPoints; i++)
+        {
+            template.DoodadBindings.Add(new SlaveDoodadBindings
+            {
+                Id = CargoSlaveTemplateId * 100 + (uint)i,
+                OwnerId = CargoSlaveTemplateId,
+                OwnerType = "Slave",
+                AttachPointId = (AttachPointKind)((int)AttachPointKind.Cannon0 + i), // 9..12 = cart cargo points
+                DoodadId = CanonicalPackStorageBoxDoodadId,
+                Persist = false,
+                Scale = 1f,
+            });
+        }
+
+        var slave = new Slave
+        {
+            ObjId = slaveObjId,
+            TlId = (ushort)(slaveObjId & 0xFFFF),
+            Id = slaveObjId,
+            Name = "test-farm-wagon",
+            Template = template,
+            ModelId = CargoSlaveModelId,
+            Hp = 1000,
+            Mp = 100,
+            Summoner = actor.Character,
+        };
+        var pos = actor.Character.Transform.World.Position;
+        slave.Transform.Local.SetPosition(pos);
+        // Headless registry bypass (the PlacePackDoodad / CreateActor
+        // pattern): the ParentWorld setter re-enters
+        // Transform.InstanceId → WorldManager.GetWorld, and the headless
+        // world is not in the shared registry. Set the backing fields
+        // directly; Region.AddObject's InstanceId assignment then no-ops.
+        typeof(AAEmu.Game.Models.Game.World.GameObject)
+            .GetField("_parentWorld", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(slave, session.World);
+        typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
+            .GetField("_instanceId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(slave.Transform, session.World.Id);
+        session.World.AddObject(slave);
+        return slave;
     }
 
     /// <summary>

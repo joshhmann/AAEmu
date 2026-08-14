@@ -204,3 +204,12 @@ public sealed record QuestTurnInParams(uint TargetObjId, int SelectedReward);
 /// <param name="ZRot">Yaw rotation (radians) of the placed doodad.</param>
 /// <param name="Scale">Doodad scale (0 = template default).</param>
 public sealed record PlantParams(System.Numerics.Vector3 Position, float ZRot, float Scale);
+
+/// <summary>
+/// LoadPackOntoVehicle request payload — the pack source selection for the
+/// vehicle cargo load (Phase 2 prerequisite, t_a7756a00). The vehicle is
+/// addressed by the request TargetId (slave objId).
+/// </summary>
+/// <param name="PlacedPackDoodadObjId">ObjId of the standing placed-pack doodad to load;
+/// null = load the pack carried in the Backpack equipment slot.</param>
+public sealed record LoadPackOntoVehicleParams(uint? PlacedPackDoodadObjId);
