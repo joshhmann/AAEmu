@@ -147,6 +147,33 @@ public interface IGameplayActor
     ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null);
 
     /// <summary>
+    /// Harvests a mature crop through the real engine path — the same
+    /// doodad.Use(caster, harvestSkill) chain the client's harvest
+    /// interaction drives (mature phase → DoodadFuncUse → looting phase →
+    /// DoodadFuncLootPack yield → final phase → doodad deleted). The harvest
+    /// skill is resolved DATA-DRIVEN from the doodad's current phase funcs:
+    /// the phase's DoodadFuncUse whose skill leads into a loot phase is the
+    /// harvest interaction (canonical potato: mature 4457 carries func 5887 /
+    /// skill 13980 → looting 4458 carries DoodadFuncLootPack 129). No crop
+    /// ids are hardcoded in the actor.
+    ///
+    /// Validation gates: doodad resolves (Rejected(RejectedAction)), in range
+    /// (Rejected(RejectedAction)), not scheduled for despawn (the engine's own
+    /// #1443 guard), and the current phase is harvestable — a crop that is not
+    /// mature (seedling/small phases carry only watering/uproot funcs, no loot
+    /// link) is Rejected(StateTransition). After the engine call the doodad is
+    /// verified gone-or-advanced; an unchanged phase means the engine refused
+    /// (permissions/conditions) → Rejected(RejectedAction).
+    ///
+    /// Idempotency: the engine deletes the crop on the final phase, so a
+    /// fresh-key retry after success resolves no doodad and grants nothing;
+    /// same-key retries are rejected pre-flight by the ActorEffectLedger. The
+    /// yield effect is also recorded on the ledger (harvest:&lt;doodadObjId&gt;)
+    /// after it lands for correlation. Retries/timeouts cannot double-yield.
+    /// </summary>
+    ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null);
+
+    /// <summary>
     /// Drives a boarded vehicle (Slave ground vehicle or Mate mount) to an
     /// absolute world position through the client-authored vehicle movement
     /// model — the SAME engine path a client driver's CSMoveUnitPacket
@@ -517,7 +544,10 @@ public enum ActorActionType : byte
     DepositItem = 27,
 
     /// <summary>Bank withdrawal of an item stack through Inventory.SplitOrMoveItem (CSSwapItemsPacket path).</summary>
-    WithdrawItem = 28
+    WithdrawItem = 28,
+
+    /// <summary>Crop harvest through Doodad.Use(caster, harvestSkill) (real engine path, data-driven skill).</summary>
+    Harvest = 29
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

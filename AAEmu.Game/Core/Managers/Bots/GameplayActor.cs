@@ -1511,6 +1511,114 @@ public class GameplayActor : IGameplayActor
 
     #endregion
 
+    #region M5.1 harvest action (real engine path)
+
+    /// <summary>
+    /// Loot func types that mark a crop phase as harvestable: the phase's
+    /// DoodadFuncUse advances into one of these, meaning the interaction
+    /// yields items. The canonical 1.2 crop loop (potato) advances mature →
+    /// looting (DoodadFuncLootPack); the actor resolves the harvest skill
+    /// from whichever loot-producing chain the current phase leads to.
+    /// </summary>
+    private static readonly string[] LootFuncTypes =
+    [
+        "DoodadFuncLootPack",
+        "DoodadFuncLootItem",
+        "DoodadFuncHarvest",
+        "DoodadFuncCropHarvest",
+        "DoodadFuncFruitPick",
+        "DoodadFuncCerealHarvest"
+    ];
+
+    public ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Harvest, doodadObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "harvest"))
+            return request;
+
+        var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
+        if (doodad == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} not found in world");
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, doodad.Transform.World.Position, false) > MaxInteractRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} out of interaction range");
+        if (doodad.Despawn > DateTime.MinValue)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} scheduled for despawn");
+
+        // Data-driven harvestability: the crop's CURRENT phase must carry a
+        // DoodadFuncUse whose skill advances into a loot phase — that func's
+        // skill IS the harvest interaction. Immature phases (seedling/small)
+        // carry watering/uproot funcs whose next phases have no loot func, so
+        // they resolve to no harvest skill → StateTransition (not harvestable
+        // in this phase). An already-harvested crop is deleted by the final
+        // phase, so the world lookup above already failed for it.
+        if (!TryResolveHarvestSkill(doodad, out var harvestSkillId))
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"doodad {doodadObjId} not harvestable in phase {doodad.FuncGroupId} (no loot-linked interaction func)");
+
+        var phaseBefore = doodad.FuncGroupId;
+        var yieldBefore = InventoryUnitCount();
+        request.Start($"harvesting doodad {doodadObjId} (phase {phaseBefore}, skill {harvestSkillId})");
+
+        // The REAL engine path: the same doodad.Use(caster, skill) chain the
+        // client's harvest interaction drives. Inside this single call the
+        // phase machine runs the whole crop loop synchronously (proven by
+        // CropHarvestLoopTests): mature → looting (DoodadFuncLootPack grants
+        // the pack through the ordinary inventory grant path) → final →
+        // doodad deleted (plot reset). No bot-only resource creation; labor
+        // consumption, if any, happens inside the engine's own skill path.
+        doodad.Use(Character, harvestSkillId);
+
+        // Post-state verification: the crop must be gone (final phase deletes
+        // it) or at least advanced. An unchanged phase means the engine
+        // refused the interaction (permissions/conditions) — surface that as
+        // a Rejected instead of a silent no-op.
+        var after = Character.ParentWorld?.GetDoodad(doodadObjId);
+        if (after != null && after.FuncGroupId == phaseBefore)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"doodad {doodadObjId} harvest refused by engine (phase {phaseBefore} unchanged)");
+
+        var yieldDelta = InventoryUnitCount() - yieldBefore;
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("harvest", doodadObjId), request.TraceId);
+        return Complete(request, yieldDelta,
+            $"harvested doodad {doodadObjId} (phase {phaseBefore} → {(after == null ? "deleted" : after.FuncGroupId.ToString())}, yield {yieldDelta} unit(s))");
+    }
+
+    /// <summary>
+    /// Resolves the harvest interaction skill for a crop doodad from its
+    /// CURRENT phase funcs (data-driven, canonical 1.2 shape): the phase's
+    /// DoodadFuncUse whose skill advances into a loot phase. The canonical
+    /// potato chain resolves 4457 (mature) → func 5887 → skill 13980 (작물
+    /// 수확) → 4458 (looting, DoodadFuncLootPack 129). False when the phase
+    /// has no loot-linked interaction (immature/terminal states).
+    /// </summary>
+    private static bool TryResolveHarvestSkill(Doodad doodad, out uint harvestSkillId)
+    {
+        harvestSkillId = 0;
+        var funcs = DoodadManager.Instance.GetFuncsForGroup(doodad.FuncGroupId);
+        foreach (var func in funcs)
+        {
+            if (func.FuncType != "DoodadFuncUse" || func.SkillId == 0)
+                continue;
+            if (func.NextPhase <= 0)
+                continue;
+
+            var nextFuncs = DoodadManager.Instance.GetFuncsForGroup((uint)func.NextPhase);
+            if (nextFuncs.Any(f => LootFuncTypes.Contains(f.FuncType)))
+            {
+                harvestSkillId = func.SkillId;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Total item units in the actor's inventory bag (yield measurement).</summary>
+    private int InventoryUnitCount()
+        => Character.Inventory?.Bag.Items.Sum(i => i.Count) ?? 0;
+
+    #endregion
+
     #region Tick / movement
 
     private Vector3? _moveTarget;
