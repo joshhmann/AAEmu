@@ -308,17 +308,44 @@ public static class CropHarvestLoopRig
 {
     private static bool s_seeded;
 
+    /// <summary>
+    /// Seeds the real-data singleton surface for the potato crop loop.
+    ///
+    /// The singleton surface is one-shot (s_seeded); the idempotent,
+    /// ADDITIVE healers (item/doodad/skill templates, the potato chain on
+    /// the DoodadManager, house 77 on the HousingManager, the loot pack,
+    /// the ZoneManager climate dict) run on EVERY call (t_3c33557d — same
+    /// class as 5cea57dd9's SkillManager/ItemManager re-heal). Sibling rigs
+    /// that run earlier in the suite unconditionally replace or partially
+    /// seed shared singletons:
+    ///   - GameplayActorPlantActionsTests seeds a DoodadManager whose
+    ///     _templates hold TestCropDoodadId — a manager with ANY template
+    ///     was previously treated as "established" and the potato chain
+    ///     (2259) was skipped, so DoodadManager.Create(2259) returned null
+    ///     (Plant NRE) whenever the Bots family ran first;
+    ///   - GameplayActorTestRig seeds a ZoneManager with _zones/_groups but
+    ///     NO _climateElem — the climate dict must be ensured on the live
+    ///     instance or DoodadFuncGrowth NREs (livestock/crop restart tests).
+    /// The one-shot guard alone would leave every later crop-family test
+    /// dereferencing the sibling's partial surface.
+    /// </summary>
     public static void Seed()
     {
         lock (typeof(CropHarvestLoopRig))
         {
-            if (s_seeded)
-                return;
+            if (!s_seeded)
+            {
+                GameplayActorTestRig.Seed(); // base surface (missing-only)
+                SeedObjectIdManager();
+                SeedIncrementingItemIds();
 
-            GameplayActorTestRig.Seed(); // base surface (missing-only)
-            SeedObjectIdManager();
+                s_seeded = true;
+            }
+
+            // Idempotent + additive (missing-only per dict/template), so
+            // re-running after a sibling singleton swap is safe and never
+            // clobbers established data (t_4f11a519 discipline).
             SeedItemTemplates();
-            SeedIncrementingItemIds();
             SeedItemDoodadMapping();
             SeedDoodadManager();
             SeedHousingManager();
@@ -326,8 +353,6 @@ public static class CropHarvestLoopRig
             SeedSkillTemplates();
             SeedZoneManager();
             SeedPublicFarmManager();
-
-            s_seeded = true;
         }
     }
 
@@ -412,6 +437,11 @@ public static class CropHarvestLoopRig
     {
         var manager = ItemManager.Instance;
         var templates = (Dictionary<uint, ItemTemplate>)GetField(manager, "_templates");
+        if (templates == null)
+        {
+            templates = [];
+            SetField(manager, "_templates", templates);
+        }
         // Missing-only, additive: never replace templates another rig registered
         foreach (var templateId in new[] { CropHarvestLoopTests.PotatoSeedItemId, CropHarvestLoopTests.PotatoItemId, CropHarvestLoopTests.GoldenPotatoItemId })
         {
@@ -470,46 +500,131 @@ public static class CropHarvestLoopRig
 
     private static void SeedDoodadManager()
     {
-        // A bare placeholder — a DoodadManager seeded by a sibling rig
-        // WITHOUT templates (the Bots rig's lazy surface) — does not count
-        // as established: the rich chain below must win so Create() resolves
-        // this rig's templates regardless of which rig seeded first.
-        if (SingletonSeeded(typeof(Singleton<DoodadManager>)) && !IsBareDoodadManager())
-            return;
+        // A DoodadManager singleton must exist (create with the same mock
+        // deps as before when missing — never replaced once live).
+        if (!SingletonSeeded(typeof(Singleton<DoodadManager>)))
+        {
+            var objectIdManager = Mock.Of<IObjectIdManager>();
+            objectIdManager.GetNextId().Returns(0x200000u);
 
-        var objectIdManager = Mock.Of<IObjectIdManager>();
-        objectIdManager.GetNextId().Returns(0x200000u);
+            var housingManager = Mock.Of<IHousingManager>();
 
-        var housingManager = Mock.Of<IHousingManager>();
+            var manager = new DoodadManager(
+                objectIdManager.Object,
+                Mock.Of<IDoodadIdManager>().Object,
+                ItemManager.Instance,
+                new Lazy<IHousingManager>(() => housingManager.Object),
+                Mock.Of<ISusManager>().Object);
 
-        var manager = new DoodadManager(
-            objectIdManager.Object,
-            Mock.Of<IDoodadIdManager>().Object,
-            ItemManager.Instance,
-            new Lazy<IHousingManager>(() => housingManager.Object),
-            Mock.Of<ISusManager>().Object);
+            SetField(manager, "_templates", new Dictionary<uint, DoodadTemplate>());
+            SetField(manager, "_funcsByGroups", new Dictionary<uint, List<DoodadFunc>>());
+            SetField(manager, "_funcsById", new Dictionary<uint, DoodadFunc>());
+            SetField(manager, "_funcTemplates", new Dictionary<string, Dictionary<uint, DoodadFuncTemplate>>());
+            SetField(manager, "_phaseFuncs", new Dictionary<uint, List<DoodadPhaseFunc>>());
+            SetField(manager, "_phaseFuncTemplates", new Dictionary<string, Dictionary<uint, DoodadPhaseFuncTemplate>>());
 
-        SetField(manager, "_templates", BuildTemplates());
-        var (funcsByGroups, funcsById) = BuildFuncs();
-        SetField(manager, "_funcsByGroups", funcsByGroups);
-        SetField(manager, "_funcsById", funcsById);
-        SetField(manager, "_funcTemplates", BuildFuncTemplates());
-        SetField(manager, "_phaseFuncs", BuildPhaseFuncs());
-        SetField(manager, "_phaseFuncTemplates", BuildPhaseFuncTemplates());
+            SeedSingleton(typeof(Singleton<DoodadManager>), manager);
+        }
 
-        // SeedSingleton is missing-only; when a sibling rig's bare placeholder
-        // is installed, force-replace it with this rich chain.
-        var field = typeof(Singleton<DoodadManager>).GetField("s_instance",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        field?.SetValue(null, manager);
-    }
+        // ADDITIVE merge into the live manager (t_3c33557d — same class as
+        // 5cea57dd9's SkillManager/ItemManager re-heal). A sibling rig may
+        // have installed a manager whose _templates hold OTHER doodads (e.g.
+        // GameplayActorPlantActionsTests' TestCropDoodadId) — that manager
+        // is NOT "bare", so the old guard skipped the potato chain and
+        // Create(2259) returned null. Never replace an established manager;
+        // merge the missing potato rows (template + funcs + phase funcs +
+        // templates) into whatever instance is live. Null-dict harden first
+        // (a sibling's lazy surface may leave dicts null).
+        var manager2 = DoodadManager.Instance;
 
-    /// <summary>True when the seeded DoodadManager has no templates at all — a
-    /// sibling rig's bare placeholder rather than an established rich chain.</summary>
-    private static bool IsBareDoodadManager()
-    {
-        var templates = GetField(DoodadManager.Instance, "_templates") as Dictionary<uint, DoodadTemplate>;
-        return templates == null || templates.Count == 0;
+        var templates = (Dictionary<uint, DoodadTemplate>)GetField(manager2, "_templates");
+        if (templates == null)
+        {
+            templates = [];
+            SetField(manager2, "_templates", templates);
+        }
+        if (!templates.ContainsKey(CropHarvestLoopTests.PotatoDoodadId))
+            templates[CropHarvestLoopTests.PotatoDoodadId] = BuildTemplates()[CropHarvestLoopTests.PotatoDoodadId];
+
+        var funcsByGroups = (Dictionary<uint, List<DoodadFunc>>)GetField(manager2, "_funcsByGroups");
+        if (funcsByGroups == null)
+        {
+            funcsByGroups = [];
+            SetField(manager2, "_funcsByGroups", funcsByGroups);
+        }
+        var funcsById = (Dictionary<uint, DoodadFunc>)GetField(manager2, "_funcsById");
+        if (funcsById == null)
+        {
+            funcsById = [];
+            SetField(manager2, "_funcsById", funcsById);
+        }
+        var funcTemplates = (Dictionary<string, Dictionary<uint, DoodadFuncTemplate>>)GetField(manager2, "_funcTemplates");
+        if (funcTemplates == null)
+        {
+            funcTemplates = [];
+            SetField(manager2, "_funcTemplates", funcTemplates);
+        }
+        var phaseFuncs = (Dictionary<uint, List<DoodadPhaseFunc>>)GetField(manager2, "_phaseFuncs");
+        if (phaseFuncs == null)
+        {
+            phaseFuncs = [];
+            SetField(manager2, "_phaseFuncs", phaseFuncs);
+        }
+        var phaseFuncTemplates = (Dictionary<string, Dictionary<uint, DoodadPhaseFuncTemplate>>)GetField(manager2, "_phaseFuncTemplates");
+        if (phaseFuncTemplates == null)
+        {
+            phaseFuncTemplates = [];
+            SetField(manager2, "_phaseFuncTemplates", phaseFuncTemplates);
+        }
+
+        var (builtFuncsByGroups, builtFuncsById) = BuildFuncs();
+        foreach (var (groupId, funcs) in builtFuncsByGroups)
+        {
+            if (!funcsByGroups.TryGetValue(groupId, out var groupFuncs))
+            {
+                groupFuncs = [];
+                funcsByGroups[groupId] = groupFuncs;
+            }
+            foreach (var func in funcs)
+                if (groupFuncs.All(f => f.FuncKey != func.FuncKey))
+                    groupFuncs.Add(func);
+        }
+        foreach (var (key, func) in builtFuncsById)
+            funcsById.TryAdd(key, func);
+
+        foreach (var (funcType, templatesByType) in BuildFuncTemplates())
+        {
+            if (!funcTemplates.TryGetValue(funcType, out var byType))
+            {
+                byType = [];
+                funcTemplates[funcType] = byType;
+            }
+            foreach (var (funcId, template) in templatesByType)
+                byType.TryAdd(funcId, template);
+        }
+
+        foreach (var (groupId, funcs) in BuildPhaseFuncs())
+        {
+            if (!phaseFuncs.TryGetValue(groupId, out var groupFuncs))
+            {
+                groupFuncs = [];
+                phaseFuncs[groupId] = groupFuncs;
+            }
+            foreach (var func in funcs)
+                if (groupFuncs.All(f => f.FuncId != func.FuncId))
+                    groupFuncs.Add(func);
+        }
+
+        foreach (var (funcType, templatesByType) in BuildPhaseFuncTemplates())
+        {
+            if (!phaseFuncTemplates.TryGetValue(funcType, out var byType))
+            {
+                byType = [];
+                phaseFuncTemplates[funcType] = byType;
+            }
+            foreach (var (funcId, template) in templatesByType)
+                byType.TryAdd(funcId, template);
+        }
     }
 
     private static Dictionary<uint, DoodadTemplate> BuildTemplates()
@@ -637,38 +752,57 @@ public static class CropHarvestLoopRig
     /// The test house (id 77) is registered with an AlwaysPublic template —
     /// same as a freshly placed house on owned farm land — so
     /// house.AllowedToInteract(player) short-circuits to true for the owner.
-    /// Missing-only guard: never replaces a HousingManager a sibling rig
-    /// (or the placement card's rig) already established.
+    /// Missing-only per field; house 77 is ensured on the LIVE instance on
+    /// every call (t_3c33557d — a sibling rig's HousingManager without house
+    /// 77 must be healed additively, never replaced).
     /// </summary>
     private static void SeedHousingManager()
     {
-        if (SingletonSeeded(typeof(Singleton<HousingManager>)))
-            return;
-
-        var manager = new HousingManager(
-            Mock.Of<IObjectIdManager>().Object,
-            Mock.Of<IFactionManager>().Object,
-            Mock.Of<ILocalizationManager>().Object,
-            Mock.Of<IWorldManager>().Object,
-            Mock.Of<ITaskManager>().Object,
-            Mock.Of<ISkillManager>().Object,
-            Mock.Of<IHousingIdManager>().Object,
-            Mock.Of<IHousingTldManager>().Object,
-            Mock.Of<IItemManager>().Object,
-            Mock.Of<IMailManager>().Object,
-            Mock.Of<INameManager>().Object,
-            Mock.Of<IZoneManager>().Object,
-            Mock.Of<IDoodadManager>().Object,
-            Mock.Of<IUccManager>().Object);
-
-        var house = new House
+        if (!SingletonSeeded(typeof(Singleton<HousingManager>)))
         {
-            Id = 77,
-            ObjId = 0x10201,
-            Template = new HousingTemplate { AlwaysPublic = true }
-        };
-        SetField(manager, "_houses", new Dictionary<uint, House> { [house.Id] = house });
-        SeedSingleton(typeof(Singleton<HousingManager>), manager);
+            var manager = new HousingManager(
+                Mock.Of<IObjectIdManager>().Object,
+                Mock.Of<IFactionManager>().Object,
+                Mock.Of<ILocalizationManager>().Object,
+                Mock.Of<IWorldManager>().Object,
+                Mock.Of<ITaskManager>().Object,
+                Mock.Of<ISkillManager>().Object,
+                Mock.Of<IHousingIdManager>().Object,
+                Mock.Of<IHousingTldManager>().Object,
+                Mock.Of<IItemManager>().Object,
+                Mock.Of<IMailManager>().Object,
+                Mock.Of<INameManager>().Object,
+                Mock.Of<IZoneManager>().Object,
+                Mock.Of<IDoodadManager>().Object,
+                Mock.Of<IUccManager>().Object);
+
+            var house = new House
+            {
+                Id = 77,
+                ObjId = 0x10201,
+                Template = new HousingTemplate { AlwaysPublic = true }
+            };
+            SetField(manager, "_houses", new Dictionary<uint, House> { [house.Id] = house });
+            SeedSingleton(typeof(Singleton<HousingManager>), manager);
+            return;
+        }
+
+        // Already seeded by a sibling — ensure house 77 is registered on the
+        // live instance (never replace it).
+        if (GetField(HousingManager.Instance, "_houses") is not Dictionary<uint, House> houses)
+        {
+            houses = [];
+            SetField(HousingManager.Instance, "_houses", houses);
+        }
+        if (!houses.ContainsKey(77))
+        {
+            houses[77] = new House
+            {
+                Id = 77,
+                ObjId = 0x10201,
+                Template = new HousingTemplate { AlwaysPublic = true }
+            };
+        }
     }
 
     private static void SeedLootGameData()
@@ -730,16 +864,33 @@ public static class CropHarvestLoopRig
         }
     }
 
+    /// <summary>
+    /// Seeds the ZoneManager singleton so climate lookups resolve. The dict
+    /// surface is ensured on the LIVE instance on every call (t_3c33557d):
+    /// GameplayActorTestRig seeds a ZoneManager with _zones/_groups but NO
+    /// _climateElem — DoodadFuncGrowth → DoodadHasMatchingClimate →
+    /// GetClimatesByZone NREs on the null dict whenever the Bots family ran
+    /// first. Missing-only per field; never replaces an established manager.
+    /// </summary>
     private static void SeedZoneManager()
     {
-        if (SingletonSeeded(typeof(Singleton<ZoneManager>)))
+        if (!SingletonSeeded(typeof(Singleton<ZoneManager>)))
+        {
+            var zoneManager = new ZoneManager(Mock.Of<IWorldManager>().Object);
+            // Same as NpcLineOfSightTests: the zones dict is only populated by
+            // Load() — seed empty so GetZoneByKey resolves nulls instead of NRE.
+            SetField(zoneManager, "_zones", new Dictionary<uint, Zone>());
+            SetField(zoneManager, "_climateElem", new Dictionary<uint, ZoneClimateElem>());
+            SeedSingleton(typeof(Singleton<ZoneManager>), zoneManager);
             return;
-        var zoneManager = new ZoneManager(Mock.Of<IWorldManager>().Object);
-        // Same as NpcLineOfSightTests: the zones dict is only populated by
-        // Load() — seed empty so GetZoneByKey resolves nulls instead of NRE.
-        SetField(zoneManager, "_zones", new Dictionary<uint, Zone>());
-        SetField(zoneManager, "_climateElem", new Dictionary<uint, ZoneClimateElem>());
-        SeedSingleton(typeof(Singleton<ZoneManager>), zoneManager);
+        }
+
+        // Already seeded by a sibling — ensure the climate dict exists on the
+        // live instance (never replace it).
+        if (GetField(ZoneManager.Instance, "_climateElem") == null)
+            SetField(ZoneManager.Instance, "_climateElem", new Dictionary<uint, ZoneClimateElem>());
+        if (GetField(ZoneManager.Instance, "_zones") == null)
+            SetField(ZoneManager.Instance, "_zones", new Dictionary<uint, Zone>());
     }
 
     private static void SeedPublicFarmManager()

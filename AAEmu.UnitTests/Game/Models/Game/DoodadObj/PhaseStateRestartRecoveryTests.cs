@@ -507,11 +507,10 @@ public static class PhaseStateRestartRecoveryRig
     {
         lock (typeof(PhaseStateRestartRecoveryRig))
         {
-            if (s_seeded)
-                return;
-
+            // CropHarvestLoopRig.Seed() re-heals additively on EVERY call
+            // (t_3c33557d) — must not be skipped after the first test.
             CropHarvestLoopRig.Seed(); // potato + base surface (missing-only)
-            SeedDoodadManager();
+            SeedDoodadManager();       // additive TryAdd merges
 
             s_seeded = true;
         }
