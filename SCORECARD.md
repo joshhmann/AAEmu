@@ -47,6 +47,19 @@ cell; it is NEVER recorded as `H=2`. `H` stays `U` (UNKNOWN) until Josh runs
 the curated scenario. (ROADMAP M5-stand-in rule: bots prove function, never
 feel.)
 
+**Proxy vs authentic replay (2026-08-13, canonical sync t_c9f0d7f6):** the
+M3a/M4 `A`-dimension grades above rest on scripted-actor PROXY evidence
+(M3a: in-memory rig, reflection, GM inventory, direct service calls; M4
+integrated rig: direct zone/transform assignment, manual cargo attach). Those
+rigs are **superseded for authentic acceptance — NOT erased** (historical
+evidence preserved in ROADMAP's M4 EXIT RECORD + deferred-gate table) — by
+the bot-backtrack Phase-2 replay (root t_b4f455b0, scope t_2625be99) through
+M5.1 contract actions on a real server: no direct Transform/ZoneId/GM/
+reflection/DB shortcuts; labor (−60/pack) + mail payout (124540/pack,
+SpecialtyManager) conservation required; process-level restart suites re-run
+as-is. **Grades are not inflated:** proxy evidence stays labeled, and `H`
+stays `U` (UNKNOWN) until Josh tests feel (human packet t_2b654349).
+
 ### Global mechanic ledger
 
 This is the prioritized inventory, not a claim that manager presence means the

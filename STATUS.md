@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-12 18:20 PDT · by Nei (t_773f9651; bot-backtrack reconcile t_4ec066d3)
-Branch of record: develop @ 761d1e81a (ls-remote verified 2026-08-12 18:00 PT)
+Updated: 2026-08-13 19:05 PDT · by Nei (t_c9f0d7f6 — canonical sync: M5.1 salvage + Phase 2 vehicle/Housing scope + backtrack truth)
+Branch of record: develop @ 983b35736 (ls-remote verified 2026-08-13 19:00 PT)
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
@@ -77,16 +77,40 @@ slave cargo → 3-leg route → sell, 2× 124540 mails); restart E2E kill -9 PAS
 M4 economic/navigation replay = explicit deferred gate)**. Human playtest of
 the integrated release remains the deployment-lane follow-up pending Josh GO.
 
-**M5 — Gameplay Actor Contract: 🔶 A1 + B1 COMPLETE on develop — B2 + exit tests open**
+**M5 — Gameplay Actor Contract: 🔶 A1 + B1 COMPLETE — M5.1: Plant/PackPickup/PutDown/Buy-Sell + control-plane/MCP/consumer DONE; salvage wave + Phase-2 prerequisites + M5.2 Housing.Build OPEN (2026-08-13)**
 A1 (marshal bot steps onto the game loop — the M6-exit-blocking retroactive
 fix) + B1 core action surface (Interact · Loot · UseItem · Mount/Dismount ·
 AcceptQuest · TurnInQuest, each through real engine paths) merged to fork
-develop @ **761d1e81a** (ls-remote joshhmann/AAEmu develop verified
-2026-08-12 18:00 PT; Rei gates t_d06d8dd9 / t_ebfc9b35 done). Remaining:
-B2 (M5.1 economic actions), threading-boundary verification, M5 core exit
-test. Control-plane API t_7b6d7a4b running (Tai) — contract-backed surface
-replacing BotDriveBridge (token auth, enqueue-only, no-admin, crash
-isolation); MCP sidecar t_446228b5 + first consumer t_52b2b084 queued.
+develop @ 761d1e81a (Rei gates t_d06d8dd9 / t_ebfc9b35; merged-tree re-verify
+1850/0/1 via Phase 3 t_9340e85d). **M5.1 economic extension — Kimi+Codex-
+verified recovery plan (memo m51-backtrack-recovery-memo-2026-08-13.md,
+canonical sync t_c9f0d7f6):**
+- **DONE (merged to develop):** Plant (t_b1d7c430 — continuation; supersedes
+  t_a69e4998, blocked "do not redispatch") · PackPickup/PutDown (t_64ecf525,
+  Rei gate t_9ca4aa07) · Buy/Sell (t_8741b03d) · control-plane API
+  (t_7b6d7a4b, Rei gate t_29d2273b) · MCP sidecar (t_446228b5, Rei gate
+  t_b5467288) · first consumer — scripted Lane D auction-house scenario
+  (t_52b2b084, Rei gate t_0e01ef42).
+- **SALVAGE WAVE (serial merge; work preserved in kanban workspaces, do NOT
+  re-implement):** ① Deposit/Withdraw t_78ce17a2 (blocked — rebase, drop
+  out-of-scope livestock flake change, renumber 22-25, keep-or-split
+  EconomyDrive extras) ② Harvest t_234da01a (todo) ③ BoardVehicle
+  t_15343fdd (todo) ④ Craft split: rig repair t_6b5ac43e (todo) +
+  implementation t_cffb71ad (todo). All 4 diffs renumber on rebase (enum
+  tail 15-18 vs develop 15-21); never wave >2 builders at the shared tree.
+- **Phase-2 prerequisites (genuine, previously in no card's scope):**
+  LoadPackOntoVehicle t_a7756a00 (blocked) + DriveVehicle t_eaf1754d
+  (blocked) — both must land before Phase 2 can run its vehicle leg.
+- **Housing.Build = M5.2 contract card t_94761d55 (running)** — Josh-approved
+  Phase-2 scope (marker t_2625be99); **implementation OPEN** (not merged).
+- **BACKTRACK:** Phase 1 t_61a0eebb **BLOCKED/open** — live evidence is
+  min-slice only (1 quest); full-route live replay not yet evidenced
+  (follow-up t_15787275 todo). Phase 2 root t_b4f455b0 todo (M3a/M4 economic
+  replay; parent re-pointed t_a69e4998 → t_b1d7c430). Human test packet
+  t_2b654349 todo (Rei).
+- **H = UNKNOWN** — proxy/bot-functional evidence only; H stays U until Josh
+  tests feel. Remaining: threading-boundary verification, M5 core exit test,
+  salvage merges, vehicle prerequisites, M5.2 Housing.Build.
 
 **M6 exit blockers (soak limitations):** regression t_eecc5604 (physics-warning
 budget 0.03/min vs 0 in 6h soak) · PlayerBotScheduler NOT enabled in the soak
@@ -146,10 +170,10 @@ skips at the milestone gate.
 
 | Lane | Sister | Current work | Status |
 |------|--------|--------------|--------|
-| Builds | Tai | M4 prod image 6d5a07cf49a5 live (t_442f3016); control-plane API t_7b6d7a4b running — contract-backed surface replacing BotDriveBridge | 🔶 running |
+| Builds | Tai | M4 prod image 6d5a07cf49a5 live (t_442f3016); M5.1 salvage wave next (Deposit/Withdraw t_78ce17a2 → Harvest → BoardVehicle → Craft split); M5.2 Housing.Build t_94761d55 running | 🔶 running |
 | Verifies | Rei | M4 gate PASS t_abe87eaf; M5 gates t_d06d8dd9 / t_ebfc9b35 done | ✅ done |
 | Dispatches | Mai | M4 deploy to CT 133 + prod startup verification (t_442f3016) | ✅ done |
-| Tracks | Nei | 08-12 (t_773f9651): M4/M5 rows + branch-of-record 761d1e81a (ls-remote verified); SLO window relabel sidecar/shadow baseline (hermes-ops f31f829/8a0fb09) | ✅ this card |
+| Tracks | Nei | 08-13 (t_c9f0d7f6): M5.1 recovery sync — salvage order + Phase-2 prereqs + Housing.Build scope mirrored across ROADMAP/STATUS/SCORECARD/progression-board/wiki; branch of record 983b35736 (ls-remote verified) | ✅ this card |
 
 ## Open tasks (kanban, AAEmu lane)
 
@@ -161,9 +185,9 @@ skips at the milestone gate.
 | t_555ed207 | Fix: adopt-heal force-stamps demo blob — looks collapse to 1 on reboot | tai | 🔶 blocked — fix pushed cdf6d4a62, awaiting Rei gate |
 | t_f198bb0e | M1-5d: harness extension — 14 unsupported act families (T3 SKIPs) | hx-coder | ⏳ ready |
 | t_913c1d4a | verifier stale stub-registry false positives (CheckGuard/ItemGroup — the 3 WARNs) | hx-coder | ⏳ ready |
-| t_7b6d7a4b | Control plane API: contract-backed surface (replaces BotDriveBridge) — token auth, enqueue-only, no-admin, crash isolation | tai | 🔶 running |
-| t_446228b5 | MCP sidecar: contract action tools (observe/move/interact/accept_quest/...) | tai | ⏳ ready |
-| t_52b2b084 | First consumer: scripted Lane D auction-house scenario via contract API | tai | ⏳ ready |
+| t_7b6d7a4b | Control plane API: contract-backed surface (replaces BotDriveBridge) — token auth, enqueue-only, no-admin, crash isolation | tai | ✅ done — Rei gate t_29d2273b ACCEPT (17 /api/act endpoints verified); merged |
+| t_446228b5 | MCP sidecar: contract action tools (observe/move/interact/accept_quest/...) | tai | ✅ done — Rei gate t_b5467288 (tool mapping, live end-to-end, crash isolation) |
+| t_52b2b084 | First consumer: scripted Lane D auction-house scenario via contract API | tai | ✅ done — Rei gate t_0e01ef42 (Lane D no-Josh loop proof); density-25 PASS w/ trace_records (983b35736) |
 | t_5999b370 | AAEMU authority envelope: draft + validate + Josh decision packet | nei | 🔶 running (draft done, pending Josh approval) |
 | t_bcf976ad | Wiki M0/M1 update — implement wiki-audit.md proposals | hx-researcher | blocked |
 | — | feat/quest-scenario-harness (6e367585: T3 census + runnability.md + SCORECARD M1-5 entry) merge to develop | Tai | ⏳ no card yet |
@@ -175,6 +199,16 @@ skips at the milestone gate.
 
 ## Last scorecard update
 
+- 2026-08-13 — **canonical sync (t_c9f0d7f6)**: M5.1 recovery plan recorded —
+  Kimi memo + Codex reconciliation (salvage order Deposit/Withdraw → Harvest →
+  BoardVehicle → Craft split with card ids; work preserved, no
+  re-implementation); LoadPackOntoVehicle (t_a7756a00) + DriveVehicle
+  (t_eaf1754d) recorded as genuine Phase-2 prerequisites; Housing.Build =
+  M5.2 contract card t_94761d55 in Josh-approved Phase-2 scope (impl open);
+  Phase 1 t_61a0eebb stays open (min-slice evidence only; follow-up
+  t_15787275); control-plane API / MCP sidecar / first consumer marked DONE
+  (were queued); branch of record → 983b35736 (ls-remote verified); H stays
+  UNKNOWN everywhere.
 - 2026-08-12 — **bot-backtrack Phase 0.2 reconciliation (t_4ec066d3)**: M3a/M4
   H grades corrected — scripted-actor evidence is proxy/bot-functional, H =
   UNKNOWN until Josh runs it; SCORECARD H dimension = actual player only
