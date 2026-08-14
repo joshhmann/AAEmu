@@ -75,6 +75,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null)
         => Actor.Dismount(mateObjId, idempotencyKey);
 
+    public ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null)
+        => Actor.Harvest(doodadObjId, idempotencyKey);
+
     public ActorRequest PackPickup(uint doodadObjId, string? idempotencyKey = null)
         => Actor.PackPickup(doodadObjId, idempotencyKey);
 
