@@ -4,12 +4,14 @@ using System.Numerics;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Containers;
@@ -1059,6 +1061,120 @@ public class GameplayActor : IGameplayActor
         _ledger.RecordEffect(ActorIdempotency.EffectKey("plant", doodadId, seedItemTemplateId.ToString()), request.TraceId);
         return Complete(request, doodad.ObjId,
             $"planted doodad {doodad.ObjId} (template {doodadId}) from seed {seedItemTemplateId}");
+    }
+
+    public ActorRequest BuildHouse(uint designId, uint designItemTemplateId, Vector3 position, float zRot = 0f, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.HouseBuild, designId,
+            payload: new HouseBuildParams(position, zRot), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "build house"))
+            return request;
+
+        if (!position.IsFinite())
+            return Reject(request, ActorFailureReason.RejectedAction, "build position must be finite");
+
+        // 1. The design item must be in the actor's own bag (the same
+        //    resolution the client's housing UI performs before it sends
+        //    CSCreateHousePacket with the item's instance id).
+        var inventory = Character.Inventory;
+        if (inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        inventory.Bag.GetAllItemsByTemplate(designItemTemplateId, -1, out var designItems, out _);
+        var designItem = designItems.FirstOrDefault();
+        if (designItem == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"design item {designItemTemplateId} not found in inventory");
+
+        // 2. The design id must resolve to a canonical housing template
+        //    (HousingManager.Build's GetTemplate is silently
+        //    null-tolerant — the validator would reject, but the actor
+        //    refuses pre-flight with a taxonomy reason instead of an
+        //    unobservable engine no-op).
+        var houseTemplate = HousingGameData.Instance.GetTemplate(designId);
+        if (houseTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"unknown house design {designId}");
+
+        // 3. Connection gate — the real Build path is connection-mediated
+        //    (the CSCreateHousePacket handler's connection; every engine
+        //    refusal is an error packet on it). Headless characters
+        //    without a network connection get Rejected (the same rule as
+        //    Mount).
+        var connection = Character.Connection;
+        if (connection == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                "no game connection (the house-build path is connection-mediated)");
+
+        // 4. Tax gate pre-flight — mirror the packet's tax branch exactly
+        //    (HousingManager.Build): the engine checks affordability and
+        //    refuses SILENTLY via an error packet, so the actor computes
+        //    the same numbers through the engine's own
+        //    CalculateBuildingTaxInfo and refuses with a taxonomy reason
+        //    before the engine call. Nothing is consumed pre-flight.
+        HousingManager.Instance.CalculateBuildingTaxInfo(Character.AccountId, houseTemplate, true,
+            out var totalTaxAmountDue, out _, out _, out _, out _);
+        if (FeaturesManager.Fsets?.Check(Models.Game.Features.Feature.taxItem) == true)
+        {
+            var userTaxCount = inventory.GetItemsCount(SlotType.Inventory, Item.TaxCertificate);
+            var userBoundTaxCount = inventory.GetItemsCount(SlotType.Inventory, Item.BoundTaxCertificate);
+            var totalCertsCost = (int)Math.Ceiling(totalTaxAmountDue / 10000f);
+            if (totalCertsCost > userTaxCount + userBoundTaxCount)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"not enough tax certificates ({totalCertsCost} required)");
+        }
+        else if (totalTaxAmountDue > Character.Money)
+        {
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"not enough money for the house tax ({totalTaxAmountDue} required)");
+        }
+
+        request.Start($"building house design {designId} (design item {designItem.Id}) at {position}");
+
+        // 5. THE real engine path — the same HousingManager.Build call the
+        //    CSCreateHousePacket handler makes. The engine enforces the
+        //    canonical placement rules (land zone / faction / category /
+        //    houseless-only / overlap via HousingPlacementValidator, then
+        //    the polygon layer), charges the tax, consumes the design
+        //    item, creates the house in construction state and registers
+        //    it. No bot-side placement, no direct DB, no Transform/ZoneId
+        //    shortcut.
+        var housesBefore = HousingManager.Instance.GetAllHouses();
+        try
+        {
+            HousingManager.Instance.Build(connection, designId,
+                position.X, position.Y, position.Z, zRot,
+                designItem.Id, 0, 0, false);
+        }
+        catch (Exception ex)
+        {
+            // Execution began and the engine threw. The placement may or
+            // may not have been applied — the outcome is ambiguous, so
+            // Interrupted locks the idempotency key (the same rule as
+            // Plant's persistence boundary; a same-key retry is refused
+            // pre-flight and the design item is never consumed twice).
+            return Interrupt(request,
+                $"building house {designId} failed inside the engine: {ex.Message}");
+        }
+
+        // 6. Post-state verification: the engine signals refusals via
+        //    error packets (invisible headless), so the applied-effect
+        //    proof is a NEW house registered under the actor (absent from
+        //    the pre-call snapshot). No new house → the engine rejected
+        //    the placement at one of its gates.
+        var newHouse = HousingManager.Instance.GetAllHouses()
+            .FirstOrDefault(h => h.OwnerId == Character.Id && housesBefore.All(b => b.Id != h.Id));
+        if (newHouse == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                "engine refused the house placement (zone/category/overlap/ownership/tax gate)");
+
+        // 7. Record the applied effect (house registered from the design)
+        //    for M8 audit correlation. The request-level key dedupe is the
+        //    PRIMARY retry guard; the engine-true design-item consumption
+        //    is the backstop (a new-key retry finds no design item).
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("housebuild", designId, designItemTemplateId.ToString()), request.TraceId);
+        return Complete(request, newHouse.Id,
+            $"built house {newHouse.Id} (design {designId}) at {position} — construction step {newHouse.CurrentStep}");
     }
 
     #endregion
