@@ -21,6 +21,7 @@ using AAEmu.Game.Models.Game.CommonFarm;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
@@ -39,6 +40,7 @@ using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Templates;
+using AAEmu.Game.Models.Game.Slaves;
 using AAEmu.Game.Models.Game.Team;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
@@ -604,6 +606,64 @@ public static class GameplayActorTestRig
     /// <summary>Moves the character to a known start position via the ordinary Transform.</summary>
     public static void SetPosition(GameplayActor actor, Vector3 position)
         => actor.Character.Transform.Local.SetPosition(position);
+
+    // ------------------------------------------------------------------ vehicle drive rig
+
+    /// <summary>Default test ground vehicle (Slave) objId for the DriveVehicle rig.</summary>
+    public const uint SlaveObjId = 0x3001;
+
+    /// <summary>
+    /// Summons a test ground vehicle (Slave): a real Slave object registered
+    /// in the session world (object + base-unit + slave registries), owned by
+    /// the actor, at the given position. Mirrors the M4 integrated-session
+    /// rig's group-cart shape (mountable SlaveTemplate).
+    /// </summary>
+    public static uint SummonSlave(HeadlessSession session, GameplayActor actor, uint slaveObjId = SlaveObjId, Vector3 position = default)
+    {
+        var slave = new Slave
+        {
+            ObjId = slaveObjId,
+            TlId = (ushort)(slaveObjId & 0xFFFF),
+            Id = slaveObjId,
+            Name = "test-cart",
+            Template = new SlaveTemplate
+            {
+                Id = 15,
+                Name = "test-cart",
+                ModelId = 129,
+                Mountable = true,
+                SlaveKind = SlaveKind.Boat,
+                PortalTime = 0f,
+                Level = 1
+            },
+            Hp = 1000,
+            Mp = 100,
+            Summoner = actor.Character
+        };
+        slave.Transform.Local.SetPosition(position);
+        // Same instance-id bypass as CreateActor: the headless world is not
+        // in the shared WorldManager registry, so the public InstanceId
+        // setter would NRE — pre-set the backing fields instead (the
+        // _parentWorld backing field avoids the InstanceId side effect of
+        // the ParentWorld setter).
+        typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
+            .GetField("_instanceId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(slave.Transform, session.World.Id);
+        typeof(AAEmu.Game.Models.Game.World.GameObject)
+            .GetField("_parentWorld", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(slave, session.World);
+        session.World.AddObject(slave);
+        return slave.ObjId;
+    }
+
+    /// <summary>
+    /// Puts the actor into the DRIVER seat of a test slave through the REAL
+    /// engine path — SlaveManager.BindSlave, the exact call CSBindSlavePacket
+    /// and the AttachTo effect use (driver-lock + seat-occupied checks run).
+    /// The slave must exist in the session world first (SummonSlave).
+    /// </summary>
+    public static void BindSlaveDriver(HeadlessSession session, GameplayActor actor, uint slaveObjId)
+        => session.World.SlaveManager.BindSlave(actor.Character, slaveObjId, AttachPointKind.Driver, AttachUnitReason.NewMaster);
 
     // ------------------------------------------------------------------ B1 rig
 

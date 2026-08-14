@@ -147,6 +147,31 @@ public interface IGameplayActor
     ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null);
 
     /// <summary>
+    /// Drives a boarded vehicle (Slave ground vehicle or Mate mount) to an
+    /// absolute world position through the client-authored vehicle movement
+    /// model — the SAME engine path a client driver's CSMoveUnitPacket
+    /// executes (driver attach + position apply + SCOneUnitMovementPacket
+    /// broadcast + FinalizeTransform via VehicleMovementModel). The vehicle
+    /// Transform is NEVER assigned by the actor: every leg is applied through
+    /// the shared model, so observers see real movement broadcasts and
+    /// passengers/packs follow the vehicle.
+    ///
+    /// Preconditions (pre-flight, engine never re-entered without them):
+    ///  - the objId resolves to a Slave or Mate in the actor's world —
+    ///    otherwise Rejected(RejectedAction, "vehicle not found"),
+    ///  - the actor occupies the DRIVER seat (Slave.AttachedCharacters[Driver]
+    ///    / Mate.Passengers[Driver]) — otherwise
+    ///    Rejected(StateTransition, "not in driver seat"),
+    ///  - speed positive and destination finite.
+    ///
+    /// Completes on arrival (ArrivalRadius 0.5f); TimedOut(Navigation) when
+    /// the budget expires. Composes with BoardVehicle (driver seat) and
+    /// LoadPackOntoVehicle (cargo) for the Phase 2 farm → craft → pack →
+    /// drive → unload → sell route.
+    /// </summary>
+    ActorRequest DriveVehicle(uint vehicleObjId, Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null);
+
+    /// <summary>
     /// Picks up a placed trade pack through the real engine path
     /// (RecoverItem.Execute — the exact call CSLootOpenBagPacket makes for
     /// pack-style pickup with the generic world recover skill 11361).
@@ -408,7 +433,13 @@ public enum ActorActionType : byte
     Plant = 21,
 
     /// <summary>House construction through HousingManager.Build (CSCreateHousePacket path).</summary>
-    HouseBuild = 22
+    HouseBuild = 22,
+
+    /// <summary>
+    /// Vehicle driving through the client-authored vehicle movement model
+    /// (VehicleMovementModel — the CSMoveUnitPacket path).
+    /// </summary>
+    Drive = 23
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

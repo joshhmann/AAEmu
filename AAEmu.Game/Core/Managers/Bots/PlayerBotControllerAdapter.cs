@@ -50,6 +50,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
         => Actor.MoveToUnit(targetObjId, speed, timeout, idempotencyKey);
 
+    public ActorRequest DriveVehicle(uint vehicleObjId, System.Numerics.Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+        => Actor.DriveVehicle(vehicleObjId, destination, speed, timeout, idempotencyKey);
+
     public ActorRequest Stop() => Actor.Stop();
 
     public ActorRequest SetTarget(uint targetObjId) => Actor.SetTarget(targetObjId);

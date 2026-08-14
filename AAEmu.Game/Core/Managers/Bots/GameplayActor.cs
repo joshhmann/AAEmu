@@ -20,6 +20,7 @@ using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.Units.Movements;
 using AAEmu.Game.Models.Game.World.Interactions;
 using AAEmu.Game.Utils;
 
@@ -567,6 +568,45 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.RejectedAction, "dismount did not take effect");
 
         return Complete(request, true, $"dismounted mate {mate.ObjId}");
+    }
+
+    public ActorRequest DriveVehicle(uint vehicleObjId, Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Drive, vehicleObjId, destination, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "drive"))
+            return request;
+
+        if (speed <= 0f)
+            return Reject(request, ActorFailureReason.RejectedAction, "speed must be positive");
+        if (!destination.IsFinite())
+            return Reject(request, ActorFailureReason.RejectedAction, "destination must be finite");
+
+        // 1. The target must resolve to a driveable vehicle (Slave ground
+        //    vehicle or Mate mount) in the actor's world.
+        var vehicle = Character.ParentWorld?.GetBaseUnit(vehicleObjId);
+        if (vehicle is not (Slave or Mate))
+            return Reject(request, ActorFailureReason.RejectedAction, $"vehicle {vehicleObjId} not found in world");
+
+        // 2. Driver-seat preflight — the engine is never re-entered without
+        //    the seat, so a retry cannot start a second drive.
+        var inDriverSeat = vehicle switch
+        {
+            Slave slave => slave.AttachedCharacters.TryGetValue(AttachPointKind.Driver, out var driver) && driver == Character,
+            Mate mate => mate.Passengers.TryGetValue(AttachPointKind.Driver, out var seat) && seat._objId == Character.ObjId,
+            _ => false
+        };
+        if (!inDriverSeat)
+            return Reject(request, ActorFailureReason.StateTransition, $"not in driver seat of vehicle {vehicleObjId}");
+
+        if (MathUtil.CalculateDistance(vehicle.Transform.World.Position, destination, false) <= ArrivalRadius
+            && Math.Abs(vehicle.Transform.World.Position.Z - destination.Z) <= ArrivalRadius)
+            return Complete(request, "already at destination");
+
+        _driveTarget = destination;
+        _driveSpeed = speed;
+        _driveVehicle = vehicle;
+        request.Start($"driving vehicle {vehicle.ObjId} ({vehicle.Name})");
+        return request;
     }
 
     /// <summary>
@@ -1183,6 +1223,9 @@ public class GameplayActor : IGameplayActor
 
     private Vector3? _moveTarget;
     private float _moveSpeed;
+    private Vector3? _driveTarget;
+    private float _driveSpeed;
+    private BaseUnit? _driveVehicle;
 
     public void Tick(TimeSpan elapsed)
     {
@@ -1192,13 +1235,13 @@ public class GameplayActor : IGameplayActor
         request.AddElapsed(elapsed);
 
         // Timeout enforcement on EVERY action that carries a budget — not
-        // just movement. The §17 reason maps per action kind (Move →
+        // just movement. The §17 reason maps per action kind (Move/Drive →
         // Navigation; everything else → Starvation, budget exhaustion).
         if (request.Timeout is { } budget && request.Elapsed > budget)
         {
             Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action),
-                request.Action == ActorActionType.Move ? "navigation budget exceeded" : "action budget exceeded"));
-            _moveTarget = null;
+                request.Action is ActorActionType.Move or ActorActionType.Drive ? "navigation budget exceeded" : "action budget exceeded"));
+            ClearMovementState();
             return;
         }
 
@@ -1230,6 +1273,43 @@ public class GameplayActor : IGameplayActor
                 var zStep = Math.Min(step, zDistance);
                 ApplyPosition(new Vector3(position.X, position.Y, position.Z + dir * zStep));
             }
+            return;
+        }
+
+        if (request.Action == ActorActionType.Drive && _driveVehicle is { } vehicle && _driveTarget is { } driveDestination)
+        {
+            var position = vehicle.Transform.World.Position;
+            var flatDistance = MathUtil.CalculateDistance(position, driveDestination, false);
+            var zDistance = Math.Abs(driveDestination.Z - position.Z);
+
+            if (flatDistance <= ArrivalRadius && zDistance <= ArrivalRadius)
+            {
+                Finish(request, request.Complete(detail: "arrived"));
+                ClearDriveState();
+                return;
+            }
+
+            var step = Math.Min(_driveSpeed * (float)Math.Max(elapsed.TotalSeconds, 0.05), flatDistance);
+            Vector3 next;
+            if (flatDistance > 0.0001f)
+            {
+                var angle = (float)MathUtil.CalculateAngleFrom(position, driveDestination).DegToRad();
+                var (newX, newY) = MathUtil.AddDistanceToFront(step, position.X, position.Y, angle);
+                var fraction = step / flatDistance;
+                next = new Vector3(newX, newY, position.Z + (driveDestination.Z - position.Z) * fraction);
+            }
+            else
+            {
+                var dir = driveDestination.Z >= position.Z ? 1f : -1f;
+                next = new Vector3(position.X, position.Y, position.Z + dir * Math.Min(step, zDistance));
+            }
+
+            // Player-equivalent drive: every leg is applied through the
+            // client-authored vehicle movement model (the CSMoveUnitPacket
+            // engine path) — position set + SCOneUnitMovementPacket
+            // broadcast + FinalizeTransform. The vehicle Transform is never
+            // assigned directly here.
+            ApplyVehicleMove(vehicle, next);
         }
     }
 
@@ -1239,6 +1319,42 @@ public class GameplayActor : IGameplayActor
         var angle = (float)MathUtil.CalculateAngleFrom(transform.World.Position, next);
         transform.Local.SetRotationDegree(0f, 0f, angle - 90);
         transform.Local.SetPosition(next);
+    }
+
+    /// <summary>
+    /// Applies one drive leg through the shared client-authored movement
+    /// model. Slave ground vehicles move via VehicleMoveType (rotation
+    /// shorts + velocity), Mates via UnitMoveType — the exact payloads a
+    /// client driver/rider would send, applied by the SAME engine path
+    /// CSMoveUnitPacket executes.
+    /// </summary>
+    private void ApplyVehicleMove(BaseUnit vehicle, Vector3 next)
+    {
+        var from = vehicle.Transform.World.Position;
+        var angle = (float)MathUtil.CalculateAngleFrom(from, next);
+        switch (vehicle)
+        {
+            case Slave slave:
+                VehicleMovementModel.ApplySlaveMove(Character, slave,
+                    VehicleMovementModel.BuildVehicleMove(next, (angle - 90).DegToRad(), _driveSpeed));
+                break;
+            case Mate mate:
+                VehicleMovementModel.ApplyUnitMove(Character, mate,
+                    VehicleMovementModel.BuildUnitMove(next, angle.DegToRad(), _driveSpeed));
+                break;
+        }
+    }
+
+    private void ClearMovementState()
+    {
+        _moveTarget = null;
+        ClearDriveState();
+    }
+
+    private void ClearDriveState()
+    {
+        _driveTarget = null;
+        _driveVehicle = null;
     }
 
     #endregion
@@ -1295,7 +1411,7 @@ public class GameplayActor : IGameplayActor
         {
             Finish(request, request.Interrupt(detail));
         }
-        _moveTarget = null;
+        ClearMovementState();
     }
 
     private ActorRequest Complete(ActorRequest request, string detail)
@@ -1378,5 +1494,5 @@ internal static class VectorMath
 public static class ActorTimeoutPolicy
 {
     public static ActorFailureReason ReasonFor(ActorActionType action)
-        => action == ActorActionType.Move ? ActorFailureReason.Navigation : ActorFailureReason.Starvation;
+        => action is ActorActionType.Move or ActorActionType.Drive ? ActorFailureReason.Navigation : ActorFailureReason.Starvation;
 }
