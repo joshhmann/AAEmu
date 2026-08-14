@@ -19,6 +19,7 @@ using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.CommonFarm;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
+using AAEmu.Game.Models.Game.Crafts;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
@@ -33,6 +34,7 @@ using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.Mails;
 using AAEmu.Game.Models.Game.Merchant;
+using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Templates;
@@ -579,6 +581,7 @@ public static class GameplayActorTestRig
         // session does not.
         character.Skills = new CharacterSkills(character);
         character.Actability = new CharacterActability(character);
+        character.Craft ??= new CharacterCraft(character);
         // BuyBackItems is created by Character.Load() (line 2615); the
         // headless fixture path never runs Load, and the M5.1 Sell engine
         // path (CSSellItemsPacket branch) moves the sold item into it.
@@ -2250,6 +2253,178 @@ public static class GameplayActorTestRig
         if (field == null)
             throw new InvalidOperationException($"Cannot locate HousingManager field '{name}'");
         field.SetValue(target, value);
+    }
+
+    // ---------------------------------------------------------- Craft rig (M5.1)
+
+    /// <summary>Test craft id of the Craft contract rig (2× material → 1× product).</summary>
+    public const uint CraftTestCraftId = 90_501;
+
+    /// <summary>Material template of the rig craft (amount 2 per step).</summary>
+    public const uint CraftMaterialTemplateId = 91_201;
+
+    /// <summary>Product template of the rig craft (1 per step, rate 100 → deterministic grant).</summary>
+    public const uint CraftProductTemplateId = 91_202;
+
+    /// <summary>Craft skill of the rig craft (Doodad target, labor 10, instant cast, no effects).</summary>
+    public const uint CraftTestSkillId = 90_502;
+
+    /// <summary>Bench doodad template of the rig craft (the recipe's req_doodad_id).</summary>
+    public const uint CraftBenchTemplateId = 91_301;
+
+    /// <summary>A different bench template — wrong for the rig recipe (template-mismatch tests).</summary>
+    public const uint CraftWrongBenchTemplateId = 91_302;
+
+    /// <summary>
+    /// Seeds the craft engine surface (missing-only, additive): CraftManager
+    /// singleton + the rig recipe, the craft skill template, material/product
+    /// item templates, the CraftStart world-interaction group (CraftEffect
+    /// resolves it), and the ModelManager surface Character.GetDistanceTo
+    /// reads in the engine's craft range gate.
+    ///
+    /// NOTE: NO DoodadManager template mutation here — the shared singleton
+    /// may be the crop rig's rich chain (potato templates) or the Bots bare
+    /// placeholder, and either must keep its state exactly as found: adding
+    /// bench templates to a bare manager would make it look "established" to
+    /// the crop rig's IsBareDoodadManager() guard, which then skips its rich
+    /// re-seed and NREs Plant() (the shared _templates must stay count==0 OR
+    /// carry the crop rig's ids). The bench is spawned as a plain Doodad
+    /// instance (M4 cargo-doodad shape) — CraftEffect only needs the world
+    /// target, never the bench's template entry. The bare singleton itself IS
+    /// seeded when missing (SeedDoodadManager) because the skill cast path
+    /// (Doodad.OnSkillHit) dereferences DoodadManager.Instance even with no
+    /// func groups.
+    /// </summary>
+    public static void SeedCraftSurface()
+    {
+        // Character.ChangeLabor (negative) reads World.ExpRate — the real
+        // config surface is null headless (M4 exit-session rig lesson).
+        AppConfiguration.Instance.World ??= new WorldConfig();
+
+        if (!SingletonSeeded(typeof(Singleton<CraftManager>)))
+        {
+            var craftManager = new CraftManager();
+            SetField(craftManager, "_crafts", new Dictionary<uint, Craft>());
+            SeedSingleton(typeof(Singleton<CraftManager>), craftManager);
+        }
+
+        var crafts = (Dictionary<uint, Craft>)GetField(CraftManager.Instance, "_crafts");
+        if (!crafts.ContainsKey(CraftTestCraftId))
+        {
+            crafts[CraftTestCraftId] = new Craft
+            {
+                Id = CraftTestCraftId,
+                SkillId = CraftTestSkillId,
+                ReqDoodadId = CraftBenchTemplateId,
+                ActabilityLimit = 0,
+                CraftMaterials = [new CraftMaterial { ItemId = CraftMaterialTemplateId, Amount = 2 }],
+                CraftProducts = [new CraftProduct { ItemId = CraftProductTemplateId, Amount = 1, Rate = 100 }]
+            };
+        }
+
+        var manager = SkillManager.Instance;
+        var skills = (Dictionary<uint, SkillTemplate>)GetField(manager, "_skills");
+        if (!skills.ContainsKey(CraftTestSkillId))
+        {
+            skills[CraftTestSkillId] = new SkillTemplate
+            {
+                Id = CraftTestSkillId,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 100,
+                ConsumeLaborPower = 10,
+                ActabilityGroupId = 0,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Doodad,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target
+            };
+        }
+
+        SeedItemTemplate(CraftMaterialTemplateId);
+        SeedItemTemplate(CraftProductTemplateId);
+
+        var groups = (Dictionary<uint, WorldInteractionGroup>?)GetField(WorldManager.Instance, "_worldInteractionGroups");
+        if (groups == null)
+        {
+            groups = [];
+            SetField(WorldManager.Instance, "_worldInteractionGroups", groups);
+        }
+        groups[(uint)WorldInteractionType.CraftStart] = WorldInteractionGroup.Craft;
+
+        // DoodadManager singleton, BARE (missing-only, never replace): the
+        // skill cast path (Doodad.OnSkillHit → DoodadManager.Instance)
+        // dereferences the singleton even when the bench has no func groups.
+        // Seed only the empty dictionaries — NEVER templates (the crop rig's
+        // IsBareDoodadManager guard requires _templates to stay count==0 OR
+        // carry the crop rig's ids, so a bench template here would make the
+        // crop rig skip its rich re-seed and NRE Plant()).
+        SeedDoodadManager();
+
+        // ModelManager (empty tables) — Character.GetDistanceTo (the engine
+        // craft range gate) resolves actor-model radius through it; empty
+        // tables resolve to 0 radius. Missing-only.
+        if (!SingletonSeeded(typeof(Singleton<ModelManager>)))
+        {
+            var modelManager = new ModelManager();
+            SetField(modelManager, "_models", new Dictionary<string, Dictionary<uint, Model>>());
+            SetField(modelManager, "_modelTypes", new Dictionary<uint, ModelType>());
+            SeedSingleton(typeof(Singleton<ModelManager>), modelManager);
+        }
+    }
+
+    /// <summary>Unique ObjId source for rig benches (collides with no sibling rig's ids).</summary>
+    private static uint _nextBenchObjId = 0x300100;
+
+    /// <summary>
+    /// Spawns a crafting bench 1 m in front of the actor as a plain Doodad
+    /// instance (M4 cargo-doodad shape) — NOT DoodadManager.Create, because
+    /// Create() resolves the bench template through the shared singleton's
+    /// _templates and would force this rig to mutate it (breaking the crop
+    /// rig's IsBareDoodadManager guard — see SeedCraftSurface). The engine
+    /// craft chain (CharacterCraft.Craft → cast → CraftEffect → EndCraft)
+    /// only ever reads the bench as a world target by ObjId; the template
+    /// entry is not dereferenced. No world-registry dance is needed — the
+    /// headless world is already the character's ParentWorld.
+    ///
+    /// t_0fc3a550 NRE lesson: assign Transform FIRST, then ParentWorld. The
+    /// ParentWorld setter writes Transform.InstanceId, whose setter resolves
+    /// ParentWorld through WorldManager.Instance.GetWorld — the headless
+    /// world is not (or no longer) in the shared registry, so a null world
+    /// would be written back and NRE on the recursion. CloneDetached already
+    /// carries the actor's world id (InstanceId == world.Id), so the
+    /// InstanceId write short-circuits (value == _instanceId → no-op) and
+    /// the registry is never touched — same bypass pattern as CreateActor.
+    /// </summary>
+    public static uint SpawnCraftBench(HeadlessSession session, GameplayActor actor, uint benchTemplateId = CraftBenchTemplateId)
+    {
+        SeedCraftSurface();
+        var world = session.World;
+        var bench = new Doodad
+        {
+            ObjId = _nextBenchObjId++,
+            TemplateId = benchTemplateId
+        };
+        // Transform FIRST, then ParentWorld (t_0fc3a550 NRE lesson).
+        bench.Transform = actor.Character.Transform.CloneDetached(bench);
+        bench.ParentWorld = world;
+        bench.Transform.Local.SetPosition(actor.Character.Transform.World.Position + new Vector3(1f, 0f, 0f));
+        world.AddObject(bench);
+        return bench.ObjId;
+    }
+
+    /// <summary>
+    /// Drives the engine-side completion of one in-flight craft step — the
+    /// same CraftEffect.Apply → EndCraft chain the skill pipeline runs after
+    /// a cast (M4 exit-session rig precedent). Call AFTER the actor has
+    /// started the craft (CharacterCraft.Craft accepted the step).
+    /// </summary>
+    public static void CompleteCraftStep(GameplayActor actor, uint benchObjId)
+    {
+        var bench = actor.Character.ParentWorld?.GetDoodad(benchObjId);
+        var effect = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart };
+        effect.Apply(actor.Character, null, bench, null,
+            new CastSkill(CraftTestSkillId, 0), new EffectSource(), null, DateTime.UtcNow);
     }
 }
 
