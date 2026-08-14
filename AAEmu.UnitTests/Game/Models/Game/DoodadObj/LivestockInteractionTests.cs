@@ -391,13 +391,12 @@ public static class LivestockInteractionRig
     {
         lock (typeof(LivestockInteractionRig))
         {
-            if (s_seeded)
-                return;
-
+            // CropHarvestLoopRig.Seed() re-heals additively on EVERY call
+            // (t_3c33557d) — must not be skipped after the first test.
             CropHarvestLoopRig.Seed(); // base surface (missing-only)
             SeedItemTemplates();
             SeedLootPacks();
-            SeedDoodadManager();
+            SeedDoodadManager();       // additive TryAdd merges
 
             s_seeded = true;
         }
