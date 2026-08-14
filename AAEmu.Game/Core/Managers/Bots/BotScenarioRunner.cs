@@ -144,6 +144,9 @@ public static class BotScenarioRunner
         if (template.Name == M1M2ReplayScenario.ScenarioName)
             return M1M2ReplayScenario.Run(character, world);
 
+        if (template.Name == M1M2ReplayScenario.MinSliceScenarioName)
+            return M1M2ReplayScenario.RunMinSlice(character, world);
+
         var rigNotes = new List<string>();
         var actor = new GameplayActor(character);
         var controller = new PlayerBotController(character);

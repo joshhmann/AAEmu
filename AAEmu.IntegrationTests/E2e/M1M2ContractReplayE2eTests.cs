@@ -1,21 +1,26 @@
 using System.Text.Json;
 
+using AAEmu.Game.Core.Managers.Bots;
+
 using Xunit;
 
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// BACKTRACK Phase 1 (t_61a0eebb) — the M1 route + M2 baseline contract
-/// replay run headless against the REAL stack via the bridge `scenario` cmd
-/// (the same channel the gate harness uses for template stages): zero human
-/// in the loop. The server provisions a real bot (production
-/// HeadlessSession path) and drives the curated Solzreed golden route (16
-/// quests through the first-mount chain) through IGameplayActor CONTRACT
-/// ACTIONS ONLY (accept_quest/advance_quest/use_item/turn_in_quest/
-/// auto_turn_in/mount), asserting completion, item conservation and
-/// lifecycle correctness from the audit trace records. This test asserts
-/// the verdict and writes the machine-readable report + trace evidence into
-/// the workspace + E2E logs.
+/// BACKTRACK Phase 1 (t_61a0eebb) — MINIMUM SLICE (Aya narrow-scope
+/// directive): the M1 action + M2 action contract replay run headless
+/// against the REAL stack via the bridge `scenario` cmd (the same channel
+/// the gate harness uses for template stages): zero human in the loop.
+/// The server provisions a real bot (production HeadlessSession path) and
+/// drives ONE canonical M1 action (quest 251 full spine:
+/// accept_quest → advance_quest → turn_in_quest at the real NPC) + ONE
+/// canonical M2 action (mount segment: use first Lilyut horse item →
+/// mount → dismount) through IGameplayActor CONTRACT ACTIONS ONLY,
+/// asserting completion + lifecycle correctness from the audit trace
+/// records and bot-side observation deltas (position/quest state before
+/// and after). This test asserts the verdict and writes the
+/// machine-readable report + trace evidence into the workspace + E2E
+/// logs.
 ///
 /// H stays UNKNOWN: this is proxy/bot-functional evidence — Josh's feel
 /// verdicts are never derived from scripted actors.
@@ -23,7 +28,7 @@ namespace AAEmu.IntegrationTests.E2e;
 [Collection("e2e")]
 public class M1M2ContractReplayE2eTests
 {
-    private const string TemplateName = "m1m2-replay";
+    private const string TemplateName = M1M2ReplayScenario.MinSliceScenarioName;
     private const string ReplayBotName = "m1m2replay";
 
     private static string EvidenceDir => Path.Combine(

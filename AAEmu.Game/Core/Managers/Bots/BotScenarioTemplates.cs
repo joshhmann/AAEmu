@@ -246,6 +246,31 @@ public static class BotScenarioTemplates
     };
 
     /// <summary>
+    /// BACKTRACK Phase 1 (t_61a0eebb) — MINIMUM SLICE template (Aya's
+    /// narrow-scope directive): ONE canonical M1 action (quest 251 full
+    /// spine) + ONE M2 action (mount segment) through the control-plane
+    /// API end-to-end, with request/response traces + bot-side observation
+    /// deltas as the evidence packet. Same dispatch pattern as the full
+    /// replay; the runner routes this name to
+    /// <see cref="M1M2ReplayScenario.RunMinSlice"/>.
+    /// </summary>
+    public static BotScenarioTemplate M1M2MinSlice { get; } = new()
+    {
+        Name = M1M2ReplayScenario.MinSliceScenarioName,
+        Description = "BACKTRACK Phase 1 min slice: one canonical M1 action (quest 251 accept→advance→turn-in) + one M2 action (mount segment) through the control-plane API, with trace + observation evidence; H stays UNKNOWN.",
+        Race = Race.Nuian,
+        Gender = Gender.Male,
+        Level = 6,
+        Drive = new QuestDriveSpec
+        {
+            QuestId = 0,
+            AcceptorType = nameof(QuestAcceptorType.Npc),
+            AcceptorId = 0,
+            Stages = []
+        }
+    };
+
+    /// <summary>
     /// The library — templates by name.
     /// </summary>
     public static IReadOnlyDictionary<string, BotScenarioTemplate> Library { get; } =
@@ -255,7 +280,8 @@ public static class BotScenarioTemplates
             [AbilityPrerequisiteGate.Name] = AbilityPrerequisiteGate,
             [Cat34DailyCycle.Name] = Cat34DailyCycle,
             [AuctionHouseConservation.Name] = AuctionHouseConservation,
-            [M1M2Replay.Name] = M1M2Replay
+            [M1M2Replay.Name] = M1M2Replay,
+            [M1M2MinSlice.Name] = M1M2MinSlice
         };
 
     public static BotScenarioTemplate? Get(string name)

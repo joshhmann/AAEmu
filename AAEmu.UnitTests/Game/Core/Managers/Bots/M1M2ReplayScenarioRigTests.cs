@@ -230,6 +230,40 @@ public class M1M2ReplayScenarioRigTests
         await Assert.That(rejectedRunning.Count, "no Rejected record may carry a Running transition (except the documented GCD-retry CooldownTime refusal)").IsEqualTo(0);
     }
 
+    /// <summary>
+    /// The MINIMUM SLICE (Aya narrow-scope directive, t_61a0eebb): the
+    /// canonical M1 action (quest 251 full spine) + canonical M2 action
+    /// (mount segment) complete through contract actions on the fixture
+    /// rig, with the observation-delta criterion green. This is the
+    /// live-world E2E gate's unit twin — the exact scenario the E2E test
+    /// dispatches (m1m2-min-slice).
+    /// </summary>
+    [Test]
+    public async Task M1M2MinSlice_OneM1Action_OneM2Action_Complete()
+    {
+        SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m1m2rig3");
+        session.Character.Level = 6;
+
+        var result = BotScenarioRunner.Run(
+            BotScenarioTemplates.M1M2MinSlice, session.Character, new FixtureWorldAdapter(session));
+
+        AppendEvidence(result);
+
+        await Assert.That(result.Passed, "min-slice replay FAILED:\n" + result.Evidence()).IsTrue();
+        await Assert.That(result.Template, "min-slice must run under its own template name").IsEqualTo(M1M2ReplayScenario.MinSliceScenarioName);
+        await Assert.That(result.ActorRequests, "min-slice must produce contract-action trace records").IsGreaterThan(0);
+
+        var failed = result.Criteria.Where(c => !c.Passed).Select(c => c.Name + ": " + c.Detail).ToList();
+        await Assert.That(failed, "all min-slice criteria must pass: " + string.Join("; ", failed)).IsEmpty();
+
+        // The M1 criterion must be the quest-251 completion (the canonical
+        // M1 exit spine reduced to one quest).
+        var m1 = result.Criteria.FirstOrDefault(c => c.Name == "m1-quest-251-completed");
+        await Assert.That(m1, "min-slice must carry the m1-quest-251-completed criterion").IsNotNull();
+        await Assert.That(m1!.Passed, "quest 251 must complete through the contract spine").IsTrue();
+    }
+
     private static bool s_evidenceInitialized;
     private static readonly object s_evidenceLock = new();
 
