@@ -167,6 +167,38 @@ public class GameplayActorHouseBuildActionsTests
         await Assert.That(record.StateChanges.Last().StartsWith("Completed")).IsTrue();
     }
 
+    // ========================================== ParentWorld regression — world NOT in WorldManager
+
+    [Test]
+    public async Task BuildHouse_OnWorldNotRegisteredInWorldManager_StillCompletes_SpawnsWithCharacterParentWorld()
+    {
+        // Finding B (t_ebf36737): the upstream ParentWorld null-spawn bug
+        // was masked by the registered-world rig — Create()'s
+        // Transform.InstanceId assignment resolves ParentWorld via
+        // WorldManager.GetWorld, so a REGISTERED world hides the missing
+        // engine assignment. On an UNREGISTERED world GetWorld returns
+        // null and only the engine's own assignment
+        // (house.ParentWorld = connection.ActiveChar.ParentWorld) keeps
+        // GameObject.Spawn from throwing. Pre-fix this test fails with
+        // Interrupted ("failed inside the engine: Tried to spawn a object
+        // without a owning parent world").
+        var (actor, session) = CreateActorOnUnregisteredWorld("m52-house-unreg");
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestDesignItemTemplateId, 2);
+
+        var request = actor.BuildHouse(GameplayActorTestRig.TestHouseDesignId,
+            GameplayActorTestRig.TestDesignItemTemplateId, TestPosition);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        var newHouse = FindHouse(actor.Character.Id);
+        await Assert.That(newHouse).IsNotNull();
+        // The engine assigned the character's parent world — Spawn ran
+        // against a real world instance, not a null.
+        await Assert.That(newHouse.ParentWorld).IsNotNull();
+        await Assert.That(newHouse.ParentWorld).IsEqualTo(session.World);
+        await Assert.That(newHouse.TemplateId).IsEqualTo(GameplayActorTestRig.TestHouseDesignId);
+        await Assert.That(BagCount(actor, GameplayActorTestRig.TestDesignItemTemplateId)).IsEqualTo(1);
+    }
+
     // ================================================================ canonical rules — engine gates
 
     [Test]
@@ -416,6 +448,38 @@ public class GameplayActorHouseBuildActionsTests
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
         RigWorld(session);
+        GameplayActorTestRig.WireHouseZone(session, SolzreedZoneKey, new Zone
+        {
+            Id = SolzreedZoneId,
+            Name = "w_solzreed_1",
+            FactionId = SolzreedFaction
+        });
+        GameplayActorTestRig.AttachConnection(actor);
+        return (actor, session);
+    }
+
+    /// <summary>
+    /// Same rig as <see cref="CreateActor"/> EXCEPT the session world is
+    /// NOT registered in WorldManager._worlds. Finding B regression
+    /// (t_ebf36737): the pre-fix HousingManager.Build spawned the house
+    /// with a null ParentWorld — GameObject.Spawn throws without it — and
+    /// the registered-world rig masked it, because Create()'s
+    /// Transform.InstanceId assignment resolves ParentWorld through
+    /// WorldManager.GetWorld. Only an unregistered world exercises the
+    /// engine's own assignment (house.ParentWorld =
+    /// connection.ActiveChar.ParentWorld), so this is the fail-before
+    /// shape that would have caught the upstream bug.
+    /// </summary>
+    private static (GameplayActor Actor, HeadlessSession Session) CreateActorOnUnregisteredWorld(string name)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        // World id uniqueness + transform sync + spawn surface, but NO
+        // _worlds.TryAdd — GetWorld(instanceId) must resolve null.
+        typeof(WorldInstance).GetField("<Id>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(session.World, s_nextWorldId++);
+        session.World.SpawnManager ??= new SpawnManager(session.World);
+        typeof(Transform).GetField("_instanceId", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(session.Character.Transform, session.World.Id);
         GameplayActorTestRig.WireHouseZone(session, SolzreedZoneKey, new Zone
         {
             Id = SolzreedZoneId,

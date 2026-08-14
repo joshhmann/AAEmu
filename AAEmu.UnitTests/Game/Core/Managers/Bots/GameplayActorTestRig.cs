@@ -1968,8 +1968,13 @@ public static class GameplayActorTestRig
             // null, both OnZoneChange zone-group ids read 0, and the
             // method early-returns (loading real zones WITHOUT groups
             // would NRE deeper in OnZoneChange's buff branch).
+            // _climateElem must also be seeded: GetClimatesByZone /
+            // DoodadHasMatchingClimate iterate it (doodad growth paths),
+            // and once this singleton is seeded the SingletonSeeded guard
+            // blocks other rigs (e.g. CropHarvestLoopRig) from repairing it.
             SetField(zoneManager, "_zones", new Dictionary<uint, Zone>());
             SetField(zoneManager, "_groups", new Dictionary<uint, ZoneGroup>());
+            SetField(zoneManager, "_climateElem", new Dictionary<uint, ZoneClimateElem>());
             SeedSingleton(typeof(Singleton<ZoneManager>), zoneManager);
         }
         if (GetField(HousingManager.Instance, "_houses") is not Dictionary<uint, House>)
