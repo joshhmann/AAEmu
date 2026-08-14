@@ -191,11 +191,14 @@ public static class M1M2ReplayScenario
             var lifecycle = AssertTraceCompleteness(traceRecords, out var lifecycleDetail);
             criteria.Add(new BotScenarioRunner.CriterionVerdict("lifecycle-trace-complete", lifecycle, lifecycleDetail));
 
-            var mountPassed = DriveMountSegment(actor, character, rigNotes, stages, traceRecords);
+            var mountOutcome = DriveMountSegment(actor, character, rigNotes, stages, traceRecords);
             criteria.Add(new BotScenarioRunner.CriterionVerdict(
-                "m2-mount-segment", mountPassed,
-                mountPassed ? "M2 mount segment: first mount used and mounted (or engine did not materialize a mate headless — see rig note)"
-                            : "M2 mount segment FAILED"));
+                "m2-mount-segment", mountOutcome == MountOutcome.Mounted,
+                mountOutcome == MountOutcome.Mounted
+                    ? "M2 mount segment: REAL mount executed (first mount used → mate mounted → dismounted)"
+                    : mountOutcome == MountOutcome.NoMateMaterialized
+                        ? "M2 mount segment: NO REAL MOUNT — engine did not materialize an owned active mate headless (declared limitation; item use Completed, summon path is client-visual)"
+                        : "M2 mount segment FAILED (see rig notes)"));
 
             return new BotScenarioRunner.ScenarioRunResult
             {
@@ -316,13 +319,19 @@ public static class M1M2ReplayScenario
             // item-use path → summon skill), then mount/dismount if the
             // engine materialized an owned active mate headless. The horse
             // item is provisioned through the normal items path (the same
-            // stock surface the route's quest 4295 uses).
+            // stock surface the route's quest 4295 uses). The criterion is
+            // DISCRIMINATED (kimi memo item 2): it passes only on a real
+            // mount chain; a headless no-mate situation is recorded as a
+            // declared limitation, never as a pass claiming a mount.
             controller.StockInventory(FirstMountItemId, 1);
-            var mountPassed = DriveMountSegment(actor, character, rigNotes, stages, traceRecords);
+            var mountOutcome = DriveMountSegment(actor, character, rigNotes, stages, traceRecords);
             criteria.Add(new BotScenarioRunner.CriterionVerdict(
-                "m2-mount-segment", mountPassed,
-                mountPassed ? "M2 mount segment: horse item used + mount chain executed (or engine did not materialize a mate headless — see rig note)"
-                            : "M2 mount segment FAILED"));
+                "m2-mount-segment", mountOutcome == MountOutcome.Mounted,
+                mountOutcome == MountOutcome.Mounted
+                    ? "M2 mount segment: REAL mount executed (item 8159 used → mate mounted → dismounted, all Completed)"
+                    : mountOutcome == MountOutcome.NoMateMaterialized
+                        ? "M2 mount segment: NO REAL MOUNT — engine did not materialize an owned active mate headless (declared limitation; item use Completed, summon path is client-visual)"
+                        : "M2 mount segment FAILED (see rig notes)"));
 
             var obsAfterM2 = actor.Observe();
             traceRecords.Add(actor.AuditTrace.Last());
@@ -574,14 +583,24 @@ public static class M1M2ReplayScenario
     }
 
     /// <summary>
-    /// M2 "unlock mount" segment: after the mount chain, use the first
-    /// Lilyut horse item (real item-use path — the item's summon skill) and,
-    /// if the engine materializes an owned active mate headless, mount and
-    /// dismount it through the contract actions. The mount unlock itself is
-    /// proven by quest 4295 (FIRST MOUNTS = the gathered horse items); the
+    /// M2 "unlock mount" segment outcome — kimi memo (2026-08-13) item 2:
+    /// the mount criterion must NOT soft-pass claiming a mount when none
+    /// occurred. Outcomes are discriminated: a real mount chain
+    /// (use → mount → dismount all Completed), a declared headless
+    /// limitation (item used but the engine materialized no owned active
+    /// mate — summon path is client-visual), or a genuine failure.
+    /// </summary>
+    private enum MountOutcome { Mounted, NoMateMaterialized, Failed }
+
+    /// <summary>
+    /// M2 "unlock mount" segment: use the first Lilyut horse item (real
+    /// item-use path — the item's summon skill) and, if the engine
+    /// materializes an owned active mate headless, mount and dismount it
+    /// through the contract actions. The mount unlock itself is proven by
+    /// quest 4295 (FIRST MOUNTS = the gathered horse items); the
     /// mate-materialization step is recorded honestly either way.
     /// </summary>
-    private static bool DriveMountSegment(
+    private static MountOutcome DriveMountSegment(
         GameplayActor actor, Character character, List<string> rigNotes,
         List<BotScenarioRunner.ScenarioStageVerdict> stages,
         List<ActorAuditRecord> traceRecords)
@@ -591,7 +610,7 @@ public static class M1M2ReplayScenario
         if (use.State != ActorLifecycleState.Completed)
         {
             rigNotes.Add($"mount segment: use_item {FirstMountItemId} {use.State} — {use.Detail}");
-            return true; // item-use evidence recorded; unlock already proven by 4295
+            return MountOutcome.Failed; // item-use evidence recorded; unlock already proven by 4295
         }
         stages.Add(Stage("MOUNT:ITEM", FirstMountItemId, use));
 
@@ -599,7 +618,7 @@ public static class M1M2ReplayScenario
         if (mates.Count == 0)
         {
             rigNotes.Add("mount segment: horse item used; engine did not materialize an owned active mate headless (no mate to mount — summon path is client-visual; unlock proven by quest 4295)");
-            return true;
+            return MountOutcome.NoMateMaterialized;
         }
 
         var mate = mates[0];
@@ -609,13 +628,13 @@ public static class M1M2ReplayScenario
         if (mount.State != ActorLifecycleState.Completed)
         {
             rigNotes.Add($"mount segment: mount refused — {mount.Detail}");
-            return false;
+            return MountOutcome.Failed;
         }
 
         var dismount = actor.Dismount();
         traceRecords.Add(actor.AuditTrace.Last());
         stages.Add(Stage("MOUNT:DISMOUNT", mate.ObjId, dismount));
-        return dismount.State == ActorLifecycleState.Completed;
+        return dismount.State == ActorLifecycleState.Completed ? MountOutcome.Mounted : MountOutcome.Failed;
     }
 
     private static BotScenarioRunner.ScenarioStageVerdict Stage(string name, uint target, ActorRequest request)
