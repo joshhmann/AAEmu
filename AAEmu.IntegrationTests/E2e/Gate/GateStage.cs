@@ -87,7 +87,7 @@ public static class GateStages
         RequireH2 = false,
         WindowMinutes = 3,
         QuestSubset = 16, // full golden route
-        ScenarioTemplates = ["level22-gate", "ability-gate", "cat34-daily", "ah-conservation"],
+        ScenarioTemplates = ["level22-gate", "ability-gate", "cat34-daily", "ah-conservation", "m1m2-replay"],
         Budgets = new GateBudgets()
     };
 
@@ -99,7 +99,7 @@ public static class GateStages
         RequireH2 = true,
         WindowMinutes = 3,
         QuestSubset = 4, // stability focus — correctness is stage 10's job
-        ScenarioTemplates = ["level22-gate", "ability-gate", "cat34-daily", "ah-conservation"],
+        ScenarioTemplates = ["level22-gate", "ability-gate", "cat34-daily", "ah-conservation", "m1m2-replay"],
         Budgets = new GateBudgets()
     };
 
@@ -133,7 +133,7 @@ public static class GateStages
         RequireH2 = true,
         SoakMinutes = 360,
         QuestSubset = 2, // light activity — the window is the test
-        ScenarioTemplates = ["level22-gate", "ability-gate", "cat34-daily", "ah-conservation"],
+        ScenarioTemplates = ["level22-gate", "ability-gate", "cat34-daily", "ah-conservation", "m1m2-replay"],
         Budgets = new GateBudgets()
     };
 }

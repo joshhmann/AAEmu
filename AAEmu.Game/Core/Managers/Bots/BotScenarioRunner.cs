@@ -88,7 +88,10 @@ public static class BotScenarioRunner
         /// drives leave this empty; fleet scenarios (ah-conservation) fill
         /// it so the E2E writer can emit trace evidence directly from the
         /// bridge response (evidence hygiene t_6e2725b5: no worker-side
-        /// transcription of the deterministic evidence block).
+        /// transcription of the deterministic evidence block). Also the
+        /// machine-readable replay evidence for scenario-family drives
+        /// (AuctionHouseScenario, M1M2ReplayScenario); empty for classic
+        /// single-quest templates.
         /// </summary>
         public List<ActorAuditRecord> TraceRecords { get; init; } = [];
 
@@ -137,6 +140,17 @@ public static class BotScenarioRunner
         // The quest machinery below is never entered for it.
         if (template.Name == AuctionHouseScenario.ScenarioName)
             return AuctionHouseScenario.Run(character);
+
+        // BACKTRACK Phase 1 (t_61a0eebb) — the M1/M2 contract replay: the
+        // curated golden route driven headless through contract actions
+        // only. Dispatched before the single-quest machinery (the replay
+        // drives 16 quests and needs the world adapter for real NPC
+        // turn-in resolution).
+        if (template.Name == M1M2ReplayScenario.ScenarioName)
+            return M1M2ReplayScenario.Run(character, world);
+
+        if (template.Name == M1M2ReplayScenario.MinSliceScenarioName)
+            return M1M2ReplayScenario.RunMinSlice(character, world);
 
         var rigNotes = new List<string>();
         var actor = new GameplayActor(character);
