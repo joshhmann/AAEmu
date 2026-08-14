@@ -101,16 +101,23 @@ canonical sync t_c9f0d7f6):**
 - **Phase-2 prerequisites (genuine, previously in no card's scope):**
   LoadPackOntoVehicle t_a7756a00 (blocked) + DriveVehicle t_eaf1754d
   (blocked) — both must land before Phase 2 can run its vehicle leg.
+  **DONE 2026-08-14 — merged @ 6c2429ae0 + 6edbf0cbb (Rei gates
+  t_aca50468 / t_bc74fd29 ACCEPT).**
 - **Housing.Build = M5.2 contract card t_94761d55 (running)** — Josh-approved
   Phase-2 scope (marker t_2625be99); **implementation OPEN** (not merged).
+  **DONE 2026-08-14 — merged @ 3396d9ef1 (Rei gate t_ebf36737 ACCEPT).**
+  Phase-2 replay scope (marker t_2625be99) now sequences **Housing.Build
+  FIRST, before farm/storage**, then craft → pack → load/drive vehicle →
+  unload → sell → reward.
 - **BACKTRACK:** Phase 1 t_61a0eebb **BLOCKED/open** — live evidence is
   min-slice only (1 quest); full-route live replay not yet evidenced
-  (follow-up t_15787275 todo). Phase 2 root t_b4f455b0 todo (M3a/M4 economic
-  replay; parent re-pointed t_a69e4998 → t_b1d7c430). Human test packet
-  t_2b654349 todo (Rei).
+  (follow-up t_15787275 todo). Phase 2 root t_b4f455b0 **dispatched
+  2026-08-14** (M3a/M4 economic replay; parent re-pointed t_a69e4998 →
+  t_b1d7c430; all Phase-2 prerequisites merged per scope marker t_2625be99).
+  Human test packet t_2b654349 todo (Rei).
 - **H = UNKNOWN** — proxy/bot-functional evidence only; H stays U until Josh
   tests feel. Remaining: threading-boundary verification, M5 core exit test,
-  salvage merges, vehicle prerequisites, M5.2 Housing.Build.
+  Phase-2 live replay (t_b4f455b0) evidence.
 
 **M6 exit blockers (soak limitations):** regression t_eecc5604 (physics-warning
 budget 0.03/min vs 0 in 6h soak) · PlayerBotScheduler NOT enabled in the soak

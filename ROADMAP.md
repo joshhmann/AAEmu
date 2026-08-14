@@ -578,15 +578,27 @@ re-implement.**
     packs only to housing; nothing re-parents a placed pack to a slave (the
     old M4 rig hand-attached: M4ExitIntegratedSessionTests.cs:328). Retail
     1.2 snaps put-down-near-vehicle to cargo points.
+    **DONE 2026-08-14 — merged to develop @ 6c2429ae0 (Rei gate t_aca50468
+    ACCEPT):** real gameplay path PackVehicleService →
+    SlaveManager.AttachDoodadAtPoint (retail snap-to-cargo-point via
+    ApplyAttachPointLocation); capacity from slave_doodad_bindings.
   - **DriveVehicle — t_eaf1754d (blocked):** contract MoveTo is
     character-walking only; vehicle movement is client-authoritative
     (CSMoveUnitPacket/VehicleMoveType). BoardVehicle = boarding only — needs
     a drive action or move-when-boarded semantics.
+    **DONE 2026-08-14 — merged to develop @ 6edbf0cbb (Rei gate t_bc74fd29
+    ACCEPT):** DriveVehicle(uint objId, Vector3 dest, float speed, timeout,
+    idempotencyKey) through client-authored VehicleMovementModel
+    (CSMoveUnitPacket path); no Transform assignment.
 - **Housing.Build — t_94761d55 (running):** a separate **M5.2 contract card**,
   included in the current Josh-approved Phase-2 scope (marker t_2625be99).
   Inclusion is approved; **implementation remains OPEN** (card running, not
   merged; deferred gate #3 lists only farming actions — HousingManager.Build
   has no contract action until this card lands).
+  **DONE 2026-08-14 — merged to develop @ 3396d9ef1 (Rei gate t_ebf36737
+  ACCEPT):** BuildHouse over the REAL HousingManager.Build engine path
+  (exact CSCreateHousePacket handler call). Scope inclusion stands — the
+  Phase-2 replay now sequences Housing.Build BEFORE farm/storage.
 - **H stays UNKNOWN** everywhere — no bot/scripted evidence is H=2 (human
   packet t_2b654349, Rei).
 
@@ -769,8 +781,8 @@ proves feel. Replayed via normal gameplay services + auditable traces
 |---|---|---|---|
 | 1 | **M1 human route** (Solzreed walk, Open Decision #1) | Automated + restart evidence CLOSED M1; human verdict OPEN | Phase 1: golden route replayed through the M5 actor contract (real request lifecycle, normal services, machine-readable traces); Josh's feel verdict batched with other gates |
 | 2 | **Original M2 human baseline** (two players, no GM repair) | Amended census/reset scope COMPLETE (G1 2026-08-10); human baseline open | Phase 1: contract-level replay of the curated route from reproducible reset; Josh's two-player baseline remains Josh-owned (bots may stand in for the AUTOMATED baseline only — never H=2) |
-| 3 | **M3a contract replay** (housing/farming through contract actions) | M3a closed on scripted-actor proxy evidence (in-memory actors, reflection, GM inventory, direct service calls — predates A1/B1) | Phase 2: replay via M5.1 contract actions (Plant/Harvest/Craft/PackPickup/PutDown) + **Housing.Build (M5.2 contract card t_94761d55, Josh-approved Phase-2 scope, implementation open)** on a real server, real engine paths, no direct DB/reflection/GM repair |
-| 4 | **M4 economic/navigation replay** (farm → craft → pack → load → navigate → unload → sell → reward) | M4 closed on M4ExitIntegratedSessionTests (4 scripted actors; integrated rig assigns zones/transforms directly, manually attaches cargo) | Phase 2: replay via M5.1 contract actions incl. **LoadPackOntoVehicle (t_a7756a00) + DriveVehicle (t_eaf1754d) — genuine Phase-2 prerequisites**; navigation/travel from normal movement/vehicle controls — direct Transform/ZoneId assignment FAILS the gate; **labor (−60/pack) + mail payout (124540/pack, SpecialtyManager) conservation required**; preserve + rerun process-level restart E2Es (M4_2TradePackRestart, M4Vehicles); Rei verifies traces + conservation |
+| 3 | **M3a contract replay** (housing/farming through contract actions) | M3a closed on scripted-actor proxy evidence (in-memory actors, reflection, GM inventory, direct service calls — predates A1/B1) | Phase 2: replay via M5.1/M5.2 contract actions on a real server, real engine paths, no direct DB/reflection/GM repair — **sequenced route: Housing.Build FIRST (BuildHouse contract, M5.2 t_94761d55, merged @ 3396d9ef1), then farm/storage (Plant/Harvest), then craft → pack → load/drive vehicle → unload → sell → reward**; labor + mail payout conservation (−60/pack, 124540/pack SpecialtyManager); machine-readable traces; process-level restart evidence (M4_2TradePackRestart / M4Vehicles / M3bExitPersistence re-run as-is); H stays UNKNOWN (proxy/bot-functional, never H=2) |
+| 4 | **M4 economic/navigation replay** (farm → craft → pack → load → navigate → unload → sell → reward) | M4 closed on M4ExitIntegratedSessionTests (4 scripted actors; integrated rig assigns zones/transforms directly, manually attaches cargo) | Phase 2: replay via M5.1 contract actions incl. **LoadPackOntoVehicle (t_a7756a00, merged @ 6c2429ae0) + DriveVehicle (t_eaf1754d, merged @ 6edbf0cbb) — both prerequisites DONE 2026-08-14**; route = craft → pack → load/drive vehicle → unload → sell → reward (Housing.Build precedes per gate #3); navigation/travel from normal movement/vehicle controls — direct Transform/ZoneId assignment FAILS the gate; **labor (−60/pack) + mail payout (124540/pack, SpecialtyManager) conservation required**; preserve + rerun process-level restart E2Es (M4_2TradePackRestart, M4Vehicles); Rei verifies traces + conservation |
 | 5 | **M6 B4 restart scenario** (bot identity/inventory/position/schedule survive restart) | 6h soak PASSED under revised approved budgets; A1 landed after soak; B4 metadata store not yet built | Phase 3: A1/B1 verified on merged develop; B4 metadata persistence implemented; bot-world restart test (2 checkpoints); soak verdict stays "passed revised approved budgets" |
 
 **Deferred-gate execution (2026-08-12, Phase 3 t_9340e85d):** gate #5 (M6 B4
@@ -817,6 +829,19 @@ Kimi independent engineering memo `m51-backtrack-recovery-memo-2026-08-13.md`
   t_a69e4998 is blocked "do not redispatch" — the dependency re-points to
   t_b1d7c430 (done); the vehicle leg additionally depends on the new
   prerequisites t_a7756a00 (LoadPackOntoVehicle) + t_eaf1754d (DriveVehicle).
+  **Scope LOCKED 2026-08-14 (marker t_2625be99 — all prerequisites now
+  MERGED):** Housing.Build t_94761d55 @ 3396d9ef1 · LoadPackOntoVehicle
+  t_a7756a00 @ 6c2429ae0 · DriveVehicle t_eaf1754d @ 6edbf0cbb · full M5.1
+  surface on develop (Plant/PackPickup/PutDown/Buy-Sell/Deposit-Withdraw/
+  Harvest/BoardVehicle/Craft). Replay route locked: **Housing.Build →
+  farm/storage → craft → pack → load/drive vehicle → unload → sell →
+  reward** — Housing.Build FIRST, before farm/storage. Requirements: real
+  normal gameplay services + auditable traces only; labor (−60/pack) and
+  mail payout (124540/pack, SpecialtyManager) conservation required;
+  process-level restart evidence (M4_2TradePackRestart / M4Vehicles /
+  M3bExitPersistence re-run as-is); no direct DB/GM/reflection/Transform
+  shortcuts; H stays UNKNOWN (proxy/bot-functional, never H=2). Root card
+  t_b4f455b0 dispatched 2026-08-14.
 - **Prior shortcut rigs are SUPERSEDED for authentic acceptance — NOT erased.**
   M3a's in-memory actors/reflection/GM inventory/direct service calls and
   M4's direct zone/transform assignment + manual cargo attach remain visible

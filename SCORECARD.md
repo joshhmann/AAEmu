@@ -58,7 +58,11 @@ M5.1 contract actions on a real server: no direct Transform/ZoneId/GM/
 reflection/DB shortcuts; labor (−60/pack) + mail payout (124540/pack,
 SpecialtyManager) conservation required; process-level restart suites re-run
 as-is. **Grades are not inflated:** proxy evidence stays labeled, and `H`
-stays `U` (UNKNOWN) until Josh tests feel (human packet t_2b654349).
+stays `U` (UNKNOWN) until Josh tests feel (human packet t_2b654349). Scope
+lock 2026-08-14 (marker t_2625be99): replay route = **Housing.Build (M5.2,
+merged 3396d9ef1) → farm/storage → craft → pack → load/drive vehicle →
+unload → sell → reward**, all prerequisites merged (LoadPackOntoVehicle
+6c2429ae0, DriveVehicle 6edbf0cbb, full M5.1 surface on develop).
 
 ### Global mechanic ledger
 
