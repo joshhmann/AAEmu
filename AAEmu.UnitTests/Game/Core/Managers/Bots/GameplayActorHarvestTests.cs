@@ -1,5 +1,7 @@
 using System.Numerics;
 
+using AAEmu.Commons.Utils;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
@@ -37,6 +39,40 @@ public class GameplayActorHarvestTests
     private WorldConfig _previousWorldConfig;
 
     /// <summary>
+    /// Pre-class snapshot of HousingManager._houses, restored at class end.
+    /// The shared crop rig (CropHarvestLoopRig.Seed → SeedHousingManager)
+    /// registers house 77 (AccountId 0) into the process-wide registry; rig
+    /// characters also default to AccountId 0, so the sibling HouseBuild
+    /// class's engine-path pre-flight (CalculateBuildingTaxInfo) then counts
+    /// house 77 as the account's FIRST house and every build on a default
+    /// (0-money) character rejects with "not enough money for the house tax
+    /// (300000 required)" (t_234da01a interference finding — the tax detail
+    /// is the 1:1 reproduction). Restoring the registry keeps this class
+    /// order-safe: HouseBuild's rig re-seeds an empty registry (tax 0) and
+    /// the crop family re-adds house 77 via its own Seed on later runs.
+    /// </summary>
+    private static Dictionary<uint, House> _housesBeforeClass;
+
+    [Before(Class)]
+    public static void BeforeClass()
+    {
+        if (GameplayActorTestRig.SingletonSeeded(typeof(Singleton<HousingManager>)))
+            _housesBeforeClass = HousingManager.Instance.GetAllHouses().ToDictionary(h => h.Id);
+        else
+            _housesBeforeClass = null; // this class seeds it — restore to empty
+    }
+
+    [After(Class)]
+    public static void AfterClass()
+    {
+        if (!GameplayActorTestRig.SingletonSeeded(typeof(Singleton<HousingManager>)))
+            return;
+        var housesField = typeof(HousingManager).GetField("_houses",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        housesField?.SetValue(HousingManager.Instance, _housesBeforeClass ?? new Dictionary<uint, House>());
+    }
+
+    /// <summary>
     /// The headless session world is created with instance id 1 for EVERY
     /// actor (HeadlessSession.CreateWorld). WorldManager._worlds is keyed by
     /// that id and TryAdd is first-wins: the first test's world registers,
@@ -46,9 +82,16 @@ public class GameplayActorHarvestTests
     /// WorldManager.GetWorld(instanceId) — a collision sends the crop to
     /// test 1's world and every later lookup fails. Assign a unique instance
     /// id per test (same high-base pattern as GameplayActorTestRig's
-    /// _nextWorldInstanceId) so each world registers and resolves.
+    /// _nextWorldInstanceId).
+    ///
+    /// NOTE (t_234da01a): the base is 0x6000_0000, NOT 0x4000_0000 — the
+    /// sibling M5.1 rigs own 0x4000_0000 (Plant) and 0x5000_0000
+    /// (HouseBuild) with process-wide first-wins registration; sharing a
+    /// base would let this class's worlds win the registry slots and strand
+    /// every later Plant/HouseBuild test's world (crops/houses land in the
+    /// wrong world).
     /// </summary>
-    private static uint _nextWorldInstanceId = 0x4000_0000;
+    private static uint _nextWorldInstanceId = 0x6000_0000;
 
     [Before(Test)]
     public void SetUp()
