@@ -1,3 +1,4 @@
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Quests.Static;
 
 namespace AAEmu.Game.Core.Managers.Bots;
@@ -223,3 +224,7 @@ public sealed record LoadPackOntoVehicleParams(uint? PlacedPackDoodadObjId);
 /// <param name="Position">World position where the house is placed.</param>
 /// <param name="ZRot">Yaw rotation (radians) of the placed house.</param>
 public sealed record HouseBuildParams(System.Numerics.Vector3 Position, float ZRot);
+
+/// <summary>BoardVehicle request payload — the requested vehicle seat.</summary>
+/// <param name="AttachPoint">Seat on the vehicle (Driver for slave driver seats, Passenger* for route-carriage seats).</param>
+public sealed record BoardVehicleParams(AttachPointKind AttachPoint);

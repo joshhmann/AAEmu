@@ -4,17 +4,20 @@ using System.Numerics;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Containers;
+using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
@@ -859,6 +862,269 @@ public class GameplayActor : IGameplayActor
             default:
                 return Reject(request, ActorFailureReason.RejectedAction, "engine refused the pack load");
         }
+    }
+
+    #endregion
+
+    #region M5.1 vehicle actions (B2 — the vehicle/transfer manager surface)
+
+    /// <summary>Maximum flat distance for a BoardVehicle request (boarding range).</summary>
+    public const float MaxBoardRange = 25f;
+
+    public ActorRequest BoardVehicle(uint vehicleObjId, AttachPointKind attachPoint = AttachPointKind.Driver, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.BoardVehicle, vehicleObjId,
+            payload: new BoardVehicleParams(attachPoint), idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "board vehicle"))
+            return request;
+
+        // 1. Already-boarded → StateTransition (the engine is never
+        //    re-entered). Covers all three vehicle families: a slave
+        //    registry attachment, a transfer seat bond, and an equipped
+        //    glider. A retry that got past the key gate is refused here
+        //    before any engine call, so boarding state can never flip twice.
+        if (Character.ParentWorld?.SlaveManager.GetIsMounted(Character.ObjId, out _) != null)
+            return Reject(request, ActorFailureReason.StateTransition, "already boarded on a slave");
+        if (Character.Bonding != null)
+            return Reject(request, ActorFailureReason.StateTransition, $"already seated on doodad {Character.Bonding.ObjId}");
+        if (GetEquippedGlider() != null)
+            return Reject(request, ActorFailureReason.StateTransition, "glider already equipped");
+
+        // 2. Resolve the target through the normal vehicle/transfer manager
+        //    registries (SlaveManager first, then TransferManager, then the
+        //    glider item surface). Each family uses its own real engine path.
+        var slave = Character.ParentWorld?.SlaveManager.GetSlaveByObjId(vehicleObjId);
+        if (slave != null)
+            return BoardSlave(request, slave, attachPoint);
+
+        var transfer = Character.ParentWorld?.TransferManager.GetTransfers().FirstOrDefault(t => t.ObjId == vehicleObjId);
+        if (transfer != null)
+            return BoardTransferSeat(request, transfer, attachPoint);
+
+        return BoardGlider(request, vehicleObjId);
+    }
+
+    /// <summary>
+    /// Boards a slave vehicle (ships, farm wagons, tanks, machines) through
+    /// SlaveManager.BindSlave — the exact call CSBindSlavePacket (driver)
+    /// and DoodadFuncAttachment's ship branch (passenger) make.
+    /// </summary>
+    private ActorRequest BoardSlave(ActorRequest request, Slave slave, AttachPointKind attachPoint)
+    {
+        // Canonical gates the engine itself enforces (dossier §4.2): a dead
+        // vehicle refuses boarding (324), the driver seat is locked to the
+        // summoner while the Owner's-Mark buff is up (97), and an occupied
+        // attach point is refused (96-family). Mirror them pre-flight so the
+        // refusals are explicit Rejected records instead of silent no-ops.
+        if (slave.IsDead)
+            return Reject(request, ActorFailureReason.RejectedAction, $"vehicle {slave.ObjId} is destroyed");
+        if (slave.AttachedCharacters.ContainsKey(attachPoint))
+            return Reject(request, ActorFailureReason.RejectedAction, $"attach point {attachPoint} on vehicle {slave.ObjId} is occupied");
+        if (attachPoint == AttachPointKind.Driver
+            && slave.Buffs.CheckBuff((uint)BuffConstants.OwnersMark)
+            && slave.Summoner?.ObjId != Character.ObjId)
+            return Reject(request, ActorFailureReason.RejectedAction, $"driver seat of vehicle {slave.ObjId} is locked to its owner");
+
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, slave.Transform.World.Position, false) > MaxBoardRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"vehicle {slave.ObjId} out of boarding range");
+
+        request.Start($"boarding slave {slave.ObjId} (tl {slave.TlId}, seat {attachPoint})");
+
+        // 3. Real engine path — the same BindSlave the CSBindSlavePacket
+        //    handler and DoodadFuncAttachment's ship branch drive.
+        Character.ParentWorld!.SlaveManager.BindSlave(Character, slave.ObjId, attachPoint, AttachUnitReason.BoardTransfer);
+
+        // 4. Post-state verification: the engine must have attached the
+        //    character at exactly the requested seat.
+        var mounted = Character.ParentWorld.SlaveManager.GetIsMounted(Character.ObjId, out var actualPoint);
+        if (mounted?.ObjId != slave.ObjId || actualPoint != attachPoint)
+            return Reject(request, ActorFailureReason.RejectedAction, $"board of slave {slave.ObjId} did not take effect");
+
+        // 5. Record the applied-effect fingerprint (B1 idempotency layer):
+        //    the character is attached at a seat of the slave. A same-key
+        //    retry is refused pre-flight (TryBegin), so the engine is never
+        //    re-entered; a fresh-key retry is refused by the already-boarded
+        //    gate above. Either way the slave can never be boarded twice.
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("board", slave.ObjId, attachPoint.ToString()), request.TraceId);
+        return Complete(request, true, $"boarded slave {slave.ObjId} at {attachPoint}");
+    }
+
+    /// <summary>
+    /// Boards a route-carriage transfer seat through the real bond path —
+    /// the same interaction a passenger boarding a route carriage performs:
+    /// the seat's DoodadFuncAttachment func row (resolved by the seeded
+    /// interaction skill) drives Seat.LoadPassenger + BondDoodad + transform
+    /// parenting + SCBondDoodadPacket (DoodadFuncAttachment.Use).
+    /// </summary>
+    private ActorRequest BoardTransferSeat(ActorRequest request, Transfer transfer, AttachPointKind attachPoint)
+    {
+        // The seat doodad whose attachment func row targets the requested
+        // attach point. The transfer's AttachedDoodads is the same registry
+        // the engine's transfer spawner populates.
+        var seat = transfer.AttachedDoodads.FirstOrDefault(d =>
+        {
+            var funcs = DoodadManager.Instance.GetFuncsForGroup(d.FuncGroupId);
+            return funcs.Any(f => f.FuncType == "DoodadFuncAttachment"
+                && DoodadManager.Instance.GetFuncTemplate(f.FuncId, f.FuncType) is DoodadFuncAttachment
+                {
+                    AttachPointId: var point
+                } && point == attachPoint);
+        });
+        if (seat == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"transfer {transfer.ObjId} has no {attachPoint} seat doodad");
+
+        // Mirror the engine's own occupancy gate: Seat.LoadPassenger returns
+        // -1 when the requested seat is full — refuse pre-flight instead of
+        // a silent no-op.
+        if (transfer.AttachedCharacters.Contains(Character))
+            return Reject(request, ActorFailureReason.StateTransition, "already seated on this transfer");
+
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, transfer.Transform.World.Position, false) > MaxBoardRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"transfer {transfer.ObjId} out of boarding range");
+
+        request.Start($"boarding transfer {transfer.ObjId} at seat {attachPoint} (seat doodad {seat.ObjId})");
+
+        // 3. Real engine path — DoodadFuncAttachment.Use through the doodad
+        //    interaction pipeline (the CSStartInteractionPacket → Doodad.Use
+        //    chain). The interaction skill is the func row's own SkillId —
+        //    DoodadManager.GetFunc resolves the row by that skill exactly
+        //    like the client's seat interaction does.
+        var attachmentFunc = DoodadManager.Instance.GetFuncsForGroup(seat.FuncGroupId)
+            .First(f => f.FuncType == "DoodadFuncAttachment");
+        seat.Use(Character, attachmentFunc.SkillId);
+
+        // 4. Post-state verification: the bond must have landed on this seat.
+        if (Character.Bonding?.ObjId != seat.ObjId)
+            return Reject(request, ActorFailureReason.RejectedAction, $"board of transfer {transfer.ObjId} did not take effect");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("board", transfer.ObjId, attachPoint.ToString()), request.TraceId);
+        return Complete(request, true, $"boarded transfer {transfer.ObjId} at {attachPoint} (seat doodad {seat.ObjId})");
+    }
+
+    /// <summary>
+    /// Boards a glider by equipping it into the Backpack slot through the
+    /// ordinary inventory path (SplitOrMoveItem — the CSSwapItemsPacket
+    /// equip call). vehicleObjId addresses the glider ITEM TEMPLATE (the
+    /// client's glider is an inventory item; deploy/fly is the item's use
+    /// skill, a separate action).
+    /// </summary>
+    private ActorRequest BoardGlider(ActorRequest request, uint itemTemplateId)
+    {
+        if (Character.Inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        // The glider must be a real BackpackType.Glider item in the bag.
+        var item = Character.Inventory.Bag.Items.FirstOrDefault(i =>
+            i.TemplateId == itemTemplateId && i.Template is BackpackTemplate { BackpackType: BackpackType.Glider });
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"no glider {itemTemplateId} in inventory");
+
+        request.Start($"boarding glider {itemTemplateId} (instance {item.Id})");
+
+        // Real engine path — equip into the Backpack slot through the
+        // ordinary inventory move (the CSSwapItemsPacket equip call). The
+        // item carries its own Slot/SlotType, so the source is addressed
+        // exactly like the packet handler addresses it.
+        if (!Character.Inventory.SplitOrMoveItem(ItemTaskType.SwapItems, item.Id, item.SlotType, (byte)item.Slot,
+                0, SlotType.Equipment, (byte)EquipmentItemSlot.Backpack))
+            return Reject(request, ActorFailureReason.RejectedAction, $"glider {itemTemplateId} equip refused by engine");
+
+        // 4. Post-state verification: the glider must sit in the Backpack slot.
+        if (GetEquippedGlider()?.Id != item.Id)
+            return Reject(request, ActorFailureReason.RejectedAction, $"glider {itemTemplateId} equip did not take effect");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("board", itemTemplateId, item.Id.ToString()), request.TraceId);
+        return Complete(request, true, $"boarded glider {itemTemplateId} (instance {item.Id})");
+    }
+
+    public ActorRequest UnboardVehicle(uint vehicleObjId = 0, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.UnboardVehicle, vehicleObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "unboard vehicle"))
+            return request;
+
+        var slaveManager = Character.ParentWorld?.SlaveManager;
+
+        // 1. Slave path — the CSDiscardSlavePacket call.
+        AttachPointKind attachPoint = AttachPointKind.None;
+        var slave = slaveManager?.GetIsMounted(Character.ObjId, out attachPoint) ?? null;
+        if (slave != null)
+        {
+            if (vehicleObjId != 0 && slave.ObjId != vehicleObjId)
+                return Reject(request, ActorFailureReason.StateTransition,
+                    $"mounted on slave {slave.ObjId}, not {vehicleObjId}");
+
+            request.Start($"unboarding slave {slave.ObjId} (tl {slave.TlId}, seat {attachPoint})");
+
+            // 2. Real engine path — the exact UnbindSlave the
+            //    CSDiscardSlavePacket handler drives.
+            slaveManager!.UnbindSlave(Character, slave.TlId, AttachUnitReason.SlaveBinding);
+
+            // 3. Post-state verification: the engine must have detached the rider.
+            if (slaveManager.GetIsMounted(Character.ObjId, out _) != null)
+                return Reject(request, ActorFailureReason.RejectedAction, "unboard of slave did not take effect");
+
+            _ledger.RecordEffect(ActorIdempotency.EffectKey("unboard", slave.ObjId), request.TraceId);
+            return Complete(request, true, $"unboarded slave {slave.ObjId}");
+        }
+
+        // 2. Transfer seat — the CSUnbondDoodadPacket path (Seat.UnLoadPassenger
+        //    + Bonding clear + transform detach + SCUnbondDoodadPacket).
+        if (Character.Bonding != null)
+        {
+            var bonding = Character.Bonding;
+            var seat = bonding.GetOwner();
+            if (vehicleObjId != 0 && seat.ParentObjId != vehicleObjId)
+                return Reject(request, ActorFailureReason.StateTransition,
+                    $"seated on doodad {seat.ObjId}, not transfer {vehicleObjId}");
+
+            request.Start($"unboarding seat doodad {seat.ObjId} (transfer {seat.ParentObjId})");
+
+            seat.Seat.UnLoadPassenger(Character, seat.ObjId); // free the place
+            bonding.SetOwner(null);
+            Character.Bonding = null;
+            Character.Transform.Parent = null;
+            Character.BroadcastPacket(new SCUnbondDoodadPacket(Character.ObjId, Character.Id, seat.ObjId), true);
+
+            if (Character.Bonding != null)
+                return Reject(request, ActorFailureReason.RejectedAction, "unboard of transfer seat did not take effect");
+
+            _ledger.RecordEffect(ActorIdempotency.EffectKey("unboard", seat.ParentObjId), request.TraceId);
+            return Complete(request, true, $"unboarded transfer seat {seat.ObjId}");
+        }
+
+        // 3. Glider path — Inventory.TakeoffBackpack (unequips the Backpack slot).
+        var glider = GetEquippedGlider();
+        if (glider != null)
+        {
+            if (vehicleObjId != 0 && glider.TemplateId != vehicleObjId)
+                return Reject(request, ActorFailureReason.StateTransition,
+                    $"glider {glider.TemplateId} equipped, not {vehicleObjId}");
+
+            request.Start($"unboarding glider {glider.TemplateId} (instance {glider.Id})");
+
+            if (!Character.Inventory!.TakeoffBackpack(ItemTaskType.SwapItems, true))
+                return Reject(request, ActorFailureReason.RejectedAction, "glider takeoff refused by engine");
+            if (GetEquippedGlider() != null)
+                return Reject(request, ActorFailureReason.RejectedAction, "glider takeoff did not take effect");
+
+            _ledger.RecordEffect(ActorIdempotency.EffectKey("unboard", glider.TemplateId), request.TraceId);
+            return Complete(request, true, $"unboarded glider {glider.TemplateId}");
+        }
+
+        // 4. Not boarded → StateTransition (nothing to unboard). A retry
+        //    after a successful unboard is refused here — the state can
+        //    never flip back by re-running the request.
+        return Reject(request, ActorFailureReason.StateTransition, "not boarded on any vehicle");
+    }
+
+    /// <summary>The glider equipped in the Backpack slot, or null.</summary>
+    private Backpack? GetEquippedGlider()
+    {
+        var item = Character.Inventory?.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+        return item is Backpack { Template: BackpackTemplate { BackpackType: BackpackType.Glider } } glider ? glider : null;
     }
 
     #endregion

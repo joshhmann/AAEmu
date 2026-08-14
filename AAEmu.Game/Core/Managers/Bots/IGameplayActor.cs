@@ -2,6 +2,7 @@ using System.Numerics;
 
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units;
 
@@ -13,11 +14,11 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///
 /// v2 surface (B1, ROADMAP §M5): Observe · Move · Stop · Target · Cast ·
 /// Interact · Loot · UseItem · Mount/Dismount · AcceptQuest · TurnInQuest.
-/// The M5.1 economic extension (Deposit/Withdraw, t_7c224245) adds the
-/// bank actions through the real engine paths; the PackPickup/PutDown,
-/// Buy/Sell and Plant slices have landed; Harvest/Craft/BoardVehicle land
-/// in later slices; the lifecycle, rejection taxonomy and audit machinery
-/// below are final.
+/// The M5.1 economic extension has landed: Plant/Harvest, PackPickup/PutDown,
+/// Buy/Sell, Deposit/Withdraw, and BoardVehicle/UnboardVehicle — the
+/// vehicle/transfer manager surface (slaves, route-carriage seats, glider
+/// equip). Craft lands in a later slice; the lifecycle, rejection taxonomy
+/// and audit machinery below are final.
 ///
 /// Contract rules (ROADMAP M5, spec §16-17):
 ///  - Actions are VALIDATED gameplay requests. Every request tracks the
@@ -145,6 +146,38 @@ public interface IGameplayActor
     /// cannot double-dismount.
     /// </summary>
     ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Boards a vehicle through the REAL engine path — the vehicle/transfer
+    /// manager surface (NOT the mate path covered by B1 Mount/Dismount).
+    /// Resolves the target to one of the engine's vehicle families:
+    ///  - Slave (ships, farm wagons, tanks, machines — SlaveManager
+    ///    registry): SlaveManager.BindSlave — the exact call
+    ///    CSBindSlavePacket (driver) and DoodadFuncAttachment's ship branch
+    ///    (passenger) make. attachPoint selects the seat.
+    ///  - Transfer (route carriage — TransferManager registry): the seat
+    ///    doodad bond path (DoodadFuncAttachment: Seat.LoadPassenger +
+    ///    BondDoodad + transform parenting + SCBondDoodadPacket) — the
+    ///    same interaction a passenger boarding a route carriage performs.
+    ///  - Glider item template (BackpackType.Glider in inventory): equips
+    ///    the glider into the Backpack slot through the ordinary inventory
+    ///    path (SplitOrMoveItem) — the real 1.2 "board a glider" step
+    ///    (deploy/fly is the item's use skill, a separate action).
+    /// Already-boarded is Rejected(StateTransition) — the engine is never
+    /// re-entered, so a retry cannot double-board.
+    /// </summary>
+    ActorRequest BoardVehicle(uint vehicleObjId, AttachPointKind attachPoint = AttachPointKind.Driver, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Unboards from a vehicle through the real engine path:
+    ///  - Slave → SlaveManager.UnbindSlave (the CSDiscardSlavePacket call)
+    ///  - Transfer seat → Seat.UnLoadPassenger + Bonding clear (the
+    ///    CSUnbondDoodadPacket path)
+    ///  - Glider → Inventory.TakeoffBackpack (unequips the Backpack slot)
+    /// Not-boarded is Rejected(StateTransition) — retries cannot
+    /// double-unboard.
+    /// </summary>
+    ActorRequest UnboardVehicle(uint vehicleObjId = 0, string? idempotencyKey = null);
 
     /// <summary>
     /// Harvests a mature crop through the real engine path — the same
@@ -547,7 +580,13 @@ public enum ActorActionType : byte
     WithdrawItem = 28,
 
     /// <summary>Crop harvest through Doodad.Use(caster, harvestSkill) (real engine path, data-driven skill).</summary>
-    Harvest = 29
+    Harvest = 29,
+
+    /// <summary>Vehicle boarding through the vehicle/transfer managers (M5.1 — slaves, transfers, gliders).</summary>
+    BoardVehicle = 30,
+
+    /// <summary>Vehicle unboarding through the vehicle/transfer managers (M5.1 — slave unbind, seat unbond, glider takeoff).</summary>
+    UnboardVehicle = 31
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

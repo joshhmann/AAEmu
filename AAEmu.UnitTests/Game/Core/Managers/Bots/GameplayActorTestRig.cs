@@ -37,11 +37,13 @@ using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Buffs;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Slaves;
 using AAEmu.Game.Models.Game.Team;
+using AAEmu.Game.Models.Game.Transfers;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
@@ -135,6 +137,7 @@ public static class GameplayActorTestRig
                 SeedBaseSurface();
                 EnsureIncrementingItemIds();
                 SeedTradeSurface();
+                SeedItemGameData();
                 FormulaManager.Instance.Load();
 
                 s_seeded = true;
@@ -381,7 +384,7 @@ public static class GameplayActorTestRig
         // Skill tag dictionaries (SkillModifiers → GetSkillTags /
         // GetBuffsByTagId / GetSkillsByTag / GetBuffTags dereference
         // these during ManaCost / range / modifier evaluation).
-        foreach (var field in new[] { "_skillTags", "_taggedSkills", "_buffTags", "_taggedBuffs" })
+        foreach (var field in new[] { "_skillTags", "_taggedSkills", "_buffTags", "_taggedBuffs", "_buffs", "_buffTriggers", "_skillModifiers", "_combatBuffs" })
         {
             var f = typeof(SkillManager).GetField(field, flags);
             if (f!.GetValue(manager) == null)
@@ -469,6 +472,35 @@ public static class GameplayActorTestRig
         }
     }
 
+    /// <summary>
+    /// Seeds the ItemGameData singleton's grade-buff map so the real equip
+    /// path (EquipmentContainer.OnEnterContainer → UpdateGearBonuses →
+    /// ApplyEquipEffects → GetItemBuff) does not NRE on a null dictionary.
+    /// Empty is correct for unit surfaces: GetItemBuff returns null, and the
+    /// equip path skips the buff application (Unit.cs:1411 guards the null).
+    /// </summary>
+    private static void SeedItemGameData()
+    {
+        var manager = ItemGameData.Instance;
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var field = typeof(ItemGameData).GetField("_itemGradeBuffs", flags);
+        if (field == null)
+            throw new InvalidOperationException("Cannot locate ItemGameData._itemGradeBuffs");
+        if (field.GetValue(manager) == null)
+            field.SetValue(manager, new Dictionary<uint, Dictionary<byte, uint>>());
+
+        // BuffGameData is loaded by the same GameData pipeline; the real
+        // buff pipeline (Buffs.AddBuff → BuffModifiers.AddModifiers →
+        // BuffGameData.GetModifiersForBuff) NREs on its null dicts too.
+        var buffManager = BuffGameData.Instance;
+        var buffModifiers = typeof(BuffGameData).GetField("_buffModifiers", flags);
+        if (buffModifiers?.GetValue(buffManager) == null)
+            buffModifiers?.SetValue(buffManager, new Dictionary<uint, List<BuffModifier>>());
+        var buffTolerances = typeof(BuffGameData).GetField("_buffTolerances", flags);
+        if (buffTolerances?.GetValue(buffManager) == null)
+            buffTolerances?.SetValue(buffManager, new Dictionary<uint, BuffTolerance>());
+    }
+
     internal static bool SingletonSeeded(Type singletonBase)
         => singletonBase.GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             ?.GetValue(null) != null;
@@ -507,6 +539,10 @@ public static class GameplayActorTestRig
         // resolves through ParentWorld.MateManager.
         session.World.MateManager = new MateManager(session.World);
         session.World.SlaveManager = new SlaveManager(session.World);
+        // The M5.1 vehicle pipeline (BoardVehicle/UnboardVehicle) resolves
+        // transfers through ParentWorld.TransferManager — prod assigns it
+        // right after world creation, headless session worlds don't.
+        session.World.TransferManager = new TransferManager();
         // Prod allocates the world's region grid at creation
         // (WorldManager.cs:565-574); headless session worlds don't.
         // Character.SetPosition → AddVisibleObject → GetRegionByPos
@@ -664,6 +700,187 @@ public static class GameplayActorTestRig
     /// </summary>
     public static void BindSlaveDriver(HeadlessSession session, GameplayActor actor, uint slaveObjId)
         => session.World.SlaveManager.BindSlave(actor.Character, slaveObjId, AttachPointKind.Driver, AttachUnitReason.NewMaster);
+
+    // ------------------------------------------------------------------ M5.1 vehicle rig (BoardVehicle/UnboardVehicle)
+
+    /// <summary>Default objId for a rig-spawned route-carriage transfer.</summary>
+    public const uint TransferObjId = 0x3002;
+
+    /// <summary>Default objId for the seat doodad of a rig transfer.</summary>
+    public const uint TransferSeatDoodadObjId = 0x3003;
+
+    /// <summary>Glider item template id used by the BoardVehicle glider rig.</summary>
+    public const uint GliderItemTemplateId = 91_004;
+
+    /// <summary>
+    /// Seeds a DoodadFuncAttachment func row + template for a transfer seat:
+    /// the bond path (BondChairSingle &gt; BondInvalid) with the given attach
+    /// point and the seeded interaction skill, so the seat interaction
+    /// (Doodad.Use → GetFunc) resolves the row exactly like a real route
+    /// carriage seat.
+    /// </summary>
+    public static void SeedDoodadAttachmentFunc(uint groupId, uint funcId, uint skillId,
+        AttachPointKind attachPoint = AttachPointKind.Passenger0)
+    {
+        SeedDoodadManager();
+        var manager = DoodadManager.Instance;
+        var funcsByGroups = (Dictionary<uint, List<DoodadFunc>>)GetField(manager, "_funcsByGroups");
+        var funcsById = (Dictionary<uint, DoodadFunc>)GetField(manager, "_funcsById");
+        var funcTemplates = (Dictionary<string, Dictionary<uint, DoodadFuncTemplate>>)GetField(manager, "_funcTemplates");
+
+        var func = new DoodadFunc
+        {
+            GroupId = groupId,
+            FuncId = funcId,
+            FuncKey = funcId,
+            FuncType = "DoodadFuncAttachment",
+            NextPhase = -1, // bond rows never advance the phase
+            SkillId = skillId
+        };
+        if (!funcsById.ContainsKey(funcId))
+            funcsById[funcId] = func;
+        if (!funcsByGroups.TryGetValue(groupId, out var group))
+        {
+            group = [];
+            funcsByGroups[groupId] = group;
+        }
+        if (group.All(f => f.FuncId != funcId))
+            group.Add(func);
+
+        if (!funcTemplates.TryGetValue("DoodadFuncAttachment", out var attachmentTemplates))
+        {
+            attachmentTemplates = [];
+            funcTemplates["DoodadFuncAttachment"] = attachmentTemplates;
+        }
+        if (!attachmentTemplates.ContainsKey(funcId))
+        {
+            attachmentTemplates[funcId] = new DoodadFuncAttachment
+            {
+                AttachPointId = attachPoint,
+                Space = 1, // single seat (a chair)
+                BondKindId = BondKind.BondChairSingle
+            };
+        }
+    }
+
+    /// <summary>
+    /// Spawns a route-carriage transfer with a seat doodad attached at the
+    /// given attach point: a real Transfer in the world + registered in the
+    /// world's TransferManager active registry (the surface
+    /// IGameplayActor.BoardVehicle resolves), and a seat doodad whose func
+    /// group carries a DoodadFuncAttachment (bond path) row for the seat
+    /// interaction skill.
+    /// </summary>
+    public static uint SpawnTransferWithSeat(HeadlessSession session, GameplayActor actor,
+        uint transferObjId = TransferObjId, uint seatDoodadObjId = TransferSeatDoodadObjId,
+        AttachPointKind attachPoint = AttachPointKind.Passenger0, uint groupId = 99_102, uint funcId = 99_302)
+    {
+        // The seat's DoodadFuncAttachment func row + template (bond path:
+        // BondChairSingle > BondInvalid). SkillId = TestSkillId so the
+        // seat interaction resolves through the seeded skill.
+        SeedDoodadAttachmentFunc(groupId, funcId, TestSkillId, attachPoint);
+
+        var seatDoodad = new Doodad
+        {
+            ObjId = seatDoodadObjId,
+            Id = seatDoodadObjId,
+            FuncGroupId = groupId,
+            // DoFunc → HasOnlyGroupKindStart() reads Template.FuncGroups; an
+            // empty list keeps the one-shot seat alive (start-only rule).
+            Template = new DoodadTemplate { Id = groupId, FuncGroups = [] }
+        };
+
+        var transfer = new Transfer
+        {
+            ObjId = transferObjId,
+            TlId = 1,
+            Id = transferObjId,
+            Name = "test-carriage",
+            Template = new TransferTemplate { Id = 6, Name = "test-carriage", ModelId = 653 }
+        };
+        // The seat bond parents the passenger's transform to the seat's
+        // StickyParent — point it at the transfer (the engine's transfer
+        // spawner wires this through DoodadManager.Create + TransferSpawner).
+        seatDoodad.Seat = new VehicleSeat(transfer);
+        seatDoodad.ParentObjId = transfer.ObjId;
+        transfer.AttachedDoodads.Add(seatDoodad);
+
+        // Same instance-id bypass as SummonSlave: the headless world is not
+        // in the shared WorldManager registry, so the public setters would
+        // NRE — pre-set the backing fields (bypass BEFORE ParentWorld).
+        foreach (var obj in new GameObject[] { seatDoodad, transfer })
+        {
+            typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
+                .GetField("_instanceId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .SetValue(obj.Transform, session.World.Id);
+            typeof(AAEmu.Game.Models.Game.World.GameObject)
+                .GetField("_parentWorld", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .SetValue(obj, session.World);
+        }
+        session.World.AddObject(seatDoodad);
+        session.World.AddObject(transfer);
+
+        // Register in TransferManager._activeTransfers (the registry
+        // TransferSpawner.AddActiveTransfer fills in prod; WorldInstance
+        // AddObject alone does not register transfers).
+        var registry = (Dictionary<uint, Transfer>?)typeof(TransferManager)
+            .GetField("_activeTransfers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(session.World.TransferManager);
+        if (registry == null)
+            throw new InvalidOperationException("TransferManager._activeTransfers not found");
+        registry[transfer.ObjId] = transfer;
+        return transfer.ObjId;
+    }
+
+    /// <summary>
+    /// Stocks a glider item (BackpackType.Glider) into the actor's bag
+    /// through the real acquisition path. The item template is a
+    /// BackpackTemplate so ItemManager.Create instantiates a real Backpack
+    /// (the glider's ClassType) — the equip path the BoardVehicle glider
+    /// branch drives resolves it as an equippable glider.
+    /// </summary>
+    public static void StockGlider(HeadlessSession session, GameplayActor actor, uint templateId = GliderItemTemplateId)
+    {
+        SeedItemManager();
+        var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
+        if (!templates.TryGetValue(templateId, out var existing) || existing is not BackpackTemplate)
+        {
+            templates[templateId] = new BackpackTemplate
+            {
+                Id = templateId,
+                Name = "test-glider",
+                BackpackType = BackpackType.Glider,
+                MaxCount = 1,
+                FixedGrade = -1
+            };
+        }
+        else
+        {
+            // Idempotent: always a glider (a sibling bare seed must not
+            // shadow this test's equip surface).
+            ((BackpackTemplate)existing).BackpackType = BackpackType.Glider;
+        }
+        StockItem(session, templateId, 1);
+    }
+
+    /// <summary>
+    /// Seeds a buff template into SkillManager so the REAL buff pipeline
+    /// (Buffs.AddBuff → SkillManager.GetBuffTemplate → new Buff) can apply
+    /// it. Used by the BoardVehicle driver-lock rig (Owner's-Mark 4867).
+    /// </summary>
+    public static void SeedBuffTemplate(uint buffId)
+    {
+        SeedSkillManager();
+        var manager = SkillManager.Instance;
+        var buffs = (Dictionary<uint, BuffTemplate>?)GetField(manager, "_buffs");
+        if (buffs == null)
+        {
+            buffs = [];
+            SetField(manager, "_buffs", buffs);
+        }
+        if (!buffs.ContainsKey(buffId))
+            buffs[buffId] = new BuffTemplate { Id = buffId };
+    }
 
     // ------------------------------------------------------------------ B1 rig
 
