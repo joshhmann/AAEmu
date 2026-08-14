@@ -1,6 +1,7 @@
 using System.Numerics;
 
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
@@ -69,8 +70,24 @@ public sealed class BotScenarioTemplate
     /// <summary>World position (character Transform.Local.Position).</summary>
     public Vector3? Position { get; init; }
 
-    /// <summary>The scenario: target quest + acceptor + ordered drive stages.</summary>
-    public required QuestDriveSpec Drive { get; init; }
+    /// <summary>Rigged starting copper (ordinary character record — the bank
+    /// deposit/withdraw actions read/write the same balance the client
+    /// sees).</summary>
+    public long Money { get; init; }
+
+    /// <summary>The scenario drive: EXACTLY ONE of the quest drive or the
+    /// economy replay drive. Quest templates carry
+    /// <see cref="QuestDriveSpec"/>; M5.1 economy templates carry
+    /// <see cref="EconomyDriveSpec"/>.</summary>
+    public QuestDriveSpec? Drive { get; init; }
+
+    /// <summary>
+    /// Economy replay drive (M5.1, t_7c224245 — the Phase 2 M3a/M4
+    /// economic-replay hook): ordered steps of Deposit/Withdraw events
+    /// fired through the actor contract (real engine paths), each verified
+    /// Completed before the next step runs.
+    /// </summary>
+    public EconomyDriveSpec? EconomyDrive { get; init; }
 
     /// <summary>Negative gate probes run BEFORE the drive (each must be
     /// REFUSED by the engine or the template fails).</summary>
@@ -126,6 +143,23 @@ public sealed class QuestDriveStage
     public List<ScenarioEvent> Events { get; init; } = [];
 }
 
+/// <summary>One quest drive stage's events and the post-event advance.</summary>
+public sealed class EconomyDriveSpec
+{
+    /// <summary>Ordered economy steps (DepositMoney / WithdrawMoney /
+    /// DepositItem / WithdrawItem events through the actor contract).</summary>
+    public List<EconomyDriveStep> Steps { get; init; } = [];
+}
+
+/// <summary>One economy replay step: events fired, then verified
+/// Completed before the next step runs.</summary>
+public sealed class EconomyDriveStep
+{
+    public string Name { get; init; } = "";
+
+    public List<ScenarioEvent> Events { get; init; } = [];
+}
+
 /// <summary>
 /// One world event (the same vocabulary the world interaction pipeline
 /// fires — PlayerBotController event surface). Report events resolve their
@@ -138,7 +172,9 @@ public sealed class ScenarioEvent
     /// ItemGroupGather, ItemUse, ItemGroupUse, Talk, TalkNpcGroup,
     /// Interaction, EnterSphere, Craft, ReportNpc, ReportDoodad,
     /// ReportJournal, ExpressFire, LevelUp, Aggro, ZoneKill,
-    /// CinemaStarted, CinemaEnded.</summary>
+    /// CinemaStarted, CinemaEnded, DepositMoney, WithdrawMoney,
+    /// DepositItem, WithdrawItem (M5.1 economy events fired through the
+    /// actor contract).</summary>
     public required string Type { get; init; }
 
     public uint NpcId { get; init; }
@@ -166,6 +202,9 @@ public sealed class ScenarioEvent
 
     /// <summary>Report selection index (ReportNpc/ReportDoodad; -1 = default).</summary>
     public int Selected { get; init; } = -1;
+
+    /// <summary>Copper amount (DepositMoney/WithdrawMoney events).</summary>
+    public long Amount { get; init; }
 }
 
 /// <summary>
@@ -215,4 +254,14 @@ public sealed record AbilityLevelCriterion(string Name, AbilityType Ability, byt
 /// <summary>Re-accept after completion must be REFUSED by the engine
 /// (repeatable/daily gate — the daily-cycle semantics under test).</summary>
 public sealed record ReAcceptRefusedCriterion(string Name, uint QuestId, string AcceptorType, uint AcceptorId)
+    : ScenarioCriterion(Name);
+
+/// <summary>Bank (Money2) balance equals the expected copper amount
+/// (M5.1 deposit/withdraw acceptance).</summary>
+public sealed record BankMoneyCriterion(string Name, long Expected) : ScenarioCriterion(Name);
+
+/// <summary>A named container holds exactly the expected count of a
+/// template (M5.1 deposit/withdraw acceptance — distinguishes bag vs bank
+/// holdings, which the total ItemHeldCriterion cannot).</summary>
+public sealed record ContainerItemCriterion(string Name, SlotType Container, uint ItemId, int Count)
     : ScenarioCriterion(Name);
