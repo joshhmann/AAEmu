@@ -332,6 +332,33 @@ public static class BotScenarioTemplates
         ]
     };
 
+    /// <summary>
+    /// BACKTRACK Phase 2 (t_b4f455b0): M3a/M4 economic replay — the curated
+    /// farm → craft → pack → vehicle → trade → bank route driven through the
+    /// M5.1 + B1 contract actions on a provisioned bot, with conservation
+    /// (items/currency/labor) + lifecycle asserts and a machine-readable
+    /// verdict. The runner routes this name to
+    /// <see cref="M3aM4ReplayScenario"/> before the quest machinery — the
+    /// same dispatch pattern as the auction-house / M1M2 scenarios. Drive
+    /// placeholder never executes. Proxy/bot-functional evidence, H stays
+    /// UNKNOWN.
+    /// </summary>
+    public static BotScenarioTemplate M3aM4Replay { get; } = new()
+    {
+        Name = M3aM4ReplayScenario.ScenarioName,
+        Description = "BACKTRACK Phase 2: M3a contract + M4 economic/navigation replay — farm → craft → pack → vehicle → trade → bank through contract actions only; conservation + lifecycle asserts; proxy evidence, H stays UNKNOWN.",
+        Race = Race.Nuian,
+        Gender = Gender.Male,
+        Level = 10,
+        Drive = new QuestDriveSpec
+        {
+            QuestId = 0,
+            AcceptorType = nameof(QuestAcceptorType.Npc),
+            AcceptorId = 0,
+            Stages = []
+        }
+    };
+
     /// <summary>The library — templates by name.</summary>
     public static IReadOnlyDictionary<string, BotScenarioTemplate> Library { get; } =
         new Dictionary<string, BotScenarioTemplate>(StringComparer.Ordinal)
@@ -342,7 +369,8 @@ public static class BotScenarioTemplates
             [AuctionHouseConservation.Name] = AuctionHouseConservation,
             [M1M2Replay.Name] = M1M2Replay,
             [M1M2MinSlice.Name] = M1M2MinSlice,
-            [DepositWithdrawCycle.Name] = DepositWithdrawCycle
+            [DepositWithdrawCycle.Name] = DepositWithdrawCycle,
+            [M3aM4Replay.Name] = M3aM4Replay
         };
 
     public static BotScenarioTemplate? Get(string name)

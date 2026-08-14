@@ -152,6 +152,13 @@ public static class BotScenarioRunner
         if (template.Name == M1M2ReplayScenario.MinSliceScenarioName)
             return M1M2ReplayScenario.RunMinSlice(character, world);
 
+        // BACKTRACK Phase 2 (t_b4f455b0) — the M3a contract + M4
+        // economic/navigation replay: the curated farm → craft → pack →
+        // vehicle → trade → bank route driven through the M5.1 + B1
+        // contract actions only, with conservation + lifecycle asserts.
+        if (template.Name == M3aM4ReplayScenario.ScenarioName)
+            return M3aM4ReplayScenario.Run(character, world);
+
         var rigNotes = new List<string>();
         var actor = new GameplayActor(character);
         var controller = new PlayerBotController(character);
