@@ -137,6 +137,21 @@ public static class M3aM4ReplayScenario
         // ---- TIME ---------------------------------------------------------
         public TimeSpan CropMaturityTimeout { get; init; } = TimeSpan.FromSeconds(180);
         public TimeSpan ActionPumpTimeout { get; init; } = TimeSpan.FromSeconds(60);
+
+        // ---- REPOSITION (live path) ---------------------------------------
+        /// <summary>Pace for the scripted walk back to the farm plot (m/s).
+        /// The seed merchant's spawner can sit ~1.3 km from the plot on the
+        /// live world, and the harvest gate needs the actor within
+        /// MaxInteractRange of every crop. The leg runs the REAL MoveTo
+        /// contract action + Tick integration; a replay pace keeps the live
+        /// hook inside its 420 s budget. Unit worlds are co-located — the
+        /// leg completes instantly there ("already at destination").</summary>
+        public float RepositionSpeed { get; init; } = 15f;
+
+        /// <summary>Budget for one reposition leg (the request's own timeout
+        /// AND the pump's Drive window — 1.3 km at the replay pace plus lag
+        /// headroom).</summary>
+        public TimeSpan FarmRepositionTimeout { get; init; } = TimeSpan.FromSeconds(150);
     }
 
     /// <summary>
@@ -248,12 +263,35 @@ public static class M3aM4ReplayScenario
             farm.MilletSeedsSeeded = options.MilletSeedCount;
             rigNotes.Add($"stocked {options.MilletSeedCount} x seed {options.MilletSeedItemId} (millet, not merchant-sold)");
 
+            // The farm-wagon summon scroll is not merchant-sold either (no
+            // merchant_goods row for 18660) — provision it the same way so
+            // the LIVE summon path runs the REAL UseItem on the real scroll.
+            // Unit worlds never reach this path (the rig pump injects the
+            // fixture slave instead).
+            controller.StockInventory(options.FarmWagonSummonScrollItemId, 1);
+            rigNotes.Add($"stocked 1 x farm wagon summon scroll {options.FarmWagonSummonScrollItemId} (not merchant-sold)");
+
             // ------------------------------------------------ 2. FARM
             // 2a. Buy the poppy seeds from the seed merchant (M5.1 Buy — the
             // trade surface is part of the route; the seed purchase feeds the farm).
             var seedMerchantObjId = world.ResolveNpcObjId(options.SeedMerchantNpcTemplateId);
             if (seedMerchantObjId == 0)
                 return Fail("BUY-SEEDS", null, $"seed merchant {options.SeedMerchantNpcTemplateId} unresolvable in world",
+                    rigNotes, stages, criteria, traceRecords);
+
+            // Walk into shop range (3 m): the live adapter only teleports to
+            // the spawner when the merchant is NOT yet spawned — a merchant
+            // already in the world resolves to its objId with no teleport,
+            // and the actor can be anywhere. The MoveToUnit leg is a no-op
+            // right after a teleport (same position); unit worlds are
+            // co-located. Either way the Buy gate is deterministic.
+            var walkToSeedMerchant = actor.MoveToUnit(seedMerchantObjId, speed: options.RepositionSpeed,
+                timeout: options.FarmRepositionTimeout, idempotencyKey: "m3a4-walk-to-seed-merchant");
+            traceRecords.Add(actor.AuditTrace.Last());
+            stages.Add(Stage("WALK-TO-SEED-MERCHANT", walkToSeedMerchant, $"merchant {seedMerchantObjId}"));
+            walkToSeedMerchant = pump.Drive(actor, walkToSeedMerchant, options.FarmRepositionTimeout);
+            if (walkToSeedMerchant.State != ActorLifecycleState.Completed)
+                return Fail("WALK-TO-SEED-MERCHANT", walkToSeedMerchant, "reposition to seed merchant",
                     rigNotes, stages, criteria, traceRecords);
 
             var buySeeds = actor.Buy(seedMerchantObjId, options.PoppySeedItemId, options.PoppySeedCount,
@@ -335,7 +373,23 @@ public static class M3aM4ReplayScenario
                 farm.Planted.Count == options.MilletSeedCount + options.PoppySeedCount,
                 $"planted {farm.Planted.Count} crops (millet {options.MilletSeedCount} + poppy {options.PoppySeedCount})"));
 
-            // 2c. Growth (engine timers; the pump advances them), then harvest.
+            // 2c. Reposition to the plot. The seed purchase resolved through
+            // the merchant spawner (the live adapter's test-control seam can
+            // place the actor ~1.3 km from the farm), and the harvest gate
+            // requires the actor within MaxInteractRange of every crop. Walk
+            // the REAL MoveTo contract action back to the farm origin — the
+            // whole plot sits within a few meters of it. Unit worlds are
+            // co-located, so the leg completes instantly.
+            var walkToFarm = actor.MoveTo(farmOrigin, speed: options.RepositionSpeed,
+                timeout: options.FarmRepositionTimeout, idempotencyKey: "m3a4-walk-to-farm");
+            traceRecords.Add(actor.AuditTrace.Last());
+            stages.Add(Stage("WALK-TO-FARM", walkToFarm, $"farm origin {farmOrigin}"));
+            walkToFarm = pump.Drive(actor, walkToFarm, options.FarmRepositionTimeout);
+            if (walkToFarm.State != ActorLifecycleState.Completed)
+                return Fail("WALK-TO-FARM", walkToFarm, "reposition to farm",
+                    rigNotes, stages, criteria, traceRecords);
+
+            // 2d. Growth (engine timers; the pump advances them), then harvest.
             foreach (var cropObjId in farm.Planted)
             {
                 if (!pump.WaitForCropMaturity(character, cropObjId, options.CropMaturityTimeout))
@@ -385,6 +439,21 @@ public static class M3aM4ReplayScenario
             var generalMerchantObjId = world.ResolveNpcObjId(options.GeneralMerchantNpcTemplateId);
             if (generalMerchantObjId == 0)
                 return Fail("BUY-CERTIFICATE", null, $"general merchant {options.GeneralMerchantNpcTemplateId} unresolvable in world",
+                    rigNotes, stages, criteria, traceRecords);
+
+            // Same deterministic shop-range leg as the seed purchase: the
+            // live adapter resolves an already-spawned merchant without a
+            // teleport (observed live: the general merchant spawns near the
+            // seed merchant's spawner while the actor is away at the farm —
+            // the Buy gate then fails at 3 m). Walk into range; no-op when
+            // the resolve teleported (same position).
+            var walkToMerchant = actor.MoveToUnit(generalMerchantObjId, speed: options.RepositionSpeed,
+                timeout: options.FarmRepositionTimeout, idempotencyKey: "m3a4-walk-to-merchant");
+            traceRecords.Add(actor.AuditTrace.Last());
+            stages.Add(Stage("WALK-TO-MERCHANT", walkToMerchant, $"merchant {generalMerchantObjId}"));
+            walkToMerchant = pump.Drive(actor, walkToMerchant, options.FarmRepositionTimeout);
+            if (walkToMerchant.State != ActorLifecycleState.Completed)
+                return Fail("WALK-TO-MERCHANT", walkToMerchant, "reposition to merchant",
                     rigNotes, stages, criteria, traceRecords);
 
             var buyCert = actor.Buy(generalMerchantObjId, options.CertificateItemId, 1,
@@ -445,7 +514,18 @@ public static class M3aM4ReplayScenario
             craftState.PackInstanceId = packItem?.Id ?? 0;
 
             // ------------------------------------------------ 4. PACK
-            // 4a. Put down the carried pack (engine spawns the placed-pack doodad 6068).
+            // 4a. Put down the carried pack (engine spawns the placed-pack
+            // doodad 6068). The engine refuses placement inside public-farm
+            // subzones and on house plots without permission — the craft
+            // bench area in a town can sit in either (observed live:
+            // "put-down did not take effect (engine refused placement)").
+            // Stand at the nearest spot that clears BOTH gates (engine READ
+            // APIs only — no state is mutated by the probe), facing +X so
+            // the effect's 1m-in-front placement point is deterministic.
+            var placementSpot = FindFreePlacementSpot(character, rigNotes);
+            character.Transform.Local.SetPosition(placementSpot);
+            character.Transform.Local.SetRotation(0f, 0f, 0f);
+
             var putDown = actor.PutDown(options.PackItemTemplateId, idempotencyKey: "m3a4-putdown");
             traceRecords.Add(actor.AuditTrace.Last());
             stages.Add(Stage("PUTDOWN", putDown, $"pack {options.PackItemTemplateId}"));
@@ -494,6 +574,13 @@ public static class M3aM4ReplayScenario
             }
             else
             {
+                // GCD settle: the engine's 150ms skill GCD window rejects
+                // back-to-back skill uses with SkillResult.CooldownTime (the
+                // put-down / pickup skill uses land milliseconds before this
+                // summon). A real client paces itself; the scripted actor
+                // waits out the window explicitly.
+                Thread.Sleep(300);
+
                 var summon = actor.UseItem(options.FarmWagonSummonScrollItemId, idempotencyKey: "m3a4-summon-wagon");
                 traceRecords.Add(actor.AuditTrace.Last());
                 stages.Add(Stage("USE-SUMMON-SCROLL", summon, $"scroll {options.FarmWagonSummonScrollItemId}"));
@@ -759,6 +846,66 @@ public static class M3aM4ReplayScenario
         }
 
         return nearest;
+    }
+
+    /// <summary>
+    /// Nearest spot to the actor whose stand point AND the pack put-down
+    /// point 1m in front of it clear the engine's placement gates:
+    /// public-farm subzone exclusion (PublicFarmManager.InPublicFarm) and
+    /// house-plot permission (HousingManager.GetHouseAtLocation — a fresh
+    /// rig owns no houses). Scans a deterministic spiral of candidate
+    /// positions (rings out to 50 m, 8 compass points per ring). Rejection
+    /// telemetry is appended to the rig notes so a live failure names the
+    /// gate (farm vs house) instead of a bare engine refusal. Unit worlds
+    /// have no subzone/housing managers — the probe falls back to the
+    /// actor's current position there.
+    /// </summary>
+    private static Vector3 FindFreePlacementSpot(Character character, List<string> rigNotes)
+    {
+        var world = character.ParentWorld;
+        var origin = character.Transform.World.Position;
+        if (world == null)
+            return origin;
+
+        var farmRejects = 0;
+        var houseRejects = 0;
+        try
+        {
+            foreach (var radius in new[] { 0f, 3f, 6f, 9f, 12f, 15f, 20f, 25f, 30f, 40f, 50f })
+            {
+                foreach (var (dx, dy) in new[]
+                         {
+                             (1f, 0f), (-1f, 0f), (0f, 1f), (0f, -1f),
+                             (0.707f, 0.707f), (0.707f, -0.707f), (-0.707f, 0.707f), (-0.707f, -0.707f)
+                         })
+                {
+                    var stand = origin + new Vector3(dx * radius, dy * radius, 0f);
+                    var ahead = stand + new Vector3(1f, 0f, 0f); // yaw 0 → +X
+                    if (PublicFarmManager.Instance.InPublicFarm(world.Template, stand) ||
+                        PublicFarmManager.Instance.InPublicFarm(world.Template, ahead))
+                    {
+                        farmRejects++;
+                        continue;
+                    }
+                    if (HousingManager.Instance.GetHouseAtLocation(stand.X, stand.Y) != null ||
+                        HousingManager.Instance.GetHouseAtLocation(ahead.X, ahead.Y) != null)
+                    {
+                        houseRejects++;
+                        continue;
+                    }
+                    rigNotes.Add($"placement spot {stand} (rejects: {farmRejects} farm, {houseRejects} house)");
+                    return stand;
+                }
+            }
+        }
+        catch
+        {
+            // Subzone/housing managers unavailable (unit worlds) — fall back
+            // to the current position; the engine gates behave as before.
+        }
+
+        rigNotes.Add($"placement fallback to actor position {origin} (rejects: {farmRejects} farm, {houseRejects} house)");
+        return origin;
     }
 
     private static Doodad? FindPlacedPackDoodad(Character character, uint packItemTemplateId, uint placedDoodadTemplateId)
