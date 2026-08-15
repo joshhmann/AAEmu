@@ -350,6 +350,24 @@ public static class PackVehicleService
             doodad.InitDoodad();
         doodad.Spawn();
 
+        // Persistence arm (M5.1 restart contract, t_1b82b33f): a pack
+        // loaded onto a REAL summoned player vehicle is persisted as a
+        // slave-owned doodad — the exact row shape the engine's own
+        // binding-spawn writes (SlaveManager) and the re-summon load path
+        // restores (SpawnPersistentDoodads(DoodadOwnerType.Slave,
+        // slave.Id): owner_type=Slave + house_id=slave DbId + attach_point
+        // + item link + LOCAL snapped transform). Without this arm the
+        // attached pack vanishes on kill -9. Headless unit rigs summon
+        // item-less slaves (SummoningItem == null), so the arm is skipped
+        // there and the unit gate stays MySQL-free.
+        if (slave.SummoningItem != null)
+        {
+            doodad.OwnerType = DoodadOwnerType.Slave;
+            doodad.OwnerDbId = slave.Id;
+            doodad.IsPersistent = true;
+            doodad.Save();
+        }
+
         data = new PackLoadData(doodad, doodad.ItemId > 0 ? ItemManager.Instance.GetItemByItemId(doodad.ItemId) : null,
             freePoint.Value, doodad.AttachPoint != AttachPointKind.None && doodad.ParentObjId == slave.ObjId);
         return PackLoadResult.Success;

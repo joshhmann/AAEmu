@@ -34,6 +34,29 @@ public class M4VehiclesE2eTests
     private const uint RowboatTemplateId = 15;          // slaves.template_id — rowboat (compact.sqlite3)
     private const uint RowboatScrollTemplateId = 17863; // 솔즈리드 나룻배 소환 주문서 (summon scroll item)
 
+    // Attached-pack-on-slave restart (M5.1 gap flag t_1b82b33f): a trade pack
+    // loaded onto a slave cargo point via PackVehicleService →
+    // SlaveManager.AttachDoodadAtPoint must survive kill -9. Seed ids are
+    // clear of the rowboat test above (910010+).
+    private const uint WagonAccountId = 910010;
+    private const uint WagonCharId = 910010;
+    private const uint WagonSlaveRowId = 910011;
+    private const uint WagonSummonItemId = 910012;
+    private const uint AttachedPackDoodadDbId = 910013;
+    private const ulong AttachedPackItemId = 910014;
+    private const uint AttachedPackContainerId = 910015;
+    private const uint FarmWagonTemplateId = 60;        // slaves.template_id — Farm Wagon (model 1008, cargo points 9-12)
+    private const uint FarmWagonScrollTemplateId = 18660; // item_summon_slaves: 18660 → slave 60 (farm wagon summon scroll)
+    private const uint PackItemTemplateId = 26488;      // 황금 평원 마취제 (trade pack)
+    private const uint PlacedPackDoodadTemplateId = 6068;
+    private const uint PlacedPackStartPhaseId = 15677;
+    // Canonical local snap of Farm Wagon model 1008 attach point 9 (cargo
+    // point Cannon0) — the value ApplyAttachPointLocation writes and the
+    // restart must preserve.
+    private const float CargoSnapX = -0.55f;
+    private const float CargoSnapY = -2.0f;
+    private const float CargoSnapZ = 1.15f;
+
     private static void EnsureStack() => E2eStack.EnsureUp();
 
     [Fact]
@@ -54,7 +77,7 @@ public class M4VehiclesE2eTests
         using (var game = E2eStack.OpenDb("aaemu_game"))
         {
             InsertCharacter(game, CharId, AccountId, "m4_vehicle_owner");
-            InsertSummonItem(game, SummonItemId, CharId);
+            InsertSummonItem(game, SummonItemId, CharId, RowboatScrollTemplateId);
         }
 
         try
@@ -81,6 +104,68 @@ public class M4VehiclesE2eTests
         }
     }
 
+    /// <summary>
+    /// M5.1 gap flag (t_1b82b33f): attached-pack-on-slave restart — a trade
+    /// pack loaded onto a slave cargo point via the REAL gameplay path
+    /// (PackVehicleService.TryLoadCarriedPack → SlaveManager.AttachDoodadAtPoint)
+    /// persists as a slave-owned doodads row (owner_type Slave, house_id =
+    /// slave DbId, attach_point = cargo point, item link, LOCAL snapped
+    /// transform). This test seeds exactly the row the engine now writes,
+    /// kills the game server (kill -9 semantics), boots it again, and
+    /// asserts the full attached-pack state survives byte-intact: the slave
+    /// row, the single binding row (owner_type=2 + house_id=slaveId), the
+    /// binding (attach_point/data), the item link and the local transform —
+    /// no loss, no duplication, exactly 1 binding row.
+    ///
+    /// Rows are seeded with distinctive values so any boot-time rewrite
+    /// (the M3b-1 clobber class) fails the assertion.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "e2e")]
+    public void M4Vehicles_AttachedPackOnSlave_Restart_RowBindingTransformSurvive_ExactlyOneBindingRow()
+    {
+        EnsureStack();
+
+        using (var login = E2eStack.OpenDb("aaemu_login"))
+        using (var cmd = login.CreateCommand())
+        {
+            cmd.CommandText = "INSERT IGNORE INTO users (id, username, password, email, last_ip) VALUES (@id, @name, '', '', '')";
+            cmd.Parameters.AddWithValue("@id", WagonAccountId);
+            cmd.Parameters.AddWithValue("@name", "m4_attached_pack_owner");
+            cmd.ExecuteNonQuery();
+        }
+
+        // Planted 5 days ago: canonical 6-day despawn timer still running —
+        // the maturation clock must not be rewritten at boot.
+        var plantedAt = DateTime.UtcNow.AddDays(-5);
+        var plantedAtSql = plantedAt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+
+        using (var game = E2eStack.OpenDb("aaemu_game"))
+        {
+            InsertCharacter(game, WagonCharId, WagonAccountId, "m4_attached_pack_owner");
+            InsertSummonItem(game, WagonSummonItemId, WagonCharId, FarmWagonScrollTemplateId);
+            InsertAttachedPackSystemContainer(game);
+            InsertAttachedPackItem(game);
+            SeedAttachedPackSlaveRow();
+            SeedAttachedPackDoodad(plantedAtSql);
+        }
+
+        try
+        {
+            AssertAttachedPackSeeded(plantedAt);
+
+            // kill -9: StopGameServer kills the process tree; the MySQL rows
+            // are the only thing that can survive. Boot fresh and verify.
+            E2eStack.RestartGameServer();
+            AssertAttachedPackIntact(plantedAt);
+            Console.WriteLine("[m4-vehicles] ATTACHED-PACK RESTART PASS (pack on slave cargo survives kill -9: row + binding + transform, exactly 1 binding row)");
+        }
+        finally
+        {
+            CleanupAttachedPack();
+        }
+    }
+
     // ================================================================ seeding
 
     private static void InsertCharacter(MySqlConnection conn, uint charId, uint accountId, string name)
@@ -100,7 +185,7 @@ public class M4VehiclesE2eTests
     }
 
     /// <summary>Summon scroll item the vehicle is bound to (the re-summon path anchor).</summary>
-    private static void InsertSummonItem(MySqlConnection conn, ulong itemId, uint ownerId)
+    private static void InsertSummonItem(MySqlConnection conn, ulong itemId, uint ownerId, uint templateId)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText =
@@ -108,7 +193,7 @@ public class M4VehiclesE2eTests
             "lifespan_mins, made_unit_id, owner, grade, flags, created_at) " +
             "VALUES (@id, 'SummonSlave', @templateId, 0, 0, 0, 1, '', 0, 0, @owner, 0, 0, @createdAt)";
         cmd.Parameters.AddWithValue("@id", itemId);
-        cmd.Parameters.AddWithValue("@templateId", RowboatScrollTemplateId);
+        cmd.Parameters.AddWithValue("@templateId", templateId);
         cmd.Parameters.AddWithValue("@owner", ownerId);
         cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
         cmd.ExecuteNonQuery();
@@ -247,6 +332,225 @@ public class M4VehiclesE2eTests
         catch (Exception e)
         {
             Console.WriteLine($"[m4-vehicles] cleanup failed (non-fatal): {e.Message}");
+        }
+    }
+
+    // ================================================================ attached-pack seeding
+
+    /// <summary>System container the pack item lives in after a carried load (SlotType.System = 0xFF).</summary>
+    private static void InsertAttachedPackSystemContainer(MySqlConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "INSERT IGNORE INTO item_containers (container_id, container_type, slot_type, container_size, owner_id, mate_id) " +
+            "VALUES (@containerId, 'AAEmu.Game.Models.Game.Items.Containers.SystemContainer', 255, 0, @ownerId, 0)";
+        cmd.Parameters.AddWithValue("@containerId", AttachedPackContainerId);
+        cmd.Parameters.AddWithValue("@ownerId", WagonCharId);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>Pack item (Backpack 26488) in the System container — the carried-load cargo state.</summary>
+    private static void InsertAttachedPackItem(MySqlConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "INSERT IGNORE INTO items (id, type, template_id, container_id, slot_type, slot, count, details, " +
+            "lifespan_mins, made_unit_id, owner, grade, flags, created_at) " +
+            "VALUES (@id, 'AAEmu.Game.Models.Game.Items.Backpack', @templateId, @containerId, 255, 0, 1, '', " +
+            "0, 0, @ownerId, 0, 0, @createdAt)";
+        cmd.Parameters.AddWithValue("@id", AttachedPackItemId);
+        cmd.Parameters.AddWithValue("@templateId", PackItemTemplateId);
+        cmd.Parameters.AddWithValue("@containerId", AttachedPackContainerId);
+        cmd.Parameters.AddWithValue("@ownerId", WagonCharId);
+        cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// The farm wagon out + ridden when the server stops — same row shape as
+    /// the rowboat seed, but the canonical cargo vehicle (template 60, model
+    /// 1008: pack-storage-box bindings at attach points 9-12).
+    /// </summary>
+    private static void SeedAttachedPackSlaveRow()
+    {
+        using var conn = E2eStack.OpenDb("aaemu_game");
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "INSERT INTO slaves (id, item_id, template_id, attach_point, name, owner_type, owner_id, summoner, hp, mp, x, y, z) " +
+            "VALUES (@id, @itemId, @templateId, 1, 'm4-e2e-farm-wagon', 0, @owner, @owner, 1234, 456, 100.5, 200.5, 1.5)";
+        cmd.Parameters.AddWithValue("@id", WagonSlaveRowId);
+        cmd.Parameters.AddWithValue("@itemId", WagonSummonItemId);
+        cmd.Parameters.AddWithValue("@templateId", FarmWagonTemplateId);
+        cmd.Parameters.AddWithValue("@owner", WagonCharId);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// The attached-pack doodads row — exactly what the persistence arm in
+    /// PackVehicleService now writes after AttachDoodadAtPoint:
+    ///   owner_type = 2 (Slave), house_id = slave DbId, attach_point = 9
+    ///   (first cargo point), data = 9 (attach-point copy), template 6068
+    ///   (placed-pack doodad for pack 26488), current_phase 15677 (start
+    ///   group), item link, LOCAL transform = the canonical model-1008 snap
+    ///   of cargo point 9, and plant_time 5 days back (maturation clock).
+    /// </summary>
+    private static void SeedAttachedPackDoodad(string plantedAtSql)
+    {
+        using var conn = E2eStack.OpenDb("aaemu_game");
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "INSERT IGNORE INTO doodads (id, owner_id, owner_type, attach_point, template_id, current_phase_id, " +
+            "plant_time, growth_time, phase_time, x, y, z, roll, pitch, yaw, scale, item_id, house_id, " +
+            "parent_doodad, item_template_id, item_container_id, data, farm_type) " +
+            "VALUES (@id, @ownerId, 2, 9, @templateId, @phaseId, @plantTime, @plantTime, @plantTime, " +
+            "@x, @y, @z, 0, 0, 0, 1, @itemId, @houseId, 0, @itemTemplateId, 0, 9, 0)";
+        cmd.Parameters.AddWithValue("@id", AttachedPackDoodadDbId);
+        cmd.Parameters.AddWithValue("@ownerId", WagonCharId);
+        cmd.Parameters.AddWithValue("@templateId", PlacedPackDoodadTemplateId);
+        cmd.Parameters.AddWithValue("@phaseId", PlacedPackStartPhaseId);
+        cmd.Parameters.AddWithValue("@plantTime", plantedAtSql);
+        cmd.Parameters.AddWithValue("@x", CargoSnapX.ToString("R", CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("@y", CargoSnapY.ToString("R", CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("@z", CargoSnapZ.ToString("R", CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("@itemId", AttachedPackItemId);
+        cmd.Parameters.AddWithValue("@houseId", WagonSlaveRowId);
+        cmd.Parameters.AddWithValue("@itemTemplateId", PackItemTemplateId);
+        cmd.ExecuteNonQuery();
+    }
+
+    // ================================================================ attached-pack assertions
+
+    private static void AssertAttachedPackSeeded(DateTime plantedAt)
+    {
+        using var conn = E2eStack.OpenDb("aaemu_game");
+
+        // Slave row seeded for the summoner.
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT COUNT(*) FROM slaves WHERE summoner = @owner";
+            cmd.Parameters.AddWithValue("@owner", WagonCharId);
+            Assert.Equal(1, Convert.ToInt32(cmd.ExecuteScalar()));
+        }
+
+        // Exactly 1 binding row: owner_type Slave(2) + house_id = slave DbId.
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT COUNT(*) FROM doodads WHERE owner_type = 2 AND house_id = @houseId";
+            cmd.Parameters.AddWithValue("@houseId", WagonSlaveRowId);
+            Assert.Equal(1, Convert.ToInt32(cmd.ExecuteScalar()));
+        }
+
+        AssertAttachedPackRow(conn, "seeded", plantedAt);
+    }
+
+    private static void AssertAttachedPackIntact(DateTime plantedAt)
+    {
+        using var conn = E2eStack.OpenDb("aaemu_game");
+
+        // Exactly one slave row for the summoner — no boot-time respawn dup.
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT COUNT(*) FROM slaves WHERE summoner = @owner";
+            cmd.Parameters.AddWithValue("@owner", WagonCharId);
+            Assert.Equal(1, Convert.ToInt32(cmd.ExecuteScalar()));
+        }
+
+        // Exactly ONE binding row (owner_type=Slave + house_id=slaveDbId) —
+        // the attached-pack contract: no loss, no duplication.
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT COUNT(*) FROM doodads WHERE owner_type = 2 AND house_id = @houseId";
+            cmd.Parameters.AddWithValue("@houseId", WagonSlaveRowId);
+            Assert.Equal(1, Convert.ToInt32(cmd.ExecuteScalar()));
+        }
+
+        AssertAttachedPackRow(conn, "after-restart", plantedAt);
+    }
+
+    /// <summary>Byte-intact check of the binding + item link + LOCAL transform.</summary>
+    private static void AssertAttachedPackRow(MySqlConnection conn, string phase, DateTime plantedAt)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT owner_id, owner_type, attach_point, template_id, current_phase_id, plant_time, " +
+            "item_id, item_template_id, house_id, x, y, z, data FROM doodads WHERE id = @doodadId";
+        cmd.Parameters.AddWithValue("@doodadId", AttachedPackDoodadDbId);
+
+        using var reader = cmd.ExecuteReader();
+        Assert.True(reader.Read(), $"[{phase}] attached-pack doodads row missing");
+        Assert.Equal(WagonCharId, reader.GetUInt32("owner_id"));
+        Assert.Equal(2u, reader.GetUInt32("owner_type"));               // DoodadOwnerType.Slave
+        Assert.Equal(9u, reader.GetUInt32("attach_point"));             // cargo point Cannon0
+        Assert.Equal(PlacedPackDoodadTemplateId, reader.GetUInt32("template_id"));
+        Assert.Equal(PlacedPackStartPhaseId, reader.GetUInt32("current_phase_id"));
+
+        // Maturation clock must not be rewritten at boot (M3b-1 clobber class).
+        var plantTime = reader.GetDateTime("plant_time");
+        Assert.True(Math.Abs((plantTime - plantedAt).TotalSeconds) < 2,
+            $"[{phase}] plant_time clobbered: stored {plantTime:O}, seeded {plantedAt:O}");
+
+        // Item link (doodad → pack item) survives.
+        Assert.Equal(AttachedPackItemId, reader.GetUInt64("item_id"));
+        Assert.Equal(PackItemTemplateId, reader.GetUInt32("item_template_id"));
+
+        // Binding row key: house_id == slave DbId.
+        Assert.Equal(WagonSlaveRowId, reader.GetUInt32("house_id"));
+        Assert.Equal(9, reader.GetInt32("data"));                      // attach-point copy
+
+        // LOCAL transform = the canonical cargo snap — a world-space rewrite
+        // (or a lost parent) would shift these.
+        Assert.True(Math.Abs(reader.GetFloat("x") - CargoSnapX) < 0.001f &&
+                    Math.Abs(reader.GetFloat("y") - CargoSnapY) < 0.001f &&
+                    Math.Abs(reader.GetFloat("z") - CargoSnapZ) < 0.001f,
+            $"[{phase}] local transform clobbered to {reader.GetFloat("x")}/{reader.GetFloat("y")}/{reader.GetFloat("z")}");
+    }
+
+    private static void CleanupAttachedPack()
+    {
+        try
+        {
+            using var game = E2eStack.OpenDb("aaemu_game");
+            using (var cmd = game.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM doodads WHERE id = @doodadId";
+                cmd.Parameters.AddWithValue("@doodadId", AttachedPackDoodadDbId);
+                cmd.ExecuteNonQuery();
+            }
+            using (var cmd = game.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM slaves WHERE id = @id OR summoner = @owner";
+                cmd.Parameters.AddWithValue("@id", WagonSlaveRowId);
+                cmd.Parameters.AddWithValue("@owner", WagonCharId);
+                cmd.ExecuteNonQuery();
+            }
+            using (var cmd = game.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM items WHERE id IN (@scrollId, @packId)";
+                cmd.Parameters.AddWithValue("@scrollId", WagonSummonItemId);
+                cmd.Parameters.AddWithValue("@packId", AttachedPackItemId);
+                cmd.ExecuteNonQuery();
+            }
+            using (var cmd = game.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM item_containers WHERE container_id = @containerId";
+                cmd.Parameters.AddWithValue("@containerId", AttachedPackContainerId);
+                cmd.ExecuteNonQuery();
+            }
+            using (var cmd = game.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM characters WHERE id = @id";
+                cmd.Parameters.AddWithValue("@id", WagonCharId);
+                cmd.ExecuteNonQuery();
+            }
+            using var login = E2eStack.OpenDb("aaemu_login");
+            using var cmd2 = login.CreateCommand();
+            cmd2.CommandText = "DELETE FROM users WHERE id = @id";
+            cmd2.Parameters.AddWithValue("@id", WagonAccountId);
+            cmd2.ExecuteNonQuery();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[m4-vehicles] attached-pack cleanup failed (non-fatal): {e.Message}");
         }
     }
 }
