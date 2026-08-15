@@ -92,6 +92,78 @@
 
 ---
 
+## Milestone Requirements & DoD — THE STANDARD (retrofit 2026-08-14, Codex audit finding)
+
+**Origin (Josh directive 2026-08-14):** milestones were closed on "got
+something working" evidence, not on true-to-requirements evidence. Every
+milestone therefore carries an explicit, uniform block: **Requirements**,
+**DoD (evidence classes)**, **Non-goals**, and requirement-indexed **Exit
+tests**. A closure claim that cannot cite a requirement and its DoD evidence
+is untrustworthy. (Retrofit card t_730b04bd; the AAEmu cap at M5.2 stands —
+this is requirements governance, exempt from the cap by Josh ruling.
+Re-grading is the Rei gate's job, t_ec7f0c19 — this section defines the
+block format and the retrofitted blocks only, and changes NO milestone
+status.)
+
+### Requirements (REQ-<M>-<n>)
+- **Verifiable:** an independent observer can check pass/fail (test, gate
+  verdict, census, replay, registered decision).
+- **Canonical-1.2-true:** the bar is ArcheAge 1.2 retail behavior (reference
+  data + 1.2 mechanics), never invented behavior. Where Josh ruled a
+  deviation (drop / prune / keep-by-ruling), the requirement's bar is the
+  ruling itself — registered, dated, with restore pointers where relevant.
+- **Independently testable:** each item carries its own evidence path; no
+  requirement may borrow another requirement's test and count as covered.
+- **Provenance marks (mandatory):** `(reconstructed 2026-08-14)` = recovered
+  from the milestone's existing Work:/status/Detail prose — never silently
+  invented. `REQUIREMENT NOT RECOVERABLE` = no source basis exists in the
+  record; that mark is itself a finding — the item is UNVERIFIABLE and needs
+  a Josh requirement ruling before any closure claim.
+
+### DoD — evidence classes REQUIRED to claim closure (7-state ledger, EVIDENCE-LEDGER.md, t_547ef82d)
+
+| Class | Ledger state(s) | Meaning |
+|---|---|---|
+| engine-path implementation | 1 implemented | code merged to fork develop; real engine path, normal gameplay services only (no direct DB, no bot-only resource creation) |
+| bot-replay | 3 bot-replay-ready + 4 bot-replay-passed | scripted rig exists AND passes on the merged tree (M5-stand-in rule; proxy/bot-functional evidence) |
+| restart-persistence | 5 restart-passed | restart/persistence scenario passed (standing 3-scenario rule) |
+| soak | 6 soak-passed | duration/load soak within approved numeric budgets — required only where the milestone touches load-sensitive paths |
+| human-feel | 7 human-feel-accepted | Josh's H verdict — NEVER inferred from bot/scripted evidence; H=2 only after Josh runs the feel gate |
+
+Per-milestone DoD blocks mark each class **REQUIRED / N/A (reason) /
+DEFERRED-RECORDED (Josh-owned deferred gate, card cited)**. A milestone with
+any DEFERRED or UNKNOWN class may close at most **CLOSED-WITH-CAVEATS** —
+never CONFIRMED-CLOSED. Ledger discipline (t_547ef82d): every transition
+cites card/commit/date; earned evidence is never erased; H stays UNKNOWN
+everywhere until Josh runs the feel gate.
+
+### Non-goals
+Explicit per milestone. Work outside the requirement set is out of scope and
+must be filed as its own card, never absorbed into the milestone.
+
+### Exit tests
+Requirement-indexed: each exit-test bullet is tagged with the REQ ids it
+exercises. An exit test that exercises no requirement is either redundant or
+a sign of scope creep.
+
+### Retrofit summary (2026-08-14, t_730b04bd)
+
+All blocks below were reconstructed from each milestone's own record; no
+status was re-graded (that is t_ec7f0c19).
+
+| Milestone | Requirements | Reconstructed | NOT RECOVERABLE findings |
+|---|---|---|---|
+| M1 | REQ-M1-1..10 | 10 | 2 (completeness bar; peripheral-coverage target) |
+| M2 / M2a–d | REQ-M2-1..9 + REQ-M2a/b/b-E2E/c/d | 14 | 1 (M2c/M2d per-band thresholds) |
+| M3a | REQ-M3a-1..8 | 8 | 0 |
+| M3b | REQ-M3b-1..12 | 12 | 0 (REQ-M3b-9 closure-evidence gap flagged) |
+| M4 | REQ-M4-1..7 | 7 | 0 |
+| M5 | REQ-M5-1..15 | 15 | 0 |
+| M5.1 | REQ-M5.1-1..5 | 5 | 0 (LoadPackOntoVehicle restart-assertion gap flagged) |
+| M5.2 | REQ-M5.2-1..3 | 3 | 0 |
+
+---
+
 ## Upstream alignment rules (Josh, locked 2026-08-04 — every milestone)
 
 These keep upstream pulls into the fork clean and reviewable. They do not make
@@ -145,6 +217,63 @@ merge/deploy decision.
 
 Trimmed, not exhaustive. Fix shared engine defects + the selected golden
 route. Individual peripheral quest bugs → Lane B (maintenance).
+
+**Requirements (retrofit 2026-08-14):**
+- **REQ-M1-1** — Shared engine defects on the golden route fixed through real
+  engine paths: BUG-006 kill-acceptor (380 quests startable; 1082/1082
+  tests). *(reconstructed 2026-08-14)*
+- **REQ-M1-2** — `quest_act_obj_aliases` load + validate: verdict documented
+  (dormant id→name dict; zero live 1.2 refs — no use_alias=1 rows, no
+  QuestActObjAlias act type — no-op). *(reconstructed 2026-08-14)*
+- **REQ-M1-3** — Stub-act audit: genuine stubs fixed (CheckGuard
+  silent-pass, ItemGroup gather/use stall); orphaned act rows registered.
+  *(reconstructed 2026-08-14)*
+- **REQ-M1-4** — Quest sanity verifier (startup cross-check) with tests
+  (BUG-007, 14 tests); first live census over all quests (5 ERR / 128 WARN /
+  4 INFO over 4,775). *(reconstructed 2026-08-14)*
+- **REQ-M1-5** — Doodad phase/interaction objectives resolve (quests
+  922/3889/3447; T1 Solzreed 97/97). *(reconstructed 2026-08-14)*
+- **REQ-M1-6** — Solzreed golden route selected + curated; intentionally
+  excluded quests documented (Docs/wiki/Golden-Route-Solzreed.md).
+  *(reconstructed 2026-08-14)*
+- **REQ-M1-7** — Widened verifier data-defect backlog closed per registered
+  decision: 776/777 FIXED (in-memory overlay, t_d8a8c798) · 2145→2146 PRUNED
+  (t_60a559ab) · QUEST_NO_START cluster 1533–1548 DROPPED (Josh,
+  t_5140fb35) · QUEST_NO_COMPONENTS 1391 DROPPED (Josh, t_5a61cee3) · 8
+  orphaned quest_contexts DROPPED (Josh, t_0ac25620) — every drop registered
+  with restore pointers (scorecard-explorations/dropped-content-register.md).
+  *(reconstructed 2026-08-14)*
+- **REQ-M1-8** — Automated exit GREEN: scenario-harness census 153/153
+  runnable / 0 FAIL / 33 SKIP over 186 quests; full gate 1148/1148
+  (superseded by G1 4,573/4,573). *(reconstructed 2026-08-14)*
+- **REQ-M1-9** — Restart-persistence: character resumes the golden route
+  after server restart. *(reconstructed 2026-08-14 — promoted from the exit
+  test below)*
+- **REQ-M1-10** — Human playtest verdict on the curated Solzreed route (Josh;
+  Open Decision #1 / deferred gate #1). *(reconstructed 2026-08-14)*
+- **REQUIREMENT NOT RECOVERABLE:** a completeness bar for "shared engine
+  defects" beyond the enumerated list — M1 scope is explicitly "trimmed, not
+  exhaustive"; no finite defect enumeration exists in the record.
+- **REQUIREMENT NOT RECOVERABLE:** a peripheral-quest coverage target —
+  explicitly out of scope (Lane B maintenance); no bar was ever set.
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M1 evidence |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | ✅ merged @ 94f498fc (BUG-006..012) + widened fixes (t_d8a8c798, t_60a559ab, registered drops) |
+| bot-replay (3+4) | REQUIRED | ✅ 153/153 census → G1 4,573/4,573; control-plane contract replay 16/16 + full-route live PASS (t_15787275, proxy) |
+| restart-persistence (5) | REQUIRED | ✅ retroactive via M2 baseline t_cca63225 + live probe t_92a41fe6 (2/2) |
+| soak (6) | N/A | quest-spine milestone; no load-sensitive path claimed |
+| human-feel (7) | DEFERRED-RECORDED | ⏳ deferred gate #1 / Open Decision #1 (Josh-owned); H UNKNOWN |
+
+**Non-goals (reconstructed 2026-08-14):** individual peripheral quest bugs
+(→ Lane B maintenance); harness extension M1-5d/5e (→ M2); full-corpus
+coverage (→ G1/M2); no M5 contract dependency (pre-M5 automation
+distinction).
+
+**Exit tests (requirement-indexed):** Human → REQ-M1-10 · Automated (pre-M5)
+→ REQ-M1-1, -2, -3, -4, -5, -7, -8 · Restart-persistence → REQ-M1-9 · After
+M5: golden route replayed through the actor contract (REQ-M1-6 + M5 surface).
 
 **Work:**
 - ✅ BUG-006 kill-acceptor (380 quests, 1082/1082 tests) — merged to fork
@@ -235,6 +364,70 @@ baseline before repairing its housing and trade segments. **M2 is a planning
 and discovery gate, not a claim that the entire loop already works.** M3
 investigation may begin while M2 documentation and test tooling are finalized.
 
+**Requirements (retrofit 2026-08-14):**
+- **REQ-M2-1** — Golden path defined + documented: create character → starter
+  progression → unlock mount → acquire farm → plant & harvest → build house →
+  craft trade pack → transport pack → sell → return home.
+  *(reconstructed 2026-08-14)*
+- **REQ-M2-2** — Golden-path zone LOCKED: Solzreed (Josh 2026-08-03), route
+  expanding outward. *(reconstructed 2026-08-14)*
+- **REQ-M2-3** — Primary outputs delivered: curated route · human playtest
+  checklist · scenario manifest · restart checkpoints · known-blocker
+  registry · structured logging expectations · reproducible DB reset/seed
+  procedure (no raw snapshot with accounts/secrets/production state).
+  *(reconstructed 2026-08-14)*
+- **REQ-M2-4** — Reset/seed procedure reproducible by a THIRD PARTY (clean
+  host) from the docs — the manifest may not validate itself.
+  *(reconstructed 2026-08-14)*
+- **REQ-M2-5** — Human baseline: two players attempt the entire route from
+  the reproducible reset state; every blocker captured with stage, repro,
+  evidence, and its owning M3/M4 card. *(reconstructed 2026-08-14; the
+  original two-player leg = deferred gate #2, Josh-owned)*
+- **REQ-M2-6** — Automated baseline: manifest + reset procedure reproduce the
+  selected character, item, property, recipe, pack, and vehicle
+  prerequisites. *(reconstructed 2026-08-14)*
+- **REQ-M2-7** — Restart baseline: checkpoints identify exactly which state
+  is retained, lost, duplicated, or requires repair.
+  *(reconstructed 2026-08-14)*
+- **REQ-M2-8** — Quest census to 100%: every live context PASS or
+  registered-drop or doc-SKIP, zero unexplained (band sweeps M2a–M2d + G1
+  gate; ≥95% band gates adopted by reference from progression-board.md).
+  *(reconstructed 2026-08-14)*
+  - **REQ-M2a** — Band 1–20 census ≥95% (final: 1,169 PASS / 0 FAIL /
+    0 doc-SKIP). *(reconstructed 2026-08-14)*
+  - **REQ-M2b** — Playerbot repeatability pilot on Solzreed (final: 30/30).
+    *(reconstructed 2026-08-14)*
+  - **REQ-M2b-E2E** — Live-server bot harness (Login+Game+MySQL): 10-bot
+    correctness + 25-bot stability gates. *(reconstructed 2026-08-14)*
+  - **REQ-M2c** — Band 21–30 sweep (final: 847/847 PASS).
+    *(reconstructed 2026-08-14)*
+  - **REQ-M2d** — Band 41–50 sweep (final: 1,589 PASS / 2 doc-SKIP
+    kept-by-ruling). *(reconstructed 2026-08-14)*
+- **REQ-M2-9** — Harness expansion track inherited from M1: M1-5d (14
+  unsupported act families, t_f198bb0e) + M1-5e (T4 full-corpus census,
+  t_9fc77eb) ride in M2; census coverage grows past 153.
+  *(reconstructed 2026-08-14)*
+- **REQUIREMENT NOT RECOVERABLE:** the original per-band numeric thresholds
+  for M2c/M2d beyond the reference-level "≥95%" (the board's meaning columns
+  carry no threshold; both landed 100% PASS-or-doc-SKIP via G1).
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M2 evidence |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | ✅ census harness + M2b-E2E harness merged (G1 @ 7f5c179f7) |
+| bot-replay (3+4) | REQUIRED | ✅ 4,573 PASS / 0 FAIL / 14 doc-SKIP (G1 gate PASSED 08-10); M2b pilot 30/30; contract replay 16/16 incl. mount chain; live E2E min slice + full-route live PASS (t_15787275, proxy) |
+| restart-persistence (5) | REQUIRED | ✅ automated t_c6eb12ec/t_1998cfd8; restart t_cca63225/t_c069bacd + probe t_92a41fe6; clean-host t_52755daa/t_819930ef |
+| soak (6) | N/A | planning/baseline gate; no soak claimed |
+| human-feel (7) | DEFERRED-RECORDED | ⏳ original two-player baseline deferred (t_46bf9b84); bot-driven baseline is proxy, never H=2; H UNKNOWN |
+
+**Non-goals (reconstructed 2026-08-14):** M2 is a planning/discovery gate —
+not a claim that the full loop works (housing/trade repairs belong to
+M3/M4); no content implementation beyond the census/harness track.
+
+**Exit tests (requirement-indexed):** Human baseline → REQ-M2-5 · Automated
+baseline → REQ-M2-6 · Restart baseline → REQ-M2-7 · Third-party reset check
+→ REQ-M2-4 · Census/G1 → REQ-M2-8, REQ-M2a–d · Harness expansion → REQ-M2-9.
+
 **Golden path:** create character → starter progression → unlock mount →
 acquire farm → plant & harvest → build house → craft trade pack → transport
 pack → sell → return home.
@@ -306,6 +499,38 @@ Housing placement-zone validation · decoration-limit enforcement ·
 housing-group/UI data · ownership + permissions · construction · crop
 placement · growth + harvest · selected storage and furniture interactions.
 
+**Requirements (retrofit 2026-08-14):**
+- **REQ-M3a-1** — Housing placement-zone validation (adjacent-homestead
+  spacing enforced; overlap rejected). *(reconstructed 2026-08-14)*
+- **REQ-M3a-2** — Decoration-limit enforcement. *(reconstructed 2026-08-14)*
+- **REQ-M3a-3** — Housing-group/UI data wired. *(reconstructed 2026-08-14)*
+- **REQ-M3a-4** — Ownership + permissions. *(reconstructed 2026-08-14)*
+- **REQ-M3a-5** — Construction through the real engine path
+  (HousingManager.Build). *(reconstructed 2026-08-14)*
+- **REQ-M3a-6** — Crop placement · growth · harvest through the real engine
+  path (Doodad.Use). *(reconstructed 2026-08-14)*
+- **REQ-M3a-7** — Selected storage + furniture interactions (CofferContainer
+  path). *(reconstructed 2026-08-14)*
+- **REQ-M3a-8** — Two players establish ADJACENT homesteads and use the
+  curated objects in ONE uninterrupted session (M5-stand-in rule allowed for
+  the automated leg). *(reconstructed 2026-08-14)*
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M3a evidence |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | ✅ merged @ 4d0427b96; real HousingManager.Build / CraftEffect / Doodad.Use / CofferContainer paths |
+| bot-replay (3+4) | REQUIRED | ✅ M3aExitScenarioTests: 2 scripted actors, 16m adjacency (10m overlap REJECTED), ONE session; Rei gates t_72c787c8 / t_449875bd ACCEPT |
+| restart-persistence (5) | N/A | single-session by design; persistence is M3b's class |
+| soak (6) | N/A | no load path claimed |
+| human-feel (7) | UNKNOWN (recorded) | H stays UNKNOWN; M3a contract replay = deferred gate #3 |
+
+**Non-goals (reconstructed 2026-08-14):** persistence/recovery (→ M3b);
+save-performance budget (→ M3b); server-restart restoration (→ M3b).
+
+**Exit tests (requirement-indexed):** two-player one-session gate →
+REQ-M3a-1..8 (automated leg via M5-stand-in scripted actors; human leg
+deferred, H UNKNOWN).
+
 **Exit condition:** two players establish adjacent homesteads and use the
 curated objects during ONE uninterrupted session.
 
@@ -326,6 +551,41 @@ Furniture + bound doodad persistence · door/window phase state · crop +
 livestock recovery · rotation/attachment integrity · storage persistence ·
 server restart restoration · disconnect + logout cleanup · orphan/duplicate
 prevention · administrative repair tooling.
+
+**Requirements (retrofit 2026-08-14):**
+- **REQ-M3b-1** — Furniture + bound doodad persistence. *(reconstructed 2026-08-14)*
+- **REQ-M3b-2** — Door/window phase state persistence. *(reconstructed 2026-08-14)*
+- **REQ-M3b-3** — Crop + livestock recovery. *(reconstructed 2026-08-14)*
+- **REQ-M3b-4** — Rotation/attachment integrity. *(reconstructed 2026-08-14)*
+- **REQ-M3b-5** — Storage persistence. *(reconstructed 2026-08-14)*
+- **REQ-M3b-6** — Server restart restoration. *(reconstructed 2026-08-14)*
+- **REQ-M3b-7** — Disconnect + logout cleanup. *(reconstructed 2026-08-14)*
+- **REQ-M3b-8** — Orphan/duplicate prevention. *(reconstructed 2026-08-14)*
+- **REQ-M3b-9** — Administrative repair tooling. *(reconstructed 2026-08-14;
+  closure evidence NOT cited in the M3b exit record — gap flag for the Rei gate)*
+- **REQ-M3b-10** — N≥3 crash cycles (restart · kill -9 mid-save with open
+  autosave transaction · container kill during harvest), 16 rows asserted per
+  boot, no loss/dup. *(reconstructed 2026-08-14, from the 08-09 audit + exit record)*
+- **REQ-M3b-11** — Save-duration budget: autosave p95 < 2s at gate scale
+  (2 homesteads + 25 bots embodied). *(reconstructed 2026-08-14)*
+- **REQ-M3b-12** — A4 SaveManager dirty tracking audited for property objects
+  (hard prerequisite). *(reconstructed 2026-08-14)*
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M3b evidence |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | ✅ M3b-1..4 merged (5dc7c2fbd / 71b43e09f / 3913932bf / 5981246ea) |
+| bot-replay (3+4) | REQUIRED | ✅ M3bExitPersistenceE2eTests rig on the tree |
+| restart-persistence (5) | REQUIRED | ✅ EXIT E2E f5b00c686 PASS 7m08s — N=3 cycles incl. kill -9 mid-save + container kill, 16 rows/boot, no loss/dup |
+| soak (6) | REQUIRED (load-sensitive save path) | ✅ save budget at scale: autosave p95 1301ms < 2000ms @ 25 bots + 2 homesteads |
+| human-feel (7) | UNKNOWN (recorded) | H stays UNKNOWN |
+
+**Non-goals (reconstructed 2026-08-14):** housing construction/UI (→ M3a);
+trade/craft/transport (→ M4); multi-homestead scale (→ M8).
+
+**Exit tests (requirement-indexed):** repeated logout/restart/crash-recovery
+→ REQ-M3b-1..8, -10 · quantified cycles → REQ-M3b-10 · save-duration budget
+→ REQ-M3b-11 · A4 audit → REQ-M3b-12.
 
 **Exit condition:** the same two homesteads survive repeated logout,
 restart, crash-recovery, and re-entry tests WITHOUT state loss or
@@ -376,6 +636,47 @@ storage on property, maturation, sale + reward correctness.
 **Vehicles/ships:** summon/despawn, passenger + cargo attachment, death/
 disconnect cleanup, portal/instance behavior, restart recovery, stuck
 recovery.
+
+**Requirements (retrofit 2026-08-14):**
+- **REQ-M4-1** — Crafting: recipe prerequisites · material + labor
+  consumption · output correctness · workstation range/ownership ·
+  inventory-full handling. *(reconstructed 2026-08-14)*
+- **REQ-M4-2** — Trade packs: creation · backpack occupancy · placement/pickup
+  · ownership · storage on property · maturation · sale + reward correctness.
+  *(reconstructed 2026-08-14)*
+- **REQ-M4-3** — Vehicles/ships: summon/despawn · passenger + cargo
+  attachment · death/disconnect cleanup · portal/instance behavior · restart
+  recovery · stuck recovery. *(reconstructed 2026-08-14)*
+- **REQ-M4-4** — Integrated exit: group harvests real materials → crafts pack
+  → loads vehicle → travels defined route → unloads + sells → correct reward
+  → repeats after restart. *(reconstructed 2026-08-14)*
+- **REQ-M4-5** — M2 release validation: four players complete one integrated
+  session from a clean reset state without GM repair (automated fallback:
+  scripted actors on real engine paths, M5-stand-in rule).
+  *(reconstructed 2026-08-14)*
+- **REQ-M4-6** — Per-object-type restart assertions: slave/vehicle
+  attachment, pack maturation timers, cargo ownership each survive restart.
+  *(reconstructed 2026-08-14, from the 08-09 audit)*
+- **REQ-M4-7** — A2 broadcast economics verified at M4 entry
+  (allocation-free short-circuit; wake-storm scans budgeted); convoy-VOLUME
+  measurement is a soak-scale item owned by the M6 soak lane.
+  *(reconstructed 2026-08-14)*
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M4 evidence |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | ✅ release/m4-exit merged (f28b93fc1 / e4af04a49 / 2907f46ff); unit gate 1778/0/1; pinned audited SHA 95bb1c78e (deployed, ledger state 2) |
+| bot-replay (3+4) | REQUIRED | ✅ M4ExitIntegratedSessionTests: 4 scripted actors, real paths (harvest→craft→pack→load→travel→sell→repeat; negatives incl. LevelLowToUse, 801 despawn, StoreCantSellSameZone); merged-tree re-published run (t_abe87eaf) |
+| restart-persistence (5) | REQUIRED | ✅ M4_2TradePackRestart PASS 2m12s (kill -9); M4Vehicles PASS 3m09s (2× kill -9); M3bExit E2E PASS 7m03s; merged-tree re-run 1/1 + 1/1 + M2b 5/5 |
+| soak (6) | N/A at closure | convoy-volume deferred to M6 soak lane (recorded) |
+| human-feel (7) | DEFERRED-RECORDED | ⏳ deferred gate #4 + deployment-lane playtest after Josh GO; H UNKNOWN |
+
+**Non-goals (reconstructed 2026-08-14):** music/contests/siege (explicitly
+ahead of M4); combat balance; housing placement (→ M3a).
+
+**Exit tests (requirement-indexed):** integrated group run → REQ-M4-4 · M2
+release validation → REQ-M4-5 · per-object restart assertions → REQ-M4-6 ·
+A2 entry verification → REQ-M4-7.
 
 **Exit test:** group harvests real materials → crafts pack → loads vehicle →
 travels defined route → unloads + sells → correct reward → repeats after
@@ -464,6 +765,64 @@ contract. Size this milestone after a short architecture spike proves the
 execution/threading boundary and one vertical action; existing primitives are
 reusable, but their packet/session coupling is the main uncertainty.
 
+**Requirements (retrofit 2026-08-14):**
+- **REQ-M5-1** — One unified observation snapshot. *(reconstructed 2026-08-14)*
+- **REQ-M5-2** — One validated action request format. *(reconstructed 2026-08-14)*
+- **REQ-M5-3** — Lifecycle tracking: Requested → Accepted → Running →
+  Completed | Rejected(reason) | Interrupted(reason) | TimedOut.
+  *(reconstructed 2026-08-14)*
+- **REQ-M5-4** — Failure reasons on rejection/interruption.
+  *(reconstructed 2026-08-14)*
+- **REQ-M5-5** — Cancellation + timeout. *(reconstructed 2026-08-14)*
+- **REQ-M5-6** — Diagnostics + trace IDs. *(reconstructed 2026-08-14)*
+- **REQ-M5-7** — No-database-shortcut policy: actions invoke normal gameplay
+  services only — no direct DB manipulation, no bot-only resource creation.
+  *(reconstructed 2026-08-14)*
+- **REQ-M5-8** — Adapter implementations over existing systems: NpcAi
+  movement, target selection, skill execution, interaction, inventory/game
+  services (administrator commands for diagnostics/test setup only, never as
+  a production gameplay-action implementation). *(reconstructed 2026-08-14)*
+- **REQ-M5-9** — Single execution boundary: one world/character mutation
+  seam; controllers may enqueue requests but may not mutate a Character
+  concurrently. *(reconstructed 2026-08-14)*
+- **REQ-M5-10** — Threading-boundary verification: a debug thread-affinity
+  assertion proves zero Character/world mutation off the execution boundary
+  (A1 marshal seam) — trace-based exit tests alone do NOT satisfy this.
+  *(reconstructed 2026-08-14, from the 08-09 audit)*
+- **REQ-M5-11** — Idempotency/correlation: retries and timeouts cannot
+  duplicate items, currency, labor consumption, quest credit, or
+  interactions. *(reconstructed 2026-08-14)*
+- **REQ-M5-12** — Bot audit trail: every action emits a structured trace
+  record `{trace_id, actor_id, action, target_id, requested_at, started_at,
+  completed_at, result, state_changes}`. *(reconstructed 2026-08-14)*
+- **REQ-M5-13** — M5 required action surface on the contract: Observe · Move
+  · Stop · Target · Cast · Interact · Loot · UseItem · Mount/Dismount ·
+  AcceptQuest · TurnInQuest. *(reconstructed 2026-08-14)*
+- **REQ-M5-14** — Exit: a scripted actor completes the curated
+  quest/combat/mount segment and produces a machine-readable trace showing
+  every request, transition, result, and failure. *(reconstructed 2026-08-14)*
+- **REQ-M5-15** — Actor contract tests pass independent of any controller;
+  retry tests prove non-idempotent actions do not execute twice.
+  *(reconstructed 2026-08-14)*
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M5 evidence (as of 2026-08-14; status NOT re-graded here) |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | 🔶 partial: A1 seam c6d8f93a0 + B1 six-action surface 761d1e81a merged (merged-tree re-verify 1850/0/1); remaining surface (Observe/Move/Stop/Target/Cast) status per develop |
+| bot-replay (3+4) | REQUIRED | 🔶 B1Actions/B1ContractLayer tests on the merged tree; control-plane contract replay rig (t_61a0eebb, 16/16 quests) |
+| restart-persistence (5) | N/A | contract layer adds no new persistence; underlying systems carry M1/M2/M3/M4 restart classes |
+| soak (6) | N/A | soak belongs to the M6 lane |
+| human-feel (7) | N/A (recorded) | feel gates belong to later phases; first consumer Lane D scoped w/ JOSH GO (t_52b2b084) |
+
+**Non-goals:** the explicit NON-GOALS paragraph below is the canonical M5
+non-goal set (unchanged). *(reconstructed 2026-08-14 additions:* economic
+actions → M5.1; housing actions → M5.2.*)*
+
+**Exit tests (requirement-indexed):** M5 core scripted segment → REQ-M5-13,
+-14 · M5.1 economy segment → REQ-M5.1-1..5 · contract tests independent of
+controller + retry tests → REQ-M5-15 · threading-boundary assertion →
+REQ-M5-10.
+
 **Existing primitives to wrap:**
 - NPC AI movement (NpcAi)
 - target selection
@@ -536,6 +895,65 @@ this: the current bot layer (8 unsynchronized worker threads,
 PlayerBotScheduler.cs:84) would pass the trace tests while violating the
 rule at L332-333. **A1 (marshal bot steps onto the game loop) is the
 retroactive fix and is M6-exit-blocking.**
+
+**M5.1 — economic extension (Requirements + DoD, retrofit 2026-08-14):**
+**Requirements:**
+- **REQ-M5.1-1** — Economic action surface on the contract: Plant · Harvest
+  · Craft · PackPickup/PutDown · BoardVehicle · Buy/Sell ·
+  Deposit/Withdraw. *(reconstructed 2026-08-14)*
+- **REQ-M5.1-2** — Every M5.1 action executes through its REAL engine path
+  (no shortcuts): Plant → real planting · Harvest → real doodad.Use · Craft
+  → real CharacterCraft.Craft · BoardVehicle → real SlaveManager.BindSlave /
+  Seat.LoadPassenger · PackPickup/PutDown → real pack ops · Buy/Sell → real
+  shop ops · Deposit/Withdraw → real storage ops.
+  *(reconstructed 2026-08-14)*
+- **REQ-M5.1-3** — Phase-2 prerequisite LoadPackOntoVehicle: real gameplay
+  path PackVehicleService → SlaveManager.AttachDoodadAtPoint (retail
+  snap-to-cargo-point), capacity from slave_doodad_bindings.
+  *(reconstructed 2026-08-14)*
+- **REQ-M5.1-4** — Phase-2 prerequisite DriveVehicle: contract drive action
+  (MoveTo-when-boarded) through client-authored VehicleMovementModel
+  (CSMoveUnitPacket path); no Transform assignment. *(reconstructed 2026-08-14)*
+- **REQ-M5.1-5** — Exit: a scripted actor completes the curated
+  farm/craft/pack/vehicle/trade segment through the economic actions;
+  Phase-2 replay sequences Housing.Build FIRST, then farm/storage → craft →
+  pack → load/drive vehicle → unload → sell → reward (scope marker
+  t_2625be99). *(reconstructed 2026-08-14)*
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M5.1 evidence |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | ✅ all merged, Rei-gated: Deposit/Withdraw f760256a0 · Harvest ebff582a8 · BoardVehicle e7e7ef0fe · Craft rig 7a01ff57c + Craft dab91ecb0 · LoadPackOntoVehicle 6c2429ae0 · DriveVehicle 6edbf0cbb |
+| bot-replay (3+4) | REQUIRED | ✅ per-action contract tests (13 Craft · 14 load · 7 drive · BoardVehicle 21/21 targeted · GameplayActor family 240/240 · full gate 2054/0/1); Phase-2 replay scenario merged (t_b4f455b0) — live E2E hook execution deferred to t_eaee04ee |
+| restart-persistence (5) | N/A (inherited) | M5.1 adds no new persistence; pack/vehicle restart coverage = M4 DoD. GAP FLAG for the Rei gate: attached-pack-on-slave state (LoadPackOntoVehicle) has no dedicated restart assertion as of 2026-08-14 |
+| soak (6) | N/A | M6 soak lane |
+| human-feel (7) | UNKNOWN (recorded) | H stays UNKNOWN — never H=2 from scripted evidence |
+
+**Non-goals (reconstructed 2026-08-14):** housing contract actions (→ M5.2);
+combat/quest actions (→ M5 core); navigation rewrite; autonomous behavior.
+
+**M5.2 — Housing.Build contract action (Requirements + DoD, retrofit 2026-08-14):**
+**Requirements:**
+- **REQ-M5.2-1** — BuildHouse contract action on the IGameplayActor surface
+  over the REAL HousingManager.Build engine path (exact CSCreateHousePacket
+  handler call). *(reconstructed 2026-08-14)*
+- **REQ-M5.2-2** — Contract tests on the canonical rig (13 tests) + Rei gate
+  3/3. *(reconstructed 2026-08-14)*
+- **REQ-M5.2-3** — Phase-2 replay sequences Housing.Build BEFORE farm/storage
+  (scope marker t_2625be99). *(reconstructed 2026-08-14)*
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M5.2 evidence |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | ✅ merged @ 3396d9ef1 (t_94761d55, Rei t_ebf36737 ACCEPT); latent upstream ParentWorld bug fixed; test-singleton pollution t_14bd519b + rig order-dependence flakes t_3c33557d root-caused + merged |
+| bot-replay (3+4) | REQUIRED | ✅ 13 canonical-rig tests; post-merge gate 2074/0/1 |
+| restart-persistence (5) | N/A | housing persistence = M3b class; Build adds no new persistence |
+| soak (6) | N/A | no load path claimed |
+| human-feel (7) | UNKNOWN (recorded) | H stays UNKNOWN |
+
+**Non-goals (reconstructed 2026-08-14):** other housing interactions
+(decoration/storage/furniture are M3a surface, not contract actions); any
+non-housing contract action.
 
 **M5.1 status — Kimi+Codex-verified recovery plan (2026-08-13; memo
 `.hermes-ops/docs/m51-backtrack-recovery-memo-2026-08-13.md`; canonical sync
@@ -1214,6 +1632,11 @@ not the original calendar; packet/session coupling, persistence, navigation,
 and vehicle attachment may reveal deeper work.
 
 ## Definition of done per milestone
+
+> Process checklist (below) + the per-milestone Requirements & DoD evidence
+> classes from "Milestone Requirements & DoD — THE STANDARD" above (retrofit
+> 2026-08-14). A milestone is CLOSED only when both layers hold: this
+> checklist AND every required DoD evidence class.
 
 - [ ] Human scenario, automated scenario, AND restart-persistence scenario
       defined and passing
