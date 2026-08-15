@@ -2,7 +2,21 @@
 
 Date: 2026-08-14 · Prepared by: Nei (tracking) · Escalated by: Rei gate t_ec7f0c19 · Source: retrofit t_730b04bd
 
-**Status:** PENDING JOSH RULING · **Constraint:** STOP LINE (AAEmu cap at M5.2) stands — this is requirements governance, exempt. No milestone status changes result from this packet; H stays UNKNOWN everywhere.
+**Status:** RULED (2026-08-15) · **Constraint:** STOP LINE (AAEmu cap at M5.2) stands — this is requirements governance, exempt. No milestone status changes result from this packet; H stays UNKNOWN everywhere.
+
+## Ruling record (authority: Josh, 2026-08-15, card t_905cffc4)
+
+Verbatim owner ruling (2026-08-15, Josh on card t_905cffc4):
+
+> Q1 ACCEPT-ENUMERATED. Q2 CONFIRM-LANE-B. Q3 RATIFY-95. These are standing requirement rulings only; they do not reopen any milestone. Nei: record the ruling and provenance in the packet/ROADMAP/board; Rei: re-touch the three slots to complete closure grading.
+
+| Q | Ruling | Effect (recorded 2026-08-15, t_905cffc4) |
+|---|---|---|
+| Q1 | **ACCEPT-ENUMERATED** | M1 closure graded on the enumerated defect set (BUG-006..012 @ 94f498fc) + widened fixes; later defects → live backlog, not M1 reopens. Now **REQ-M1-11**. |
+| Q2 | **CONFIRM-LANE-B** | No M1 peripheral-quest requirement; Lane B owns maintenance. Now **REQ-M1-12**. |
+| Q3 | **RATIFY-95** | Reference ≥95% is the standing bar for M2c/M2d; both bands met it (100% PASS-or-doc-SKIP). Now **REQ-M2-10**. |
+
+Amendments applied: ROADMAP.md (3 slots + summary table), scorecard-explorations/progression-board.md (2 rows), all marked `(Josh ruling 2026-08-15, t_905cffc4)`, committed on fork branch `docs/milestone-requirement-rulings`. These are standing requirement rulings only — they do not reopen any milestone; no status changes; H stays UNKNOWN.
 
 ## Why this packet exists
 

@@ -30,8 +30,8 @@ re-graded by this retrofit — re-grading is the Rei gate's job (t_ec7f0c19).**
 
 | Milestone | Requirements (retrofit 2026-08-14) | NOT RECOVERABLE findings | DoD closure ceiling (per the standard) |
 |---|---|---|---|
-| M1 | REQ-M1-1..10 (all reconstructed) | 2: completeness bar for "shared engine defects"; peripheral-quest coverage target | CLOSED-WITH-CAVEATS (human-feel deferred) |
-| M2 / M2a–d | REQ-M2-1..9 + REQ-M2a/b/b-E2E/c/d (14 reconstructed) | 1: M2c/M2d per-band thresholds beyond reference ≥95% | CLOSED-WITH-CAVEATS (human baseline deferred) |
+| M1 | REQ-M1-1..12 (11-12 ruled by Josh 2026-08-15) | 0 (Q1/Q2 ruled 2026-08-15 → REQ-M1-11/12) | CLOSED-WITH-CAVEATS (human-feel deferred) |
+| M2 / M2a–d | REQ-M2-1..9 + REQ-M2a/b/b-E2E/c/d + REQ-M2-10 (15; M2-10 ruled by Josh 2026-08-15) | 0 (Q3 ruled 2026-08-15 → REQ-M2-10) | CLOSED-WITH-CAVEATS (human baseline deferred) |
 | M3a | REQ-M3a-1..8 (reconstructed) | 0 | CLOSED-WITH-CAVEATS (H UNKNOWN) |
 | M3b | REQ-M3b-1..12 (reconstructed) | 0 (REQ-M3b-9 closure-evidence gap flagged) | CLOSED-WITH-CAVEATS (H UNKNOWN) |
 | M4 | REQ-M4-1..7 (reconstructed) | 0 | CLOSED-WITH-CAVEATS (human-feel deferred) |

@@ -153,8 +153,8 @@ status was re-graded (that is t_ec7f0c19).
 
 | Milestone | Requirements | Reconstructed | NOT RECOVERABLE findings |
 |---|---|---|---|
-| M1 | REQ-M1-1..10 | 10 | 2 (completeness bar; peripheral-coverage target) |
-| M2 / M2a–d | REQ-M2-1..9 + REQ-M2a/b/b-E2E/c/d | 14 | 1 (M2c/M2d per-band thresholds) |
+| M1 | REQ-M1-1..12 | 12 | 0 (Q1/Q2 ruled by Josh 2026-08-15 → REQ-M1-11/12) |
+| M2 / M2a–d | REQ-M2-1..9 + REQ-M2a/b/b-E2E/c/d + REQ-M2-10 | 15 | 0 (Q3 ruled by Josh 2026-08-15 → REQ-M2-10) |
 | M3a | REQ-M3a-1..8 | 8 | 0 |
 | M3b | REQ-M3b-1..12 | 12 | 0 (REQ-M3b-9 closure-evidence gap flagged) |
 | M4 | REQ-M4-1..7 | 7 | 0 |
@@ -251,11 +251,18 @@ route. Individual peripheral quest bugs → Lane B (maintenance).
   test below)*
 - **REQ-M1-10** — Human playtest verdict on the curated Solzreed route (Josh;
   Open Decision #1 / deferred gate #1). *(reconstructed 2026-08-14)*
-- **REQUIREMENT NOT RECOVERABLE:** a completeness bar for "shared engine
-  defects" beyond the enumerated list — M1 scope is explicitly "trimmed, not
-  exhaustive"; no finite defect enumeration exists in the record.
-- **REQUIREMENT NOT RECOVERABLE:** a peripheral-quest coverage target —
-  explicitly out of scope (Lane B maintenance); no bar was ever set.
+- **REQ-M1-11** — Engine-defect completeness: closure graded on the
+  enumerated defect set (BUG-006..012 merged @ 94f498fc) + widened fixes
+  (t_d8a8c798, t_60a559ab, registered drops); defects found after closure
+  route to the live backlog (Lane B / maintenance), not to M1 reopens. No
+  completeness bar over the open defect class (ungradeable — scope is
+  "trimmed, not exhaustive"). *(Josh ruling 2026-08-15, t_905cffc4 —
+  replaces REQUIREMENT NOT RECOVERABLE)*
+- **REQ-M1-12** — Peripheral-quest coverage: no M1 requirement;
+  peripheral-quest maintenance is Lane B's by standing scope (golden path
+  locked to Solzreed, Josh 2026-08-03). Any future peripheral-quest bar is
+  Lane B's to set. *(Josh ruling 2026-08-15, t_905cffc4 — replaces
+  REQUIREMENT NOT RECOVERABLE)*
 
 **DoD — evidence classes (ledger t_547ef82d):**
 | Class | Required | M1 evidence |
@@ -407,9 +414,11 @@ investigation may begin while M2 documentation and test tooling are finalized.
   unsupported act families, t_f198bb0e) + M1-5e (T4 full-corpus census,
   t_9fc77eb) ride in M2; census coverage grows past 153.
   *(reconstructed 2026-08-14)*
-- **REQUIREMENT NOT RECOVERABLE:** the original per-band numeric thresholds
-  for M2c/M2d beyond the reference-level "≥95%" (the board's meaning columns
-  carry no threshold; both landed 100% PASS-or-doc-SKIP via G1).
+- **REQ-M2-10** — M2c/M2d per-band threshold: standing bar is the board's
+  reference-level "≥95%" (M2a gate language); both bands met it as landed
+  (Band 21–30: 847/847 = 100%; Band 41–50: 1,589 PASS / 2 doc-SKIP
+  kept-by-ruling = 100% PASS-or-doc-SKIP via G1). *(Josh ruling 2026-08-15,
+  t_905cffc4 — replaces REQUIREMENT NOT RECOVERABLE)*
 
 **DoD — evidence classes (ledger t_547ef82d):**
 | Class | Required | M2 evidence |
