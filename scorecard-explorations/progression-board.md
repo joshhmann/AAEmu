@@ -1,6 +1,43 @@
 # HYRAXKNOT — AAEmu Progression Board
 
-**Updated:** 2026-08-14 · **Owner:** Aya (director) / Nei (tracking) · **Data basis:** census + board, all Rei-gated · **G1 gate PASSED** (WI-12, merged develop @ 7f5c179f7) · **M1-M3 audit 2026-08-11** (t_5b1f5494): PASS WITH NOTES · **Bot-backtrack 0.1–0.3 (2026-08-12)**: 7-state evidence ledger (t_547ef82d), H grades reconciled — proxy/bot evidence ≠ H=2, H stays UNKNOWN until Josh runs it — + 5 deferred validation gates explicit (t_4ec066d3), M6 B4 restart replay PASS (t_9340e85d); M6 soak verdict preserved verbatim "passed revised approved budgets" · **Canonical sync 2026-08-13 (t_c9f0d7f6)**: M5.1 salvage order + Phase-2 vehicle/Housing scope mirrored from ROADMAP/STATUS/SCORECARD (Kimi memo + Codex reconciliation) — **no stale "M5.1 complete" / "Phase 2 ready" claims** · **Auto refresh 2026-08-14 (t_5b906366)**: M5.1 salvage wave FULLY MERGED (all 5 action sets, Rei-gated), M5.2 Housing.Build MERGED @ 3396d9ef1, Phase-2 prereqs (LoadPackOntoVehicle/DriveVehicle) MERGED, BACKTRACK Phase 1 + full-route live replay MERGED, Phase 2 scenario MERGED (live exec deferred t_eaee04ee), human test packet delivered — **branch of record: develop @ 62691fb29 (ls-remote verified 2026-08-14)** · H stays UNKNOWN everywhere (feel = Josh only)
+**Updated:** 2026-08-14 · **Owner:** Aya (director) / Nei (tracking) · **Data basis:** census + board, all Rei-gated · **G1 gate PASSED** (WI-12, merged develop @ 7f5c179f7) · **M1-M3 audit 2026-08-11** (t_5b1f5494): PASS WITH NOTES · **Bot-backtrack 0.1–0.3 (2026-08-12)**: 7-state evidence ledger (t_547ef82d), H grades reconciled — proxy/bot evidence ≠ H=2, H stays UNKNOWN until Josh runs it — + 5 deferred validation gates explicit (t_4ec066d3), M6 B4 restart replay PASS (t_9340e85d); M6 soak verdict preserved verbatim "passed revised approved budgets" · **Canonical sync 2026-08-13 (t_c9f0d7f6)**: M5.1 salvage order + Phase-2 vehicle/Housing scope mirrored from ROADMAP/STATUS/SCORECARD (Kimi memo + Codex reconciliation) — **no stale "M5.1 complete" / "Phase 2 ready" claims** · **Auto refresh 2026-08-14 (t_5b906366)**: M5.1 salvage wave FULLY MERGED (all 5 action sets, Rei-gated), M5.2 Housing.Build MERGED @ 3396d9ef1, Phase-2 prereqs (LoadPackOntoVehicle/DriveVehicle) MERGED, BACKTRACK Phase 1 + full-route live replay MERGED, Phase 2 scenario MERGED (live exec deferred t_eaee04ee), human test packet delivered — **branch of record: develop @ 62691fb29 (ls-remote verified 2026-08-14)** · H stays UNKNOWN everywhere (feel = Josh only) · **🚏 STOP LINE — JOSH RULING 2026-08-14: AAEmu milestone program caps at M5.2. No M5.3+/M6-full/Phase-3 dispatch, no new AAEmu milestone cards, until Josh lifts the cap. Exception granted same evening: BACKTRACK P2b t_eaee04ee (M3a/M4 evidence closure, NOT past-5.2 scope) MAY RUN — unblocked 21:10 with status-truth constraints (H stays UNKNOWN, evidence before any status update). Any other AAEmu thread: parked until Josh lifts the cap.**
+
+---
+
+## Milestone Requirements & DoD — standard block (retrofit 2026-08-14, t_730b04bd)
+
+Every milestone carries, in ROADMAP.md + this board: **Requirements**
+(REQ-<M>-<n> — verifiable, canonical-1.2-true, independently testable,
+provenance-marked), **DoD** (evidence classes REQUIRED to claim closure,
+mapped to the 7-state ledger EVIDENCE-LEDGER.md / t_547ef82d), **Non-goals**
+(explicit), and requirement-indexed **Exit tests**. Full per-milestone
+requirement sets + DoD evidence tables: ROADMAP.md M1–M5.2.
+
+| Class | Ledger state(s) | Meaning |
+|---|---|---|
+| engine-path implementation | 1 implemented | merged to fork develop; real engine path, normal gameplay services only |
+| bot-replay | 3 bot-replay-ready + 4 bot-replay-passed | scripted rig exists AND passes on the merged tree (M5-stand-in; proxy/bot-functional) |
+| restart-persistence | 5 restart-passed | restart/persistence scenario passed (standing 3-scenario rule) |
+| soak | 6 soak-passed | duration/load soak within approved budgets (load-sensitive milestones only) |
+| human-feel | 7 human-feel-accepted | Josh's H verdict — NEVER inferred from bot/scripted evidence; H stays UNKNOWN until Josh runs it |
+
+Provenance marks: `(reconstructed 2026-08-14)` = recovered from existing
+Work:/status prose, never silently invented; `REQUIREMENT NOT RECOVERABLE` =
+no source basis — that mark is itself a finding (UNVERIFIABLE, needs a Josh
+ruling before closure). A milestone with any DEFERRED/UNKNOWN DoD class may
+close at most CLOSED-WITH-CAVEATS. **Statuses in the tables above are NOT
+re-graded by this retrofit — re-grading is the Rei gate's job (t_ec7f0c19).**
+
+| Milestone | Requirements (retrofit 2026-08-14) | NOT RECOVERABLE findings | DoD closure ceiling (per the standard) |
+|---|---|---|---|
+| M1 | REQ-M1-1..10 (all reconstructed) | 2: completeness bar for "shared engine defects"; peripheral-quest coverage target | CLOSED-WITH-CAVEATS (human-feel deferred) |
+| M2 / M2a–d | REQ-M2-1..9 + REQ-M2a/b/b-E2E/c/d (14 reconstructed) | 1: M2c/M2d per-band thresholds beyond reference ≥95% | CLOSED-WITH-CAVEATS (human baseline deferred) |
+| M3a | REQ-M3a-1..8 (reconstructed) | 0 | CLOSED-WITH-CAVEATS (H UNKNOWN) |
+| M3b | REQ-M3b-1..12 (reconstructed) | 0 (REQ-M3b-9 closure-evidence gap flagged) | CLOSED-WITH-CAVEATS (H UNKNOWN) |
+| M4 | REQ-M4-1..7 (reconstructed) | 0 | CLOSED-WITH-CAVEATS (human-feel deferred) |
+| M5 | REQ-M5-1..15 (reconstructed) | 0 | IN PROGRESS (DoD partial) |
+| M5.1 | REQ-M5.1-1..5 (reconstructed) | 0 (LoadPackOntoVehicle restart-assertion gap flagged) | function-evidence complete; H UNKNOWN |
+| M5.2 | REQ-M5.2-1..3 (reconstructed) | 0 | function-evidence complete; H UNKNOWN |
 
 ---
 
