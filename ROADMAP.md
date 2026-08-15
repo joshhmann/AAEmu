@@ -156,7 +156,7 @@ status was re-graded (that is t_ec7f0c19).
 | M1 | REQ-M1-1..10 | 10 | 2 (completeness bar; peripheral-coverage target) |
 | M2 / M2a–d | REQ-M2-1..9 + REQ-M2a/b/b-E2E/c/d | 14 | 1 (M2c/M2d per-band thresholds) |
 | M3a | REQ-M3a-1..8 | 8 | 0 |
-| M3b | REQ-M3b-1..12 | 12 | 0 (REQ-M3b-9 closure-evidence gap flagged) |
+| M3b | REQ-M3b-1..12 | 12 | 0 |
 | M4 | REQ-M4-1..7 | 7 | 0 |
 | M5 | REQ-M5-1..15 | 15 | 0 |
 | M5.1 | REQ-M5.1-1..5 | 5 | 0 (LoadPackOntoVehicle restart-assertion gap flagged) |
@@ -562,7 +562,9 @@ prevention · administrative repair tooling.
 - **REQ-M3b-7** — Disconnect + logout cleanup. *(reconstructed 2026-08-14)*
 - **REQ-M3b-8** — Orphan/duplicate prevention. *(reconstructed 2026-08-14)*
 - **REQ-M3b-9** — Administrative repair tooling. *(reconstructed 2026-08-14;
-  closure evidence NOT cited in the M3b exit record — gap flag for the Rei gate)*
+  evidence: PropertyRepairScanner/Service + /house_repair GM command merged
+  @ 5981246ea (99edc67a, t_7c71be66), 13/13 scanner tests, Rei gate PASS run
+  1892 — cited in the M3b exit record, t_c2dd474b)*
 - **REQ-M3b-10** — N≥3 crash cycles (restart · kill -9 mid-save with open
   autosave transaction · container kill during harvest), 16 rows asserted per
   boot, no loss/dup. *(reconstructed 2026-08-14, from the 08-09 audit + exit record)*
@@ -621,7 +623,10 @@ kill -9 mid-save (open autosave transaction observed in MySQL
 INNODB_TRX), container kill during open save — 16 rows asserted per boot,
 no loss/dup. Save-duration budget PASS: autosave p95 1301ms < 2000ms at
 25 bots + 2 homesteads. Scorecard: `PROPERTY-01` R = 2 (U→2 in
-f5b00c686).
+f5b00c686). REQ-M3b-9 (administrative repair tooling):
+PropertyRepairScanner/Service + /house_repair GM command merged @ 5981246ea
+(99edc67a, t_7c71be66), 13/13 scanner tests, Rei gate PASS run 1892 —
+citation added 2026-08-14 (t_c2dd474b).
 
 ---
 

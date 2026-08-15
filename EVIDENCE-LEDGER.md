@@ -42,7 +42,9 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 | **M3a** Homestead shell (CLOSED 08-10, Rei ACCEPT t_449875bd) | ✅ @ 4d0427b96 | — (merged; no deploy record) | ✅ M3aExitScenarioTests rigs | ✅ 2 scripted actors, ONE session (placement→construction→crops→storage→furniture); HOUSING-01/FARM-01 C/W/H/A=2 (proxy) | — (single-session by design; persistence = M3b) | — | ⚠️ UNKNOWN — H stays UNKNOWN until Josh runs it |
 | **M3b** Property persistence (CLOSED 08-11, EXIT t_accb1c63 PASS) | ✅ M3b-1..4 merged (5dc7c2fbd…) | — | ✅ M3bExitPersistenceE2eTests | ✅ EXIT E2E f5b00c686 PASS 7m08s | ✅ N=3 crash cycles incl. kill -9 mid-save + container kill, 16 rows/boot, no loss/dup; autosave p95 1301ms < 2000ms @ 25 bots + 2 homesteads; PROPERTY-01 R=2 | — | ⚠️ UNKNOWN |
 | **M4** Trade/craft/transport (EXIT RECORD 08-12, Rei gate t_97e59ffc) | ✅ on release/m4-exit (f28b93fc1/e4af04a49/2907f46ff); unit gate 1778/0/1 | ⏳ release merge + deploy pending Josh GO (deployment-lane follow-up) | ✅ M4ExitIntegratedSessionTests + per-object restart E2E rigs | ✅ 4 scripted actors, real engine paths: harvest→craft→pack→load→travel→sell→repeat; negatives incl. LevelLowToUse, 801 despawn, StoreCantSellSameZone; CRAFT-01/PACK-01/SLAVE-01 R=2 (proxy) | ✅ M4_2TradePackRestart PASS 2m12s (kill -9); M4Vehicles PASS 3m09s (2× kill -9); M3bExit E2E PASS 7m03s; merged-tree re-run 1/1+1/1+M2b 5/5 (t_abe87eaf) | — (convoy-volume = M6 soak lane) | ⚠️ UNKNOWN — H unknown; playtest of integrated release deferred to deployment-lane follow-up after Josh GO |
-| **M5** Gameplay Actor Contract (IN PROGRESS — active critical path, untouched by Phase 0) | 🔶 PARTIAL — UseItem/Mount/Dismount slice merged to develop @ a335e1672 (t_a5edc1e6); Interact/Loot + contract layer on feat/bot-actor-surface-b1 (unmerged); M5.1 economy actions not filed (t_f947d9ab); MCP sidecar contract tools in flight (t_446228b5, tai) | — | 🔶 branch-level rigs (B1Actions/B1ContractLayer tests); merged-tree replay not ready | — (exit tests not run on merged tree; threading-boundary A1 mandatory at exit) | — | — | — (first consumer Lane D scoped w/ JOSH GO 08-11, t_52b2b084; feel gates belong to later phases) |
+| **M5** Gameplay Actor Contract (merged tree @ 75ac8df12 — Rei gate t_ec7f0c19: CLOSED-WITH-CAVEATS ceiling, formal close pending in gate lane) | ✅ full 11-action surface on fork develop — v1 34cf33cb + A1 c6d8f93a0 (ExecutionBoundary thread-affinity, compiled in ALL configs) + B1 761d1e81a: Observe/Move/Stop/Target/Cast/AcceptQuest/TurnInQuest/Interact/Loot/UseItem/Mount/Dismount all in GameplayActor.cs; ActorIdempotency + effect ledger (retry), ActorAuditRecord (trace) | — (contract surface; deploy story follows consumers) | ✅ per-action rigs on merged tree (GameplayActorTestRig + per-action classes) | ✅ full-route live replay t_15787275 @ 106d0a7e9 — 16/16 quests, lifecycle 53/53, REAL mount chain, 34/34 criteria, machine-readable traces; gates 1850/0/1 → 2054/0/1 → 2074/0/1 | — (no restart scenario owned by the contract exit; restart legs live in M2/M3b/M4) | — | ⚠️ UNKNOWN — H stays UNKNOWN (proxy/bot evidence only; feel gates belong to later phases — STOP LINE, cap M5.2) |
+| **M5.1** Economic extension (MERGED — all Rei-gated) | ✅ Plant (t_b1d7c430) · PackPickup/PutDown (t_64ecf525) · Buy/Sell (t_8741b03d) · Deposit/Withdraw (f760256a0) · Harvest (ebff582a8) · BoardVehicle (e7e7ef0fe) · Craft (dab91ecb0) · LoadPackOntoVehicle (6c2429ae0) · DriveVehicle (6edbf0cbb) — real engine paths (doodad.Use, CharacterCraft.Craft, BindSlave/Seat.LoadPassenger, PackVehicleService→AttachDoodadAtPoint, VehicleMovementModel CSMoveUnitPacket); control-plane API/MCP sidecar/Lane D consumer (t_7b6d7a4a, t_446228b5, t_52b2b084) | — | ✅ per-action rigs on merged tree | ✅ per-action tests on merged tree (count @ 75ac8df12, t_c2dd474b): Deposit/Withdraw 21 · BoardVehicle 21 · Buy/Sell 30 · Pack 17 · Plant 14 · LoadPackOntoVehicle 14 · Harvest 8; Rei re-audit gate-time baseline 13/14/7/21/240 (t_ec7f0c19); post-merge gate 2074/0/1 | — (N/A for contract actions; gap flag: attached-pack-on-slave restart assertion MISSING — t_1b82b33f, tai) | — | ⚠️ UNKNOWN — H stays UNKNOWN (REQ-M5.1-5 live E2E leg parked t_eaee04ee @ STOP LINE) |
+| **M5.2** Housing.Build (MERGED 08-14 — Rei-gated) | ✅ @ 3396d9ef1 (t_94761d55, Rei t_ebf36737 ACCEPT 3/3) — BuildHouse over the REAL HousingManager.Build engine path (exact CSCreateHousePacket handler call); scope t_2625be99 Housing.Build-FIRST locked | — | ✅ 13 canonical-rig tests | ✅ HouseBuild 14/14 post rig-fix (447c78ffe, t_18bbe650); post-merge gate 2074/0/1 | — (N/A) | — | ⚠️ UNKNOWN — H stays UNKNOWN |
 | **M6** Deterministic playerbot framework (exit soak GREEN 08-11; reconciliation open) | ✅ hotfix chain + BotAppearanceFactory (91b308d71) + parity seeding (45cd3f3a9, live-verified 34 actabilities/skills/bag) + GM cmds P0 (t_7b4f9423) + E2E harness + presence overlay in-repo | ✅ presence-demo overlay live (hotfix3) — 3 citizens at Josh's spawn, zone 179; sighting ACCEPTED 08-09. ⚠️ adopt-heal look-collapse (t_555ed207): fix pushed cdf6d4a62, awaiting Rei gate; prod re-provision pending | ✅ E2E harness (real Login+Game+MySQL) | ✅ 10-bot correctness PASS; 25-bot stability PASS (H2 1.00); M2bE2e 5/5 (t_2ee39438) | ⏳ DEFERRED — B4 restart persistence (playerbot_metadata + 2-checkpoint restart test) not yet executed; A1 boundary + observability + G0-1 merge-to-develop outstanding (per M6 EXIT RECORD) | ✅ 6h/10-bot soak GREEN 08-11 (t_35167e60): 360-min, ALL 9 budgets PASS, 0 failures — verdict preserved as "passed revised approved budgets" (physics budget recalibrated t_18fccd09; GC fix t_eecc5604 merged first per Josh's ruling) | ⏳ DEFERRED (informal partial) — Josh sighting ACCEPTED 08-09 (wire-confirmed t_509ef8c2); rendered screenshots pending Josh's client; batched feel/visual/fun verdicts deferred until bot functional + restart gates green (decision contract) |
 
 ## Evidence register (citations, append-only)
@@ -65,15 +67,32 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   4d0427b96; M3aExitScenarioTests (2 scripted actors, 16m adjacency).
 - **M3b:** ROADMAP §M3b; STATUS M3b; EXIT gate t_accb1c63 PASS; merges
   5dc7c2fbd / 71b43e09f / 3913932bf / 5981246ea; E2E f5b00c686 PASS 7m08s;
-  save-observation seam t_1329a833.
+  save-observation seam t_1329a833; REQ-M3b-9 admin repair tooling evidence
+  (PropertyRepairScanner/Service + /house_repair GM command @ 5981246ea/
+  99edc67a, 13/13 scanner tests, Rei gate PASS run 1892) cited in the exit
+  record + ROADMAP (t_c2dd474b, 2026-08-14).
 - **M4:** ROADMAP §M4 EXIT RECORD (2026-08-12, t_97e59ffc); merged-tree
   provenance t_abe87eaf (E2E_REBUILD=1, re-published from exact merge commit);
   A2 convoy gate t_921a7be5 (Rei ACCEPT, merged f9572e1a8); unit gate 1778/0/1;
   restart E2Es M4_2TradePackRestart / M4Vehicles / M3bExitPersistence.
 - **M5:** ROADMAP §M5 (+ 08-09 audit: B1/B2 split, threading-boundary A1);
-  develop merge a335e1672 (t_a5edc1e6); forward gates t_446228b5 (MCP sidecar,
-  tai) + t_52b2b084 (first consumer Lane D, JOSH GO 08-11) — re-verified live
-  2026-08-12 18:19 PT; M5.1 scope filing owned by t_f947d9ab (Phase 0.3).
+  full 11-action surface merged — v1 34cf33cb + A1 c6d8f93a0 (ExecutionBoundary
+  thread-affinity, compiled in ALL configs) + B1 761d1e81a; verified on
+  origin/develop @ 75ac8df12 (Rei re-audit t_ec7f0c19, 2026-08-14); M5-14
+  full-route live replay t_15787275 @ 106d0a7e9 (16/16 quests, lifecycle
+  53/53, REAL mount chain, 34/34 criteria); forward gates t_446228b5 (MCP
+  sidecar) + t_52b2b084 (first consumer Lane D, JOSH GO 08-11); 08-12 snapshot
+  superseded — preserved in change log 2026-08-14.
+- **M5.1:** ROADMAP §M5.1; salvage merges f760256a0 / ebff582a8 / e7e7ef0fe /
+  7a01ff57c / dab91ecb0 / 6c2429ae0 / 6edbf0cbb (all Rei-gated); real engine
+  paths verified t_ec7f0c19; per-action tests on merged tree (D/W 21 ·
+  BoardVehicle 21 · Buy/Sell 30 · Pack 17 · Plant 14 · LoadPack 14 · Harvest 8,
+  count @ 75ac8df12, t_c2dd474b); post-merge gate 2074/0/1; REQ-M5.1-5 live
+  E2E leg parked t_eaee04ee (STOP LINE); attached-pack-on-slave restart
+  assertion t_1b82b33f (tai).
+- **M5.2:** ROADMAP §M5.2; Housing.Build merged @ 3396d9ef1 (t_94761d55, Rei
+  t_ebf36737 ACCEPT 3/3); 13 canonical-rig tests; HouseBuild 14/14 post
+  rig-fix (447c78ffe, t_18bbe650); post-merge gate 2074/0/1; scope t_2625be99.
 - **M6:** ROADMAP §M6 EXIT RECORD (t_35167e60, merge eb6f637e0, gate 1592/0);
   soak attempts: #1 crash 19min (soak-failure semantics defined 08-09),
   attempt-3 6h operational PASS / physics-budget FAIL (t_1ed9881f) → RCA +
@@ -85,6 +104,21 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 
 ## Change log (append-only)
 
+- 2026-08-14 — LEDGER CURRENCY (t_c2dd474b, filed by Rei gate t_ec7f0c19):
+  M5 row refreshed to the merged tree @ 75ac8df12; M5.1 + M5.2 rows ADDED
+  (engine-path ✅, bot-replay ✅ with per-action counts, restart — N/A with
+  gap flag t_1b82b33f for M5.1, H UNKNOWN). Superseded M5 snapshot preserved
+  verbatim: "🔶 PARTIAL — UseItem/Mount/Dismount slice merged to develop @
+  a335e1672 (t_a5edc1e6); Interact/Loot + contract layer on
+  feat/bot-actor-surface-b1 (unmerged); M5.1 economy actions not filed
+  (t_f947d9ab); MCP sidecar contract tools in flight (t_446228b5, tai);
+  🔶 branch-level rigs (B1Actions/B1ContractLayer tests); merged-tree replay
+  not ready; exit tests not run on merged tree; threading-boundary A1
+  mandatory at exit". Also: REQ-M3b-9 evidence citation added to ROADMAP
+  §M3b exit record + summary table + progression-board (gap flag cleared —
+  PropertyRepairScanner/Service + /house_repair GM command @ 5981246ea/
+  99edc67a, 13/13 scanner tests, Rei gate PASS run 1892). No statuses
+  changed; H stays UNKNOWN; STOP LINE respected (capped at M5.2).
 - 2026-08-13 — BACKTRACK Phase 1 (t_61a0eebb): M1/M2 contract replay via the
   control plane — curated Solzreed golden route (16 quests through the
   first-mount chain) driven headless through IGameplayActor CONTRACT ACTIONS

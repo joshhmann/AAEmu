@@ -33,7 +33,7 @@ re-graded by this retrofit — re-grading is the Rei gate's job (t_ec7f0c19).**
 | M1 | REQ-M1-1..10 (all reconstructed) | 2: completeness bar for "shared engine defects"; peripheral-quest coverage target | CLOSED-WITH-CAVEATS (human-feel deferred) |
 | M2 / M2a–d | REQ-M2-1..9 + REQ-M2a/b/b-E2E/c/d (14 reconstructed) | 1: M2c/M2d per-band thresholds beyond reference ≥95% | CLOSED-WITH-CAVEATS (human baseline deferred) |
 | M3a | REQ-M3a-1..8 (reconstructed) | 0 | CLOSED-WITH-CAVEATS (H UNKNOWN) |
-| M3b | REQ-M3b-1..12 (reconstructed) | 0 (REQ-M3b-9 closure-evidence gap flagged) | CLOSED-WITH-CAVEATS (H UNKNOWN) |
+| M3b | REQ-M3b-1..12 (reconstructed) | 0 | CLOSED-WITH-CAVEATS (H UNKNOWN) |
 | M4 | REQ-M4-1..7 (reconstructed) | 0 | CLOSED-WITH-CAVEATS (human-feel deferred) |
 | M5 | REQ-M5-1..15 (reconstructed) | 0 | IN PROGRESS (DoD partial) |
 | M5.1 | REQ-M5.1-1..5 (reconstructed) | 0 (LoadPackOntoVehicle restart-assertion gap flagged) | function-evidence complete; H UNKNOWN |
