@@ -22,7 +22,10 @@ namespace AAEmu.IntegrationTests.E2e;
 /// conservation criteria (pack instance, seeds, currency, labor, lifecycle)
 /// must all pass. The E2E stack boosts World.GrowthRate so the crop cycle
 /// completes within the scenario's maturity timeout (production rates would
-/// take hours — out of scope for a scripted replay).
+/// take hours — out of scope for a scripted replay), and World.LootRate so
+/// the actability-gated crop loot (the 1.2 emulator's actability multiplier
+/// is flat 1.0, leaving the millet-material/seed groups at ~3.6% rolls for
+/// any character) yields the craft materials a leveled farmer would get.
 ///
 /// This test writes the machine-readable PASS/FAIL report + trace evidence
 /// into the E2E logs (the same evidence convention as the M1M2 contract

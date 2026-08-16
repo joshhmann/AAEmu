@@ -23,6 +23,7 @@ using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.Units.Movements;
@@ -137,7 +138,14 @@ public class GameplayActor : IGameplayActor
     {
         if (MathUtil.CalculateDistance(Character.Transform.World.Position, destination, false) <= ArrivalRadius
             && Math.Abs(Character.Transform.World.Position.Z - destination.Z) <= ArrivalRadius)
+        {
+            // The no-op leg still walks the full lifecycle: a Completed
+            // record must always carry Requested → Accepted → Running →
+            // Completed (the scenario lifecycle law), so the actor never
+            // completes a move without entering Running.
+            request.Start("walking");
             return Complete(request, "already at destination");
+        }
 
         _moveTarget = destination;
         _moveSpeed = speed;
@@ -493,7 +501,23 @@ public class GameplayActor : IGameplayActor
         if (result != SkillResult.Success)
             return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} use refused by engine: {result}");
 
-        // 4. Record the applied-effect fingerprint (B1 idempotency layer):
+        // 4. Cast-time completion: casting-time skills (e.g. the farm-wagon
+        //    summon scroll's 5 s cast) apply their effects through a
+        //    CastTask scheduled on the task scheduler. That scheduler is
+        //    unreliable for headless bots (silent cancellation, late fires —
+        //    observed live: the cast landed minutes late or never). Drive
+        //    the cast synchronously instead — the exact call the CastTask
+        //    would make — then mark the skill cancelled so the stray
+        //    scheduled task bails out (CastTask checks Skill.Cancelled)
+        //    instead of double-casting.
+        if (Character.SkillTask != null)
+        {
+            Character.SkillTask = null;
+            skill.Cast(Character, caster, target, castTarget, null);
+            skill.Cancelled = true;
+        }
+
+        // 5. Record the applied-effect fingerprint (B1 idempotency layer):
         //    correlation for the M8 economic audit. The request-level key
         //    dedupe is the PRIMARY retry guard — a same-key retry is
         //    rejected pre-flight, so the item can never be consumed twice
@@ -605,7 +629,12 @@ public class GameplayActor : IGameplayActor
 
         if (MathUtil.CalculateDistance(vehicle.Transform.World.Position, destination, false) <= ArrivalRadius
             && Math.Abs(vehicle.Transform.World.Position.Z - destination.Z) <= ArrivalRadius)
+        {
+            // Full lifecycle on the no-op leg too (Requested → Accepted →
+            // Running → Completed) — a Completed drive never skips Running.
+            request.Start($"driving vehicle {vehicle.ObjId} ({vehicle.Name})");
             return Complete(request, "already at destination");
+        }
 
         _driveTarget = destination;
         _driveSpeed = speed;
@@ -746,6 +775,27 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.RejectedAction,
                 $"trade pack {packItemTemplateId} put-down refused by engine: {result}");
 
+        // 3b. Emulator-gap bridge: plot-only put-down skills (pack 26488 →
+        // skill 20412, plot 5 — 사방치기) return Success at Skill.Use's
+        // PlotOnly branch BEFORE the skill's effect list applies, and the
+        // plot executor only fires its own plot_effects (projectile
+        // visuals), so the pack would never leave the Backpack slot. Apply
+        // the skill's OWN PutDownBackpackEffect directly — the exact engine
+        // effect retail applies at the plot step — with the same call shape
+        // the plot executor uses. Unit-world fixture packs carry no plot
+        // (the effect already applied synchronously inside Use), so this
+        // branch is a no-op there.
+        if (Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack)?.Id == pack.Id
+            && skillTemplate.Effects?.FirstOrDefault(e => e.Template is PutDownBackpackEffect) is { Template: PutDownBackpackEffect putDownEffect })
+        {
+            var effectCaster = new SkillItem(Character.ObjId, pack.Id, pack.TemplateId);
+            var effectTarget = SkillCastTarget.GetByType(SkillCastTargetType.Unit);
+            effectTarget.ObjId = Character.ObjId;
+            putDownEffect.Apply(Character, effectCaster, Character, effectTarget,
+                new CastPlot(skillTemplate.Plot?.Id ?? 0, (ushort)skill.TlId, 0, skillTemplate.Id),
+                new EffectSource(skill), null, DateTime.UtcNow);
+        }
+
         // 4. Post-state verification: PutDownBackpackEffect early-returns
         //    (public-farm exclusion, house permission, invalid item)
         //    WITHOUT failing the skill — the pack must have LEFT the
@@ -753,9 +803,20 @@ public class GameplayActor : IGameplayActor
         //    also the retry-proof state: a retry finds no pack in the slot
         //    and is refused pre-flight, so the pack can never be placed
         //    twice.
+        //
+        //    LIVE note: the real pack put-down skills (e.g. 20412 for pack
+        //    26488) are plot-only (plot 5 — 사방치기): Skill.Use dispatches
+        //    the plot via Task.Run and returns Success immediately, and the
+        //    put-down effect (SpecialEffect 37) lands ~1.8 s later when the
+        //    plot's direction events fire. Unit-world fixture packs carry no
+        //    plot, so the effect is synchronous there. Wait for the async
+        //    plot by holding the request Running and polling the slot in
+        //    Tick (the same pattern as the craft-queue drain).
         if (Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack)?.Id == pack.Id)
-            return Reject(request, ActorFailureReason.RejectedAction,
-                $"trade pack {packItemTemplateId} put-down did not take effect (engine refused placement)");
+        {
+            _pendingPutDownPackId = pack.Id;
+            return request;
+        }
 
         // Applied-effect fingerprint (M8 economic-audit correlation): the
         // pack instance transitioned to a placed pack.
@@ -2030,6 +2091,7 @@ public class GameplayActor : IGameplayActor
     private Vector3? _driveTarget;
     private float _driveSpeed;
     private BaseUnit? _driveVehicle;
+    private ulong? _pendingPutDownPackId;
 
     public void Tick(TimeSpan elapsed)
     {
@@ -2099,6 +2161,24 @@ public class GameplayActor : IGameplayActor
             ClearCraftSnapshot();
             Finish(request, request.Complete(new CraftResult(request.TargetId, granted),
                 $"craft {request.TargetId} step completed (materials consumed, {granted.Count} product row(s) granted)"));
+            return;
+        }
+
+        // Put-down completion: the live pack put-down skills are plot-only
+        // (the engine dispatches the plot via Task.Run and returns Success
+        // immediately; the effect lands ~1.8 s later). The request stays
+        // Running while Tick polls the Backpack slot; when the async effect
+        // moves the pack into the System container, the placement is done.
+        if (request.Action == ActorActionType.PutDown && _pendingPutDownPackId is { } pendingPackId)
+        {
+            var slotPack = Character.Inventory?.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+            if (slotPack == null || slotPack.Id != pendingPackId)
+            {
+                _pendingPutDownPackId = null;
+                _ledger.RecordEffect(ActorIdempotency.EffectKey("packputdown", request.TargetId, pendingPackId.ToString()), request.TraceId);
+                Finish(request, request.Complete(true,
+                    detail: $"trade pack {request.TargetId} placed (instance {pendingPackId}, async plot effect applied)"));
+            }
             return;
         }
 
@@ -2205,6 +2285,7 @@ public class GameplayActor : IGameplayActor
     private void ClearMovementState()
     {
         _moveTarget = null;
+        _pendingPutDownPackId = null;
         ClearDriveState();
     }
 

@@ -330,6 +330,18 @@ public static class E2eStack
     }
 
     private static string GameLocalConfig()
+        // Replay pacing (scripted-actor scope, same class as GrowthRate):
+        //   GrowthRate 3600 — crop cycle completes inside the scenario's
+        //     maturity timeout (production rates take hours).
+        //   LootRate 100 — the 1.2 emulator's actability loot multiplier is
+        //     flat 1.0 for every rank (Actability.s_expMultipliers), so the
+        //     crop loot actability gates (millet material group max_dice 359,
+        //     seed group 355) stay ~3.6% rolls for ANY character; dividing
+        //     the actability dice by LootRate restores the reliable yield a
+        //     leveled farmer gets on live 1.2. Counts are unaffected (the
+        //     engine only multiplies coin loot by rates). NOTE: keep this
+        //     template strict JSON — BotDriveBridge.ReadConfig parses it with
+        //     System.Text.Json (no comment support).
         => $$"""
             {
               "Network": { "Host": "*", "Port": {{GamePort}}, "NumConnections": 10 },
@@ -344,7 +356,7 @@ public static class E2eStack
               },
               "ClientData": { "Sources": [ "./ClientData/game_pak" ] },
               "HeightMapsEnable": true,
-              "World": { "AutoSaveInterval": 0.2, "UsePersistentHouseDoodads": true, "GrowthRate": 3600 },
+              "World": { "AutoSaveInterval": 0.2, "UsePersistentHouseDoodads": true, "GrowthRate": 3600, "LootRate": 100 },
               "Bots": { "EnableE2EBridge": true, "E2EBridgePort": {{BridgePort}} }
             }
             """;
