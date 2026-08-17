@@ -45,11 +45,14 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///    (Completed/Interrupted/TimedOut) is never re-executed; the duplicate
 ///    is Rejected(StateTransition) pre-flight. Every action supports a
 ///    timeout budget (§17 reason: Move → Navigation, else Starvation).
-///  - All execution goes through normal gameplay services: movement applies
-///    the ordinary Transform (same facility Simulation.MoveTo / the M2b
-///    pilot use), targeting sets Unit.CurrentTarget, casting calls
-///    Character.UseSkill (the exact learned-skill branch CSStartSkillPacket
-///    uses). Observe reads the region graph + character state — no packets.
+///  - All execution goes through normal gameplay services: movement rides
+///    the client-authored unit-movement model (CSMoveUnitPacket's
+///    UnitMoveType path via VehicleMovementModel — position apply +
+///    SCOneUnitMovementPacket broadcast + transform finalize; the same
+///    model family DriveVehicle rides), targeting sets Unit.CurrentTarget,
+///    casting calls Character.UseSkill (the exact learned-skill branch
+///    CSStartSkillPacket uses). Observe reads the region graph + character
+///    state — no packets.
 ///
 /// Threading: NOT thread-safe by itself. The scheduler's per-bot execution
 /// lease (IPlayerBotScheduler) guarantees at most one in-flight step per
@@ -119,6 +122,13 @@ public class GameplayActor : IGameplayActor
 
     public ActorRequest MoveTo(Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
     {
+        // REQ-M5.3-7 (carries REQ-M5-10): every action executes only on the
+        // A1 marshal seam (the game-loop thread). This debug thread-affinity
+        // assertion fires when the action runs off the boundary — a
+        // controller may enqueue a wake but never mutate a Character off
+        // the game loop.
+        ExecutionBoundary.AssertOnExecutionThread("MoveTo");
+
         var request = NewRequest(ActorActionType.Move, 0, destination, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "move"))
             return request;
@@ -155,6 +165,9 @@ public class GameplayActor : IGameplayActor
 
     public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
     {
+        // REQ-M5.3-7 — see MoveTo.
+        ExecutionBoundary.AssertOnExecutionThread("MoveToUnit");
+
         var request = NewRequest(ActorActionType.Move, targetObjId, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "move"))
             return request;
@@ -167,13 +180,24 @@ public class GameplayActor : IGameplayActor
 
     public ActorRequest Stop()
     {
+        // REQ-M5.3-7 — see MoveTo.
+        ExecutionBoundary.AssertOnExecutionThread("Stop");
+
         var request = NewRequest(ActorActionType.Stop, 0);
         if (!request.Accept("stop"))
             return request; // defensive; should never happen
 
         // Interrupt whatever is running (if anything), then complete the stop.
         if (_active is { IsTerminal: false })
+        {
+            // A walking Move is halted mid-leg: emit the canonical Stopping
+            // broadcast so observers see the standstill (dossier §1.6 — the
+            // M6 "frozen bot" bug class). Non-movement interrupts broadcast
+            // nothing.
+            if (_active.Action == ActorActionType.Move && _moveTarget != null)
+                BroadcastStop();
             InterruptActive("stop requested");
+        }
         request.Start("interrupting");
         Finish(request, request.Complete(detail: "stopped"));
         return request;
@@ -2105,6 +2129,10 @@ public class GameplayActor : IGameplayActor
         // Navigation; everything else → Starvation, budget exhaustion).
         if (request.Timeout is { } budget && request.Elapsed > budget)
         {
+            // A Move that exhausts its budget halts mid-leg — observers
+            // must see the standstill (dossier §1.6).
+            if (request.Action is ActorActionType.Move && _moveTarget != null)
+                BroadcastStop();
             Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action),
                 request.Action is ActorActionType.Move or ActorActionType.Drive ? "navigation budget exceeded" : "action budget exceeded"));
             ClearMovementState();
@@ -2190,6 +2218,8 @@ public class GameplayActor : IGameplayActor
 
             if (flatDistance <= ArrivalRadius && zDistance <= ArrivalRadius)
             {
+                // Leg ended — observers must see the halt (dossier §1.6).
+                BroadcastStop();
                 Finish(request, request.Complete(detail: "arrived"));
                 _moveTarget = null;
                 return;
@@ -2202,13 +2232,13 @@ public class GameplayActor : IGameplayActor
                 var (newX, newY) = MathUtil.AddDistanceToFront(step, position.X, position.Y, angle);
                 var fraction = step / flatDistance;
                 var newZ = position.Z + (destination.Z - position.Z) * fraction;
-                ApplyPosition(new Vector3(newX, newY, newZ));
+                ApplyCharacterMove(new Vector3(newX, newY, newZ));
             }
             else
             {
                 var dir = destination.Z >= position.Z ? 1f : -1f;
                 var zStep = Math.Min(step, zDistance);
-                ApplyPosition(new Vector3(position.X, position.Y, position.Z + dir * zStep));
+                ApplyCharacterMove(new Vector3(position.X, position.Y, position.Z + dir * zStep));
             }
             return;
         }
@@ -2250,12 +2280,38 @@ public class GameplayActor : IGameplayActor
         }
     }
 
-    private void ApplyPosition(Vector3 next)
+    /// <summary>
+    /// Applies one walk leg through the client-authored unit-movement model
+    /// — the exact engine path CSMoveUnitPacket's UnitMoveType case executes
+    /// for the character itself (position apply + SCOneUnitMovementPacket
+    /// broadcast + transform finalize). Replaces the v1 silent Transform
+    /// write (the bare SetPosition, no broadcast): observers see real
+    /// movement broadcasts, and the character rides the same movement-model
+    /// family as DriveVehicle (REQ-M5.3-3).
+    /// </summary>
+    private void ApplyCharacterMove(Vector3 next)
     {
-        var transform = Character.Transform;
-        var angle = (float)MathUtil.CalculateAngleFrom(transform.World.Position, next);
-        transform.Local.SetRotationDegree(0f, 0f, angle - 90);
-        transform.Local.SetPosition(next);
+        var from = Character.Transform.World.Position;
+        var angle = (float)MathUtil.CalculateAngleFrom(from, next).DegToRad();
+        VehicleMovementModel.ApplyUnitMove(Character, Character,
+            VehicleMovementModel.BuildCharacterMove(next, angle, _moveSpeed));
+    }
+
+    /// <summary>
+    /// Emits the canonical Stopping broadcast at the character's current
+    /// position (dossier §1.6 — Blink/TeleportToUnit shape): zero velocity
+    /// + Stopping flag, so observers' clients snap the character to a
+    /// standstill whenever a Move leg ends for any reason (arrival, budget
+    /// expiry, Stop). Without it an observer who saw the walk keeps the
+    /// character walking forever (the M6 "frozen bot" bug class).
+    /// </summary>
+    private void BroadcastStop()
+    {
+        var position = Character.Transform.World.Position;
+        var rotZ = Character.Transform.Local.ToRollPitchYawSBytesMovement().Item3;
+        Character.BroadcastPacket(
+            new SCOneUnitMovementPacket(Character.ObjId,
+                VehicleMovementModel.BuildStopMove(position, rotZ)), true);
     }
 
     /// <summary>
