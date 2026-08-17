@@ -92,6 +92,12 @@ public class GameplayActor : IGameplayActor
 
     public ActorObservation Observe()
     {
+        // REQ-M5.3-7 (carries REQ-M5-10): every action executes only on the
+        // A1 marshal seam (the game-loop thread). Observe reads world state
+        // that is only consistent on the seam — the same debug thread-affinity
+        // assertion family as MoveTo/Stop.
+        ExecutionBoundary.AssertOnExecutionThread("Observe");
+
         var observation = new ActorObservation
         {
             ActorId = ActorId,
@@ -205,6 +211,10 @@ public class GameplayActor : IGameplayActor
 
     public ActorRequest SetTarget(uint targetObjId)
     {
+        // REQ-M5.3-7 (carries REQ-M5-10): every action executes only on the
+        // A1 marshal seam — SetTarget mutates Character/world state.
+        ExecutionBoundary.AssertOnExecutionThread("SetTarget");
+
         var request = NewRequest(ActorActionType.Target, targetObjId);
         if (!TryBegin(request, "target"))
             return request;
@@ -214,11 +224,25 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.RejectedAction, "target not found in world");
 
         Character.CurrentTarget = unit;
+
+        // REQ-M5.3-5: same resolve -> assign -> broadcast order the engine's
+        // CSChangeTargetPacket.Read performs — observers must see the bot's
+        // target change. The actor never clears targets (0/unknown objIds are
+        // rejected above), so no clear-target branch is needed, and the
+        // Rejected path mutates nothing / emits nothing.
+        Character.BroadcastPacket(
+            new SCTargetChangedPacket(Character.ObjId, Character.CurrentTarget?.ObjId ?? 0),
+            true);
+
         return Complete(request, $"targeting {unit.ObjId}");
     }
 
     public ActorRequest Cast(uint skillId, uint targetObjId, string? idempotencyKey = null)
     {
+        // REQ-M5.3-7 (carries REQ-M5-10): every action executes only on the
+        // A1 marshal seam — Cast mutates Character/world state.
+        ExecutionBoundary.AssertOnExecutionThread("Cast");
+
         var request = NewRequest(ActorActionType.Cast, targetObjId, skillId: skillId, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "cast"))
             return request;
