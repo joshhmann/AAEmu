@@ -46,8 +46,19 @@ see §0.1).
 Two commands this packet depends on are landing on t_e1cf82c9 (Josh redesign
 2026-08-17, fork-only, Rei-gated):
 
-- `.kit hytest` — curated GM kit: level 50 equivalent, labor, gold, portals,
-  key gear for the M5.x surface (canonical 1.2 item ids, no inventions).
+- `.kit hytest` — curated GM kit, scope RESIZED by Aya 2026-08-17 →
+  **level/labor/gold/portals only** (Mirage provides the test facilities;
+  no gear/seeds/designs in the kit). Canonical 1.2 item ids (compact.sqlite3):
+  - Growthstone (129) × 25 — +200,000 XP per use (AddExp SpecialType 28);
+    25 × = 5,000,000 XP ≥ 4,410,000 total for level 50 (levels.id 50).
+  - Worker's Compensation (8000013) × 20 — +1,000 LP per use
+    (AddLaborPower SpecialType 29); 20 × = 20,000 LP budget.
+  - Dull Delphinad Gold Coins (19072) × 50 — vendorable; refund 100,000
+    copper each → ~50 × 10g = ~500g at a merchant.
+  - Teleport Book (4045) × 1 — opens the teleport-book UI (OpenPortalEffect).
+  Consumables are USED from the bag (right-click) to grant level/labor; the
+  coins are SOLD to a merchant for gold. Faster level/labor/gold alternates
+  that already exist in-tree: `.level 50`, `.labor <n>`, `.gold <n>`.
 - `.teleport mirage` — convenience teleport to the test island.
 
 If either command is not live yet (kit list from `.kit ?`, or the teleport
@@ -69,14 +80,51 @@ IS the environment:
   cluster @ (3481-3493, 4302-4336) — crafting surface.
 - Fenced farm plot @ (3585-3597, 4373-4384) — plant/harvest surface.
 - Housing design cluster (townhouses/cottages/manors/villas) @ (3528-3538,
-  4370-4380) + farmhouse @ (3854, 4611) + aquafarm @ (3659, 4423) — build
-  surface for M5.2.
+  4370-4380) + farmhouse @ (3854, 4611) + aquafarm @ (3659, 4423) — DISPLAY
+  houses only. IMPORTANT (verified against the fork 2026-08-17, t_e1cf82c9):
+  Mirage has NO buildable housing land zones — `housing_areas` has zero rows
+  for zone 260/183 (`arche_mall`), so `HousingManager.Build` validation
+  rejects placement here (`InvalidArea`). M5.2's H1/H2 placement leg MUST run
+  in a real housing zone — use Solzreed `w_solzreed_1` (zone key 142,
+  housing_areas rows 333/335-355, `LevelDesignShape_142_moang_*`), the same
+  zone as the M4 sell leg. `.teleport solzreed` → (15369, 13864, 159) → walk
+  to the moang housing plots; the design item is granted via `.item add`.
 - Test-drive vehicles: Comet Speedster (18260), Apex Squall (18269),
   Timber Coupe (18270) — board/drive surface.
 - Mirage Isle Portal doodads 4895 @ (3565.6, 4335.1) and (3466.2, 4233.6) —
   exit/return.
 - GOLD TRADER: NOT on the island. The M4/M5.1 sell leg runs at the Solzreed
   gold trader (NPC 10664, Misty) @ (15180.1, 13612.4, 103.9) — see M4 steps.
+
+### 0.3 Fast-forward command sequence (exact, t_e1cf82c9)
+
+One line per stage; everything is GM-gated (AccessLevel >= 100, granted on
+account 10 / chars Asssaa + Dingus per t_01a893c7).
+
+```
+# A. Fast-forward to test-ready (Mirage venue)
+.kit hytest                    # level/labor/gold/portals consumables
+#    then right-click in bag: Growthstone x25 -> level 50 (5.0M XP),
+#    Worker's Compensation x20 -> 20,000 LP, Teleport Book x1 -> portal UI
+#    Sell Delphinad Gold Coins x50 at General Vendor 7961 -> ~500g
+#    (or skip clicks: .level 50 / .labor 20000 / .gold 500)
+.teleport mirage               # land (3680.5, 4572.2, 156), zone 183
+
+# B. Ad-hoc grants (NOT in kit, per Aya resize — grant only as needed)
+.item add self 15659 20        # Potato Eyes (canonical seed, M5.1 E1)
+.item add self 21165 1         # Thatched Farmhouse Design (M5.2 H1,
+                               #   item_housings 105 -> housing 171)
+.item add self 18664 1         # Aquafarm Design (alt, housing 157)
+
+# C. Zone coords (all canonical, verified 2026-08-17)
+# Mirage (zone 183 / key 260 / group 49): spawn 3680.5, 4572.2, 156
+#   vendor 7961 (3443.6, 4307.1) | warehouse/auctioneer 7983 (3452.5, 4289.4)
+#   mailbox 320 (3446.9, 4295.2) | workbench 7701 (3457.4, 4302.2)
+#   farm plot (3585-3597, 4373-4384) | portal doodads 4895 (3565.6, 4335.1)
+# Solzreed (zone key 142, w_solzreed_1): .teleport solzreed -> 15369, 13864, 159
+#   gold trader 10664 (15180.1, 13612.4, 103.9)
+#   moang housing plots (H1 placement surface; housing_areas 333/335-355)
+```
 
 ---
 
@@ -104,7 +152,13 @@ PROVEN. What is NOT proven: the FEEL verdict. That is this section.
 
 ```
 1. Login (any character; GM level required for commands — AccessLevel >= 100).
-2. .kit hytest          -> level 50 equiv, labor, gold, portals, gear.
+2. .kit hytest          -> level 50 equiv (Growthstone x25), labor (Worker's
+                          Comp x20), gold (Delphinad coins x50 -> ~500g at a
+                          merchant), portals (Teleport Book x1). Consumables
+                          are right-clicked from the bag; coins are sold.
+                          (Aya resize 2026-08-17: NO gear/seeds/designs in
+                          kit — Mirage facilities cover those; grant ad hoc
+                          with .item add.)
 3. .teleport mirage     -> land at (3680.5, 4572.2, 156), zone 183.
    FALLBACK (until t_e1cf82c9 lands): use a Mirage Isle Portal doodad in the
    main world (e.g. Solis 1.2 Mirage Portal) OR
@@ -172,10 +226,10 @@ Land at (3680.5, 4572.2, 156). Facility map (§0.2) applies.
 
 | # | Step (observable action) | PASS (objective) | Feel ask |
 |---|---|---|---|
-| E1 | Plant: use a seed from the hytest kit on the farm plot (3585-3597, 4373-4384) | Seed consumes; crop doodad spawns at position; cycle state advances | Does the planting gesture/animation read right? Does the seed visibly go into the ground? |
+| E1 | Plant: use a seed on the farm plot (3585-3597, 4373-4384). Seed NOT in the hytest kit (Aya resize 2026-08-17): grant `.item add self 15659 20` (Potato Eyes, canonical 1.2 seed, category 51) or harvest the pre-planted potato doodad 2259 on the plot | Seed consumes; crop doodad spawns at position; cycle state advances | Does the planting gesture/animation read right? Does the seed visibly go into the ground? |
 | E2 | Harvest: work the grown crop | Items land in bag; crop phases advance; harvest completes | Does the crop look ready/grown before harvest? Does harvest feel like the farm is alive? |
 | E3 | Craft: craft an item at the Fellowship Workbench (7701) or Regal cluster | Craft completes via real CharacterCraft path; labor deducted; item lands in bag | Does the craft station read as a proper station? Does the item appear plausibly in the bag? |
-| E4 | PackPickup/PutDown: create a pack (26489 chain or kit-provided), pick it up, put it down near a vehicle | Pack occupies backpack slot on pickup; placed pack appears as a world object on putdown | Does the pack visually ride on the character when carried? Does it sit correctly on the ground when placed? |
+| E4 | PackPickup/PutDown: create a pack (26489 chain via craft 5404 — the hytest kit carries no pack after the Aya resize), pick it up, put it down near a vehicle | Pack occupies backpack slot on pickup; placed pack appears as a world object on putdown | Does the pack visually ride on the character when carried? Does it sit correctly on the ground when placed? |
 | E5 | LoadPackOntoVehicle: put the placed pack onto the test-drive vehicle cargo point | Pack snaps to cargo point (real snap-to-cargo behavior); binding recorded | Does the pack snap cleanly, or clip/float? Does it track the vehicle when it moves? |
 | E6 | BoardVehicle + Drive: board the vehicle, drive a route, dismount | Real BindSlave/Seat.LoadPassenger + VehicleMovementModel path; movement broadcasts observed | Does boarding feel right? Does driving feel like driving, not teleporting? |
 | E7 | Buy/Sell + Deposit/Withdraw: buy from General Vendor (7961), sell something back, deposit/withdraw at Auctioneer/Warehouse (7983) | Buy deducts gold and grants item; sell grants gold; warehouse deposit/withdraw round-trips currency/items | Do shop + storage UIs feel like the classic mall? Do items/currency move visibly? |
@@ -210,17 +264,25 @@ and whether the placement feels canonical.
 
 ### 3.2 PREREQUISITE SETUP
 
-Same fast-forward: `.kit hytest` -> `.teleport mirage`. Use the housing design
-cluster @ (3528-3538, 4370-4380) or the farmhouse design @ (3854, 4611) /
-aquafarm @ (3659, 4423) as the placement surface. Kit provides the house
-design (level/gold/labor already covered by hytest).
+Fast-forward: `.kit hytest` -> `.teleport mirage` (land at 3680.5, 4572.2,
+156) for the walkaround, then for the placement leg: `.teleport solzreed`
+(15369, 13864, 159) and walk to the moang housing plots (w_solzreed_1,
+zone key 142). The design item is NOT in the hytest kit (Aya resize
+2026-08-17 — kit is level/labor/gold/portals only): grant the design with
+`.item add self 21165 1` (Thatched Farmhouse Design, canonical 1.2,
+item_housings row 105 → housing 171) or `.item add self 18664 1` (Aquafarm
+Design, row 100 → housing 157). Level/gold/labor are already covered by
+hytest (Growthstone / Delphinad coins / Worker's Compensation). The Mirage
+housing cluster (§0.2) is display-only — placement there is rejected by the
+real Build validation (no housing land zone for arche_mall); run placement
+at Solzreed.
 
 ### 3.3 TEST STEPS + PASS/FAIL
 
 | # | Step (observable action) | PASS (objective) | Feel ask |
 |---|---|---|---|
-| H1 | Place: use the house design from the kit at a valid spot in the housing cluster | Placement accepted at a valid spot; construction state begins; house object appears | Does the placement ghost/validation read correctly? Does the construction start look right? |
-| H2 | Construct: run the build to completion (watches or instant per kit/command) | Construction completes; door/window phases exist; house usable (door opens) | Does the house LOOK like a house a player would want? Scale/lighting/entrance feel? |
+| H1 | Place: use the house design (granted via `.item add` per §3.2) at a valid spot in the Solzreed moang housing plots | Placement accepted at a valid spot; construction state begins; house object appears | Does the placement ghost/validation read correctly? Does the construction start look right? |
+| H2 | Construct: run the build to completion (watches or instant — `.build <n>` advances the target house, or use BuildHouse action) | Construction completes; door/window phases exist; house usable (door opens) | Does the house LOOK like a house a player would want? Scale/lighting/entrance feel? |
 | H3 | Build-FIRST ordering (REQ-M5.2-3): confirm house exists before farm/storage work in the same session | House persists and is interactable before planting/crafting in that session | Does build-first ordering feel natural for the Phase-2 route? |
 
 ### 3.4 VERDICT FORMAT (M5.2)
@@ -324,7 +386,7 @@ is ever recorded as H=2 — H flips to PASS/FAIL only from this sheet.
 - EVIDENCE-LEDGER.md — 7 evidence states; class 7 = human-feel-accepted,
   NEVER inferred from bot/scripted evidence.
 - AAEmu.Game/Scripts/Commands/ — Teleport.cs (named locations incl.
-  solzreed), Kit.cs + kits.json (kit surface, 28 kits today; hytest lands via
+  solzreed), Kit.cs + kits.json (kit surface, 29 kits incl. hytest, added by
   t_e1cf82c9), Move.cs, MoveTo.cs, BuildHouse.cs, AddGold/AddLabor/AddXP/
   ChangeLevel/AddPortals/GodMode/IgnoreCooldowns.
 - AAEmu.Game/Data/Worlds/arche_mall_world/ — npc_spawns.json (418),
