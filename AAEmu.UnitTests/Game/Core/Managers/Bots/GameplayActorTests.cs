@@ -1,7 +1,20 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Numerics;
 
+using AAEmu.Commons.Network;
+using AAEmu.Commons.Network.Core;
+using AAEmu.Commons.Utils;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Network.Connections;
+using AAEmu.Game.Core.Packets.G2C;
+using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.Skills.Static;
+using AAEmu.Game.Models.Game.Units.Movements;
+using AAEmu.Game.Models.StaticValues;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -181,6 +194,357 @@ public class GameplayActorTests
 
         await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
         await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+    }
+
+    #endregion
+
+    #region Move rework — real 1.2 movement path (REQ-M5.3-3/4/7/8)
+
+    // M5.3 Move rework (t_3cac48d4): the v1 silent Transform write
+    // (ApplyPosition — bare SetPosition, no broadcast) is replaced by the
+    // client-authored unit-movement model — the exact engine path
+    // CSMoveUnitPacket's UnitMoveType case executes for the character
+    // (VehicleMovementModel.ApplyUnitMove: position apply +
+    // SCOneUnitMovementPacket broadcast + transform finalize; the same
+    // model family DriveVehicle rides). These tests prove the real path:
+    // broadcasts observed on the wire, arrival/completion semantics, halt
+    // on Stop, idempotency, and the REQ-M5.3-7 threading-boundary
+    // assertion (ExecutionBoundary — trace tests alone do NOT satisfy the
+    // requirement).
+
+    // -- capture rig (same pattern as GameplayActorDriveVehicleTests) --
+
+    private static object? _previousSusManager;
+    private static object? _previousModelManager;
+
+    /// <summary>
+    /// FinalizeTransform runs delta-movement analysis through SusManager
+    /// every 5s of accumulated movement. The headless test process has no
+    /// DI — seed both singletons the way GameplayActorDriveVehicleTests
+    /// does, AFTER CreateActor (see its SeedMovementSingletons).
+    /// </summary>
+    private static void SeedMovementSingletons()
+    {
+        _previousSusManager = typeof(Singleton<SusManager>)
+            .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .GetValue(null);
+        typeof(Singleton<SusManager>)
+            .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .SetValue(null, new SusManager(WorldManager.Instance));
+
+        _previousModelManager = typeof(Singleton<ModelManager>)
+            .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .GetValue(null);
+        var modelManager = new ModelManager();
+        typeof(ModelManager)
+            .GetField("_modelTypes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(modelManager, new Dictionary<uint, ModelType>());
+        typeof(ModelManager)
+            .GetField("_models", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(modelManager, new Dictionary<string, Dictionary<uint, Model>>());
+        typeof(Singleton<ModelManager>)
+            .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .SetValue(null, modelManager);
+    }
+
+    [After(Test)]
+    public void RestoreMovementSingletons()
+    {
+        if (_previousSusManager != null)
+            typeof(Singleton<SusManager>)
+                .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .SetValue(null, _previousSusManager);
+        if (_previousModelManager != null)
+            typeof(Singleton<ModelManager>)
+                .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .SetValue(null, _previousModelManager);
+        _previousSusManager = null;
+        _previousModelManager = null;
+    }
+
+    private sealed class PacketCaptureSession : ISession
+    {
+        public List<byte[]> CapturedPackets { get; } = [];
+
+        public IPAddress Ip => IPAddress.Loopback;
+        public uint SessionId => 1;
+        public Socket Socket => null;
+
+        public void SendPacket(byte[] packet) => CapturedPackets.Add(packet);
+        public void AddAttribute(string name, object attribute) { }
+        public object GetAttribute(string name) => null;
+        public void ClearAttribute(string name) { }
+        public void Close() { }
+    }
+
+    /// <summary>Attaches a real GameConnection with a capture sink to the actor.</summary>
+    private static PacketCaptureSession AttachCapture(GameplayActor actor)
+    {
+        var capture = new PacketCaptureSession();
+        actor.Character.Connection = new GameConnection(capture) { ActiveChar = actor.Character };
+        return capture;
+    }
+
+    /// <summary>Places the actor in the world AND its region grid so its own
+    /// movement broadcast reaches it (BroadcastPacket self=true → capture).</summary>
+    private static void PlaceInWorld(HeadlessSession session, GameplayActor actor, Vector3 position)
+    {
+        GameplayActorTestRig.SetPosition(actor, position);
+        WorldManager.Instance.AddVisibleObject(actor.Character);
+    }
+
+    private static bool CapturedOpcode(PacketCaptureSession capture, ushort opcode)
+    {
+        foreach (var bytes in capture.CapturedPackets)
+        {
+            try
+            {
+                var stream = new PacketStream();
+                stream.Write(bytes);
+                stream.ReadUInt16(); // length prefix
+                stream.ReadByte();   // 0xdd
+                stream.ReadByte();   // level (1)
+                stream.ReadByte();   // hash (0)
+                stream.ReadByte();   // count (0)
+                if (stream.ReadUInt16() == opcode) // TypeId
+                    return true;
+            }
+            catch
+            {
+                // malformed capture — skip
+            }
+        }
+
+        return false;
+    }
+
+    [Test]
+    public async Task Move_RealMovementPath_AdvancesPositionWithBroadcast_AndArrives()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("m53-move-1");
+        SeedMovementSingletons();
+        var capture = AttachCapture(actor);
+        PlaceInWorld(session, actor, new Vector3(512, 512, 0));
+
+        var destination = new Vector3(612, 512, 0); // 100 units east
+        var request = actor.MoveTo(destination, speed: 10f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(ReferenceEquals(request, actor.ActiveRequest)).IsTrue();
+
+        // 12 × 1s ticks at 10 m/s covers the 100-unit leg with margin.
+        for (var i = 0; i < 12; i++)
+            actor.Tick(TimeSpan.FromSeconds(1));
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.Detail).IsEqualTo("arrived");
+        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.X - destination.X)).IsLessThan(0.5f);
+        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.Y - destination.Y)).IsLessThan(0.5f);
+
+        // REAL broadcast: SCOneUnitMovementPacket was emitted through the
+        // client-authored model (the CSMoveUnitPacket UnitMoveType path) —
+        // the v1 silent Transform write is gone.
+        await Assert.That(CapturedOpcode(capture, SCOffsets.SCOneUnitMovementPacket)).IsTrue();
+
+        // TRACE: full lifecycle audit record correlated to the request.
+        var record = actor.AuditTrace[^1];
+        await Assert.That(record.Action).IsEqualTo(ActorActionType.Move);
+        await Assert.That(record.Result).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(record.TraceId).IsEqualTo(request.TraceId);
+        await Assert.That(record.StateChanges.Any(s => s.Contains("Running"))).IsTrue();
+        await Assert.That(record.StateChanges.Any(s => s.Contains("Completed"))).IsTrue();
+    }
+
+    [Test]
+    public async Task MoveToUnit_RealPath_ArrivesAtUnitPosition_WithBroadcast()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("m53-move-2");
+        SeedMovementSingletons();
+        var capture = AttachCapture(actor);
+        PlaceInWorld(session, actor, new Vector3(512, 512, 0));
+
+        var npcObjId = GameplayActorTestRig.SpawnNpc(session, 1000);
+        var npc = session.World.GetUnit(npcObjId)!;
+        npc.Transform.Local.SetPosition(new Vector3(612, 512, 0));
+
+        var request = actor.MoveToUnit(npcObjId, speed: 10f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+
+        for (var i = 0; i < 12; i++)
+            actor.Tick(TimeSpan.FromSeconds(1));
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.Detail).IsEqualTo("arrived");
+        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.X - npc.Transform.World.Position.X)).IsLessThan(0.5f);
+        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.Y - npc.Transform.World.Position.Y)).IsLessThan(0.5f);
+        await Assert.That(CapturedOpcode(capture, SCOffsets.SCOneUnitMovementPacket)).IsTrue();
+    }
+
+    [Test]
+    public async Task Move_AlreadyAtDestination_CompletesImmediately_NoBroadcast()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("m53-move-3");
+        SeedMovementSingletons();
+        var capture = AttachCapture(actor);
+        PlaceInWorld(session, actor, new Vector3(512, 512, 0));
+
+        var request = actor.MoveTo(new Vector3(512, 512, 0), speed: 5f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.Detail).IsEqualTo("already at destination");
+        await Assert.That(actor.ActiveRequest).IsNull();
+        // No leg was walked — the movement path never ran — so no broadcast.
+        await Assert.That(CapturedOpcode(capture, SCOffsets.SCOneUnitMovementPacket)).IsFalse();
+    }
+
+    [Test]
+    public async Task Move_NonFiniteDestination_RejectedWithRejectedAction()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("m53-move-4");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var request = actor.MoveTo(new Vector3(float.NaN, 0, 0), speed: 1f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(actor.ActiveRequest).IsNull();
+    }
+
+    [Test]
+    public async Task Move_SameIdempotencyKeyRetry_RejectedPreFlight_NoReExecution()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("m53-move-5");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var first = actor.MoveTo(new Vector3(10, 0, 0), speed: 1f, idempotencyKey: "m53-move-key");
+        for (var i = 0; i < 30 && first.State is not ActorLifecycleState.Completed; i++)
+            actor.Tick(TimeSpan.FromSeconds(1));
+        await Assert.That(first.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        var retry = actor.MoveTo(new Vector3(10, 0, 0), speed: 1f, idempotencyKey: "m53-move-key");
+
+        // Pre-flight dedupe: Rejected(StateTransition) with NO Running
+        // transition — the original outcome under the key is preserved.
+        await Assert.That(retry.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(retry.Failure).IsEqualTo(ActorFailureReason.StateTransition);
+        await Assert.That(retry.StateChanges.Any(s => s.Contains("Running"))).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == retry.TraceId)).IsEqualTo(1);
+        await Assert.That(actor.FindByKey("m53-move-key")!.TraceId).IsEqualTo(first.TraceId);
+    }
+
+    [Test]
+    public async Task Stop_RunningMove_HaltsMovement_SecondStopIsNoOp()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("m53-move-6");
+        SeedMovementSingletons();
+        var capture = AttachCapture(actor);
+        PlaceInWorld(session, actor, new Vector3(512, 512, 0));
+
+        var move = actor.MoveTo(new Vector3(612, 512, 0), speed: 5f);
+        actor.Tick(TimeSpan.FromSeconds(1));
+        var broadcastsDuringMove = capture.CapturedPackets.Count;
+        var positionAtStop = actor.Character.Transform.World.Position;
+
+        var stop = actor.Stop();
+
+        await Assert.That(move.State).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(stop.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.ActiveRequest).IsNull();
+
+        // HALT: Stop emits exactly ONE more movement packet — the canonical
+        // Stopping broadcast (zero velocity, dossier §1.6) — and then the
+        // interrupted move stops advancing: position frozen, no further
+        // broadcasts across subsequent ticks.
+        await Assert.That(capture.CapturedPackets.Count).IsEqualTo(broadcastsDuringMove + 1);
+        for (var i = 0; i < 5; i++)
+            actor.Tick(TimeSpan.FromSeconds(1));
+        await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(positionAtStop);
+        await Assert.That(capture.CapturedPackets.Count).IsEqualTo(broadcastsDuringMove + 1);
+
+        // Second Stop is a no-op (idempotent) and still completes itself.
+        var stop2 = actor.Stop();
+        await Assert.That(stop2.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.AuditTrace.Count).IsEqualTo(3); // move + stop + second stop
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Stop && r.Result == ActorLifecycleState.Completed)).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task BuildStopMove_ZeroVelocity_StoppingFlag_AtHaltPosition()
+    {
+        var stop = VehicleMovementModel.BuildStopMove(new Vector3(1, 2, 3), 42);
+
+        await Assert.That(stop.X).IsEqualTo(1f);
+        await Assert.That(stop.Y).IsEqualTo(2f);
+        await Assert.That(stop.Z).IsEqualTo(3f);
+        await Assert.That(stop.VelX).IsEqualTo((short)0);
+        await Assert.That(stop.VelY).IsEqualTo((short)0);
+        await Assert.That(stop.VelZ).IsEqualTo((short)0);
+        await Assert.That(stop.Flags).IsEqualTo(MoveTypeFlags.Stopping);
+        await Assert.That(stop.RotationZ).IsEqualTo((sbyte)42);
+    }
+
+    [Test]
+    public async Task BuildCharacterMove_WalkPayload_VelocityFacingAndWalkFlags()
+    {
+        // Heading east (yaw 0): velocity must be detectable (dossier §1.7 —
+        // non-zero velocity triggers BuffRemoveOn.Move) and carry the walk
+        // gait (ActorFlags 5) + stance/alertness a client would send.
+        var move = VehicleMovementModel.BuildCharacterMove(new Vector3(10, 0, 0), 0f, 2f);
+
+        await Assert.That(move.X).IsEqualTo(10f);
+        await Assert.That(move.Y).IsEqualTo(0f);
+        await Assert.That(move.Z).IsEqualTo(0f);
+        await Assert.That(move.VelX > 0).IsTrue(); // speed × 2048, east
+        await Assert.That(move.ActorFlags).IsEqualTo((byte)5); // 5-walk
+        await Assert.That(move.Stance).IsEqualTo(GameStanceType.Relaxed);
+        await Assert.That(move.Alertness).IsEqualTo(MoveTypeAlertness.Idle);
+    }
+
+    [Test]
+    public async Task ExecutionBoundary_MoveAndStop_OnBoundaryThread_NoViolations()
+    {
+        ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+        var before = ExecutionBoundary.ViolationCount;
+        try
+        {
+            var (actor, _) = GameplayActorTestRig.CreateActor("m53-boundary-1");
+            GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+            actor.MoveTo(new Vector3(10, 0, 0), speed: 1f);
+            actor.MoveToUnit(0);
+            actor.Stop();
+
+            await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(before);
+        }
+        finally
+        {
+            ExecutionBoundary.ResetForTest();
+        }
+    }
+
+    [Test]
+    public async Task ExecutionBoundary_MoveOffBoundaryThread_FiresViolation()
+    {
+        // Pin to an impossible thread id — any real thread is off-boundary:
+        // the action-level assertion must fire (trace tests alone do NOT
+        // satisfy REQ-M5.3-7).
+        ExecutionBoundary.SetExecutionThreadForTest(int.MaxValue);
+        var before = ExecutionBoundary.ViolationCount;
+        try
+        {
+            var (actor, _) = GameplayActorTestRig.CreateActor("m53-boundary-2");
+            GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+            actor.MoveTo(new Vector3(10, 0, 0), speed: 1f);
+            actor.Stop();
+
+            await Assert.That(ExecutionBoundary.ViolationCount).IsGreaterThan(before);
+        }
+        finally
+        {
+            ExecutionBoundary.ResetForTest();
+        }
     }
 
     #endregion

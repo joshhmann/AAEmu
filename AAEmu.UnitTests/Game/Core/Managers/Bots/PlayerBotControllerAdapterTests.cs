@@ -2,9 +2,7 @@ using System.Numerics;
 
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Bots;
-using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Quests.Static;
-using AAEmu.Game.Models.Game.Skills.Templates;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -24,14 +22,14 @@ public class PlayerBotControllerAdapterTests
 {
     private static (PlayerBotControllerAdapter Adapter, PlayerBotController Controller, HeadlessSession Session) CreateAdaptedBot()
     {
-        GameplayActorTestRig.Seed();
-        var session = HeadlessSession.Create(0x41AD, "adapter-bot", 1);
-        var character = session.Character;
-        character.ObjId = GameplayActorTestRig.NextActorObjId();
-        session.World.AddObject(character);
-        character.Skills = new CharacterSkills(character);
-        character.Actability = new CharacterActability(character);
-        character.Skills.AddSkill(new SkillTemplate { Id = GameplayActorTestRig.TestSkillId }, 1, false);
+        // Full rig setup via GameplayActorTestRig.CreateActor — the M5.3
+        // Move rework routes legs through the client-authored model whose
+        // FinalizeTransform → WorldManager.AddVisibleObject needs the
+        // world's region grid + pinned transform instance (the older
+        // hand-rolled fixture here lacked them and NRE'd on the first real
+        // walk leg).
+        var (actor, session) = GameplayActorTestRig.CreateActor("adapter-bot");
+        var character = actor.Character;
         var controller = new PlayerBotController(character);
         return (new PlayerBotControllerAdapter(controller), controller, session);
     }

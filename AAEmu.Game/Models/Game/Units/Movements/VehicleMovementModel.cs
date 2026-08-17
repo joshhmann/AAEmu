@@ -240,6 +240,67 @@ public static class VehicleMovementModel
         return moveType;
     }
 
+    /// <summary>
+    /// Builds the UnitMoveType a client would send for its OWN character
+    /// walking (CSMoveUnitPacket, UnitMoveType case). Same walk shape as
+    /// <see cref="BuildUnitMove"/> (velocity, walk flags/stance/alertness)
+    /// plus the facing rotation bytes — the Simulation.cs:397-409 pattern:
+    /// the rotation short encodes the travel heading so the character's
+    /// transform (and observers) faces the movement direction instead of
+    /// snapping to 0 on every leg.
+    /// </summary>
+    public static UnitMoveType BuildCharacterMove(Vector3 position, float yawRadians, float speed)
+    {
+        var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
+        var (velX, velY) = MathUtil.AddDistanceToFront(speed * 2048f, 0, 0, yawRadians);
+
+        moveType.X = position.X;
+        moveType.Y = position.Y;
+        moveType.Z = position.Z;
+        moveType.VelX = (short)velX;
+        moveType.VelY = (short)velY;
+        moveType.RotationX = 0;
+        moveType.RotationY = 0;
+        moveType.RotationZ = MathUtil.ConvertDegreeToSByteDirection(yawRadians.RadToDeg() - 90);
+        moveType.ActorFlags = 5; // 5-walk
+        moveType.Flags = 0;
+        moveType.DeltaMovement = [0, 63, 0];
+        moveType.Stance = GameStanceType.Relaxed;   // IDLE = 0x1
+        moveType.Alertness = MoveTypeAlertness.Idle; // IDLE = 0x0
+        moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;
+        return moveType;
+    }
+
+    /// <summary>
+    /// Builds the canonical locomotion-reset payload a client sends when it
+    /// releases movement keys: zero velocity + <see cref="MoveTypeFlags.Stopping"/>
+    /// at the given position, facing preserved. Same shape Blink.cs:65-79 and
+    /// TeleportToUnit.cs:74-83 use for teleport-style resets (dossier §1.6) —
+    /// the broadcast that snaps observers' clients to a standstill.
+    /// </summary>
+    /// <param name="position">The halt position (the character's final world position).</param>
+    /// <param name="rotationZ">Current facing byte (Transform.Local.ToRollPitchYawSBytesMovement().Item3).</param>
+    public static UnitMoveType BuildStopMove(Vector3 position, sbyte rotationZ)
+    {
+        var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
+
+        moveType.X = position.X;
+        moveType.Y = position.Y;
+        moveType.Z = position.Z;
+        moveType.VelX = 0;
+        moveType.VelY = 0;
+        moveType.VelZ = 0;
+        moveType.RotationX = 0;
+        moveType.RotationY = 0;
+        moveType.RotationZ = rotationZ;
+        moveType.Flags = MoveTypeFlags.Stopping; // 0x04 — released movement keys
+        moveType.DeltaMovement = [0, 0, 0];      // empty — no gait delta
+        moveType.Stance = GameStanceType.Relaxed;   // IDLE = 0x1
+        moveType.Alertness = MoveTypeAlertness.Idle; // IDLE = 0x0
+        moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;
+        return moveType;
+    }
+
     private static void RemoveEffects(BaseUnit unit, MoveType moveType)
     {
         if (moveType.VelX != 0 || moveType.VelY != 0 || moveType.VelZ != 0)
