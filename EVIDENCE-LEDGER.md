@@ -45,7 +45,7 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 | **M5** Gameplay Actor Contract (merged tree @ 75ac8df12 — Rei gate t_ec7f0c19: CLOSED-WITH-CAVEATS ceiling, formal close pending in gate lane) | ✅ full 11-action surface on fork develop — v1 34cf33cb + A1 c6d8f93a0 (ExecutionBoundary thread-affinity, compiled in ALL configs) + B1 761d1e81a: Observe/Move/Stop/Target/Cast/AcceptQuest/TurnInQuest/Interact/Loot/UseItem/Mount/Dismount all in GameplayActor.cs; ActorIdempotency + effect ledger (retry), ActorAuditRecord (trace) | — (contract surface; deploy story follows consumers) | ✅ per-action rigs on merged tree (GameplayActorTestRig + per-action classes) | ✅ full-route live replay t_15787275 @ 106d0a7e9 — 16/16 quests, lifecycle 53/53, REAL mount chain, 34/34 criteria, machine-readable traces; gates 1850/0/1 → 2054/0/1 → 2074/0/1 | — (no restart scenario owned by the contract exit; restart legs live in M2/M3b/M4) | — | ⚠️ UNKNOWN — H stays UNKNOWN (proxy/bot evidence only; feel gates belong to later phases — STOP LINE, cap M5.2) |
 | **M5.1** Economic extension (MERGED — all Rei-gated) | ✅ Plant (t_b1d7c430) · PackPickup/PutDown (t_64ecf525) · Buy/Sell (t_8741b03d) · Deposit/Withdraw (f760256a0) · Harvest (ebff582a8) · BoardVehicle (e7e7ef0fe) · Craft (dab91ecb0) · LoadPackOntoVehicle (6c2429ae0) · DriveVehicle (6edbf0cbb) — real engine paths (doodad.Use, CharacterCraft.Craft, BindSlave/Seat.LoadPassenger, PackVehicleService→AttachDoodadAtPoint, VehicleMovementModel CSMoveUnitPacket); control-plane API/MCP sidecar/Lane D consumer (t_7b6d7a4a, t_446228b5, t_52b2b084) | — | ✅ per-action rigs on merged tree | ✅ per-action tests on merged tree (count @ 75ac8df12, t_c2dd474b): Deposit/Withdraw 21 · BoardVehicle 21 · Buy/Sell 30 · Pack 17 · Plant 14 · LoadPackOntoVehicle 14 · Harvest 8; Rei re-audit gate-time baseline 13/14/7/21/240 (t_ec7f0c19); post-merge gate 2074/0/1 | — (N/A for contract actions; gap flag: attached-pack-on-slave restart assertion MISSING — t_1b82b33f, tai) | — | ⚠️ UNKNOWN — H stays UNKNOWN (REQ-M5.1-5 live E2E leg parked t_eaee04ee @ STOP LINE) |
 | **M5.2** Housing.Build (MERGED 08-14 — Rei-gated) | ✅ @ 3396d9ef1 (t_94761d55, Rei t_ebf36737 ACCEPT 3/3) — BuildHouse over the REAL HousingManager.Build engine path (exact CSCreateHousePacket handler call); scope t_2625be99 Housing.Build-FIRST locked | — | ✅ 13 canonical-rig tests | ✅ HouseBuild 14/14 post rig-fix (447c78ffe, t_18bbe650); post-merge gate 2074/0/1 | — (N/A) | — | ⚠️ UNKNOWN — H stays UNKNOWN |
-| **M5.3** Core-surface close — Observe · Move · Stop · Target · Cast (SPEC'D 2026-08-16, t_d837ee0b — spec-only) | 🔶 v1 impls on develop since 34cf33cb2 (t_4f11a519) — canonical fidelity UNVERIFIED; Move known non-conforming (silent Transform write, GameplayActor.cs:2173-2179); dossier-first rework spec'd — implementation parked at M5.2 cap | — | — (spec-only; v1 tests exist in GameplayActorTests, not Rei-gated) | — (spec-only) | — (N/A — no new persistence) | — (N/A — M6 soak lane) | ⚠️ UNKNOWN — H stays UNKNOWN |
+| **M5.3** Core-surface close — Observe · Move · Stop · Target · Cast (SPEC'D 2026-08-16, t_d837ee0b; IMPL AUTHORIZED 2026-08-17, t_5189977b) | 🔶 v1 impls on develop since 34cf33cb2 (t_4f11a519) — canonical fidelity UNVERIFIED; Move known non-conforming (silent Transform write, GameplayActor.cs:2253-2259: ApplyPosition — no broadcast, no UnitMoveType path); **canonical dossier COMMITTED 2026-08-17** (scorecard-explorations/mechanics/m5-core-actions-canonical.md, t_5189977b — movement/targeting/cast canon, every claim DV-code/DV-data/RD-wiki flagged); impl cards t_3cac48d4/t_c73d6293 follow | — | 📋 dossier (REQ-M5.3-1) committed + cited + flagged; per-action contract tests pending impl (REQ-M5.3-10) | — (pending impl) | — (N/A — no new persistence) | — (N/A — M6 soak lane) | ⚠️ UNKNOWN — H stays UNKNOWN |
 | **M6** Deterministic playerbot framework (exit soak GREEN 08-11; reconciliation open) | ✅ hotfix chain + BotAppearanceFactory (91b308d71) + parity seeding (45cd3f3a9, live-verified 34 actabilities/skills/bag) + GM cmds P0 (t_7b4f9423) + E2E harness + presence overlay in-repo | ✅ presence-demo overlay live (hotfix3) — 3 citizens at Josh's spawn, zone 179; sighting ACCEPTED 08-09. ⚠️ adopt-heal look-collapse (t_555ed207): fix pushed cdf6d4a62, awaiting Rei gate; prod re-provision pending | ✅ E2E harness (real Login+Game+MySQL) | ✅ 10-bot correctness PASS; 25-bot stability PASS (H2 1.00); M2bE2e 5/5 (t_2ee39438) | ⏳ DEFERRED — B4 restart persistence (playerbot_metadata + 2-checkpoint restart test) not yet executed; A1 boundary + observability + G0-1 merge-to-develop outstanding (per M6 EXIT RECORD) | ✅ 6h/10-bot soak GREEN 08-11 (t_35167e60): 360-min, ALL 9 budgets PASS, 0 failures — verdict preserved as "passed revised approved budgets" (physics budget recalibrated t_18fccd09; GC fix t_eecc5604 merged first per Josh's ruling) | ⏳ DEFERRED (informal partial) — Josh sighting ACCEPTED 08-09 (wire-confirmed t_509ef8c2); rendered screenshots pending Josh's client; batched feel/visual/fun verdicts deferred until bot functional + restart gates green (decision contract) |
 
 ## Evidence register (citations, append-only)
@@ -94,14 +94,23 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 - **M5.2:** ROADMAP §M5.2; Housing.Build merged @ 3396d9ef1 (t_94761d55, Rei
   t_ebf36737 ACCEPT 3/3); 13 canonical-rig tests; HouseBuild 14/14 post
   rig-fix (447c78ffe, t_18bbe650); post-merge gate 2074/0/1; scope t_2625be99.
-- **M5.3 (SPEC-ONLY):** ROADMAP §M5.3 (spec t_d837ee0b, 2026-08-16); five
+- **M5.3:** ROADMAP §M5.3 (spec t_d837ee0b, 2026-08-16); five
   core actions spec'd dossier-first (canonical dossier
   scorecard-explorations/mechanics/m5-core-actions-canonical.md required
   BEFORE implementation); v1 impls on develop since 34cf33cb2 (t_4f11a519)
   unverified — Move known non-conforming (GameplayActor.ApplyPosition,
-  GameplayActor.cs:2173-2179: silent Transform write, no broadcast);
-  Observe/SetTarget/Cast v1 shapes engine-true, verification pending;
-  implementation parked at M5.2 cap until Josh GO; review gate t_a844e2b1.
+  GameplayActor.cs:2253-2259: silent Transform write, no broadcast);
+  Observe/SetTarget/Cast v1 shapes engine-true, verification pending.
+  **CANONICAL DOSSIER COMMITTED 2026-08-17 (t_5189977b, REQ-M5.3-1):**
+  m5-core-actions-canonical.md — (a) client-authored CSMoveUnitPacket path
+  + SCOneUnitMovementPacket broadcasts + Stopping halt semantics, (b) the
+  real target-set path via CSChangeTargetPacket → Unit.CurrentTarget +
+  SCTargetChangedPacket, (c) cast pipeline (casting_time → CastTask schedule
+  → Cast → SCSkillStarted/SCSkillEnded packets, mana/cooldown consumption,
+  move-interrupt rules); every claim flagged DV-code/DV-data/RD-wiki.
+  **IMPL AUTHORIZED 2026-08-17 (Josh lift on t_5189977b)** — impl cards
+  t_3cac48d4/t_c73d6293 may run; M6-full/Phase-3 remain capped; review gate
+  t_a844e2b1, acceptance gate t_5fa9bd73.
 - **M6:** ROADMAP §M6 EXIT RECORD (t_35167e60, merge eb6f637e0, gate 1592/0);
   soak attempts: #1 crash 19min (soak-failure semantics defined 08-09),
   attempt-3 6h operational PASS / physics-budget FAIL (t_1ed9881f) → RCA +
@@ -113,6 +122,15 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 
 ## Change log (append-only)
 
+- 2026-08-17 — M5.3 DOSSIER (REQ-M5.3-1, t_5189977b): canonical dossier
+  committed — scorecard-explorations/mechanics/m5-core-actions-canonical.md
+  (movement/targeting/cast ground truth; every claim flagged DV-code /
+  DV-data / RD-wiki with file:line or compact.sqlite3 queries; no invented
+  mechanics; gaps recorded as [GAP]). **IMPL LIFT (Josh)**: M5.3
+  implementation authorized; M6-full/Phase-3 remain capped. progression-board
+  STOP LINE + M5/M5.3 rows updated; M5.3 ledger row moved out of SPEC-ONLY.
+  Docs-only; no statuses beyond the lift; H stays UNKNOWN; fork-only push.
+  Gate: acceptance t_5fa9bd73 (REI).
 - 2026-08-16 — M5.3 SPEC (t_d837ee0b): M5.3 row ADDED to the ledger —
   SPEC-ONLY placeholders (Observe · Move · Stop · Target · Cast), no
   evidence claimed: v1 impls on develop since 34cf33cb2 (t_4f11a519)

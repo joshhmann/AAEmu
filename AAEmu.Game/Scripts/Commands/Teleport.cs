@@ -57,6 +57,7 @@ public class Teleport : ICommand
     private static readonly string[] cradleAlt = ["kc", "gkc", "kroloal", "kroloa", "koala"];
     private static readonly string[] abyssAlt = ["ha", "gha", "howling"];
     private static readonly string[] serpentisAlt = ["snake", "snek"];
+    private static readonly string[] mirageAlt = ["mirage", "mall"];
 
     public void OnLoad()
     {
@@ -595,6 +596,17 @@ public class Teleport : ICommand
             Z = 142,
             AltNames = serpentisAlt
         });
+        Locations.Add(new TPloc
+        {
+            Region = TeleportCommandRegions.Dungeons,
+            Name = "mirage",
+            Info = "Mirage Isle (arche_mall)",
+            X = 3680,
+            Y = 4572,
+            Z = 156,
+            AltNames = mirageAlt,
+            EnterInstanceZoneId = 183
+        });
 
         #endregion
 
@@ -684,8 +696,21 @@ public class Teleport : ICommand
                         CommandManager.SendNormalText(this, messageOutput,
                             "Teleporting to |cFFFFFFFF" + item.Info + "|r");
                         character.ForceDismount();
-                        character.DisabledSetPosition = true;
-                        character.SendPacket(new SCTeleportUnitPacket(0, 0, item.X, item.Y, item.Z, 0));
+                        if (item.EnterInstanceZoneId > 0)
+                        {
+                            // System-instance destination (e.g. Mirage Isle / arche_mall, zone 183):
+                            // the target world (arche_mall_world) is a separate instance world with its
+                            // own local coordinates — request entry through the IndunManager so the
+                            // character is moved into that world (SCLoadInstancePacket) at its canonical
+                            // spawn, instead of sending a position packet that would resolve against the
+                            // main world grid and land out of bounds.
+                            IndunManager.Instance.RequestSystemInstance(character, item.EnterInstanceZoneId, 0, out _);
+                        }
+                        else
+                        {
+                            character.DisabledSetPosition = true;
+                            character.SendPacket(new SCTeleportUnitPacket(0, 0, item.X, item.Y, item.Z, 0));
+                        }
                         break;
                     }
                 }
@@ -735,5 +760,6 @@ public class Teleport : ICommand
         public int Z { get; set; }
         public string[] AltNames { get; set; }
         public TeleportCommandRegions Region { get; set; }
+        public uint EnterInstanceZoneId { get; set; }
     }
 }
