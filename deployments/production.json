@@ -2,27 +2,27 @@
   "environment": "aaemu-.165",
   "image": {
     "tag": "aaemu-game:presence-demo",
-    "digest": "sha256:3ddcf7a4bdbcaf6b96628b7ac0f3ea7f2e496f68603101ce094331c7a4905dc2",
-    "built_at": "2026-08-11T22:53:33-07:00 (PDT)"
+    "digest": "sha256:32978f3613e3466ffcf2a1176a77a1c73a93575f0d319d014b5d65379c911307",
+    "built_at": "2026-08-17T05:38:55-07:00 (PDT)"
   },
   "source": {
-    "commit": "4ded92c61",
-    "branch": "develop (fork joshhmann/AAEmu)",
-    "lineage": "fork develop @ 4ded92c61 (verified tip: M3b-1..4 + exit gate f5b00c686 + SaveManager + quest-save NRE + race-fix chain + bot-control fixes; audit ACCEPT t_4b4e9fbe; M1-M3 audit PASS t_5b1f5494)",
-    "verified": "4ded92c61 = fork develop tip at card time; ff-only merge from f4adbadcb (prior prod HEAD); hotfix ancestors verified (exit gate f5b00c686, SaveManager 5ed5d6493, adopt-heal 960ef8479, patrol-home 96e45252a all ANCESTOR OK, 2026-08-11 t_fec9b36f)"
+    "commit": "81676c0d6120eb24110a881c72ed0c0612f56914",
+    "branch": "deploy/teleport-mirage (fork joshhmann/AAEmu develop lineage)",
+    "lineage": "81676c0d6 = merge --no-ff of feat/teleport-mirage @5d6d1d00b (Teleport.cs +28/-2) into fork develop via t_42e24eca (Rei gate ACCEPT, suite 2074/0/1). .teleport mirage TPloc routes through IndunManager.RequestSystemInstance(zoneId=183) with EnterInstanceZoneId=183u, alt names mirage+mall. Card-scoped TELEPORT-ONLY deploy: hytest kit t_e1cf82c9 did NOT merge (fork develop tip at build time; M5.3 move-rework 8e9c0713a landed 05:28 as separate mid-flight work, explicitly out of this card's scope).",
+    "verified": "81676c0d6 = local checkout on deploy/teleport-mirage at build (git rev-parse HEAD); merge-base --is-ancestor 81676c0d6 = self; fork develop carries 81676c0d6 (ancestor check vs 8e9c0713a = YES). Prod binary IL verified live from container: RequestSystemInstance x7, EnterInstanceZoneId backing field + accessors, mirageAlt string[], 'mirage' ldstr x2."
   },
-  "git_sha": "72b807e47",
-  "git_sha_note": "prod tree HEAD after ff-merge to fork develop tip (docs-only delta 4ded92c61..72b807e47: scorecard/roadmap merges, non-runtime). Runtime image built from source.commit 4ded92c61.",
-  "deployed_at": "2026-08-11T22:54:00-07:00",
-  "milestone": "M3b deploy (t_fec9b36f) \u2014 M3b furniture persistence + phase-crop recovery + restart restore + property repair + exit gate + M2/M3a fixes; quest census drops applied (SQL/patches overlays)",
-  "database_backup": "compact.sqlite3.bak-pre-m3b-20260811 (in .server_files/AAEmu.Game/Data/) \u2014 pre-overlay pristine copy; MySQL untouched (bot rows additive, accounts reused)",
+  "git_sha": "81676c0d6120eb24110a881c72ed0c0612f56914",
+  "git_sha_note": "prod tree HEAD = deploy/teleport-mirage checkout at 81676c0d6 (fork develop mirage-merge). Runtime image built from source.commit 81676c0d6. Manifest recorded on deploy/teleport-mirage-manifest branch (fork, NOT develop).",
+  "deployed_at": "2026-08-17T05:39:23-07:00",
+  "milestone": "Teleport-mirage deploy (t_d8658d50, 2026-08-17) — Josh testing NOW: .teleport mirage was gate-failing on prod because M5.2 image (t_e30cbd69, 116a032eed51, deployed 08-16) predates the mirage TPloc. This deploy lands fork develop tip 81676c0d6 so .teleport mirage routes to zone 183 arche_mall.",
+  "database_backup": "compact.sqlite3.bak-pre-m3b-20260811 (in .server_files/AAEmu.Game/Data/) — no SQL migration in this deploy (zero SQL/patches commits in 00452aa11..81676c0d6, verified at build). Runtime overlay intact: /root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3 119054336 bytes, mtime 2026-08-11 22:50, byte-equal to pre-M3b pristine copy (no schema drift since M5.2). Boot showed 0 schema/migration errors.",
   "services": {
     "db": "Up (healthy) - untouched",
     "login": "Up (healthy) - untouched",
-    "game": "Up (healthy) - presence-demo image 3ddcf7a4bdbc, 3/3 citizen bots adopted+roaming (positions change across save cycles), QuestSanity SUMMARY OK 0 errors, 0 FATAL, client connection from 192.168.0.186 accepted post-boot",
+    "game": "Up (healthy) - presence-demo image 32978f3613e3, restarts=0, Health=healthy, 3/3 citizen bots roaming (BotPresenceCoordinator: presence demo up — 3/3 citizen bots roaming, 8-waypoint Loop routes assigned at 12:40:25Z; bot_managed_presence_001/002/003 accounts provisioned 12:40:23Z), QuestSanity SUMMARY OK 0 errors (6 warn / 13 info, 4566 quests / 17349 comps / 18963 acts), 0 FATAL, 0 crash markers, 0 Unhandled exception, arche_mall_world (zone 183 system instance) active in TickManager/PhysicsManager logs, game registered on LoginServer 12:40:23Z (GameServerId 1)",
     "adminer": "Up"
   },
-  "build_path": "in-repo overlay recipe: `cd /root/AAEmu && git merge --ff-only 4ded92c61 && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml up -d --no-deps --force-recreate game` (presence overlay carries AAEMU_PRESENCE_DEMO=1 + patrol-home 15572/15364/126.5). Rollback tag: aaemu-game:presence-demo-rollback-pre-m3b = 096593111afc.",
-  "notes": "Deploy t_fec9b36f (2026-08-11, Mai): rollback tag snapshotted FIRST from running image 096593111afc (pre-build, per thinpool/GC pitfall). SQL overlays applied to runtime compact.sqlite3 only (dev tree stays pristine reference per rule 3); overlay script at /tmp/overlay-apply.py on CT 133 (idempotent, guarded deletes). npc_spawns.json (main_world) md5 5f6e57efcf5a0df46914f90de49c2d1a matches previous deploy. NLog caps confirmed: Sequence/26214400/20 + env-Info rule. No upstream PRs (lane gate).",
-  "sql_overlays": "SQL/patches/compact/*.sql applied to runtime compact.sqlite3 (12 patches, FK OFF per authors' env): quest_contexts 4876->4579, quest_components 17851->17480, quest_acts 26886->26802, unit_reqs 13354->13214; dropped ids 1391/6069/1533-1548 cluster/2148-2229 reserve etc verified 0 rows; census-only drops (2026/2230/2607/2684/3491/3503/3569/3758/5812) remain live DB rows by design (WI-11b deferred/KEEP register)"
+  "build_path": "in-repo overlay recipe: `cd /root/AAEmu && git checkout deploy/teleport-mirage (81676c0d6) && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml build game && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml up -d --no-deps --force-recreate game` (presence overlay carries AAEMU_PRESENCE_DEMO=1 + patrol-home 15572/15364/126.5, verified in running container env). Rollback tag: aaemu-game:presence-demo-rollback-pre-teleport-mirage = 116a032eed51 (snapshotted FIRST pre-build per thinpool/GC pitfall).",
+  "notes": "Deploy t_d8658d50 (2026-08-17, Mai): rollback tag snapshotted FIRST from running M5.2 image 116a032eed51 (pre-build, proven recipe t_442f3016/t_e30cbd69). Miage TPloc verified in live container binary via ikdasm on copied /app/AAEmu.Game.dll: RequestSystemInstance x7, EnterInstanceZoneId backing field + get/set accessors, mirageAlt static string[], 'mirage' ldstr x2 — matches parent t_42e24eca evidence. NLog caps confirmed: Sequence/26214400/maxArchiveFiles 20 (25MB x 20 rotation live, Error_11651..11672 archives observed). Known baseline: PacketStream/StreamProtocolHandler error flood (read-beyond + unknown 0x00 from proxy interface 172.18.0.1) is a dead-socket read-loop after client connect/disconnect — pre-existing (login-failure pattern from 192.168.0.186 predates this deploy, first observed 11:03Z vs deploy 12:39Z), NOT a regression of the teleport change; NLog caps contain disk impact. docker json-file log caps max-size 50m x 3. No upstream PRs (lane gate). Fork-only push: manifest on deploy/teleport-mirage-manifest branch, NOT develop.",
+  "sql_overlays": "NONE new in this deploy — zero SQL/patches commits in 00452aa11..81676c0d6 (verified at build). Runtime compact.sqlite3 overlay state intact at M5.2 baseline (quest_contexts 4579 / quest_components 17480 / quest_acts 26802 / unit_reqs 13214 per M5.2 record; no schema changes since)."
 }
