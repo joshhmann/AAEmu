@@ -813,7 +813,7 @@ reusable, but their packet/session coupling is the main uncertainty.
 **DoD — evidence classes (ledger t_547ef82d):**
 | Class | Required | M5 evidence (as of 2026-08-14; status NOT re-graded here) |
 |---|---|---|
-| engine-path implementation (1) | REQUIRED | 🔶 partial: A1 seam c6d8f93a0 + B1 six-action surface 761d1e81a merged (merged-tree re-verify 1850/0/1); remaining surface (Observe/Move/Stop/Target/Cast) status per develop |
+| engine-path implementation (1) | REQUIRED | 🔶 partial: A1 seam c6d8f93a0 + B1 six-action surface 761d1e81a merged (merged-tree re-verify 1850/0/1); remaining surface (Observe/Move/Stop/Target/Cast) v1 impls on develop since 34cf33cb2 (t_4f11a519) — canonical fidelity UNVERIFIED (Move known non-conforming: silent Transform write, no broadcast), spec'd as M5.3 2026-08-16 (t_d837ee0b) |
 | bot-replay (3+4) | REQUIRED | 🔶 B1Actions/B1ContractLayer tests on the merged tree; control-plane contract replay rig (t_61a0eebb, 16/16 quests) |
 | restart-persistence (5) | N/A | contract layer adds no new persistence; underlying systems carry M1/M2/M3/M4 restart classes |
 | soak (6) | N/A | soak belongs to the M6 lane |
@@ -826,7 +826,8 @@ actions → M5.1; housing actions → M5.2.*)*
 **Exit tests (requirement-indexed):** M5 core scripted segment → REQ-M5-13,
 -14 · M5.1 economy segment → REQ-M5.1-1..5 · contract tests independent of
 controller + retry tests → REQ-M5-15 · threading-boundary assertion →
-REQ-M5-10.
+REQ-M5-10 · M5.3 core-surface segment (Observe/Move/Stop/Target/Cast) →
+REQ-M5.3-1..11 (spec 2026-08-16, t_d837ee0b).
 
 **Existing primitives to wrap:**
 - NPC AI movement (NpcAi)
@@ -862,6 +863,8 @@ no bot-only inventory or combat behavior.
   Loot · UseItem · Mount/Dismount · AcceptQuest · TurnInQuest
 - **M5.1 economic extension:** Plant · Harvest · Craft · PackPickup/PutDown ·
   BoardVehicle · Buy/Sell · Deposit/Withdraw
+- **M5.3 core-surface close (SPEC'D 2026-08-16 — implementation parked at
+  M5.2 cap):** Observe · Move · Stop · Target · Cast
 
 Slicing keeps M5 from expanding when crafting or vehicle APIs expose
 special cases.
@@ -1024,6 +1027,130 @@ re-implement.**
   Phase-2 replay now sequences Housing.Build BEFORE farm/storage.
 - **H stays UNKNOWN** everywhere — no bot/scripted evidence is H=2 (human
   packet t_2b654349, Rei).
+
+**M5.3 — close the M5 core surface: Observe · Move · Stop · Target · Cast
+(Requirements + DoD + Exit tests, SPEC'D 2026-08-16 — implementation parked
+at the M5.2 cap until Josh GO; spec t_d837ee0b, review gate t_a844e2b1):**
+
+REQ-M5-13's vocabulary is Observe · Move · Stop · Target · Cast · Interact ·
+Loot · UseItem · Mount/Dismount · AcceptQuest · TurnInQuest. B1 (761d1e81a)
+landed 6 of 11; M5.1/M5.2 covered the economic + housing extensions. The
+five core actions carry **v1 implementations on develop since the original
+contract spike (t_4f11a519, 34cf33cb2, 2026-08-07) — present but NOT
+verified against this standard**: no canonical dossier, no Rei gate, no
+threading-boundary evidence, and **Move is KNOWN non-conforming** — it
+advances via a silent local Transform write (`GameplayActor.ApplyPosition`,
+GameplayActor.cs:2173-2179: no movement broadcast, no client-authored path;
+the player-equivalent reference is DriveVehicle's VehicleMovementModel /
+CSMoveUnitPacket path). M7 (Adventurer bots) depends on these five ("B1
+(combat/quest actor actions)").
+
+**Requirements (canonical-1.2-true; dossier-first per mechanic-research
+doctrine):**
+- **REQ-M5.3-1** — Canonical dossier FIRST: before any implementation,
+  commit `scorecard-explorations/mechanics/m5-core-actions-canonical.md`
+  covering (a) character foot movement — walk/run, the client-authored
+  CSMoveUnitPacket path, movement broadcasts, stop/halt semantics; (b)
+  targeting — the real engine target-set path for `Unit.CurrentTarget`; (c)
+  skill cast mechanics — casting_time, CastTask scheduling,
+  SCSkillStartedPacket/SCSkillEndedPacket, move-interrupt rules, mana/
+  cooldown consumption — all canonical-1.2 ground truth; every claim flagged
+  research-derived (wiki cited + dated) or data-verified (compact.sqlite3 /
+  engine code); no invented mechanics.
+- **REQ-M5.3-2** — Observe: one unified observation snapshot through real
+  engine queries only (region lists, WorldManager, character state — REQ-M5-1
+  carry); no packets (spec §8); emits the audit record and completes
+  immediately. v1 shape (GameplayActor.cs:89-113) retained or adjusted per
+  dossier findings.
+- **REQ-M5.3-3** — Move: MoveTo/MoveToUnit advance the character through the
+  REAL 1.2 movement path — the client-authored unit-movement model
+  (CSMoveUnitPacket-equivalent; the same family DriveVehicle rides via
+  VehicleMovementModel), with real movement broadcasts; the v1 silent
+  Transform write is replaced. Arrival (ArrivalRadius 0.5f) → Completed;
+  budget expiry → TimedOut(Navigation); non-positive speed / non-finite
+  destination → Rejected(RejectedAction); busy → Rejected(StateTransition).
+- **REQ-M5.3-4** — Stop: interrupts the running request (Interrupted, detail
+  "stop requested") and completes itself through the real 1.2 halt semantics
+  per dossier; no-op when idle (idempotent).
+- **REQ-M5.3-5** — Target: SetTarget through the real engine targeting path
+  (`Unit.CurrentTarget` — the exact assignment the engine's targeting
+  performs per dossier); unknown objId → Rejected(RejectedAction).
+- **REQ-M5.3-6** — Cast: executes ONE skill through the real character skill
+  pipeline (Character.UseSkill — the exact call CSStartSkillPacket's
+  learned-skill branch makes; cast mechanics per dossier — cast time, cast
+  task, start/end broadcasts). Validation gates: skill template exists,
+  character knows the skill (learned / default / common / variant — the
+  packet branch's own rule), target resolves. Engine refusal →
+  Rejected(RejectedAction). One skill per request — no rotation logic.
+- **REQ-M5.3-7** — Threading-boundary (carries REQ-M5-10): every M5.3 action
+  executes only on the A1 marshal seam (game-loop thread); a debug
+  thread-affinity assertion (ExecutionBoundary) proves zero Character/world
+  mutation off the boundary — trace-based exit tests alone do NOT satisfy
+  this.
+- **REQ-M5.3-8** — Idempotency/correlation (carries REQ-M5-11): retries and
+  timeouts cannot double-execute — Cast never double-casts (request-key
+  dedupe primary; engine-true backstop: mana/cooldown consumed); Move/Stop/
+  Target idempotent by construction + key; Observe is a read.
+- **REQ-M5.3-9** — Bot audit trail (carries REQ-M5-12): every action emits
+  the structured trace record `{trace_id, actor_id, action, target_id,
+  requested_at, started_at, completed_at, result, state_changes}`.
+- **REQ-M5.3-10** — Contract tests (carries REQ-M5-15): per-action contract
+  tests on the canonical rig pass independent of any controller; retry tests
+  prove non-idempotent actions do not execute twice; gate.sh green on the
+  merged tree.
+- **REQ-M5.3-11** — Exit (carries REQ-M5-14): a scripted actor completes a
+  curated segment exercising all five actions through their real paths
+  (observe → move → stop → target → cast) and produces a machine-readable
+  trace showing every request, transition, result, and failure.
+
+Carried constraints (unchanged): REQ-M5-7 (no database shortcuts — normal
+gameplay services only), REQ-M5-9 (single execution boundary — controllers
+enqueue requests, never mutate a Character concurrently).
+
+**DoD — evidence classes (ledger t_547ef82d):**
+| Class | Required | M5.3 evidence / status |
+|---|---|---|
+| engine-path implementation (1) | REQUIRED | v1 impls on develop since 34cf33cb2 (t_4f11a519) — to be verified/reworked per dossier: Move KNOWN non-conforming (silent Transform write, no broadcast); Observe/SetTarget/Cast shapes engine-true (WorldManager queries / Unit.CurrentTarget / Character.UseSkill), verification pending |
+| bot-replay (3+4) | REQUIRED | per-action contract tests on the canonical rig (existing v1 tests GameplayActorTests + dossier-driven assertions); M5.3 exit scenario replay; post-merge gate green |
+| restart-persistence (5) | N/A | none of the five introduces persistence; restart classes live in M1/M2/M3b/M4 |
+| soak (6) | N/A | soak belongs to the M6 lane |
+| human-feel (7) | UNKNOWN | H stays UNKNOWN — Josh runs it; never inferred from bot/scripted evidence |
+
+**Non-goals (canonical M5 set, carried):** no autonomous planning · no LLM
+integration · no generalized navigation rewrite (Move = straight-leg walk via
+the real movement path; no navmesh/pathfinding/obstacle-avoidance work) · no
+core gameplay interface replacement · no bot-only inventory or combat
+behavior. **M5.3-specific:** no actions beyond the five; no combat
+decision-making/rotation (Cast = one skill per request); no changes to
+M5.1/M5.2 actions; no persistence additions; Observe stays a server-side
+query (no packet fabrication).
+
+**Exit tests (requirement-indexed):**
+- E1 — dossier committed with citations + research-derived/data-verified
+  flags → REQ-M5.3-1 (checked at review gate).
+- E2 — Observe test: snapshot equals direct WorldManager query results;
+  audit record Observe/Completed → REQ-M5.3-2.
+- E3 — Move test: position advances via the real path with real movement
+  broadcasts observed; arrival → Completed; timeout → TimedOut(Navigation);
+  speed≤0 / non-finite → Rejected(RejectedAction); busy →
+  Rejected(StateTransition) → REQ-M5.3-3.
+- E4 — Stop test: running Move interrupted (Interrupted, "stop requested"),
+  Stop Completed; second Stop is a no-op → REQ-M5.3-4.
+- E5 — Target test: CurrentTarget set to the resolved unit; unknown unit →
+  Rejected(RejectedAction); Observe reflects the target → REQ-M5.3-5.
+- E6 — Cast test: real skill executes (mana/cooldown consumed, effects per
+  template); unknown skill / not-learned / unknown target →
+  Rejected(RejectedAction); same-key retry never double-casts → REQ-M5.3-6.
+- E7 — ExecutionBoundary thread-affinity assertion passes for every action
+  on the A1 seam → REQ-M5.3-7 (carries REQ-M5-10).
+- E8 — retry/idempotency tests per action (request-key dedupe + engine-true
+  backstop) → REQ-M5.3-8 (carries REQ-M5-11).
+- E9 — audit-record shape assertion per action → REQ-M5.3-9 (carries
+  REQ-M5-12).
+- E10 — contract tests run with no controller in the rig; full gate.sh green
+  on the merged tree → REQ-M5.3-10 (carries REQ-M5-15).
+- E11 — M5.3 exit scenario (observe → move → stop → target → cast) completes
+  with a machine-readable trace → REQ-M5.3-11 (carries REQ-M5-14).
 
 ---
 
