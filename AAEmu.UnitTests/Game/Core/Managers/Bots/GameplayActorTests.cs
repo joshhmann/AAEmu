@@ -295,6 +295,13 @@ public class GameplayActorTests
 
     private static bool CapturedOpcode(PacketCaptureSession capture, ushort opcode)
     {
+        return CapturedOpcodeCount(capture, opcode) > 0;
+    }
+
+    /// <summary>Counts how many captured packets carry the given opcode.</summary>
+    private static int CapturedOpcodeCount(PacketCaptureSession capture, ushort opcode)
+    {
+        var count = 0;
         foreach (var bytes in capture.CapturedPackets)
         {
             try
@@ -307,7 +314,7 @@ public class GameplayActorTests
                 stream.ReadByte();   // hash (0)
                 stream.ReadByte();   // count (0)
                 if (stream.ReadUInt16() == opcode) // TypeId
-                    return true;
+                    count++;
             }
             catch
             {
@@ -315,7 +322,7 @@ public class GameplayActorTests
             }
         }
 
-        return false;
+        return count;
     }
 
     [Test]
@@ -547,6 +554,57 @@ public class GameplayActorTests
         }
     }
 
+    [Test]
+    public async Task ExecutionBoundary_ObserveSetTargetCast_OnBoundaryThread_NoViolations()
+    {
+        // REQ-M5.3-7/E7: the assertion must hold for EVERY M5.3 action — not
+        // only Move/Stop. Observe (world reads), SetTarget and Cast (both
+        // mutate Character/world) all ride the A1 seam.
+        ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+        var before = ExecutionBoundary.ViolationCount;
+        try
+        {
+            var (actor, session) = GameplayActorTestRig.CreateActor("m53-boundary-3");
+            var npcObjId = GameplayActorTestRig.SpawnNpc(session, 1000);
+
+            actor.Observe();
+            actor.SetTarget(npcObjId);
+            actor.Cast(GameplayActorTestRig.TestSkillId, actor.ActorId);
+
+            await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(before);
+        }
+        finally
+        {
+            ExecutionBoundary.ResetForTest();
+        }
+    }
+
+    [Test]
+    public async Task ExecutionBoundary_ObserveSetTargetCast_OffBoundaryThread_FiresViolation()
+    {
+        // Mirrors the Move negative test: pinned to an impossible thread,
+        // every action-level assertion fires — SetTarget and Cast mutate
+        // Character/world off the boundary, Observe reads world state that
+        // is only consistent on the seam.
+        ExecutionBoundary.SetExecutionThreadForTest(int.MaxValue);
+        var before = ExecutionBoundary.ViolationCount;
+        try
+        {
+            var (actor, session) = GameplayActorTestRig.CreateActor("m53-boundary-4");
+            var npcObjId = GameplayActorTestRig.SpawnNpc(session, 1000);
+
+            actor.Observe();
+            actor.SetTarget(npcObjId);
+            actor.Cast(GameplayActorTestRig.TestSkillId, actor.ActorId);
+
+            await Assert.That(ExecutionBoundary.ViolationCount).IsGreaterThan(before);
+        }
+        finally
+        {
+            ExecutionBoundary.ResetForTest();
+        }
+    }
+
     #endregion
 
     #region Target
@@ -583,6 +641,43 @@ public class GameplayActorTests
         await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
         await Assert.That(actor.Character.CurrentTarget).IsNull();
         await Assert.That(actor.ActiveRequest).IsNull();
+    }
+
+    [Test]
+    public async Task SetTarget_ValidUnit_BroadcastsExactlyOneTargetChangedPacket()
+    {
+        // REQ-M5.3-5: the engine's resolve -> assign -> broadcast order must
+        // be observable — a successful SetTarget emits exactly ONE
+        // SCTargetChangedPacket so client observers see the bot's target
+        // change (same capture rig as the Move broadcast tests).
+        var (actor, session) = GameplayActorTestRig.CreateActor("target-3");
+        var capture = AttachCapture(actor);
+        PlaceInWorld(session, actor, new Vector3(512, 512, 0));
+        var npcObjId = GameplayActorTestRig.SpawnNpc(session, 1000);
+
+        var request = actor.SetTarget(npcObjId);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.CurrentTarget!.ObjId).IsEqualTo(npcObjId);
+        await Assert.That(CapturedOpcodeCount(capture, SCOffsets.SCTargetChangedPacket)).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task SetTarget_RejectedPath_EmitsNoTargetChangedBroadcast()
+    {
+        // REQ-M5.3-5: a rejected request must not mutate Character state and
+        // must not emit the broadcast (the engine path only broadcasts after
+        // a successful assignment).
+        var (actor, session) = GameplayActorTestRig.CreateActor("target-4");
+        var capture = AttachCapture(actor);
+        PlaceInWorld(session, actor, new Vector3(512, 512, 0));
+
+        var request = actor.SetTarget(999_999);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(actor.Character.CurrentTarget).IsNull();
+        await Assert.That(CapturedOpcodeCount(capture, SCOffsets.SCTargetChangedPacket)).IsEqualTo(0);
+        await Assert.That(capture.CapturedPackets.Count).IsEqualTo(0);
     }
 
     #endregion
