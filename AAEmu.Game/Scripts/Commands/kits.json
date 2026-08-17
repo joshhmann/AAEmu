@@ -1515,6 +1515,54 @@
             "id": 20465,
             "grade": 5,
             "count": 1
+        },
+        // ====================================================================
+        // hytest --- human-test fast-forward kit (Josh ruling 2026-08-17)
+        // Curated for the M4/M5.x QAT packet (docs/JOSH-QAT-PACKET-M4-M5.x.md,
+        // card t_e1cf82c9, venue Mirage Isle zone 183).
+        // Scope (Aya 2026-08-17): level/labor/gold/portals ONLY --- Mirage
+        // provides the test facilities (housing/crafting/etc). No gear/seeds/
+        // designs in this kit; grant those ad hoc via .item add.
+        // Ids verified against compact.sqlite3 (canonical 1.2):
+        //   Growthstone 129: +200,000 XP/use (AddExp SpecialType 28); 25x = 5.0M
+        //     XP >= 4,410,000 total for level 50 (levels.id 50).
+        //   Worker's Compensation 8000013: +1,000 LP/use (AddLaborPower type 29);
+        //     20x = 20,000 LP test budget.
+        //   Dull Delphinad Gold Coins 19072: vendorable, refund 100,000 copper
+        //     each -> ~50 x 10g = 500g.
+        //   Teleport Book 4045: opens the teleport book UI (OpenPortalEffect).
+        {
+            // Growthstone (level: 25 x 200k XP = level 50 equiv)
+            "names": [
+                "hytest"
+            ],
+            "id": 129,
+            "count": 25
+        },
+        {
+            // Worker's Compensation (labor: 20 x 1000 LP = 20,000 LP)
+            "names": [
+                "hytest"
+            ],
+            "id": 8000013,
+            "count": 20
+        },
+        {
+            // Dull Delphinad Gold Coins (gold: 50 x 10g vendor = ~500g)
+            "names": [
+                "hytest"
+            ],
+            "id": 19072,
+            "count": 50
+        },
+        {
+            // Teleport Book (portals: the teleport-book UI item)
+            "names": [
+                "hytest"
+            ],
+            "id": 4045,
+            "count": 1
         }
+
     ]
 }
