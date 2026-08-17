@@ -141,6 +141,41 @@ public static class GameplayActorTestRig
                 SeedTradeSurface();
                 SeedItemGameData();
                 FormulaManager.Instance.Load();
+                // M5.3 Move rework (t_3cac48d4): character movement rides the
+                // client-authored path (VehicleMovementModel.ApplyUnitMove)
+                // which calls Character.SetPlayerMoved →
+                // AppConfiguration.Instance.World.MOTD. Headless tests have
+                // no DI ServiceProvider, so Instance is the static default
+                // whose World section is null — seed it once so the real
+                // movement path never NREs.
+                AppConfiguration.Instance.World ??= new WorldConfig();
+                // M5.3 Move rework (t_3cac48d4): every walk leg rides the
+                // client-authored movement model (VehicleMovementModel),
+                // whose FinalizeTransform runs delta-movement analysis
+                // through SusManager (no parameterless ctor — DI-only) and
+                // Character.SetPosition consults ModelManager while attached
+                // to a Slave. The headless process has no DI, so seed the
+                // movement singletons HERE (missing-only, after WorldManager
+                // exists) — every Move/Drive leg through the real path
+                // works; per-test swap rigs (drive/M3aM4) capture and
+                // restore on top of this baseline.
+                var susField = typeof(Singleton<SusManager>)
+                    .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                if (susField?.GetValue(null) == null)
+                    susField!.SetValue(null, new SusManager(WorldManager.Instance));
+                var modelField = typeof(Singleton<ModelManager>)
+                    .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                if (modelField?.GetValue(null) == null)
+                {
+                    var modelManager = new ModelManager();
+                    modelManager.GetType()
+                        .GetField("_modelTypes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                        .SetValue(modelManager, new Dictionary<uint, ModelType>());
+                    modelManager.GetType()
+                        .GetField("_models", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                        .SetValue(modelManager, new Dictionary<string, Dictionary<uint, Model>>());
+                    modelField!.SetValue(null, modelManager);
+                }
 
                 s_seeded = true;
             }
