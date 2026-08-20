@@ -625,6 +625,18 @@ public sealed class BotActionCommandQueue
             ?? record?.StateChanges.ToList()
             ?? ["Requested"];
 
+        // B4 audit-trace flush: hand the terminal record to the sink exactly
+        // once (in-memory append only — the DB write happens on the
+        // SaveManager tick, never on this boundary thread).
+        if (!entry.AuditFlushed
+            && record != null
+            && state is ActorLifecycleState.Completed or ActorLifecycleState.Rejected
+                or ActorLifecycleState.Interrupted or ActorLifecycleState.TimedOut)
+        {
+            entry.AuditFlushed = true;
+            PlayerBotAuditSink.Instance.Enqueue(entry.CharacterId, record.ToJson());
+        }
+
         entry.Publish(new BotActionSnapshot(
             TraceId: entry.TraceId,
             ActorId: entry.Actor?.ActorId ?? entry.CharacterId,
@@ -726,6 +738,9 @@ public sealed class BotActionCommand
     public ActorRequest? Request { get; set; }
     public ActorAuditRecord? AuditRecord { get; set; }
     public object? Result { get; set; }
+
+    /// <summary>B4 audit flush: set once the terminal snapshot's audit JSON was handed to PlayerBotAuditSink.</summary>
+    public bool AuditFlushed { get; set; }
 
     private volatile BotActionSnapshot _snapshot;
 

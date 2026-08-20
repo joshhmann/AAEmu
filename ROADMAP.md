@@ -1971,9 +1971,13 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   roam as a module with zero scheduler changes; delete/absorb the dead
   PlayerBotBehaviorController stack; new module = one file + one config line.
 - B4 (S-M) playerbot_metadata store (personality, schedule, profession, home,
-  planner state) — **store DONE 2026-08-20** (`PlayerBotMetadataStore` +
-  presence-demo wiring + 2-checkpoint restart replay asserting metadata
-  directly, PASS); audit-trace flush still open.
+  planner state) + audit-trace flush — **DONE 2026-08-20**:
+  `PlayerBotMetadataStore` + presence-demo wiring + 2-checkpoint restart
+  replay asserting metadata directly (PASS), and the audit half —
+  `PlayerBotAuditSink` buffers terminal BotActionCommandQueue audit records
+  (bounded, drop-oldest, in-memory append on the boundary thread only) and
+  batch-flushes to `playerbot_audit` inside the SaveManager transaction
+  (5 hermetic tests).
 
 ### G4 — Living Village content (M8)
 

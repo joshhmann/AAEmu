@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
@@ -106,6 +106,8 @@ public class SaveManager(
                         var savedCrimes = crimeManager.Save(connection, transaction);
                         // PlayerBot metadata (B4 playerbot_metadata store: dirty rows only, never breaks the save cycle)
                         PlayerBotMetadataStore.Instance.SaveDirty(connection, transaction);
+                        // PlayerBot audit trace flush (B4 second half: buffered terminal records, telemetry — never blocks the save)
+                        PlayerBotAuditSink.Instance.Flush(connection, transaction);
 
                         // Characters (dirty-tracking: only persist touched rows unless forced)
                         var savedCharacters = 0;

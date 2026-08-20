@@ -664,3 +664,16 @@ COMMENT='B4 playerbot metadata: personality/profession/home/schedule per bot cha
 COLLATE='utf8mb4_general_ci'
 ENGINE=InnoDB
 ;
+-- B4 audit-trace flush (2026-08-20): terminal bot action audit records (JSON), flushed on the SaveManager tick
+CREATE TABLE IF NOT EXISTS `playerbot_audit` (
+	`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`character_id` INT UNSIGNED NOT NULL COMMENT 'Character Id of the bot that performed the action',
+	`audit_json` TEXT NOT NULL COMMENT 'ActorAuditRecord JSON (trace id, action, lifecycle, failure, state changes)',
+	`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (`id`) USING BTREE,
+	KEY `ix_playerbot_audit_character` (`character_id`) USING BTREE
+)
+COMMENT='B4 bot audit trail: terminal control-plane action records (JSON)'
+COLLATE='utf8mb4_general_ci'
+ENGINE=InnoDB
+;
