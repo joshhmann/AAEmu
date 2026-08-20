@@ -120,15 +120,22 @@ public static class GameplayActorTestRig
     /// <summary>
     /// Seeds missing singletons + the minimal skill template. The singleton
     /// surface is one-shot (s_seeded); the idempotent dict/template healing
-    /// (SeedSkillManager + SeedItemManager) runs on EVERY call so actor
-    /// tests re-heal the shared managers after a sibling rig swaps them
+    /// (SeedSkillManager + SeedItemManager) and the movement-singleton heal
+    /// (SusManager/ModelManager) run on EVERY call so actor tests re-heal the
+    /// shared managers after a sibling rig swaps them
     /// (t_277eaa57: PlayerbotPilotRig.SeedPilotSingletons →
     /// QuestScenarioDriver.SeedSingletons UNCONDITIONALLY replaces
     /// SkillManager/ItemManager with fresh instances whose dictionaries are
     /// null/empty; the one-shot guard alone would leave every later actor
     /// test dereferencing null _skills / empty _templates — the combined
-    /// GameplayActor run's order dependence). Must run before any actor is
-    /// created. Safe in any suite ordering.
+    /// GameplayActor run's order dependence. The movement singletons have the
+    /// same hazard: SlaveLifecycleTests/M3aM4ReplayScenarioRigTests capture
+    /// + restore Singleton&lt;SusManager&gt;.s_instance UNCONDITIONALLY, so a
+    /// rig that runs before the baseline seed restores NULL over it and every
+    /// later Move leg throws "SusManager has no parameterless constructor" in
+    /// Transform.FinalizeTransform — exposed when PlayerBotMetadataStoreTests
+    /// shifted the suite's parallel interleaving). Must run before any actor
+    /// is created. Safe in any suite ordering.
     /// </summary>
     public static void Seed()
     {
@@ -149,35 +156,38 @@ public static class GameplayActorTestRig
                 // whose World section is null — seed it once so the real
                 // movement path never NREs.
                 AppConfiguration.Instance.World ??= new WorldConfig();
-                // M5.3 Move rework (t_3cac48d4): every walk leg rides the
-                // client-authored movement model (VehicleMovementModel),
-                // whose FinalizeTransform runs delta-movement analysis
-                // through SusManager (no parameterless ctor — DI-only) and
-                // Character.SetPosition consults ModelManager while attached
-                // to a Slave. The headless process has no DI, so seed the
-                // movement singletons HERE (missing-only, after WorldManager
-                // exists) — every Move/Drive leg through the real path
-                // works; per-test swap rigs (drive/M3aM4) capture and
-                // restore on top of this baseline.
-                var susField = typeof(Singleton<SusManager>)
-                    .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                if (susField?.GetValue(null) == null)
-                    susField!.SetValue(null, new SusManager(WorldManager.Instance));
-                var modelField = typeof(Singleton<ModelManager>)
-                    .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                if (modelField?.GetValue(null) == null)
-                {
-                    var modelManager = new ModelManager();
-                    modelManager.GetType()
-                        .GetField("_modelTypes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-                        .SetValue(modelManager, new Dictionary<uint, ModelType>());
-                    modelManager.GetType()
-                        .GetField("_models", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-                        .SetValue(modelManager, new Dictionary<string, Dictionary<uint, Model>>());
-                    modelField!.SetValue(null, modelManager);
-                }
 
                 s_seeded = true;
+            }
+
+            // M5.3 Move rework (t_3cac48d4): every walk leg rides the
+            // client-authored movement model (VehicleMovementModel), whose
+            // FinalizeTransform runs delta-movement analysis through
+            // SusManager (no parameterless ctor — DI-only) and
+            // Character.SetPosition consults ModelManager while attached
+            // to a Slave. The headless process has no DI, so heal the
+            // movement singletons HERE — on EVERY call, missing-only (after
+            // WorldManager exists): sibling swap rigs (drive/M3aM4/slave
+            // lifecycle) capture + restore s_instance unconditionally and can
+            // wipe the baseline back to null between Seed() calls; the
+            // per-test swap rigs then capture and restore on top of this
+            // healed baseline.
+            var susField = typeof(Singleton<SusManager>)
+                .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            if (susField?.GetValue(null) == null)
+                susField!.SetValue(null, new SusManager(WorldManager.Instance));
+            var modelField = typeof(Singleton<ModelManager>)
+                .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            if (modelField?.GetValue(null) == null)
+            {
+                var modelManager = new ModelManager();
+                modelManager.GetType()
+                    .GetField("_modelTypes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                    .SetValue(modelManager, new Dictionary<uint, ModelType>());
+                modelManager.GetType()
+                    .GetField("_models", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                    .SetValue(modelManager, new Dictionary<string, Dictionary<uint, Model>>());
+                modelField!.SetValue(null, modelManager);
             }
 
             // Idempotent + additive (missing-only per dict/template), so

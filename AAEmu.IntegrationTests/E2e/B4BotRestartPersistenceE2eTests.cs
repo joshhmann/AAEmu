@@ -28,11 +28,13 @@ namespace AAEmu.IntegrationTests.E2e;
 ///   Cycle B (checkpoint Citizen02): NO cleanup between cycles — rows from
 ///     cycle A persist, so this proves MULTI-restart idempotency: boot 2
 ///     adopts again, roster stays exactly 3 with the SAME ids, and
-///     Citizen02's state survives its own restart. The roam route is
-///     re-armed deterministically (schedule evidence; the B4 playerbot_metadata
-///     store for profession/home is NOT built yet — see ROADMAP deferred
-///     gate #5) and the A1 execution-boundary trace re-appears in the same
-///     boot log.
+///     Citizen02's state survives its own restart. Each checkpoint also
+///     asserts the B4 playerbot_metadata store DIRECTLY (ROADMAP deferred
+///     gate #5 — now implemented): the checkpoint bot's row exists with
+///     has_home=1, the env-pinned home coords and a roam-loop schedule, and
+///     the pre/post-restart metadata snapshots are EQUAL. The deterministic
+///     roam-route re-arm log lines stay as secondary schedule evidence, and
+///     the A1 execution-boundary trace re-appears in the same boot log.
 ///
 /// H dimension stays UNKNOWN — this is R/A-dimension evidence only; no
 /// bot/scripted evidence is recorded as H=2 (SCORECARD H rule).
@@ -83,6 +85,9 @@ public class B4BotRestartPersistenceE2eTests
     private sealed record RosterSnapshot(
         List<(uint Id, string Username)> Accounts,
         List<CharacterRow> Characters);
+
+    private sealed record MetadataRow(uint CharacterId, bool HasHome,
+        float HomeX, float HomeY, float HomeZ, string Schedule);
 
     private static string RestartLog => Path.Combine(E2eStack.E2eRoot, "logs", "game-restart.log");
 
@@ -143,6 +148,23 @@ public class B4BotRestartPersistenceE2eTests
                 var preBot = pre.Characters.Single(c => c.Name == name);
                 var preItems = E2eStack.DumpItemRows(preBot.Id);
 
+                // B4 metadata (playerbot_metadata store): the patrol home +
+                // roam schedule are written through at boot (hard-kill safe),
+                // so the row must exist BEFORE the restart already — pinned
+                // to the env home with a roam-loop schedule.
+                var preMetadata = SnapshotMetadata(preBot.Id);
+                Assert.NotNull(preMetadata);
+                Assert.True(preMetadata.HasHome,
+                    $"checkpoint {name}: playerbot_metadata.has_home must be 1");
+                Assert.True(
+                    MathF.Abs(preMetadata.HomeX - HomeX) <= 0.5f &&
+                    MathF.Abs(preMetadata.HomeY - HomeY) <= 0.5f &&
+                    MathF.Abs(preMetadata.HomeZ - HomeZ) <= 0.5f,
+                    $"checkpoint {name}: stored home ({preMetadata.HomeX:0.##},{preMetadata.HomeY:0.##},{preMetadata.HomeZ:0.##}) must be the env-pinned home ({HomeX},{HomeY},{HomeZ})");
+                Assert.False(string.IsNullOrEmpty(preMetadata.Schedule),
+                    $"checkpoint {name}: playerbot_metadata.schedule must be recorded");
+                Assert.Contains("roam-loop", preMetadata.Schedule);
+
                 // The checkpoint bot must be materially AWAY from the template
                 // spawn before the restart, otherwise a position reset could
                 // hide inside the roam tolerance.
@@ -153,6 +175,7 @@ public class B4BotRestartPersistenceE2eTests
                     $"pos ({preBot.X:0.##},{preBot.Y:0.##},{preBot.Z:0.##}) zone {preBot.ZoneId}, level {preBot.Level}, money {preBot.Money}, " +
                     $"items [{string.Join(",", preItems)}]");
                 evidence.AppendLine($"- pre-restart roster: {pre.Characters.Count} Citizen rows, accounts {pre.Accounts.Count}");
+                evidence.AppendLine($"- pre-restart metadata {name}: has_home=1, home ({preMetadata.HomeX:0.##},{preMetadata.HomeY:0.##},{preMetadata.HomeZ:0.##}), schedule `{preMetadata.Schedule}`");
 
                 // REAL process-level restart (MySQL persists).
                 E2eStack.RestartGameServer();
@@ -234,8 +257,18 @@ public class B4BotRestartPersistenceE2eTests
                 Assert.DoesNotContain("presence demo aborted", secondBootLog);
                 evidence.AppendLine("- adopt path confirmed in boot log; zero NameAlreadyExists / rejected / failed-to-provision");
 
-                // 4. Schedule re-armed (B4 store not built — deterministic
-                //    re-arm IS the persistence contract for now).
+                // 4. Metadata persisted (B4 playerbot_metadata store — the
+                //    direct persistence contract, replacing the old
+                //    re-arm-as-substitute language): the checkpoint bot's row
+                //    survived the restart with pre == post (has_home, the
+                //    env-pinned home coords, the roam-loop schedule).
+                var postMetadata = SnapshotMetadata(postBot.Id);
+                Assert.NotNull(postMetadata);
+                Assert.Equal(preMetadata, postMetadata);
+                evidence.AppendLine($"- metadata: playerbot_metadata row survived the restart (pre == post: has_home=1, home env-pinned, schedule roam-loop)");
+
+                // 5. Schedule re-armed (secondary evidence alongside the
+                //    metadata row): the deterministic re-arm logs again.
                 var routeLines = File.ReadLines(RestartLog)
                     .Count(l => l.Contains("Roam route assigned") && l.Contains("8 waypoints"));
                 Assert.True(routeLines >= 3, $"expected >=3 roam routes re-armed after restart, saw {routeLines}");
@@ -301,6 +334,27 @@ public class B4BotRestartPersistenceE2eTests
         }
 
         return new RosterSnapshot(accounts, characters);
+    }
+
+    /// <summary>B4 playerbot_metadata row for one bot (null when absent) —
+    /// direct SQL, same style as <see cref="SnapshotRoster"/>.</summary>
+    private static MetadataRow? SnapshotMetadata(uint characterId)
+    {
+        using var conn = E2eStack.OpenDb("aaemu_game");
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT character_id, has_home, home_x, home_y, home_z, schedule " +
+            "FROM playerbot_metadata WHERE character_id = @id";
+        cmd.Parameters.AddWithValue("@id", characterId);
+        cmd.Prepare();
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read())
+            return null;
+        return new MetadataRow(
+            reader.GetUInt32(0),
+            reader.GetBoolean(1),
+            reader.GetFloat(2), reader.GetFloat(3), reader.GetFloat(4),
+            reader.IsDBNull(5) ? string.Empty : reader.GetString(5));
     }
 
     private static float Distance(CharacterRow c, (float X, float Y, float Z) p)

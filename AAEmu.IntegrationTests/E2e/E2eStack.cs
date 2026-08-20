@@ -615,6 +615,19 @@ public static class E2eStack
     public static void CleanupBotRows(params string[] accountNames)
     {
         using var conn = OpenDb("aaemu_game");
+
+        // B4 playerbot_metadata rows first (guarded: no-op when the table is
+        // absent, e.g. a stack seeded before the 2026-08-20 update).
+        using var cmdMetaCheck = conn.CreateCommand();
+        cmdMetaCheck.CommandText = "SELECT COUNT(*) FROM information_schema.TABLES " +
+                                   "WHERE TABLE_SCHEMA = 'aaemu_game' AND TABLE_NAME = 'playerbot_metadata'";
+        if (Convert.ToInt64(cmdMetaCheck.ExecuteScalar()) > 0)
+        {
+            using var cmdMeta = conn.CreateCommand();
+            cmdMeta.CommandText = "DELETE FROM playerbot_metadata WHERE character_id IN (SELECT id FROM characters WHERE name LIKE 'Citizen%')";
+            try { cmdMeta.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
+        }
+
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "DELETE FROM quests WHERE owner IN (SELECT id FROM characters WHERE account_id IN (SELECT id FROM aaemu_login.users WHERE username IN (@names)))";
         cmd.Parameters.AddWithValue("@names", string.Join(",", accountNames.Select(n => $"'{n.Replace("'", "''")}'")));

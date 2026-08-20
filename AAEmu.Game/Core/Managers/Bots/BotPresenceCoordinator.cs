@@ -24,6 +24,9 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     → PopulationDirector.TrySetFidelity(Full) (the demo set gets full
 ///       presence)
 ///     → BotRoamStepExecutor.SetRoamRoute (BotPath loop around the spawn)
+///     → PlayerBotMetadataStore.RecordHome/RecordSchedule (B4 persistence:
+///       the patrol home + schedule hit playerbot_metadata on mutation, so a
+///       hard-kill restart re-arms the SAME route from the store)
 ///     → PlayerBotScheduler.Wake (the due-time loop drives the actor)
 ///
 /// DISABLED BY DEFAULT. Enabled only when the runtime Config.Local.json sets
@@ -190,9 +193,9 @@ public sealed class BotPresenceCoordinator
             return true;
         }
 
-        var home = _homeResolver(config);
+        var defaultHome = _homeResolver(config);
         Logger.Info("BotPresenceCoordinator: provisioning {Count} citizen bots (home {Home}, zone {ZoneId})",
-            config.BotCount, home, config.ZoneId);
+            config.BotCount, defaultHome, config.ZoneId);
 
         _scheduler.Start();
 
@@ -212,14 +215,21 @@ public sealed class BotPresenceCoordinator
                 }
 
                 var character = session.Character;
+                // B4 home resolution (playerbot_metadata store): an explicit
+                // env override wins; else the bot's PERSISTED home (restart:
+                // re-embody at the recorded patrol home); else the resolver
+                // default (template spawn in production). Fire-and-forget —
+                // the store never throws (no DB → empty metadata → default).
+                var metadata = PlayerBotMetadataStore.Instance.GetForRead(character.Id);
+                var home = ResolveHome(config.HomePosition, metadata, defaultHome);
                 // Patrol-home relocation (t_118484a7 scope-add): when a home
-                // override is configured, embody the bot AT the override
-                // position (not the template spawn) so a logging-in human at
-                // that spot sees the bots instantly. The adapter's
-                // AddVisibleObject placement then registers the bot in the
-                // home's region graph. No-op when the override is unset
-                // (template spawn — the default demo layout).
-                if (config.HomePosition != default)
+                // override is configured (or a home was restored from the
+                // store), embody the bot AT that position (not the template
+                // spawn) so a logging-in human at that spot sees the bots
+                // instantly. The adapter's AddVisibleObject placement then
+                // registers the bot in the home's region graph. No-op when
+                // neither is set (template spawn — the default demo layout).
+                if (config.HomePosition != default || metadata.HasHome)
                     character.Transform.Local.SetPosition(home.X, home.Y, home.Z);
 
                 if (!_manager.Spawn(character, "presence-demo"))
@@ -249,6 +259,17 @@ public sealed class BotPresenceCoordinator
                 // arrive (t_d7e45251 wedge fix).
                 var route = BuildRoamRoute(home, config.RoamRadius, i, character.Transform.ZoneId, _groundHeightProvider);
                 _stepExecutor.SetRoamRoute(character, route);
+
+                // B4 metadata persistence (M6 deferred gate #5): write the
+                // home actually used + the roam schedule through to
+                // playerbot_metadata NOW (write-through; the E2E restarts are
+                // hard kills, so shutdown-time persistence would lose them).
+                // Fire-and-forget: the store never throws — a DB failure is
+                // logged and the row stays dirty for the SaveManager tick.
+                var store = PlayerBotMetadataStore.Instance;
+                store.RecordHome(character.Id, character.Transform.WorldId, character.Transform.ZoneId,
+                    home.X, home.Y, home.Z);
+                store.RecordSchedule(character.Id, BuildRoamScheduleJson(home, route, config.RoamRadius, i));
 
                 _scheduler.Wake(character.Id);
                 spawned++;
@@ -313,6 +334,46 @@ public sealed class BotPresenceCoordinator
     /// </summary>
     internal static float DefaultGroundHeightProvider(Vector3 position, uint zoneId)
         => WorldManager.Instance.GetReferenceHeight(null, position.X, position.Y, position.Z, zoneId);
+
+    /// <summary>
+    /// B4 home precedence (pure, hermetic-testable): an EXPLICIT home (the
+    /// AAEMU_PRESENCE_HOME_X/Y/Z override) always wins; else the bot's
+    /// PERSISTED home from playerbot_metadata (the restart re-arm); else the
+    /// resolver default (Nuian template spawn in production).
+    /// </summary>
+    internal static Vector3 ResolveHome(Vector3 explicitHome, PlayerBotMetadata stored, Vector3 templateHome)
+    {
+        if (explicitHome != default)
+            return explicitHome;
+        if (stored is { HasHome: true })
+            return new Vector3(stored.HomeX, stored.HomeY, stored.HomeZ);
+        return templateHome;
+    }
+
+    /// <summary>
+    /// The deterministic B4 schedule payload recorded next to the patrol
+    /// home: a roam-loop descriptor (kind / waypoint count / radius /
+    /// per-bot phase / loop flag) plus the home and waypoint coordinates.
+    /// Rebuilt identically on every boot from the same home + seed, so the
+    /// pre/post-restart store snapshots compare EQUAL.
+    /// </summary>
+    internal static string BuildRoamScheduleJson(Vector3 home, BotPath route, float radius, int phase)
+    {
+        var path = new float[route.Waypoints.Count][];
+        for (var i = 0; i < path.Length; i++)
+            path[i] = new[] { route.Waypoints[i].X, route.Waypoints[i].Y, route.Waypoints[i].Z };
+
+        return System.Text.Json.JsonSerializer.Serialize(new
+        {
+            kind = "roam-loop",
+            waypoints = route.Waypoints.Count,
+            radius,
+            phase,
+            loop = route.Mode == BotPath.LoopMode.Loop,
+            home = new[] { home.X, home.Y, home.Z },
+            path
+        });
+    }
 
     /// <summary>
     /// Default home: the Nuian character template spawn (Solzreed — the
