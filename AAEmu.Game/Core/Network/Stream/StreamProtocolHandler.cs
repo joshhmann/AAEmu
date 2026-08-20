@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Text;
 using AAEmu.Commons.Exceptions;
 using AAEmu.Commons.Network;
@@ -77,6 +77,17 @@ public class StreamProtocolHandler : BaseProtocolHandler
             stream.Insert(stream.Count, buf, offset, bytes);
             while (stream != null && stream.Count > 0)
             {
+                // Fewer bytes than the length word — stash the remnant and wait
+                // for more data. PacketStream over-reads log-and-return-0
+                // instead of throwing, so without this guard a 1-byte remnant
+                // makes packetLen == 0 and the loop never advances.
+                if (stream.Count < 2)
+                {
+                    connection.LastPacket = stream;
+                    stream = null;
+                    continue;
+                }
+
                 ushort len;
                 try
                 {
@@ -89,6 +100,16 @@ public class StreamProtocolHandler : BaseProtocolHandler
                     connection.LastPacket = stream;
                     stream = null;
                     continue;
+                }
+
+                // A length word too small to even hold the packet type is not
+                // this protocol (port probes, stray LAN clients). Drop the
+                // connection once instead of logging per garbage segment.
+                if (len < 2)
+                {
+                    Logger.Warn("Malformed packet (len={0}) from {1}; closing stream connection", len, connection.Ip);
+                    connection.Shutdown();
+                    return;
                 }
 
                 var packetLen = len + stream.Pos;
