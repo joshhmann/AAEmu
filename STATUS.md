@@ -104,19 +104,30 @@ Phase 2 (t_b4f455b0) both DONE.
 **H = UNKNOWN** — proxy/bot-functional evidence only; the five deferred human
 gates below remain Josh-owned.
 
-**M7 — Adventurer and party bots: 🔶 GATING SPIKE DONE (2026-08-20)**
+**M7 — Adventurer and party bots: 🔶 GATING SPIKE DONE (2026-08-20) + heal/retreat landed**
 One adventurer cleared quest 250 (Solzreed fox cull) end-to-end through the
 M5 contract — accept at the real board → travel → hostile select (CanAttack)
 → burst Cast rotation → 3/3 REAL kills → 3 corpse loots → quest complete.
 Rig 4/4 green + E2E PASS 1/1 2m15s (37 trace records; evidence
 m7-adventurer-spike-report.json). Gate 2125/0/1. Spike found BUG-016
-(18131-class melee skills never hit their primary target — OPEN, census
-pending) + leash-reset/mana realities now recorded in ROADMAP M7. Spike
-shortcuts on the record: level-50 provisioning, straight-line Move (no
-pathfinding), death/resurrection still nonexistent (**RESOLVED 2026-08-20** —
+(18131-class melee skills never hit their primary target — FIXED same day,
+census 415/13, 18131-led combo-chain rotation is the live regression) +
+leash-reset/mana realities now recorded in ROADMAP M7. **Adventurer v1
+sustain (heal/retreat) landed 2026-08-20**: the hunt loop checks vitals
+before engaging — below threshold (0.35) the bot retreats along the
+threat→bot vector, recovers (configured heal item through the real UseItem
+path when bagged; out-of-combat regen fallback), and re-engages at 0.8 —
+bounded rounds fail CLOSED with Starvation. Rig E-M7-3/4/5 green; live
+exercise awaits level-appropriate content (foxes can't hurt the level-50
+spike bot — recorded). Potion data note: no low-level direct-heal potion in
+canonical compact.sqlite3 (retail heal pots are buff-tick shaped) —
+HealItemTemplateId defaults to 0 until the right template is verified.
+Spike shortcuts on the record: level-50 provisioning, straight-line Move (no
+pathfinding), death/resurrection (**RESOLVED 2026-08-20** —
 scheduler death watch + CharacterResurrection, see M6 exit blockers below).
-Adventurer v1 / Party v1 proper remain open; scheduling
-now unblocked per the roadmap's spike gate. H UNKNOWN.
+Remaining Adventurer v1: distance maintenance, equip upgrades (needs a new
+Equip contract action), literal return-to-NPC quest leg. Party v1 open.
+Scheduling unblocked per the roadmap's spike gate. H UNKNOWN.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod

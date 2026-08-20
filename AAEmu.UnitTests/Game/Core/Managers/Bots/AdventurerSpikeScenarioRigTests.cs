@@ -116,7 +116,7 @@ public class AdventurerSpikeScenarioRigTests
     /// exact call Npc.DoDie makes for a character killer), and seeds the
     /// corpse's loot container through the rig's real container surface.
     /// </summary>
-    internal sealed class RigSpikeRuntime(bool seedLoot) : AdventurerSpikeScenario.ISpikeRuntime
+    internal sealed class RigSpikeRuntime(bool seedLoot, bool healOnRecovery = true) : AdventurerSpikeScenario.ISpikeRuntime
     {
         public ActorRequest Drive(GameplayActor actor, ActorRequest request, TimeSpan maxWait)
         {
@@ -147,6 +147,17 @@ public class AdventurerSpikeScenarioRigTests
         {
             if (seedLoot)
                 GameplayActorTestRig.SeedLootContainer(corpse, (GameplayActorTestRig.TestItemTemplateId, 1));
+        }
+
+        public void RecoveryTick(Character character)
+        {
+            // Rig-faked regen (documented): the rig has no game-loop regen
+            // task, so each recovery tick restores 10% of max — the shape of
+            // out-of-combat recovery. Real regen/potion healing happens live.
+            // healOnRecovery=false drives the exhaustion (fail-closed) test.
+            if (healOnRecovery && character.MaxHp > 0)
+                character.Hp = Math.Min(character.MaxHp, character.Hp + Math.Max(1, character.MaxHp / 10));
+            Thread.Sleep(1);
         }
     }
 
@@ -389,6 +400,86 @@ public class AdventurerSpikeScenarioRigTests
             File.AppendAllText(mdPath, md.ToString());
             Console.WriteLine("m7 adventurer spike trace written to " + jsonlPath);
         }
+    }
+
+    /// <summary>
+    /// E-M7-3 (Adventurer v1 heal/retreat): a bot wounded below the sustain
+    /// threshold BEFORE engaging retreats from the threat, recovers (rig
+    /// regen fake — 10%/tick), and re-engages to complete the chain. The
+    /// SUSTAIN-RETREAT stage must precede the first kill.
+    /// </summary>
+    [Test]
+    public async Task AdventurerSpike_Sustain_BelowThreshold_RetreatsRecoversReengages()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m7sustain");
+        session.Character.Level = 10;
+        session.Character.Hp = 30; // 30% < the 0.35 sustain threshold
+
+        var result = AdventurerSpikeScenario.Run(
+            session.Character, new SpikeFixtureWorldAdapter(session, foxCount: 3),
+            new RigSpikeRuntime(seedLoot: true), RigOptions());
+
+        WriteTraceEvidence(result);
+
+        await Assert.That(result.Passed, "sustain spike FAILED:\n" + result.Evidence()).IsTrue();
+        var stageNames = result.Stages.Select(s => s.Stage).ToList();
+        await Assert.That(stageNames).Contains("SUSTAIN-RETREAT");
+        await Assert.That(stageNames.IndexOf("SUSTAIN-RETREAT") < stageNames.IndexOf("HUNT-KILL")).IsTrue();
+        await Assert.That(session.Character.Hp).IsGreaterThan(30); // recovered mid-run
+        await Assert.That(session.Character.Quests.HasQuestCompleted(AdventurerSpikeScenario.FoxQuestId)).IsTrue();
+    }
+
+    /// <summary>
+    /// E-M7-4: when a heal item is configured AND bagged, recovery attempts
+    /// it through the real UseItem contract path (SUSTAIN-HEAL stage; the
+    /// fixture item is not a potion — the use may legitimately Reject, the
+    /// contract attempt is the assertion) and regen remains the fallback.
+    /// </summary>
+    [Test]
+    public async Task AdventurerSpike_Sustain_HealItem_AttemptedThroughContractWhenBagged()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m7sustainheal");
+        session.Character.Level = 10;
+        session.Character.Hp = 30;
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 2);
+
+        var options = RigOptions() with { HealItemTemplateId = GameplayActorTestRig.TestItemTemplateId };
+        var result = AdventurerSpikeScenario.Run(
+            session.Character, new SpikeFixtureWorldAdapter(session, foxCount: 3),
+            new RigSpikeRuntime(seedLoot: true), options);
+
+        WriteTraceEvidence(result);
+
+        await Assert.That(result.Passed, "sustain-heal spike FAILED:\n" + result.Evidence()).IsTrue();
+        var stageNames = result.Stages.Select(s => s.Stage).ToList();
+        await Assert.That(stageNames).Contains("SUSTAIN-RETREAT");
+        await Assert.That(stageNames).Contains("SUSTAIN-HEAL");
+    }
+
+    /// <summary>
+    /// E-M7-5: recovery that never reaches the resume threshold fails the
+    /// run CLOSED — SUSTAIN stage, Starvation classification (never
+    /// "bot got stuck"), no fake completion.
+    /// </summary>
+    [Test]
+    public async Task AdventurerSpike_Sustain_ExhaustedRecovery_FailsClosedStarvation()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m7sustainfail");
+        session.Character.Level = 10;
+        session.Character.Hp = 10; // 10% — never recovers with healing off
+
+        var options = RigOptions() with { SustainMaxRounds = 3 };
+        var result = AdventurerSpikeScenario.Run(
+            session.Character, new SpikeFixtureWorldAdapter(session, foxCount: 3),
+            new RigSpikeRuntime(seedLoot: true, healOnRecovery: false), options);
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo("SUSTAIN");
+        await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.Starvation);
+        await Assert.That(session.Character.Quests.HasQuestCompleted(AdventurerSpikeScenario.FoxQuestId)).IsFalse();
     }
 
     /// <summary>Worktree-tolerant repo root (M53 pattern; accepts .git dir OR file).</summary>

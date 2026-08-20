@@ -139,6 +139,34 @@ public static class AdventurerSpikeScenario
         /// burst after the first cast (the synthetic kill applies at once).
         /// </summary>
         public int BurstCasts { get; init; } = 8;
+
+        // ---- M7 Adventurer v1: heal/retreat (sustain) ----
+
+        /// <summary>
+        /// HP ratio (Hp/MaxHp) below which the hunt loop disengages:
+        /// retreat from the threat, recover, re-engage. Default 0.35.
+        /// </summary>
+        public float SustainThreshold { get; init; } = 0.35f;
+
+        /// <summary>HP ratio to recover to before re-engaging. Default 0.8.</summary>
+        public float ResumeThreshold { get; init; } = 0.8f;
+
+        /// <summary>Retreat leg length (m) along the threat→bot vector. Default 10.</summary>
+        public float RetreatDistance { get; init; } = 10f;
+
+        /// <summary>Bounded recovery rounds before the run fails (Starvation). Default 30.</summary>
+        public int SustainMaxRounds { get; init; } = 30;
+
+        /// <summary>
+        /// Heal item template used once per recovery round through the real
+        /// UseItem contract path (0 = none — pure out-of-combat regen).
+        /// A Rejected use (not in bag / on cooldown) is tolerated — regen
+        /// is the documented fallback. Potion data note: canonical
+        /// compact.sqlite3 maps no low-level direct-heal potion (the retail
+        /// heal-potion chain is buff-tick shaped); the default stays 0 until
+        /// the right template is verified.
+        /// </summary>
+        public uint HealItemTemplateId { get; init; } = 0;
     }
 
     /// <summary>
@@ -174,6 +202,15 @@ public static class AdventurerSpikeScenario
         /// grant. The LIVE runtime is a no-op (real DoDie generates loot).
         /// </summary>
         void PrepareLootCorpse(Npc corpse);
+
+        /// <summary>
+        /// Recovery seam for the sustain loop: one recovery wait. LIVE:
+        /// sleeps so the game loop applies regen/potion healing. RIG:
+        /// restores a chunk of HP directly (documented rig-faked regen —
+        /// the rig has no game-loop regen task; real recovery healing is
+        /// proven on the live stack).
+        /// </summary>
+        void RecoveryTick(Character character);
     }
 
     // ------------------------------------------------------------------ run
@@ -329,6 +366,23 @@ public static class AdventurerSpikeScenario
                     continue;
                 }
                 noTarget = 0;
+
+                // SUSTAIN (M7 Adventurer v1 heal/retreat): vitals check
+                // BEFORE engaging — below the threshold, retreat from the
+                // threat, recover (configured heal item through the real
+                // UseItem path when bagged, else out-of-combat regen), then
+                // re-engage on the next round.
+                if (character.MaxHp > 0 && (float)character.Hp / character.MaxHp < options.SustainThreshold)
+                {
+                    if (!TrySustain(character, actor, target, runtime, options, stages, traceRecords))
+                    {
+                        huntFailure = ("SUSTAIN", ActorFailureReason.Starvation,
+                            $"recovery exhausted: {options.SustainMaxRounds} rounds without reaching the resume threshold " +
+                            $"(hp {character.Hp}/{character.MaxHp})");
+                        break;
+                    }
+                    continue; // recovered — re-observe and re-engage
+                }
 
                 var targetRequest = actor.SetTarget(target.ObjId);
                 Collect(actor, traceRecords);
@@ -544,6 +598,51 @@ public static class AdventurerSpikeScenario
     }
 
     /// <summary>
+    /// M7 heal/retreat: one sustain episode. RETREAT — a short Move leg away
+    /// from the threat along the threat→bot vector (failure tolerated: a
+    /// cornered bot still attempts recovery). RECOVER — bounded rounds: the
+    /// configured heal item once per round through the real UseItem contract
+    /// path when set (Rejected = not bagged/on cooldown — tolerated, regen
+    /// is the documented fallback), then a runtime recovery tick (live: game
+    /// loop applies regen/potion healing; rig: documented regen fake) until
+    /// the resume threshold. True when the bot re-engages at or above
+    /// <see cref="SpikeOptions.ResumeThreshold"/>.
+    /// </summary>
+    private static bool TrySustain(Character character, GameplayActor actor, Npc threat,
+        ISpikeRuntime runtime, SpikeOptions options,
+        List<BotScenarioRunner.ScenarioStageVerdict> stages, List<ActorAuditRecord> traceRecords)
+    {
+        var position = character.Transform.World.Position;
+        var away = position - threat.Transform.World.Position;
+        if (away.LengthSquared() < 0.01f)
+            away = new Vector3(1, 0, 0); // stacked on the threat — arbitrary direction
+        var retreatPoint = position + Vector3.Normalize(away) * options.RetreatDistance;
+
+        var retreat = actor.MoveTo(retreatPoint, options.TravelSpeed, options.TravelTimeout);
+        Collect(actor, traceRecords);
+        stages.Add(Stage("SUSTAIN-RETREAT", threat.ObjId, retreat));
+        retreat = runtime.Drive(actor, retreat, options.TravelTimeout);
+        Collect(actor, traceRecords);
+
+        for (var round = 0; round < options.SustainMaxRounds; round++)
+        {
+            if (character.MaxHp > 0 && (float)character.Hp / character.MaxHp >= options.ResumeThreshold)
+                return true;
+
+            if (options.HealItemTemplateId > 0)
+            {
+                var use = actor.UseItem(options.HealItemTemplateId);
+                Collect(actor, traceRecords);
+                stages.Add(Stage("SUSTAIN-HEAL", options.HealItemTemplateId, use));
+            }
+
+            runtime.RecoveryTick(character);
+        }
+
+        return character.MaxHp > 0 && (float)character.Hp / character.MaxHp >= options.ResumeThreshold;
+    }
+
+    /// <summary>
     /// Server-side world scan for the re-travel leg: the nearest alive,
     /// uncredited fox in the whole world (the Observe radius is 25 m — the
     /// live fox cluster is spread over ~130 m, so consecutive kills can
@@ -681,5 +780,11 @@ public sealed class LiveSpikeRuntime : AdventurerSpikeScenario.ISpikeRuntime
     public void PrepareLootCorpse(Npc corpse)
     {
         // live: real DoDie generates the corpse's loot — nothing to seed
+    }
+
+    public void RecoveryTick(Character character)
+    {
+        // live: let the game loop tick (regen + potion effects apply).
+        Thread.Sleep(500);
     }
 }
