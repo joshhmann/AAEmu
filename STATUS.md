@@ -113,16 +113,20 @@ m7-adventurer-spike-report.json). Gate 2125/0/1. Spike found BUG-016
 (18131-class melee skills never hit their primary target — OPEN, census
 pending) + leash-reset/mana realities now recorded in ROADMAP M7. Spike
 shortcuts on the record: level-50 provisioning, straight-line Move (no
-pathfinding), death/resurrection still nonexistent (top M7 blocker for any
-lethal scenario). Adventurer v1 / Party v1 proper remain open; scheduling
+pathfinding), death/resurrection still nonexistent (**RESOLVED 2026-08-20** —
+scheduler death watch + CharacterResurrection, see M6 exit blockers below).
+Adventurer v1 / Party v1 proper remain open; scheduling
 now unblocked per the roadmap's spike gate. H UNKNOWN.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
 re-provision verified by presence deploy chain) · **B4 playerbot_metadata
-store ✅ done 2026-08-20** (PlayerBotMetadataStore + presence-demo home/
-schedule wiring; B4 restart replay re-run asserting metadata directly —
-PASS 1/1) · PlayerBotScheduler
+store ✅ done 2026-08-20** · **6.2 death/resurrection ✅ done 2026-08-20**
+(CharacterResurrection core shared with the packet path + scheduler death
+watch: dead bots stop getting work steps, poll, resurrect at the nearest
+return portal after a 5s delay with the real 10%/debuff semantics,
+server-side relocation through Character.SetPosition, then normal stepping
+resumes — 5 rig tests green) · PlayerBotScheduler
 scheduler-driven soak still open if M6 exit mandates it. **Exit-label note
 (reconciled 2026-08-12, bot-backtrack):** soak verdict = "passed revised
 approved budgets" — full M6 exit label NOT claimed; **B4 restart-persistence

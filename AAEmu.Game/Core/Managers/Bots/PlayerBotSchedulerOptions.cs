@@ -35,4 +35,28 @@ public sealed class PlayerBotSchedulerOptions
 
     /// <summary>How long StopAsync waits for in-flight steps before giving up. Default 10 s.</summary>
     public TimeSpan ShutdownTimeout { get; init; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// M6.2 death watch: when true (default), a bot whose character is dead
+    /// (Hp &lt;= 0) gets no work steps — the scheduler polls the corpse and
+    /// resurrects it through <see cref="AAEmu.Game.Models.Game.Char.CharacterResurrection"/>
+    /// once <see cref="ResurrectDelay"/> has elapsed, then normal stepping
+    /// resumes (the step executor re-engages its route/behavior from the
+    /// new position).
+    /// </summary>
+    public bool ResurrectionEnabled { get; init; } = true;
+
+    /// <summary>How long a bot stays dead before the death watch resurrects it. Default 5 s.</summary>
+    public TimeSpan ResurrectDelay { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Death-watch poll cadence (next-wake delay while a bot is dead). Default 1 s.</summary>
+    public TimeSpan DeathPollInterval { get; init; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// Portal lookup override for rigs (default: PortalManager's closest
+    /// return portal). Rigs return a portal with X == 0 to exercise the
+    /// resurrection without the server-side relocation move (the same
+    /// condition the packet path uses to choose its broadcast).
+    /// </summary>
+    public Func<AAEmu.Game.Models.Game.Char.Character, AAEmu.Game.Models.Game.Portal>? PortalResolver { get; init; }
 }

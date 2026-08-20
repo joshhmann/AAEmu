@@ -81,6 +81,12 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     private long _totalWakeLatencyMs;
     private long _maxWakeLatencyMs;
     private long _busyTicks;
+    private long _totalResurrections;
+
+    // M6.2 death watch: per-bot first-seen-dead timestamp (UTC). An entry is
+    // added when a dead bot's step is skipped and removed on resurrection or
+    // when the bot is seen alive again.
+    private readonly ConcurrentDictionary<uint, DateTime> _deadSince = new();
 
     public PlayerBotScheduler(
         IPlayerBotManager manager,
@@ -227,7 +233,8 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                 TotalWakeLatencyMs: Volatile.Read(ref _totalWakeLatencyMs),
                 MaxWakeLatencyMs: Volatile.Read(ref _maxWakeLatencyMs),
                 WorkerUtilization: utilization,
-                ElapsedMs: (long)elapsed);
+                ElapsedMs: (long)elapsed,
+                TotalResurrections: Volatile.Read(ref _totalResurrections));
         }
     }
 
@@ -367,21 +374,35 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             ExecutionBoundary.EnterBotStep();
             try
             {
-                if (_options.StepTimeout > TimeSpan.Zero)
+                if (_options.ResurrectionEnabled && runtime.Character.IsDead)
                 {
-                    using var stepCts = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken.None);
-                    stepCts.CancelAfter(_options.StepTimeout);
-                    // The executors are synchronous-bodied; GetResult returns
-                    // immediately. A genuinely hung async executor blocks the
-                    // tick thread until the timeout — a loud, deliberate
-                    // failure mode (a bot step must never run off-thread).
-                    nextDelay = _executor.StepAsync(runtime, stepCts.Token)
-                        .WaitAsync(stepCts.Token).GetAwaiter().GetResult();
+                    // M6.2 death watch: a dead bot gets no work steps — the
+                    // scheduler polls the corpse and resurrects it once the
+                    // delay elapses, then normal stepping resumes (the step
+                    // executor re-engages its route/behavior from the new
+                    // position). All of this stays on the boundary thread.
+                    HandleDeathWatch(step.BotId, runtime.Character);
+                    nextDelay = _options.DeathPollInterval;
                 }
                 else
                 {
-                    nextDelay = _executor.StepAsync(runtime, CancellationToken.None)
-                        .GetAwaiter().GetResult();
+                    _deadSince.TryRemove(step.BotId, out _);
+                    if (_options.StepTimeout > TimeSpan.Zero)
+                    {
+                        using var stepCts = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken.None);
+                        stepCts.CancelAfter(_options.StepTimeout);
+                        // The executors are synchronous-bodied; GetResult returns
+                        // immediately. A genuinely hung async executor blocks the
+                        // tick thread until the timeout — a loud, deliberate
+                        // failure mode (a bot step must never run off-thread).
+                        nextDelay = _executor.StepAsync(runtime, stepCts.Token)
+                            .WaitAsync(stepCts.Token).GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+                        nextDelay = _executor.StepAsync(runtime, CancellationToken.None)
+                            .GetAwaiter().GetResult();
+                    }
                 }
             }
             catch (OperationCanceledException)
@@ -433,6 +454,42 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         {
             Interlocked.Decrement(ref _activeWorkers);
             Interlocked.Add(ref _busyTicks, sw.ElapsedTicks);
+        }
+    }
+
+    /// <summary>
+    /// M6.2 death watch (death/resurrection — the 6.2 safety item that did
+    /// not exist): polls a dead bot's corpse and, once
+    /// <see cref="PlayerBotSchedulerOptions.ResurrectDelay"/> has elapsed,
+    /// resurrects it through <see cref="CharacterResurrection"/> — the SAME
+    /// engine path the CSResurrectCharacterPacket handler uses (portal
+    /// selection, 10% HP/MP, revival debuffs, broadcasts). Headless bots
+    /// have no client to re-enter at the portal, so the watch then performs
+    /// the server-side relocation itself through the real region-aware
+    /// Character.SetPosition move (gated on the same portal.X != 0 condition
+    /// the packet uses for its broadcast).
+    /// </summary>
+    private void HandleDeathWatch(uint botId, Character character)
+    {
+        var now = UtcNow;
+        var since = _deadSince.GetOrAdd(botId, now);
+        if (now - since < _options.ResurrectDelay)
+            return;
+
+        var portal = CharacterResurrection.Resurrect(character, inPlace: false, _options.PortalResolver);
+        _deadSince.TryRemove(botId, out _);
+        Interlocked.Increment(ref _totalResurrections);
+
+        if (portal is { X: not 0 })
+        {
+            character.SetPosition(portal.X, portal.Y, portal.Z, 0, 0, 0);
+            Logger.Info("PlayerBotScheduler: resurrected dead bot {CharacterId} at return portal ({X:0.##},{Y:0.##},{Z:0.##}) — M6.2 death watch",
+                botId, portal.X, portal.Y, portal.Z);
+        }
+        else
+        {
+            Logger.Info("PlayerBotScheduler: resurrected dead bot {CharacterId} in place (no return portal resolved) — M6.2 death watch",
+                botId);
         }
     }
 

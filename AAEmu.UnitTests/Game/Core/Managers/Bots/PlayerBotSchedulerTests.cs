@@ -169,14 +169,16 @@ public class PlayerBotSchedulerTests
         /// <summary>Spawns + activates a bot through the real manager registry.</summary>
         public uint AddActiveBot(uint id, string name = "bot")
         {
-            Manager.Spawn(new Character(new UnitCustomModelParams()) { Id = id, Name = name }, "rig");
+            // M6.2 death watch: rig bots must be ALIVE (Hp/MaxHp default to
+            // 0, which is IsDead — the watch would intercept every step).
+            Manager.Spawn(new Character(new UnitCustomModelParams()) { Id = id, Name = name, MaxHp = 100, Hp = 100 }, "rig");
             Manager.Activate(id, null, "rig");
             return id;
         }
 
         public uint AddRegisteredBot(uint id, string name = "bot")
         {
-            Manager.Spawn(new Character(new UnitCustomModelParams()) { Id = id, Name = name }, "rig");
+            Manager.Spawn(new Character(new UnitCustomModelParams()) { Id = id, Name = name, MaxHp = 100, Hp = 100 }, "rig");
             return id;
         }
 
