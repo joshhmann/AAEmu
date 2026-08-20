@@ -970,6 +970,30 @@ public static class GameplayActorTestRig
         template.UseSkillAsReagent = useSkillAsReagent;
     }
 
+    /// <summary>
+    /// Seeds an EQUIPPABLE weapon template — SeedItemTemplate seeds a plain
+    /// ItemTemplate, which EquipmentContainer.CanAccept refuses ("must be a
+    /// equip-able item"). This shape is a one-handed weapon: WeaponTemplate
+    /// + Holdable with the given slot type (default OneHanded → allowed
+    /// slots Mainhand/Offhand per the engine's GetAllowedGearSlots).
+    /// Idempotent per template id. Call AFTER CreateActor/Seed — ItemManager
+    /// is DI-only; the rig seeds the singleton during Seed().
+    /// </summary>
+    public static void SeedEquipItemTemplate(uint templateId,
+        EquipmentItemSlotType slotType = EquipmentItemSlotType.OneHanded)
+    {
+        var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
+        if (!templates.ContainsKey(templateId))
+        {
+            templates[templateId] = new WeaponTemplate
+            {
+                Id = templateId,
+                MaxCount = 1,
+                HoldableTemplate = new Holdable { Id = templateId, SlotTypeId = (uint)slotType }
+            };
+        }
+    }
+
     /// <summary>Seeds a minimal skill template (no effects, no reagents, instant, self-range).</summary>
     public static void SeedSkillTemplate(uint skillId)
     {

@@ -574,6 +574,58 @@ public class GameplayActor : IGameplayActor
         return Complete(request, result, $"item {itemTemplateId} used (skill {itemTemplate.UseSkillId})");
     }
 
+    public ActorRequest Equip(uint itemTemplateId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Equip, itemTemplateId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "equip"))
+            return request;
+
+        var inventory = Character.Inventory;
+        if (inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        // 1. Resolve the item through NORMAL inventory services — the same
+        //    template lookup the client's move path performs. Only the
+        //    character's own bag is a valid equip source.
+        inventory.Bag.GetAllItemsByTemplate(itemTemplateId, -1, out var items, out _);
+        var item = items.FirstOrDefault();
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} not found in bag");
+
+        // Equip-credit idempotency marker (DepositItem pattern): when a
+        // prior attempt already moved this exact instance out of the bag,
+        // the equip is already done — refuse pre-flight. (The conjunctive
+        // check keeps a legitimately re-acquired item retryable.)
+        if (_ledger.IsEffectApplied(ActorIdempotency.EffectKey("equip", itemTemplateId, item.Id.ToString()))
+            && inventory.Bag.GetItemByItemId(item.Id) == null)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"item {itemTemplateId} (instance {item.Id}) already equipped (duplicate refused pre-flight)");
+
+        // 2. Target slot through the engine's own slot table: the first
+        //    EMPTY allowed slot, else the first allowed slot — the client's
+        //    equip-over-occupied swap semantics (SplitOrMoveItem moves the
+        //    occupant back to the vacated bag slot).
+        var allowedSlots = EquipmentContainer.GetAllowedGearSlots(item.Template);
+        if (allowedSlots.Count == 0)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} is not equippable");
+        var targetSlot = allowedSlots.FirstOrDefault(s => inventory.Equipment.GetItemBySlot((int)s) == null, allowedSlots[0]);
+
+        request.Start($"equipping item {itemTemplateId} (instance {item.Id}) into {targetSlot}");
+
+        // 3. REAL engine path — the exact call CSSwapItemsPacket makes for
+        //    an Inventory→Equipment move: Inventory.SplitOrMoveItem with the
+        //    SwapItems task type. The engine's EquipmentContainer.CanAccept
+        //    validates slot compatibility BEFORE anything moves; a refusal
+        //    moves nothing. (The engine has no level gate on this path.)
+        if (!inventory.SplitOrMoveItem(ItemTaskType.SwapItems, item.Id, SlotType.Inventory, (byte)item.Slot,
+                0, SlotType.Equipment, (byte)targetSlot))
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"equip of item {itemTemplateId} into {targetSlot} refused by engine");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("equip", itemTemplateId, item.Id.ToString()), request.TraceId);
+        return Complete(request, true, $"equipped item {itemTemplateId} into {targetSlot}");
+    }
+
     public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null)
     {
         var request = NewRequest(ActorActionType.Mount, mateObjId, idempotencyKey: idempotencyKey);
