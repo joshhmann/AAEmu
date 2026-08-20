@@ -214,9 +214,8 @@ M1 Solzreed human route · original M2 two-player baseline · M3a contract
 replay · M4 economic/navigation replay. hytest GM
 kit + .teleport mirage + GM access (t_01a893c7, deployed t_d8658d50) are the
 fast-forward lane for these. (M6 B4 restart scenario engineering completed
-2026-08-20 — the remaining piece there is the M6 exit-label decision, and
-the audit-trace flush half of the B4 line item stays open as engineering
-follow-up.)
+2026-08-20 — the remaining piece there is the M6 exit-label decision; the
+B4 line item is now FULLY closed: metadata store + audit-trace flush.)
 
 **New 2026-08-20 — B4 playerbot_metadata store (this pass):** the M6.0
 metadata list (personality/schedule/profession/home/behavior/planner state)
