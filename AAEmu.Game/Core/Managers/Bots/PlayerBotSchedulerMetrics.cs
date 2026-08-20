@@ -21,6 +21,7 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// <param name="MaxWakeLatencyMs">Worst observed wake→start latency (ms).</param>
 /// <param name="WorkerUtilization">Pool busy-time ratio (0..1) since Start().</param>
 /// <param name="ElapsedMs">Milliseconds since Start().</param>
+/// <param name="TotalResurrections">Cumulative M6.2 death-watch resurrections.</param>
 public sealed record PlayerBotSchedulerMetrics(
     int WorkerCount,
     int ActiveWorkers,
@@ -37,7 +38,8 @@ public sealed record PlayerBotSchedulerMetrics(
     long TotalWakeLatencyMs,
     long MaxWakeLatencyMs,
     double WorkerUtilization,
-    long ElapsedMs)
+    long ElapsedMs,
+    long TotalResurrections = 0)
 {
     /// <summary>Mean wake→start latency in ms (0 when no steps ran).</summary>
     public double AverageWakeLatencyMs => TotalStepsRun == 0 ? 0 : (double)TotalWakeLatencyMs / TotalStepsRun;

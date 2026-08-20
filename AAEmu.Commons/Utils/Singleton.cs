@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,6 +41,14 @@ public abstract class Singleton<T> where T : class
             return s_instance;
         }
     }
+
+    /// <summary>
+    /// The current instance WITHOUT creating it — null when the singleton was
+    /// never initialized. For paths that must degrade gracefully in headless
+    /// rigs where DI-only managers cannot be constructed (Instance would
+    /// throw).
+    /// </summary>
+    public static T? PeekInstance => s_instance ?? SingletonContainer.ServiceProvider?.GetService<T>();
 
     private static void OnInit()
     {

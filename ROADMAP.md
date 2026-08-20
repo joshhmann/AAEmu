@@ -1457,13 +1457,17 @@ completed + dropped, 37 lifecycle-complete trace records (evidence
 /root/aaemu-e2e/logs/m7-adventurer-spike-report.json). Full unit gate
 2125/0/1. Spike surfaced four engine realities now on the record:
 **BUG-016** (18131-class area+Target melee skills never hit their primary
-target — census pending), weapon-less bots deal 0 damage (bridge
+target — **FIXED 2026-08-20**, census 415/13, 18131-led combo-chain rotation
+is the live regression), weapon-less bots deal 0 damage (bridge
 provisioning now applies starting equipment), NPC leash-reset demands burst
 kills, mana starvation shapes rotation depth. **Known spike shortcuts
 (recorded, not hidden):** spike bot provisions at level 50 (chain+contract
 proof, not combat balance); Move is straight-line — no pathfinding; bot
-death/resurrection still does not exist and gates any scenario where a bot
-can die. H stays UNKNOWN — Josh confirms feel.
+death/resurrection — **BUILT 2026-08-20** (the spike's recorded top gap):
+CharacterResurrection shares the CSResurrectCharacterPacket engine path and
+the scheduler death watch stops work on dead bots, resurrects at the
+nearest return portal after 5s, relocates server-side, and resumes work
+(5 rig tests green). H stays UNKNOWN — Josh confirms feel.
 
 **Depends on:** M6 exit (including A1) and B1 (combat/quest actor actions).
 **M7 is the largest unestimated chunk on the roadmap** — there is no combat
