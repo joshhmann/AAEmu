@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-20 · by Kimi (Josh-directed no-cards cleanup pass: M5 closeout sync, spin-guard fix, hygiene)
+Updated: 2026-08-20 · by Kimi (Josh-directed no-cards pass #2: B4 playerbot_metadata store — M6 deferred gate #5 engineering COMPLETE)
 Branch of record: develop @ efb98e4ae (local, ls-remote verified 2026-08-19 by fleet commit 50af336dc)
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
@@ -15,7 +15,10 @@ ROADMAP.md "Deferred validation gates".
 2. **Original M2 human baseline** — two players, no GM repair; Josh-owned.
 3. **M3a contract replay** — Phase 2 via M5.1 actions (Plant/Harvest/Craft/PackPickup/PutDown).
 4. **M4 economic/navigation replay** — Phase 2 contract replay; normal movement/vehicle controls (direct Transform/ZoneId assignment FAILS the gate).
-5. **M6 B4 restart scenario** — Phase 3; bot identity/inventory/position/schedule survive restart.
+5. **M6 B4 restart scenario** — Phase 3; bot identity/inventory/position/
+   schedule survive restart. **Engineering COMPLETE 2026-08-20** (store
+   built + 2-checkpoint replay re-run with direct metadata assertions,
+   PASS) — what remains is the full-M6-exit LABEL decision, not code.
 
 ## Milestone state
 
@@ -103,7 +106,10 @@ gates below remain Josh-owned.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
-re-provision verified by presence deploy chain) · PlayerBotScheduler
+re-provision verified by presence deploy chain) · **B4 playerbot_metadata
+store ✅ done 2026-08-20** (PlayerBotMetadataStore + presence-demo home/
+schedule wiring; B4 restart replay re-run asserting metadata directly —
+PASS 1/1) · PlayerBotScheduler
 scheduler-driven soak still open if M6 exit mandates it. **Exit-label note
 (reconciled 2026-08-12, bot-backtrack):** soak verdict = "passed revised
 approved budgets" — full M6 exit label NOT claimed; **B4 restart-persistence
@@ -188,9 +194,24 @@ kit (782ac3b3c), spin-guard fix. Rebuild + redeploy recommended before QAT.
 
 **Remaining Josh-owned (deferred gates, bots cannot substitute):**
 M1 Solzreed human route · original M2 two-player baseline · M3a contract
-replay · M4 economic/navigation replay · M6 B4 restart scenario. hytest GM
+replay · M4 economic/navigation replay. hytest GM
 kit + .teleport mirage + GM access (t_01a893c7, deployed t_d8658d50) are the
-fast-forward lane for these.
+fast-forward lane for these. (M6 B4 restart scenario engineering completed
+2026-08-20 — the remaining piece there is the M6 exit-label decision, and
+the audit-trace flush half of the B4 line item stays open as engineering
+follow-up.)
+
+**New 2026-08-20 — B4 playerbot_metadata store (this pass):** the M6.0
+metadata list (personality/schedule/profession/home/behavior/planner state)
+now has a table and a store — `PlayerBotMetadataStore` (self-healing schema,
+write-through REPLACE on mutation for hard-kill safety + dirty flush in the
+SaveManager transaction), presence demo resolves home explicit-env →
+persisted → template and records home + roam-loop schedule per bot. B4
+restart replay extended to assert metadata directly: PASS 1/1 (4m39s,
+evidence gate-m6-reconcile-b4-20260820-162058.md). Full unit gate 2121/0/1
+(+15 store tests). Branch feat/b4-playerbot-metadata. NOT yet deployed to
+prod — presence-demo home resolution gains a persisted fallback, so prod
+deploy is a separate Josh decision.
 
 ## Legacy upstream item (predates one-way policy)
 

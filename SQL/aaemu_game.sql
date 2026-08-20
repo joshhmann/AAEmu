@@ -643,3 +643,24 @@ COMMENT='Keeps track of the crime events'
 COLLATE='utf8mb4_general_ci'
 ENGINE=InnoDB
 ;
+
+CREATE TABLE IF NOT EXISTS `playerbot_metadata` (
+	`character_id` INT UNSIGNED NOT NULL COMMENT 'Character Id this bot metadata belongs to',
+	`personality` VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'Free-form personality description',
+	`profession` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'Bot profession',
+	`has_home` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '1 when a home position is recorded',
+	`home_world_id` INT UNSIGNED NOT NULL DEFAULT '0',
+	`home_zone_id` INT UNSIGNED NOT NULL DEFAULT '0',
+	`home_x` FLOAT NOT NULL DEFAULT '0',
+	`home_y` FLOAT NOT NULL DEFAULT '0',
+	`home_z` FLOAT NOT NULL DEFAULT '0',
+	`schedule` TEXT NULL DEFAULT NULL COMMENT 'Serialized bot schedule (JSON)',
+	`behavior_config` TEXT NULL DEFAULT NULL COMMENT 'Serialized behavior configuration (JSON)',
+	`planner_state` TEXT NULL DEFAULT NULL COMMENT 'Serialized planner state (JSON)',
+	`updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (`character_id`) USING BTREE
+)
+COMMENT='B4 playerbot metadata: personality/profession/home/schedule per bot character'
+COLLATE='utf8mb4_general_ci'
+ENGINE=InnoDB
+;

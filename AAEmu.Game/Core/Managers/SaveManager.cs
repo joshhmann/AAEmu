@@ -2,6 +2,7 @@
 
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Char;
@@ -103,6 +104,8 @@ public class SaveManager(
                         var savedAuctionHouse = auctionManager.Save(connection, transaction);
                         // Crimes
                         var savedCrimes = crimeManager.Save(connection, transaction);
+                        // PlayerBot metadata (B4 playerbot_metadata store: dirty rows only, never breaks the save cycle)
+                        PlayerBotMetadataStore.Instance.SaveDirty(connection, transaction);
 
                         // Characters (dirty-tracking: only persist touched rows unless forced)
                         var savedCharacters = 0;
