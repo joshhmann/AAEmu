@@ -934,7 +934,16 @@ public class Skill
         if (Template.TargetAreaRadius > 0)
         {
             var units = WorldManager.GetAround<BaseUnit>(targetSelf, Template.TargetAreaRadius, true);
-            if (Template.TargetSelection == SkillTargetSelection.Source)
+            // GetAround excludes the center object, so add the main target
+            // back explicitly: Source selection centers the AoE ON the
+            // caster (targetSelf == caster — the classic self-buff splash),
+            // and Target selection centers it on the selected unit — the
+            // primary target (BUG-016: area melee combos like 18131 cast
+            // successfully but dealt 0 damage to the selected target).
+            // FilterAoeUnits applies the template's relation filter and the
+            // Distinct() below dedupes, so re-adding is safe against
+            // friendly-fire and double application.
+            if (Template.TargetSelection is SkillTargetSelection.Source or SkillTargetSelection.Target)
                 units.Add(targetSelf); // Add main target as well
             units = FilterAoeUnits(caster, units).ToList();
 

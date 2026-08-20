@@ -367,9 +367,10 @@ public static class BotScenarioTemplates
     /// <see cref="AdventurerSpikeScenario"/> before the quest machinery —
     /// the same dispatch pattern as the M1M2/M3aM4 replays. Drive
     /// placeholder never executes. Level 10 so the provisioned bot survives
-    /// the foxes; the Fight ability-1 triple-slash rotation (18134 primary —
-    /// 18131's AoE-selection engine gap is documented in
-    /// <see cref="AdventurerSpikeScenario"/>) is the live cast rotation. Proxy/bot-functional evidence, H stays UNKNOWN.
+    /// the foxes; the Fight ability-1 triple-slash rotation leads with 18131
+    /// (its AoE-selection engine gap was BUG-016, FIXED 2026-08-20 — the
+    /// 18131 lead regression-covers the fix live; 18134 is the fallback).
+    /// Proxy/bot-functional evidence, H stays UNKNOWN.
     /// </summary>
     public static BotScenarioTemplate AdventurerSpikeFox { get; } = new()
     {
