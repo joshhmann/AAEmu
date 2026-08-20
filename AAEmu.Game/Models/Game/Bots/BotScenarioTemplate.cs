@@ -75,6 +75,17 @@ public sealed class BotScenarioTemplate
     /// sees).</summary>
     public long Money { get; init; }
 
+    /// <summary>
+    /// When true, the bridge provisions the bot through the appearance
+    /// overload (HeadlessSession.Provision with a BotAppearanceSpec) so the
+    /// character is born with the per-class starting equipment through the
+    /// real ApplyStartingEquipment path — the human-create gear pack. Combat
+    /// scenarios need this: weapon-scaling damage skills (e.g. the Fight
+    /// start skill 18131) deal ZERO damage on a weapon-less bot. The class
+    /// is <see cref="AbilityTrees"/>[0] when set, else the factory default.
+    /// </summary>
+    public bool ProvisionWithAppearance { get; init; }
+
     /// <summary>The scenario drive: EXACTLY ONE of the quest drive or the
     /// economy replay drive. Quest templates carry
     /// <see cref="QuestDriveSpec"/>; M5.1 economy templates carry

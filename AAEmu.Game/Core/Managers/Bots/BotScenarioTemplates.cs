@@ -359,6 +359,47 @@ public static class BotScenarioTemplates
         }
     };
 
+    /// <summary>
+    /// M7 gating spike (ROADMAP M7): ONE adventurer clearing a short
+    /// kill-quest chain end-to-end through the M5 contract — quest 250
+    /// (Solzreed fox cull: accept at notice-board doodad 5047, kill 3× fox
+    /// npc 3492, auto-complete). The runner routes this name to
+    /// <see cref="AdventurerSpikeScenario"/> before the quest machinery —
+    /// the same dispatch pattern as the M1M2/M3aM4 replays. Drive
+    /// placeholder never executes. Level 10 so the provisioned bot survives
+    /// the foxes; the Fight ability-1 triple-slash rotation (18134 primary —
+    /// 18131's AoE-selection engine gap is documented in
+    /// <see cref="AdventurerSpikeScenario"/>) is the live cast rotation. Proxy/bot-functional evidence, H stays UNKNOWN.
+    /// </summary>
+    public static BotScenarioTemplate AdventurerSpikeFox { get; } = new()
+    {
+        Name = AdventurerSpikeScenario.ScenarioName,
+        Description = "M7 gating spike: one adventurer clears quest 250 (fox cull) end-to-end through the M5 contract (accept → travel → hunt → loot → auto-complete), machine-readable trace; H stays UNKNOWN.",
+        Race = Race.Nuian,
+        Gender = Gender.Male,
+        // The fox cull is COMBAT: the bot needs the real Fight starting gear
+        // (weapon-scaling damage on the triple-slash rotation) — appearance
+        // provisioning applies the human-create equipment pack.
+        AbilityTrees = [AbilityType.Fight],
+        ProvisionWithAppearance = true,
+        // Level 50: quest 250's only gates are level ≥1 + mother faction, so
+        // the overleveled bot is legal — and REQUIRED on live: foxes
+        // leash-reset to full HP when the fight drags (Npc return-to-idle
+        // heals), and a level-30 run drained the mana pool fighting the
+        // resets (LackMana starvation after 2/3 kills — run-10 evidence).
+        // At 50 the finisher kills a fox in ~2 casts, inside the reset
+        // window, on a big enough mana pool. The spike proves the chain +
+        // contract, not combat balance.
+        Level = 50,
+        Drive = new QuestDriveSpec
+        {
+            QuestId = 0,
+            AcceptorType = nameof(QuestAcceptorType.Npc),
+            AcceptorId = 0,
+            Stages = []
+        }
+    };
+
     /// <summary>The library — templates by name.</summary>
     public static IReadOnlyDictionary<string, BotScenarioTemplate> Library { get; } =
         new Dictionary<string, BotScenarioTemplate>(StringComparer.Ordinal)
@@ -370,7 +411,8 @@ public static class BotScenarioTemplates
             [M1M2Replay.Name] = M1M2Replay,
             [M1M2MinSlice.Name] = M1M2MinSlice,
             [DepositWithdrawCycle.Name] = DepositWithdrawCycle,
-            [M3aM4Replay.Name] = M3aM4Replay
+            [M3aM4Replay.Name] = M3aM4Replay,
+            [AdventurerSpikeFox.Name] = AdventurerSpikeFox
         };
 
     public static BotScenarioTemplate? Get(string name)

@@ -159,6 +159,12 @@ public static class BotScenarioRunner
         if (template.Name == M3aM4ReplayScenario.ScenarioName)
             return M3aM4ReplayScenario.Run(character, world);
 
+        // M7 gating spike — one adventurer clearing the Solzreed fox-cull
+        // kill-quest chain end-to-end (accept → travel → hunt → loot →
+        // auto-complete) through the M5 contract actions only.
+        if (template.Name == AdventurerSpikeScenario.ScenarioName)
+            return AdventurerSpikeScenario.Run(character, world);
+
         var rigNotes = new List<string>();
         var actor = new GameplayActor(character);
         var controller = new PlayerBotController(character);
