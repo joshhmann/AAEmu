@@ -1,0 +1,189 @@
+{
+  "generated_by": "GameplayActorB1TraceSamplesTests (kanban t_219f7724 final B1 verification)",
+  "action_count": 10,
+  "actions": [
+    {
+      "trace_id": "f8f26503-74e5-4d37-82ae-3b8ab6226b22",
+      "actor_id": 4097,
+      "action": "Observe",
+      "target_id": 0,
+      "requested_at": "2026-08-13T01:08:08.7140903Z",
+      "started_at": "2026-08-13T01:08:08.7142624Z",
+      "completed_at": "2026-08-13T01:08:08.7153826Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "completed",
+      "state_changes": [
+        "Requested",
+        "Accepted (observe)",
+        "Running (query)",
+        "Completed (completed)"
+      ]
+    },
+    {
+      "trace_id": "891ddc58-d9dd-4cf1-9f35-ebc23fab603b",
+      "actor_id": 4097,
+      "action": "Move",
+      "target_id": 0,
+      "requested_at": "2026-08-13T01:08:08.7272294Z",
+      "started_at": "2026-08-13T01:08:08.7273994Z",
+      "completed_at": "2026-08-13T01:08:08.7286425Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "arrived",
+      "state_changes": [
+        "Requested",
+        "Accepted (move)",
+        "Running (walking)",
+        "Completed (arrived)"
+      ]
+    },
+    {
+      "trace_id": "17b37469-88d3-453f-a191-d0cbc5fe2986",
+      "actor_id": 4097,
+      "action": "Interact",
+      "target_id": 1000,
+      "requested_at": "2026-08-13T01:08:08.7386935Z",
+      "started_at": "2026-08-13T01:08:08.7386943Z",
+      "completed_at": "2026-08-13T01:08:08.7513684Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "doodad 1000 interacted (phase 99101)",
+      "state_changes": [
+        "Requested",
+        "Accepted (interact)",
+        "Running (interacting with doodad 1000 (skill 0))",
+        "Completed (doodad 1000 interacted (phase 99101))"
+      ]
+    },
+    {
+      "trace_id": "ba9edfbc-117d-49de-a1bb-8e5ba9bc79b8",
+      "actor_id": 4097,
+      "action": "Loot",
+      "target_id": 1001,
+      "requested_at": "2026-08-13T01:08:08.7592568Z",
+      "started_at": "2026-08-13T01:08:08.7592579Z",
+      "completed_at": "2026-08-13T01:08:08.7654616Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "looted 2 item(s) from 1001",
+      "state_changes": [
+        "Requested",
+        "Accepted (loot)",
+        "Running (looting 1001 (bag entries 2))",
+        "Completed (looted 2 item(s) from 1001)"
+      ]
+    },
+    {
+      "trace_id": "deb3ae42-03d1-4ef4-b434-6e5fc46a3be2",
+      "actor_id": 4097,
+      "action": "UseItem",
+      "target_id": 1234,
+      "requested_at": "2026-08-13T01:08:08.7660032Z",
+      "started_at": "2026-08-13T01:08:08.766004Z",
+      "completed_at": "2026-08-13T01:08:08.785808Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "item 1234 used (skill 90002)",
+      "state_changes": [
+        "Requested",
+        "Accepted (use item)",
+        "Running (using item 1234 (instance 6, skill 90002))",
+        "Completed (item 1234 used (skill 90002))"
+      ]
+    },
+    {
+      "trace_id": "a8225050-acc0-4353-94c7-4fdb18bd1ab4",
+      "actor_id": 4097,
+      "action": "Mount",
+      "target_id": 8193,
+      "requested_at": "2026-08-13T01:08:08.7884103Z",
+      "started_at": "2026-08-13T01:08:08.7884111Z",
+      "completed_at": "2026-08-13T01:08:08.7972893Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "mounted mate 8193",
+      "state_changes": [
+        "Requested",
+        "Accepted (mount)",
+        "Running (mounting mate 8193 (tl 1))",
+        "Completed (mounted mate 8193)"
+      ]
+    },
+    {
+      "trace_id": "7bf0fa87-9643-4040-8bdc-20b6383347be",
+      "actor_id": 4097,
+      "action": "Dismount",
+      "target_id": 0,
+      "requested_at": "2026-08-13T01:08:08.8007491Z",
+      "started_at": "2026-08-13T01:08:08.8007497Z",
+      "completed_at": "2026-08-13T01:08:08.8055824Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "dismounted mate 8193",
+      "state_changes": [
+        "Requested",
+        "Accepted (dismount)",
+        "Running (dismounting mate 8193 (tl 1, seat Driver))",
+        "Completed (dismounted mate 8193)"
+      ]
+    },
+    {
+      "trace_id": "3c7b4a90-695c-493b-828e-ba98f1706c28",
+      "actor_id": 4097,
+      "action": "AcceptQuest",
+      "target_id": 251,
+      "requested_at": "2026-08-13T01:08:08.8062574Z",
+      "started_at": "2026-08-13T01:08:08.8063219Z",
+      "completed_at": "2026-08-13T01:08:08.8223003Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "quest 251 accepted (Npc/3512)",
+      "state_changes": [
+        "Requested",
+        "quest_id=251",
+        "Accepted (accept quest)",
+        "Running (accepting quest 251 via Npc/3512)",
+        "Completed (quest 251 accepted (Npc/3512))"
+      ]
+    },
+    {
+      "trace_id": "8a1e5f12-fb52-4d71-bd27-73faf26d8cc1",
+      "actor_id": 4097,
+      "action": "AdvanceQuest",
+      "target_id": 251,
+      "requested_at": "2026-08-13T01:08:08.8229252Z",
+      "started_at": "2026-08-13T01:08:08.8229273Z",
+      "completed_at": "2026-08-13T01:08:08.8244893Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "quest 251 advanced (step Ready, status Ready)",
+      "state_changes": [
+        "Requested",
+        "quest_id=251",
+        "Accepted (advance quest)",
+        "Running (advancing quest 251 (step Progress, status Progress))",
+        "Completed (quest 251 advanced (step Ready, status Ready))"
+      ]
+    },
+    {
+      "trace_id": "983417b9-d060-4505-a7b1-887d28b20643",
+      "actor_id": 4097,
+      "action": "TurnInQuest",
+      "target_id": 251,
+      "requested_at": "2026-08-13T01:08:08.8256696Z",
+      "started_at": "2026-08-13T01:08:08.8256715Z",
+      "completed_at": "2026-08-13T01:08:08.8355424Z",
+      "result": "Completed",
+      "failure": null,
+      "detail": "quest 251 completed by turn-in",
+      "state_changes": [
+        "Requested",
+        "quest_id=251",
+        "Accepted (turn in)",
+        "Running (turning in quest 251 (target 1002, selected 0))",
+        "Completed (quest 251 completed by turn-in)"
+      ]
+    }
+  ]
+}

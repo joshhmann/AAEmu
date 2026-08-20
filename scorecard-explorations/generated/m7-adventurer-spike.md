@@ -9,18 +9,6 @@
 
 ```
 # Scenario: adventurer-spike-fox
-Verdict: FAIL at HUNT (WrongDecision) — no attackable npc template 3492 visible after 4 re-observe/re-travel retries (nearby npcs: [])
-- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
-- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
-- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- stage TRAVEL: 1 events, advance=Running, step=0, status=
-- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
-- actor requests: 9
-
-```
-
-```
-# Scenario: adventurer-spike-fox
 Verdict: PASS
 - stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
 - stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
@@ -28,23 +16,23 @@ Verdict: PASS
 - stage TRAVEL: 1 events, advance=Running, step=0, status=
 - stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 1 events, advance=credited, step=24577, status=kill 1/3
-- stage LOOT: 1 events, advance=Rejected, step=24577, status=RejectedAction: nothing to loot from 24577 (empty or already looted)
+- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
 - stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 2 events, advance=credited, step=24576, status=kill 2/3
-- stage LOOT: 1 events, advance=Rejected, step=24576, status=RejectedAction: nothing to loot from 24576 (empty or already looted)
+- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
 - stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 3 events, advance=credited, step=24578, status=kill 3/3
-- stage LOOT: 1 events, advance=Rejected, step=24578, status=RejectedAction: nothing to loot from 24578 (empty or already looted)
+- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
 - stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
 - stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
 - criterion [quest-active-after-accept]: PASS active quests after accept: [250]
 - criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
-- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Rejected (RejectedAction: nothing to loot from 24577 (empty or already looted)) | corpse 24576: Rejected (RejectedAction: nothing to loot from 24576 (empty or already looted)) | corpse 24578: Rejected (RejectedAction: nothing to loot from 24578 (empty or already looted))
+- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578)
 - criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=21 completed=18 incomplete=0 rejected-with-running=0
+- criterion [lifecycle-trace-complete]: PASS records=21 completed=21 incomplete=0 rejected-with-running=0
 - actor requests: 21
 
 ```
@@ -84,6 +72,18 @@ Verdict: PASS
 
 ```
 # Scenario: adventurer-spike-fox
+Verdict: FAIL at HUNT (WrongDecision) — no attackable npc template 3492 visible after 4 re-observe/re-travel retries (nearby npcs: [])
+- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
+- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
+- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- stage TRAVEL: 1 events, advance=Running, step=0, status=
+- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
+- actor requests: 9
+
+```
+
+```
+# Scenario: adventurer-spike-fox
 Verdict: PASS
 - stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
 - stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
@@ -91,23 +91,23 @@ Verdict: PASS
 - stage TRAVEL: 1 events, advance=Running, step=0, status=
 - stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 1 events, advance=credited, step=24577, status=kill 1/3
-- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
+- stage LOOT: 1 events, advance=Rejected, step=24577, status=RejectedAction: nothing to loot from 24577 (empty or already looted)
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
 - stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 2 events, advance=credited, step=24576, status=kill 2/3
-- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
+- stage LOOT: 1 events, advance=Rejected, step=24576, status=RejectedAction: nothing to loot from 24576 (empty or already looted)
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
 - stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 3 events, advance=credited, step=24578, status=kill 3/3
-- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
+- stage LOOT: 1 events, advance=Rejected, step=24578, status=RejectedAction: nothing to loot from 24578 (empty or already looted)
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
 - stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
 - stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
 - criterion [quest-active-after-accept]: PASS active quests after accept: [250]
 - criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
-- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578)
+- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Rejected (RejectedAction: nothing to loot from 24577 (empty or already looted)) | corpse 24576: Rejected (RejectedAction: nothing to loot from 24576 (empty or already looted)) | corpse 24578: Rejected (RejectedAction: nothing to loot from 24578 (empty or already looted))
 - criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=21 completed=21 incomplete=0 rejected-with-running=0
+- criterion [lifecycle-trace-complete]: PASS records=21 completed=18 incomplete=0 rejected-with-running=0
 - actor requests: 21
 
 ```

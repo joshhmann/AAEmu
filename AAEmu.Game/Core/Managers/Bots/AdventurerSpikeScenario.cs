@@ -61,19 +61,17 @@ public static class AdventurerSpikeScenario
     /// <summary>
     /// 3단 베기 THIRD hit (Triple Slash combo finisher) — a Fight ability-1
     /// start skill a provisioned bot learns through
-    /// CharacterManager.ApplyPlayerProgression. Chosen over the first hit
-    /// (18131) because of a LIVE-VERIFIED engine gap: 18131 has
-    /// target_area_radius=2 with TargetSelection=Target, and ApplyEffects'
-    /// AoE branch never includes targetSelf (WorldManager.GetAround
-    /// excludes the center object) — 150/150 successful casts dealt ZERO
-    /// damage to the primary target (m7 spike diagnosis, 2026-08-20).
-    /// 18134 has area_radius=0 → possibleTargets = [the fox]. Both stay in
-    /// the rotation: 18134 lands the damage, 18131 records the quirk as
-    /// trace evidence on the fallback path.
+    /// CharacterManager.ApplyPlayerProgression. The rotation now LEADS with
+    /// the first hit (18131): the BUG-016 engine gap (18131's
+    /// target_area_radius=2 + TargetSelection=Target never included the
+    /// primary target — GetAround excludes the center object; 150/150
+    /// successful casts, 0 damage, m7 spike diagnosis 2026-08-20) is FIXED in
+    /// Skill.ApplyEffects, and the 18131-led rotation regression-covers the
+    /// fix live. 18134 (area_radius=0) stays as the fallback.
     /// </summary>
     public const uint TripleSlashFinisherSkillId = 18134;
 
-    /// <summary>3단 베기 first hit (18131) — see the finisher note above.</summary>
+    /// <summary>3단 베기 first hit (18131) — the rotation lead since the BUG-016 fix.</summary>
     public const uint TripleSlashSkillId = 18131;
 
     /// <summary>Spike parameters (live defaults = canonical ids; unit rigs inject fixture values).</summary>
@@ -101,9 +99,13 @@ public static class AdventurerSpikeScenario
         /// <summary>
         /// Skill ids in priority order — the hunt loop casts the first one
         /// the engine does not Reject (unlearned/cooldown refusals fall
-        /// through to the next). Live default: the Fight start skill.
+        /// through to the next). Live default: 18131 LEADS again — BUG-016
+        /// is fixed (Skill.ApplyEffects re-adds targetSelf for
+        /// Target-selection area skills), so the first hit now damages its
+        /// primary target and this order regression-covers the fix on every
+        /// live spike run; 18134 remains the fallback.
         /// </summary>
-        public uint[] CastRotation { get; init; } = [TripleSlashFinisherSkillId, TripleSlashSkillId];
+        public uint[] CastRotation { get; init; } = [TripleSlashSkillId, TripleSlashFinisherSkillId];
 
         /// <summary>
         /// Quest 250's objectives are kills only — corpse loot is flavor.
@@ -351,11 +353,17 @@ public static class AdventurerSpikeScenario
                         continue; // leg failed — re-observe next round (bounded by attempts)
                 }
 
-                // Cast rotation in a burst: repeat while the target is up
-                // (server-side alive read), bounded per round. Live prey
-                // leash-resets mid-fight — the kill must land inside the
-                // reset window. The stage detail carries the target's HP
-                // before/after — the damage-landing evidence the trace needs.
+                // Cast the rotation as a COMBO CHAIN: every skill in the
+                // rotation is cast once per burst round (Rejected ones are
+                // skipped and recorded), because combo hits are meant to
+                // chain — leading 18131 alone starves DPS and drains mana
+                // against leash-resetting prey (run-11 live failure: 2/3
+                // kills then LackMana; 18131-only needed 20+ casts/fox).
+                // The round breaks early when the target drops (server-side
+                // alive read). Live prey leash-resets mid-fight — the kill
+                // must land inside the reset window. The stage detail
+                // carries the target's HP before/after — the
+                // damage-landing evidence the trace needs.
                 var targetDown = false;
                 for (var burst = 0; burst < options.BurstCasts && !targetDown; burst++)
                 {
@@ -371,10 +379,9 @@ public static class AdventurerSpikeScenario
                             StatusObserved = $"{castStage.StatusObserved} [target hp {hpBefore}→{target.Hp}]"
                         });
                         if (cast.State != ActorLifecycleState.Rejected)
-                        {
                             castExecuted = true;
-                            break;
-                        }
+                        if (target.Hp <= 0)
+                            break; // target dropped mid-chain — stop casting
                     }
                     if (!castExecuted)
                         break; // the whole rotation refused — re-observe next round

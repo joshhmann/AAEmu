@@ -25,7 +25,7 @@ Bug entries: see `bugs/` folder (one file per issue)
 | BUG-013 | NPC sit poses render "knees in" — server sends sit anim ids the 1.2 client cannot play for the NPC's race/gender (missing .caf assets; ids 70/160 have none at all) | FIXED — branch fix/npc-sit-pose (2026-08-05) |
 | BUG-014 | quest completed-block id wraps for quest ids >= 4,194,304 — ResetQuests recomputes a wrapped id, daily reset never clears, AddQuest refuses with QuestDailyLimit forever (live: 8000004) | FIXED — branch fix/bug-014-quest-completed-block-uint (2026-08-10) |
 | BUG-015 | CharacterQuests.Save NREs on a null completed-block entry — concurrent mutation during enumeration yields a null block, disconnect save aborts BEFORE the active-quest REPLACE loop, quest rows lost | FIXED — branch fix/quest-save-null-guard (2026-08-10) |
-| BUG-016 | Melee combo skills with target_area_radius + TargetSelection=Target never damage their primary target (skill 18131 confirmed — 150/150 successful casts, 0 damage) — ApplyEffects AoE branch excludes the center object | OPEN — found 2026-08-20 by M7 spike E2E; census of the skill class pending |
+| BUG-016 | Melee combo skills with target_area_radius + TargetSelection=Target never damage their primary target (skill 18131 confirmed — 150/150 successful casts, 0 damage; census: 415 skills in class, 13 player-learnable) — ApplyEffects AoE branch excludes the center object | FIXED — branch fix/bug-016-area-target-primary (2026-08-20); rig tests + 18131-led spike rotation as live regression |
 
 ## Audit findings (Kimi deep-dive 2026-08-09, t_0fda3cd3)
 
