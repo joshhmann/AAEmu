@@ -740,7 +740,17 @@ public sealed class BotDriveBridge
         HeadlessSession session;
         try
         {
-            session = HeadlessSession.Provision(username, botName, template.Race, template.Gender, template.Level);
+            // Combat templates opt into appearance provisioning: the
+            // per-class starting equipment (ApplyStartingEquipment — the
+            // human create path) is what gives weapon-scaling skills real
+            // damage. Everyone else keeps the plain provision shape.
+            session = template.ProvisionWithAppearance
+                ? HeadlessSession.Provision(username,
+                    new BotAppearanceSpec(template.Race, template.Gender,
+                        ClassAbility: template.AbilityTrees.Count > 0 ? template.AbilityTrees[0] : null,
+                        Name: botName),
+                    template.Level)
+                : HeadlessSession.Provision(username, botName, template.Race, template.Gender, template.Level);
         }
         catch (Exception ex)
         {

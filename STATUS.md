@@ -104,6 +104,19 @@ Phase 2 (t_b4f455b0) both DONE.
 **H = UNKNOWN** — proxy/bot-functional evidence only; the five deferred human
 gates below remain Josh-owned.
 
+**M7 — Adventurer and party bots: 🔶 GATING SPIKE DONE (2026-08-20)**
+One adventurer cleared quest 250 (Solzreed fox cull) end-to-end through the
+M5 contract — accept at the real board → travel → hostile select (CanAttack)
+→ burst Cast rotation → 3/3 REAL kills → 3 corpse loots → quest complete.
+Rig 4/4 green + E2E PASS 1/1 2m15s (37 trace records; evidence
+m7-adventurer-spike-report.json). Gate 2125/0/1. Spike found BUG-016
+(18131-class melee skills never hit their primary target — OPEN, census
+pending) + leash-reset/mana realities now recorded in ROADMAP M7. Spike
+shortcuts on the record: level-50 provisioning, straight-line Move (no
+pathfinding), death/resurrection still nonexistent (top M7 blocker for any
+lethal scenario). Adventurer v1 / Party v1 proper remain open; scheduling
+now unblocked per the roadmap's spike gate. H UNKNOWN.
+
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
 re-provision verified by presence deploy chain) · **B4 playerbot_metadata
