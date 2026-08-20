@@ -1436,7 +1436,9 @@ Split by archetype, not one universal mind.
   *(2026-08-20 status: targeting/skill-priority/loot land in the spike;
   heal/retreat DONE (sustain loop: retreat + heal-item/regen + re-engage,
   fail-closed Starvation, rig E-M7-3/4/5); death recovery DONE (scheduler
-  death watch); distance maintenance / equip upgrades / literal
+  death watch); distance maintenance DONE (standoff band
+  [StandoffMin, EngageRange]: close-in/back-off to the band edge, melee
+  default unchanged, rig E-M7-6/7); equip upgrades / literal
   return-to-NPC leg open)*
 - **Party v1:** invite/join, follow leader, rally, assist target, avoid
   extra pulls, tank/damage/healer roles, wait for missing members,

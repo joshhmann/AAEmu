@@ -125,7 +125,17 @@ HealItemTemplateId defaults to 0 until the right template is verified.
 Spike shortcuts on the record: level-50 provisioning, straight-line Move (no
 pathfinding), death/resurrection (**RESOLVED 2026-08-20** —
 scheduler death watch + CharacterResurrection, see M6 exit blockers below).
-Remaining Adventurer v1: distance maintenance, equip upgrades (needs a new
+**Distance maintenance landed 2026-08-20**: the hunt loop keeps a standoff
+band [StandoffMin, EngageRange] before the cast burst — too far closes in
+(melee default: straight onto the unit, the proven live behavior; ranged:
+to the band edge, never face-planting the target), too close (ranged
+StandoffMin > 0) backs off along the threat→bot vector. Rig E-M7-6/7 green
+(band-edge stop distances asserted through a position-recording runtime);
+melee defaults byte-identical in behavior (EngageRange 3 = the old
+hardcode). Rig gotcha recorded: Character.MaxHp computes from Level via
+FormulaManager — rig tests that set Level must also refill Hp or the
+sustain loop fires on every run.
+Remaining Adventurer v1: equip upgrades (needs a new
 Equip contract action), literal return-to-NPC quest leg. Party v1 open.
 Scheduling unblocked per the roadmap's spike gate. H UNKNOWN.
 
