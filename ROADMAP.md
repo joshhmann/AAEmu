@@ -1440,6 +1440,31 @@ Split by archetype, not one universal mind.
 **Exit test:** one human + three bots complete the curated leveling route
 and a selected group encounter.
 
+**GATING SPIKE — DONE (2026-08-20, Josh-directed no-cards pass, branch
+feat/m7-adventurer-spike):** one adventurer clears the Solzreed fox cull
+(quest 250: accept doodad 5047 → kill 3× fox npc 3492 → auto-complete —
+ids verified against Golden-Route-Solzreed.md + canonical compact.sqlite3)
+end-to-end through the M5 contract: Accept → travel → hunt loop (Observe →
+nearest attackable via CanAttack → SetTarget → burst Cast rotation) →
+Loot → complete. `AdventurerSpikeScenario` (world-agnostic, M3aM4 options
+pattern) dispatched as template `adventurer-spike-fox`. Rig: 4 TUnit tests
+green (kill leg synthetic-but-real-credit per the pre-authorized rig
+convention — bare rig NPCs cannot survive Npc.DoDie); generated trace
+evidence scorecard-explorations/generated/m7-adventurer-spike.{jsonl,md}.
+**E2E PASS 1/1 (2m15s)**: real board accept, real Move legs, 3/3 REAL fox
+kills via DoDie→DoOnMonsterHuntEvents, 3 real corpse loots, quest 250
+completed + dropped, 37 lifecycle-complete trace records (evidence
+/root/aaemu-e2e/logs/m7-adventurer-spike-report.json). Full unit gate
+2125/0/1. Spike surfaced four engine realities now on the record:
+**BUG-016** (18131-class area+Target melee skills never hit their primary
+target — census pending), weapon-less bots deal 0 damage (bridge
+provisioning now applies starting equipment), NPC leash-reset demands burst
+kills, mana starvation shapes rotation depth. **Known spike shortcuts
+(recorded, not hidden):** spike bot provisions at level 50 (chain+contract
+proof, not combat balance); Move is straight-line — no pathfinding; bot
+death/resurrection still does not exist and gates any scenario where a bot
+can die. H stays UNKNOWN — Josh confirms feel.
+
 **Depends on:** M6 exit (including A1) and B1 (combat/quest actor actions).
 **M7 is the largest unestimated chunk on the roadmap** — there is no combat
 AI today beyond Cast/SetTarget — so a scoped spike (one adventurer clearing
