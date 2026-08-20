@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Text;
 
 using AAEmu.Commons.Exceptions;
@@ -130,6 +130,17 @@ public class GameProtocolHandler : BaseProtocolHandler
             stream.Insert(stream.Count, buf, offset, bytes);
             while (stream is { Count: > 0 })
             {
+                // Fewer bytes than the length word — stash the remnant and wait
+                // for more data. PacketStream over-reads log-and-return-0
+                // instead of throwing, so without this guard a 1-byte remnant
+                // makes packetLen == 0 and the loop never advances.
+                if (stream.Count < 2)
+                {
+                    connection.LastPacket = stream;
+                    stream = null;
+                    continue;
+                }
+
                 ushort len;
                 try
                 {
@@ -143,6 +154,17 @@ public class GameProtocolHandler : BaseProtocolHandler
                     stream = null;
                     continue;
                 }
+
+                // A length word too small to hold unk+level+type is not this
+                // protocol (port probes, stray LAN clients). Drop the
+                // connection once instead of logging per garbage segment.
+                if (len < 4)
+                {
+                    Logger.Warn($"Malformed packet (len={len}) from {connection.Ip}; closing game connection");
+                    connection.Shutdown();
+                    return;
+                }
+
                 var packetLen = len + stream.Pos;
                 if (packetLen <= stream.Count)
                 {

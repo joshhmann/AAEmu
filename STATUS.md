@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-13 19:05 PDT · by Nei (t_c9f0d7f6 — canonical sync: M5.1 salvage + Phase 2 vehicle/Housing scope + backtrack truth)
-Branch of record: develop @ 983b35736 (ls-remote verified 2026-08-13 19:00 PT)
+Updated: 2026-08-20 · by Kimi (Josh-directed no-cards cleanup pass: M5 closeout sync, spin-guard fix, hygiene)
+Branch of record: develop @ efb98e4ae (local, ls-remote verified 2026-08-19 by fleet commit 50af336dc)
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
@@ -77,57 +77,37 @@ slave cargo → 3-leg route → sell, 2× 124540 mails); restart E2E kill -9 PAS
 M4 economic/navigation replay = explicit deferred gate)**. Human playtest of
 the integrated release remains the deployment-lane follow-up pending Josh GO.
 
-**M5 — Gameplay Actor Contract: 🔶 A1 + B1 COMPLETE — M5.1: Plant/PackPickup/PutDown/Buy-Sell + control-plane/MCP/consumer DONE; salvage wave + Phase-2 prerequisites + M5.2 Housing.Build OPEN (2026-08-13)**
+**M5 — Gameplay Actor Contract: ✅ COMPLETE (2026-08-17 sync 2026-08-20)**
 A1 (marshal bot steps onto the game loop — the M6-exit-blocking retroactive
 fix) + B1 core action surface (Interact · Loot · UseItem · Mount/Dismount ·
 AcceptQuest · TurnInQuest, each through real engine paths) merged to fork
 develop @ 761d1e81a (Rei gates t_d06d8dd9 / t_ebfc9b35; merged-tree re-verify
-1850/0/1 via Phase 3 t_9340e85d). **M5.1 economic extension — Kimi+Codex-
-verified recovery plan (memo m51-backtrack-recovery-memo-2026-08-13.md,
-canonical sync t_c9f0d7f6):**
-- **DONE (merged to develop):** Plant (t_b1d7c430 — continuation; supersedes
-  t_a69e4998, blocked "do not redispatch") · PackPickup/PutDown (t_64ecf525,
-  Rei gate t_9ca4aa07) · Buy/Sell (t_8741b03d) · control-plane API
-  (t_7b6d7a4b, Rei gate t_29d2273b) · MCP sidecar (t_446228b5, Rei gate
-  t_b5467288) · first consumer — scripted Lane D auction-house scenario
-  (t_52b2b084, Rei gate t_0e01ef42).
-- **SALVAGE WAVE (serial merge; work preserved in kanban workspaces, do NOT
-  re-implement):** ① Deposit/Withdraw t_78ce17a2 (blocked — rebase, drop
-  out-of-scope livestock flake change, renumber 22-25, keep-or-split
-  EconomyDrive extras) ② Harvest t_234da01a (todo) ③ BoardVehicle
-  t_15343fdd (todo) ④ Craft split: rig repair t_6b5ac43e (todo) +
-  implementation t_cffb71ad (todo). All 4 diffs renumber on rebase (enum
-  tail 15-18 vs develop 15-21); never wave >2 builders at the shared tree.
-- **Phase-2 prerequisites (genuine, previously in no card's scope):**
-  LoadPackOntoVehicle t_a7756a00 (blocked) + DriveVehicle t_eaf1754d
-  (blocked) — both must land before Phase 2 can run its vehicle leg.
-  **DONE 2026-08-14 — merged @ 6c2429ae0 + 6edbf0cbb (Rei gates
-  t_aca50468 / t_bc74fd29 ACCEPT).**
-- **Housing.Build = M5.2 contract card t_94761d55 (running)** — Josh-approved
-  Phase-2 scope (marker t_2625be99); **implementation OPEN** (not merged).
-  **DONE 2026-08-14 — merged @ 3396d9ef1 (Rei gate t_ebf36737 ACCEPT).**
-  Phase-2 replay scope (marker t_2625be99) now sequences **Housing.Build
-  FIRST, before farm/storage**, then craft → pack → load/drive vehicle →
-  unload → sell → reward.
-- **BACKTRACK:** Phase 1 t_61a0eebb **BLOCKED/open** — live evidence is
-  min-slice only (1 quest); full-route live replay not yet evidenced
-  (follow-up t_15787275 todo). Phase 2 root t_b4f455b0 **dispatched
-  2026-08-14** (M3a/M4 economic replay; parent re-pointed t_a69e4998 →
-  t_b1d7c430; all Phase-2 prerequisites merged per scope marker t_2625be99).
-  Human test packet t_2b654349 todo (Rei).
-- **H = UNKNOWN** — proxy/bot-functional evidence only; H stays U until Josh
-  tests feel. Remaining: threading-boundary verification, M5 core exit test,
-  Phase-2 live replay (t_b4f455b0) evidence.
+1850/0/1 via Phase 3 t_9340e85d). **M5.1 economic extension — ALL MERGED:**
+Plant (t_b1d7c430) · PackPickup/PutDown (t_64ecf525) · Buy/Sell (t_8741b03d) ·
+control-plane API (t_7b6d7a4b) · MCP sidecar (t_446228b5) · first consumer
+(t_52b2b084) · salvage wave Deposit/Withdraw (t_78ce17a2), Harvest
+(t_234da01a), BoardVehicle (t_15343fdd), Craft rig+impl (t_6b5ac43e,
+t_cffb71ad) — all done per kanban. Phase-2 prerequisites LoadPackOntoVehicle
+(t_a7756a00) + DriveVehicle (t_eaf1754d) merged @ 6c2429ae0 + 6edbf0cbb.
+Housing.Build = M5.2 merged @ 3396d9ef1 (Rei gate t_ebf36737 ACCEPT).
+**M5.3 core surface (Observe/Move/Stop/Target/Cast): MERGED 2026-08-17 @
+6b4ffe1d2** — canonical verification + exit scenario (t_c73d6293), Move rework
+(8e9c0713a), SetTarget broadcast + ExecutionBoundary rework (t_09e1c671, Rei
+gate t_5fa9bd73 ACCEPT), full gate 2102/0/1 on merged tree. hytest GM kit
+(level/labor/gold/portals) merged @ 782ac3b3c (t_e1cf82c9, Josh ruling
+2026-08-17) + .teleport mirage (t_42e24eca) — human-test fast-forward lane
+LIVE. BACKTRACK Phase 1 (t_61a0eebb + full-route follow-up t_15787275) and
+Phase 2 (t_b4f455b0) both DONE.
+**H = UNKNOWN** — proxy/bot-functional evidence only; the five deferred human
+gates below remain Josh-owned.
 
-**M6 exit blockers (soak limitations):** regression t_eecc5604 (physics-warning
-budget 0.03/min vs 0 in 6h soak) · PlayerBotScheduler NOT enabled in the soak
-run — scheduler-driven soak still required if M6 exit mandates it · adopt-heal
-fix t_555ed207 awaiting Rei gate. **Exit-label note (reconciled 2026-08-12,
-bot-backtrack):** soak verdict = "passed revised approved budgets" (original
-zero-warning threshold not met; A1 landed AFTER the soak, merged 761d1e81a) —
-full M6 exit label NOT claimed; **B4 restart-persistence scenario (bot
-identity/inventory/position/schedule survive restart) = explicit deferred
-gate**.
+**M6 exit blockers (as of 2026-08-20):** physics-warning regression
+t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
+re-provision verified by presence deploy chain) · PlayerBotScheduler
+scheduler-driven soak still open if M6 exit mandates it. **Exit-label note
+(reconciled 2026-08-12, bot-backtrack):** soak verdict = "passed revised
+approved budgets" — full M6 exit label NOT claimed; **B4 restart-persistence
+scenario = explicit deferred gate**.
 
 **M6 — Deterministic playerbot framework: 🔶 presence-demo hotfix chain DONE — parity + soak open**
 Presence demo (3 citizen bots embody + roam AT Josh's spawn, zone 179)
@@ -184,20 +164,33 @@ skips at the milestone gate.
 
 ## Open tasks (kanban, AAEmu lane)
 
-| ID | Title | Lane | Status |
-|----|-------|------|--------|
-| — | In-client bot sighting | Josh / Rei | ✅ **ACCEPTED** 08-09 — Josh saw bots; Rei wire-confirmed 3 distinct bodies (t_509ef8c2); rendered screenshots pending Josh's client |
-| t_1ed9881f | M6 exit test: 6h/10-bot soak (numeric budgets) | hx-coder | ✅ done 08-10 — full 6h, 10/10, 0 crash/dc, RSS flat; **budget FAIL** on physics warnings (11 transient) → t_eecc5604 |
-| t_eecc5604 | M6 regression: physics slow-thread warnings 0.03/min vs 0 (11x in 6h soak) | tai | 🔶 running — RCA or budget recalibration (precedent t_2006451f) |
-| t_555ed207 | Fix: adopt-heal force-stamps demo blob — looks collapse to 1 on reboot | tai | 🔶 blocked — fix pushed cdf6d4a62, awaiting Rei gate |
-| t_f198bb0e | M1-5d: harness extension — 14 unsupported act families (T3 SKIPs) | hx-coder | ⏳ ready |
-| t_913c1d4a | verifier stale stub-registry false positives (CheckGuard/ItemGroup — the 3 WARNs) | hx-coder | ⏳ ready |
-| t_7b6d7a4b | Control plane API: contract-backed surface (replaces BotDriveBridge) — token auth, enqueue-only, no-admin, crash isolation | tai | ✅ done — Rei gate t_29d2273b ACCEPT (17 /api/act endpoints verified); merged |
-| t_446228b5 | MCP sidecar: contract action tools (observe/move/interact/accept_quest/...) | tai | ✅ done — Rei gate t_b5467288 (tool mapping, live end-to-end, crash isolation) |
-| t_52b2b084 | First consumer: scripted Lane D auction-house scenario via contract API | tai | ✅ done — Rei gate t_0e01ef42 (Lane D no-Josh loop proof); density-25 PASS w/ trace_records (983b35736) |
-| t_5999b370 | AAEMU authority envelope: draft + validate + Josh decision packet | nei | 🔶 running (draft done, pending Josh approval) |
-| t_bcf976ad | Wiki M0/M1 update — implement wiki-audit.md proposals | hx-researcher | blocked |
-| — | feat/quest-scenario-harness (6e367585: T3 census + runnability.md + SCORECARD M1-5 entry) merge to develop | Tai | ⏳ no card yet |
+**2026-08-20 cleanup sync (Kimi, Josh-directed):** every AAEmu card listed
+here on 08-13 is now `done` in kanban — including the M5.1 salvage wave
+(t_78ce17a2 / t_234da01a / t_15343fdd / t_6b5ac43e / t_cffb71ad), M6
+regression t_eecc5604, adopt-heal t_555ed207, harness extension t_f198bb0e,
+verifier stub-registry t_913c1d4a, authority envelope t_5999b370 (ACTIVATED,
+closed t_b1002aad), and both backtrack phases (t_61a0eebb / t_15787275 /
+t_b4f455b0). Human test packet t_2b654349 delivered. No open AAEmu-lane
+engineering cards remain.
+
+**New 2026-08-20 — production defect found + fixed (this pass):** a stray
+half-closed LAN client wedged the stream-port (:1250) receive loop into a
+zero-progress spin (~20k ERROR lines/sec, 174% CPU) because PacketStream
+over-reads log-and-return-0 instead of throwing, making packetLen == 0 on a
+1-byte remnant. Fixed on branch fix/protocol-spin-guard: truncation guard +
+malformed-length close in Stream/Game/Game-side-Login protocol handlers +
+5 regression tests. Prod mitigation: game container restarted 2026-08-20
+(spin cleared, boot clean, 0 FATAL).
+
+**Known deployment gap:** prod CT 133 image 32978f3613e3 = develop @ ~81676c0d6
+(08-17 teleport-mirage). Missing from prod: M5.3 rework (6b4ffe1d2), hytest GM
+kit (782ac3b3c), spin-guard fix. Rebuild + redeploy recommended before QAT.
+
+**Remaining Josh-owned (deferred gates, bots cannot substitute):**
+M1 Solzreed human route · original M2 two-player baseline · M3a contract
+replay · M4 economic/navigation replay · M6 B4 restart scenario. hytest GM
+kit + .teleport mirage + GM access (t_01a893c7, deployed t_d8658d50) are the
+fast-forward lane for these.
 
 ## Legacy upstream item (predates one-way policy)
 

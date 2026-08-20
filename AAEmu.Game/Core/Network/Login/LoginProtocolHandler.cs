@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
 using AAEmu.Commons.Exceptions;
@@ -58,6 +58,17 @@ public class LoginProtocolHandler : BaseProtocolHandler
         stream.Insert(stream.Count, buf, offset, bytes);
         while (stream != null && stream.Count > 0)
         {
+            // Fewer bytes than the length word — stash the remnant and wait
+            // for more data. PacketStream over-reads log-and-return-0 instead
+            // of throwing, so without this guard a 1-byte remnant makes
+            // packetLen == 0 and the loop never advances.
+            if (stream.Count < 2)
+            {
+                _lastPacket = stream;
+                stream = null;
+                continue;
+            }
+
             ushort len;
             try
             {
