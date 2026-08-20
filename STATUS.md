@@ -135,8 +135,20 @@ melee defaults byte-identical in behavior (EngageRange 3 = the old
 hardcode). Rig gotcha recorded: Character.MaxHp computes from Level via
 FormulaManager — rig tests that set Level must also refill Hp or the
 sustain loop fires on every run.
-Remaining Adventurer v1: equip upgrades (needs a new
-Equip contract action), literal return-to-NPC quest leg. Party v1 open.
+**Equip contract action landed 2026-08-20** (M7 equip-upgrades
+prerequisite): `IGameplayActor.Equip(itemTemplateId)` moves a bagged item
+into equipment through the real CSSwapItemsPacket Inventory→Equipment path
+(Inventory.SplitOrMoveItem, SwapItems task) — the engine's
+EquipmentContainer.CanAccept validates slot compatibility before anything
+moves, and the slot pick uses the engine's own GetAllowedGearSlots table
+(first EMPTY allowed slot, else first allowed = client equip-over-occupied
+swap). Full idempotency discipline (same-key pre-flight refusal + fresh-key
+engine backstop). Rig 7/7 (GameplayActorEquipTests). Engine gap on record:
+no level/requirement gate on the equip path (CanAccept checks slot only).
+Rig gotcha recorded: SeedEquipItemTemplate must run AFTER CreateActor
+(ItemManager is DI-only, seeded by the rig's Seed()).
+Remaining Adventurer v1: equip upgrades (spike adoption of Equip),
+literal return-to-NPC quest leg. Party v1 open.
 Scheduling unblocked per the roadmap's spike gate. H UNKNOWN.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression

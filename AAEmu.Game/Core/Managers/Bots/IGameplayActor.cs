@@ -129,6 +129,23 @@ public interface IGameplayActor
     ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0, string? idempotencyKey = null);
 
     /// <summary>
+    /// Equips a bagged item through the real engine path — the exact
+    /// CSSwapItemsPacket Inventory→Equipment move:
+    /// Inventory.SplitOrMoveItem(SwapItems). The target slot comes from the
+    /// engine's own EquipmentContainer.GetAllowedGearSlots(template): the
+    /// first EMPTY allowed slot, else the first allowed slot (client swap
+    /// semantics — the occupant moves back through the same call).
+    /// Validates: item present in bag, template equippable; the engine's
+    /// EquipmentContainer.CanAccept validates slot compatibility before
+    /// anything moves. Equip-credit idempotency: a retry whose instance
+    /// already left the bag is refused pre-flight (StateTransition).
+    /// Note: the engine gates equips on slot compatibility ONLY — there is
+    /// no engine level/requirement check on this path (CanAccept), so
+    /// callers wanting level discipline must check themselves.
+    /// </summary>
+    ActorRequest Equip(uint itemTemplateId, string? idempotencyKey = null);
+
+    /// <summary>
     /// Mounts a mate through the real engine path (MateManager.MountMate —
     /// the CSMountMatePacket call). Requires the character's real
     /// GameConnection (the packet path resolves the rider from
@@ -612,7 +629,10 @@ public enum ActorActionType : byte
     /// One engine craft step through CharacterCraft.Craft (the CSExecuteCraft
     /// path, count=1) — M5.1 economy surface.
     /// </summary>
-    Craft = 32
+    Craft = 32,
+
+    /// <summary>Equipping a bagged item through Inventory.SplitOrMoveItem (CSSwapItemsPacket Inventory→Equipment path).</summary>
+    Equip = 33
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

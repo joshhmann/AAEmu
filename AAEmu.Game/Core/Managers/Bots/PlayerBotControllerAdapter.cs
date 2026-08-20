@@ -70,6 +70,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0, string? idempotencyKey = null)
         => Actor.UseItem(itemTemplateId, targetObjId, idempotencyKey);
 
+    public ActorRequest Equip(uint itemTemplateId, string? idempotencyKey = null)
+        => Actor.Equip(itemTemplateId, idempotencyKey);
+
     public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null)
         => Actor.Mount(mateObjId, idempotencyKey);
 
