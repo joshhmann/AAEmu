@@ -1333,7 +1333,7 @@ proves feel. Replayed via normal gameplay services + auditable traces
 | 2 | **Original M2 human baseline** (two players, no GM repair) | Amended census/reset scope COMPLETE (G1 2026-08-10); human baseline open | Phase 1: contract-level replay of the curated route from reproducible reset; Josh's two-player baseline remains Josh-owned (bots may stand in for the AUTOMATED baseline only — never H=2) |
 | 3 | **M3a contract replay** (housing/farming through contract actions) | M3a closed on scripted-actor proxy evidence (in-memory actors, reflection, GM inventory, direct service calls — predates A1/B1) | Phase 2: replay via M5.1/M5.2 contract actions on a real server, real engine paths, no direct DB/reflection/GM repair — **sequenced route: Housing.Build FIRST (BuildHouse contract, M5.2 t_94761d55, merged @ 3396d9ef1), then farm/storage (Plant/Harvest), then craft → pack → load/drive vehicle → unload → sell → reward**; labor + mail payout conservation (−60/pack, 124540/pack SpecialtyManager); machine-readable traces; process-level restart evidence (M4_2TradePackRestart / M4Vehicles / M3bExitPersistence re-run as-is); H stays UNKNOWN (proxy/bot-functional, never H=2) |
 | 4 | **M4 economic/navigation replay** (farm → craft → pack → load → navigate → unload → sell → reward) | M4 closed on M4ExitIntegratedSessionTests (4 scripted actors; integrated rig assigns zones/transforms directly, manually attaches cargo) | Phase 2: replay via M5.1 contract actions incl. **LoadPackOntoVehicle (t_a7756a00, merged @ 6c2429ae0) + DriveVehicle (t_eaf1754d, merged @ 6edbf0cbb) — both prerequisites DONE 2026-08-14**; route = craft → pack → load/drive vehicle → unload → sell → reward (Housing.Build precedes per gate #3); navigation/travel from normal movement/vehicle controls — direct Transform/ZoneId assignment FAILS the gate; **labor (−60/pack) + mail payout (124540/pack, SpecialtyManager) conservation required**; preserve + rerun process-level restart E2Es (M4_2TradePackRestart, M4Vehicles); Rei verifies traces + conservation |
-| 5 | **M6 B4 restart scenario** (bot identity/inventory/position/schedule survive restart) | 6h soak PASSED under revised approved budgets; A1 landed after soak; B4 metadata store not yet built | Phase 3: A1/B1 verified on merged develop; B4 metadata persistence implemented; bot-world restart test (2 checkpoints); soak verdict stays "passed revised approved budgets" |
+| 5 | **M6 B4 restart scenario** (bot identity/inventory/position/schedule survive restart) | 6h soak PASSED under revised approved budgets; A1 landed after soak; B4 metadata store BUILT 2026-08-20 (`playerbot_metadata`, below) | Phase 3: A1/B1 verified on merged develop; B4 metadata persistence implemented 2026-08-20; bot-world restart test (2 checkpoints) re-run with DIRECT metadata assertions — PASS |
 
 **Deferred-gate execution (2026-08-12, Phase 3 t_9340e85d):** gate #5 (M6 B4
 restart scenario) EXECUTED:
@@ -1358,6 +1358,23 @@ restart scenario) EXECUTED:
   store (schedule/profession/home as persisted data) is still not built;
   the restart replay proves persistence through the ordinary Character/save
   path + deterministic schedule re-arm.
+
+**Deferred-gate #5 follow-up EXECUTED (2026-08-20, Josh-directed no-cards
+pass):** the B4 `playerbot_metadata` store is now BUILT —
+`PlayerBotMetadataStore` (personality/profession/home/schedule/behavior/
+planner state keyed by characters.id; self-healing schema +
+SQL/updates/2026-08-20 migration + base-dump entry; write-through REPLACE on
+mutation — hard-kill safe — plus a dirty-row flush inside the SaveManager
+transaction). The presence demo resolves home explicit-env → persisted →
+template (stored state is load-bearing on adopt, not decorative) and records
+home + roam-loop schedule per bot. `B4BotRestartPersistenceE2eTests` now
+asserts the store DIRECTLY: per checkpoint, row exists pre-restart with
+has_home=1 + env-pinned home + roam-loop schedule, and pre/post-restart
+snapshots are EQUAL across both process restarts — **PASS 1/1 (4m39s,
+evidence gate-m6-reconcile-b4-20260820-162058.md)**; the deterministic
+re-arm log lines stay as secondary evidence. Full unit gate 2121/0/1 (15
+new store tests). The audit-trace flush half of the B4 line item remains
+open. H stays UNKNOWN — Josh's feel verdict is untouched.
 
 **Reconciliation note (2026-08-13, canonical sync t_c9f0d7f6 — provenance:
 Kimi independent engineering memo `m51-backtrack-recovery-memo-2026-08-13.md`
@@ -1925,8 +1942,9 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   roam as a module with zero scheduler changes; delete/absorb the dead
   PlayerBotBehaviorController stack; new module = one file + one config line.
 - B4 (S-M) playerbot_metadata store (personality, schedule, profession, home,
-  planner state — the M6.0 list that has no table today) + audit-trace flush;
-  2-checkpoint bot-world restart test.
+  planner state) — **store DONE 2026-08-20** (`PlayerBotMetadataStore` +
+  presence-demo wiring + 2-checkpoint restart replay asserting metadata
+  directly, PASS); audit-trace flush still open.
 
 ### G4 — Living Village content (M8)
 
