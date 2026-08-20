@@ -1433,6 +1433,11 @@ Split by archetype, not one universal mind.
 - **Adventurer v1:** curated quest route, hostile targeting, fixed skill
   priority, distance maintenance, heal/retreat, loot, equip upgrades,
   return to quest NPC, death recovery
+  *(2026-08-20 status: targeting/skill-priority/loot land in the spike;
+  heal/retreat DONE (sustain loop: retreat + heal-item/regen + re-engage,
+  fail-closed Starvation, rig E-M7-3/4/5); death recovery DONE (scheduler
+  death watch); distance maintenance / equip upgrades / literal
+  return-to-NPC leg open)*
 - **Party v1:** invite/join, follow leader, rally, assist target, avoid
   extra pulls, tank/damage/healer roles, wait for missing members,
   resurrect, mount + travel together
