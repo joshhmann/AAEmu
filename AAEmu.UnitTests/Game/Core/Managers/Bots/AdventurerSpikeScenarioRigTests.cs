@@ -59,12 +59,14 @@ public class AdventurerSpikeScenarioRigTests
         private readonly HeadlessSession _session;
         private readonly int _foxCount;
         private readonly bool _foxesAlive;
+        private readonly Vector3 _foxOffset;
 
-        public SpikeFixtureWorldAdapter(HeadlessSession session, int foxCount, bool foxesAlive = true)
+        public SpikeFixtureWorldAdapter(HeadlessSession session, int foxCount, bool foxesAlive = true, Vector3 foxOffset = default)
         {
             _session = session;
             _foxCount = foxCount;
             _foxesAlive = foxesAlive;
+            _foxOffset = foxOffset;
             SpawnFoxes();
         }
 
@@ -72,7 +74,7 @@ public class AdventurerSpikeScenarioRigTests
         {
             for (var i = 0; i < _foxCount; i++)
             {
-                var position = HuntingGround + new Vector3((i % 2 == 0 ? 1.5f : -1.5f), (i - 1) * 1.5f, 0);
+                var position = HuntingGround + _foxOffset + new Vector3((i % 2 == 0 ? 1.5f : -1.5f), (i - 1) * 1.5f, 0);
                 var fox = new Npc
                 {
                     ObjId = FirstFoxObjId + (uint)i,
@@ -480,6 +482,118 @@ public class AdventurerSpikeScenarioRigTests
         await Assert.That(result.FailStage).IsEqualTo("SUSTAIN");
         await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.Starvation);
         await Assert.That(session.Character.Quests.HasQuestCompleted(AdventurerSpikeScenario.FoxQuestId)).IsFalse();
+    }
+
+    /// <summary>
+    /// Position-recording runtime wrapper (distance-maintenance evidence):
+    /// delegates to the rig runtime and snapshots the character position
+    /// after every driven Move leg, so tests can assert WHERE a range leg
+    /// actually stopped (band edge vs on top of the unit).
+    /// </summary>
+    internal sealed class PositionRecordingRuntime(AdventurerSpikeScenario.ISpikeRuntime inner) : AdventurerSpikeScenario.ISpikeRuntime
+    {
+        /// <summary>(target id, destination, end position) per driven Move leg.</summary>
+        public List<(uint TargetId, Vector3? Destination, Vector3 End)> Moves { get; } = [];
+
+        public ActorRequest Drive(GameplayActor actor, ActorRequest request, TimeSpan maxWait)
+        {
+            var driven = inner.Drive(actor, request, maxWait);
+            if (request.Action == ActorActionType.Move)
+                Moves.Add((request.TargetId, request.Destination, actor.Character.Transform.World.Position));
+            return driven;
+        }
+
+        public bool TargetDown(Npc target) => inner.TargetDown(target);
+        public bool EnsureKillCredit(GameplayActor actor, Npc target) => inner.EnsureKillCredit(actor, target);
+        public void PrepareLootCorpse(Npc corpse) => inner.PrepareLootCorpse(corpse);
+        public void RecoveryTick(Character character) => inner.RecoveryTick(character);
+    }
+
+    /// <summary>
+    /// E-M7-6: ranged standoff back-off — with StandoffMin 5 / EngageRange 8
+    /// and no hunting ground (travel = MoveToUnit straight onto fox 0), the
+    /// bot lands inside the minimum band and must BACK OFF to the band edge
+    /// before casting: exactly one non-unit Move leg (the back-off) ends
+    /// ~7.5 m (EngageRange − 0.5 arrival slack, ± the 0.5 m arrival radius)
+    /// from the fox, and HUNT-RANGE-BACK precedes the first kill.
+    /// </summary>
+    [Test]
+    public async Task AdventurerSpike_RangeKeep_TooClose_BacksOffToBandEdge()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m7rangeback");
+        session.Character.Level = 10;
+        // Full vitals: MaxHp computes from Level via FormulaManager (~600 at
+        // 10) while CreateActor seeds Hp=100 — the sustain loop would fire
+        // mid-run and its retreat would corrupt the range geometry.
+        session.Character.Hp = session.Character.MaxHp;
+
+        var adapter = new SpikeFixtureWorldAdapter(session, foxCount: 3);
+        var runtime = new PositionRecordingRuntime(new RigSpikeRuntime(seedLoot: true));
+        var options = RigOptions() with { HuntingGround = null, StandoffMin = 5f, EngageRange = 8f };
+        var result = AdventurerSpikeScenario.Run(session.Character, adapter, runtime, options);
+
+        WriteTraceEvidence(result);
+
+        await Assert.That(result.Passed, "range-back spike FAILED:\n" + result.Evidence()).IsTrue();
+        var stageNames = result.Stages.Select(s => s.Stage).ToList();
+        await Assert.That(stageNames).Contains("HUNT-RANGE-BACK");
+        await Assert.That(stageNames.IndexOf("HUNT-RANGE-BACK") < stageNames.IndexOf("HUNT-KILL")).IsTrue();
+
+        // The back-off is the leg right after travel (MoveToUnit onto fox
+        // 0: TargetId = fox, Destination null). It must be a band-point
+        // MoveTo ending [7.5 − 0.6, 7.5 + 0.6] from fox 0 — NOT on top of
+        // the unit (a melee close-in would end within 0.5 m).
+        var fox0 = session.World.GetNpc(FirstFoxObjId);
+        var travelIndex = runtime.Moves.FindIndex(m => m.TargetId == FirstFoxObjId && m.Destination == null);
+        await Assert.That(travelIndex, "travel leg (MoveToUnit fox 0) recorded").IsGreaterThanOrEqualTo(0);
+        var backOff = runtime.Moves[travelIndex + 1];
+        await Assert.That(backOff.TargetId, "back-off is a band-point MoveTo").IsEqualTo(0u);
+        await Assert.That(backOff.Destination.HasValue, "back-off is a band-point MoveTo").IsTrue();
+        var stopDistance = Vector3.Distance(backOff.End, fox0.Transform.World.Position);
+        await Assert.That(stopDistance, "back-off must stop at the band edge").IsGreaterThan(6.9f);
+        await Assert.That(stopDistance, "back-off must stop at the band edge").IsLessThan(8.1f);
+    }
+
+    /// <summary>
+    /// E-M7-7: ranged close-in stops at the band edge — foxes spawned 20 m
+    /// past the hunting ground, so after travel the nearest fox is ~18.6 m
+    /// out (&gt; EngageRange 8). A melee loop (MoveToUnit) would land within
+    /// 0.5 m of the unit; the ranged loop must close only to the band edge
+    /// (~7.5 m). Asserted on the first post-travel Move leg's end position.
+    /// </summary>
+    [Test]
+    public async Task AdventurerSpike_RangeKeep_TooFar_ClosesToBandEdgeNotUnit()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m7rangeclose");
+        session.Character.Level = 10;
+        session.Character.Hp = session.Character.MaxHp; // see E-M7-6 — full vitals keep sustain out of the geometry
+
+        var adapter = new SpikeFixtureWorldAdapter(session, foxCount: 3, foxOffset: new Vector3(0, 20, 0));
+        var runtime = new PositionRecordingRuntime(new RigSpikeRuntime(seedLoot: true));
+        var options = RigOptions() with { StandoffMin = 5f, EngageRange = 8f };
+        var result = AdventurerSpikeScenario.Run(session.Character, adapter, runtime, options);
+
+        WriteTraceEvidence(result);
+
+        await Assert.That(result.Passed, "range-close spike FAILED:\n" + result.Evidence()).IsTrue();
+        var stageNames = result.Stages.Select(s => s.Stage).ToList();
+        await Assert.That(stageNames).Contains("HUNT-CLOSE");
+        await Assert.That(stageNames).DoesNotContain("HUNT-RANGE-BACK");
+
+        // The leg right after travel (MoveTo the hunting ground) is the
+        // ranged close-in: it must be a band-point MoveTo (Destination set —
+        // a melee MoveToUnit carries none) ending [6.9, 8.1] m from fox 0 —
+        // a MoveToUnit close-in would end within 0.5 m of the unit.
+        var fox0 = session.World.GetNpc(FirstFoxObjId);
+        var travelIndex = runtime.Moves.FindIndex(m => m.Destination == HuntingGround);
+        await Assert.That(travelIndex, "travel leg (MoveTo hunting ground) recorded").IsGreaterThanOrEqualTo(0);
+        var closeIn = runtime.Moves[travelIndex + 1];
+        await Assert.That(closeIn.Destination.HasValue, "ranged close-in is a band-point MoveTo, not MoveToUnit onto the fox").IsTrue();
+        var stopDistance = Vector3.Distance(closeIn.End, fox0.Transform.World.Position);
+        await Assert.That(stopDistance, "close-in must stop at the band edge").IsGreaterThan(6.9f);
+        await Assert.That(stopDistance, "close-in must stop at the band edge").IsLessThan(8.1f);
     }
 
     /// <summary>Worktree-tolerant repo root (M53 pattern; accepts .git dir OR file).</summary>

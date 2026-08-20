@@ -15,7 +15,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///
 ///   accept (quest 250 at the notice-board doodad 5047) → travel (Move to
 ///   the hunting ground) → hunt loop (Observe → nearest attackable fox
-///   (npc 3492) → SetTarget → Cast rotation) ×3 → Loot each corpse →
+///   (npc 3492) → SetTarget → standoff-band check (EngageRange/StandoffMin)
+///   → Cast rotation) ×3 → Loot each corpse →
 ///   auto-complete (250 is an auto-report quest — no return leg)
 ///
 /// Quest data verified against Docs/wiki/Golden-Route-Solzreed.md §1a (step
@@ -156,6 +157,26 @@ public static class AdventurerSpikeScenario
 
         /// <summary>Bounded recovery rounds before the run fails (Starvation). Default 30.</summary>
         public int SustainMaxRounds { get; init; } = 30;
+
+        // ---- M7 Adventurer v1: distance maintenance (standoff band) ----
+
+        /// <summary>
+        /// Max distance (m) from which the rotation may start — beyond it the
+        /// hunt loop closes in before casting. Default 3: the live rotation
+        /// lead (18131) reaches 4 m; 3 leaves 1 m of slack against roaming
+        /// prey (the run-4 live failure signature was endless TooFarRange).
+        /// </summary>
+        public float EngageRange { get; init; } = 3f;
+
+        /// <summary>
+        /// Min comfortable distance (m) — 0 disables the back-off (melee
+        /// default: the bot closes straight onto the unit, the proven live
+        /// behavior). When &gt; 0 (ranged/kiting builds) the hunt loop keeps
+        /// a standoff band [StandoffMin, EngageRange]: closer than
+        /// StandoffMin it backs off to the band edge, farther than
+        /// EngageRange it closes to the band edge instead of the unit.
+        /// </summary>
+        public float StandoffMin { get; init; } = 0f;
 
         /// <summary>
         /// Heal item template used once per recovery round through the real
@@ -393,19 +414,17 @@ public static class AdventurerSpikeScenario
                     break;
                 }
 
-                // Foxes ROAM (live AI): close into melee reach before casting
-                // and after every range refusal, or the 4 m rotation starves
-                // (run-4 live failure signature: endless TooFarRange).
-                if (Vector3.Distance(character.Transform.World.Position, target.Transform.World.Position) > 3f)
-                {
-                    var closeIn = actor.MoveToUnit(target.ObjId, options.TravelSpeed, options.TravelTimeout);
-                    Collect(actor, traceRecords);
-                    stages.Add(Stage("HUNT-CLOSE", target.ObjId, closeIn));
-                    closeIn = runtime.Drive(actor, closeIn, options.TravelTimeout);
-                    Collect(actor, traceRecords);
-                    if (closeIn.State != ActorLifecycleState.Completed)
-                        continue; // leg failed — re-observe next round (bounded by attempts)
-                }
+                // DISTANCE MAINTENANCE (M7 Adventurer v1): keep the fight
+                // inside the standoff band [StandoffMin, EngageRange] before
+                // casting. Foxes ROAM (live AI): the band is re-checked
+                // every hunt round, or the 4 m rotation starves (run-4 live
+                // failure signature: endless TooFarRange). Melee default
+                // (StandoffMin 0): close straight onto the unit — the proven
+                // behavior. Ranged (StandoffMin > 0): close to / back off to
+                // the band edge, never onto the unit. A failed leg re-observes
+                // next round (bounded by attempts).
+                if (!MaintainRange(character, actor, target, runtime, options, stages, traceRecords))
+                    continue;
 
                 // Cast the rotation as a COMBO CHAIN: every skill in the
                 // rotation is cast once per burst round (Rejected ones are
@@ -640,6 +659,69 @@ public static class AdventurerSpikeScenario
         }
 
         return character.MaxHp > 0 && (float)character.Hp / character.MaxHp >= options.ResumeThreshold;
+    }
+
+    /// <summary>
+    /// M7 distance maintenance: one band check before the cast burst. In
+    /// band [StandoffMin, EngageRange] → true, cast. Too close (ranged only)
+    /// → HUNT-RANGE-BACK: a short Move to the band edge along the threat→bot
+    /// vector. Too far → HUNT-CLOSE: melee (StandoffMin 0) closes straight
+    /// onto the unit (MoveToUnit — the proven live behavior); ranged closes
+    /// to the band edge instead, so a kiting build never face-plants the
+    /// target. Returns false when a needed leg did not complete — the caller
+    /// re-observes next round (bounded by attempts).
+    /// </summary>
+    private static bool MaintainRange(Character character, GameplayActor actor, Npc target,
+        ISpikeRuntime runtime, SpikeOptions options,
+        List<BotScenarioRunner.ScenarioStageVerdict> stages, List<ActorAuditRecord> traceRecords)
+    {
+        var botPos = character.Transform.World.Position;
+        var targetPos = target.Transform.World.Position;
+        var distance = Vector3.Distance(botPos, targetPos);
+
+        if (options.StandoffMin > 0f && distance < options.StandoffMin)
+        {
+            var backOff = actor.MoveTo(BandPoint(botPos, targetPos, options), options.TravelSpeed, options.TravelTimeout);
+            Collect(actor, traceRecords);
+            backOff = runtime.Drive(actor, backOff, options.TravelTimeout);
+            Collect(actor, traceRecords);
+            var backStage = Stage("HUNT-RANGE-BACK", target.ObjId, backOff);
+            stages.Add(backStage with
+            {
+                StatusObserved = $"{backStage.StatusObserved} [dist {distance:F1} < standoff {options.StandoffMin:F1}]"
+            });
+            return backOff.State == ActorLifecycleState.Completed;
+        }
+
+        if (distance <= options.EngageRange)
+            return true;
+
+        var closeIn = options.StandoffMin > 0f
+            ? actor.MoveTo(BandPoint(botPos, targetPos, options), options.TravelSpeed, options.TravelTimeout)
+            : actor.MoveToUnit(target.ObjId, options.TravelSpeed, options.TravelTimeout);
+        Collect(actor, traceRecords);
+        closeIn = runtime.Drive(actor, closeIn, options.TravelTimeout);
+        Collect(actor, traceRecords);
+        var closeStage = Stage("HUNT-CLOSE", target.ObjId, closeIn);
+        stages.Add(closeStage with
+        {
+            StatusObserved = $"{closeStage.StatusObserved} [dist {distance:F1} > engage {options.EngageRange:F1}]"
+        });
+        return closeIn.State == ActorLifecycleState.Completed;
+    }
+
+    /// <summary>
+    /// The standoff-band destination: on the bot↔target line, just inside
+    /// the far band edge (EngageRange − 0.5, floored at StandoffMin) so the
+    /// 0.5 m arrival radius cannot leave the bot hovering out of band.
+    /// </summary>
+    private static Vector3 BandPoint(Vector3 botPos, Vector3 targetPos, SpikeOptions options)
+    {
+        var away = botPos - targetPos;
+        if (away.LengthSquared() < 0.01f)
+            away = new Vector3(1, 0, 0); // stacked on the target — arbitrary direction
+        var stopRange = Math.Max(options.StandoffMin, options.EngageRange - 0.5f);
+        return targetPos + Vector3.Normalize(away) * stopRange;
     }
 
     /// <summary>
