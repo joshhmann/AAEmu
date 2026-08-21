@@ -6,6 +6,7 @@ using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Templates;
@@ -118,7 +119,7 @@ public class AdventurerSpikeScenarioRigTests
     /// exact call Npc.DoDie makes for a character killer), and seeds the
     /// corpse's loot container through the rig's real container surface.
     /// </summary>
-    internal sealed class RigSpikeRuntime(bool seedLoot, bool healOnRecovery = true) : AdventurerSpikeScenario.ISpikeRuntime
+    internal sealed class RigSpikeRuntime(bool seedLoot, bool healOnRecovery = true, uint lootTemplateId = 0, uint neverKillObjId = 0) : AdventurerSpikeScenario.ISpikeRuntime
     {
         public ActorRequest Drive(GameplayActor actor, ActorRequest request, TimeSpan maxWait)
         {
@@ -135,6 +136,11 @@ public class AdventurerSpikeScenarioRigTests
 
         public bool EnsureKillCredit(GameplayActor actor, Npc target)
         {
+            // Undamageable-prey seam (E-M7-9): this fixture fox never takes
+            // the killing blow — the live 2026-08-20 fox pinned at full HP
+            // across 100+ successful casts.
+            if (target.ObjId == neverKillObjId)
+                return false;
             // Rig-faked damage (documented): bare fixture NPCs carry no
             // template/AI/spawner scaffolding for a full Npc.DoDie, so the
             // killing blow is applied through the REAL quest-credit entry
@@ -148,7 +154,8 @@ public class AdventurerSpikeScenarioRigTests
         public void PrepareLootCorpse(Npc corpse)
         {
             if (seedLoot)
-                GameplayActorTestRig.SeedLootContainer(corpse, (GameplayActorTestRig.TestItemTemplateId, 1));
+                GameplayActorTestRig.SeedLootContainer(corpse,
+                    (lootTemplateId != 0 ? lootTemplateId : GameplayActorTestRig.TestItemTemplateId, 1));
         }
 
         public void RecoveryTick(Character character)
@@ -594,6 +601,77 @@ public class AdventurerSpikeScenarioRigTests
         var stopDistance = Vector3.Distance(closeIn.End, fox0.Transform.World.Position);
         await Assert.That(stopDistance, "close-in must stop at the band edge").IsGreaterThan(6.9f);
         await Assert.That(stopDistance, "close-in must stop at the band edge").IsLessThan(8.1f);
+    }
+
+    /// <summary>
+    /// E-M7-8: equip upgrades — every corpse carries an equippable fixture
+    /// sword; after each loot the hunt loop evaluates the bag and equips
+    /// through the Equip contract action: corpse 1's sword takes the empty
+    /// Mainhand, corpse 2's the empty Offhand, corpse 3's stays bagged
+    /// (equal template Level — not an upgrade). HUNT-EQUIP stages record
+    /// both equips; the chain still completes.
+    /// </summary>
+    [Test]
+    public async Task AdventurerSpike_EquipUpgrades_LootedGearEquipsThroughContract()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m7equip");
+        session.Character.Level = 10;
+        session.Character.Hp = session.Character.MaxHp; // see E-M7-6 — full vitals keep sustain out of the run
+        GameplayActorTestRig.SeedEquipItemTemplate(EquipLootTemplateId);
+
+        var result = AdventurerSpikeScenario.Run(
+            session.Character, new SpikeFixtureWorldAdapter(session, foxCount: 3),
+            new RigSpikeRuntime(seedLoot: true, lootTemplateId: EquipLootTemplateId), RigOptions());
+
+        WriteTraceEvidence(result);
+
+        await Assert.That(result.Passed, "equip-upgrade spike FAILED:\n" + result.Evidence()).IsTrue();
+        var stageNames = result.Stages.Select(s => s.Stage).ToList();
+        await Assert.That(stageNames.Count(s => s == "HUNT-EQUIP"), "two empty slots → exactly two equips").IsEqualTo(2);
+
+        var equipment = session.Character.Inventory.Equipment;
+        await Assert.That(equipment.GetItemBySlot((int)EquipmentItemSlot.Mainhand)?.TemplateId).IsEqualTo(EquipLootTemplateId);
+        await Assert.That(equipment.GetItemBySlot((int)EquipmentItemSlot.Offhand)?.TemplateId).IsEqualTo(EquipLootTemplateId);
+        // The third sword never equipped (equal Level, both slots taken).
+        session.Character.Inventory.Bag.GetAllItemsByTemplate(EquipLootTemplateId, -1, out var bagged, out _);
+        await Assert.That(bagged.Count).IsEqualTo(1);
+        await Assert.That(session.Character.Quests.HasQuestCompleted(AdventurerSpikeScenario.FoxQuestId)).IsTrue();
+    }
+
+    /// <summary>Equippable loot fixture for E-M7-8 (9003x — the spike suite's range; 90010 is the rotation probe).</summary>
+    private const uint EquipLootTemplateId = 90_030;
+
+    /// <summary>
+    /// E-M7-9: no-progress skip — one fox (of four) never takes damage (the
+    /// live 2026-08-20 leash-stuck fox pinned at full HP). After
+    /// NoProgressSkipRounds (3) executed-cast rounds with zero net damage
+    /// the hunt loop EXCLUDES it (HUNT-SKIP stage; exclusion only, never a
+    /// kill credit) and clears the cull with the remaining healthy foxes.
+    /// </summary>
+    [Test]
+    public async Task AdventurerSpike_UndamageablePrey_SkippedAndHuntCompletes()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m7noprog");
+        session.Character.Level = 10;
+        session.Character.Hp = session.Character.MaxHp; // see E-M7-6 — full vitals keep sustain out of the run
+
+        var result = AdventurerSpikeScenario.Run(
+            session.Character, new SpikeFixtureWorldAdapter(session, foxCount: 4),
+            new RigSpikeRuntime(seedLoot: true, neverKillObjId: FirstFoxObjId), RigOptions());
+
+        WriteTraceEvidence(result);
+
+        await Assert.That(result.Passed, "no-progress-skip spike FAILED:\n" + result.Evidence()).IsTrue();
+        var stageNames = result.Stages.Select(s => s.Stage).ToList();
+        await Assert.That(stageNames).Contains("HUNT-SKIP");
+        var skipStage = result.Stages.First(s => s.Stage == "HUNT-SKIP");
+        await Assert.That(skipStage.StepObserved).IsEqualTo(FirstFoxObjId.ToString());
+        // The skip precedes the LAST kill (the hunt moved on and finished).
+        await Assert.That(stageNames.IndexOf("HUNT-SKIP") < stageNames.LastIndexOf("HUNT-KILL")).IsTrue();
+        await Assert.That(stageNames.Count(s => s == "HUNT-KILL")).IsEqualTo(3);
+        await Assert.That(session.Character.Quests.HasQuestCompleted(AdventurerSpikeScenario.FoxQuestId)).IsTrue();
     }
 
     /// <summary>Worktree-tolerant repo root (M53 pattern; accepts .git dir OR file).</summary>

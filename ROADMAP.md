@@ -1438,9 +1438,9 @@ Split by archetype, not one universal mind.
   fail-closed Starvation, rig E-M7-3/4/5); death recovery DONE (scheduler
   death watch); distance maintenance DONE (standoff band
   [StandoffMin, EngageRange]: close-in/back-off to the band edge, melee
-  default unchanged, rig E-M7-6/7); equip upgrades IN PROGRESS (Equip
-  contract action landed — real CSSwapItemsPacket Inventory→Equipment path,
-  rig 7/7; spike adoption next); literal return-to-NPC leg open)*
+  default unchanged, rig E-M7-6/7); equip upgrades DONE (Equip contract
+  action + per-corpse upgrade evaluation in the spike hunt loop, rig
+  E-M7-8); literal return-to-NPC leg open)*
 - **Party v1:** invite/join, follow leader, rally, assist target, avoid
   extra pulls, tank/damage/healer roles, wait for missing members,
   resurrect, mount + travel together

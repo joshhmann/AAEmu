@@ -147,8 +147,28 @@ engine backstop). Rig 7/7 (GameplayActorEquipTests). Engine gap on record:
 no level/requirement gate on the equip path (CanAccept checks slot only).
 Rig gotcha recorded: SeedEquipItemTemplate must run AFTER CreateActor
 (ItemManager is DI-only, seeded by the rig's Seed()).
-Remaining Adventurer v1: equip upgrades (spike adoption of Equip),
-literal return-to-NPC quest leg. Party v1 open.
+**Equip upgrades landed 2026-08-20**: the spike hunt loop evaluates bagged
+equippables after each corpse loot and equips upgrades through the Equip
+contract — the upgrade rule mirrors the contract's own slot pick (first
+EMPTY allowed slot else first allowed; equip when the slot is empty or the
+candidate's template Level beats the occupant's), and level discipline
+lives in the scenario (LevelRequirement ≤ bot level; the engine has no
+equip level gate). Rig E-M7-8 green (two equips through the contract, the
+equal-Level third sword stays bagged); live no-op honesty: fox loot is
+flavor, so the stage records nothing on the live stack unless real gear
+drops.
+**Live failure found + hardened 2026-08-20 (E2E rebuild run):** a fox
+pinned at full 217 HP across 100+ successful casts (leash-stuck class —
+damage never lands) starved the hunt at 2/3 in 150 attempts. The hunt loop
+now carries a NO-PROGRESS SKIP: a target that takes zero net damage across
+NoProgressSkipRounds (3) executed-cast rounds is excluded from reselection
+(exclusion only, never a kill credit; HUNT-SKIP stage) and the hunt moves
+on. Rig E-M7-9 (one unkillable fox of four — skip fires, cull completes
+with the healthy three). Open question on record: WHY a freshly spawned
+fox can enter the pinned-HP state at all (cold-boot correlation: both
+rebuild-run E2E failures showed it, warm runs never did) — worth a
+dedicated look at Npc leash/return-home healing.
+Remaining Adventurer v1: literal return-to-NPC quest leg. Party v1 open.
 Scheduling unblocked per the roadmap's spike gate. H UNKNOWN.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
