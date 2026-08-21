@@ -17,6 +17,7 @@ using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Chat;
 using AAEmu.Game.Models.Game.CommonFarm;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.Crafts;
@@ -286,9 +287,18 @@ public static class GameplayActorTestRig
         }
 
         if (!SingletonSeeded(typeof(Singleton<TeamManager>)))
+            SeedSingleton(typeof(Singleton<TeamManager>), CreateWiredTeamManager());
+
+        // M7 Party v1: the engine sets Character.InParty on team join, and
+        // the setter notifies FriendMananger.SendStatusChange — which NREs
+        // on its null _allFriends when Load() never ran (headless). Seed the
+        // singleton with an empty friends table: SendStatusChange
+        // early-returns, exactly like a server with no friend rows.
+        if (!SingletonSeeded(typeof(Singleton<FriendMananger>)))
         {
-            SeedSingleton(typeof(Singleton<TeamManager>),
-                new TeamManager(Mock.Of<IWorldManager>().Object, Mock.Of<IChatManager>().Object, Mock.Of<ITeamIdManager>().Object));
+            var friendManager = new FriendMananger();
+            SetField(friendManager, "_allFriends", new Dictionary<uint, FriendTemplate>());
+            SeedSingleton(typeof(Singleton<FriendMananger>), friendManager);
         }
 
         if (!SingletonSeeded(typeof(Singleton<TaskManager>)))
@@ -634,6 +644,66 @@ public static class GameplayActorTestRig
         // Learn the seeded skill (real engine gate: Character.Skills).
         character.Skills.AddSkill(new SkillTemplate { Id = TestSkillId }, 1, false);
         return (new GameplayActor(character), session);
+    }
+
+    /// <summary>
+    /// Moves a second actor's character into the FIRST actor's session world
+    /// so world-resolution paths (ResolveUnit → ParentWorld.GetUnit) see both
+    /// characters — the M7 Party v1 invite/accept rig (each CreateActor gets
+    /// its OWN session world; a party needs two Characters in ONE world).
+    /// Same headless registry bypass as CreateActor: pre-set the Transform
+    /// _instanceId / GameObject _parentWorld backing fields so Region.
+    /// AddObject's assignment no-ops instead of re-entering the shared
+    /// WorldManager registry, then refresh the character registry slot.
+    /// </summary>
+    public static void JoinActorWorld(HeadlessSession hostSession, GameplayActor guest)
+    {
+        var character = guest.Character;
+        typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
+            .GetField("_instanceId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(character.Transform, hostSession.World.Id);
+        typeof(AAEmu.Game.Models.Game.World.GameObject)
+            .GetField("_parentWorld", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(character, hostSession.World);
+        WorldManager.Instance.TryRemoveCharacter(character.ObjId);
+        hostSession.World.AddObject(character);
+    }
+
+    /// <summary>
+    /// Builds the headless-wired TeamManager (M7 Party v1): bare mocks NRE
+    /// the party pipeline — CreateNewTeam dereferences
+    /// chatManager.GetPartyChat(...).JoinChannel(...) (a default mock
+    /// returns null) and teamIdManager.GetNextId() defaults to 0, so a
+    /// second team would collide on id. Real ChatChannel instances
+    /// (parameterless ctor; JoinChannel only adds to Members + null-safe
+    /// SendPacket) and an incrementing team-id counter keep the real engine
+    /// path intact headless.
+    /// </summary>
+    private static TeamManager CreateWiredTeamManager()
+    {
+        var chatManager = Mock.Of<IChatManager>();
+        chatManager.GetPartyChat(Any<Team>(), Any<Character>()).Returns(() => new ChatChannel());
+        chatManager.GetRaidChat(Any<Team>()).Returns(() => new ChatChannel());
+        var teamIdManager = Mock.Of<ITeamIdManager>();
+        var nextTeamId = 0u;
+        teamIdManager.GetNextId().Returns(() => ++nextTeamId);
+        return new TeamManager(Mock.Of<IWorldManager>().Object, chatManager.Object, teamIdManager.Object);
+    }
+
+    /// <summary>
+    /// FORCE-seeds the wired TeamManager. The shared seed is missing-only,
+    /// but another fixture (QuestScenarioDriver) force-sets a bare-mock
+    /// TeamManager mid-run, shadowing the wired instance — the party engine
+    /// path then NREs in CreateNewTeam. Party suites call this at test start
+    /// so the wired instance always wins ordering. A fresh instance per call
+    /// also resets the team registry/id counter, which keeps team ids from
+    /// leaking across tests.
+    /// </summary>
+    public static void ForceSeedTeamManager()
+    {
+        typeof(Singleton<TeamManager>)
+            .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .SetValue(null, CreateWiredTeamManager());
     }
 
     /// <summary>Convenience: spawns an NPC in the session world and returns its objId.</summary>

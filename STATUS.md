@@ -181,6 +181,28 @@ shape); live defaults run the chain.
 priority, distance maintenance, heal/retreat, loot, equip upgrades,
 return to quest NPC, death recovery all landed. Party v1 open.
 Scheduling unblocked per the roadmap's spike gate. H UNKNOWN.
+**Party v1 slice 1 landed 2026-08-21** — invite/join contract actions
+(PartyInvite = 34, PartyAccept = 35) on IGameplayActor + the
+PlayerBotControllerAdapter, through the real engine paths:
+TeamManager.AskToJoin via the target-object overload (the exact
+CSInviteToTeamPacket call, skipping the global name registry so headless
+rigs resolve) and TeamManager.ReplyToJoinTeam (the exact
+CSReplyToJoinTeamPacket call; invitation.TeamId 0 → engine CreateNewTeam,
+else AddMember on the inviter's team). The engine's refusals on both
+paths are SILENT voids, so the contract pre-flights (pending invitation /
+already a member / no pending invitation → StateTransition, engine never
+entered) and post-checks the observable outcomes (invitation record for
+invite; Character.InParty + active-team membership for accept).
+TeamManager.GetActiveInvitation went private→public (the invitation
+record IS the observable outcome the actor must inspect). Rig upgrades:
+the TeamManager seed now wires real ChatChannel instances and
+incrementing team ids (bare mocks NRE'd CreateNewTeam's chat wiring and
+collided every team on id 0), FriendMananger is seeded with an empty
+friends table (Character.InParty's setter NRE'd headless), and
+JoinActorWorld moves a second actor's character into the host session's
+world (each CreateActor gets its OWN world; a party needs one). Rig
+GameplayActorPartyTests 6/6 green. Follow-up slices: follow leader /
+assist target (scenario surface), then the M7 party spike. H UNKNOWN.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
