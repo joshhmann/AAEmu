@@ -1446,6 +1446,13 @@ Split by archetype, not one universal mind.
 - **Party v1:** invite/join, follow leader, rally, assist target, avoid
   extra pulls, tank/damage/healer roles, wait for missing members,
   resurrect, mount + travel together
+  *(2026-08-21: invite/join DONE as contract actions — PartyInvite/
+  PartyAccept on IGameplayActor through the real engine paths
+  (TeamManager.AskToJoin target-object overload = the CSInviteToTeamPacket
+  call; ReplyToJoinTeam = the CSReplyToJoinTeamPacket call). The engine's
+  refusals are silent voids, so the contract pre-flights StateTransition
+  and post-checks the observable outcomes (invitation record; InParty +
+  team membership). Rig GameplayActorPartyTests 6 green)*
 
 **Exit test:** one human + three bots complete the curated leveling route
 and a selected group encounter.

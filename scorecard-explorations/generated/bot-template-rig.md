@@ -20,17 +20,16 @@ Verdict: PASS
 
 ```
 
-## cat34-daily
+## level22-gate
 ```
-# Scenario: cat34-daily
-Verdict: PASS
-- gate [prereq-1958]: REFUSED (pass) refused without prereq quest 1958 completed: RejectedAction: quest 1959 accept refused by engine gate (Npc/0)
-- stage START: 0 events, advance=ran, step=Reward, status=Completed
-- stage PROGRESS: 1 events, advance=ran, step=Dropped, status=Completed
-- criterion [quest-1959-completed]: PASS quest 1959 completed (flag set, not active)
-- criterion [quest-1959-not-active]: PASS quest 1959 not active
-- criterion [reaccept-refused]: PASS re-accept of completed quest 1959 refused by engine (repeatable/daily gate)
-- actor requests: 4
+# Scenario: level22-gate
+Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' failed: quest 168 not completed: active=True, flag=False
+- gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
+- stage START: 0 events, advance=ran, step=Ready, status=Ready
+- stage READY: 1 events, advance=ran, step=Ready, status=Ready
+- stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
+- criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
+- actor requests: 6
 
 ```
 
@@ -49,16 +48,17 @@ Verdict: PASS
 
 ```
 
-## level22-gate
+## cat34-daily
 ```
-# Scenario: level22-gate
-Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' failed: quest 168 not completed: active=True, flag=False
-- gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
-- stage START: 0 events, advance=ran, step=Ready, status=Ready
-- stage READY: 1 events, advance=ran, step=Ready, status=Ready
-- stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
-- criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
-- actor requests: 6
+# Scenario: cat34-daily
+Verdict: PASS
+- gate [prereq-1958]: REFUSED (pass) refused without prereq quest 1958 completed: RejectedAction: quest 1959 accept refused by engine gate (Npc/0)
+- stage START: 0 events, advance=ran, step=Reward, status=Completed
+- stage PROGRESS: 1 events, advance=ran, step=Dropped, status=Completed
+- criterion [quest-1959-completed]: PASS quest 1959 completed (flag set, not active)
+- criterion [quest-1959-not-active]: PASS quest 1959 not active
+- criterion [reaccept-refused]: PASS re-accept of completed quest 1959 refused by engine (repeatable/daily gate)
+- actor requests: 4
 
 ```
 

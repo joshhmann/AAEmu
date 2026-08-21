@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers.Id;
@@ -96,7 +96,11 @@ public class TeamManager(IWorldManager worldManager, IChatManager chatManager, I
         return team?.IsMember(unit2) ?? false;
     }
 
-    private InvitationTemplate GetActiveInvitation(uint targetId)
+    // Public since M7 Party v1: the bot actor contract surface (IGameplayActor
+    // PartyInvite/PartyAccept) pre-flights and post-checks invitation state —
+    // the engine's invite/accept refusals are silent voids, so the observable
+    // outcome IS the invitation dictionary.
+    public InvitationTemplate GetActiveInvitation(uint targetId)
     {
         return _activeInvitations.TryGetValue(targetId, out var invitation) ? invitation : null;
     }

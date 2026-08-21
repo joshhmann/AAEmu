@@ -626,6 +626,83 @@ public class GameplayActor : IGameplayActor
         return Complete(request, true, $"equipped item {itemTemplateId} into {targetSlot}");
     }
 
+    public ActorRequest PartyInvite(uint targetCharacterObjId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.PartyInvite, targetCharacterObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "party invite"))
+            return request;
+
+        // 1. Resolve the target through the ordinary world lookup (the same
+        //    resolution every unit-targeting action uses).
+        if (ResolveUnit(targetCharacterObjId) is not Character target)
+            return Reject(request, ActorFailureReason.RejectedAction, $"invite target {targetCharacterObjId} not found in world");
+        if (target.Id == Character.Id)
+            return Reject(request, ActorFailureReason.RejectedAction, "cannot invite self to a party");
+
+        // 2. Pre-flight the engine's SILENT refusal modes (AskToJoin returns
+        //    void on every refusal): a pending invitation on the target, and
+        //    — the fresh-key retry backstop — the target already sitting in
+        //    the inviter's team (a successful invite+accept consumed the
+        //    first attempt).
+        if (TeamManager.Instance.GetActiveInvitation(target.Id) != null)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"target {target.Name} already has a pending team invitation");
+        var inviterTeam = TeamManager.Instance.GetActiveTeamByUnit(Character.Id);
+        if (inviterTeam?.IsMember(target.Id) == true)
+            return Reject(request, ActorFailureReason.StateTransition,
+                $"target {target.Name} is already a member of this team");
+
+        request.Start($"inviting {target.Name} (objId {targetCharacterObjId}) to party");
+
+        // 3. REAL engine path — the exact call CSInviteToTeamPacket makes,
+        //    through the target-object overload (skips the global name
+        //    registry: headless rigs resolve). The inviter's active team id
+        //    is forwarded when one exists, exactly like the packet handler;
+        //    teamId 0 lets the engine create the team on accept.
+        TeamManager.Instance.AskToJoin(Character, target.Name, inviterTeam?.Id ?? 0u, true, target);
+
+        // 4. Post-check the observable outcome: the engine's refusals are
+        //    silent, so a missing invitation record IS the refusal signal.
+        if (TeamManager.Instance.GetActiveInvitation(target.Id) == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "party invite refused by engine");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("partyinvite", target.Id), request.TraceId);
+        return Complete(request, true, $"invited {target.Name} to party");
+    }
+
+    public ActorRequest PartyAccept(string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.PartyAccept, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "party accept"))
+            return request;
+
+        // 1. Pre-flight: no pending invitation = nothing to accept. Refused
+        //    BEFORE the engine is entered so a retry cannot double-join
+        //    (the engine consumes the invitation record on accept, so the
+        //    fresh-key retry lands here too).
+        var invitation = TeamManager.Instance.GetActiveInvitation(Character.Id);
+        if (invitation == null)
+            return Reject(request, ActorFailureReason.StateTransition, "no pending party invitation");
+
+        request.Start($"accepting party invitation from {invitation.Owner.Name}");
+
+        // 2. REAL engine path — the exact call CSReplyToJoinTeamPacket makes
+        //    (accept: isReject false, isArea false). With invitation.TeamId 0
+        //    the engine creates the team (CreateNewTeam); otherwise the actor
+        //    joins the inviter's existing team (AddMember).
+        TeamManager.Instance.ReplyToJoinTeam(Character, 0, true, invitation.Owner.Id, false, Character.Name, false);
+
+        // 3. Post-check the observable outcome: the engine's refusal modes
+        //    (expired invitation, full team, owner already teamed elsewhere)
+        //    are silent voids — no party membership = refused.
+        var team = TeamManager.Instance.GetActiveTeamByUnit(Character.Id);
+        if (!Character.InParty || team == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "party accept refused by engine");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("partyaccept", team.Id), request.TraceId);
+        return Complete(request, true, $"joined party {team.Id}");
+    }
+
     public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null)
     {
         var request = NewRequest(ActorActionType.Mount, mateObjId, idempotencyKey: idempotencyKey);

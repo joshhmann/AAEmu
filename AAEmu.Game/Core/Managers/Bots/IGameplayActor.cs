@@ -146,6 +146,41 @@ public interface IGameplayActor
     ActorRequest Equip(uint itemTemplateId, string? idempotencyKey = null);
 
     /// <summary>
+    /// Invites another character to a party through the real engine path —
+    /// the exact CSInviteToTeamPacket call: TeamManager.AskToJoin with the
+    /// target-object overload (skips the global name registry so headless
+    /// rigs resolve). The inviter's active team id is forwarded when one
+    /// exists, exactly like the packet handler; teamId 0 lets the engine
+    /// create the team on accept (CreateNewTeam).
+    /// Validates: target resolves in the actor's world and is a Character,
+    /// not self, no pending invitation on the target, target not already a
+    /// member of the inviter's team. The engine's refusals on this path are
+    /// SILENT voids, so the post-check is the observable outcome: no active
+    /// invitation on the target after AskToJoin = Rejected("refused by
+    /// engine"). Invitations expire after 60s engine-side. Idempotency:
+    /// same-key retries are refused pre-flight by the ledger; a fresh-key
+    /// retry while the first invitation is still pending hits the
+    /// already-invited pre-flight (StateTransition).
+    /// </summary>
+    ActorRequest PartyInvite(uint targetCharacterObjId, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Accepts the actor's pending party invitation through the real engine
+    /// path — the exact CSReplyToJoinTeamPacket call:
+    /// TeamManager.ReplyToJoinTeam (isReject: false, isArea: false). With
+    /// invitation.TeamId 0 the engine creates the team (CreateNewTeam);
+    /// otherwise the actor joins the inviter's existing team (AddMember).
+    /// No pending invitation is Rejected(StateTransition) — the engine is
+    /// never entered, so a retry cannot double-join. The engine's refusal
+    /// modes (expired invitation, full team, owner already teamed) are
+    /// silent voids, so the post-check is Character.InParty + an active
+    /// team containing the actor. Same-key retries are refused pre-flight
+    /// by the ledger; a fresh-key retry after a successful join finds no
+    /// pending invitation (the engine consumed it) — StateTransition.
+    /// </summary>
+    ActorRequest PartyAccept(string? idempotencyKey = null);
+
+    /// <summary>
     /// Mounts a mate through the real engine path (MateManager.MountMate —
     /// the CSMountMatePacket call). Requires the character's real
     /// GameConnection (the packet path resolves the rider from
@@ -632,7 +667,13 @@ public enum ActorActionType : byte
     Craft = 32,
 
     /// <summary>Equipping a bagged item through Inventory.SplitOrMoveItem (CSSwapItemsPacket Inventory→Equipment path).</summary>
-    Equip = 33
+    Equip = 33,
+
+    /// <summary>Inviting another character to a party through TeamManager.AskToJoin (the CSInviteToTeamPacket path).</summary>
+    PartyInvite = 34,
+
+    /// <summary>Accepting a pending party invitation through TeamManager.ReplyToJoinTeam (the CSReplyToJoinTeamPacket path).</summary>
+    PartyAccept = 35
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>
