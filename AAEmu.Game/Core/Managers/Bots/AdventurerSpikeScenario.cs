@@ -1,6 +1,8 @@
 using System.Numerics;
 
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
 using NLog;
@@ -16,7 +18,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///   accept (quest 250 at the notice-board doodad 5047) → travel (Move to
 ///   the hunting ground) → hunt loop (Observe → nearest attackable fox
 ///   (npc 3492) → SetTarget → standoff-band check (EngageRange/StandoffMin)
-///   → Cast rotation) ×3 → Loot each corpse →
+///   → Cast rotation) ×3 → Loot each corpse → equip-upgrade evaluation
+///   (bagged equippable upgrades equip through the Equip contract action) →
 ///   auto-complete (250 is an auto-report quest — no return leg)
 ///
 /// Quest data verified against Docs/wiki/Golden-Route-Solzreed.md §1a (step
@@ -133,6 +136,16 @@ public static class AdventurerSpikeScenario
         public int NoTargetRetries { get; init; } = 4;
 
         /// <summary>
+        /// Rounds of executed casts with zero net damage on one target
+        /// before the hunt loop excludes it from reselection (leash-stuck /
+        /// undamageable prey — observed live 2026-08-20: a fox pinned at
+        /// full HP across 100+ successful casts starved the run at 2/3).
+        /// The skip joins the exclusion set only — never a kill credit.
+        /// Default 3.
+        /// </summary>
+        public int NoProgressSkipRounds { get; init; } = 3;
+
+        /// <summary>
         /// Max casts per hunt round on one target (repeat-while-alive burst).
         /// Live prey leash-resets to full HP when the fight drags (Npc
         /// return-to-idle heals), so the kill must land within the reset
@@ -177,6 +190,21 @@ public static class AdventurerSpikeScenario
         /// EngageRange it closes to the band edge instead of the unit.
         /// </summary>
         public float StandoffMin { get; init; } = 0f;
+
+        // ---- M7 Adventurer v1: equip upgrades ----
+
+        /// <summary>
+        /// Evaluate bagged equippables after each corpse loot and equip
+        /// upgrades through the Equip contract action. Upgrade rule (mirrors
+        /// the contract's own slot pick exactly): target slot = first EMPTY
+        /// allowed slot else first allowed; equip when the target slot is
+        /// empty or the candidate's template Level beats the occupant's.
+        /// Level discipline lives HERE (the engine's equip path has no
+        /// level gate): candidates with LevelRequirement above the bot's
+        /// level are skipped. Default true — a no-op when loot carries
+        /// nothing equippable (live fox loot is flavor).
+        /// </summary>
+        public bool EquipUpgrades { get; init; } = true;
 
         /// <summary>
         /// Heal item template used once per recovery round through the real
@@ -264,6 +292,7 @@ public static class AdventurerSpikeScenario
         // Hunt-loop state (read across the run, asserted at VERIFY).
         var credited = new HashSet<uint>();
         var lootOutcomes = new List<string>();
+        var noProgress = new Dictionary<uint, int>(); // objId → consecutive executed-cast rounds with zero net damage
 
         try
         {
@@ -437,7 +466,9 @@ public static class AdventurerSpikeScenario
                 // must land inside the reset window. The stage detail
                 // carries the target's HP before/after — the
                 // damage-landing evidence the trace needs.
+                var hpRoundStart = target.Hp;
                 var targetDown = false;
+                var roundCastExecuted = false;
                 for (var burst = 0; burst < options.BurstCasts && !targetDown; burst++)
                 {
                     var castExecuted = false;
@@ -458,10 +489,38 @@ public static class AdventurerSpikeScenario
                     }
                     if (!castExecuted)
                         break; // the whole rotation refused — re-observe next round
+                    roundCastExecuted = true;
                     targetDown = runtime.EnsureKillCredit(actor, target);
                 }
                 if (!targetDown)
-                    continue; // target still up — re-observe and cast again
+                {
+                    // NO-PROGRESS SKIP: casts executed but the target's HP
+                    // never dropped across rounds — leash-stuck/undamageable
+                    // prey (observed live 2026-08-20: a fox pinned at full
+                    // 217 HP across 100+ successful casts starved the run at
+                    // 2/3). After NoProgressSkipRounds such rounds the target
+                    // is EXCLUDED from reselection (the exclusion set only —
+                    // never a kill credit) and the hunt moves on. A target
+                    // that takes net damage resets its counter.
+                    if (roundCastExecuted && target.Hp >= hpRoundStart)
+                    {
+                        var rounds = noProgress.GetValueOrDefault(target.ObjId) + 1;
+                        noProgress[target.ObjId] = rounds;
+                        if (rounds >= options.NoProgressSkipRounds)
+                        {
+                            credited.Add(target.ObjId); // exclusion only — NOT a kill credit
+                            noProgress.Remove(target.ObjId);
+                            stages.Add(new BotScenarioRunner.ScenarioStageVerdict(
+                                "HUNT-SKIP", rounds, "skipped", target.ObjId.ToString(),
+                                $"no damage landed across {rounds} rounds (hp pinned at {target.Hp}) — excluded from reselection"));
+                        }
+                    }
+                    else
+                    {
+                        noProgress.Remove(target.ObjId); // damage landed (or nothing executed) — reset
+                    }
+                    continue; // re-observe and cast again
+                }
 
                 kills++;
                 credited.Add(target.ObjId);
@@ -487,6 +546,13 @@ public static class AdventurerSpikeScenario
                 {
                     lootOutcomes.Add($"corpse {target.ObjId}: {loot.State} ({loot.Detail ?? "n/a"})");
                 }
+
+                // ------------------------------------ 4b. EQUIP UPGRADES (per corpse)
+                // Adventurer v1: gear up as you go — evaluate bagged
+                // equippables and equip upgrades through the Equip contract
+                // action. Tolerated refusals are recorded, never fatal.
+                if (options.EquipUpgrades)
+                    TryEquipUpgrades(character, actor, stages, traceRecords);
 
                 // Advance the step machine through the contract (250
                 // auto-completes when the objective count is met — the
@@ -722,6 +788,52 @@ public static class AdventurerSpikeScenario
             away = new Vector3(1, 0, 0); // stacked on the target — arbitrary direction
         var stopRange = Math.Max(options.StandoffMin, options.EngageRange - 0.5f);
         return targetPos + Vector3.Normalize(away) * stopRange;
+    }
+
+    /// <summary>
+    /// M7 equip upgrades: one evaluation pass over the bag after a corpse
+    /// loot. For each equippable bag item the upgrade decision mirrors the
+    /// Equip contract's own slot pick exactly (first EMPTY allowed slot,
+    /// else first allowed): equip when the slot is empty or the candidate's
+    /// template Level beats the occupant's. Level discipline lives here —
+    /// the engine's equip path has no level gate, so candidates with
+    /// LevelRequirement above the bot's level are skipped. Equip refusals
+    /// are tolerated and recorded (HUNT-EQUIP stage per attempt); a swapped
+    ///-out occupant returns to the bag after this pass's snapshot and is
+    /// never re-evaluated mid-pass.
+    /// </summary>
+    private static void TryEquipUpgrades(Character character, GameplayActor actor,
+        List<BotScenarioRunner.ScenarioStageVerdict> stages, List<ActorAuditRecord> traceRecords)
+    {
+        var inventory = character.Inventory;
+        if (inventory?.Bag == null || inventory.Equipment == null)
+            return;
+
+        foreach (var item in inventory.Bag.Items.ToList())
+        {
+            if (item?.Template == null)
+                continue;
+            var allowedSlots = EquipmentContainer.GetAllowedGearSlots(item.Template);
+            if (allowedSlots.Count == 0)
+                continue; // not equippable
+            if (item.Template.LevelRequirement > character.Level)
+                continue; // level discipline — the engine's equip path has no level gate
+            var targetSlot = allowedSlots.FirstOrDefault(s => inventory.Equipment.GetItemBySlot((int)s) == null, allowedSlots[0]);
+            var occupant = inventory.Equipment.GetItemBySlot((int)targetSlot);
+            if (occupant != null && item.Template.Level <= occupant.Template.Level)
+                continue; // not an upgrade
+            if (occupant?.TemplateId == item.TemplateId)
+                continue; // same template — a pointless swap
+
+            var equip = actor.Equip(item.TemplateId);
+            Collect(actor, traceRecords);
+            var equipStage = Stage("HUNT-EQUIP", item.TemplateId, equip);
+            stages.Add(equipStage with
+            {
+                StatusObserved = $"{equipStage.StatusObserved} [{item.TemplateId} → {targetSlot}" +
+                                 $"{(occupant != null ? $", replaces {occupant.TemplateId}" : ", empty slot")}]"
+            });
+        }
     }
 
     /// <summary>
