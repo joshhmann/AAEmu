@@ -105,9 +105,41 @@ public class AdventurerSpikeScenarioRigTests
         }
 
         public uint ResolveNpcObjId(uint npcTemplateId)
-            => npcTemplateId == AdventurerSpikeScenario.FoxNpcTemplateId && _foxCount > 0
-                ? FirstFoxObjId
-                : 0;
+        {
+            if (npcTemplateId == AdventurerSpikeScenario.FoxNpcTemplateId && _foxCount > 0)
+                return FirstFoxObjId;
+            // Return-leg quest NPCs (E-M7-10): lazily spawned fixture NPCs
+            // near the hunting ground (short straight-line legs), region-
+            // joined like the foxes so the real Observe region query works.
+            if (npcTemplateId == AdventurerSpikeScenario.ReturnAcceptorNpcTemplateId)
+                return SpawnQuestNpc(npcTemplateId, HuntingGround + new Vector3(6, 0, 0), 0x6100);
+            if (npcTemplateId == AdventurerSpikeScenario.ReturnReportNpcTemplateId)
+                return SpawnQuestNpc(npcTemplateId, HuntingGround + new Vector3(0, 9, 0), 0x6101);
+            return 0;
+        }
+
+        private uint SpawnQuestNpc(uint templateId, Vector3 position, uint objId)
+        {
+            if (_session.World.GetNpc(objId) != null)
+                return objId; // already spawned (dedupe by fixed objId)
+            var npc = new Npc
+            {
+                ObjId = objId,
+                TemplateId = templateId,
+                Hp = 100,
+                MaxHp = 100,
+                Template = new NpcTemplate { Id = templateId, Scale = 1f }
+            };
+            _session.World.AddObject(npc);
+            npc.Transform.Local.SetPosition(position);
+            var region = _session.World.GetRegionByPos(position);
+            if (region != null)
+            {
+                region.AddObject(npc);
+                npc.Region = region;
+            }
+            return objId;
+        }
 
         public uint ResolveDoodadObjId(uint doodadTemplateId) => _session.SpawnDoodad(doodadTemplateId);
     }
@@ -178,7 +210,10 @@ public class AdventurerSpikeScenarioRigTests
             // (real damage skills need real game data — the E2E's surface).
             CastRotation = castRotation ?? [GameplayActorTestRig.TestSkillId],
             HuntingGround = HuntingGround,
-            LootOptional = lootOptional
+            LootOptional = lootOptional,
+            // One-quest shape by default — the return-to-NPC leg is opt-in
+            // (E-M7-10). Live defaults run the 250 → 330 chain.
+            ReturnQuestId = 0
         };
 
     /// <summary>
@@ -672,6 +707,49 @@ public class AdventurerSpikeScenarioRigTests
         await Assert.That(stageNames.IndexOf("HUNT-SKIP") < stageNames.LastIndexOf("HUNT-KILL")).IsTrue();
         await Assert.That(stageNames.Count(s => s == "HUNT-KILL")).IsEqualTo(3);
         await Assert.That(session.Character.Quests.HasQuestCompleted(AdventurerSpikeScenario.FoxQuestId)).IsTrue();
+    }
+
+    /// <summary>
+    /// E-M7-10: the return-to-NPC leg — after the fox cull completes, the
+    /// bot travels to the quest-330 acceptor (fixture Npc 3597), accepts
+    /// through the real AddQuest gate, travels to the report NPC (fixture
+    /// Npc 3511), and turns in through the real packet path: BOTH quests
+    /// end completed-and-dropped, and the return stages follow the cull's
+    /// completion stages.
+    /// </summary>
+    [Test]
+    public async Task AdventurerSpike_ReturnToNpc_QuestChainCompletes()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        var (_, session) = GameplayActorTestRig.CreateActor("m7return");
+        session.Character.Level = 10;
+        session.Character.Hp = session.Character.MaxHp; // see E-M7-6 — full vitals keep sustain out of the run
+
+        var result = AdventurerSpikeScenario.Run(
+            session.Character, new SpikeFixtureWorldAdapter(session, foxCount: 3),
+            new RigSpikeRuntime(seedLoot: true),
+            RigOptions() with { ReturnQuestId = AdventurerSpikeScenario.ReturnQuest330Id });
+
+        WriteTraceEvidence(result);
+
+        await Assert.That(result.Passed, "return-to-NPC spike FAILED:\n" + result.Evidence()).IsTrue();
+        var stageNames = result.Stages.Select(s => s.Stage).ToList();
+        await Assert.That(stageNames).Contains("RETURN-TRAVEL-ACCEPT");
+        await Assert.That(stageNames).Contains("RETURN-ACCEPT");
+        await Assert.That(stageNames).Contains("RETURN-TRAVEL-REPORT");
+        await Assert.That(stageNames).Contains("RETURN-TURNIN");
+        // The return leg runs AFTER the cull's completion stages.
+        await Assert.That(stageNames.IndexOf("RETURN-ACCEPT") > stageNames.LastIndexOf("HUNT-KILL")).IsTrue();
+
+        // Both quests completed at the engine level: flags set, none active.
+        await Assert.That(session.Character.Quests.HasQuestCompleted(AdventurerSpikeScenario.FoxQuestId)).IsTrue();
+        await Assert.That(session.Character.Quests.HasQuestCompleted(AdventurerSpikeScenario.ReturnQuest330Id)).IsTrue();
+        await Assert.That(session.Character.Quests.HasQuest(AdventurerSpikeScenario.ReturnQuest330Id)).IsFalse();
+
+        // The contract vocabulary gained the second accept + the turn-in.
+        var actions = result.TraceRecords.Select(r => r.Action).ToList();
+        await Assert.That(actions.Count(a => a == ActorActionType.AcceptQuest)).IsEqualTo(2);
+        await Assert.That(actions.Count(a => a == ActorActionType.TurnInQuest)).IsEqualTo(1);
     }
 
     /// <summary>Worktree-tolerant repo root (M53 pattern; accepts .git dir OR file).</summary>

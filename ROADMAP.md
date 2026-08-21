@@ -1440,7 +1440,9 @@ Split by archetype, not one universal mind.
   [StandoffMin, EngageRange]: close-in/back-off to the band edge, melee
   default unchanged, rig E-M7-6/7); equip upgrades DONE (Equip contract
   action + per-corpse upgrade evaluation in the spike hunt loop, rig
-  E-M7-8); literal return-to-NPC leg open)*
+  E-M7-8); return to quest NPC DONE (spike is now the M7-worded chain:
+  250 → 330 — travel to acceptor Npc 3597, accept, travel to report
+  Npc 3511, real-packet turn-in, rig E-M7-10))*
 - **Party v1:** invite/join, follow leader, rally, assist target, avoid
   extra pulls, tank/damage/healer roles, wait for missing members,
   resurrect, mount + travel together
