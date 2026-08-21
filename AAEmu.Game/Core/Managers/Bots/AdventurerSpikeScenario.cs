@@ -20,7 +20,10 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///   (npc 3492) → SetTarget → standoff-band check (EngageRange/StandoffMin)
 ///   → Cast rotation) ×3 → Loot each corpse → equip-upgrade evaluation
 ///   (bagged equippable upgrades equip through the Equip contract action) →
-///   auto-complete (250 is an auto-report quest — no return leg)
+///   auto-complete (250 is an auto-report quest) → return leg (quest 330:
+///   travel to acceptor Npc 3597 → accept → travel to report Npc 3511 →
+///   turn in through the real packet path) — the M7-worded short quest
+///   chain, 250 → 330 end-to-end.
 ///
 /// Quest data verified against Docs/wiki/Golden-Route-Solzreed.md §1a (step
 /// 1: quest 250, accept Doodad 5047, kill 3× fox npc 3492, auto turn-in,
@@ -77,6 +80,13 @@ public static class AdventurerSpikeScenario
 
     /// <summary>3단 베기 first hit (18131) — the rotation lead since the BUG-016 fix.</summary>
     public const uint TripleSlashSkillId = 18131;
+
+    // ---- Canonical quest-330 ids (golden route §1a step 3: accept Npc 3597,
+    // no objectives, report Npc 3511 — the return-to-NPC leg; M1M2 replay
+    // route-proven). Live default: the spike is a CHAIN (250 → 330).
+    public const uint ReturnQuest330Id = 330;
+    public const uint ReturnAcceptorNpcTemplateId = 3597;
+    public const uint ReturnReportNpcTemplateId = 3511;
 
     /// <summary>Spike parameters (live defaults = canonical ids; unit rigs inject fixture values).</summary>
     public sealed record SpikeOptions
@@ -205,6 +215,25 @@ public static class AdventurerSpikeScenario
         /// nothing equippable (live fox loot is flavor).
         /// </summary>
         public bool EquipUpgrades { get; init; } = true;
+
+        // ---- M7 Adventurer v1: return-to-NPC leg (quest chain) ----
+
+        /// <summary>
+        /// Follow-up quest for the return-to-NPC leg (0 = none — unit rigs
+        /// keep the one-quest shape). Live default 330: after the fox cull
+        /// completes, the bot travels to the acceptor NPC, accepts the
+        /// follow-up through the real AddQuest gate, travels to the report
+        /// NPC, and turns in through the real packet path — the literal
+        /// "return to quest NPC" behavior, making the spike the M7-worded
+        /// short quest chain (250 → 330).
+        /// </summary>
+        public uint ReturnQuestId { get; init; } = ReturnQuest330Id;
+
+        /// <summary>NPC template accepting the return quest (3597).</summary>
+        public uint ReturnAcceptorTemplateId { get; init; } = ReturnAcceptorNpcTemplateId;
+
+        /// <summary>NPC template the return quest reports to (3511).</summary>
+        public uint ReturnReportTemplateId { get; init; } = ReturnReportNpcTemplateId;
 
         /// <summary>
         /// Heal item template used once per recovery round through the real
@@ -598,6 +627,79 @@ public static class AdventurerSpikeScenario
                         $"completion advance refused: {drain.Detail}", rigNotes, stages, criteria, traceRecords);
             }
 
+            // ---------------------------------------- 6. RETURN-TO-NPC LEG
+            // The quest chain's second link (golden route §1a step 3, quest
+            // 330 — no objectives, report at a DIFFERENT NPC): travel to the
+            // acceptor, accept through the real AddQuest gate, travel to the
+            // report NPC, turn in through the real packet path, then drain
+            // the step machine (M1M2 replay pattern). Skipped when
+            // ReturnQuestId is 0 (unit rigs keep the one-quest shape unless
+            // they opt in).
+            if (options.ReturnQuestId > 0)
+            {
+                var acceptorObjId = world.ResolveNpcObjId(options.ReturnAcceptorTemplateId);
+                if (acceptorObjId == 0)
+                    return Fail("RETURN", ActorFailureReason.WrongDecision,
+                        $"return-quest acceptor npc template {options.ReturnAcceptorTemplateId} unresolvable in scenario world",
+                        rigNotes, stages, criteria, traceRecords);
+
+                var toAcceptor = actor.MoveToUnit(acceptorObjId, options.TravelSpeed, options.TravelTimeout);
+                Collect(actor, traceRecords);
+                stages.Add(Stage("RETURN-TRAVEL-ACCEPT", acceptorObjId, toAcceptor));
+                toAcceptor = runtime.Drive(actor, toAcceptor, options.TravelTimeout);
+                Collect(actor, traceRecords);
+                if (toAcceptor.State != ActorLifecycleState.Completed)
+                    return Fail("RETURN", toAcceptor.Failure ?? ActorFailureReason.Navigation,
+                        $"travel to return-quest acceptor {acceptorObjId} not completed: {toAcceptor.State} ({toAcceptor.Detail ?? "n/a"})",
+                        rigNotes, stages, criteria, traceRecords);
+
+                var returnAccept = actor.AcceptQuest(options.ReturnQuestId, QuestAcceptorType.Npc, options.ReturnAcceptorTemplateId);
+                Collect(actor, traceRecords);
+                stages.Add(Stage("RETURN-ACCEPT", options.ReturnQuestId, returnAccept));
+                if (returnAccept.State != ActorLifecycleState.Completed)
+                    return Fail("RETURN", returnAccept.Failure ?? ActorFailureReason.RejectedAction,
+                        $"return quest {options.ReturnQuestId} accept refused by engine gate: {returnAccept.Detail}",
+                        rigNotes, stages, criteria, traceRecords);
+
+                var reportObjId = world.ResolveNpcObjId(options.ReturnReportTemplateId);
+                if (reportObjId == 0)
+                    return Fail("RETURN", ActorFailureReason.WrongDecision,
+                        $"return-quest report npc template {options.ReturnReportTemplateId} unresolvable in scenario world",
+                        rigNotes, stages, criteria, traceRecords);
+
+                var toReport = actor.MoveToUnit(reportObjId, options.TravelSpeed, options.TravelTimeout);
+                Collect(actor, traceRecords);
+                stages.Add(Stage("RETURN-TRAVEL-REPORT", reportObjId, toReport));
+                toReport = runtime.Drive(actor, toReport, options.TravelTimeout);
+                Collect(actor, traceRecords);
+                if (toReport.State != ActorLifecycleState.Completed)
+                    return Fail("RETURN", toReport.Failure ?? ActorFailureReason.Navigation,
+                        $"travel to return-quest report npc {reportObjId} not completed: {toReport.State} ({toReport.Detail ?? "n/a"})",
+                        rigNotes, stages, criteria, traceRecords);
+
+                var returnTurnIn = actor.TurnInQuest(options.ReturnQuestId, reportObjId);
+                Collect(actor, traceRecords);
+                stages.Add(Stage("RETURN-TURNIN", options.ReturnQuestId, returnTurnIn));
+                if (returnTurnIn.State != ActorLifecycleState.Completed)
+                    return Fail("RETURN", returnTurnIn.Failure ?? ActorFailureReason.RejectedAction,
+                        $"return quest {options.ReturnQuestId} turn-in refused: {returnTurnIn.Detail}",
+                        rigNotes, stages, criteria, traceRecords);
+
+                // Drain the step machine until the turn-in completion drops
+                // the quest from ActiveQuests (bounded — M1M2 replay shape).
+                var returnDrainGuard = 0;
+                while (character.Quests?.ActiveQuests.ContainsKey(options.ReturnQuestId) == true && returnDrainGuard++ < 8)
+                {
+                    var returnDrain = actor.AdvanceQuest(options.ReturnQuestId);
+                    Collect(actor, traceRecords);
+                    stages.Add(Stage("RETURN-ADVANCE", options.ReturnQuestId, returnDrain));
+                    if (returnDrain.State != ActorLifecycleState.Completed)
+                        return Fail("RETURN", returnDrain.Failure ?? ActorFailureReason.StateTransition,
+                            $"return quest {options.ReturnQuestId} post-turn-in advance refused: {returnDrain.Detail}",
+                            rigNotes, stages, criteria, traceRecords);
+                }
+            }
+
             var finalObserve = actor.Observe();
             Collect(actor, traceRecords);
             stages.Add(Stage("COMPLETE-OBSERVE", 0, actor.AuditTrace.Last()));
@@ -614,6 +716,15 @@ public static class AdventurerSpikeScenario
             criteria.Add(new BotScenarioRunner.CriterionVerdict(
                 $"quest-{options.QuestId}-completed", completedFlag && !stillActive,
                 $"quest {options.QuestId}: completed flag={completedFlag}, active={stillActive}"));
+
+            if (options.ReturnQuestId > 0)
+            {
+                var returnStillActive = finalObserve.ActiveQuestIds.Contains(options.ReturnQuestId);
+                var returnCompleted = character.Quests?.HasQuestCompleted(options.ReturnQuestId) == true;
+                criteria.Add(new BotScenarioRunner.CriterionVerdict(
+                    $"quest-{options.ReturnQuestId}-completed", returnCompleted && !returnStillActive,
+                    $"return quest {options.ReturnQuestId}: completed flag={returnCompleted}, active={returnStillActive}"));
+            }
 
             var lifecycle = AssertTraceCompleteness(traceRecords, out var lifecycleDetail);
             criteria.Add(new BotScenarioRunner.CriterionVerdict("lifecycle-trace-complete", lifecycle, lifecycleDetail));

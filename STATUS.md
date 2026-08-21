@@ -168,7 +168,18 @@ with the healthy three). Open question on record: WHY a freshly spawned
 fox can enter the pinned-HP state at all (cold-boot correlation: both
 rebuild-run E2E failures showed it, warm runs never did) — worth a
 dedicated look at Npc leash/return-home healing.
-Remaining Adventurer v1: literal return-to-NPC quest leg. Party v1 open.
+**Return-to-NPC leg landed 2026-08-20**: the spike is now the M7-worded
+short quest chain — after the 250 cull completes, the bot travels to the
+quest-330 acceptor (golden route §1a step 3: Npc 3597, no objectives,
+report Npc 3511), accepts through the real AddQuest gate, travels to the
+report NPC, and turns in through the real packet path, draining the step
+machine to completion (M1M2 replay shape). Rig E-M7-10 green (both quests
+completed-and-dropped; contract vocabulary gains the second accept + the
+turn-in). Rigs default the leg off (ReturnQuestId 0 keeps the one-quest
+shape); live defaults run the chain.
+**Adventurer v1 feature list COMPLETE 2026-08-20** — targeting, skill
+priority, distance maintenance, heal/retreat, loot, equip upgrades,
+return to quest NPC, death recovery all landed. Party v1 open.
 Scheduling unblocked per the roadmap's spike gate. H UNKNOWN.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
