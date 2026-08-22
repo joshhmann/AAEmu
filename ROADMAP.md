@@ -1491,6 +1491,15 @@ the scheduler death watch stops work on dead bots, resurrects at the
 nearest return portal after 5s, relocates server-side, and resumes work
 (5 rig tests green). H stays UNKNOWN — Josh confirms feel.
 
+**Cold-start fox follow-up (2026-08-22):** an isolated local E2E run with a
+forced rebuild/cold start passed 1/1 in 2m57s. All three foxes took damage
+and died; the trace had neither a `HUNT-SKIP` nor a return-home/full-HP reset.
+Early unchanged HP samples are consistent with asynchronous effect scheduling,
+not proof of a failed hit. The previously observed pinned-HP case is not
+reproduced, its root cause remains UNKNOWN, and no speculative Npc AI change
+is authorized by this evidence. A second local repeat stalled during harness
+startup before producing a scenario report and is not gameplay evidence.
+
 **Depends on:** M6 exit (including A1) and B1 (combat/quest actor actions).
 **M7 is the largest unestimated chunk on the roadmap** — there is no combat
 AI today beyond Cast/SetTarget — so a scoped spike (one adventurer clearing

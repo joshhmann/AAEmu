@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-20 · by Kimi (Josh-directed no-cards pass #2: B4 playerbot_metadata store — M6 deferred gate #5 engineering COMPLETE)
-Branch of record: develop @ efb98e4ae (local, ls-remote verified 2026-08-19 by fleet commit 50af336dc)
+Updated: 2026-08-22 · by Codex (M7 Party v1 slice 2 + cold-start fox follow-up)
+Branch of record: develop @ 2549d487e (origin/develop)
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
@@ -166,8 +166,15 @@ NoProgressSkipRounds (3) executed-cast rounds is excluded from reselection
 on. Rig E-M7-9 (one unkillable fox of four — skip fires, cull completes
 with the healthy three). Open question on record: WHY a freshly spawned
 fox can enter the pinned-HP state at all (cold-boot correlation: both
-rebuild-run E2E failures showed it, warm runs never did) — worth a
-dedicated look at Npc leash/return-home healing.
+rebuild-run E2E failures showed it, warm runs never did). **Follow-up
+2026-08-22:** an isolated forced-rebuild E2E cold start passed 1/1 in
+2m57s: 3/3 foxes took damage and died, with no `HUNT-SKIP` and no observed
+return-home/full-HP reset. The first cast samples can remain unchanged while
+effects are scheduled asynchronously, so they are not alone evidence of a
+damage failure. The original failure is therefore **not reproduced and root
+cause remains UNKNOWN**; no speculative Npc AI change was merged. A second
+repeat stalled in local harness startup before it produced a scenario
+report, so it is not gameplay evidence.
 **Return-to-NPC leg landed 2026-08-20**: the spike is now the M7-worded
 short quest chain — after the 250 cull completes, the bot travels to the
 quest-330 acceptor (golden route §1a step 3: Npc 3597, no objectives,
