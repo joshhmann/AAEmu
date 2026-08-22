@@ -1505,22 +1505,31 @@ startup before producing a scenario report and is not gameplay evidence.
 1. **Party spike first** — one real party completes a selected group
    encounter; turn its follow/assist, rally, role, avoid-extra-pull,
    regroup, death-recovery, and travel legs into reusable scenario steps.
-2. **E2E repeatability** — give the isolated stack bounded startup/shutdown,
+   `PartyFollowAssistScenario` is currently rig-only: give multi-actor
+   scenarios an explicit `BotScenarioRunner` template/bridge execution seam
+   before counting the feature as live E2E coverage.
+2. **Party lifecycle fault matrix** — exercise leader/member death,
+   disconnect, restart, world change, invitation retry, target death, and
+   leash/return while preserving party membership, no duplicate work, and
+   fail-closed regroup behavior. Multi-actor coordination is the first place
+   where independently safe actor requests can still be unsafe together.
+3. **E2E repeatability** — give the isolated stack bounded startup/shutdown,
    infrastructure-only retry classification, reliable cleanup, and a single
    per-run artifact bundle. A harness startup stall is never gameplay proof.
-3. **Causal traces** — standardize action accepted → effect observed → target
+4. **Causal traces** — standardize action accepted → effect observed → target
    state change → bounded timeout/failure reason. This distinguishes delayed
    effects from failed hits and makes a recurrence of the fox issue diagnosable.
-4. **Group movement and navigation** — replace curated straight-line movement
+5. **Group movement and navigation** — replace curated straight-line movement
    workarounds with terrain/obstacle-aware movement, formation cohesion, and
    explicit stuck recovery before dungeon-scale party scenarios.
-5. **Npc state telemetry** — log/trace aggro transitions, return-home entry,
+6. **Npc state telemetry** — log/trace aggro transitions, return-home entry,
    healing, and target changes; investigate a reproduced pinned-HP case only,
    never by speculative AI behavior changes.
-6. **Scheduler and recovery proof** — run a long mixed-behavior scheduler
+7. **Scheduler and recovery proof** — run a long mixed-behavior scheduler
    soak and a party-mid-route restart/resume E2E before M8 increases embodied
-   bot counts.
-7. **Coverage ledger and fault injection** — maintain a small action/system
+   bot counts. Scheduler behavior is currently covered by deterministic rigs;
+   the E2E must assert the live bridge metrics and actual wake/lease behavior.
+8. **Coverage ledger and fault injection** — maintain a small action/system
    matrix (rig, isolated E2E, integrated route, human-feel status) and add
    controlled disconnect, server restart, delayed-effect, and persistence
    fault cases to the reusable harness.
