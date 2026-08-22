@@ -1452,7 +1452,12 @@ Split by archetype, not one universal mind.
   call; ReplyToJoinTeam = the CSReplyToJoinTeamPacket call). The engine's
   refusals are silent voids, so the contract pre-flights StateTransition
   and post-checks the observable outcomes (invitation record; InParty +
-  team membership). Rig GameplayActorPartyTests 6 green)*
+  team membership). Rig GameplayActorPartyTests 6 green. 2026-08-22:
+  follow leader / assist target DONE as `PartyFollowAssistScenario` — a
+  scenario composition over `MoveToUnit` and `SetTarget`, with real active
+  party/owner/world pre-flights and fail-closed no-leader-target behavior;
+  rig PartyFollowAssistScenarioRigTests 4 green, full gate 2163/0/1.
+  Remaining: party spike)*
 
 **Exit test:** one human + three bots complete the curated leveling route
 and a selected group encounter.

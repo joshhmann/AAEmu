@@ -203,6 +203,16 @@ JoinActorWorld moves a second actor's character into the host session's
 world (each CreateActor gets its OWN world; a party needs one). Rig
 GameplayActorPartyTests 6/6 green. Follow-up slices: follow leader /
 assist target (scenario surface), then the M7 party spike. H UNKNOWN.
+**Party v1 slice 2 landed 2026-08-22** — `PartyFollowAssistScenario`
+composes existing actor actions instead of growing the contract surface:
+the member verifies it and the leader are active members of the same real
+party (and that the supplied leader is the team's owner), follows through
+`MoveToUnit`, then copies the leader's ordinary `CurrentTarget` through
+`SetTarget`. The scenario fails closed for wrong party/world/leader state
+or a leader without a target. Rig `PartyFollowAssistScenarioRigTests` 4/4
+green: distant follow + assist, in-formation hold + assist, non-party
+pre-flight refusal, and no-target refusal. Full gate 2163/0/1. Remaining:
+M7 party spike. H UNKNOWN.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
