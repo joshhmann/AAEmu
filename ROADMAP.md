@@ -1538,6 +1538,26 @@ These are test-platform investments, not a claim that bots can replace the
 Josh-owned human-feel gates; client feel, visual correctness, and balance
 remain human acceptance work.
 
+**Low-lift first moves (2026-08-22; use existing seams):**
+
+- Add a small isolated-stack Party follow/assist smoke that uses the live
+  bridge and asserts real team membership, member position, and copied target.
+  This is the first consumer of the multi-actor execution seam, not a new
+  party framework.
+- Add a scheduler smoke through the existing bridge statistics: wake a managed
+  bot, assert one real step/lease completion and bounded wake latency, then
+  capture the existing scheduler metrics in the report.
+- Standardize every E2E report's small manifest from data already available:
+  scenario inputs, cold/warm mode, runtime `compact.sqlite3` MD5, server
+  process/log tails, and the action/criterion trace. This makes flakes
+  comparable without building an observability platform first.
+- Promote the existing stack boot/isolation checks and restart helpers into a
+  reusable preflight for new E2Es, rather than duplicating startup assumptions
+  in each scenario.
+- For a new failure class, land the smallest deterministic rig reproduction
+  alongside the E2E artifact before broadening retries or changing engine
+  behavior. The fox investigation is the model for this discipline.
+
 **Depends on:** M6 exit (including A1) and B1 (combat/quest actor actions).
 **M7 is the largest unestimated chunk on the roadmap** — there is no combat
 AI today beyond Cast/SetTarget — so a scoped spike (one adventurer clearing
