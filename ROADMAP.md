@@ -1500,6 +1500,35 @@ reproduced, its root cause remains UNKNOWN, and no speculative Npc AI change
 is authorized by this evidence. A second local repeat stalled during harness
 startup before producing a scenario report and is not gameplay evidence.
 
+**Forward hardening queue (2026-08-22; non-blocking, ordered for M7→M8):**
+
+1. **Party spike first** — one real party completes a selected group
+   encounter; turn its follow/assist, rally, role, avoid-extra-pull,
+   regroup, death-recovery, and travel legs into reusable scenario steps.
+2. **E2E repeatability** — give the isolated stack bounded startup/shutdown,
+   infrastructure-only retry classification, reliable cleanup, and a single
+   per-run artifact bundle. A harness startup stall is never gameplay proof.
+3. **Causal traces** — standardize action accepted → effect observed → target
+   state change → bounded timeout/failure reason. This distinguishes delayed
+   effects from failed hits and makes a recurrence of the fox issue diagnosable.
+4. **Group movement and navigation** — replace curated straight-line movement
+   workarounds with terrain/obstacle-aware movement, formation cohesion, and
+   explicit stuck recovery before dungeon-scale party scenarios.
+5. **Npc state telemetry** — log/trace aggro transitions, return-home entry,
+   healing, and target changes; investigate a reproduced pinned-HP case only,
+   never by speculative AI behavior changes.
+6. **Scheduler and recovery proof** — run a long mixed-behavior scheduler
+   soak and a party-mid-route restart/resume E2E before M8 increases embodied
+   bot counts.
+7. **Coverage ledger and fault injection** — maintain a small action/system
+   matrix (rig, isolated E2E, integrated route, human-feel status) and add
+   controlled disconnect, server restart, delayed-effect, and persistence
+   fault cases to the reusable harness.
+
+These are test-platform investments, not a claim that bots can replace the
+Josh-owned human-feel gates; client feel, visual correctness, and balance
+remain human acceptance work.
+
 **Depends on:** M6 exit (including A1) and B1 (combat/quest actor actions).
 **M7 is the largest unestimated chunk on the roadmap** — there is no combat
 AI today beyond Cast/SetTarget — so a scoped spike (one adventurer clearing
