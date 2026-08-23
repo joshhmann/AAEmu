@@ -2,27 +2,27 @@
   "environment": "aaemu-.165",
   "image": {
     "tag": "aaemu-game:presence-demo",
-    "digest": "sha256:2bba61bfa73a0d54ee4e754cb499af41dc0bd333d8f6b1f38df356c37258d315",
-    "built_at": "2026-08-23T11:12:51.545947112-07:00 (CT 133 docker build)"
+    "digest": "sha256:55f19ab58db5b004ad4347a845b059574fe518048a024a50bee28de17fd82397",
+    "built_at": "2026-08-23T11:12:51-07:00 (PDT)"
   },
   "source": {
     "commit": "c98da8a53",
-    "branch": "deploy/m7 (fork joshhmann/AAEmu, tracks fork/develop)",
-    "lineage": "fork develop @ c98da8a53 (verified tip): M7 Adventurer v1 (return-to-NPC leg, sustain, distance, equip, death recovery) + M7 Party v1 (invite, follow/assist, party spike) + M6.2 death watch + B4 audit sink + playerbot metadata store + protocol spin-guard continuation; scope 907d1ee25..c98da8a53"
+    "branch": "deploy/m7 @ fork develop tip (joshhmann/AAEmu)",
+    "lineage": "fork develop tip @ c98da8a53 = M7 capped milestone (t_abe2e083) — feat(bots): M7 party spike + multi-actor bridge seam + causal cast-effect traces (Tai 2026-08-23); scope 907d1ee25..c98da8a53 carries M7 Adventurer v1 + Party v1 (invite, follow/assist, spike), M6.2 death watch, B4 audit sink + metadata store, spin-guard continuation, docs/progression refresh",
+    "verified": "c98da8a53 = fork/develop remote tip (git rev-parse fork/develop, 2026-08-23); ff-equivalent: prod tree checked out to deploy/m7 @ c98da8a53 (local develop was polluted by stale M5.2 manifest commit 60d922e2b — left untouched per no-reset rule; preserved on fork/deploy/m52-manifest); tree clean, only documented .bak-* untracked files"
   },
-  "git_sha": "c98da8a533b71d3b56d2805961059b6e7fa176d2",
-  "git_sha_note": "prod tree HEAD = deploy/m7 at fork develop tip c98da8a53 (ff-equivalent; local develop carried stale M5.2 manifest commit 60d922e2b — left untouched per no-reset rule). Runtime image built from source.commit c98da8a53. Manifest recorded on deploy/m7-manifest branch (fork, NOT develop).",
-  "deployed_at": "2026-08-23T18:14Z",
-  "milestone": "M7 deploy (t_abe2e083) \u2014 M7 party spike + multi-actor bridge seam + causal cast-effect traces; M7 Adventurer v1 + Party v1 + M6.2 death watch + B4 audit/metadata",
-  "database_backup": "Rollback image tag aaemu-game:presence-demo-rollback-pre-m7 = 483de80cad1b (snapshotted FIRST pre-build per thinpool/GC pitfall). compact.sqlite3 runtime overlay untouched (bind-mounted, mtime 2026-08-11): quest_contexts 4579 / quest_components 17480 / quest_acts 26802 / unit_reqs 13214 verified intact. NEW MySQL tables playerbot_audit + playerbot_metadata pre-applied to aaemu_game (SQL/updates/2026-08-20, idempotent CREATE IF NOT EXISTS; server code also self-heals at boot).",
+  "git_sha": "c98da8a53",
+  "git_sha_note": "prod tree HEAD on branch deploy/m7 @ c98da8a53 (fork develop tip). Runtime image built from source.commit c98da8a53. M4/M5.2 manifest commits remain safe on fork deploy/m4-manifest and fork/deploy/m52-manifest branches.",
+  "deployed_at": "2026-08-23T11:14:52-07:00",
+  "milestone": "M7 deploy (t_abe2e083) \u2014 M7 bots line: party spike + multi-actor bridge seam + causal cast-effect traces, capped milestone for Josh human verification. STOP LINE respected: no post-cap content in the line. H verdicts stay UNKNOWN until Josh reports his run.",
+  "database_backup": "compact.sqlite3.bak-pre-m3b-20260811 (in .server_files/AAEmu.Game/Data/) \u2014 overlay state intact (quest_contexts 4579 / quest_components 17480 / quest_acts 26802 / unit_reqs 13214; dropped ids 6069/1391 = 0 rows); new schema migrations since last deploy: SQL/updates/2026-08-20 playerbot_audit + playerbot_metadata (CREATE TABLE IF NOT EXISTS) pre-applied to prod aaemu_game, verified present; server also self-heals at boot (PlayerBotMetadataStore.EnsureSchema)",
   "services": {
-    "db": "Up (healthy) - untouched (playerbot_* tables added via migration)",
+    "db": "Up (healthy) - untouched",
     "login": "Up (healthy) - untouched",
-    "game": "Up (healthy) - presence-demo rebuilt from c98da8a53 (image 2bba61bfa73a); 3/3 citizen bots re-adopted + embodied + roaming (8-waypoint loops); QuestSanity SUMMARY 0 errors (4566 quests); 0 FATAL; npc_spawns md5 5f6e57ef unchanged; NLog caps 25MB x 20 baked in image; 15-min boot bar PASS (18:29Z, RestartCount=0, 0 FATAL)",
+    "game": "Up (healthy) - presence-demo image 55f19ab58db5, restarts=0, 3/3 citizen bots embodied + roaming (positions change across save cycles), QuestSanity SUMMARY OK 0 errors, 0 FATAL, npc_spawns (main_world) md5 5f6e57efcf5a0df46914f90de49c2d1a unchanged, ports 1237/1239 accepting connections",
     "adminer": "Up"
   },
-  "build_path": "in-repo overlay recipe: `cd /root/AAEmu && git switch -c deploy/m7 fork/develop && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml build game && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml up -d --no-deps --force-recreate game` (presence overlay carries AAEMU_PRESENCE_DEMO=1 + patrol-home 15572/15364/126.5, verified in running container env). Rollback tag: aaemu-game:presence-demo-rollback-pre-m7 = 483de80cad1b (snapshotted FIRST pre-build).",
-  "notes": "Deploy t_abe2e083 (2026-08-23, Mai): rollback tag snapshotted FIRST from running image 483de80cad1b (pre-build, proven recipe t_442f3016/t_e30cbd69/t_d8658d50). M7/B4 markers verified in live container binary via ikdasm on copied /app/AAEmu.Game.dll: PartySpikeScenario, LivePartyRuntime, LivePartySpikeRuntime, LiveSpikeRuntime, PartyFollowAssistScenario, PlayerBotControllerAdapter, PendingCastEffect, BotTransitionSafetyProbe x2, PlayerBotMetadataStore, PlayerBotAuditSink \u2014 all present (10/10). NLog caps confirmed in image: Sequence/26214400/maxArchiveFiles 20. No upstream PRs (lane gate). Fork-only push: manifest on deploy/m7-manifest branch, NOT develop.",
-  "sql_overlays": "NONE new for compact.sqlite3 (zero SQL/patches/compact commits in 907d1ee25..c98da8a53). Runtime overlay intact (quest_contexts 4579 / quest_components 17480 / quest_acts 26802 / unit_reqs 13214). MySQL delta: playerbot_audit + playerbot_metadata created (pre-applied).",
-  "rollback": "aaemu-game:presence-demo-rollback-pre-m7 (pre-rebuild image 483de80cad1b)"
+  "build_path": "in-repo overlay recipe: cd /root/AAEmu (branch deploy/m7 @ c98da8a53) && docker compose --env-file /root/AAEmu/.env -p aaemu -f docker-compose.yaml -f docker-compose.presence.yaml build game && up -d --no-deps --force-recreate game (presence overlay carries AAEMU_PRESENCE_DEMO=1 + patrol-home 15572/15364/126.5). Rollback tag: aaemu-game:presence-demo-rollback-pre-m7 = 483de80cad1b (verified present post-build).",
+  "notes": "Deploy t_abe2e083 (2026-08-23, Mai): rollback tag snapshotted FIRST from running image 483de80cad1b (pre-build, per thinpool/GC pitfall; re-verified post-build). ikdasm marker verification on deployed binary (IL from running container): M7 PartySpikeScenario/LivePartyRuntime/LivePartySpikeRuntime/LiveSpikeRuntime/PartyFollowAssistScenario/PlayerBotControllerAdapter/PendingCastEffect/BotTransitionSafetyProbe/PlayerBotMetadataStore/PlayerBotAuditSink all present (10/10); prior markers retained (TradePackExpiryTask x6, StoreCantSellSameZone x1, TryDespawnOwnedSlave x7, BuildHouse/HousingManager, ActorActionType Craft=32/Harvest=29/BoardVehicle=30/UnboardVehicle=31, ApplyLoadedState x3). NLog caps confirmed: Sequence/26214400/20. No upstream PRs (lane gate).",
+  "sql_overlays": "SQL/patches/compact/*.sql applied to runtime compact.sqlite3 (12 patches, FK OFF per authors' env): quest_contexts 4876->4579, quest_components 17851->17480, quest_acts 26886->26802, unit_reqs 13354->13214; dropped ids 6069/1391 verified 0 rows at deploy. New schema: playerbot_audit + playerbot_metadata (2026-08-20) pre-applied to MySQL aaemu_game."
 }
