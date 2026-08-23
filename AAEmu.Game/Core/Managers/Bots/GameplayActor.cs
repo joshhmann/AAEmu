@@ -89,6 +89,35 @@ public class GameplayActor : IGameplayActor
     /// </summary>
     public TimeSpan EffectObservationWindow { get; set; } = DefaultEffectObservationWindow;
 
+    /// <summary>
+    /// Default no-progress window for Move stuck detection (M7 hardening
+    /// #5). Short enough to fail fast well inside a typical Move budget
+    /// (<see cref="DefaultMoveTimeout"/>), long enough to ride out slow
+    /// tick cadences and sub-threshold jitter.
+    /// </summary>
+    public static readonly TimeSpan DefaultNoProgressWindow = TimeSpan.FromSeconds(2.5);
+
+    /// <summary>Length of one bounded unstick nudge leg.</summary>
+    public const float UnstickNudgeDistance = 2f;
+
+    /// <summary>
+    /// Seam for deterministic rig tests: how long a Running Move leg may
+    /// sit without meaningful positional progress (displacement from the
+    /// last progress mark over <see cref="ArrivalRadius"/>) before the
+    /// actor declares the leg stuck and acts. Set to
+    /// <see cref="TimeSpan.Zero"/> to disable stuck detection entirely —
+    /// the leg then rides its full timeout budget exactly like before
+    /// this hardening existed.
+    /// </summary>
+    public TimeSpan NoProgressWindow { get; set; } = DefaultNoProgressWindow;
+
+    /// <summary>
+    /// Bounded recovery budget: how many unstick nudge legs ONE Move
+    /// request may attempt before a stuck declaration fails the request.
+    /// 0 disables nudging — the first stuck declaration fails immediately.
+    /// </summary>
+    public int MaxUnstickNudges { get; set; } = 1;
+
     /// <summary>Max audit records retained (newest last).</summary>
     private const int MaxTraceRecords = 512;
 
@@ -186,6 +215,7 @@ public class GameplayActor : IGameplayActor
 
         _moveTarget = destination;
         _moveSpeed = speed;
+        ResetMoveProgressTracking();
         request.Start("walking");
         return request;
     }
@@ -2303,6 +2333,17 @@ public class GameplayActor : IGameplayActor
 
     private Vector3? _moveTarget;
     private float _moveSpeed;
+
+    // M7 hardening #5 (movement stuck detection): progress tracking for the
+    // active Move leg. _lastProgressPosition/_noProgressElapsed sample
+    // whether the character actually displaces; _unstickWaypoint is a short
+    // lateral recovery leg walked before resuming the original destination;
+    // _unstickAttempts bounds the recovery budget per request.
+    private Vector3 _lastProgressPosition;
+    private TimeSpan _noProgressElapsed;
+    private int _unstickAttempts;
+    private Vector3? _unstickWaypoint;
+
     private Vector3? _driveTarget;
     private float _driveSpeed;
     private BaseUnit? _driveVehicle;
@@ -2422,11 +2463,26 @@ public class GameplayActor : IGameplayActor
         if (request.Action == ActorActionType.Move && _moveTarget is { } destination)
         {
             var position = Character.Transform.World.Position;
-            var flatDistance = MathUtil.CalculateDistance(position, destination, false);
-            var zDistance = Math.Abs(destination.Z - position.Z);
+
+            // M7 hardening #5: an active unstick waypoint steers the leg
+            // before the original destination (a short bounded recovery leg
+            // walked when the straight line is blocked).
+            var legTarget = _unstickWaypoint ?? destination;
+            var flatDistance = MathUtil.CalculateDistance(position, legTarget, false);
+            var zDistance = Math.Abs(legTarget.Z - position.Z);
 
             if (flatDistance <= ArrivalRadius && zDistance <= ArrivalRadius)
             {
+                if (_unstickWaypoint.HasValue)
+                {
+                    // Recovery waypoint reached — resume the original leg
+                    // with fresh progress tracking.
+                    _unstickWaypoint = null;
+                    _lastProgressPosition = position;
+                    _noProgressElapsed = TimeSpan.Zero;
+                    return;
+                }
+
                 // Leg ended — observers must see the halt (dossier §1.6).
                 BroadcastStop();
                 Finish(request, request.Complete(detail: "arrived"));
@@ -2434,18 +2490,24 @@ public class GameplayActor : IGameplayActor
                 return;
             }
 
+            // Stuck detection: no meaningful displacement over the window
+            // fails the leg fast (before the navigation budget burns) after
+            // at most MaxUnstickNudges bounded recovery legs.
+            if (UpdateMoveStuckState(request, position, elapsed))
+                return;
+
             var step = Math.Min(_moveSpeed * (float)Math.Max(elapsed.TotalSeconds, 0.05), flatDistance);
             if (flatDistance > 0.0001f)
             {
-                var angle = (float)MathUtil.CalculateAngleFrom(position, destination).DegToRad();
+                var angle = (float)MathUtil.CalculateAngleFrom(position, legTarget).DegToRad();
                 var (newX, newY) = MathUtil.AddDistanceToFront(step, position.X, position.Y, angle);
                 var fraction = step / flatDistance;
-                var newZ = position.Z + (destination.Z - position.Z) * fraction;
+                var newZ = position.Z + (legTarget.Z - position.Z) * fraction;
                 ApplyCharacterMove(new Vector3(newX, newY, newZ));
             }
             else
             {
-                var dir = destination.Z >= position.Z ? 1f : -1f;
+                var dir = legTarget.Z >= position.Z ? 1f : -1f;
                 var zStep = Math.Min(step, zDistance);
                 ApplyCharacterMove(new Vector3(position.X, position.Y, position.Z + dir * zStep));
             }
@@ -2507,6 +2569,95 @@ public class GameplayActor : IGameplayActor
     }
 
     /// <summary>
+    /// Fresh progress tracking for a new Move leg (M7 hardening #5).
+    /// </summary>
+    private void ResetMoveProgressTracking()
+    {
+        _lastProgressPosition = Character.Transform.World.Position;
+        _noProgressElapsed = TimeSpan.Zero;
+        _unstickAttempts = 0;
+        _unstickWaypoint = null;
+    }
+
+    /// <summary>
+    /// One stuck-detection sample for a Running Move leg (M7 hardening #5):
+    /// displacement from the last progress mark over the arrival radius
+    /// resets the no-progress timer; otherwise the timer accumulates and,
+    /// once it exceeds <see cref="NoProgressWindow"/>, either a bounded
+    /// unstick nudge is scheduled (<see cref="MaxUnstickNudges"/>) or the
+    /// request fails fast.
+    ///
+    /// Stuck declaration semantics: TimedOut(<see cref="ActorFailureReason.Navigation"/>)
+    /// via <see cref="ActorRequest.Expire"/> with detail
+    /// "stuck: no progress {t}s". Expire is used because
+    /// <see cref="ActorRequest.Interrupt"/> cannot carry a §17 Failure
+    /// reason, and scenario loops classify retries off
+    /// Failure == Navigation; the "stuck:" detail prefix discriminates this
+    /// terminal from a plain budget expiry ("navigation budget exceeded").
+    /// The declaration always arrives well before the Move budget expires
+    /// whenever NoProgressWindow &lt; Timeout.
+    ///
+    /// Returns true when the request was terminated (the Tick move branch
+    /// must not continue walking this tick).
+    /// </summary>
+    private bool UpdateMoveStuckState(ActorRequest request, Vector3 position, TimeSpan elapsed)
+    {
+        // Seam disabled — legacy behavior byte-for-byte: the leg rides its
+        // full navigation budget.
+        if (NoProgressWindow <= TimeSpan.Zero)
+            return false;
+
+        if (Vector3.Distance(position, _lastProgressPosition) > ArrivalRadius)
+        {
+            _lastProgressPosition = position;
+            _noProgressElapsed = TimeSpan.Zero;
+            return false;
+        }
+
+        _noProgressElapsed += elapsed;
+        if (_noProgressElapsed < NoProgressWindow)
+            return false;
+
+        // Bounded recovery first: one short lateral leg off the blocked
+        // straight line, alternating sides per attempt.
+        if (_unstickAttempts < MaxUnstickNudges)
+        {
+            _unstickAttempts++;
+            _unstickWaypoint = BuildUnstickWaypoint(position);
+            _lastProgressPosition = position;
+            _noProgressElapsed = TimeSpan.Zero;
+            return false;
+        }
+
+        BroadcastStop();
+        Finish(request, request.Expire(ActorFailureReason.Navigation,
+            $"stuck: no progress {_noProgressElapsed.TotalSeconds:F1}s"));
+        ClearMovementState();
+        return true;
+    }
+
+    /// <summary>
+    /// Unstick nudge waypoint: <see cref="UnstickNudgeDistance"/> lateral
+    /// (perpendicular to the direction of travel), alternating sides per
+    /// attempt. Falls back to a straight sideways leg when the direction is
+    /// degenerate.
+    /// </summary>
+    private Vector3 BuildUnstickWaypoint(Vector3 position)
+    {
+        var legTarget = _unstickWaypoint ?? _moveTarget!.Value;
+        var dx = legTarget.X - position.X;
+        var dy = legTarget.Y - position.Y;
+        var length = MathF.Sqrt(dx * dx + dy * dy);
+        var sign = _unstickAttempts % 2 == 0 ? 1f : -1f;
+        if (length < 0.0001f)
+            return position + new Vector3(UnstickNudgeDistance * sign, 0f, 0f);
+        return position + new Vector3(
+            -dy / length * UnstickNudgeDistance * sign,
+            dx / length * UnstickNudgeDistance * sign,
+            0f);
+    }
+
+    /// <summary>
     /// Emits the canonical Stopping broadcast at the character's current
     /// position (dossier §1.6 — Blink/TeleportToUnit shape): zero velocity
     /// + Stopping flag, so observers' clients snap the character to a
@@ -2550,6 +2701,9 @@ public class GameplayActor : IGameplayActor
     private void ClearMovementState()
     {
         _moveTarget = null;
+        _unstickWaypoint = null;
+        _noProgressElapsed = TimeSpan.Zero;
+        _unstickAttempts = 0;
         _pendingPutDownPackId = null;
         ClearDriveState();
     }

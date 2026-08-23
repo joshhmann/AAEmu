@@ -272,6 +272,13 @@ public static class Program
                 services.AddSingleton<PopulationDirector>();
                 services.AddSingleton<IPopulationDirector>(sp => sp.GetRequiredService<PopulationDirector>());
 
+                // Pre-LLM social layer (M8.5a): deterministic proximity chatter
+                // through the REAL local-chat path. DISABLED by default
+                // ("Bots"."EnableChatter" / AAEMU_BOT_CHATTER_ENABLED); the
+                // service refuses to arm its tick subscription while the gate
+                // is off, and BotChatterBootstrap only calls Start() then.
+                services.AddSingleton<BotChatterService>();
+
                 services.AddSingleton<PublicFarmManager>();
                 services.AddSingleton<IPublicFarmManager>(sp => sp.GetRequiredService<PublicFarmManager>());
 
