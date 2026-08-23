@@ -269,7 +269,15 @@ public sealed class BotPresenceCoordinator
                 var store = PlayerBotMetadataStore.Instance;
                 store.RecordHome(character.Id, character.Transform.WorldId, character.Transform.ZoneId,
                     home.X, home.Y, home.Z);
-                store.RecordSchedule(character.Id, BuildRoamScheduleJson(home, route, config.RoamRadius, i));
+                // C1 Schedules v1 (additive hook): when BotScheduleService
+                // has recorded daily-anchor/last-phase extensions into this
+                // bot's schedule JSON, carry them across this re-record so
+                // they survive a re-provision. With no extensions present
+                // (the default and the B4 E2E shape) the payload passes
+                // through VERBATIM — byte-equal restart snapshots hold.
+                var roamScheduleJson = BuildRoamScheduleJson(home, route, config.RoamRadius, i);
+                store.RecordSchedule(character.Id,
+                    BotSchedulePayload.PreserveExtensions(metadata.Schedule, roamScheduleJson));
 
                 _scheduler.Wake(character.Id);
                 spawned++;

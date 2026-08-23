@@ -722,6 +722,8 @@ public sealed class BotDriveBridge
             return HandlePartyFollowAssistScenario(root);
         if (templateName == PartySpikeScenario.ScenarioName)
             return HandlePartySpikeScenario(root);
+        if (templateName == EconomyDayCycleScenario.ScenarioName)
+            return HandleEconomyDayCycleScenario(root);
 
         var template = templateName != null ? BotScenarioTemplates.Get(templateName) : null;
         if (template == null)
@@ -1126,6 +1128,155 @@ public sealed class BotDriveBridge
         {
             DeactivateParty(PartySpikeScenario.ScenarioName, sessions);
         }
+    }
+
+    /// <summary>
+    /// M8 economy-loop v0 execution seam: runs
+    /// <see cref="EconomyDayCycleScenario"/> on ONE real provisioned bot
+    /// through the live E2E bridge. Request (all fields optional except
+    /// "template"):
+    ///
+    ///   {"cmd":"scenario","template":"m8-economy-cycle-v0",
+    ///    "bot":"m8economy","fresh":true,"cycles":1,
+    ///    "deposit":"proceeds","fixedAmount":0}
+    ///
+    /// Flow: fresh-wipe the bot row → plain headless provisioning → run the
+    /// day cycle(s) through its default overload (LiveCyclePump) → return
+    /// the same structured payload envelope as the single-bot runner, with a
+    /// one-entry `characters` array and a `ledger` block (observable
+    /// character state captured BEFORE deactivation: money / bank / labor /
+    /// per-template bag and bank counts) — the pre-restart expectation the
+    /// E2E restart-reconciliation test asserts against MySQL. The character
+    /// is deactivated afterwards.
+    /// </summary>
+    private string HandleEconomyDayCycleScenario(JsonElement root)
+    {
+        var botName = (root.TryGetProperty("bot", out var b) && b.GetString() is { Length: > 0 } bn
+            ? bn
+            : "m8economy").NormalizeName();
+        var username = BotAccountProvisioningService.ManagedUsernamePrefix + botName.ToLowerInvariant();
+
+        var options = new EconomyDayCycleScenario.CycleOptions
+        {
+            Cycles = root.TryGetProperty("cycles", out var cyEl) && cyEl.TryGetInt32(out var cy) && cy > 0 ? cy : 1,
+            Mode = root.TryGetProperty("deposit", out var depEl) &&
+                   Enum.TryParse<EconomyDayCycleScenario.DepositMode>(depEl.GetString(), ignoreCase: true, out var mode)
+                ? mode
+                : EconomyDayCycleScenario.DepositMode.Proceeds,
+            FixedDepositAmount = root.TryGetProperty("fixedAmount", out var faEl) && faEl.TryGetInt64(out var fa) ? fa : 0
+        };
+
+        // Fresh-rig contract (the template runner's semantics): wipe prior
+        // rows unless the caller opts into adoption.
+        var fresh = !root.TryGetProperty("fresh", out var freshEl) || freshEl.GetBoolean();
+        if (fresh)
+        {
+            try
+            {
+                EnsureFreshBotRow(botName, username);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "scenario '{Template}': fresh wipe failed for '{Bot}' — continuing with adoption semantics",
+                    EconomyDayCycleScenario.ScenarioName, botName);
+            }
+        }
+
+        HeadlessSession session;
+        try
+        {
+            session = HeadlessSession.Provision(username, botName, Race.Nuian, Gender.Male, 10);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': provisioning failed for '{Bot}'",
+                EconomyDayCycleScenario.ScenarioName, botName);
+            return Err($"scenario: provisioning failed for '{botName}': {ex.GetType().Name}: {ex.Message}");
+        }
+
+        try
+        {
+            var result = EconomyDayCycleScenario.Run(session.Character,
+                new LiveScenarioWorldAdapter(session.Character), options);
+
+            // Observable economy state AFTER the run, BEFORE deactivation —
+            // the ledger snapshot the restart test reconciles against MySQL.
+            var ledger = new
+            {
+                characterId = session.Character.Id,
+                money = session.Character.Money,
+                bankMoney = session.Character.Money2,
+                laborPower = session.Character.LaborPower,
+                bagItems = BagTemplateCounts(session.Character),
+                bankItems = BankTemplateCounts(session.Character)
+            };
+
+            var payload = new
+            {
+                template = result.Template,
+                passed = result.Passed,
+                failStage = result.FailStage,
+                failure = result.Failure?.ToString(),
+                failReason = result.FailReason,
+                gates = result.Gates,
+                stages = result.Stages,
+                criteria = result.Criteria,
+                traceRecords = result.TraceRecords.Select(r => r.ToJson()).ToList(),
+                actorRequests = result.ActorRequests,
+                rigNotes = result.RigNotes,
+                trace = result.TraceRecords
+                    .Select(r => JsonSerializer.Deserialize<JsonElement>(r.ToJson()))
+                    .ToArray(),
+                evidence = result.Evidence(),
+                characters = new[]
+                {
+                    // id = characters.id; objId = the live world object id.
+                    new { name = session.Character.Name, level = session.Character.Level,
+                          objId = session.Character.ObjId, id = session.Character.Id }
+                },
+                ledger
+            };
+            Logger.Info("scenario '{Template}': {Verdict} on '{Bot}' ({Stage}{Failure})",
+                EconomyDayCycleScenario.ScenarioName, result.Passed ? "PASS" : "FAIL", botName,
+                result.FailStage, result.Failure is { } f ? $", {f}" : "");
+            return Ok(payload);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': run crashed on '{Bot}'",
+                EconomyDayCycleScenario.ScenarioName, botName);
+            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            try
+            {
+                CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "scenario '{Template}': deactivate failed for '{Bot}'",
+                    EconomyDayCycleScenario.ScenarioName, botName);
+            }
+        }
+    }
+
+    /// <summary>Per-template bag counts for the ledger block.</summary>
+    private static Dictionary<uint, int> BagTemplateCounts(Character character)
+    {
+        var counts = new Dictionary<uint, int>();
+        foreach (var item in character.Inventory.Bag.GetItemsSnapshot())
+            counts[item.TemplateId] = counts.GetValueOrDefault(item.TemplateId) + item.Count;
+        return counts;
+    }
+
+    /// <summary>Per-template bank (warehouse) counts for the ledger block.</summary>
+    private static Dictionary<uint, int> BankTemplateCounts(Character character)
+    {
+        var counts = new Dictionary<uint, int>();
+        foreach (var item in character.Inventory.Warehouse.GetItemsSnapshot())
+            counts[item.TemplateId] = counts.GetValueOrDefault(item.TemplateId) + item.Count;
+        return counts;
     }
 
     /// <summary>

@@ -279,6 +279,14 @@ public static class Program
                 // is off, and BotChatterBootstrap only calls Start() then.
                 services.AddSingleton<BotChatterService>();
 
+                // C1 Schedules v1 (M8/G4): game-clock daily anchors for
+                // persistent bots (home/work/travel/rest). DISABLED by
+                // default ("Bots"."EnableSchedules" /
+                // AAEMU_BOT_SCHEDULES_ENABLED); while off the service never
+                // subscribes to the tick, writes metadata, or changes bot
+                // behavior. BotScheduleBootstrap only calls Start() then.
+                services.AddSingleton<BotScheduleService>();
+
                 services.AddSingleton<PublicFarmManager>();
                 services.AddSingleton<IPublicFarmManager>(sp => sp.GetRequiredService<PublicFarmManager>());
 
