@@ -239,12 +239,14 @@ public static class AdventurerSpikeScenario
         /// Heal item template used once per recovery round through the real
         /// UseItem contract path (0 = none — pure out-of-combat regen).
         /// A Rejected use (not in bag / on cooldown) is tolerated — regen
-        /// is the documented fallback. Potion data note: canonical
-        /// compact.sqlite3 maps no low-level direct-heal potion (the retail
-        /// heal-potion chain is buff-tick shaped); the default stays 0 until
-        /// the right template is verified.
+        /// is the documented fallback. Potion data note (verified against
+        /// canonical compact.sqlite3 r208022): direct-heal potions DO exist
+        /// as HealEffect rows — 8515 / 8518 ("2단계 치유 물약", skill 11718,
+        /// fixed 2900 heal, 90 s cooldown, instant) / 15580 / 15581 (870
+        /// heal, 9 s cooldown), all req level 20. Default 8518: the
+        /// strongest single-shot heal for a level-20 spike bot.
         /// </summary>
-        public uint HealItemTemplateId { get; init; } = 0;
+        public uint HealItemTemplateId { get; init; } = 8518;
     }
 
     /// <summary>
@@ -794,49 +796,66 @@ public static class AdventurerSpikeScenario
     }
 
     /// <summary>
-    /// M7 heal/retreat: one sustain episode. RETREAT — a short Move leg away
-    /// from the threat along the threat→bot vector (failure tolerated: a
-    /// cornered bot still attempts recovery). RECOVER — bounded rounds: the
-    /// configured heal item once per round through the real UseItem contract
-    /// path when set (Rejected = not bagged/on cooldown — tolerated, regen
-    /// is the documented fallback), then a runtime recovery tick (live: game
-    /// loop applies regen/potion healing; rig: documented regen fake) until
-    /// the resume threshold. True when the bot re-engages at or above
-    /// <see cref="SpikeOptions.ResumeThreshold"/>.
+    /// M7 heal/retreat: one sustain episode (shared primitive — the party
+    /// spike's per-member sustain composes the SAME helper, see
+    /// PartySpikeScenario). RETREAT — a short Move leg away from the threat
+    /// along the threat→bot vector (failure tolerated: a cornered bot still
+    /// attempts recovery). RECOVER — bounded rounds: the configured heal
+    /// item once per round through the real UseItem contract path when set
+    /// (Rejected = not bagged/on cooldown — tolerated, regen is the
+    /// documented fallback), then one recovery tick (<paramref name="drive"/>
+    /// advances move legs; <paramref name="recoveryTick"/> waits one
+    /// recovery beat — live: game loop applies regen/potion healing; rig:
+    /// documented regen fake). True when the bot re-engages at or above
+    /// <paramref name="resumeThreshold"/>.
     /// </summary>
-    private static bool TrySustain(Character character, GameplayActor actor, Npc threat,
-        ISpikeRuntime runtime, SpikeOptions options,
+    internal static bool RunSustainEpisode(
+        Character character, GameplayActor actor, Npc threat,
+        float retreatDistance, float travelSpeed, TimeSpan travelTimeout,
+        uint healItemTemplateId, float resumeThreshold, int maxRounds,
+        Func<ActorRequest, ActorRequest> drive, Action recoveryTick,
         List<BotScenarioRunner.ScenarioStageVerdict> stages, List<ActorAuditRecord> traceRecords)
     {
         var position = character.Transform.World.Position;
         var away = position - threat.Transform.World.Position;
         if (away.LengthSquared() < 0.01f)
             away = new Vector3(1, 0, 0); // stacked on the threat — arbitrary direction
-        var retreatPoint = position + Vector3.Normalize(away) * options.RetreatDistance;
+        var retreatPoint = position + Vector3.Normalize(away) * retreatDistance;
 
-        var retreat = actor.MoveTo(retreatPoint, options.TravelSpeed, options.TravelTimeout);
+        var retreat = actor.MoveTo(retreatPoint, travelSpeed, travelTimeout);
         Collect(actor, traceRecords);
         stages.Add(Stage("SUSTAIN-RETREAT", threat.ObjId, retreat));
-        retreat = runtime.Drive(actor, retreat, options.TravelTimeout);
+        retreat = drive(retreat);
         Collect(actor, traceRecords);
 
-        for (var round = 0; round < options.SustainMaxRounds; round++)
+        for (var round = 0; round < maxRounds; round++)
         {
-            if (character.MaxHp > 0 && (float)character.Hp / character.MaxHp >= options.ResumeThreshold)
+            if (character.MaxHp > 0 && (float)character.Hp / character.MaxHp >= resumeThreshold)
                 return true;
 
-            if (options.HealItemTemplateId > 0)
+            if (healItemTemplateId > 0)
             {
-                var use = actor.UseItem(options.HealItemTemplateId);
+                var use = actor.UseItem(healItemTemplateId);
                 Collect(actor, traceRecords);
-                stages.Add(Stage("SUSTAIN-HEAL", options.HealItemTemplateId, use));
+                stages.Add(Stage("SUSTAIN-HEAL", healItemTemplateId, use));
             }
 
-            runtime.RecoveryTick(character);
+            recoveryTick();
         }
 
-        return character.MaxHp > 0 && (float)character.Hp / character.MaxHp >= options.ResumeThreshold;
+        return character.MaxHp > 0 && (float)character.Hp / character.MaxHp >= resumeThreshold;
     }
+
+    /// <summary>Solo-spike sustain: the shared episode with this scenario's options and runtime.</summary>
+    private static bool TrySustain(Character character, GameplayActor actor, Npc threat,
+        ISpikeRuntime runtime, SpikeOptions options,
+        List<BotScenarioRunner.ScenarioStageVerdict> stages, List<ActorAuditRecord> traceRecords)
+        => RunSustainEpisode(character, actor, threat,
+            options.RetreatDistance, options.TravelSpeed, options.TravelTimeout,
+            options.HealItemTemplateId, options.ResumeThreshold, options.SustainMaxRounds,
+            request => runtime.Drive(actor, request, options.TravelTimeout),
+            () => runtime.RecoveryTick(character),
+            stages, traceRecords);
 
     /// <summary>
     /// M7 distance maintenance: one band check before the cast burst. In

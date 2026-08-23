@@ -68,6 +68,27 @@ public class GameplayActor : IGameplayActor
     /// <summary>Default navigation budget for a Move request.</summary>
     public static readonly TimeSpan DefaultMoveTimeout = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// Default bounded post-cast effect-observation window (M7 hardening
+    /// #4). Long enough to cover retail's delayed ApplySkillTask damage
+    /// (~200 ms) with margin; short enough to keep the trace timely.
+    /// </summary>
+    public static readonly TimeSpan DefaultEffectObservationWindow = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// Expected poll cadence for the effect-observation window in
+    /// production (the scheduler's per-bot step cadence drives
+    /// <see cref="Tick"/>; each tick is one read-only HP poll).
+    /// </summary>
+    public static readonly TimeSpan EffectObservationPollInterval = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>
+    /// Seam for deterministic rig tests: how long the post-cast HP
+    /// observation window waits before declaring "no effect observed".
+    /// Set to <see cref="TimeSpan.Zero"/> to disable observation entirely.
+    /// </summary>
+    public TimeSpan EffectObservationWindow { get; set; } = DefaultEffectObservationWindow;
+
     /// <summary>Max audit records retained (newest last).</summary>
     private const int MaxTraceRecords = 512;
 
@@ -267,13 +288,30 @@ public class GameplayActor : IGameplayActor
         if (target == null)
             return Reject(request, ActorFailureReason.RejectedAction, "cast target not found in world");
 
+        // M7 hardening #4 (causal traces): sample the resolved target's HP
+        // at cast acceptance so the post-completion effect observation has a
+        // before value. Only live units with an HP pool are observable —
+        // everything else leaves the additive audit fields null.
+        var observeTargetHp = IsObservableEffectTarget(target);
+        int? targetHpBefore = observeTargetHp ? target.Hp : null;
+
         request.Start($"casting {skillId} on {target.ObjId}");
 
         // Execute through the REAL engine path — the same call the
         // CSStartSkillPacket learned-skill branch makes.
         var result = Character.UseSkill(skillId, target);
         if (result == SkillResult.Success)
+        {
+            // Damage may land asynchronously (ApplySkillTask scheduled on
+            // the game loop when the skill template carries an effect
+            // delay/speed), so the observation is a bounded post-completion
+            // window correlated by target objId — NOT synchronous with this
+            // call. The action's own result stays Completed either way:
+            // observation failure ≠ action failure.
+            if (observeTargetHp)
+                RegisterCastEffectObservation(request.TraceId, target, targetHpBefore!.Value);
             return Complete(request, result, $"skill {skillId} cast succeeded");
+        }
         return Reject(request, ActorFailureReason.RejectedAction, $"skill {skillId} refused: {result}");
     }
 
@@ -2269,9 +2307,27 @@ public class GameplayActor : IGameplayActor
     private float _driveSpeed;
     private BaseUnit? _driveVehicle;
     private ulong? _pendingPutDownPackId;
+    private readonly List<PendingCastEffect> _pendingCastEffects = [];
+
+    /// <summary>
+    /// One in-flight post-cast effect observation (M7 hardening #4): the
+    /// resolved cast target, its HP sampled at cast acceptance, and the
+    /// bounded window. Polls are read-only HP reads on the execution
+    /// boundary (<see cref="Tick"/>) — no world mutation off the seam.
+    /// </summary>
+    private sealed class PendingCastEffect
+    {
+        public required Guid TraceId { get; init; }
+        public required Unit Target { get; init; }
+        public required int HpBefore { get; init; }
+        public required TimeSpan Window { get; init; }
+        public TimeSpan Elapsed { get; set; }
+    }
 
     public void Tick(TimeSpan elapsed)
     {
+        ProcessPendingCastEffects(elapsed);
+
         if (_active is not { IsTerminal: false } request)
             return;
 
@@ -2502,6 +2558,86 @@ public class GameplayActor : IGameplayActor
     {
         _driveTarget = null;
         _driveVehicle = null;
+    }
+
+    #endregion
+
+    #region Cast effect observation (M7 hardening #4 — causal traces)
+
+    /// <summary>
+    /// A live unit with current HP is observable: the fox pinned-HP anomaly
+    /// class needs a before/after read of the resolved cast target's
+    /// CURRENT hp (a plain unit field — deliberately NOT the template-
+    /// derived MaxHp, which headless/template-less units cannot evaluate).
+    /// Anything else (observation disabled, dead target) leaves the additive
+    /// audit fields null — never fabricate a measurement.
+    /// </summary>
+    private bool IsObservableEffectTarget(Unit target)
+        => EffectObservationWindow > TimeSpan.Zero && !target.IsDead;
+
+    /// <summary>
+    /// Starts the bounded post-cast observation window for a successfully
+    /// accepted cast. Damage lands asynchronously (ApplySkillTask scheduled
+    /// on the game loop when the skill template carries an effect
+    /// delay/speed), so the window is drained by <see cref="Tick"/> on the
+    /// execution boundary — the same seam that marshals the cast itself.
+    /// </summary>
+    private void RegisterCastEffectObservation(Guid traceId, Unit target, int hpBefore)
+        => _pendingCastEffects.Add(new PendingCastEffect
+        {
+            TraceId = traceId,
+            Target = target,
+            HpBefore = hpBefore,
+            Window = EffectObservationWindow
+        });
+
+    /// <summary>
+    /// Drains every pending observation one read-only HP poll per tick.
+    /// A HP change resolves the window immediately (effect landed); expiry
+    /// without change records EffectObserved=false — the failed-hit vs
+    /// delayed-effect discriminator. Either outcome only ENRICHES the
+    /// already-terminal audit record; it never changes Result.
+    /// Observations outlive their request's terminal transition on purpose:
+    /// Cast completes synchronously while its damage may land up to a
+    /// window later.
+    /// </summary>
+    private void ProcessPendingCastEffects(TimeSpan elapsed)
+    {
+        if (_pendingCastEffects.Count == 0)
+            return;
+
+        for (var i = _pendingCastEffects.Count - 1; i >= 0; i--)
+        {
+            var pending = _pendingCastEffects[i];
+            pending.Elapsed += elapsed;
+            var hpAfter = pending.Target.Hp; // read-only poll on the seam
+            var observed = hpAfter != pending.HpBefore;
+            if (observed || pending.Elapsed >= pending.Window)
+            {
+                _pendingCastEffects.RemoveAt(i);
+                AttachCastEffectObservation(pending, hpAfter, observed);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Swaps the enriched record into the bounded trace (records are
+    /// immutable; the v2 additive fields arrive via a with-copy at the same
+    /// index). The trace entry can already be trimmed under load (bounded
+    /// 512-record ring) — then there is nothing to enrich.
+    /// </summary>
+    private void AttachCastEffectObservation(PendingCastEffect pending, int hpAfter, bool observed)
+    {
+        var index = _trace.FindIndex(r => r.TraceId == pending.TraceId);
+        if (index < 0)
+            return;
+        _trace[index] = _trace[index] with
+        {
+            TargetHpBefore = pending.HpBefore,
+            TargetHpAfter = hpAfter,
+            EffectObserved = observed,
+            EffectWait = pending.Elapsed
+        };
     }
 
     #endregion

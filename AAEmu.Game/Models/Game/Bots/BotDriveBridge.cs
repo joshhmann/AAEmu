@@ -713,9 +713,19 @@ public sealed class BotDriveBridge
     private string HandleScenario(JsonElement root)
     {
         var templateName = root.GetProperty("template").GetString();
+
+        // Multi-actor seam (ROADMAP M7 hardening #1): templates that drive
+        // SEVERAL provisioned bots (party follow+assist) cannot run through
+        // the single-session template runner below — they own their own
+        // provisioning + execution flow.
+        if (templateName == PartyFollowAssistScenario.ScenarioName)
+            return HandlePartyFollowAssistScenario(root);
+        if (templateName == PartySpikeScenario.ScenarioName)
+            return HandlePartySpikeScenario(root);
+
         var template = templateName != null ? BotScenarioTemplates.Get(templateName) : null;
         if (template == null)
-            return Err($"scenario: unknown template '{templateName}' (library: {string.Join(", ", BotScenarioTemplates.Library.Keys)})");
+            return Err($"scenario: unknown template '{templateName}' (library: {string.Join(", ", BotScenarioTemplates.Library.Keys)}, {PartyFollowAssistScenario.ScenarioName}, {PartySpikeScenario.ScenarioName})");
 
         var botName = (root.TryGetProperty("bot", out var b) && b.GetString() is { Length: > 0 } bn
             ? bn
@@ -809,6 +819,408 @@ public sealed class BotDriveBridge
             catch (Exception ex)
             {
                 Logger.Warn(ex, "scenario '{Template}': deactivate failed for '{Bot}'", templateName, botName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Multi-actor execution seam (ROADMAP M7 hardening #1): runs
+    /// <see cref="PartyFollowAssistScenario"/> on TWO real provisioned bots
+    /// through the live E2E bridge. Request (all fields optional except
+    /// "template"):
+    ///
+    ///   {"cmd":"scenario","template":"m7-party-follow-assist",
+    ///    "leader":"m7pfa-leader","member":"m7pfa-member",
+    ///    "npc":3492,
+    ///    "followDistance":3.0,"moveSpeed":5.0,"moveTimeoutSeconds":30}
+    ///
+    /// Flow: fresh-wipe both bot rows → provision leader + member as plain
+    /// headless sessions (shared <see cref="ProvisionBotParty"/> machinery:
+    /// wipe → provision → shared-world convergence poll → explicit Spawn)
+    /// → form the party through the CONTRACT
+    /// (<see cref="GameplayActor.PartyInvite"/> + <see cref="GameplayActor.PartyAccept"/>,
+    /// the exact rig path) → position the leader at the target NPC's spawner
+    /// via <see cref="LiveScenarioWorldAdapter"/> and offset the member by
+    /// ~+20 X so the FOLLOW leg actually drives → give the leader its target →
+    /// run the scenario through its default overload (LivePartyRuntime) →
+    /// return the same structured payload envelope as the single-bot runner,
+    /// with a `characters` array for BOTH bots and `party` info from
+    /// TeamManager. Both characters are deactivated afterwards.
+    /// </summary>
+    private string HandlePartyFollowAssistScenario(JsonElement root)
+    {
+        var leaderName = (root.TryGetProperty("leader", out var l) && l.GetString() is { Length: > 0 } ln
+            ? ln
+            : "m7pfa-leader").NormalizeName();
+        var memberName = (root.TryGetProperty("member", out var m) && m.GetString() is { Length: > 0 } mn
+            ? mn
+            : "m7pfa-member").NormalizeName();
+        var npcTemplateId = GetUInt(root, "npc");
+        if (npcTemplateId == 0)
+            npcTemplateId = 3492u; // Solzreed fox — the M7 spike target
+
+        const byte level = 20; // combat is not under test — a sane adult level
+
+        var provisionError = ProvisionBotParty(
+            PartyFollowAssistScenario.ScenarioName, [leaderName, memberName], level, out var sessions);
+        if (provisionError != null)
+            return provisionError;
+
+        var leaderSession = sessions[0];
+        var memberSession = sessions[1];
+        var leaderChar = leaderSession.Character;
+        var memberChar = memberSession.Character;
+
+        try
+        {
+            // --------------------------------------------------- PARTY FORM
+            // The CONTRACT path — the exact calls the M7 rig makes. Both
+            // actions post-check observable outcomes themselves; verify team
+            // membership through the engine registry before running.
+            var invite = new GameplayActor(leaderChar).PartyInvite(memberChar.ObjId);
+            if (invite.State != ActorLifecycleState.Completed)
+                return Err($"scenario: party invite failed ({invite.State}: {invite.Detail ?? "no detail"})");
+            var accept = new GameplayActor(memberChar).PartyAccept();
+            if (accept.State != ActorLifecycleState.Completed)
+                return Err($"scenario: party accept failed ({accept.State}: {accept.Detail ?? "no detail"})");
+
+            var team = TeamManager.Instance.GetActiveTeamByUnit(leaderChar.Id);
+            if (team == null || !team.IsParty || !team.IsMember(memberChar.Id) || team.OwnerId != leaderChar.Id)
+                return Err($"scenario: party did not form (team {(team == null ? "<null>" : team.Id.ToString())}, " +
+                           $"owner {team?.OwnerId.ToString() ?? "<null>"}, expected owner {leaderChar.Id})");
+
+            // ---------------------------------------------------- POSITION
+            // Leader at the target NPC's spawner (the adapter resolves/spawns
+            // the NPC through the NORMAL spawn path); member offset ~+20 X so
+            // distanceBefore > FollowDistance and the FOLLOW leg drives.
+            var npcObjId = new LiveScenarioWorldAdapter(leaderChar).ResolveNpcObjId(npcTemplateId);
+            if (npcObjId == 0)
+                return Err($"scenario: could not resolve a live objId for NPC template {npcTemplateId}");
+
+            memberChar.Transform.Local.Position = leaderChar.Transform.Local.Position +
+                new System.Numerics.Vector3(20f, 0f, 0f);
+            memberChar.Transform.ZoneId = leaderChar.Transform.ZoneId;
+
+            var setTarget = new GameplayActor(leaderChar).SetTarget(npcObjId);
+            if (setTarget.State != ActorLifecycleState.Completed)
+                return Err($"scenario: leader SetTarget({npcObjId}) failed ({setTarget.State}: {setTarget.Detail ?? "no detail"})");
+
+            // -------------------------------------------------------- RUN
+            var options = new PartyFollowAssistScenario.PartyOptions
+            {
+                FollowDistance = root.TryGetProperty("followDistance", out var fdEl) && fdEl.TryGetSingle(out var fd) ? fd : 3f,
+                MoveSpeed = root.TryGetProperty("moveSpeed", out var msEl) && msEl.TryGetSingle(out var ms) ? ms : 5f,
+                MoveTimeout = TimeSpan.FromSeconds(
+                    root.TryGetProperty("moveTimeoutSeconds", out var mtEl) && mtEl.TryGetInt32(out var mt) && mt > 0 ? mt : 30)
+            };
+
+            var result = PartyFollowAssistScenario.Run(leaderChar, memberChar, options);
+
+            // Party truth AFTER the run (the scenario never disbands).
+            var finalTeam = TeamManager.Instance.GetActiveTeamByUnit(leaderChar.Id);
+
+            var payload = new
+            {
+                template = result.Template,
+                passed = result.Passed,
+                failStage = result.FailStage,
+                failure = result.Failure?.ToString(),
+                failReason = result.FailReason,
+                gates = result.Gates,
+                stages = result.Stages,
+                criteria = result.Criteria,
+                traceRecords = result.TraceRecords.Select(r => r.ToJson()).ToList(),
+                actorRequests = result.ActorRequests,
+                rigNotes = result.RigNotes,
+                trace = result.TraceRecords
+                    .Select(r => JsonSerializer.Deserialize<JsonElement>(r.ToJson()))
+                    .ToArray(),
+                evidence = result.Evidence(),
+                characters = new[]
+                {
+                    // id = characters.id (the TeamManager.OwnerId key); objId =
+                    // the live world object id. They are different namespaces.
+                    new { name = leaderChar.Name, level = leaderChar.Level, objId = leaderChar.ObjId, id = leaderChar.Id },
+                    new { name = memberChar.Name, level = memberChar.Level, objId = memberChar.ObjId, id = memberChar.Id }
+                },
+                party = new
+                {
+                    teamId = finalTeam?.Id ?? 0u,
+                    ownerId = finalTeam?.OwnerId ?? 0u
+                }
+            };
+            Logger.Info("scenario '{Template}': {Verdict} on '{Leader}'/'{Member}' ({Stage}{Failure})",
+                PartyFollowAssistScenario.ScenarioName, result.Passed ? "PASS" : "FAIL",
+                leaderName, memberName, result.FailStage, result.Failure is { } f ? $", {f}" : "");
+            return Ok(payload);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': run crashed on '{Leader}'/'{Member}'",
+                PartyFollowAssistScenario.ScenarioName, leaderName, memberName);
+            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions);
+        }
+    }
+
+    /// <summary>
+    /// Multi-actor execution seam (ROADMAP M7 — the party spike): runs
+    /// <see cref="PartySpikeScenario"/> on THREE real provisioned bots
+    /// (leader + 2 members) against ONE elite group encounter through the
+    /// live E2E bridge. Request (all fields optional except "template"):
+    ///
+    ///   {"cmd":"scenario","template":"m7-party-spike",
+    ///    "leader":"m7ps-leader","member1":"m7ps-m1","member2":"m7ps-m2",
+    ///    "npc":1870,
+    ///    "followDistance":3.0,"moveSpeed":5.0,"moveTimeoutSeconds":30,
+    ///    "sustainThreshold":0.35,"resumeThreshold":0.8,"maxHuntRounds":150}
+    ///
+    /// Flow: shared <see cref="ProvisionBotParty"/> machinery (wipe →
+    /// provision → convergence → Spawn for ALL THREE bots) → stock the heal
+    /// potion (item 8518, verified direct-heal HealEffect row) into every
+    /// bag via the ordinary <see cref="PlayerBotController.StockInventory"/>
+    /// acquisition path → form the party through the CONTRACT (invite +
+    /// accept per member; the per-target invitation keys make members #2/#3
+    /// a verbatim reuse of member #1's flow) → position the leader at the
+    /// elite's spawner via <see cref="LiveScenarioWorldAdapter"/> and offset
+    /// both members ~+20 m so RALLY legs actually drive → run the scenario
+    /// through its default overload (LivePartySpikeRuntime) → return the
+    /// same structured payload envelope as the follow/assist runner with a
+    /// 3-entry `characters` array and `party` info from TeamManager. All
+    /// three characters are deactivated afterwards.
+    /// </summary>
+    private string HandlePartySpikeScenario(JsonElement root)
+    {
+        string ReadName(string field, string fallback)
+            => (root.TryGetProperty(field, out var el) && el.GetString() is { Length: > 0 } value
+                ? value
+                : fallback).NormalizeName();
+
+        var leaderName = ReadName("leader", "m7ps-leader");
+        var member1Name = ReadName("member1", "m7ps-m1");
+        var member2Name = ReadName("member2", "m7ps-m2");
+        var npcTemplateId = GetUInt(root, "npc");
+        if (npcTemplateId == 0)
+            npcTemplateId = PartySpikeScenario.DefaultEliteNpcTemplateId; // level-13 Strong elite — the M7 group encounter
+
+        const byte level = 20; // clears potion 8518's level gate; combat balance is the encounter's job
+
+        var provisionError = ProvisionBotParty(
+            PartySpikeScenario.ScenarioName, [leaderName, member1Name, member2Name], level, out var sessions);
+        if (provisionError != null)
+            return provisionError;
+
+        var characters = sessions.Select(s => s.Character).ToArray();
+        var leaderChar = characters[0];
+
+        try
+        {
+            // ------------------------------------------------------- SUPPLIES
+            // Stock the verified direct-heal potion into EVERY bag through
+            // the ordinary quest-supply acquisition path — each bot runs its
+            // OWN sustain loop (aggro splits across attackers).
+            foreach (var character in characters)
+                new PlayerBotController(character).StockInventory(
+                    new PartySpikeScenario.PartySpikeOptions().HealItemTemplateId,
+                    PartySpikeScenario.DefaultHealPotionCount);
+
+            // ------------------------------------------------------ PARTY FORM
+            // The CONTRACT path, per member — AskToJoin/ReplyToJoinTeam key
+            // invitations per target, so members #2/#3 are a verbatim reuse
+            // of member #1's flow.
+            foreach (var member in characters.Skip(1))
+            {
+                var invite = new GameplayActor(leaderChar).PartyInvite(member.ObjId);
+                if (invite.State != ActorLifecycleState.Completed)
+                    return Err($"scenario: party invite for '{member.Name}' failed ({invite.State}: {invite.Detail ?? "no detail"})");
+                var accept = new GameplayActor(member).PartyAccept();
+                if (accept.State != ActorLifecycleState.Completed)
+                    return Err($"scenario: party accept from '{member.Name}' failed ({accept.State}: {accept.Detail ?? "no detail"})");
+            }
+
+            var team = TeamManager.Instance.GetActiveTeamByUnit(leaderChar.Id);
+            if (team == null || !team.IsParty || team.OwnerId != leaderChar.Id ||
+                characters.Any(c => !team.IsMember(c.Id)))
+                return Err($"scenario: party did not form (team {(team == null ? "<null>" : team.Id.ToString())}, " +
+                           $"owner {team?.OwnerId.ToString() ?? "<null>"}, expected owner {leaderChar.Id})");
+
+            // -------------------------------------------------------- POSITION
+            // Leader at the elite's spawner (the adapter resolves/spawns the
+            // NPC through the NORMAL spawn path); members offset ~+20 m so
+            // distanceBefore > FollowDistance and the RALLY legs drive.
+            var npcObjId = new LiveScenarioWorldAdapter(leaderChar).ResolveNpcObjId(npcTemplateId);
+            if (npcObjId == 0)
+                return Err($"scenario: could not resolve a live objId for NPC template {npcTemplateId}");
+
+            var offsets = new[]
+            {
+                new System.Numerics.Vector3(20f, 0f, 0f),
+                new System.Numerics.Vector3(0f, 20f, 0f)
+            };
+            for (var i = 1; i < characters.Length; i++)
+            {
+                characters[i].Transform.Local.Position = leaderChar.Transform.Local.Position + offsets[(i - 1) % offsets.Length];
+                characters[i].Transform.ZoneId = leaderChar.Transform.ZoneId;
+            }
+
+            // ----------------------------------------------------------- RUN
+            var options = new PartySpikeScenario.PartySpikeOptions
+            {
+                EliteNpcTemplateId = npcTemplateId,
+                FollowDistance = root.TryGetProperty("followDistance", out var fdEl) && fdEl.TryGetSingle(out var fd) ? fd : 3f,
+                MoveSpeed = root.TryGetProperty("moveSpeed", out var msEl) && msEl.TryGetSingle(out var ms) ? ms : 5f,
+                MoveTimeout = TimeSpan.FromSeconds(
+                    root.TryGetProperty("moveTimeoutSeconds", out var mtEl) && mtEl.TryGetInt32(out var mt) && mt > 0 ? mt : 30),
+                SustainThreshold = root.TryGetProperty("sustainThreshold", out var stEl) && stEl.TryGetSingle(out var st) ? st : 0.35f,
+                ResumeThreshold = root.TryGetProperty("resumeThreshold", out var rtEl) && rtEl.TryGetSingle(out var rt) ? rt : 0.8f,
+                MaxHuntRounds = root.TryGetProperty("maxHuntRounds", out var mrEl) && mrEl.TryGetInt32(out var mr) && mr > 0 ? mr : 150
+            };
+
+            var result = PartySpikeScenario.Run(characters, options);
+
+            // Party truth AFTER the run (the scenario never disbands).
+            var finalTeam = TeamManager.Instance.GetActiveTeamByUnit(leaderChar.Id);
+
+            var payload = new
+            {
+                template = result.Template,
+                passed = result.Passed,
+                failStage = result.FailStage,
+                failure = result.Failure?.ToString(),
+                failReason = result.FailReason,
+                gates = result.Gates,
+                stages = result.Stages,
+                criteria = result.Criteria,
+                traceRecords = result.TraceRecords.Select(r => r.ToJson()).ToList(),
+                actorRequests = result.ActorRequests,
+                rigNotes = result.RigNotes,
+                trace = result.TraceRecords
+                    .Select(r => JsonSerializer.Deserialize<JsonElement>(r.ToJson()))
+                    .ToArray(),
+                evidence = result.Evidence(),
+                characters = characters.Select(c =>
+                    // id = characters.id (the TeamManager.OwnerId key); objId =
+                    // the live world object id. They are different namespaces.
+                    new { name = c.Name, level = c.Level, objId = c.ObjId, id = c.Id }).ToArray(),
+                party = new
+                {
+                    teamId = finalTeam?.Id ?? 0u,
+                    ownerId = finalTeam?.OwnerId ?? 0u
+                }
+            };
+            Logger.Info("scenario '{Template}': {Verdict} on '{Leader}'+'{M1}'/'{M2}' ({Stage}{Failure})",
+                PartySpikeScenario.ScenarioName, result.Passed ? "PASS" : "FAIL",
+                leaderName, member1Name, member2Name, result.FailStage, result.Failure is { } f ? $", {f}" : "");
+            return Ok(payload);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': run crashed on '{Leader}'/'{M1}'/'{M2}'",
+                PartySpikeScenario.ScenarioName, leaderName, member1Name, member2Name);
+            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            DeactivateParty(PartySpikeScenario.ScenarioName, sessions);
+        }
+    }
+
+    /// <summary>
+    /// Shared N-bot provisioning machinery (ROADMAP M7 hardening #1 — the
+    /// generalized follow/assist provisioning): fresh-wipes EACH bot row
+    /// (warn-and-continue = adoption semantics), provisions N plain
+    /// headless sessions in input order, polls until ALL share one world
+    /// instance (the PARTY-GATE precondition), then runs the explicit
+    /// ActiveChar.Spawn() each headless activation needs. Returns null on
+    /// success (<paramref name="sessions"/> filled in input order); on any
+    /// failure the partially provisioned bots are deactivated and an error
+    /// response string is returned.
+    /// </summary>
+    private string? ProvisionBotParty(string scenarioName, IReadOnlyList<string> botNames, byte level, out List<HeadlessSession> sessions)
+    {
+        sessions = [];
+
+        // Fresh-rig hygiene for EVERY bot: prior runs' party memberships /
+        // persisted rows would poison the PARTY-GATE.
+        foreach (var botName in botNames)
+        {
+            try
+            {
+                EnsureFreshBotRow(botName, BotAccountProvisioningService.ManagedUsernamePrefix + botName.ToLowerInvariant());
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "scenario '{Template}': fresh wipe failed for '{Bot}' — continuing with adoption semantics",
+                    scenarioName, botName);
+            }
+        }
+
+        foreach (var botName in botNames)
+        {
+            var username = BotAccountProvisioningService.ManagedUsernamePrefix + botName.ToLowerInvariant();
+            try
+            {
+                sessions.Add(HeadlessSession.Provision(username, botName, Race.Nuian, Gender.Male, level));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "scenario '{Template}': provisioning failed for '{Bot}'", scenarioName, botName);
+                DeactivateParty(scenarioName, sessions);
+                sessions = [];
+                return Err($"scenario: provisioning failed for '{botName}': {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+
+        // -------------------------------------------------- WORLD CONVERGE
+        // Separately provisioned sessions must share ONE world instance or
+        // the scenario's PARTY-GATE can never pass. Poll briefly —
+        // embodiment lands each character in the booted world.
+        var provisioned = sessions;
+        var worldDeadline = Environment.TickCount64 + 20_000;
+        while (Environment.TickCount64 < worldDeadline &&
+               (provisioned.Any(s => s.Character.ParentWorld == null) ||
+                !provisioned.All(s => ReferenceEquals(s.Character.ParentWorld, provisioned[0].Character.ParentWorld))))
+        {
+            Thread.Sleep(250);
+        }
+
+        if (provisioned.Count == 0 || provisioned.Any(s => s.Character.ParentWorld == null) ||
+            !provisioned.All(s => ReferenceEquals(s.Character.ParentWorld, provisioned[0].Character.ParentWorld)))
+        {
+            var detail = string.Join("; ", provisioned.Select(s =>
+                $"'{s.Character.Name}' world {s.Character.ParentWorld?.Id.ToString() ?? "<none>"}"));
+            DeactivateParty(scenarioName, provisioned);
+            sessions = [];
+            return Err($"scenario: provisioned bots did not converge into a shared world instance within 20s [{detail}]");
+        }
+
+        // Headless activation never runs CSNotifyInGamePacket's
+        // ActiveChar.Spawn() — the human client's in-game notify is what
+        // registers a character into the WorldInstance unit registry
+        // (_units). Without it PartyInvite / MoveToUnit can never resolve
+        // peers through GetUnit. SendPacket is Connection?-guarded, so the
+        // visibility broadcasts are no-ops for headless sessions.
+        foreach (var session in sessions)
+            session.Character.Spawn();
+
+        return null;
+    }
+
+    private void DeactivateParty(string scenarioName, IReadOnlyList<HeadlessSession> sessions)
+    {
+        foreach (var session in sessions)
+        {
+            try
+            {
+                CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "scenario '{Template}': deactivate failed for '{Bot}'",
+                    scenarioName, session.Character.Name);
             }
         }
     }

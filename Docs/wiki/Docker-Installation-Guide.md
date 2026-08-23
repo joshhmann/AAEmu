@@ -34,6 +34,69 @@ If you want the preferred contributor startup flow, use
    - Windows: `docker-update-local.ps1`
    - Linux: `docker-update-local.sh`
 
+## Production redeploy (CT 133) — read before updating
+
+⚠️ **Do NOT use `docker-update-local.sh` / `.ps1` verbatim for the production
+server.** The plain script drops `-p aaemu`, `--env-file`, the presence-demo
+overlay (`docker-compose.presence.yaml`), and the rollback-image snapshot,
+and rebuilds the whole stack `--no-cache`. Using it on prod recreates every
+service without the overlay and can silently lose the rollback image.
+
+The production game compose overlay pins the image tag
+`aaemu-game:presence-demo` — after building a new image you MUST retag it to
+that name, or the recreate silently keeps running the OLD image.
+
+Redeploy recipe (as performed for M3b/M4):
+
+```bash
+ssh root@192.168.0.165        # prod tree at /root/AAEmu
+cd /root/AAEmu
+
+# 1) Snapshot the rollback image FIRST (thinpool/GC can eat old layers):
+docker tag aaemu-game:presence-demo aaemu-game:rollback-pre-<label>
+
+# 2) Fast-forward source to the pinned target SHA:
+git fetch && git merge --ff-only <TARGET_SHA>
+
+# 3) Sanity checks BEFORE build:
+#    - AAEmu.Game/Dockerfile runtime stage must be Debian glibc
+#      (mcr.microsoft.com/dotnet/runtime:10.0) — the BUG-001 musl SIGSEGV
+#      fix; crash-loop exit 139 during AiGameData load = musl came back.
+#    - docker-compose.yaml logging caps intact (game/login 50m x3,
+#      db/adminer 25m x3) — prevents the 39GB json.log disk-full incident.
+#    - E2E bridge stays OFF: no E2E_BRIDGE_ENABLED env, no
+#      "EnableE2EBridge" key in .server_files Config*.json, port 1260 closed.
+
+# 4) Build and swap ONLY the game service, keeping the pinned tag:
+docker compose --env-file /root/AAEmu/.env -p aaemu \
+  -f docker-compose.yaml -f docker-compose.presence.yaml \
+  build game
+docker tag <new-game-image> aaemu-game:presence-demo
+docker compose --env-file /root/AAEmu/.env -p aaemu \
+  -f docker-compose.yaml -f docker-compose.presence.yaml \
+  up -d --no-deps --force-recreate game
+
+# 5) Post-boot verification:
+#    - no FATAL lines; boot passes AiGameData load (glibc OK)
+#    - login log shows "Registered GameServer"; 1237/1239/1250 answering
+#    - presence bots adopt + roam (3/3)
+#    - MySQL tables playerbot_metadata + playerbot_audit exist
+#      (self-healing schema creates them on boot; verify anyway)
+#    - real client login from LAN; GM kit smoke (.kits, .teleport mirage)
+```
+
+Rollback: retag the snapshot back and force-recreate game only:
+
+```bash
+docker tag aaemu-game:rollback-pre-<label> aaemu-game:presence-demo
+docker compose --env-file /root/AAEmu/.env -p aaemu \
+  -f docker-compose.yaml -f docker-compose.presence.yaml \
+  up -d --no-deps --force-recreate game
+```
+
+B4 bot tables are additive (`CREATE TABLE IF NOT EXISTS`) — no schema
+rollback needed.
+
 ## Launch
 
 From project root:

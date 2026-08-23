@@ -36,6 +36,10 @@ public static class PartyFollowAssistScenario
     public static BotScenarioRunner.ScenarioRunResult Run(Character leader, Character member)
         => Run(leader, member, new LivePartyRuntime(), new PartyOptions());
 
+    /// <summary>Live-runtime convenience overload with caller-supplied options.</summary>
+    public static BotScenarioRunner.ScenarioRunResult Run(Character leader, Character member, PartyOptions options)
+        => Run(leader, member, new LivePartyRuntime(), options);
+
     public static BotScenarioRunner.ScenarioRunResult Run(
         Character leader, Character member, IPartyRuntime runtime, PartyOptions options)
     {
