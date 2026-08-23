@@ -8,6 +8,34 @@
 ## level22-gate
 ```
 # Scenario: level22-gate
+Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' failed: quest 168 not completed: active=True, flag=False
+- gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
+- stage START: 0 events, advance=ran, step=Ready, status=Ready
+- stage READY: 1 events, advance=ran, step=Ready, status=Ready
+- stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
+- criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
+- actor requests: 6
+
+```
+
+## deposit-withdraw-cycle
+```
+# Scenario: deposit-withdraw-cycle
+Verdict: PASS
+- stage deposit-money: 1 events, advance=n/a, step=DepositMoney, status=deposited 1000 copper into bank
+- stage withdraw-money: 1 events, advance=n/a, step=WithdrawMoney, status=withdrew 400 copper from bank
+- stage deposit-item: 1 events, advance=n/a, step=DepositItem, status=deposited 5 of item 15589 into bank
+- stage withdraw-item: 1 events, advance=n/a, step=WithdrawItem, status=withdrew 5 of item 15589 from bank
+- criterion [bank-money-600]: PASS bank money 600 == 600
+- criterion [bag-item-restored]: PASS Inventory holds 5 of item 15589 (expected 5)
+- criterion [bank-item-empty]: PASS Bank holds 0 of item 15589 (expected 0)
+- actor requests: 4
+
+```
+
+## level22-gate
+```
+# Scenario: level22-gate
 Verdict: PASS
 - gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
 - stage START: 0 events, advance=ran, step=Ready, status=Ready
@@ -44,34 +72,6 @@ Verdict: PASS
 - criterion [quest-1959-not-active]: PASS quest 1959 not active
 - criterion [reaccept-refused]: PASS re-accept of completed quest 1959 refused by engine (repeatable/daily gate)
 - actor requests: 4
-
-```
-
-## deposit-withdraw-cycle
-```
-# Scenario: deposit-withdraw-cycle
-Verdict: PASS
-- stage deposit-money: 1 events, advance=n/a, step=DepositMoney, status=deposited 1000 copper into bank
-- stage withdraw-money: 1 events, advance=n/a, step=WithdrawMoney, status=withdrew 400 copper from bank
-- stage deposit-item: 1 events, advance=n/a, step=DepositItem, status=deposited 5 of item 15589 into bank
-- stage withdraw-item: 1 events, advance=n/a, step=WithdrawItem, status=withdrew 5 of item 15589 from bank
-- criterion [bank-money-600]: PASS bank money 600 == 600
-- criterion [bag-item-restored]: PASS Inventory holds 5 of item 15589 (expected 5)
-- criterion [bank-item-empty]: PASS Bank holds 0 of item 15589 (expected 0)
-- actor requests: 4
-
-```
-
-## level22-gate
-```
-# Scenario: level22-gate
-Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' failed: quest 168 not completed: active=True, flag=False
-- gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
-- stage START: 0 events, advance=ran, step=Ready, status=Ready
-- stage READY: 1 events, advance=ran, step=Ready, status=Ready
-- stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
-- criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
-- actor requests: 6
 
 ```
 

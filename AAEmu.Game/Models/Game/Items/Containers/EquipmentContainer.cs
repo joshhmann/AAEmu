@@ -194,6 +194,17 @@ public class EquipmentContainer : ItemContainer
             return false; // not in the list of allowed slots, remove the item
         }
 
+        // Level requirement gate (canonical 1.2): items may carry a minimum
+        // level on their template (items.level_requirement), enforced here so
+        // both the client move path (SplitOrMoveItem) and any service path
+        // funneling through CanAccept refuse under-leveled equips. A value of
+        // 0 means no requirement.
+        if (item.Template.LevelRequirement > 0 && item.Template.LevelRequirement > Owner.Level)
+        {
+            Logger.Warn($"{Owner.Name} ({OwnerId}) tried to equip a item above their level {item.Template.Name} ({item.TemplateId}), Id:{item.Id}, RequiredLevel:{item.Template.LevelRequirement}, CharacterLevel:{Owner.Level}, TargetSlot:{(EquipmentItemSlot)targetSlot}");
+            return false;
+        }
+
         return true;
     }
 

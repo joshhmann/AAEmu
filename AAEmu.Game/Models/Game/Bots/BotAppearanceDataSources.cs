@@ -1,6 +1,7 @@
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Utils.DB;
+using NLog;
 
 namespace AAEmu.Game.Models.Game.Bots;
 
@@ -57,6 +58,8 @@ public interface IBotStartingEquipmentSource
 /// </summary>
 public sealed class SqliteBotAppearanceColorSource : IBotAppearanceColorSource
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     private sealed class ModelPalette
     {
         public uint[] Hair = [];
@@ -142,11 +145,16 @@ public sealed class SqliteBotAppearanceColorSource : IBotAppearanceColorSource
                 palette.MovableDecals = list.ToArray();
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // Data file missing / unreadable (e.g. a bare test host): every
             // catalog stays empty and callers use the canonical defaults —
-            // the appearance still renders (the P0-proven path).
+            // the appearance still renders (the P0-proven path). Logged so a
+            // genuinely broken compact.sqlite3 is never a silent gearless-bot
+            // data gap (M6 observability gate).
+            Logger.Debug(ex,
+                "Bot appearance catalogs unavailable for model {ModelId} — falling back to canonical defaults for every catalog",
+                modelId);
         }
 
         return palette;

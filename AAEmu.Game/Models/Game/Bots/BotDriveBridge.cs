@@ -1400,14 +1400,16 @@ public sealed class BotDriveBridge
         {
             cmd.CommandText = "DELETE FROM quests WHERE owner = @charId";
             cmd.Parameters.AddWithValue("@charId", characterId);
-            try { cmd.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
+            try { cmd.ExecuteNonQuery(); }
+            catch (Exception ex) { Logger.Debug(ex, "scenario wipe: quests delete FK-tolerant skip for character {CharacterId}", characterId); }
         }
 
         using (var cmd = connection.CreateCommand())
         {
             cmd.CommandText = "DELETE FROM completed_quests WHERE owner = @charId";
             cmd.Parameters.AddWithValue("@charId", characterId);
-            try { cmd.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
+            try { cmd.ExecuteNonQuery(); }
+            catch (Exception ex) { Logger.Debug(ex, "scenario wipe: completed_quests delete FK-tolerant skip for character {CharacterId}", characterId); }
         }
 
         using (var cmd = connection.CreateCommand())

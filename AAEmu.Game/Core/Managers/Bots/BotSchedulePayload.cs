@@ -1,8 +1,9 @@
+using System.Numerics;
 using System.Text.Json;
 
 using AAEmu.Game.Models.Game.Bots;
 
-using System.Numerics;
+using NLog;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -25,6 +26,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// </summary>
 public static class BotSchedulePayload
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     /// <summary>Reads stored daily anchors from a schedule JSON. False when absent/malformed/invalid.</summary>
     public static bool TryReadAnchors(string? scheduleJson, out BotDailyAnchors anchors)
     {
@@ -124,8 +127,15 @@ public static class BotSchedulePayload
                 ? []
                 : JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(scheduleJson) ?? [];
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            // Stored schedule JSON is malformed: the extension merge resets to
+            // an empty document, which DROPS every verbatim key of the old
+            // blob. Never silent — a bot losing its schedule shape is a gate-
+            // visible regression (M6 observability).
+            Logger.Warn(ex,
+                "BotSchedulePayload: stored schedule JSON for WithRuntimeState is malformed ({Length} chars) — resetting document (existing keys are dropped)",
+                scheduleJson?.Length ?? 0);
             document = [];
         }
 
@@ -173,8 +183,14 @@ public static class BotSchedulePayload
             document = parsed;
             return true;
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            // Try-pattern contract: malformed input just yields false to the
+            // TryRead* callers — logged at Debug so a persistently corrupt
+            // schedule blob is diagnosable without spamming the log.
+            Logger.Debug(ex,
+                "BotSchedulePayload: schedule JSON is not a valid document ({Length} chars) — readers will report absent",
+                scheduleJson?.Length ?? 0);
             return false;
         }
     }

@@ -287,9 +287,20 @@ public static class M3aM4ReplayScenario
             // co-located. Either way the Buy gate is deterministic.
             var walkToSeedMerchant = actor.MoveToUnit(seedMerchantObjId, speed: options.RepositionSpeed,
                 timeout: options.FarmRepositionTimeout, idempotencyKey: "m3a4-walk-to-seed-merchant");
-            traceRecords.Add(actor.AuditTrace.Last());
             stages.Add(Stage("WALK-TO-SEED-MERCHANT", walkToSeedMerchant, $"merchant {seedMerchantObjId}"));
-            walkToSeedMerchant = pump.Drive(actor, walkToSeedMerchant, options.FarmRepositionTimeout);
+            // A warm-world merchant resolves without a teleport, so the leg
+            // starts async (Running): audit records append ONLY at terminal
+            // states, so the trace is read after the drive (an early Last()
+            // throws "Sequence contains no elements" or grabs the previous
+            // action's record).
+            if (!TryDriveLegToTerminal(actor, pump, walkToSeedMerchant,
+                    options.FarmRepositionTimeout, traceRecords, out walkToSeedMerchant))
+            {
+                walkToSeedMerchant.Expire(ActorFailureReason.Navigation,
+                    $"reposition leg exceeded its budget ({options.FarmRepositionTimeout})");
+                return Fail("WALK-TO-SEED-MERCHANT", walkToSeedMerchant, "reposition to seed merchant",
+                    rigNotes, stages, criteria, traceRecords);
+            }
             if (walkToSeedMerchant.State != ActorLifecycleState.Completed)
                 return Fail("WALK-TO-SEED-MERCHANT", walkToSeedMerchant, "reposition to seed merchant",
                     rigNotes, stages, criteria, traceRecords);
@@ -382,9 +393,18 @@ public static class M3aM4ReplayScenario
             // co-located, so the leg completes instantly.
             var walkToFarm = actor.MoveTo(farmOrigin, speed: options.RepositionSpeed,
                 timeout: options.FarmRepositionTimeout, idempotencyKey: "m3a4-walk-to-farm");
-            traceRecords.Add(actor.AuditTrace.Last());
             stages.Add(Stage("WALK-TO-FARM", walkToFarm, $"farm origin {farmOrigin}"));
-            walkToFarm = pump.Drive(actor, walkToFarm, options.FarmRepositionTimeout);
+            // Same warm-world discipline as the seed-merchant leg above:
+            // drive to terminal BEFORE reading the trace; timeout without a
+            // terminal transition fails closed (§17 navigation).
+            if (!TryDriveLegToTerminal(actor, pump, walkToFarm,
+                    options.FarmRepositionTimeout, traceRecords, out walkToFarm))
+            {
+                walkToFarm.Expire(ActorFailureReason.Navigation,
+                    $"reposition leg exceeded its budget ({options.FarmRepositionTimeout})");
+                return Fail("WALK-TO-FARM", walkToFarm, "reposition to farm",
+                    rigNotes, stages, criteria, traceRecords);
+            }
             if (walkToFarm.State != ActorLifecycleState.Completed)
                 return Fail("WALK-TO-FARM", walkToFarm, "reposition to farm",
                     rigNotes, stages, criteria, traceRecords);
@@ -449,9 +469,18 @@ public static class M3aM4ReplayScenario
             // the resolve teleported (same position).
             var walkToMerchant = actor.MoveToUnit(generalMerchantObjId, speed: options.RepositionSpeed,
                 timeout: options.FarmRepositionTimeout, idempotencyKey: "m3a4-walk-to-merchant");
-            traceRecords.Add(actor.AuditTrace.Last());
             stages.Add(Stage("WALK-TO-MERCHANT", walkToMerchant, $"merchant {generalMerchantObjId}"));
-            walkToMerchant = pump.Drive(actor, walkToMerchant, options.FarmRepositionTimeout);
+            // Same warm-world discipline as the seed-merchant leg above:
+            // drive to terminal BEFORE reading the trace; timeout without a
+            // terminal transition fails closed (§17 navigation).
+            if (!TryDriveLegToTerminal(actor, pump, walkToMerchant,
+                    options.FarmRepositionTimeout, traceRecords, out walkToMerchant))
+            {
+                walkToMerchant.Expire(ActorFailureReason.Navigation,
+                    $"reposition leg exceeded its budget ({options.FarmRepositionTimeout})");
+                return Fail("WALK-TO-MERCHANT", walkToMerchant, "reposition to merchant",
+                    rigNotes, stages, criteria, traceRecords);
+            }
             if (walkToMerchant.State != ActorLifecycleState.Completed)
                 return Fail("WALK-TO-MERCHANT", walkToMerchant, "reposition to merchant",
                     rigNotes, stages, criteria, traceRecords);
@@ -745,6 +774,34 @@ public static class M3aM4ReplayScenario
     }
 
     // ------------------------------------------------------------- helpers
+
+    /// <summary>
+    /// Drives an async reposition leg (MoveToUnit / Move) to a TERMINAL
+    /// state through the pump, then appends its audit record.
+    ///
+    /// Audit records append only at terminal states (the actor's Finish
+    /// path): on a WARM world the merchant resolve keeps the request
+    /// Running past creation, so reading <c>AuditTrace.Last()</c> before
+    /// the drive throws "Sequence contains no elements" (empty trace) or
+    /// captures the previous action's record. Returns false when the leg
+    /// exhausts its budget WITHOUT a terminal transition; the caller then
+    /// fails closed with the §17 navigation reason (never an
+    /// InvalidOperationException).
+    /// </summary>
+    private static bool TryDriveLegToTerminal(GameplayActor actor, IScenarioPump pump,
+        ActorRequest request, TimeSpan maxWait,
+        List<ActorAuditRecord> traceRecords, out ActorRequest driven)
+    {
+        driven = pump.Drive(actor, request, maxWait);
+        var traceId = driven.TraceId;
+        var record = driven.IsTerminal
+            ? actor.AuditTrace.LastOrDefault(r => r.TraceId == traceId)
+            : null;
+        if (record == null)
+            return false;
+        traceRecords.Add(record);
+        return true;
+    }
 
     /// <summary>
     /// Harvestability probe (mirror of the actor's data-driven resolution):

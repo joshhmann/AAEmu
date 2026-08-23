@@ -614,6 +614,9 @@ public static class E2eStack
     /// account names — cycle teardown, not quest-state manipulation.</summary>
     public static void CleanupBotRows(params string[] accountNames)
     {
+        if (accountNames.Length == 0)
+            return;
+
         using var conn = OpenDb("aaemu_game");
 
         // B4 playerbot_metadata rows first (guarded: no-op when the table is
@@ -628,26 +631,42 @@ public static class E2eStack
             try { cmdMeta.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
         }
 
+        // One bound parameter per account name. A single joined "'a','b'"
+        // parameter compares as ONE literal value inside IN (...) and never
+        // matches any username (rows were silently left behind).
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM quests WHERE owner IN (SELECT id FROM characters WHERE account_id IN (SELECT id FROM aaemu_login.users WHERE username IN (@names)))";
-        cmd.Parameters.AddWithValue("@names", string.Join(",", accountNames.Select(n => $"'{n.Replace("'", "''")}'")));
+        cmd.CommandText = "DELETE FROM quests WHERE owner IN (SELECT id FROM characters WHERE account_id IN " +
+                          $"(SELECT id FROM aaemu_login.users WHERE username IN ({BindInList(cmd, accountNames)})))";
         try { cmd.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
 
         using var cmd2 = conn.CreateCommand();
-        cmd2.CommandText = "DELETE FROM completed_quests WHERE owner IN (SELECT id FROM characters WHERE account_id IN (SELECT id FROM aaemu_login.users WHERE username IN (@names)))";
-        cmd2.Parameters.AddWithValue("@names", string.Join(",", accountNames.Select(n => $"'{n.Replace("'", "''")}'")));
-        try { cmd2.ExecuteNonQuery(); } catch { }
+        cmd2.CommandText = "DELETE FROM completed_quests WHERE owner IN (SELECT id FROM characters WHERE account_id IN " +
+                           $"(SELECT id FROM aaemu_login.users WHERE username IN ({BindInList(cmd2, accountNames)})))";
+        try { cmd2.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
 
         using var cmd3 = conn.CreateCommand();
-        cmd3.CommandText = "DELETE FROM characters WHERE account_id IN (SELECT id FROM aaemu_login.users WHERE username IN (@names))";
-        cmd3.Parameters.AddWithValue("@names", string.Join(",", accountNames.Select(n => $"'{n.Replace("'", "''")}'")));
+        cmd3.CommandText = "DELETE FROM characters WHERE account_id IN (SELECT id FROM aaemu_login.users " +
+                           $"WHERE username IN ({BindInList(cmd3, accountNames)}))";
         cmd3.ExecuteNonQuery();
 
         using var conn2 = OpenDb("aaemu_login");
         using var cmd4 = conn2.CreateCommand();
-        cmd4.CommandText = "DELETE FROM users WHERE username IN (@names)";
-        cmd4.Parameters.AddWithValue("@names", string.Join(",", accountNames.Select(n => $"'{n.Replace("'", "''")}'")));
+        cmd4.CommandText = $"DELETE FROM users WHERE username IN ({BindInList(cmd4, accountNames)})";
         cmd4.ExecuteNonQuery();
+    }
+
+    /// <summary>Binds one parameter per value and returns the placeholder
+    /// list for an SQL IN clause — the values are never quoted/interpolated.</summary>
+    private static string BindInList(MySqlCommand cmd, IReadOnlyList<string> values)
+    {
+        var placeholders = new List<string>(values.Count);
+        foreach (var value in values)
+        {
+            var placeholder = $"@in{placeholders.Count}";
+            cmd.Parameters.AddWithValue(placeholder, value);
+            placeholders.Add(placeholder);
+        }
+        return string.Join(", ", placeholders);
     }
 
     /// <summary>Quests row dump for an account (restart-persistence evidence).
