@@ -75,6 +75,24 @@ Set `game_pak` source in one of these places:
 
 For contributor workflows, prefer `Config.Local.json`.
 
+## Bot behavior configuration (all OFF by default)
+
+Bot features gate through the `"Bots"` block in `Config.json` /
+`Config.Local.json`, with env-var overrides (env wins). None of these are
+set in prod config unless explicitly desired.
+
+| Key / env | Effect |
+|-----------|--------|
+| `"Bots": { "EnableE2EBridge": true }` / `E2E_BRIDGE_ENABLED` | Test-control TCP bridge on 127.0.0.1:1260 — test environments ONLY, never prod |
+| `"Bots": { "EnableChatter": true }` / `AAEMU_BOT_CHATTER_ENABLED` | Proximity greetings + canned bot chatter (per-bot/pair cooldowns, zone budget, combat-suppressed) |
+| `"Bots": { "EnableSchedules": true }` / `AAEMU_BOT_SCHEDULES_ENABLED` | Game-clock daily schedules (Home/Work/Travel/Rest) for persistent bots |
+| `"Bots": { "PresenceManifest": "<path>" }` / `AAEMU_PRESENCE_MANIFEST` | Data-driven citizen roster (JSON); unset = legacy hardcoded demo citizens |
+| `"Bots": { "MaxPresenceBots": N }` / `AAEMU_PRESENCE_MAX_BOTS` | Presence bot clamp (default 10) |
+
+Related env-only knobs: `AAEMU_PRESENCE_HOME_X/Y/Z` (demo patrol home
+override), `AAEMU_BOT_CHATTER_RADIUS`, `AAEMU_BOT_CHATTER_ZONE_BUDGET`,
+`AAEMU_BOT_SCHEDULE_SCAN_SECONDS`.
+
 ## Migration note from old setup docs
 
 Older instructions referenced `aaemu_login.game_servers` and SQL inserts.
