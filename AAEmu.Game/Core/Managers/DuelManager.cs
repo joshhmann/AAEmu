@@ -118,9 +118,15 @@ public class DuelManager : Singleton<DuelManager>, IDuelManager
 
     private void RestoreFaction(Unit owner)
     {
-        // restore the fraction
-        owner.SetFaction(SaveFactions[owner.Id]);
-        SaveFactions.Remove(owner.Id);
+        // Defensive: if the accept path failed before SetFaction ran (e.g.
+        // flag-spawn failure headless), there is nothing to restore — a bare
+        // indexer throw here (inside the stop path's catch-all) left BOTH
+        // players permanently IsInDuel.
+        if (SaveFactions.TryGetValue(owner.Id, out var saved))
+        {
+            owner.SetFaction(saved);
+            SaveFactions.Remove(owner.Id);
+        }
     }
 
     public void DuelStart(uint id)
@@ -237,6 +243,9 @@ public class DuelManager : Singleton<DuelManager>, IDuelManager
             duel.SendPacketsBoth(new SCDuelStatePacket(duel.Challenged.ObjId, 0));
             duel.SendPacketsBoth(new SCDuelStatePacket(duel.Challenger.ObjId, 0));
 
+            // Null-guard the flag: when the flag spawn failed earlier in the
+            // accept path, a bare Delete() threw here and — inside this
+            // method's catch-all — left BOTH players permanently IsInDuel.
             if (duel.DuelFlag != null)
             {
                 duel.DuelFlag.Delete(); //Remove Flag
