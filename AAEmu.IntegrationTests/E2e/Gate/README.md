@@ -69,6 +69,34 @@ Notes:
 - E2E rig prerequisites (data rsync, compose file) are the same as the M2b
   suite — see `Scripts/e2e/README.md`.
 
+## Scheduler-driven soak — stage 1 (`SchedulerSoakStage1Tests`)
+
+Closes the M6-exit caveat "previous soaks ran with PlayerBotScheduler
+DISABLED": boots the stack with `AAEMU_PRESENCE_DEMO=1` + a 10-citizen
+`AAEMU_PRESENCE_MANIFEST` roster, so every bot's work flows through the real
+`IPlayerBotScheduler` lease/wake path, then samples a 30-minute window.
+
+```bash
+SCHEDULER_SOAK_MINUTES=30 E2E_REBUILD=1 \
+  dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj \
+  -c Release --filter-class AAEmu.IntegrationTests.E2e.Gate.SchedulerSoakStage1Tests
+```
+
+- **Run-validity contract:** INVALID unless bridge `metrics` shows
+  `scheduler.available=true` AND `totalStepsRun>0` (and still growing at
+  window end) — a silently-disabled scheduler can never read as green.
+- **Budgets** mirror the repo numerics: `GateBudgets` defaults +
+  `GateStages.SoakBudgets` idle-stage overrides (region 200 ms, tick-overrun
+  0.1/min); scheduler step timeouts enforced at 0 (zero-tolerance mirrors
+  step failures). RSS recorded informational only.
+- **Evidence:** `$E2E_ROOT/logs/scheduler-soak-stage1-{ts}.json|.md`.
+- **Manifest note:** every roster entry pins an explicit patrol home. Without
+  it, `BotPresenceCoordinator.StartFromManifest` skips relocation and hands
+  bots whose race-template spawn differs from the Nuian-male default home a
+  patrol circle thousands of meters away — run 1 walked all five Elf citizens
+  4.3 km into the sea (drowned; blood-decal doodad 878). Engine card: route
+  center must follow the bot's actual spawn when no home is configured.
+
 ## Budgets (defaults)
 
 | Budget | Default | Meaning |
