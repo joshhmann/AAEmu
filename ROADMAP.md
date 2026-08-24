@@ -1579,6 +1579,18 @@ remains open; H stays UNKNOWN — Josh confirms feel.
    ~3× scheduler-disabled baseline, heap churn ~5.9GB under roam). Staged
    ladder continues — 1h/6h rungs, party-mid-route restart leg, and the M6-exit
    physics-recalibration decision remain open.
+   **Run 3 on the fixed build (2026-08-24, 2703fd46e):** findings (a) and (c)
+   FIXED — home divergence closed @ 2703fd46e (all 10 citizens stayed within
+   ~40 units of home, zero resurrections) and roam heap churn cut 38%/wake
+   @ 615a645c9 (RSS plateau ~5.5GB → GC reclaim to 3.7GB, no monotonic growth).
+   Budgets: ALL PASS except physics warnings 0.17/min vs the 0.1/min budget —
+   same-world clause at 2/30 (15× headroom), worst pass 110ms vs 40ms target,
+   n=5 events (Poisson σ≈45%). **OPEN JOSH DECISION:** recalibrate the
+   physics-warning per-minute aggregate (~0.3/min, or severity+same-world-only
+   clause) per the t_18fccd09 precedent — at 0.1/min the gate flakes on host
+   jitter noise while every severity signal sits far inside its limit.
+   Evidence: scheduler-soak-stage1-20260824-160357.{json,md} +
+   scheduler-soak-stage1-run3-budget-fail-report-20260824-161836.md.
 8. **Coverage ledger and fault injection** — maintain a small action/system
    matrix (rig, isolated E2E, integrated route, human-feel status) and add
    controlled disconnect, server restart, delayed-effect, and persistence

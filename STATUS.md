@@ -293,6 +293,17 @@ drowned); (b) physics slow-thread rate ~3× scheduler-disabled baseline
 (0.23–0.27/min vs calibrated 0.031–0.067) — same-world clause far inside
 budget, recalibration = M6-exit decision; (c) heap churn to ~5.9GB under roam
 vs flat 3.4GB band.
+**Soak follow-ups landed (615a645c9 / 2703fd46e):** (a) FIXED — manifest
+route anchors at ACTUAL spawn when no explicit/persisted home (regression
+test in BotPresenceManifestTests); (c) roam heap churn cut 38%/wake —
+BroadcastMovement opt-out skips the per-apply movement packet for headless
+roam (throttled executor broadcast remains), shared WalkDelta payload;
+BotRoamAllocationTests pins 512B/wake (pre-fix 789B). **Run 3 on fixed build:
+ALL budgets PASS except physics warnings 0.17/min vs 0.1** (same-world 2/30,
+worst pass 110ms vs 40ms) — **OPEN JOSH DECISION:** recalibrate per-minute
+aggregate (~0.3/min or severity+same-world-only) per t_18fccd09 precedent.
+Remaining engineering follow-up: Transform.FinalizeTransform allocation per
+move (engine-wide, benefits players too).
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
