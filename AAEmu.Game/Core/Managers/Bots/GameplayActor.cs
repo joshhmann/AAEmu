@@ -771,6 +771,126 @@ public class GameplayActor : IGameplayActor
         return Complete(request, true, $"joined party {team.Id}");
     }
 
+    public ActorRequest TradeOffer(uint targetCharacterObjId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.TradeOffer, targetCharacterObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "trade offer"))
+            return request;
+
+        // 1. Resolve the target through the ordinary world lookup.
+        if (ResolveUnit(targetCharacterObjId) is not Character target)
+            return Reject(request, ActorFailureReason.RejectedAction, $"trade target {targetCharacterObjId} not found in world");
+        if (target.Id == Character.Id)
+            return Reject(request, ActorFailureReason.RejectedAction, "cannot trade with self");
+
+        // 2. Pre-flight the engine's SILENT refusal modes (CanStartTrade and
+        //    StartTrade are voids): a participant already trading, or out of
+        //    range. Distance only — no canonical faction/PvP trade gate
+        //    exists in the 1.2 data to mirror.
+        if (TradeManager.Instance.IsInTrade(Character.ObjId))
+            return Reject(request, ActorFailureReason.StateTransition, "actor is already trading");
+        if (TradeManager.Instance.IsInTrade(target.ObjId))
+            return Reject(request, ActorFailureReason.StateTransition, $"target {target.Name} is already trading");
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, target.Transform.World.Position, true) > TradeManager.MaxTradeRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"target {target.Name} is out of trade range ({TradeManager.MaxTradeRange}m)");
+
+        request.Start($"offering trade to {target.Name} (objId {targetCharacterObjId})");
+
+        // 3. REAL engine path — the exact CSCanStartTradePacket →
+        //    CSStartTradePacket call pair: gate + notify, then open the
+        //    session (v1 auto-accepts through the same StartTrade a
+        //    consenting client drives; see the contract docs).
+        if (!TradeManager.Instance.TryCanStartTrade(Character, target) ||
+            !TradeManager.Instance.TryStartTrade(Character, target))
+            return Reject(request, ActorFailureReason.RejectedAction, "trade offer refused by engine");
+
+        // 4. Post-check the observable outcome: an active session containing
+        //    both parties.
+        if (!TradeManager.Instance.IsInTrade(Character.ObjId) || !TradeManager.Instance.IsInTrade(target.ObjId))
+            return Reject(request, ActorFailureReason.RejectedAction, "trade session did not open");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("tradeoffer", target.Id), request.TraceId);
+        return Complete(request, true, $"opened trade with {target.Name}");
+    }
+
+    public ActorRequest TradePutup(uint itemTemplateId, int count, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.TradePutup, itemTemplateId, payload: count, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "trade putup"))
+            return request;
+
+        if (count <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "count must be positive");
+
+        // 1. Pre-flight the engine's refusal mode: AddItem CANCELS the whole
+        //    session on an invalid putup, so never enter it without a trade
+        //    and without a covered bag stack.
+        if (!TradeManager.Instance.IsInTrade(Character.ObjId))
+            return Reject(request, ActorFailureReason.StateTransition, "not in a trade");
+        var item = Character.Inventory.Bag.Items.FirstOrDefault(i => i?.TemplateId == itemTemplateId);
+        if (item == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} not found in bag");
+        if (Character.Inventory.GetItemsCount(itemTemplateId) < count)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"bag holds {Character.Inventory.GetItemsCount(itemTemplateId)} of item {itemTemplateId}, less than the offered {count}");
+
+        request.Start($"putting up {count}x item {itemTemplateId} (instance {item.Id})");
+
+        // 2. REAL engine path — the exact CSPutupTradeItemPacket call:
+        //    AddItem with this character's inventory slot.
+        TradeManager.Instance.AddItem(Character, SlotType.Inventory, (byte)item.Slot, count);
+
+        // 3. Post-check the observable outcome: the offered entry with the
+        //    requested count on this side's half of the window. A vanished
+        //    session means the engine canceled (fail-closed).
+        if (!TradeManager.Instance.IsInTrade(Character.ObjId))
+            return Reject(request, ActorFailureReason.RejectedAction, "engine canceled the trade during putup");
+        if (!TradeManager.Instance.GetPutUpItems(Character.ObjId).Any(e => e.Item.TemplateId == itemTemplateId && e.Count == count))
+            return Reject(request, ActorFailureReason.RejectedAction, "trade putup refused by engine");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("tradeputup", itemTemplateId, count.ToString()), request.TraceId);
+        return Complete(request, true, $"offered {count}x item {itemTemplateId}");
+    }
+
+    public ActorRequest TradeLockOk(string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.TradeLockOk, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "trade lock+ok"))
+            return request;
+
+        // 1. Pre-flight the engine's silent return: no session — OkTrade
+        //    early-returns in that shape. (The lock itself is part of THIS
+        //    action, so an unlocked trade is not a pre-flight failure.)
+        if (!TradeManager.Instance.IsInTrade(Character.ObjId))
+            return Reject(request, ActorFailureReason.StateTransition, "not in a trade");
+
+        request.Start("locking trade and recording ok");
+
+        // 2. REAL engine path — the exact CSTradeLockPacket(true) +
+        //    CSTradeOkPacket calls. When both sides confirmed, the money and
+        //    item swap executes synchronously inside ConfirmTrade.
+        TradeManager.Instance.LockTrade(Character, true);
+        var result = TradeManager.Instance.ConfirmTrade(Character);
+
+        // 3. Outcome mapping — Completed on recorded ok (finished now or
+        //    awaiting the counterpart), Rejected when the engine refused
+        //    fail-closed (space gate cancels BEFORE anything moved).
+        switch (result)
+        {
+            case TradeConfirmResult.Finished:
+                _ledger.RecordEffect(ActorIdempotency.EffectKey("tradelockok", 0, "finished"), request.TraceId);
+                return Complete(request, result, "trade finished");
+            case TradeConfirmResult.OkedAwaitingOther:
+                _ledger.RecordEffect(ActorIdempotency.EffectKey("tradelockok", 0, "awaiting"), request.TraceId);
+                return Complete(request, result, "locked + ok recorded; awaiting counterpart confirmation");
+            case TradeConfirmResult.NotInTrade:
+                return Reject(request, ActorFailureReason.StateTransition, $"trade confirm refused by engine ({result})");
+            default:
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    "trade canceled by engine: a side lacks inventory space (nothing moved)");
+        }
+    }
+
     public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null)
     {
         var request = NewRequest(ActorActionType.Mount, mateObjId, idempotencyKey: idempotencyKey);

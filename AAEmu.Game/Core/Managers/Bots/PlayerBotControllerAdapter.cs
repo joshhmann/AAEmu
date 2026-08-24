@@ -79,6 +79,15 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest PartyAccept(string? idempotencyKey = null)
         => Actor.PartyAccept(idempotencyKey);
 
+    public ActorRequest TradeOffer(uint targetCharacterObjId, string? idempotencyKey = null)
+        => Actor.TradeOffer(targetCharacterObjId, idempotencyKey);
+
+    public ActorRequest TradePutup(uint itemTemplateId, int count, string? idempotencyKey = null)
+        => Actor.TradePutup(itemTemplateId, count, idempotencyKey);
+
+    public ActorRequest TradeLockOk(string? idempotencyKey = null)
+        => Actor.TradeLockOk(idempotencyKey);
+
     public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null)
         => Actor.Mount(mateObjId, idempotencyKey);
 

@@ -181,6 +181,60 @@ public interface IGameplayActor
     ActorRequest PartyAccept(string? idempotencyKey = null);
 
     /// <summary>
+    /// Offers a direct player-to-player trade through the REAL engine path —
+    /// the exact CSCanStartTradePacket → CSStartTradePacket call pair:
+    /// TradeManager.CanStartTrade gates and notifies, then StartTrade opens
+    /// the session for both sides. v1 auto-accepts the offer through that
+    /// same StartTrade (the verb a consenting client sends) because the
+    /// contract has no separate accept action; consent is the controller's
+    /// policy decision about whom to offer to.
+    /// Validates: target resolves in the actor's world and is a Character,
+    /// not self, neither side already trading, within
+    /// TradeManager.MaxTradeRange (distance only — no canonical faction/PvP
+    /// trade gate exists in the data). The engine's refusals are SILENT
+    /// voids, so the pre-flight mirrors every gate and the post-check is the
+    /// observable outcome: an active trade session containing both parties
+    /// after the engine call = success; none = Rejected("refused by
+    /// engine"). Idempotency: same-key retries are refused pre-flight by the
+    /// ledger; a fresh-key retry while a session is open hits the
+    /// already-trading pre-flight (StateTransition).
+    /// </summary>
+    ActorRequest TradeOffer(uint targetCharacterObjId, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Puts up N units of a stacked item on the actor's side of the open
+    /// trade window through the REAL engine path — the exact
+    /// CSPutupTradeItemPacket call: TradeManager.AddItem with the first bag
+    /// slot holding the template. Partial offers (N below the stack count)
+    /// are recorded as split entries; nothing leaves the inventory until the
+    /// trade finishes, so a cancel restores it untouched.
+    /// Validates: actor is in a trade (StateTransition otherwise), item
+    /// present in the bag, count positive and covered by the bag total.
+    /// Engine refusals cancel the session (fail-closed) — the post-check is
+    /// the offered entry with exactly the requested count on this side's
+    /// half of the window; a vanished session maps to RejectedAction.
+    /// Same-key retries are refused pre-flight by the ledger.
+    /// </summary>
+    ActorRequest TradePutup(uint itemTemplateId, int count, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Locks the actor's side of the open trade and records ok through the
+    /// REAL engine path — the exact CSTradeLockPacket(true) +
+    /// CSTradeOkPacket calls (TradeManager.LockTrade + ConfirmTrade). When
+    /// both sides confirmed, the engine exchanges money and items
+    /// synchronously inside this request. Validates: actor in a trade
+    /// (StateTransition), at least one side locked (StateTransition).
+    /// Outcomes: Completed("finished") when the swap executed,
+    /// Completed("awaiting") when this ok is recorded but the counterpart
+    /// has not confirmed yet, Rejected(RejectedAction) when the engine
+    /// refused (fail-closed space gate canceled the session BEFORE any
+    /// item or money moved). Retries cannot double-swap: the finished
+    /// session is gone, so a fresh-key retry lands on the not-in-trade
+    /// pre-flight; same-key retries are refused by the ledger.
+    /// </summary>
+    ActorRequest TradeLockOk(string? idempotencyKey = null);
+
+    /// <summary>
     /// Mounts a mate through the real engine path (MateManager.MountMate —
     /// the CSMountMatePacket call). Requires the character's real
     /// GameConnection (the packet path resolves the rider from
@@ -673,7 +727,16 @@ public enum ActorActionType : byte
     PartyInvite = 34,
 
     /// <summary>Accepting a pending party invitation through TeamManager.ReplyToJoinTeam (the CSReplyToJoinTeamPacket path).</summary>
-    PartyAccept = 35
+    PartyAccept = 35,
+
+    /// <summary>Offering/opening a direct player trade through TradeManager.CanStartTrade + StartTrade (the CS{CanStart,Start}TradePacket paths).</summary>
+    TradeOffer = 36,
+
+    /// <summary>Putting up item units on the trade window through TradeManager.AddItem (the CSPutupTradeItemPacket path).</summary>
+    TradePutup = 37,
+
+    /// <summary>Locking + oking the trade through TradeManager.LockTrade + ConfirmTrade (the CSTradeLock/CSTradeOk packet paths).</summary>
+    TradeLockOk = 38
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

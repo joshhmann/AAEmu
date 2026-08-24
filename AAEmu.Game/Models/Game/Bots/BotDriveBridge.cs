@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -12,6 +13,7 @@ using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Models;
+using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
@@ -218,6 +220,12 @@ public sealed class BotDriveBridge
                 return HandleSave(root);
             case "scenario":
                 return HandleScenario(root);
+            case "provision":
+                return HandleProvision(root);
+            case "deactivate":
+                return HandleDeactivate(root);
+            case "auction":
+                return HandleAuctionOp(root);
             default:
                 return Err($"unknown cmd '{cmd}'");
         }
@@ -1382,6 +1390,292 @@ public sealed class BotDriveBridge
             }
         }
     }
+
+    #endregion
+
+    #region AUCTION-01 E2E seam (persistent headless bots + auction contract ops)
+
+    /// <summary>
+    /// Bridge-provisioned sessions that STAY EMBODIED between bridge calls,
+    /// keyed by normalized bot name. Unlike the scenario templates (which
+    /// provision and deactivate inside one synchronous call), this seam lets
+    /// an E2E test split a flow across bridge calls — e.g. kill -9 the game
+    /// process mid-flow and re-adopt the bots afterwards (HeadlessSession
+    /// adoption semantics: same managed account, same character row).
+    /// Additive test-control surface only; every mutation still flows through
+    /// the ordinary engine paths (GameplayActor contract actions, AuctionManager).
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, HeadlessSession> PersistentBotSessions = [];
+
+    private string HandleProvision(JsonElement root)
+    {
+        var rawName = root.TryGetProperty("bot", out var b) ? b.GetString() : null;
+        if (string.IsNullOrWhiteSpace(rawName))
+            return Err("provision requires 'bot'");
+        var botName = rawName.NormalizeName();
+        var username = BotAccountProvisioningService.ManagedUsernamePrefix + botName.ToLowerInvariant();
+        var level = (byte)GetInt(root, "level", 10);
+
+        var fresh = !root.TryGetProperty("fresh", out var freshEl) || freshEl.GetBoolean();
+        if (fresh)
+        {
+            try
+            {
+                EnsureFreshBotRow(botName, username);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "provision: fresh wipe failed for '{Bot}' — continuing with adoption semantics", botName);
+            }
+        }
+
+        // Replace any stale embodied session under this name (a previous
+        // provision call whose Deactivate never ran).
+        if (PersistentBotSessions.TryRemove(botName, out var stale))
+        {
+            try
+            {
+                CharacterLifecycleService.Instance.Deactivate(stale.Character, CharacterLifecycleReason.Logout);
+            }
+            catch (Exception ex)
+            {
+                Logger.Debug(ex, "provision: replacing stale session '{Bot}' failed (best-effort)", botName);
+            }
+        }
+
+        HeadlessSession session;
+        try
+        {
+            session = HeadlessSession.Provision(username, botName, Race.Nuian, Gender.Male, level);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "provision failed for '{Bot}'", botName);
+            return Err($"provision failed for '{botName}': {ex.GetType().Name}: {ex.Message}");
+        }
+
+        PersistentBotSessions[botName] = session;
+        Logger.Info("provision: '{Bot}' embodied (char {CharId}, money {Money})", botName, session.Character.Id, session.Character.Money);
+        return Ok(new
+        {
+            name = session.Character.Name,
+            id = session.Character.Id,
+            objId = session.Character.ObjId,
+            level = session.Character.Level,
+            money = session.Character.Money
+        });
+    }
+
+    private string HandleDeactivate(JsonElement root)
+    {
+        var rawName = root.TryGetProperty("bot", out var b) ? b.GetString() : null;
+        if (string.IsNullOrWhiteSpace(rawName))
+            return Err("deactivate requires 'bot'");
+        var botName = rawName.NormalizeName();
+        if (!PersistentBotSessions.TryRemove(botName, out var session))
+            return Err($"deactivate: bot '{botName}' is not provisioned");
+        try
+        {
+            CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "deactivate failed for '{Bot}'", botName);
+        }
+
+        return Ok(new { removed = true, id = session.Character.Id });
+    }
+
+    /// <summary>
+    /// Resolves a persistent session by normalized bot name.
+    /// </summary>
+    private static bool TryResolvePersistentBot(string rawName, out Character? character, out string error)
+    {
+        character = null;
+        error = "";
+        if (string.IsNullOrWhiteSpace(rawName))
+        {
+            error = "auction op requires 'bot'";
+            return false;
+        }
+
+        var botName = rawName.NormalizeName();
+        if (!PersistentBotSessions.TryGetValue(botName, out var session) || session.Character == null)
+        {
+            error = $"bot '{botName}' is not provisioned on this boot (call cmd 'provision' first — a restart wipes the registry)";
+            return false;
+        }
+
+        character = session.Character;
+        return true;
+    }
+
+    /// <summary>
+    /// Auction-house observation and contract-action ops over the persistent
+    /// sessions. Ops:
+    ///   rig    — set money and/or stock bag items (the AuctionHouseScenario
+    ///            rig shape: ordinary character fields + normal acquisition)
+    ///   post   — GameplayActor.PostAuction (real CSAuctionPostPacket path)
+    ///   buy    — GameplayActor.BuyAuction (real CSBidAuctionPacket buy-now path)
+    ///   lots   — dump the live AuctionManager lot collection
+    ///   search — buyer-side filter over the live lots (the collection
+    ///            SearchAuctionLots serves pages from)
+    ///   mails  — dump MailManager.GetCurrentMailList for the bot
+    ///   char   — observable character state (id/money/name)
+    /// </summary>
+    private string HandleAuctionOp(JsonElement root)
+    {
+        var op = root.GetProperty("op").GetString();
+        switch (op)
+        {
+            case "lots":
+            {
+                return Ok(new { lots = LotDumps(AuctionManager.Instance.AuctionLots.Values) });
+            }
+            case "search":
+            {
+                if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var sb) ? sb.GetString() : null, out var searcher, out var searchErr))
+                    return Err(searchErr);
+                var templateFilter = GetUInt(root, "itemTemplate");
+                var matches = AuctionManager.Instance.AuctionLots.Values
+                    .Where(l => l.Item != null && l.Item.TemplateId == templateFilter)
+                    .ToList();
+                return Ok(new
+                {
+                    searchedBy = searcher!.Name,
+                    itemTemplate = templateFilter,
+                    count = matches.Count,
+                    lots = LotDumps(matches)
+                });
+            }
+            case "mails":
+            {
+                if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var mb) ? mb.GetString() : null, out var mailReader, out var mailErr))
+                    return Err(mailErr);
+                var mails = MailManager.Instance.GetCurrentMailList(mailReader!.Id).Values
+                    .OrderBy(m => m.Id)
+                    .Select(m => new
+                    {
+                        id = m.Id,
+                        type = (int)m.MailType,
+                        title = m.Title,
+                        senderName = m.Header.SenderName,
+                        receiverId = m.Header.ReceiverId,
+                        copperCoins = m.Body.CopperCoins,
+                        attachments = m.Body.Attachments.Select(a => new
+                        {
+                            itemId = a.Id,
+                            templateId = a.TemplateId,
+                            count = a.Count,
+                            slotType = (int)a.SlotType
+                        }).ToArray()
+                    }).ToArray();
+                return Ok(new { receiverId = mailReader.Id, mails });
+            }
+            case "char":
+            {
+                if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var cb) ? cb.GetString() : null, out var ch, out var charErr))
+                    return Err(charErr);
+                return Ok(new
+                {
+                    name = ch!.Name,
+                    id = ch.Id,
+                    objId = ch.ObjId,
+                    level = ch.Level,
+                    money = ch.Money
+                });
+            }
+        }
+
+        // Everything below mutates — resolve the actor first.
+        if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var b) ? b.GetString() : null, out var character, out var err))
+            return Err(err);
+
+        switch (op)
+        {
+            case "rig":
+            {
+                if (root.TryGetProperty("money", out var moneyEl) && moneyEl.TryGetInt64(out var money))
+                    character!.Money = money;
+                var stockTemplate = GetUInt(root, "stockTemplate");
+                if (stockTemplate > 0)
+                    new PlayerBotController(character!).StockInventory(stockTemplate, GetInt(root, "stockCount", 1));
+                return Ok(new { name = character!.Name, money = character.Money });
+            }
+            case "post":
+            {
+                var templateId = GetUInt(root, "itemTemplate");
+                if (templateId == 0)
+                    return Err("auction post requires 'itemTemplate'");
+
+                var inBag = character!.Inventory.Bag.GetAllItemsByTemplate(templateId, -1, out var items, out _)
+                            && items.Count > 0;
+                if (!inBag)
+                    return Err($"auction post: bot '{character.Name}' has no item of template {templateId} in bag");
+                var itemId = items[0].Id;
+
+                var duration = (AuctionDuration)GetInt(root, "duration", (int)AuctionDuration.AuctionDuration6Hours);
+                var startPrice = GetInt(root, "startPrice", 100);
+                var buyoutPrice = GetInt(root, "buyoutPrice", 1000);
+
+                var actor = new GameplayActor(character);
+                var request = actor.PostAuction(itemId, startPrice, buyoutPrice, duration);
+                var lotId = request.Result is ulong ul ? ul : Convert.ToUInt64(request.Result ?? 0UL);
+                return Ok(new
+                {
+                    state = request.State.ToString(),
+                    itemId,
+                    lotId,
+                    failure = request.Failure.ToString(),
+                    detail = request.Detail ?? ""
+                });
+            }
+            case "buy":
+            {
+                var lotId = root.TryGetProperty("lotId", out var lidEl) && lidEl.TryGetUInt64(out var lid) ? lid : 0UL;
+                if (lotId == 0)
+                    return Err("auction buy requires 'lotId'");
+                var price = GetInt(root, "price", 0);
+                if (price <= 0)
+                {
+                    var lot = AuctionManager.Instance.AuctionLots.GetValueOrDefault(lotId);
+                    if (lot == null)
+                        return Err($"auction buy: lot {lotId} not found (already sold or expired)");
+                    price = lot.DirectMoney;
+                }
+
+                var actor = new GameplayActor(character!);
+                var request = actor.BuyAuction(lotId, price);
+                return Ok(new
+                {
+                    state = request.State.ToString(),
+                    lotId,
+                    paid = price,
+                    failure = request.Failure.ToString(),
+                    detail = request.Detail ?? ""
+                });
+            }
+            default:
+                return Err($"unknown auction op '{op}'");
+        }
+    }
+
+    private static object[] LotDumps(IEnumerable<AuctionLot> lots)
+        => lots.Select(l => new
+        {
+            id = l.Id,
+            itemTemplate = l.Item?.TemplateId ?? 0,
+            itemId = l.Item?.Id ?? 0,
+            stackSize = l.Item?.Count ?? 0,
+            clientId = l.ClientId,
+            clientName = l.ClientName,
+            startMoney = l.StartMoney,
+            directMoney = l.DirectMoney,
+            bidMoney = l.BidMoney,
+            bidderId = l.BidderId,
+            bidderName = l.BidderName,
+            endTime = l.EndTime
+        }).ToArray();
 
     #endregion
 

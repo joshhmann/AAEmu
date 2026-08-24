@@ -706,6 +706,33 @@ public static class GameplayActorTestRig
             .SetValue(null, CreateWiredTeamManager());
     }
 
+    /// <summary>
+    /// FORCE-seeds a wired TradeManager (TRADE-01 rig): the REAL
+    /// WorldManager singleton (rig characters are registered there, so
+    /// GetCharacterByObjId resolves both trade parties headless) and an
+    /// incrementing ITradeIdManager mock (GetNextId would otherwise default
+    /// to 0 and collide every session in _trades). Fresh instance per call
+    /// also resets the trade registry/id counter so trades never leak across
+    /// tests. Trade suites call this at test start.
+    /// </summary>
+    public static void ForceSeedTradeManager()
+    {
+        Seed(); // WorldManager is a DI singleton with no parameterless ctor — ensure the rig's seeded instance exists first
+        var tradeIdManager = Mock.Of<ITradeIdManager>();
+        var nextTradeId = 0u;
+        tradeIdManager.GetNextId().Returns(() => ++nextTradeId);
+        typeof(Singleton<TradeManager>)
+            .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+            .SetValue(null, new TradeManager(tradeIdManager.Object, WorldManager.Instance));
+    }
+
+    /// <summary>Seeds the actor's copper balance directly (the ordinary Money property; MarkDirty only).</summary>
+    public static void SetMoney(GameplayActor actor, long amount) => actor.Character.Money = amount;
+
+    /// <summary>First bag instance of the given item template (or null).</summary>
+    public static Item? FindBagItem(GameplayActor actor, uint itemTemplateId)
+        => actor.Character.Inventory.Bag.Items.FirstOrDefault(i => i?.TemplateId == itemTemplateId);
+
     /// <summary>Convenience: spawns an NPC in the session world and returns its objId.</summary>
     public static uint SpawnNpc(HeadlessSession session, uint npcTemplateId = 1000)
         => session.SpawnNpc(npcTemplateId);
@@ -1967,10 +1994,6 @@ public static class GameplayActorTestRig
 
         return objId;
     }
-
-    /// <summary>Sets the actor's money balance (ordinary Character.Money).</summary>
-    public static void SetMoney(GameplayActor actor, long amount)
-        => actor.Character.Money = amount;
 
     /// <summary>Sets an NPC's world position (shop-range tests).</summary>
     public static void SetNpcPosition(HeadlessSession session, uint npcObjId, System.Numerics.Vector3 position)
