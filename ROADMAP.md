@@ -1308,6 +1308,20 @@ exit label is NOT claimed — the **B4 restart-persistence scenario (bot
 identity/inventory/position/schedule survive restart) is an explicit
 deferred gate** (below).
 
+**Scheduler-driven soak STAGE 1 (2026-08-24, 4e460305b):** the recorded caveat
+"scheduler-driven soak still required if M6 exit mandates it" now has its first
+rung — `SchedulerSoakStage1Tests` drove 10 manifest-provisioned citizens ×
+30min through real IPlayerBotScheduler wakes; TWO VALID runs: ~90k steps, 0
+failed/timed-out, wake avg ~99ms, DB writes 14–19/min/citizen, tick+region
+budgets PASS. Three open engine findings on record: (a) manifest roster entries
+without home spawn start at race-template position but walk to the
+patrol-default Nuian home (run-1 elves walked 4.3km and drowned); (b) physics
+slow-thread rate ~3× the scheduler-disabled baseline (0.23–0.27/min vs
+calibrated 0.031–0.067) — same-world clause far inside budget, recalibration is
+an M6-exit decision; (c) heap churn to ~5.9GB under roam vs the flat 3.4GB
+band. Stage-1 execution changes NO exit label — the full M6 exit-label decision
+remains open.
+
 **Detail (2026-08-09 audit):** M6 exit is blocked on **A1** (execution
 boundary — bot steps off the game loop violate M5's core rule). Added exit
 requirements: (a) restart-persistence scenario per the standing rule —
@@ -1557,6 +1571,14 @@ remains open; H stays UNKNOWN — Josh confirms feel.
    soak and a party-mid-route restart/resume E2E before M8 increases embodied
    bot counts. Scheduler behavior is currently covered by deterministic rigs;
    the E2E must assert the live bridge metrics and actual wake/lease behavior.
+   **Progress 2026-08-24 (4e460305b):** scheduler-driven soak STAGE 1
+   executed — SchedulerSoakStage1Tests, 10 manifest citizens × 30min through
+   real IPlayerBotScheduler wakes; two valid runs ~90k steps, 0 failed/
+   timed-out, wake avg ~99ms, DB writes 14–19/min/citizen, tick+region budgets
+   PASS; three open engine findings (home-spawn roster gap, physics slow-thread
+   ~3× scheduler-disabled baseline, heap churn ~5.9GB under roam). Staged
+   ladder continues — 1h/6h rungs, party-mid-route restart leg, and the M6-exit
+   physics-recalibration decision remain open.
 8. **Coverage ledger and fault injection** — maintain a small action/system
    matrix (rig, isolated E2E, integrated route, human-feel status) and add
    controlled disconnect, server restart, delayed-effect, and persistence
@@ -2090,7 +2112,11 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   over 6h.
 - A6 (M) Manifest-driven mass provisioning (citizen manifest as data;
   replaces hardcoded CitizenNN + 10-bot clamp). Acceptance: cold boot →
-  100 citizens on schedule < 60s.
+  100 citizens on schedule < 60s. **Note 2026-08-24 (4e460305b):** soak
+  STAGE 1 ran 10 manifest-provisioned citizens through real scheduler wakes —
+  finding: roster entries without home spawn start at race-template position
+  and walk to the patrol-default Nuian home (run-1 elves walked 4.3km and
+  drowned); home-spawn requirement on the record for future manifests.
 - Gate G1: 50-bot 6h soak with numeric budgets → 100 profiling → 250 staged.
 
 ### G3 — Behavior foundation
@@ -2103,6 +2129,11 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
 - B3 (M) Goal arbitration + module contract (IBotActivityModule): re-implement
   roam as a module with zero scheduler changes; delete/absorb the dead
   PlayerBotBehaviorController stack; new module = one file + one config line.
+  **DONE 2026-08-24 (0482ba3f0):** IBotActivityModule + BotGoalArbiter landed —
+  priority-based single-active activity per bot per wake (schedule-phase P100 /
+  presence-roam P50 / idle P0 first modules via IBotStepExecutor decorator);
+  dead PlayerBotBehaviorController stack deleted; fixed latent DI gap so
+  Bots.EnableSchedules actually arms BotScheduleService.
 - B4 (S-M) playerbot_metadata store (personality, schedule, profession, home,
   planner state) + audit-trace flush — **DONE 2026-08-20**:
   `PlayerBotMetadataStore` + presence-demo wiring + 2-checkpoint restart

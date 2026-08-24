@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-23 · by Codex (M7 party spike COMPLETE + mechanics sweep)
-Branch of record: develop @ f3bb787ce (origin/develop)
+Updated: 2026-08-24 · by Codex (mechanics sweep wave 2 + soak STAGE 1 + TRANSFER-01 live)
+Branch of record: develop @ 3a534b539 (origin/develop)
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
@@ -261,6 +261,39 @@ _auctionTaskScheduled guard); AuctionHouseRestartE2eTests PASS (post→buy→
 settle→expiry-mail across kill -9, 3m26s); E2eStack.RestartGameServer(afterStop)
 seam.
 
+**2026-08-24 sweep wave 2 + soak STAGE 1 (f3bb787ce → 3a534b539):**
+G3-B3 DONE — IBotActivityModule + BotGoalArbiter (priority-based single-active
+activity per bot per wake; schedule-phase P100 / presence-roam P50 / idle P0
+first modules via IBotStepExecutor decorator); dead PlayerBotBehaviorController
+stack deleted; fixed latent DI gap so Bots.EnableSchedules actually arms
+BotScheduleService. Mechanics slices (0482ba3f0) — ITEM-01: item_proc_bindings
+loaded + GetItemProcBindings, UnitProcs factory seam (items can carry procs);
+MATE-01: mate_equip_packs/pack_groups/pack_items/slot_packs loaded in
+MateGameData, fail-closed IsMateEquipAllowed legality at
+MateEquipmentContainer.CanAccept, latent EquipmentContainer null-Owner
+level-gate bypass fixed for mates; HOUSING-01 FIX-2: terrain/overlap/cap/race
+checks verified as landed + two-thread build-race regression via real
+HousingManager.Build; ZONE-01: hard-coded Conflict boot state removed →
+data-driven Peace default (legacy World.ConflictZonesStartAtConflict flag kept
+for tests), Peace-state PvP protection at the BaseUnit.CanAttack chokepoint
+(fail-open when no conflict entry; Hostile stays attackable). TRANSFER-01
+functional + LIVE PROVEN (3a534b539) — CSBoardingTransferPacket TlId shadowing
+FIXED (multi-part transfers share the master's TlId but seats exist only on
+child parts; FirstOrDefault always resolved the seatless master — boarding
+could never bond); read-only `transfers` bridge dump command;
+TransferRideE2eTests LIVE PASS (board Marianople Gondola tlId=1 ap=2
+BondChairDouble → ride route samples → disembark at current position).
+Scheduler-driven soak STAGE 1 executed (4e460305b) — SchedulerSoakStage1Tests,
+10 manifest-provisioned citizens × 30min through real IPlayerBotScheduler
+wakes; TWO VALID runs: ~90k steps, 0 failed/timed-out, wake avg ~99ms, DB
+writes 14–19/min/citizen, tick+region budgets PASS. Engine findings on record:
+(a) manifest roster entries without home spawn start at race-template position
+but walk to the patrol-default Nuian home (run-1 elves walked 4.3km and
+drowned); (b) physics slow-thread rate ~3× scheduler-disabled baseline
+(0.23–0.27/min vs calibrated 0.031–0.067) — same-world clause far inside
+budget, recalibration = M6-exit decision; (c) heap churn to ~5.9GB under roam
+vs flat 3.4GB band.
+
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
 re-provision verified by presence deploy chain) · **B4 playerbot_metadata
@@ -270,7 +303,10 @@ watch: dead bots stop getting work steps, poll, resurrect at the nearest
 return portal after a 5s delay with the real 10%/debuff semantics,
 server-side relocation through Character.SetPosition, then normal stepping
 resumes — 5 rig tests green) · PlayerBotScheduler
-scheduler-driven soak still open if M6 exit mandates it. **Exit-label note
+scheduler-driven soak still open if M6 exit mandates it. **(STAGE 1 EXECUTED
+2026-08-24 — see 08-24 sweep above: 10 citizens × 30min, ~90k steps, 0 failures,
+budgets PASS; three open engine findings; full exit-label decision incl.
+physics recalibration still open.)** **Exit-label note
 (reconciled 2026-08-12, bot-backtrack):** soak verdict = "passed revised
 approved budgets" — full M6 exit label NOT claimed; **B4 restart-persistence
 scenario = explicit deferred gate**.
@@ -379,6 +415,15 @@ deploy is a separate Josh decision.
 
 ## Last scorecard update
 
+- 2026-08-24 — this commit: SCORECARD promotions from the post-f3bb787ce sweep —
+  ZONE-01 W=2/A=1 (data-driven Peace boot state + CanAttack enforcement;
+  rig-tested, no live PvP scenario yet) · MATE-01 W=2/A=1 (mate equip-pack data
+  + fail-closed legality; no live equip E2E yet) · TRANSFER-01 W=2/A=1
+  (TlId-shadowing fix; live board/ride/disembark E2E PASS) · ITEM-01 evidence
+  note (item_proc_bindings loader + UnitProcs seam; grades conservative) ·
+  HOUSING-01 evidence note (build-race regression added; grades unchanged) ·
+  BOT-02 note (scheduler soak STAGE 1 executed; staged ladder continues). H
+  stays UNKNOWN everywhere. Branch of record → 3a534b539.
 - 2026-08-23 — this commit: SCORECARD promotions from the 08-23 sweep —
   AUCTION-01 W/A/R → 2 (live E2E incl. kill -9 restart pin, strongest of the
   sweep) · TRADE-01 W=2/A=1 (trade handshake rig + engine fixes; A stays
