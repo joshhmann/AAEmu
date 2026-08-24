@@ -14,6 +14,203 @@ Verdict: PASS
 - stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
 - stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
 - stage TRAVEL: 1 events, advance=Running, step=0, status=
+- stage HUNT-CLOSE: 1 events, advance=Completed, step=24576, status=arrived [dist 18.6 > engage 8.0]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 1 events, advance=credited, step=24576, status=kill 1/3
+- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CLOSE: 1 events, advance=Completed, step=24577, status=arrived [dist 9.5 > engage 8.0]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 2 events, advance=credited, step=24577, status=kill 2/3
+- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CLOSE: 1 events, advance=Completed, step=24578, status=arrived [dist 9.1 > engage 8.0]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 3 events, advance=credited, step=24578, status=kill 3/3
+- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
+- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
+- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
+- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
+- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24578: Completed (looted 1 item(s) from 24578)
+- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
+- criterion [lifecycle-trace-complete]: PASS records=24 completed=24 incomplete=0 rejected-with-running=0
+- actor requests: 24
+
+```
+
+```
+# Scenario: adventurer-spike-fox
+Verdict: PASS
+- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
+- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
+- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- stage TRAVEL: 1 events, advance=Running, step=0, status=
+- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 1 events, advance=credited, step=24577, status=kill 1/3
+- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
+- stage HUNT-EQUIP: 1 events, advance=Completed, step=90030, status=equipped item 90030 into Mainhand [90030 → Mainhand, empty slot]
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 2 events, advance=credited, step=24576, status=kill 2/3
+- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
+- stage HUNT-EQUIP: 1 events, advance=Completed, step=90030, status=equipped item 90030 into Offhand [90030 → Offhand, empty slot]
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 3 events, advance=credited, step=24578, status=kill 3/3
+- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
+- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
+- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
+- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
+- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578)
+- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
+- criterion [lifecycle-trace-complete]: PASS records=23 completed=23 incomplete=0 rejected-with-running=0
+- actor requests: 23
+
+```
+
+```
+# Scenario: adventurer-spike-fox
+Verdict: PASS
+- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
+- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
+- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- stage TRAVEL: 1 events, advance=Running, step=0, status=
+- stage SUSTAIN-RETREAT: 1 events, advance=Running, step=24577, status=
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage HUNT-CLOSE: 1 events, advance=Completed, step=24576, status=arrived [dist 7.9 > engage 3.0]
+- stage HUNT-CAST: 1 events, advance=Rejected, step=24576, status=RejectedAction: skill 90010 not learned [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 1 events, advance=credited, step=24576, status=kill 1/3
+- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CAST: 1 events, advance=Rejected, step=24578, status=RejectedAction: skill 90010 not learned [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 2 events, advance=credited, step=24578, status=kill 2/3
+- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CLOSE: 1 events, advance=Completed, step=24577, status=arrived [dist 3.7 > engage 3.0]
+- stage HUNT-CAST: 1 events, advance=Rejected, step=24577, status=RejectedAction: skill 90010 not learned [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 3 events, advance=credited, step=24577, status=kill 3/3
+- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
+- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
+- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
+- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
+- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578) | corpse 24577: Completed (looted 1 item(s) from 24577)
+- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
+- criterion [lifecycle-trace-complete]: PASS records=36 completed=25 incomplete=0 rejected-with-running=0
+- actor requests: 36
+
+```
+
+```
+# Scenario: adventurer-spike-fox
+Verdict: PASS
+- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
+- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
+- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- stage TRAVEL: 1 events, advance=Running, step=0, status=
+- stage SUSTAIN-RETREAT: 1 events, advance=Running, step=24577, status=
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
+- stage HUNT-CLOSE: 1 events, advance=Completed, step=24576, status=arrived [dist 7.9 > engage 3.0]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 1 events, advance=credited, step=24576, status=kill 1/3
+- stage LOOT: 1 events, advance=Rejected, step=24576, status=RejectedAction: nothing to loot from 24576 (empty or already looted)
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 2 events, advance=credited, step=24578, status=kill 2/3
+- stage LOOT: 1 events, advance=Rejected, step=24578, status=RejectedAction: nothing to loot from 24578 (empty or already looted)
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CLOSE: 1 events, advance=Completed, step=24577, status=arrived [dist 3.7 > engage 3.0]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 3 events, advance=credited, step=24577, status=kill 3/3
+- stage LOOT: 1 events, advance=Rejected, step=24577, status=RejectedAction: nothing to loot from 24577 (empty or already looted)
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
+- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
+- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
+- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
+- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24576: Rejected (RejectedAction: nothing to loot from 24576 (empty or already looted)) | corpse 24578: Rejected (RejectedAction: nothing to loot from 24578 (empty or already looted)) | corpse 24577: Rejected (RejectedAction: nothing to loot from 24577 (empty or already looted))
+- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
+- criterion [lifecycle-trace-complete]: PASS records=33 completed=22 incomplete=0 rejected-with-running=0
+- actor requests: 33
+
+```
+
+```
+# Scenario: adventurer-spike-fox
+Verdict: PASS
+- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
+- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
+- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- stage TRAVEL: 1 events, advance=Running, step=0, status=
+- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 1 events, advance=credited, step=24577, status=kill 1/3
+- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 2 events, advance=credited, step=24576, status=kill 2/3
+- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 3 events, advance=credited, step=24578, status=kill 3/3
+- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
+- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
+- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
+- stage RETURN-TRAVEL-ACCEPT: 1 events, advance=Running, step=24832, status=
+- stage RETURN-ACCEPT: 1 events, advance=Completed, step=330, status=quest 330 accepted (Npc/3597)
+- stage RETURN-TRAVEL-REPORT: 1 events, advance=Running, step=24833, status=
+- stage RETURN-TURNIN: 1 events, advance=Completed, step=330, status=quest 330 completed by turn-in
+- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
+- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
+- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578)
+- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
+- criterion [quest-330-completed]: PASS return quest 330: completed flag=True, active=False
+- criterion [lifecycle-trace-complete]: PASS records=25 completed=25 incomplete=0 rejected-with-running=0
+- actor requests: 25
+
+```
+
+```
+# Scenario: adventurer-spike-fox
+Verdict: FAIL at HUNT (WrongDecision) — no attackable npc template 3492 visible after 4 re-observe/re-travel retries (nearby npcs: [])
+- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
+- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
+- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- stage TRAVEL: 1 events, advance=Running, step=0, status=
+- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
+- actor requests: 9
+
+```
+
+```
+# Scenario: adventurer-spike-fox
+Verdict: PASS
+- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
+- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
+- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
+- stage TRAVEL: 1 events, advance=Running, step=0, status=
 - stage SUSTAIN-RETREAT: 1 events, advance=Running, step=24577, status=
 - stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
 - stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
@@ -88,74 +285,6 @@ Verdict: PASS
 - stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
 - stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
 - stage TRAVEL: 1 events, advance=Running, step=0, status=
-- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 1 events, advance=credited, step=24577, status=kill 1/3
-- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-SKIP: 3 events, advance=skipped, step=24576, status=no damage landed across 3 rounds (hp pinned at 100) — excluded from reselection
-- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 2 events, advance=credited, step=24578, status=kill 2/3
-- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CLOSE: 1 events, advance=Completed, step=24579, status=arrived [dist 3.2 > engage 3.0]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24579, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 3 events, advance=credited, step=24579, status=kill 3/3
-- stage LOOT: 1 events, advance=Completed, step=24579, status=looted 1 item(s) from 24579
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
-- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
-- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
-- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
-- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24578: Completed (looted 1 item(s) from 24578) | corpse 24579: Completed (looted 1 item(s) from 24579)
-- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=52 completed=52 incomplete=0 rejected-with-running=0
-- actor requests: 52
-
-```
-
-```
-# Scenario: adventurer-spike-fox
-Verdict: FAIL at HUNT (WrongDecision) — no attackable npc template 3492 visible after 4 re-observe/re-travel retries (nearby npcs: [])
-- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
-- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
-- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- stage TRAVEL: 1 events, advance=Running, step=0, status=
-- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
-- actor requests: 9
-
-```
-
-```
-# Scenario: adventurer-spike-fox
-Verdict: PASS
-- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
-- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
-- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- stage TRAVEL: 1 events, advance=Running, step=0, status=
 - stage SUSTAIN-RETREAT: 1 events, advance=Running, step=24577, status=
 - stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
 - stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
@@ -166,59 +295,15 @@ Verdict: PASS
 - stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
 - stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
 - stage HUNT-CLOSE: 1 events, advance=Completed, step=24576, status=arrived [dist 7.9 > engage 3.0]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 1 events, advance=credited, step=24576, status=kill 1/3
-- stage LOOT: 1 events, advance=Rejected, step=24576, status=RejectedAction: nothing to loot from 24576 (empty or already looted)
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 2 events, advance=credited, step=24578, status=kill 2/3
-- stage LOOT: 1 events, advance=Rejected, step=24578, status=RejectedAction: nothing to loot from 24578 (empty or already looted)
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CLOSE: 1 events, advance=Completed, step=24577, status=arrived [dist 3.7 > engage 3.0]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 3 events, advance=credited, step=24577, status=kill 3/3
-- stage LOOT: 1 events, advance=Rejected, step=24577, status=RejectedAction: nothing to loot from 24577 (empty or already looted)
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
-- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
-- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
-- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
-- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24576: Rejected (RejectedAction: nothing to loot from 24576 (empty or already looted)) | corpse 24578: Rejected (RejectedAction: nothing to loot from 24578 (empty or already looted)) | corpse 24577: Rejected (RejectedAction: nothing to loot from 24577 (empty or already looted))
-- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=33 completed=22 incomplete=0 rejected-with-running=0
-- actor requests: 33
-
-```
-
-```
-# Scenario: adventurer-spike-fox
-Verdict: PASS
-- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
-- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
-- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- stage TRAVEL: 1 events, advance=Running, step=0, status=
-- stage SUSTAIN-RETREAT: 1 events, advance=Running, step=24577, status=
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage HUNT-CLOSE: 1 events, advance=Completed, step=24576, status=arrived [dist 7.9 > engage 3.0]
-- stage HUNT-CAST: 1 events, advance=Rejected, step=24576, status=RejectedAction: skill 90010 not learned [target hp 100→100]
 - stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 1 events, advance=credited, step=24576, status=kill 1/3
 - stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CAST: 1 events, advance=Rejected, step=24578, status=RejectedAction: skill 90010 not learned [target hp 100→100]
 - stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 2 events, advance=credited, step=24578, status=kill 2/3
 - stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
 - stage HUNT-CLOSE: 1 events, advance=Completed, step=24577, status=arrived [dist 3.7 > engage 3.0]
-- stage HUNT-CAST: 1 events, advance=Rejected, step=24577, status=RejectedAction: skill 90010 not learned [target hp 100→100]
 - stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 3 events, advance=credited, step=24577, status=kill 3/3
 - stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
@@ -229,41 +314,8 @@ Verdict: PASS
 - criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
 - criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578) | corpse 24577: Completed (looted 1 item(s) from 24577)
 - criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=36 completed=25 incomplete=0 rejected-with-running=0
-- actor requests: 36
-
-```
-
-```
-# Scenario: adventurer-spike-fox
-Verdict: PASS
-- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
-- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
-- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- stage TRAVEL: 1 events, advance=Running, step=0, status=
-- stage HUNT-CLOSE: 1 events, advance=Completed, step=24576, status=arrived [dist 18.6 > engage 8.0]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 1 events, advance=credited, step=24576, status=kill 1/3
-- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CLOSE: 1 events, advance=Completed, step=24577, status=arrived [dist 9.5 > engage 8.0]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 2 events, advance=credited, step=24577, status=kill 2/3
-- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CLOSE: 1 events, advance=Completed, step=24578, status=arrived [dist 9.1 > engage 8.0]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 3 events, advance=credited, step=24578, status=kill 3/3
-- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
-- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
-- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
-- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
-- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24578: Completed (looted 1 item(s) from 24578)
-- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=24 completed=24 incomplete=0 rejected-with-running=0
-- actor requests: 24
+- criterion [lifecycle-trace-complete]: PASS records=33 completed=25 incomplete=0 rejected-with-running=0
+- actor requests: 33
 
 ```
 
@@ -315,104 +367,52 @@ Verdict: PASS
 - stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
 - stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
 - stage TRAVEL: 1 events, advance=Running, step=0, status=
-- stage SUSTAIN-RETREAT: 1 events, advance=Running, step=24577, status=
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage SUSTAIN-HEAL: 1 events, advance=Rejected, step=8518, status=RejectedAction: item 8518 not found in inventory
-- stage HUNT-CLOSE: 1 events, advance=Completed, step=24576, status=arrived [dist 7.9 > engage 3.0]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 1 events, advance=credited, step=24576, status=kill 1/3
-- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
+- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 1 events, advance=credited, step=24577, status=kill 1/3
+- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-SKIP: 3 events, advance=skipped, step=24576, status=no damage landed across 3 rounds (hp pinned at 100) — excluded from reselection
 - stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
 - stage HUNT-KILL: 2 events, advance=credited, step=24578, status=kill 2/3
 - stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CLOSE: 1 events, advance=Completed, step=24577, status=arrived [dist 3.7 > engage 3.0]
-- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 3 events, advance=credited, step=24577, status=kill 3/3
-- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
+- stage HUNT-CLOSE: 1 events, advance=Completed, step=24579, status=arrived [dist 3.2 > engage 3.0]
+- stage HUNT-CAST: 1 events, advance=Completed, step=24579, status=skill 90001 cast succeeded [target hp 100→100]
+- stage HUNT-KILL: 3 events, advance=credited, step=24579, status=kill 3/3
+- stage LOOT: 1 events, advance=Completed, step=24579, status=looted 1 item(s) from 24579
 - stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
 - stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
 - stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
 - criterion [quest-active-after-accept]: PASS active quests after accept: [250]
 - criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
-- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578) | corpse 24577: Completed (looted 1 item(s) from 24577)
+- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24578: Completed (looted 1 item(s) from 24578) | corpse 24579: Completed (looted 1 item(s) from 24579)
 - criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=33 completed=25 incomplete=0 rejected-with-running=0
-- actor requests: 33
-
-```
-
-```
-# Scenario: adventurer-spike-fox
-Verdict: PASS
-- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
-- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
-- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- stage TRAVEL: 1 events, advance=Running, step=0, status=
-- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 1 events, advance=credited, step=24577, status=kill 1/3
-- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 2 events, advance=credited, step=24576, status=kill 2/3
-- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 3 events, advance=credited, step=24578, status=kill 3/3
-- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
-- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
-- stage RETURN-TRAVEL-ACCEPT: 1 events, advance=Running, step=24832, status=
-- stage RETURN-ACCEPT: 1 events, advance=Completed, step=330, status=quest 330 accepted (Npc/3597)
-- stage RETURN-TRAVEL-REPORT: 1 events, advance=Running, step=24833, status=
-- stage RETURN-TURNIN: 1 events, advance=Completed, step=330, status=quest 330 completed by turn-in
-- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
-- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
-- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578)
-- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [quest-330-completed]: PASS return quest 330: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=25 completed=25 incomplete=0 rejected-with-running=0
-- actor requests: 25
-
-```
-
-```
-# Scenario: adventurer-spike-fox
-Verdict: PASS
-- stage ACCEPT-APPROACH: 1 events, advance=Completed, step=1000, status=already at destination
-- stage ACCEPT: 1 events, advance=Completed, step=250, status=quest 250 accepted (Doodad/5047)
-- stage ACCEPT-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- stage TRAVEL: 1 events, advance=Running, step=0, status=
-- stage HUNT-CAST: 1 events, advance=Completed, step=24577, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 1 events, advance=credited, step=24577, status=kill 1/3
-- stage LOOT: 1 events, advance=Completed, step=24577, status=looted 1 item(s) from 24577
-- stage HUNT-EQUIP: 1 events, advance=Completed, step=90030, status=equipped item 90030 into Mainhand [90030 → Mainhand, empty slot]
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CAST: 1 events, advance=Completed, step=24576, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 2 events, advance=credited, step=24576, status=kill 2/3
-- stage LOOT: 1 events, advance=Completed, step=24576, status=looted 1 item(s) from 24576
-- stage HUNT-EQUIP: 1 events, advance=Completed, step=90030, status=equipped item 90030 into Offhand [90030 → Offhand, empty slot]
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Progress, status Progress)
-- stage HUNT-CAST: 1 events, advance=Completed, step=24578, status=skill 90001 cast succeeded [target hp 100→100]
-- stage HUNT-KILL: 3 events, advance=credited, step=24578, status=kill 3/3
-- stage LOOT: 1 events, advance=Completed, step=24578, status=looted 1 item(s) from 24578
-- stage HUNT-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Reward, status Completed)
-- stage COMPLETE-ADVANCE: 1 events, advance=Completed, step=250, status=quest 250 advanced (step Drop, status Dropped)
-- stage COMPLETE-OBSERVE: 1 events, advance=Completed, step=0, status=completed
-- criterion [quest-active-after-accept]: PASS active quests after accept: [250]
-- criterion [kills-credited]: PASS 3/3 fox kills credited through DoOnMonsterHuntEvents
-- criterion [loot-recorded]: PASS 3 corpse loot attempt(s): corpse 24577: Completed (looted 1 item(s) from 24577) | corpse 24576: Completed (looted 1 item(s) from 24576) | corpse 24578: Completed (looted 1 item(s) from 24578)
-- criterion [quest-250-completed]: PASS quest 250: completed flag=True, active=False
-- criterion [lifecycle-trace-complete]: PASS records=23 completed=23 incomplete=0 rejected-with-running=0
-- actor requests: 23
+- criterion [lifecycle-trace-complete]: PASS records=52 completed=52 incomplete=0 rejected-with-running=0
+- actor requests: 52
 
 ```
 

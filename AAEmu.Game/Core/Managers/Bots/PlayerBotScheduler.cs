@@ -351,7 +351,7 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         ExecutionBoundary.AssertOnExecutionThread("bot step execution");
 
         Interlocked.Increment(ref _activeWorkers);
-        var sw = Stopwatch.StartNew();
+        var startTimestamp = Stopwatch.GetTimestamp(); // allocation-free busy-time probe (Stopwatch.StartNew allocated per step)
         try
         {
             // Registry consumption: resolve the runtime now; a bot that left the
@@ -453,7 +453,7 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         finally
         {
             Interlocked.Decrement(ref _activeWorkers);
-            Interlocked.Add(ref _busyTicks, sw.ElapsedTicks);
+            Interlocked.Add(ref _busyTicks, Stopwatch.GetTimestamp() - startTimestamp);
         }
     }
 

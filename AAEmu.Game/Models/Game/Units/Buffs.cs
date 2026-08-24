@@ -713,14 +713,24 @@ public class Buffs : IBuffs
 
     public void TriggerRemoveOn(BuffRemoveOn on, uint value = 0)
     {
+        // Hot path: called on EVERY movement broadcast (VehicleMovementModel.
+        // RemoveEffects). Fast-path the common no-buffs case without taking
+        // the lock or snapshotting, then snapshot once (the ToArray copy is
+        // already immutable to callers — the old extra ToList was pure churn).
+        lock (_lock)
+        {
+            if (_effects.Count == 0)
+                return;
+        }
+
         // Create a copy of the list of effects to avoid changing the list while iterating
-        IEnumerable<Buff> effects;
+        Buff[] effects;
         lock (_lock)
         {
             effects = _effects.ToArray();
         }
 
-        foreach (var effect in effects.ToList())
+        foreach (var effect in effects)
         {
             if (effect != null)
             {

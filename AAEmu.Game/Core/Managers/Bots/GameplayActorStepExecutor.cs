@@ -35,6 +35,10 @@ public sealed class GameplayActorStepExecutor : IBotStepExecutor
     private readonly ConcurrentDictionary<uint, IGameplayActor> _actors = [];
     private readonly ConcurrentDictionary<uint, DateTime> _lastStepUtc = [];
 
+    // Cached completed results (see BotRoamStepExecutor — no per-wake Task churn).
+    private static readonly Task<TimeSpan?> DormantTask = Task.FromResult<TimeSpan?>(null);
+    private Task<TimeSpan?>? _cadenceTask;
+
     /// <summary>Step cadence reported to the scheduler while a request is live.</summary>
     public TimeSpan ActiveCadence { get; init; } = TimeSpan.FromMilliseconds(100);
 
@@ -70,6 +74,8 @@ public sealed class GameplayActorStepExecutor : IBotStepExecutor
 
         // Live request → keep waking on the scan cadence; idle → dormant.
         var live = actor.ActiveRequest is { IsTerminal: false };
-        return Task.FromResult<TimeSpan?>(live ? ActiveCadence : null);
+        return live
+            ? (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence))
+            : DormantTask;
     }
 }

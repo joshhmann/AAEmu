@@ -64,7 +64,7 @@ public static class VehicleMovementModel
     /// <param name="driver">The packet's sending character (Connection.ActiveChar).</param>
     /// <param name="targetUnit">The unit being moved (a Mate when riding a mount).</param>
     /// <param name="dmt">The client-authored move payload.</param>
-    public static void ApplyUnitMove(Character driver, BaseUnit targetUnit, UnitMoveType dmt)
+    public static void ApplyUnitMove(Character driver, BaseUnit targetUnit, UnitMoveType dmt, bool broadcast = true)
     {
         // Its moving Pets, handle Pet XP for moving
         if (targetUnit is Mate mate)
@@ -166,7 +166,8 @@ public static class VehicleMovementModel
             (float)MathUtil.ConvertDirectionToRadian(dmt.RotationX),
             (float)MathUtil.ConvertDirectionToRadian(dmt.RotationY),
             (float)MathUtil.ConvertDirectionToRadian(dmt.RotationZ));
-        targetUnit.BroadcastPacket(new SCOneUnitMovementPacket(targetUnit.ObjId, dmt), true);
+        if (broadcast)
+            targetUnit.BroadcastPacket(new SCOneUnitMovementPacket(targetUnit.ObjId, dmt), true);
         targetUnit.Transform.FinalizeTransform();
 
         // Handle Fall Velocity
@@ -249,6 +250,10 @@ public static class VehicleMovementModel
     /// transform (and observers) faces the movement direction instead of
     /// snapping to 0 on every leg.
     /// </summary>
+    /// <summary>Shared walking delta payload (0,63,0) — read-only at
+    /// serialization, safe to share across moveType instances.</summary>
+    private static readonly sbyte[] WalkDelta = [0, 63, 0];
+
     public static UnitMoveType BuildCharacterMove(Vector3 position, float yawRadians, float speed)
     {
         var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
@@ -264,7 +269,7 @@ public static class VehicleMovementModel
         moveType.RotationZ = MathUtil.ConvertDegreeToSByteDirection(yawRadians.RadToDeg() - 90);
         moveType.ActorFlags = 5; // 5-walk
         moveType.Flags = 0;
-        moveType.DeltaMovement = [0, 63, 0];
+        moveType.DeltaMovement = WalkDelta;
         moveType.Stance = GameStanceType.Relaxed;   // IDLE = 0x1
         moveType.Alertness = MoveTypeAlertness.Idle; // IDLE = 0x0
         moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;

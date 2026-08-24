@@ -131,12 +131,20 @@ public sealed class BotGoalArbiter : IBotGoalArbiter
 
         List<IBotActivityModule> snapshot;
         lock (_modulesLock)
+        {
+            // Inert fast-path: no modules, no per-wake snapshot allocation
+            // (this runs on EVERY scheduler wake — the steady-state cost of a
+            // deployment that registers nothing must be zero).
+            if (_modules.Count == 0)
+            {
+                Interlocked.Increment(ref _arbitrations);
+                return BotArbitration.None;
+            }
+
             snapshot = [.. _modules];
+        }
 
         Interlocked.Increment(ref _arbitrations);
-
-        if (snapshot.Count == 0)
-            return BotArbitration.None; // inert — zero modules, zero behavior
 
         var activeName = _activeActivity.TryGetValue(bot.CharacterId, out var current) ? current : null;
         var context = new BotActivityContext

@@ -85,6 +85,12 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     private readonly ConcurrentDictionary<uint, BotRoamState> _states = [];
     private readonly ConcurrentDictionary<uint, DateTime> _lastStepUtc = [];
 
+    // Cached already-completed step results: the scheduler GetResult()s every
+    // return, so a fresh Task<TimeSpan?> allocation per wake was pure churn at
+    // ~10 wakes/sec/bot. Tasks are immutable once completed — safe to reuse.
+    private static readonly Task<TimeSpan?> DormantTask = Task.FromResult<TimeSpan?>(null);
+    private Task<TimeSpan?>? _cadenceTask;
+
     /// <summary>
     /// Resolves the actor instance for a bot character — the SAME actor the
     /// scheduler ticks (control-plane API seam: the queue drives this actor
@@ -151,6 +157,15 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         }
 
         var actor = state.Actor;
+
+        // Soak finding (c): the roam executor owns the throttled (4-6 Hz)
+        // movement broadcast in step 3b — the actor's own per-apply
+        // broadcast would double-send every wake at ~10 Hz and was the
+        // dominant heap-churn source under scheduler-driven roam. States can
+        // be created by several entry points (SetRoamRoute included), so the
+        // flag is enforced here rather than only at one creation site.
+        if (actor is GameplayActor concreteActor && concreteActor.BroadcastMovement)
+            concreteActor.BroadcastMovement = false;
 
         // 1. Issue the next leg when idle and a route is active. The issued
         // leg is remembered as PendingLeg — GameplayActor clears its active
@@ -251,7 +266,9 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         // dormant.
         var live = actor.ActiveRequest is { IsTerminal: false };
         var routeActive = state.Path is { IsFinished: false };
-        return Task.FromResult<TimeSpan?>(live || routeActive ? ActiveCadence : null);
+        return live || routeActive
+            ? (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence))
+            : DormantTask;
     }
 
     /// <summary>

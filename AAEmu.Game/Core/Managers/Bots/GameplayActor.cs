@@ -23,6 +23,7 @@ using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Buffs;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
@@ -88,6 +89,15 @@ public class GameplayActor : IGameplayActor
     /// Set to <see cref="TimeSpan.Zero"/> to disable observation entirely.
     /// </summary>
     public TimeSpan EffectObservationWindow { get; set; } = DefaultEffectObservationWindow;
+
+    /// <summary>
+    /// When false, walk-step position applications skip the per-apply
+    /// SCOneUnitMovementPacket broadcast (soak finding (c) — headless bots
+    /// broadcast through their executor's throttled path instead). Real
+    /// packet-driven movement is unaffected: this flag lives only on the
+    /// bot actor layer.
+    /// </summary>
+    public bool BroadcastMovement { get; set; } = true;
 
     /// <summary>
     /// Default no-progress window for Move stuck detection (M7 hardening
@@ -2684,6 +2694,25 @@ public class GameplayActor : IGameplayActor
     {
         var from = Character.Transform.World.Position;
         var angle = (float)MathUtil.CalculateAngleFrom(from, next).DegToRad();
+
+        // Soak finding (c): the retail client-authoritative path builds a
+        // movement packet + broadcasts on EVERY apply (~10 Hz per bot).
+        // Headless roam has its own throttled broadcast in
+        // BotRoamStepExecutor (4-6 Hz), so when <see cref="BroadcastMovement"/>
+        // is off we apply the same state directly — position/facing,
+        // FinalizeTransform, the move-triggered buff sweep — without
+        // constructing a packet nobody consumes.
+        if (!BroadcastMovement)
+        {
+            Character.Buffs.TriggerRemoveOn(BuffRemoveOn.Move);
+            Character.SetPlayerMoved();
+            Character.Transform.Local.SetPosition(next.X, next.Y, next.Z,
+                0f, 0f,
+                (float)MathUtil.ConvertDirectionToRadian(MathUtil.ConvertDegreeToSByteDirection(angle.RadToDeg() - 90)));
+            Character.Transform.FinalizeTransform();
+            return;
+        }
+
         VehicleMovementModel.ApplyUnitMove(Character, Character,
             VehicleMovementModel.BuildCharacterMove(next, angle, _moveSpeed));
     }
