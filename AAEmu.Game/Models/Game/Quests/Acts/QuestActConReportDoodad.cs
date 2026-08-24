@@ -31,7 +31,9 @@ public class QuestActConReportDoodad(QuestComponentTemplate parentComponent) : Q
 
     public override void FinalizeQuest(Quest quest, QuestAct questAct)
     {
-        quest.Owner.Events.OnReportDoodad += questAct.OnReportDoodad;
+        // Unsubscribe (was += — a double-subscribe leak that fired the
+        // handler N times per event after N quest cycles).
+        quest.Owner.Events.OnReportDoodad -= questAct.OnReportDoodad;
         base.FinalizeQuest(quest, questAct);
     }
 

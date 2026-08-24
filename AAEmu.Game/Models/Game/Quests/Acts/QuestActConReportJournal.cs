@@ -14,10 +14,17 @@ public class QuestActConReportJournal(QuestComponentTemplate parentComponent) : 
     /// <param name="questAct"></param>
     /// <param name="currentObjectiveCount"></param>
     /// <returns>False</returns>
+    /// <summary>
+    /// Journal-report gate for TaskBoard style quests (mirrors
+    /// QuestActConReportDoodad): passes only when the OnReportJournal event
+    /// set OverrideObjectiveCompleted. The previous `|| true` short-circuit
+    /// auto-passed all 466 live quests gated on this act — 59 of them (no
+    /// Progress step) were instantly completable on accept.
+    /// </summary>
     public override bool RunAct(Quest quest, QuestAct questAct, int currentObjectiveCount)
     {
         Logger.Trace($"{QuestActTemplateName}({DetailId}).RunAct: Quest: {quest.TemplateId}, Owner {quest.Owner.Name} ({quest.Owner.Id})");
-        return questAct.OverrideObjectiveCompleted || true;
+        return questAct.OverrideObjectiveCompleted;
     }
 
     public override void InitializeQuest(Quest quest, QuestAct questAct)
