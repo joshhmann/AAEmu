@@ -29,11 +29,14 @@ public class CSBoardingTransferPacket() : GamePacket(CSOffsets.CSBoardingTransfe
         if (character.Bonding != null)
             return;
 
-        // Resolve the transfer by TlId (both parts of a multi-part carriage
-        // share the master's TlId).
-        var transfer = character.ParentWorld.TransferManager.GetTransfers()
-            .FirstOrDefault(t => t.TlId == _tl);
-        if (transfer == null)
+        // Resolve the boarding target across ALL transfer parts bound to this
+        // TlId (multi-part carriages/ships share the master's TlId but seats
+        // attach only to child parts — a plain FirstOrDefault always hits the
+        // seatless master and no CSBoardingTransferPacket could ever bond).
+        var candidates = character.ParentWorld.TransferManager.GetTransfers()
+            .Where(t => t.TlId == _tl)
+            .ToList();
+        if (candidates.Count == 0)
             return;
 
         // The seat doodad whose DoodadFuncAttachment func row targets the
@@ -42,21 +45,27 @@ public class CSBoardingTransferPacket() : GamePacket(CSOffsets.CSBoardingTransfe
         // Seat.LoadPassenger + BondDoodad + transform parenting +
         // SCBondDoodadPacket). A full seat makes LoadPassenger return -1 and
         // Use is a silent no-op there; we verify below and refuse.
-        var seat = transfer.AttachedDoodads.FirstOrDefault(d =>
-            DoodadManager.Instance.GetFuncsForGroup(d.FuncGroupId).Any(f =>
-                f.FuncType == "DoodadFuncAttachment"
-                && DoodadManager.Instance.GetFuncTemplate(f.FuncId, f.FuncType) is DoodadFuncAttachment
-                {
-                    AttachPointId: var point
-                } && point == (AttachPointKind)_ap));
-        if (seat == null)
+        foreach (var transfer in candidates)
+        {
+            var seat = transfer.AttachedDoodads.FirstOrDefault(d =>
+                DoodadManager.Instance.GetFuncsForGroup(d.FuncGroupId).Any(f =>
+                    f.FuncType == "DoodadFuncAttachment"
+                    && DoodadManager.Instance.GetFuncTemplate(f.FuncId, f.FuncType) is DoodadFuncAttachment
+                    {
+                        AttachPointId: var point
+                    } && point == (AttachPointKind)_ap));
+            if (seat == null)
+                continue;
+
+            var attachmentFunc = DoodadManager.Instance.GetFuncsForGroup(seat.FuncGroupId)
+                .First(f => f.FuncType == "DoodadFuncAttachment");
+            seat.Use(character, attachmentFunc.SkillId);
+
+            if (character.Bonding?.ObjId != seat.ObjId)
+                Logger.Warn("BoardingTransfer refused for {0} on transfer {1} seat {2}", character.Name, transfer.ObjId, seat.ObjId);
             return;
+        }
 
-        var attachmentFunc = DoodadManager.Instance.GetFuncsForGroup(seat.FuncGroupId)
-            .First(f => f.FuncType == "DoodadFuncAttachment");
-        seat.Use(character, attachmentFunc.SkillId);
-
-        if (character.Bonding?.ObjId != seat.ObjId)
-            Logger.Warn("BoardingTransfer refused for {0} on transfer {1} seat {2}", character.Name, transfer.ObjId, seat.ObjId);
+        Logger.Warn("BoardingTransfer: no seat for attach point {0} on any transfer part with Tl {1}", _ap, _tl);
     }
 }

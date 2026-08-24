@@ -15,6 +15,7 @@ using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Static;
@@ -214,6 +215,8 @@ public sealed class BotDriveBridge
                 return Ok(CollectStats());
             case "metrics":
                 return Ok(CollectGateMetrics());
+            case "transfers":
+                return Ok(new { transfers = CollectLiveTransfers() });
             case "drive":
                 return HandleDrive(root);
             case "save":
@@ -392,6 +395,62 @@ public sealed class BotDriveBridge
             save,
             uptimeMs = Environment.TickCount64
         };
+    }
+
+    /// <summary>
+    /// Read-only live-transfer dump (test seam): walks every world's
+    /// <see cref="TransferManager.GetTransfers"/> and, per transfer, its
+    /// AttachedDoodads seat benches resolved against
+    /// <see cref="DoodadManager.GetFuncsForGroup"/> /
+    /// <see cref="DoodadManager.GetFuncTemplate"/> DoodadFuncAttachment
+    /// templates. No state is touched — the exact registry + template data
+    /// CSBoardingTransferPacket consults.
+    /// </summary>
+    private object[] CollectLiveTransfers()
+    {
+        var result = new List<object>();
+        foreach (var world in WorldManager.Instance.GetWorlds())
+        {
+            foreach (var transfer in world.TransferManager.GetTransfers())
+            {
+                var seats = new List<object>();
+                foreach (var doodad in transfer.AttachedDoodads)
+                {
+                    foreach (var func in DoodadManager.Instance.GetFuncsForGroup(doodad.FuncGroupId))
+                    {
+                        if (func.FuncType != "DoodadFuncAttachment")
+                            continue;
+                        if (DoodadManager.Instance.GetFuncTemplate(func.FuncId, func.FuncType)
+                            is not DoodadFuncAttachment attachment)
+                            continue;
+                        seats.Add(new
+                        {
+                            doodadObjId = doodad.ObjId,
+                            doodadTemplateId = doodad.TemplateId,
+                            attachPoint = (byte)attachment.AttachPointId,
+                            bondKind = attachment.BondKindId.ToString()
+                        });
+                    }
+                }
+
+                result.Add(new
+                {
+                    worldId = world.Id,
+                    tlId = transfer.TlId,
+                    objId = transfer.ObjId,
+                    name = transfer.Name,
+                    position = new
+                    {
+                        x = transfer.Transform.World.Position.X,
+                        y = transfer.Transform.World.Position.Y,
+                        z = transfer.Transform.World.Position.Z
+                    },
+                    seats = seats.ToArray()
+                });
+            }
+        }
+
+        return result.ToArray();
     }
 
     private string HandleDrive(JsonElement root)
