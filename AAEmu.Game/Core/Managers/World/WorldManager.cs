@@ -957,7 +957,10 @@ public class WorldManager(
     {
         obj = GetRootObj(obj);
         var world = obj.ParentWorld ?? GetWorld(obj.Transform.InstanceId);
-        return world.GetRegionByPos(obj.Transform.World.Position);
+        // Allocation-free position composition: Transform.World clones a
+        // PositionAndRotation per parented level, and this runs on every
+        // AddVisibleObject (i.e. per move). Same value, zero allocation.
+        return world.GetRegionByPos(obj.Transform.ComputeWorldPosition());
     }
 
     /// <summary>

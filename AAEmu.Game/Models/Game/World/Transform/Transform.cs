@@ -401,6 +401,49 @@ public class Transform : IDisposable
     }
 
     /// <summary>
+    /// Allocation-free variant of <see cref="GetWorldPosition"/> that returns
+    /// only the composed world-space position and rotation as value types.
+    /// Runs for every moving entity on every FinalizeTransform, so it must not
+    /// heap-allocate (GetWorldPosition clones a PositionAndRotation per parent
+    /// level). The composition mirrors GetWorldPosition exactly; do not change
+    /// one without the other.
+    /// </summary>
+    private (Vector3 Position, Vector3 Rotation) ComposeWorldPosRot()
+    {
+        if (_parentTransform == null)
+            return (_localPosRot.Position, _localPosRot.Rotation);
+        var (parentPos, parentRot) = _parentTransform.ComposeWorldPosRot();
+        return ComposeWithParent(parentPos, parentRot);
+    }
+
+    /// <summary>
+    /// Allocation-free world-space position only (see <see cref="ComposeWorldPosRot"/>).
+    /// </summary>
+    public Vector3 ComputeWorldPosition()
+    {
+        if (_parentTransform == null)
+            return _localPosRot.Position;
+        var (parentPos, parentRot) = _parentTransform.ComposeWorldPosRot();
+        return ComposeWithParent(parentPos, parentRot).Position;
+    }
+
+    private (Vector3 Position, Vector3 Rotation) ComposeWithParent(Vector3 parentPos, Vector3 parentRot)
+    {
+        // Use parent rotation to translate child coordinates
+        var parentQuatRotation = PositionAndRotation.ToQuaternion(parentRot);
+        var parentScale = _parentTransform.GameObject is BaseUnit u ? u.Scale : 1f;
+        // Local.Position is stored unscaled; scale it by parent's scale when composing world coordinates.
+        var position = parentPos + Vector3.Transform(_localPosRot.Position * parentScale, parentQuatRotation);
+
+        // Child has no parent, so child.Local == child.World
+        var localRotation = PositionAndRotation.ToQuaternion(_localPosRot.Rotation);
+        // Transform the child's local rotation to world space, using the parent's rotation
+        var worldRotation = parentQuatRotation * localRotation;
+
+        return (position, PositionAndRotation.FromQuaternion(worldRotation));
+    }
+
+    /// <summary>
     /// Detaches the transform, and sets the Local Position and Rotation to what is defined in the WorldSpawnPosition
     /// </summary>
     /// <param name="wsp">WorldSpawnPosition to copy information from</param>
@@ -424,7 +467,10 @@ public class Transform : IDisposable
     {
         var deltaTime = DateTime.UtcNow - _lastFinalizeTime;
         // Timer to reduce log spam
-        var worldPosDelta = World.ClonePosition() - _lastFinalizePos;
+        // Allocation-free: FinalizeTransform runs per move for every moving
+        // entity — the old World.ClonePosition() cloned a PositionAndRotation
+        // per parented level (GetWorldPosition) on every call.
+        var worldPosDelta = ComputeWorldPosition() - _lastFinalizePos;
         if (worldPosDelta == Vector3.Zero)
             return;
 
@@ -566,7 +612,8 @@ public class Transform : IDisposable
 
     public void ResetFinalizeTransform()
     {
-        _lastFinalizePos = World.ClonePosition();
+        // Allocation-free (see FinalizeTransform) — runs per move.
+        _lastFinalizePos = ComputeWorldPosition();
         _lastFinalizeTime = DateTime.UtcNow;
     }
 
