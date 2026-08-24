@@ -93,7 +93,10 @@ internal static class BotPresenceBootstrap
                     RoamSpeed: 2.5f,
                     Level: 5,
                     NamePrefix: "Citizen",
-                    AccountPrefix: "presence"));
+                    AccountPrefix: "presence",
+                    // G2-A6: configurable roster safety bound (also clamps a
+                    // manifest-driven roster).
+                    MaxPresenceBots: BotPresenceCoordinator.ReadMaxPresenceBots()));
             }
             catch (Exception ex)
             {

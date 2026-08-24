@@ -8,32 +8,32 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 - **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
-- **T3 stratified act-family census (frozen M1-5c sample)**: 51 PASS / 0 FAIL / 2 SKIP
-- **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 32 PASS / 0 FAIL / 0 SKIP
+- **T3 stratified act-family census (frozen M1-5c sample)**: 49 PASS / 2 FAIL / 2 SKIP
+- **T4 M2a wave-1 (band 1-20: cinema/etc-obtain/CAIG+LP)**: 22 PASS / 10 FAIL / 0 SKIP
 - **T5 M2a wave-2 (band 1-20: express-fire/aggro/CCC/honor)**: 13 PASS / 0 FAIL / 0 SKIP
 - **T6 M2a census (band 1-10 full sweep)**: 445 PASS / 0 FAIL / 0 SKIP
 - **T7 M2a census (band 11-20 full sweep)**: 576 PASS / 0 FAIL / 0 SKIP
-- **T8 M2c census (band 21-30 full sweep)**: 826 PASS / 0 FAIL / 0 SKIP
-- **T9 M2 WI-2 (CrimePoint supply carriers)**: 5 PASS / 0 FAIL / 0 SKIP
+- **T8 M2c census (band 21-30 full sweep)**: 811 PASS / 15 FAIL / 0 SKIP
+- **T9 M2 WI-2 (CrimePoint supply carriers)**: 4 PASS / 1 FAIL / 0 SKIP
 - **T10 M2 WI-3 (AbilityLevel objective carriers)**: 9 PASS / 0 FAIL / 0 SKIP
 - **T11 M2 WI-4 (MateLevel objective carriers)**: 4 PASS / 0 FAIL / 0 SKIP
 - **T12 M2 WI-5 (CompleteQuest objective carriers)**: 9 PASS / 0 FAIL / 0 SKIP
-- **T13 M2 WI-7 census (band 31-40 full sweep)**: 631 PASS / 0 FAIL / 0 SKIP
-- **T14 M2 WI-8 census (band 41-50 full sweep)**: 1526 PASS / 0 FAIL / 2 SKIP
-- **T15 M2 WI-9 census (band 51-55 + lvl-99 straggler sweep)**: 265 PASS / 0 FAIL / 0 SKIP
+- **T13 M2 WI-7 census (band 31-40 full sweep)**: 619 PASS / 12 FAIL / 0 SKIP
+- **T14 M2 WI-8 census (band 41-50 full sweep)**: 1516 PASS / 10 FAIL / 2 SKIP
+- **T15 M2 WI-9 census (band 51-55 + lvl-99 straggler sweep)**: 264 PASS / 1 FAIL / 0 SKIP
 - **T16 M2 WI-11b census (band 0/null sweep)**: 55 PASS / 0 FAIL / 4 SKIP
-- **ALL TIERS (census)**: 4573 PASS / 0 FAIL / 14 SKIP over 4587 quests — **4573/4573 quests runnable** (14 SKIP not driven, reasons below)
+- **ALL TIERS (census)**: 4522 PASS / 51 FAIL / 14 SKIP over 4587 quests — **4522/4573 quests runnable** (14 SKIP not driven, reasons below)
 
 ## Band census (acceptance)
 
 | band | tier | total | dropped | non-dropped | driven | PASS | FAIL | SKIP | PASS-or-doc-SKIP |
 |---|---|---|---|---|---|---|---|---|---|
-| 1-10 | t6 | 668 | 108 | 560 | 560 | 560 | 0 | 0 | 100.0% |
-| 11-20 | t7 | 626 | 17 | 609 | 609 | 609 | 0 | 0 | 100.0% |
-| 21-30 | t8 | 847 | 0 | 847 | 847 | 847 | 0 | 0 | 100.0% |
-| 31-40 | t13 | 643 | 0 | 643 | 643 | 643 | 0 | 0 | 100.0% |
-| 41-50 | t14 | 1592 | 1 | 1591 | 1591 | 1589 | 0 | 2 | 100.0% |
-| 51-55 | t15 | 268 | 0 | 268 | 268 | 268 | 0 | 0 | 100.0% |
+| 1-10 | t6 | 668 | 108 | 560 | 560 | 559 | 1 | 0 | 99.8% |
+| 11-20 | t7 | 626 | 17 | 609 | 609 | 600 | 9 | 0 | 98.5% |
+| 21-30 | t8 | 847 | 0 | 847 | 847 | 831 | 16 | 0 | 98.1% |
+| 31-40 | t13 | 643 | 0 | 643 | 643 | 630 | 13 | 0 | 98.0% |
+| 41-50 | t14 | 1592 | 1 | 1591 | 1591 | 1578 | 11 | 2 | 99.3% |
+| 51-55 | t15 | 268 | 0 | 268 | 268 | 267 | 1 | 0 | 99.6% |
 | 3465 (lvl-99 straggler (top-level quest)) | t15 | 1 | 0 | 1 | 1 | 1 | 0 | 0 | 100.0% |
 | D2 old Sunny Wilderness (구 불볕황야) - superseded pre-1.2 line | t16 | 13 | 0 | 13 | 13 | 13 | 0 | 0 | 100.0% |
 | D3 tutorial sphere steps (cat 45) | t16 | 12 | 0 | 12 | 12 | 12 | 0 | 0 | 100.0% |
@@ -50,8 +50,8 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | Lilyut | 1-10 | 16 | 16 | 0 | 0 |
 | Lilyut | 11-20 | 74 | 74 | 0 | 0 |
 | Lilyut | 21-30 | 49 | 49 | 0 | 0 |
-| Lilyut | 41-50 | 6 | 6 | 0 | 0 |
-| Mahadevi | 11-20 | 125 | 125 | 0 | 0 |
+| Lilyut | 41-50 | 6 | 5 | 1 | 0 |
+| Mahadevi | 11-20 | 125 | 120 | 5 | 0 |
 | Mahadevi | 21-30 | 8 | 8 | 0 | 0 |
 | Mahadevi | 41-50 | 11 | 11 | 0 | 0 |
 | Tiger Spine | 1-10 | 22 | 22 | 0 | 0 |
@@ -63,20 +63,20 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | Falcony | 41-50 | 5 | 5 | 0 | 0 |
 | Sunny Wilderness | 1-10 | 40 | 40 | 0 | 0 |
 | Sunny Wilderness | 11-20 | 47 | 47 | 0 | 0 |
-| Ancient Forest | 21-30 | 113 | 113 | 0 | 0 |
+| Ancient Forest | 21-30 | 113 | 110 | 3 | 0 |
 | Ancient Forest | 41-50 | 3 | 3 | 0 | 0 |
-| Marionople | 21-30 | 102 | 102 | 0 | 0 |
+| Marionople | 21-30 | 102 | 101 | 1 | 0 |
 | Marionople | 41-50 | 10 | 10 | 0 | 0 |
 | Two Crowns | 21-30 | 91 | 91 | 0 | 0 |
 | Two Crowns | 31-40 | 5 | 5 | 0 | 0 |
 | Two Crowns | 41-50 | 4 | 4 | 0 | 0 |
-| White Forest | 11-20 | 32 | 32 | 0 | 0 |
-| White Forest | 21-30 | 90 | 90 | 0 | 0 |
+| White Forest | 11-20 | 32 | 29 | 3 | 0 |
+| White Forest | 21-30 | 90 | 86 | 4 | 0 |
 | White Forest | 41-50 | 3 | 3 | 0 | 0 |
-| Singing Land | 21-30 | 84 | 84 | 0 | 0 |
+| Singing Land | 21-30 | 84 | 83 | 1 | 0 |
 | Sunrise Peninsula | 11-20 | 29 | 29 | 0 | 0 |
-| Sunrise Peninsula | 21-30 | 80 | 80 | 0 | 0 |
-| Sunrise Peninsula | 41-50 | 10 | 10 | 0 | 0 |
+| Sunrise Peninsula | 21-30 | 80 | 78 | 2 | 0 |
+| Sunrise Peninsula | 41-50 | 10 | 9 | 1 | 0 |
 
 ## T1 — per-quest verdicts
 
@@ -239,7 +239,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2017 | 덫에 들어가 기다리기 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2102 | 찬바람 동굴에 평안을 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2108 | 수호자의 숲을 떠도는 도깨비불 처지 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2301 | 죽일 자와 구할 자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2301 | 죽일 자와 구할 자 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 2717 | 자유도! | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 2916 | 마리아노플 하수도 청소 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 2926 | 마리아노플 정원 관리 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
@@ -253,7 +253,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 4784 | 배심원자격4단계:재심 청구 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4788 | 배심원자격4단계:선처를 호소 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4881 | 마켈라에게 특별한 당신 | QuestActConAcceptItemGain | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 5052 | 빛을 찾아서 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5052 | 빛을 찾아서 | QuestActConAcceptDoodad | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 523 | 야영지의 비밀 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5263 | 너의 백일을 축하해! | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5430 | 폭풍을 넘어 천둥을 내 손에 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
@@ -282,15 +282,15 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 | quest | name | family | verdict | detail |
 |---|---|---|---|---|
-| 128 | 수호자에게 인정을 받는 방법 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 134 | 살덩어리 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 1702 | 매혹된 영혼 | QuestActCheckCompleteComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 128 | 수호자에게 인정을 받는 방법 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Fail (IndexOutOfRangeException: Index was outside the bounds of the array.    at AAEmu.Game.Models.Game.Quests.Templates.QuestActTemplate.GetObjective(Quest quest) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Templates/QuestActTemplate.cs:line 147    at AAEmu.Game.Models.Game.Quests.Acts.QuestActEtcItemObtain.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActEtcItemObtain.cs:line 28    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 49    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 1145); PROGRESS:Fail (IndexOutOfRangeException: Index was outside the bounds of the array.    at AAEmu.Game.Models.Game.Quests.Templates.QuestActTemplate.AddObjective(Quest quest, Int32 amount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Templates/QuestActTemplate.cs:line 159    at AAEmu.Game.Models.Game.Quests.Templates.QuestActTemplate.AddObjective(QuestAct questAct, Int32 amount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Templates/QuestActTemplate.cs:line 182    at AAEmu.Game.Models.Game.Quests.Acts.QuestActObjInteraction.OnInteraction(QuestAct questAct, Object sender, OnInteractionArgs args) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActObjInteraction.cs:line 54    at AAEmu.Game.Models.Game.Quests.QuestAct.OnInteraction(Object sender, OnInteractionArgs args) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 162    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.FireEvent(Quest quest, JsonElement rawEvent) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 754    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 1144); READY:Fail (IndexOutOfRangeException: Index was outside the bounds of the array.    at AAEmu.Game.Models.Game.Quests.Quest.GetQuestObjectiveStatus() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 204    at AAEmu.Game.Models.Game.Quests.Acts.QuestActConReportNpc.OnReportNpc(QuestAct questAct, Object sender, OnReportNpcArgs args) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActConReportNpc.cs:line 50    at AAEmu.Game.Models.Game.Quests.QuestAct.OnReportNpc(Object sender, OnReportNpcArgs args) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 272    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.FireEvent(Quest quest, JsonElement rawEvent) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 775    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 1144); REWARD:Fail (IndexOutOfRangeException: Index was outside the bounds of the array.    at AAEmu.Game.Models.Game.Quests.Templates.QuestActTemplate.GetObjective(Quest quest) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Templates/QuestActTemplate.cs:line 147    at AAEmu.Game.Models.Game.Quests.Acts.QuestActEtcItemObtain.RunAct(Quest quest, QuestAct questAct, Int32 currentObjectiveCount) in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/Acts/QuestActEtcItemObtain.cs:line 28    at AAEmu.Game.Models.Game.Quests.QuestAct.RunAct() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestAct.cs:line 49    at AAEmu.Game.Models.Game.Quests.QuestComponent.RunComponent() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestComponent.cs:line 65    at AAEmu.Game.Models.Game.Quests.QuestStep.RunComponents() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/QuestStep.cs:line 88    at AAEmu.Game.Models.Game.Quests.Quest.RunCurrentStep() in /root/aaemu-dev/AAEmu.Game/Models/Game/Quests/NewQuestCode.cs:line 67    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 1145); PERSIST:Pass |
+| 134 | 살덩어리 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 1702 | 매혹된 영혼 | QuestActCheckCompleteComponent | Fail | START:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 1953 | 하다보니(reserve) | QuestActConAutoComplete | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1959 | 장작을 모아보세요 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1960 | 여행자의 조잡한 공구상자를 설치해보세요 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 2144 | 거미줄을 모아보세요 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 2145 | 다용도 옷감을 만들어보세요 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 3537 | 탑의 도시를 지켜라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3537 | 탑의 도시를 지켜라 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected reward item 23633 x2 in inventory, found 0; expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 4882 | 마켈라에게 특별한 당신 | QuestActConAcceptItemGain | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4883 | 라이네에게 특별한 당신 | QuestActConAcceptItemGain | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4884 | 라이네에게 특별한 당신 | QuestActConAcceptItemGain | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -308,12 +308,12 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 6054 | 엘프의 사명 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6055 | 하리하란의 사명 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 6056 | 페레의 사명 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 84 | 실의에 빠진 남자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 869 | 숨겨진 보물 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 871 | 이혼하고 싶은 여자 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 882 | 쓰레기 더미 속 보물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 884 | 검은 모래회의 비밀 정보 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 997 | 납치된 주술사를 되찾아라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 84 | 실의에 빠진 남자 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 869 | 숨겨진 보물 | QuestActConAcceptDoodad | Fail | START:Pass; SUPPLY:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 871 | 이혼하고 싶은 여자 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 882 | 쓰레기 더미 속 보물 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 884 | 검은 모래회의 비밀 정보 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
+| 997 | 납치된 주술사를 되찾아라 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 
 ## T5 — per-quest verdicts
 
@@ -1426,7 +1426,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1345 | 외르겐센의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1346 | 잃어버린 청혼 반지 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1348 | 숲을 망치는 진짜 범인 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1351 | 아직 못다 한 임무 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1351 | 아직 못다 한 임무 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 1352 | 납치당한 헬마이어 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1354 | 헬마이어의 죽음 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1355 | 진실을 아는 자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1456,7 +1456,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1488 | 몽유병에 걸린 아들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1489 | 이토록 가혹한 속박 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 149 | 수습 마법사의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1490 | 로즈메린의 영혼석 만들기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1490 | 로즈메린의 영혼석 만들기 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected reward item 34002 x5 in inventory, found 0; expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 1491 | 영혼결혼식 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1492 | 만월의 숨결 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1493 | 이건 먹어도 되는 약초인가? | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1477,7 +1477,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1676 | 후슬림에게 전할 말 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1677 | 정화의 샘물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1678 | 장군 핫시하산의 원혼 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1679 | 망자를 위한 진혼제 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1679 | 망자를 위한 진혼제 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 168 | 창고에 생긴 일 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1682 | 빼앗긴 고대 유물 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1688 | 해적의 소굴로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1509,7 +1509,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 178 | 허수아비에게 경보장치를 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 181 | 습격의 배후 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 183 | 문제를 해결하는 길 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1833 | 그란비스트의 고독 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1833 | 그란비스트의 고독 | QuestActConAcceptDoodad | Fail | START:Pass; SUPPLY:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected reward item 34003 x5 in inventory, found 0; expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 1834 | 집수리 재료 돌려주기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 184 | 농장에 스며든 그림자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 185 | 매수된 경비대장 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1680,7 +1680,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2730 | 검은 쇠고리 오크 부족 소탕하기 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2733 | 울부짖는 미노타우르스 소탕하기 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 275 | 딸깍발이 고쉬 처치 의뢰 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2754 | 여신의 야광화 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2754 | 여신의 야광화 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 276 | 칼바람 셀렌 처치 의뢰 | QuestActConAcceptDoodad | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2765 | 기괴한 소문 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2767 | 세바스티안 백작의 분노 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1722,9 +1722,9 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2915 | 루비빛 의혹 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2918 | 왕자와의 만남 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2920 | 사악한 기운 정화 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2922 | 슬픈 진실 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2922 | 슬픈 진실 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 2930 | 미치광이 달걀들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2931 | 의문의 미인 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2931 | 의문의 미인 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 2932 | 폭발하는 위험물 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2944 | 장미 장원 농경지의 위험 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2945 | 장미 장원 저택의 뒤틀린 실험체들 처치 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1820,7 +1820,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3693 | 평원 늑대 퇴치 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 3694 | 파이쿤다 처치 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 3695 | 오크의 주술도구 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3696 | 목장 일 돕기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3696 | 목장 일 돕기 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3698 | 발이 묶인 해적단 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3699 | 해안 대포 파괴 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3700 | 포병대장 와일드 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1879,7 +1879,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 4192 | 부활하는 원혼들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 4193 | 하얀 털 폭군 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4194 | 사라진 마을 사람들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 4220 | 마녀 부활 저지 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4220 | 마녀 부활 저지 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4221 | 어둠에 대한 연구 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4223 | 공중을 떠도는 그림자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4224 | 환영에 갇힌 기사단 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1900,7 +1900,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 4245 | 배신의 칼날 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 4246 | 독 백합의 꽃말은 저주 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4247 | 덜컥거리는 상자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 4248 | 빛나던 옛 전당 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4248 | 빛나던 옛 전당 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 4249 | 잊혀진 무덤 손질 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4250 | 금지된 식물 실험 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4251 | 통하지 않는 대화 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1915,7 +1915,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 4267 | 오색 들판의 평화 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4268 | 아도니스를 위한 요리 재료 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4270 | 반가운 소식 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 4273 | 역사학자의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4273 | 역사학자의 부탁 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 4274 | 옛 수장의 보물 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4275 | 귀족의 사냥터 새로운 강자 | QuestActConAcceptNpcKill | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4280 | 새로운 일자리 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -1979,10 +1979,10 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 4659 | 농부의 달력, 고추와 콩 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4781 | 배심원자격1단계:추천서 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4782 | 배심원자격2단계:끝이 난 재판 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 4783 | 배심원자격3단계:현장에 남은 것 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4783 | 배심원자격3단계:현장에 남은 것 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 4785 | 배심원자격1단계:증인 보호를 요청 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4786 | 배심원자격2단계:변호인의 사정 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 4787 | 배심원자격3단계:낯선 얼굴의 경비병 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4787 | 배심원자격3단계:낯선 얼굴의 경비병 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 4789 | 사랑고백 축제 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4790 | 사랑고백 축제 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4791 | 힘과 용기 축제 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2017,7 +2017,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 520 | 새로운 위협 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 521 | 갑옷을 벗기지 말아 주세요 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 522 | 잃어버릴지도 모르는 말 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 524 | 수상한 사령관 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 524 | 수상한 사령관 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 525 | 이제부터 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 526 | 드워프 연구소의 선물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 527 | 포탄이 떨어진 곳엔 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2193,14 +2193,14 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 947 | 샤프란 도둑 잡기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 948 | 야영지의 상황 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 955 | 연습을 돕는 방법 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 963 | 떠도는 혼 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 963 | 떠도는 혼 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected reward item 34009 x5 in inventory, found 0; expected completed-quest flag set, found not completed); PERSIST:Pass |
 
 ## T9 — per-quest verdicts
 
 | quest | name | family | verdict | detail |
 |---|---|---|---|---|
 | 2935 | 공사장 자재 철거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
-| 2936 | 부두 하역 작업 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 2936 | 부두 하역 작업 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass; RESET:Fail (InvalidOperationException: re-accept refused by engine AddQuest after ResetDailyQuests    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 1109) |
 | 5197 | 구도자에게 절하기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 5198 | 바다 쓰레기 수거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 5494 | 뒤늦은 후회 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
@@ -2333,7 +2333,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 1984 | 충격적인 사실 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1986 | 사냥터 탈출 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 1987 | 도움이 필요할 때 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 1988 | 모래성 쌓기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 1988 | 모래성 쌓기 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 1989 | 무너진 모래성 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1991 | 마법진을 파괴하라 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 1992 | 싱싱한 해초와 커다란 바닷게 다리 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2351,7 +2351,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2007 | 애타게 요정군주를 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2009 | 베고니아의 꽃말 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2010 | 연회에 늦겠어요 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2012 | 영원히 완성되지 않는 다리 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2012 | 영원히 완성되지 않는 다리 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 2013 | 기쁠 때는 전설의 야자주를! | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2014 | 다리 건설의 어려움 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 2015 | 세 사람의 석상 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2371,16 +2371,16 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 2033 | 한 모금의 술 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2037 | 끝없는 공포 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2040 | 크라켄을 노리는 자들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2041 | 바다여! 영원히 잠들어라! | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2041 | 바다여! 영원히 잠들어라! | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 2043 | 산호초 채집 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2077 | 벽돌이 필요해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2077 | 벽돌이 필요해 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 2082 | 살리움의 깃발 아래 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2083 | 일리온의 깃발 아래 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2084 | 일리온군의 보급품 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2085 | 살리움군의 보급품 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2089 | 스케인의 아내 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2094 | 요정의 나무 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 2294 | 땅의 눈물 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 2294 | 땅의 눈물 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 2295 | 고인 물도 다시 보자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2296 | 동굴 속으로 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 2297 | 신속한 예방 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2620,9 +2620,9 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3300 | 피 묻은 손 판금 장화 3단계 | no-acts | Pass | START:Pass; PROGRESS:Pass; PERSIST:Pass |
 | 3301 | 피 묻은 손 우두머리 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3323 | 사교도 사제 처치 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3324 | 수상한 기계 부속 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3324 | 수상한 기계 부속 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3325 | 저 아가씨는 누구 님일까? | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3327 | 고블린의 보물 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3327 | 고블린의 보물 | QuestActConAcceptDoodad | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3330 | 상황 보고 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3331 | 진귀한 애완동물 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3332 | 이거 설마? | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2662,7 +2662,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3761 | 저녁 식사는 두툼한 스테이크 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3859 | 에르덴의 요청 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 3869 | 천진한 웃음소리 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 3870 | 여신의 가호를 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 3870 | 여신의 가호를 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3871 | 길잡이 상어 훈련 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3872 | 멋진 남자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3873 | 기억의 호수를 찾아서 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2671,7 +2671,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3903 | 저주에 효과적인 발명품 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3904 | 사라진 미녀들 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 3911 | 충실한 부하 산치카 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3912 | 호테라만과 전투둔기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3912 | 호테라만과 전투둔기 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Fail (expected status Ready, got Progress); PROGRESS:Fail (expected status Ready, got Progress); READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3913 | 술맛의 비결이 되는 재료 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3915 | 수다쟁이 허수아비 | QuestActCheckTimer | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; TIMEOUT:Pass |
 | 3916 | 지혜로운 지혜 선물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2812,7 +2812,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5393 | 철갑상어보다 더 빠르게 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 543 | 이에는 이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 547 | 루푸스 시차일드 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 548 | 루푸스의 보물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 548 | 루푸스의 보물 | QuestActConAcceptNpc | Fail | START:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 549 | 살리움에게 불의 심판을! | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 550 | 어두운 계획 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 551 | 잊혀진 기록 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2822,7 +2822,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 555 | 최후의 가고일 석상 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 557 | 눈에는 눈 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 558 | 일리온에게 불의 심판을! | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 559 | 살리움 포로 구출 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 559 | 살리움 포로 구출 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 560 | 캄사스 왕의 목 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 562 | 유골을 발굴하는 일 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 565 | 탈출한 자의 공포 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2845,7 +2845,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 584 | 괜찮은 사업 계획 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 586 | 그리핀의 알 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 588 | 석상의 유물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 590 | 일리온 포로 구출 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 590 | 일리온 포로 구출 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 591 | 적장의 목 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 592 | 그녀에게 벌어진 일 | QuestActCheckTimer | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; TIMEOUT:Pass |
 | 593 | 불탄 성의 아이들 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2906,14 +2906,14 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3013 | 역사학자 투인비 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3014 | 로카의 전설을 아는 자 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3015 | 암탉 네네의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3016 | 전염병은 독으로 다스린다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3016 | 전염병은 독으로 다스린다 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3017 | 눈사자를 유혹하려면 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3018 | 친구를 생각하는 마음 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3019 | 광폭한 바위 정령을 물리쳐라! | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 3020 | 거대 거미를 물리쳐라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3021 | 아얀가의 편지 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3022 | 거미줄로 만드는 그물 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3023 | 눈사자 사로잡기 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3023 | 눈사자 사로잡기 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3024 | 흰 유령의 전설 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3025 | 흰 유령의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3028 | 바이암이 광폭해진 까닭 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2951,7 +2951,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3075 | 무모한 도전 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3076 | 목축장을 지켜줘 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3077 | 초원의 갈등 | QuestActConAcceptNpc | Pass | START:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3078 | 더러운 양을 깨끗이 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3078 | 더러운 양을 깨끗이 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3079 | 목축장 돌부리 제거하기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3080 | 점령당한 회합터 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 3081 | 초원의 그림자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2971,7 +2971,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3095 | 초원에 기계는 필요 없다 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3096 | 보고 들은 것들 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3097 | 모래늪의 무법자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
-| 3098 | 초원의 대통합을 위해 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3098 | 초원의 대통합을 위해 | QuestActConAcceptNpc | Fail | START:Pass; SUPPLY:Fail (expected step Ready, got Progress; expected status Ready, got Progress); PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3099 | 밀렵단 전초기지 파괴 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 3100 | 가르가츠의 원한 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3101 | 습격자의 정체 | QuestActConAcceptItem | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -2984,7 +2984,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 3189 | 우정은 목숨을 걸고 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3190 | 초원의  불꽃 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3191 | 불꽃이 말하는 것 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 3192 | 나라야나 소녀 구출 작전 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 3192 | 나라야나 소녀 구출 작전 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 3193 | 검은상아 밀렵단 소탕 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3194 | 회합이 필요할 때 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 3195 | 의혹의 실마리 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -3222,7 +3222,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 4314 | 시들어버린 꽃잎 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4315 | 포기하지 않는 자의 희망 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4316 | 고통받는 영혼의 소리 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 4317 | 떠도는 영혼의 안식 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 4317 | 떠도는 영혼의 안식 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 4318 | 고대의 유적 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4319 | 섬세한 작업은 양보할게요 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 4320 | 화 풀고 다시 잠드세요 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -3703,7 +3703,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5064 | 만드라고라 잡기 상급 | QuestActConAcceptComponent | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 5087 | 허물을 벗는 뱀처럼 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5088 | 파괴의 별 가루내기 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 5099 | 모든 이야기를 팝니다 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
+| 5099 | 모든 이야기를 팝니다 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 5100 | 새로운 골동품 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5102 | 누구를 도울 것인가 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
 | 5103 | 로이스터 경의 부탁 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -3758,11 +3758,11 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5199 | 지혜의 동반자, 나무 정령 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5200 | 지혜의 동반자, 페피 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5262 | 루비 광산의 연구가 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5266 | 광석의 비밀을 풀기 위해 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5266 | 광석의 비밀을 풀기 위해 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 5268 | 백 명을 잠재운 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
 | 5269 | 피즈로로의 초대 | QuestActConReportNpc | Pass | START:Pass; SUPPLY:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5270 | 말리카족 부락의 발명가 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
-| 5271 | 바다보다 깊은 저주 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; PERSIST:Pass |
+| 5271 | 바다보다 깊은 저주 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Ready, got Progress; expected status Ready, got Progress); READY:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 5273 | 매일 밤이 걱정되는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
 | 5274 | 새 생명을 빚어내는 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
 | 5276 | 벽돌 쌓는 광부 | QuestActConAcceptItem | Pass | START:Pass; REWARD:Pass; PERSIST:Pass |
@@ -4007,7 +4007,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 5717 | 영혼조차 녹여버리는 강력한 불길 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5718 | 타오르는 겁화의 심장 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5720 | 정당한 거래 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
-| 5721 | 죽은 왕녀의 열쇠 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass |
+| 5721 | 죽은 왕녀의 열쇠 | QuestActConAcceptDoodad | Fail | START:Fail (expected step Reward, got Progress; expected status Completed, got Progress); PROGRESS:Fail (expected completed-quest flag set, found not completed); REWARD:Fail (expected completed-quest flag set, found not completed); PERSIST:Pass |
 | 5722 | 델피나드의 보물 | QuestActConAcceptDoodad | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5723 | 왕녀의 반지 복원 | QuestActConAcceptNpc | Pass | START:Pass; SUPPLY:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
 | 5724 | 알렉산데르의 제자 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; READY:Pass; REWARD:Pass; PERSIST:Pass |
@@ -4419,7 +4419,7 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 | 6064 | [1층]마법의 힘이 담긴 책 수거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 6089 | [1층]에아나드의 금서 수거 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 6090 | [1층]도서관의 비품 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
-| 6091 | [1층]도서관을 밝히는 정화의 불꽃 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
+| 6091 | [1층]도서관을 밝히는 정화의 불꽃 | QuestActConAcceptNpc | Fail | START:Pass; PROGRESS:Fail (expected step Reward, got Progress; expected status Completed, got Progress); REWARD:Fail (expected reward item 31972 x1 in inventory, found 0; expected completed-quest flag set, found not completed; expected ability exp granted by QuestActSupplyExp reward, found none); PERSIST:Pass; RESET:Fail (InvalidOperationException: re-accept refused by engine AddQuest after ResetDailyQuests    at AAEmu.UnitTests.Game.Quests.Scenario.QuestScenarioDriver.Run(QuestScenarioManifest manifest) in /root/aaemu-dev/AAEmu.UnitTests/Game/Quests/Scenario/QuestScenarioDriver.cs:line 1109) |
 | 6092 | [1층]망령이 깃든 책장 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 6093 | [1층]도깨비의 수염 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
 | 6094 | [1층]악한을 물리쳐라 | QuestActConAcceptNpc | Pass | START:Pass; PROGRESS:Pass; REWARD:Pass; PERSIST:Pass; RESET:Pass |
@@ -4747,10 +4747,30 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 ## FAIL rollup (by act family — top blockers)
 
-_none — every driven quest passed._
+- **QuestActEtcItemObtain** — 66 failing quest occurrence(s)
+- **QuestActConAcceptNpc** — 46 failing quest occurrence(s)
+- **QuestActConReportNpc** — 45 failing quest occurrence(s)
+- **QuestActObjItemGather** — 26 failing quest occurrence(s)
+- **QuestActSupplyItem** — 25 failing quest occurrence(s)
+- **QuestActObjInteraction** — 21 failing quest occurrence(s)
+- **QuestActObjItemUse** — 11 failing quest occurrence(s)
+- **QuestActConAutoComplete** — 6 failing quest occurrence(s)
+- **QuestActConAcceptDoodad** — 5 failing quest occurrence(s)
+- **QuestActObjSphere** — 2 failing quest occurrence(s)
+- **QuestActSupplyExp** — 2 failing quest occurrence(s)
+- **QuestActCheckCompleteComponent** — 1 failing quest occurrence(s)
+- **QuestActObjMonsterHunt** — 1 failing quest occurrence(s)
+- **QuestActObjTalk** — 1 failing quest occurrence(s)
+- **QuestActSupplyCopper** — 1 failing quest occurrence(s)
+- **QuestActSupplyCrimePoint** — 1 failing quest occurrence(s)
+- **QuestActSupplyRemoveItem** — 1 failing quest occurrence(s)
 
 ## FAIL rollup (by stage reason)
 
+- **START:Pass; PROGRESS:Fail** — 21 quests: 2301, 1702, 3537, 84, 997, 3696, 4248, 2936, 1988, 2012, 3870, 559, 590, 3016, 3078, 3192, 4317, 5099, 5266, 5271, 6091
+- **START:Fail** — 13 quests: 882, 884, 1351, 1490, 2754, 2931, 4273, 4783, 4787, 2077, 3327, 548, 5721
+- **START:Pass; SUPPLY:Fail** — 10 quests: 128, 869, 1833, 2922, 4220, 524, 2294, 3324, 3912, 3098
+- **START:Pass; SUPPLY:Pass; PROGRESS:Fail** — 7 quests: 5052, 134, 871, 1679, 963, 2041, 3023
 
 ## SKIP rollup (by reason)
 
@@ -4764,4 +4784,55 @@ Each row = one FAILed quest with the first engine frame from its failure reason 
 
 | quest | name | family | failing stage | act families | file:line | reason |
 |---|---|---|---|---|---|---|
+| 84 | 실의에 빠진 남자 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjItemUse+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 128 | 수호자에게 인정을 받는 방법 | QuestActConAcceptNpc | SUPPLY | QuestActConAcceptNpc+QuestActSupplyItem+QuestActObjInteraction+QuestActEtcItemObtain | QuestActTemplate.cs:147 | SUPPLY:Fail (IndexOutOfRangeException: Index was outside the bounds of the array.    at AAEmu.Game.Models.Game.Quests.Templates.QuestActTemplate.GetObjective(Qu… |
+| 134 | 살덩어리 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActSupplyItem+QuestActEtcItemObtain+QuestActObjItemUse | harness assertion | PROGRESS:Fail (expected step Reward, got Progress |
+| 524 | 수상한 사령관 | QuestActConAcceptNpc | SUPPLY | QuestActConAcceptNpc+QuestActSupplyItem+QuestActObjItemGather+QuestActEtcItemObtain | harness assertion | SUPPLY:Fail (expected step Ready, got Progress |
+| 548 | 루푸스의 보물 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 559 | 살리움 포로 구출 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 590 | 일리온 포로 구출 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 869 | 숨겨진 보물 | QuestActConAcceptDoodad | SUPPLY | QuestActConAcceptDoodad+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | SUPPLY:Fail (expected step Ready, got Progress |
+| 871 | 이혼하고 싶은 여자 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActConReportNpc+QuestActSupplyItem+QuestActObjItemUse | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 882 | 쓰레기 더미 속 보물 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 884 | 검은 모래회의 비밀 정보 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 963 | 떠도는 혼 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActConReportNpc+QuestActSupplyItem+QuestActObjItemUse | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 997 | 납치된 주술사를 되찾아라 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 1351 | 아직 못다 한 임무 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 1490 | 로즈메린의 영혼석 만들기 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 1679 | 망자를 위한 진혼제 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActSupplyItem+QuestActObjInteraction+QuestActEtcItemObtain | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 1702 | 매혹된 영혼 | QuestActCheckCompleteComponent | PROGRESS | QuestActConAcceptNpc+QuestActEtcItemObtain+QuestActObjSphere+QuestActCheckCompleteComponent | harness assertion | PROGRESS:Fail (expected step Reward, got Progress |
+| 1833 | 그란비스트의 고독 | QuestActConAcceptDoodad | SUPPLY | QuestActConAcceptDoodad+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | SUPPLY:Fail (expected step Ready, got Progress |
+| 1988 | 모래성 쌓기 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 2012 | 영원히 완성되지 않는 다리 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 2041 | 바다여! 영원히 잠들어라! | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjItemUse+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 2077 | 벽돌이 필요해 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 2294 | 땅의 눈물 | QuestActConAcceptNpc | SUPPLY | QuestActConAcceptNpc+QuestActSupplyItem+QuestActObjItemGather+QuestActEtcItemObtain | harness assertion | SUPPLY:Fail (expected step Ready, got Progress |
+| 2301 | 죽일 자와 구할 자 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActEtcItemObtain+QuestActObjTalk+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 2754 | 여신의 야광화 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 2922 | 슬픈 진실 | QuestActConAcceptNpc | SUPPLY | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | SUPPLY:Fail (expected step Ready, got Progress |
+| 2931 | 의문의 미인 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 2936 | 부두 하역 작업 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjItemUse+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 3016 | 전염병은 독으로 다스린다 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjItemUse+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 3023 | 눈사자 사로잡기 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActSupplyItem+QuestActObjItemUse+QuestActEtcItemObtain | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 3078 | 더러운 양을 깨끗이 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjItemUse+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 3098 | 초원의 대통합을 위해 | QuestActConAcceptNpc | SUPPLY | QuestActConAcceptNpc+QuestActSupplyItem+QuestActObjItemGather+QuestActEtcItemObtain | harness assertion | SUPPLY:Fail (expected step Ready, got Progress |
+| 3192 | 나라야나 소녀 구출 작전 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActEtcItemObtain+QuestActObjInteraction+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 3324 | 수상한 기계 부속 | QuestActConAcceptNpc | SUPPLY | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | SUPPLY:Fail (expected step Ready, got Progress |
+| 3327 | 고블린의 보물 | QuestActConAcceptDoodad | START | QuestActConAcceptDoodad+QuestActEtcItemObtain+QuestActObjItemGather+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 3537 | 탑의 도시를 지켜라 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjMonsterHunt+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 3696 | 목장 일 돕기 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 3870 | 여신의 가호를 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjItemUse+QuestActEtcItemObtain+QuestActConAutoComplete | harness assertion | PROGRESS:Fail (expected step Reward, got Progress |
+| 3912 | 호테라만과 전투둔기 | QuestActConAcceptNpc | SUPPLY | QuestActConAcceptNpc+QuestActSupplyItem+QuestActObjItemGather+QuestActEtcItemObtain | harness assertion | SUPPLY:Fail (expected status Ready, got Progress) |
+| 4220 | 마녀 부활 저지 | QuestActConAcceptNpc | SUPPLY | QuestActConAcceptNpc+QuestActSupplyItem+QuestActObjItemGather+QuestActEtcItemObtain | harness assertion | SUPPLY:Fail (expected step Ready, got Progress |
+| 4248 | 빛나던 옛 전당 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 4273 | 역사학자의 부탁 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 4317 | 떠도는 영혼의 안식 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjItemUse+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 4783 | 배심원자격3단계:현장에 남은 것 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 4787 | 배심원자격3단계:낯선 얼굴의 경비병 | QuestActConAcceptNpc | START | QuestActConAcceptNpc+QuestActEtcItemObtain+QuestActObjItemGather+QuestActConReportNpc | harness assertion | START:Fail (expected step Ready, got Progress |
+| 5052 | 빛을 찾아서 | QuestActConAcceptDoodad | PROGRESS | QuestActConAcceptDoodad+QuestActConAutoComplete+QuestActSupplyItem+QuestActObjItemGather | harness assertion | PROGRESS:Fail (expected step Reward, got Progress |
+| 5099 | 모든 이야기를 팝니다 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjSphere+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 5266 | 광석의 비밀을 풀기 위해 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 5271 | 바다보다 깊은 저주 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConReportNpc | harness assertion | PROGRESS:Fail (expected step Ready, got Progress |
+| 5721 | 죽은 왕녀의 열쇠 | QuestActConAcceptDoodad | START | QuestActConAcceptDoodad+QuestActObjItemGather+QuestActEtcItemObtain+QuestActConAutoComplete | harness assertion | START:Fail (expected step Reward, got Progress |
+| 6091 | [1층]도서관을 밝히는 정화의 불꽃 | QuestActConAcceptNpc | PROGRESS | QuestActConAcceptNpc+QuestActObjInteraction+QuestActEtcItemObtain+QuestActConAutoComplete | harness assertion | PROGRESS:Fail (expected step Reward, got Progress |
 

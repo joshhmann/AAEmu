@@ -17,6 +17,7 @@ public interface IMailManager : ILoadable
     bool DeleteMail(BaseMail mail, bool trashItems = false);
     Dictionary<long, BaseMail> GetCurrentMailList(uint characterId);
     void CheckAllMailTimings();
+    bool ReturnMail(ICharacter character, long mailId);
     bool PayChargeMoney(Character character, long mailId, bool autoUseAAPoint);
     void DeleteHouseMails(uint houseId);
     List<BaseMail> GetMyHouseMails(uint houseId);

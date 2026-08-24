@@ -33,7 +33,16 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// "Bots": { "EnablePresenceDemo": true } (or the AAEMU_PRESENCE_DEMO env var
 /// is 1/true); prod config never sets it. Bot count:
 /// "Bots"."PresenceBotCount" / AAEMU_PRESENCE_BOT_COUNT (default 3, clamped
-/// 1..10 for the demo).
+/// 1..DefaultMaxPresenceBots for the demo).
+///
+/// ROSTER (G2-A6): when a presence manifest is configured
+/// ("Bots"."PresenceManifest" / env AAEMU_PRESENCE_MANIFEST) the demo bots
+/// come from that JSON roster instead of the hardcoded 3-citizen loop (name,
+/// race, gender and level per entry, optional per-bot patrol home). Unset →
+/// the legacy hardcoded path runs untouched. The same configurable bot-count
+/// safety bound applies to a manifest roster ("Bots"."MaxPresenceBots" /
+/// AAEMU_PRESENCE_MAX_BOTS, default 10 — raised from the old hardcoded 10-bot
+/// clamp without changing its default shape).
 ///
 /// The coordinator runs once the world is ready (main world loaded + spawn
 /// templates available). All bots are provisioned through the production
@@ -52,6 +61,7 @@ public sealed class BotPresenceCoordinator
     private readonly Func<BotPresenceConfig, Vector3> _homeResolver;
     private readonly Func<string, string, Race, Gender, byte, HeadlessSession> _provisioner;
     private readonly Func<Vector3, uint, float> _groundHeightProvider;
+    private readonly Func<IReadOnlyList<PresenceManifestEntry>?>? _manifestProvider;
 
     public sealed record BotPresenceConfig(
         int BotCount,
@@ -61,11 +71,15 @@ public sealed class BotPresenceCoordinator
         float RoamSpeed,
         byte Level,
         string NamePrefix,
-        string AccountPrefix);
+        string AccountPrefix,
+        int MaxPresenceBots = DefaultMaxPresenceBots);
 
     /// <summary>
     /// DI-friendly constructor. Tests inject fakes for the loop pieces and
     /// custom home/provision delegates; production uses the defaults.
+    /// <paramref name="manifestProvider"/> returns the parsed G2-A6 roster
+    /// when a manifest is configured, or null for the legacy hardcoded path
+    /// (the production default resolves config/env and loads the file).
     /// </summary>
     public BotPresenceCoordinator(
         IPlayerBotManager manager,
@@ -74,7 +88,8 @@ public sealed class BotPresenceCoordinator
         BotRoamStepExecutor stepExecutor,
         Func<BotPresenceConfig, Vector3>? homeResolver = null,
         Func<string, string, Race, Gender, byte, HeadlessSession>? provisioner = null,
-        Func<Vector3, uint, float>? groundHeightProvider = null)
+        Func<Vector3, uint, float>? groundHeightProvider = null,
+        Func<IReadOnlyList<PresenceManifestEntry>?>? manifestProvider = null)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
@@ -83,6 +98,7 @@ public sealed class BotPresenceCoordinator
         _homeResolver = homeResolver ?? DefaultHomeResolver;
         _provisioner = provisioner ?? DefaultProvisioner;
         _groundHeightProvider = groundHeightProvider ?? DefaultGroundHeightProvider;
+        _manifestProvider = manifestProvider ?? DefaultManifestProvider;
     }
 
     /// <summary>
@@ -143,7 +159,16 @@ public sealed class BotPresenceCoordinator
     /// </summary>
     internal const float TerrainProbeMargin = 50f;
 
-    /// <summary>Reads the bot count from env / config (clamped 1..10).</summary>
+    /// <summary>
+    /// The demo's bot-count safety bound. Historically hardcoded as the
+    /// 1..10 clamp in <see cref="ReadBotCount"/>; G2-A6 makes the UPPER bound
+    /// configurable ("Bots"."MaxPresenceBots" / env AAEMU_PRESENCE_MAX_BOTS)
+    /// while keeping 10 as the default so an unconfigured deployment behaves
+    /// exactly as before.
+    /// </summary>
+    internal const int DefaultMaxPresenceBots = 10;
+
+    /// <summary>Reads the bot count from env / config (clamped 1..max).</summary>
     public static int ReadBotCount(int fallback = 3)
     {
         var count = fallback;
@@ -174,13 +199,112 @@ public sealed class BotPresenceCoordinator
             }
         }
 
-        return Math.Clamp(count, 1, 10);
+        return ClampBotCount(count, ReadMaxPresenceBots());
+    }
+
+    /// <summary>
+    /// Reads the configurable upper bound of the demo bot clamp
+    /// (AAEMU_PRESENCE_MAX_BOTS env wins, then "Bots"."MaxPresenceBots" in
+    /// Config.Local.json / Config.json; default
+    /// <see cref="DefaultMaxPresenceBots"/>). Chosen over raising the old
+    /// hardcoded clamp so deployments that want a bigger manifest roster can
+    /// opt in per-environment without touching shared prod config.
+    /// </summary>
+    public static int ReadMaxPresenceBots()
+    {
+        var env = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_MAX_BOTS");
+        if (int.TryParse(env, out var envMax) && envMax > 0)
+            return envMax;
+
+        foreach (var fileName in new[] { "Config.Local.json", "Config.json" })
+        {
+            var path = Path.Combine(FileManager.AppPath, fileName);
+            if (!File.Exists(path))
+                continue;
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+                if (doc.RootElement.TryGetProperty("Bots", out var bots) &&
+                    bots.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    bots.TryGetProperty("MaxPresenceBots", out var m) &&
+                    m.TryGetInt32(out var cfgMax) && cfgMax > 0)
+                {
+                    return cfgMax;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "BotPresenceCoordinator: failed to read {Path}", path);
+            }
+        }
+
+        return DefaultMaxPresenceBots;
+    }
+
+    /// <summary>Pure clamp core (hermetic-testable): 1..max, max floored at 1.</summary>
+    internal static int ClampBotCount(int count, int max)
+        => Math.Clamp(count, 1, Math.Max(1, max));
+
+    /// <summary>
+    /// Resolves the presence-manifest path (G2-A6): env AAEMU_PRESENCE_MANIFEST
+    /// wins, then "Bots"."PresenceManifest" in Config.Local.json / Config.json.
+    /// Null when unset → the legacy hardcoded citizen loop runs untouched.
+    /// </summary>
+    public static string? ReadManifestPath()
+    {
+        var env = Environment.GetEnvironmentVariable("AAEMU_PRESENCE_MANIFEST");
+        if (!string.IsNullOrWhiteSpace(env))
+            return env;
+
+        foreach (var fileName in new[] { "Config.Local.json", "Config.json" })
+        {
+            var path = Path.Combine(FileManager.AppPath, fileName);
+            if (!File.Exists(path))
+                continue;
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+                if (doc.RootElement.TryGetProperty("Bots", out var bots) &&
+                    bots.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    bots.TryGetProperty("PresenceManifest", out var m) &&
+                    m.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var configured = m.GetString();
+                    if (!string.IsNullOrWhiteSpace(configured))
+                        return configured;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "BotPresenceCoordinator: failed to read {Path}", path);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Production manifest source: resolves the configured path and loads the
+    /// roster; null (= legacy hardcoded path) when unset or the load fails.
+    /// </summary>
+    internal static IReadOnlyList<PresenceManifestEntry>? DefaultManifestProvider()
+    {
+        var path = ReadManifestPath();
+        if (path == null)
+            return null;
+        return PresenceManifestLoader.TryLoad(path, out var entries)
+            ? entries
+            : null;
     }
 
     /// <summary>
     /// Runs the presence demo: provisions <see cref="BotPresenceConfig.BotCount"/>
     /// bots, spawns them, assigns Full fidelity, and arms a bounded roam route
     /// around home. Idempotent: a second call skips when bots are already up.
+    ///
+    /// G2-A6: when a manifest provider is wired and yields a non-empty
+    /// roster, the bots come from the manifest (per-entry name/race/gender/
+    /// level/home); otherwise the legacy hardcoded citizen loop runs.
     /// </summary>
     public bool Start(BotPresenceConfig config)
     {
@@ -193,6 +317,128 @@ public sealed class BotPresenceCoordinator
             return true;
         }
 
+        IReadOnlyList<PresenceManifestEntry>? roster = null;
+        try
+        {
+            roster = _manifestProvider?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            // Manifest resolution must never take the demo down — fall back
+            // to the legacy hardcoded path (G2-A6 failure isolation).
+            Logger.Error(ex, "BotPresenceCoordinator: manifest provider threw — falling back to the legacy citizen loop");
+        }
+
+        if (roster is { Count: > 0 })
+            return StartFromManifest(config, roster);
+
+        return StartLegacy(config);
+    }
+
+    /// <summary>
+    /// The manifest-driven roster path (G2-A6): each entry is provisioned,
+    /// spawned, activated, given Full fidelity, and walked on its bounded
+    /// patrol route through the SAME flow as the legacy loop. A failing entry
+    /// is isolated: it logs and the rest of the roster still comes up. The
+    /// roster is clamped to <see cref="BotPresenceConfig.MaxPresenceBots"/>.
+    /// </summary>
+    private bool StartFromManifest(BotPresenceConfig config, IReadOnlyList<PresenceManifestEntry> roster)
+    {
+        var max = Math.Max(1, config.MaxPresenceBots);
+        var clampedRoster = roster.Count > max ? roster.Take(max).ToList() : roster;
+        if (clampedRoster.Count < roster.Count)
+            Logger.Warn("BotPresenceCoordinator: manifest roster {Total} clamped to {Max} (MaxPresenceBots)",
+                roster.Count, clampedRoster.Count);
+
+        var defaultHome = _homeResolver(config);
+        Logger.Info("BotPresenceCoordinator: provisioning {Count} manifest bots (home {Home}, zone {ZoneId})",
+            clampedRoster.Count, defaultHome, config.ZoneId);
+
+        _scheduler.Start();
+
+        var spawned = 0;
+        for (var i = 0; i < clampedRoster.Count; i++)
+        {
+            var entry = clampedRoster[i];
+            var accountName = $"{BotAccountProvisioningService.ManagedUsernamePrefix}{config.AccountPrefix}_{i + 1:D3}";
+
+            try
+            {
+                Logger.Info(
+                    "BotPresenceCoordinator: manifest bot {Name} ({Race}/{Gender}, level {Level}{Class}{Persona})",
+                    entry.Name, entry.Race, entry.Gender, entry.Level,
+                    entry.ClassAbility is null ? "" : $", class {entry.ClassAbility}",
+                    entry.Personality is null ? "" : $", personality {entry.Personality}");
+
+                var session = _provisioner(accountName, entry.Name, entry.Race, entry.Gender, entry.Level);
+                if (session == null)
+                {
+                    Logger.Error("BotPresenceCoordinator: provisioner returned null for {Name}", entry.Name);
+                    continue;
+                }
+
+                var character = session.Character;
+                // Same B4 home precedence as the legacy path, but with the
+                // per-entry manifest home as the explicit override (entry home
+                // > config home override > persisted metadata > template spawn).
+                var explicitHome = entry.Home ?? config.HomePosition;
+                var metadata = PlayerBotMetadataStore.Instance.GetForRead(character.Id);
+                var home = ResolveHome(explicitHome, metadata, defaultHome);
+                if (explicitHome != default || metadata.HasHome)
+                    character.Transform.Local.SetPosition(home.X, home.Y, home.Z);
+
+                if (!_manager.Spawn(character, "presence-demo"))
+                {
+                    Logger.Warn("BotPresenceCoordinator: spawn refused for {Name} — already registered?", entry.Name);
+                    continue;
+                }
+
+                if (!_manager.Activate(character.Id, new BotContext { BotId = character.Id, Name = entry.Name }, "presence-demo"))
+                {
+                    Logger.Warn("BotPresenceCoordinator: activation failed for {Name}", entry.Name);
+                    continue;
+                }
+
+                var reduced = _director.TrySetFidelity(character.Id, BotFidelity.Reduced, "presence-demo");
+                if (reduced != FidelityTransitionResult.Applied)
+                    Logger.Warn("BotPresenceCoordinator: fidelity Reduced {Result} for {Name}", reduced, entry.Name);
+                var full = _director.TrySetFidelity(character.Id, BotFidelity.Full, "presence-demo");
+                if (full != FidelityTransitionResult.Applied)
+                    Logger.Warn("BotPresenceCoordinator: fidelity Full {Result} for {Name}", full, entry.Name);
+
+                // Per-entry zone: a manifest home.zoneId steers the terrain
+                // probes; otherwise the bot's own transform zone (legacy shape).
+                var route = BuildRoamRoute(home, config.RoamRadius, i,
+                    entry.HomeZoneId ?? character.Transform.ZoneId, _groundHeightProvider);
+                _stepExecutor.SetRoamRoute(character, route);
+
+                var store = PlayerBotMetadataStore.Instance;
+                store.RecordHome(character.Id, character.Transform.WorldId, character.Transform.ZoneId,
+                    home.X, home.Y, home.Z);
+                var roamScheduleJson = BuildRoamScheduleJson(home, route, config.RoamRadius, i);
+                store.RecordSchedule(character.Id,
+                    BotSchedulePayload.PreserveExtensions(metadata.Schedule, roamScheduleJson));
+
+                _scheduler.Wake(character.Id);
+                spawned++;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "BotPresenceCoordinator: failed to provision manifest bot {Name}", entry.Name);
+            }
+        }
+
+        Logger.Info("BotPresenceCoordinator: presence demo up — {Spawned}/{Count} manifest bots roaming",
+            spawned, clampedRoster.Count);
+        return spawned > 0;
+    }
+
+    /// <summary>
+    /// The LEGACY hardcoded demo loop (3 Nuian citizens by default) — kept
+    /// byte-for-byte in behavior for deployments without a manifest.
+    /// </summary>
+    private bool StartLegacy(BotPresenceConfig config)
+    {
         var defaultHome = _homeResolver(config);
         Logger.Info("BotPresenceCoordinator: provisioning {Count} citizen bots (home {Home}, zone {ZoneId})",
             config.BotCount, defaultHome, config.ZoneId);

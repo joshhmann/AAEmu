@@ -75,7 +75,8 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
             Logger.Trace("Send() - Assign new mail Id");
             mail.Id = GetNewMailId();
         }
-        _allPlayerMails.Add(mail.Id, mail);
+        // Indexer assignment so re-sends of an existing mail (e.g. returned mail) upsert cleanly
+        _allPlayerMails[mail.Id] = mail;
         NotifyNewMailByNameIfOnline(mail, targetName);
         return true;
     }
@@ -356,6 +357,128 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
         return false;
     }
 
+    public bool ReturnMail(ICharacter character, long mailId)
+    {
+        var mail = GetMailById(mailId);
+        if (mail == null)
+        {
+            character?.SendErrorMessage(ErrorMessageType.MailNotFound);
+            return false;
+        }
+
+        // Fail-closed ownership check: only the current receiver may return a mail
+        if (character == null || mail.Header.ReceiverId != character.Id)
+        {
+            Logger.Warn("ReturnMail() - Character {0} ({1}) tried to return mailId {2} they do not own, refused",
+                character?.Name ?? "unknown", character?.Id ?? 0, mailId);
+            character?.SendErrorMessage(ErrorMessageType.MailNotAllowedToReturn);
+            return false;
+        }
+
+        // Only read mail can be returned by its receiver
+        if (mail.Header.Status != MailStatus.Read)
+        {
+            character.SendErrorMessage(ErrorMessageType.MailNotAllowedToReturn);
+            return false;
+        }
+
+        // A mail can only be bounced back once
+        if (mail.Header.Returned)
+        {
+            Logger.Warn("ReturnMail() - MailId {0} was already returned once, refused", mailId);
+            character.SendErrorMessage(ErrorMessageType.MailNotAllowedToReturn);
+            return false;
+        }
+
+        return BounceMailToOriginalSender(mail);
+    }
+
+    /// <summary>
+    /// Swaps sender and receiver of a mail so it travels back to the original sender,
+    /// keeping all attachments (items and money) intact. Caller is responsible for
+    /// validating ownership and status before calling this.
+    /// </summary>
+    private bool BounceMailToOriginalSender(BaseMail mail)
+    {
+        // Fail-closed: the original sender must still resolve to a known character
+        var resolvedSenderId = nameManager.GetCharacterId(mail.Header.SenderName.NormalizeName());
+        var resolvedSenderName = nameManager.GetCharacterName(mail.Header.SenderId);
+        if (mail.Header.SenderId == 0 ||
+            !string.Equals(resolvedSenderName, mail.Header.SenderName, StringComparison.InvariantCultureIgnoreCase) ||
+            resolvedSenderId != mail.Header.SenderId)
+        {
+            Logger.Warn("BounceMailToOriginalSender() - Original sender {0} ({1}) of mailId {2} no longer resolves, cannot return",
+                mail.Header.SenderName, mail.Header.SenderId, mail.Id);
+            return false;
+        }
+
+        var originalSenderId = mail.Header.SenderId;
+        var originalReceiverId = mail.Header.ReceiverId;
+        var originalReceiverName = mail.ReceiverName;
+
+        // Notify the current owner that the mail left their mailbox (before swapping roles)
+        NotifyDeleteMailByNameIfOnline(mail, originalReceiverName);
+
+        mail.Header.SenderId = originalReceiverId;
+        mail.Header.SenderName = originalReceiverName;
+        mail.Header.ReceiverId = originalSenderId;
+        // Use the canonical (normalized) sender name so Send()'s receiver verification resolves
+        mail.ReceiverName = resolvedSenderName;
+        mail.Header.Returned = true;
+        mail.Header.Status = MailStatus.Unread;
+        mail.OpenDate = default;
+        mail.Body.SendDate = DateTime.UtcNow;
+        mail.Body.RecvDate = DateTime.UtcNow;
+        mail.IsDelivered = false;
+
+        // Attachments travel back intact; retarget their ownership to the original sender
+        foreach (var attachment in mail.Body.Attachments)
+            attachment.OwnerId = originalSenderId;
+
+        // Reuse the normal send path to re-register and notify the original sender if online
+        mail.Header.Attachments = mail.GetTotalAttachmentCount();
+        mail.IsDirty = true;
+        if (!Send(mail))
+        {
+            Logger.Error("BounceMailToOriginalSender() - Failed to re-send mailId {0} back to {1} ({2})", mail.Id, resolvedSenderName, originalSenderId);
+            return false;
+        }
+
+        Logger.Info("MailId {0} returned from {1} ({2}) back to original sender {3} ({4}) with {5} attachment(s) intact",
+            mail.Id, originalReceiverName, originalReceiverId, resolvedSenderName, originalSenderId, mail.Body.Attachments.Count);
+        return true;
+    }
+
+    /// <summary>
+    /// Resolves an expired mail: player-to-player mail that has not bounced yet is
+    /// returned to the original sender with attachments intact; anything that cannot
+    /// bounce again (system mail or already-returned mail) is deleted and all remaining
+    /// unclaimed attachments are destroyed.
+    /// </summary>
+    private void ProcessExpiredMail(BaseMail mail)
+    {
+        var unclaimedAttachments = mail.GetTotalAttachmentCount();
+        var receiverName = mail.ReceiverName;
+
+        var canBounce = !mail.Header.Returned && mail.Header.SenderId > 0 &&
+                        (mail.MailType == MailType.Normal || mail.MailType == MailType.Express);
+
+        if (canBounce && BounceMailToOriginalSender(mail))
+        {
+            Logger.Warn("Expiry: mailId {0} expired unclaimed by {1}, returned to original sender with {2} attachment(s) intact",
+                mail.Id, receiverName, mail.Body.Attachments.Count);
+            return;
+        }
+
+        if (unclaimedAttachments > 0)
+            Logger.Warn(
+                "Expiry: mailId {0} ({1}) expired without being claimed, destroying {2} unclaimed attachment(s) (item(s): {3}, copper coins: {4}, billing: {5})",
+                mail.Id, receiverName, unclaimedAttachments, mail.Body.Attachments.Count, mail.Body.CopperCoins, mail.Body.BillingAmount);
+
+        NotifyDeleteMailByNameIfOnline(mail, receiverName);
+        DeleteMail(mail, trashItems: true);
+    }
+
     public void CheckAllMailTimings()
     {
         // Deliver yet "undelivered" mails
@@ -368,7 +491,13 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
         if (delivered > 0)
             Logger.Debug($"{delivered}/{undeliveredMails.Count} mail(s) delivered");
 
-        // TODO: Return expired mails back to owner if undelivered/unread
+        // Expire mails past their retention window
+        var expireCutoff = DateTime.UtcNow - MailExpireDelay;
+        var expiredMails = _allPlayerMails.Values.Where(m => m.IsDelivered && m.Body.RecvDate <= expireCutoff).ToList();
+        foreach (var mail in expiredMails)
+            ProcessExpiredMail(mail);
+        if (expiredMails.Count > 0)
+            Logger.Debug($"{expiredMails.Count} mail(s) processed at expiry");
     }
 
     public bool PayChargeMoney(Character character, long mailId, bool autoUseAAPoint)

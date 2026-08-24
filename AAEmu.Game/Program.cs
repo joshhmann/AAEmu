@@ -272,6 +272,14 @@ public static class Program
                 services.AddSingleton<PopulationDirector>();
                 services.AddSingleton<IPopulationDirector>(sp => sp.GetRequiredService<PopulationDirector>());
 
+                // Presence demo coordinator (G2-A6): manifest-driven bot
+                // provisioning (Data/Bots/presence_manifest.json via
+                // "Bots"."PresenceManifest" / AAEMU_PRESENCE_MANIFEST) with
+                // the legacy hardcoded citizen loop when no manifest is set.
+                // DISABLED by default — only BotPresenceBootstrap (or admin
+                // commands) call Start().
+                services.AddSingleton<BotPresenceCoordinator>();
+
                 // Pre-LLM social layer (M8.5a): deterministic proximity chatter
                 // through the REAL local-chat path. DISABLED by default
                 // ("Bots"."EnableChatter" / AAEMU_BOT_CHATTER_ENABLED); the

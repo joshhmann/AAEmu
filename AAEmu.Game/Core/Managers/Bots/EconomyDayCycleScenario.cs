@@ -2,12 +2,17 @@ using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Char.Templates;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Slaves;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.StaticValues;
 
 using NLog;
 
@@ -52,6 +57,21 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// a normal stackable item sold directly at the merchant). Sell + Deposit
 /// are REAL engine paths — the two legs the M8 auditable-economy assertion
 /// requires. H stays UNKNOWN: proxy/bot-functional evidence only.
+///
+/// v1 HAULER LEG (opt-in via <see cref="CycleOptions.Hauler"/>, default
+/// false = byte-compatible v0): after CRAFT the bot crafts a TRADE PACK,
+/// summons its farm wagon, boards the driver seat, LOADS the pack onto a
+/// cargo point (PackVehicleService → SlaveManager.AttachDoodadAtPoint),
+/// DRIVES a short route (VehicleMovementModel / CSMoveUnitPacket path),
+/// UNLOADS it (RecoverItem — the CSLootOpenBagPacket pack-pickup path) and
+/// SELLS it at the specialty gold trader (SpecialtyManager.SellSpecialty —
+/// the exact call CSSellBackpackGoodsPacket makes). Ledger stages:
+/// PACK-CRAFT / SUMMON-VEHICLE / BOARD / LOAD / DRIVE / UNBOARD / UNLOAD /
+/// SELL-GOLD. Conservation extensions: pack-craft labor (recipe skill),
+/// sell labor −60/pack (ChangeLabor(-60, Commerce)) and the payout formula
+/// round(base × ratio% × 1.05 interest) asserted against the CREATED MAIL
+/// (canonical 22 h delay) — the copper is IN TRANSIT and is never added to
+/// Money, so the currency law above stays EXACT.
 /// </summary>
 public static class EconomyDayCycleScenario
 {
@@ -88,6 +108,28 @@ public static class EconomyDayCycleScenario
 
     /// <summary>&lt;잡화 - 분류1&gt; general merchant (buys anything sellable).</summary>
     public const uint GeneralMerchantNpcTemplateId = 8524;
+
+    /// <summary>농업용 달구지 소환 주문서 (farm wagon summon scroll; 4 cargo points —
+    /// the m3a-m4 replay's vehicle).</summary>
+    public const uint FarmWagonSummonScrollItemId = 18660;
+
+    /// <summary>샛노란 감자 (golden potato — pack-craft material, NOT merchant-sold:
+    /// stocked through the ordinary acquisition path like the aux water).</summary>
+    public const uint GoldenPotatoItemId = 19887;
+
+    /// <summary>황금 감자 꾸러미 recipe (craft 5404: golden potato ×3 → pack 26489;
+    /// skill 16766 장사: 특산품 제작과 포장 — the M4-exit pack craft).</summary>
+    public const uint GoldenPotatoPackCraftId = 5404;
+
+    /// <summary>황금 감자 꾸러미 (trade pack; refund 20000, origin zone group 26,
+    /// placed-pack doodad 6068 — the M4-exit pack with asserted payout math).</summary>
+    public const uint GoldenPotatoPackItemId = 26489;
+
+    /// <summary>미스티 (Solzreed gold trader — bundle 10, the M4-exit sell surface).</summary>
+    public const uint GoldTraderNpcTemplateId = 10664;
+
+    /// <summary>Specialty-sale labor per pack — SellSpecialty's ChangeLabor(-60, Commerce).</summary>
+    public const int SellLaborCostPerPack = 60;
 
     /// <summary>How the day-cycle banks its proceeds.</summary>
     public enum DepositMode
@@ -129,6 +171,33 @@ public static class EconomyDayCycleScenario
         // ---- TRADE --------------------------------------------------------
         public uint SeedMerchantNpcTemplateId { get; init; } = EconomyDayCycleScenario.SeedMerchantNpcTemplateId;
         public uint GeneralMerchantNpcTemplateId { get; init; } = EconomyDayCycleScenario.GeneralMerchantNpcTemplateId;
+
+        // ---- HAULER (optional trade-pack + vehicle leg) --------------------
+        /// <summary>Run the hauler leg after CRAFT (default false = the v0
+        /// circuit, byte-compatible behavior and ledger shape).</summary>
+        public bool Hauler { get; init; } = false;
+
+        /// <summary>Trade-pack recipe (live default: golden-potato pack craft).</summary>
+        public uint PackCraftId { get; init; } = GoldenPotatoPackCraftId;
+        public uint PackItemTemplateId { get; init; } = GoldenPotatoPackItemId;
+
+        /// <summary>Pack-craft material (canonical golden potato 19887 — not
+        /// merchant-sold: stocked like the auxiliary water).</summary>
+        public uint PackMaterialItemId { get; init; } = GoldenPotatoItemId;
+        public int PackMaterialAmount { get; init; } = 3;
+
+        /// <summary>Specialty gold trader that buys the pack.</summary>
+        public uint GoldTraderNpcTemplateId { get; init; } = EconomyDayCycleScenario.GoldTraderNpcTemplateId;
+
+        /// <summary>Placed-pack doodad template of the pack's put-down skill
+        /// (canonical packs → 6068).</summary>
+        public uint PlacedPackDoodadTemplateId { get; init; } = M3aM4ReplayScenario.PackPlacedDoodadTemplateId;
+
+        /// <summary>Farm-wagon summon scroll (the REAL UseItem summon on live).</summary>
+        public uint FarmWagonSummonScrollItemId { get; init; } = EconomyDayCycleScenario.FarmWagonSummonScrollItemId;
+
+        /// <summary>Short drive leg for the loaded wagon (metres, diagonal).</summary>
+        public float DriveLegDistance { get; init; } = 12f;
 
         // ---- BANK ---------------------------------------------------------
         public DepositMode Mode { get; init; } = DepositMode.Proceeds;
@@ -176,6 +245,20 @@ public static class EconomyDayCycleScenario
         /// Harvest-rig convention; the LIVE pump never provisions (live plants
         /// Complete). See m3a-m4-replay.</summary>
         uint? ProvisionCropAtBoundary(Character character, Vector3 position);
+
+        /// <summary>Vehicle source seam (the m3a-m4 replay's exact convention):
+        /// unit rigs inject their fixture slave (the fixture world carries no
+        /// real summon-scroll item data); the LIVE pump returns null and the
+        /// scenario drives the REAL summon path (UseItem on the scroll).</summary>
+        uint? TrySummonVehicle(Character character);
+
+        /// <summary>Persistence-boundary seam (unit worlds only, the accepted
+        /// pack-rig convention): unit worlds cannot run the carried-load path's
+        /// doodad-spawn tail headless, so the rig materializes a RECOVERABLE
+        /// placed-pack doodad and the PLACED-load path runs the real
+        /// PackVehicleService attach; the LIVE pump returns null (the carried
+        /// pack loads directly through PackVehicleService). See m3a-m4-replay.</summary>
+        uint? ProvisionPlacedPackDoodad(Character character);
     }
 
     /// <summary>LIVE pump: delegates to the m3a-m4 replay's live pump (identical
@@ -192,6 +275,12 @@ public static class EconomyDayCycleScenario
 
         public uint? ProvisionCropAtBoundary(Character character, Vector3 position)
             => _inner.ProvisionCropAtBoundary(character, position);
+
+        public uint? TrySummonVehicle(Character character)
+            => _inner.TrySummonVehicle(character);
+
+        public uint? ProvisionPlacedPackDoodad(Character character)
+            => _inner.ProvisionPlacedPackDoodad(character);
     }
 
     // ---------------------------------------------------------------- ledger
@@ -264,10 +353,29 @@ public static class EconomyDayCycleScenario
         public long SeedsBought { get; set; }
         public int SeedsHeldEnd { get; set; }
 
+        // ---- hauler leg (all zero when Hauler == false) --------------------
+        public int PackCraftsCharged { get; set; }
+
+        /// <summary>Pack recipe skill labor (canonical 16766 → 60).</summary>
+        public int PackCraftLaborCostEach { get; set; }
+
+        public int SpecialtySellsCharged { get; set; }
+
+        /// <summary>SellSpecialty's per-pack labor (ChangeLabor(-60, Commerce)).</summary>
+        public int SpecialtySellLaborCostEach { get; set; }
+
+        /// <summary>Σ payout-mail copper actually created by the sales.</summary>
+        public long SpecialtyPayoutTotal { get; set; }
+
+        /// <summary>Σ round(base × ratio% × 1.05) — the documented payout law.</summary>
+        public long ExpectedSpecialtyPayoutTotal { get; set; }
+
         public int DocumentedLabor =>
             PlantsCharged * PlantLaborCostEach +
             HarvestsCharged * HarvestLaborCostEach +
-            CraftsCharged * CraftLaborCostEach;
+            CraftsCharged * CraftLaborCostEach +
+            PackCraftsCharged * PackCraftLaborCostEach +
+            SpecialtySellsCharged * SpecialtySellLaborCostEach;
 
         /// <summary>Documented currency law: end == start − buys + sells − deposits + withdrawals (exact).</summary>
         public long ExpectedEndMoney => StartMoney - BuyTotal + SellTotal - DepositTotal + WithdrawTotal;
@@ -325,6 +433,22 @@ public static class EconomyDayCycleScenario
             return new BotScenarioRunner.CriterionVerdict("seed-conservation", ok,
                 $"seeds bought {SeedsBought}, planted {SeedsPlanted}, grants {HarvestSeedGrants}, " +
                 $"held {SeedsHeldEnd} == expected {expected}" + (ok ? "" : " — MISMATCH"));
+        }
+
+        /// <summary>
+        /// Hauler payout law: the created specialty-payment mail copper must
+        /// equal the documented formula total EXACTLY. The payout is a delayed
+        /// MAIL (canonical 22 h) — it is deliberately NOT part of
+        /// <see cref="ExpectedEndMoney"/> (currency stays exact because the
+        /// copper is in transit, never in Money during the run).
+        /// </summary>
+        public BotScenarioRunner.CriterionVerdict ReconcileSpecialtyPayout()
+        {
+            var ok = SpecialtyPayoutTotal == ExpectedSpecialtyPayoutTotal;
+            return new BotScenarioRunner.CriterionVerdict("specialty-payout-conservation", ok,
+                $"payout mails {SpecialtyPayoutTotal}c == formula {ExpectedSpecialtyPayoutTotal}c " +
+                $"({SpecialtySellsCharged} sales, labor −{SpecialtySellLaborCostEach}/pack — IN TRANSIT, not Money)" +
+                (ok ? "" : " — MISMATCH"));
         }
     }
 
@@ -388,6 +512,24 @@ public static class EconomyDayCycleScenario
                 rigNotes.Add($"stocked {auxTotal} x aux material {options.AuxiliaryMaterialItemId} (not merchant-sold)");
             }
 
+            // The pack-craft material (canonical: golden potato 19887) is not
+            // merchant-sold either — same stocking convention as the aux water.
+            if (options.Hauler)
+            {
+                var packMaterialTotal = options.PackMaterialAmount * options.Cycles;
+                if (packMaterialTotal > 0)
+                {
+                    controller.StockInventory(options.PackMaterialItemId, packMaterialTotal);
+                    rigNotes.Add($"stocked {packMaterialTotal} x pack material {options.PackMaterialItemId} (not merchant-sold)");
+                }
+
+                ledger.PackCraftLaborCostEach =
+                    SkillLaborCost(CraftManager.Instance.GetCraftById(options.PackCraftId)?.SkillId ?? 0);
+                ledger.SpecialtySellLaborCostEach = SellLaborCostPerPack;
+                rigNotes.Add($"hauler leg ON: pack craft {options.PackCraftId} → pack {options.PackItemTemplateId}, " +
+                             $"gold trader {options.GoldTraderNpcTemplateId}");
+            }
+
             ledger.StartMoney = character.Money;
             ledger.StartBank = character.Money2;
             ledger.StartLabor = character.LaborPower;
@@ -430,6 +572,8 @@ public static class EconomyDayCycleScenario
             criteria.Add(ledger.ReconcileStageSums());
             criteria.Add(ledger.ReconcileLabor(options.LaborTolerance));
             criteria.Add(ledger.ReconcileSeeds());
+            if (options.Hauler)
+                criteria.Add(ledger.ReconcileSpecialtyPayout());
 
             var lifecycleOk = AssertTraceCompleteness(traceRecords, out var lifecycleDetail);
             criteria.Add(new BotScenarioRunner.CriterionVerdict("lifecycle-trace-complete", lifecycleOk, lifecycleDetail));
@@ -480,9 +624,18 @@ public static class EconomyDayCycleScenario
 
             var walkToSeedMerchant = actor.MoveToUnit(seedMerchantObjId, speed: options.RepositionSpeed,
                 timeout: options.RepositionTimeout, idempotencyKey: $"{key}-walk-seed-merchant");
-            traceRecords.Add(actor.AuditTrace.Last());
             stages.Add(Stage($"WALK-TO-SEED-MERCHANT-{cycle}", walkToSeedMerchant, $"merchant {seedMerchantObjId}"));
-            walkToSeedMerchant = pump.Drive(actor, walkToSeedMerchant, options.RepositionTimeout);
+            // A warm-world merchant resolve keeps the leg Running past creation;
+            // drive to terminal BEFORE reading the trace (resolved by TraceId —
+            // an early AuditTrace.Last() grabs the PREVIOUS action's record).
+            if (!TryDriveLegToTerminal(actor, pump, walkToSeedMerchant, options.RepositionTimeout, traceRecords,
+                    out walkToSeedMerchant))
+            {
+                walkToSeedMerchant.Expire(ActorFailureReason.Navigation,
+                    $"reposition leg exceeded its budget ({options.RepositionTimeout})");
+                return Fail($"WALK-TO-SEED-MERCHANT-{cycle}", walkToSeedMerchant, "reposition to seed merchant",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+            }
             if (walkToSeedMerchant.State != ActorLifecycleState.Completed)
                 return Fail($"WALK-TO-SEED-MERCHANT-{cycle}", walkToSeedMerchant, "reposition to seed merchant",
                     rigNotes, stages, criteria, ledger, traceRecords);
@@ -501,9 +654,15 @@ public static class EconomyDayCycleScenario
             // 2. WALK back to the plot + PLANT (contract Plant; engine consumes the seed).
             var walkToFarm = actor.MoveTo(farmOrigin, speed: options.RepositionSpeed,
                 timeout: options.RepositionTimeout, idempotencyKey: $"{key}-walk-farm");
-            traceRecords.Add(actor.AuditTrace.Last());
             stages.Add(Stage($"WALK-TO-FARM-{cycle}", walkToFarm, $"farm origin {farmOrigin}"));
-            walkToFarm = pump.Drive(actor, walkToFarm, options.RepositionTimeout);
+            // Same warm-world discipline as the seed-merchant leg above.
+            if (!TryDriveLegToTerminal(actor, pump, walkToFarm, options.RepositionTimeout, traceRecords, out walkToFarm))
+            {
+                walkToFarm.Expire(ActorFailureReason.Navigation,
+                    $"reposition leg exceeded its budget ({options.RepositionTimeout})");
+                return Fail($"WALK-TO-FARM-{cycle}", walkToFarm, "reposition to farm",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+            }
             if (walkToFarm.State != ActorLifecycleState.Completed)
                 return Fail($"WALK-TO-FARM-{cycle}", walkToFarm, "reposition to farm",
                     rigNotes, stages, criteria, ledger, traceRecords);
@@ -594,9 +753,15 @@ public static class EconomyDayCycleScenario
 
             var walkToMerchant = actor.MoveToUnit(generalMerchantObjId, speed: options.RepositionSpeed,
                 timeout: options.RepositionTimeout, idempotencyKey: $"{key}-walk-merchant");
-            traceRecords.Add(actor.AuditTrace.Last());
             stages.Add(Stage($"WALK-TO-MERCHANT-{cycle}", walkToMerchant, $"merchant {generalMerchantObjId}"));
-            walkToMerchant = pump.Drive(actor, walkToMerchant, options.RepositionTimeout);
+            // Same warm-world discipline as the seed-merchant leg above.
+            if (!TryDriveLegToTerminal(actor, pump, walkToMerchant, options.RepositionTimeout, traceRecords, out walkToMerchant))
+            {
+                walkToMerchant.Expire(ActorFailureReason.Navigation,
+                    $"reposition leg exceeded its budget ({options.RepositionTimeout})");
+                return Fail($"WALK-TO-MERCHANT-{cycle}", walkToMerchant, "reposition to merchant",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+            }
             if (walkToMerchant.State != ActorLifecycleState.Completed)
                 return Fail($"WALK-TO-MERCHANT-{cycle}", walkToMerchant, "reposition to merchant",
                     rigNotes, stages, criteria, ledger, traceRecords);
@@ -612,9 +777,17 @@ public static class EconomyDayCycleScenario
 
             var beforeCraft = EconomySnapshot.Capture(character);
             var craft = actor.Craft(options.CraftId, benchObjId, idempotencyKey: $"{key}-craft");
-            traceRecords.Add(actor.AuditTrace.Last());
             stages.Add(Stage($"CRAFT-{cycle}", craft, $"craft {options.CraftId} @ bench {benchObjId}"));
-            craft = pump.Drive(actor, craft, options.ActionPumpTimeout);
+            // The craft request stays Running until the engine craft queue
+            // drains — drive to terminal BEFORE reading the trace (resolved by
+            // TraceId; an early AuditTrace.Last() captures the PREVIOUS action).
+            if (!TryDriveLegToTerminal(actor, pump, craft, options.ActionPumpTimeout, traceRecords, out craft))
+            {
+                craft.Expire(ActorFailureReason.Starvation,
+                    $"craft queue drain exceeded its budget ({options.ActionPumpTimeout})");
+                return Fail($"CRAFT-{cycle}", craft, $"craft {options.CraftId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+            }
             if (craft.State != ActorLifecycleState.Completed)
                 return Fail($"CRAFT-{cycle}", craft, $"craft {options.CraftId}",
                     rigNotes, stages, criteria, ledger, traceRecords);
@@ -625,6 +798,17 @@ public static class EconomyDayCycleScenario
                 ledger.CraftLaborCostEach = SkillLaborCost(craftSkillId);
             }
             ledger.Entries.Add(new LedgerEntry($"CRAFT-{cycle}", beforeCraft, EconomySnapshot.Capture(character)));
+
+            // 4b. HAULER LEG (opt-in): craft a trade pack → summon + board the
+            // farm wagon → load the pack onto a cargo point → drive a short
+            // route → unload → sell at the specialty gold trader. Payout is a
+            // delayed MAIL asserted by formula; copper stays IN TRANSIT.
+            if (options.Hauler)
+            {
+                var haulerFailure = RunHaulerLeg(cycle, key);
+                if (haulerFailure != null)
+                    return haulerFailure;
+            }
 
             // 5. SELL every crafted-product stack in the bag to the general
             //    merchant (the REAL engine refund path; the stack moves to
@@ -680,9 +864,305 @@ public static class EconomyDayCycleScenario
                          $"money {character.Money}, bank {character.Money2}");
             return null;
         }
+
+        // ---------------------------------------------------- hauler leg body
+        // Local function over the same rig/stage/trace/ledger state; returns
+        // null on success, the failed-closed result otherwise.
+
+        BotScenarioRunner.ScenarioRunResult? RunHaulerLeg(int cycle, string key)
+        {
+            // ---- PACK-CRAFT at the same bench (EndCraft grants the pack into
+            // the Backpack equipment slot via TryEquipNewBackPack).
+            var packBenchObjId = ResolveNearestDoodad(character);
+            if (packBenchObjId == 0)
+                return Fail($"PACK-CRAFT-{cycle}", null,
+                    "no world doodad in range to serve as the pack-craft bench target",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            var packBench = character.ParentWorld?.GetDoodad(packBenchObjId);
+            var packBenchPos = packBench?.Transform.World.Position ?? character.Transform.World.Position;
+            character.Transform.Local.SetPosition(packBenchPos + new Vector3(2f, 0f, 0f));
+
+            var beforePackCraft = EconomySnapshot.Capture(character);
+            var packCraft = actor.Craft(options.PackCraftId, packBenchObjId, idempotencyKey: $"{key}-pack-craft");
+            stages.Add(Stage($"PACK-CRAFT-{cycle}", packCraft, $"craft {options.PackCraftId} @ bench {packBenchObjId}"));
+            if (!TryDriveLegToTerminal(actor, pump, packCraft, options.ActionPumpTimeout, traceRecords, out packCraft))
+            {
+                packCraft.Expire(ActorFailureReason.Starvation,
+                    $"craft queue drain exceeded its budget ({options.ActionPumpTimeout})");
+                return Fail($"PACK-CRAFT-{cycle}", packCraft, $"pack craft {options.PackCraftId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+            }
+            if (packCraft.State != ActorLifecycleState.Completed)
+                return Fail($"PACK-CRAFT-{cycle}", packCraft, $"pack craft {options.PackCraftId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            var craftedPack = character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+            var packGranted = craftedPack is { TemplateId: var grantedTpl } && grantedTpl == options.PackItemTemplateId;
+            criteria.Add(new BotScenarioRunner.CriterionVerdict($"haul-pack-granted-{cycle}",
+                packGranted,
+                packGranted
+                    ? $"pack {options.PackItemTemplateId} granted to Backpack slot (instance {craftedPack!.Id})"
+                    : $"pack {options.PackItemTemplateId} NOT in the Backpack slot after craft"));
+            if (!packGranted)
+                return Fail($"PACK-CRAFT-{cycle}", packCraft, "crafted pack missing from the Backpack slot",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            ledger.PackCraftsCharged++;
+            ledger.Entries.Add(new LedgerEntry($"PACK-CRAFT-{cycle}", beforePackCraft, EconomySnapshot.Capture(character)));
+
+            // ---- SUMMON the farm wagon. LIVE: the real UseItem summon path on
+            // the scroll; UNIT rigs inject their fixture slave through the pump
+            // (the m3a-m4 vehicle-source seam).
+            Slave? wagon;
+            var fixtureVehicle = pump.TrySummonVehicle(character);
+            if (fixtureVehicle is { } fixtureObjId)
+            {
+                wagon = character.ParentWorld?.SlaveManager.GetSlaveByObjId(fixtureObjId);
+                rigNotes.Add($"hauler {cycle}: vehicle injected by pump (fixture slave {fixtureObjId})");
+            }
+            else
+            {
+                // GCD settle (m3a-m4 convention): back-to-back skill uses inside
+                // the engine's 150ms window are refused with CooldownTime.
+                Thread.Sleep(300);
+                var summon = actor.UseItem(options.FarmWagonSummonScrollItemId, idempotencyKey: $"{key}-summon-wagon");
+                traceRecords.Add(actor.AuditTrace.Last());
+                stages.Add(Stage($"SUMMON-VEHICLE-{cycle}", summon, $"scroll {options.FarmWagonSummonScrollItemId}"));
+                if (summon.State != ActorLifecycleState.Completed)
+                    return Fail($"SUMMON-VEHICLE-{cycle}", summon, "farm wagon summon",
+                        rigNotes, stages, criteria, ledger, traceRecords);
+
+                wagon = character.ParentWorld?.SlaveManager.GetActiveSlaveByOwnerObjId(character.ObjId);
+            }
+
+            if (wagon == null)
+                return Fail($"VEHICLE-{cycle}", null, "farm wagon did not materialize (no owned slave in world)",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            // ---- BOARD the driver seat (SlaveManager.BindSlave).
+            var board = actor.BoardVehicle(wagon.ObjId, AttachPointKind.Driver, idempotencyKey: $"{key}-board");
+            traceRecords.Add(actor.AuditTrace.Last());
+            stages.Add(Stage($"BOARD-{cycle}", board, $"slave {wagon.ObjId}"));
+            if (board.State != ActorLifecycleState.Completed)
+                return Fail($"BOARD-{cycle}", board, $"slave {wagon.ObjId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            // ---- LOAD the pack onto a cargo point (PackVehicleService).
+            // LIVE: carried-load path; UNIT worlds: the pump materializes a
+            // RECOVERABLE placed-pack doodad first and the PLACED-load path
+            // runs (the accepted pack-rig convention, verbatim from m3a-m4).
+            var loadDoodadObjId = pump.ProvisionPlacedPackDoodad(character);
+            var load = loadDoodadObjId is { } loadDoodadId
+                ? actor.LoadPackOntoVehicle(wagon.ObjId, loadDoodadId, idempotencyKey: $"{key}-load")
+                : actor.LoadPackOntoVehicle(wagon.ObjId, placedPackDoodadObjId: null, idempotencyKey: $"{key}-load");
+            traceRecords.Add(actor.AuditTrace.Last());
+            stages.Add(Stage($"LOAD-{cycle}", load, $"slave {wagon.ObjId}"));
+            if (load.State != ActorLifecycleState.Completed)
+                return Fail($"LOAD-{cycle}", load, $"slave {wagon.ObjId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            var cargoDoodad = FindLoadedPackDoodad(character, options.PackItemTemplateId, wagon.ObjId);
+            criteria.Add(new BotScenarioRunner.CriterionVerdict($"haul-pack-on-vehicle-{cycle}",
+                cargoDoodad != null,
+                cargoDoodad != null
+                    ? $"pack instance {craftedPack!.Id} on cargo doodad {cargoDoodad!.ObjId} of slave {wagon.ObjId}"
+                    : $"pack instance {craftedPack!.Id} NOT found on slave {wagon.ObjId} cargo"));
+            ledger.Entries.Add(new LedgerEntry($"LOAD-{cycle}",
+                EconomySnapshot.Capture(character), EconomySnapshot.Capture(character)));
+
+            // ---- DRIVE the loaded wagon a short leg — the client-authored
+            // movement model (CSMoveUnitPacket path); Tick advances the leg,
+            // never a Transform assignment.
+            var driveStart = wagon.Transform.World.Position;
+            var destination = driveStart + new Vector3(options.DriveLegDistance, options.DriveLegDistance, 0f);
+            var drive = actor.DriveVehicle(wagon.ObjId, destination, speed: 5f,
+                timeout: options.ActionPumpTimeout, idempotencyKey: $"{key}-drive");
+            stages.Add(Stage($"DRIVE-{cycle}", drive, $"slave {wagon.ObjId} → {destination}"));
+            if (!TryDriveLegToTerminal(actor, pump, drive, options.ActionPumpTimeout, traceRecords, out drive))
+            {
+                drive.Expire(ActorFailureReason.Navigation,
+                    $"drive leg exceeded its budget ({options.ActionPumpTimeout})");
+                return Fail($"DRIVE-{cycle}", drive, $"slave {wagon.ObjId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+            }
+            if (drive.State != ActorLifecycleState.Completed)
+                return Fail($"DRIVE-{cycle}", drive, $"slave {wagon.ObjId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            var moved = Vector3.Distance(driveStart, wagon.Transform.World.Position) > 1f;
+            criteria.Add(new BotScenarioRunner.CriterionVerdict($"haul-vehicle-moved-{cycle}",
+                moved,
+                moved
+                    ? $"wagon moved {Vector3.Distance(driveStart, wagon.Transform.World.Position):F1}m (leg {options.DriveLegDistance}m)"
+                    : "wagon did not move (movement model did not advance)"));
+
+            // ---- UNBOARD (leaves the actor beside the wagon for the unload).
+            var unboard = actor.UnboardVehicle(wagon.ObjId, idempotencyKey: $"{key}-unboard");
+            traceRecords.Add(actor.AuditTrace.Last());
+            stages.Add(Stage($"UNBOARD-{cycle}", unboard, $"slave {wagon.ObjId}"));
+            if (unboard.State != ActorLifecycleState.Completed)
+                return Fail($"UNBOARD-{cycle}", unboard, $"slave {wagon.ObjId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            // ---- UNLOAD: pick the pack off the cargo point (RecoverItem — the
+            // exact CSLootOpenBagPacket pack-pickup path). The cargo doodad
+            // keeps its recover funcs through the load, so the pickup restores
+            // the pack into the Backpack equipment slot.
+            cargoDoodad = FindLoadedPackDoodad(character, options.PackItemTemplateId, wagon.ObjId);
+            if (cargoDoodad == null)
+                return Fail($"UNLOAD-{cycle}", null, $"loaded pack doodad on slave {wagon.ObjId} vanished before unload",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            var unload = actor.PackPickup(cargoDoodad.ObjId, idempotencyKey: $"{key}-unload");
+            traceRecords.Add(actor.AuditTrace.Last());
+            stages.Add(Stage($"UNLOAD-{cycle}", unload, $"cargo doodad {cargoDoodad.ObjId}"));
+            if (unload.State != ActorLifecycleState.Completed)
+                return Fail($"UNLOAD-{cycle}", unload, $"cargo doodad {cargoDoodad.ObjId}",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            craftedPack = character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+            var packRecovered = craftedPack is { TemplateId: var recoveredTpl } && recoveredTpl == options.PackItemTemplateId;
+            criteria.Add(new BotScenarioRunner.CriterionVerdict($"haul-pack-unloaded-{cycle}",
+                packRecovered,
+                packRecovered
+                    ? $"pack instance {craftedPack!.Id} recovered into the Backpack slot"
+                    : $"pack {options.PackItemTemplateId} NOT carried after unload"));
+            if (!packRecovered)
+                return Fail($"UNLOAD-{cycle}", unload, "pack pickup did not restore the Backpack slot",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+            ledger.Entries.Add(new LedgerEntry($"UNLOAD-{cycle}",
+                EconomySnapshot.Capture(character), EconomySnapshot.Capture(character)));
+
+            // ---- WALK to the gold trader.
+            var goldTraderObjId = world.ResolveNpcObjId(options.GoldTraderNpcTemplateId);
+            if (goldTraderObjId == 0)
+                return Fail($"SELL-GOLD-{cycle}", null,
+                    $"gold trader {options.GoldTraderNpcTemplateId} unresolvable in world",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            var walkToTrader = actor.MoveToUnit(goldTraderObjId, speed: options.RepositionSpeed,
+                timeout: options.RepositionTimeout, idempotencyKey: $"{key}-walk-trader");
+            stages.Add(Stage($"WALK-TO-GOLD-TRADER-{cycle}", walkToTrader, $"trader {goldTraderObjId}"));
+            if (!TryDriveLegToTerminal(actor, pump, walkToTrader, options.RepositionTimeout, traceRecords, out walkToTrader))
+            {
+                walkToTrader.Expire(ActorFailureReason.Navigation,
+                    $"reposition leg exceeded its budget ({options.RepositionTimeout})");
+                return Fail($"WALK-TO-GOLD-TRADER-{cycle}", walkToTrader, "reposition to gold trader",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+            }
+            if (walkToTrader.State != ActorLifecycleState.Completed)
+                return Fail($"WALK-TO-GOLD-TRADER-{cycle}", walkToTrader, "reposition to gold trader",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            // ---- SELL-GOLD at the specialty trader — the REAL engine sale path
+            // (CSSellBackpackGoodsPacket → SpecialtyManager.SellSpecialty). The
+            // contract vocabulary has no specialty-sale action yet, so the
+            // scenario calls the manager DIRECTLY — the exact call the packet
+            // handler makes (M4ExitIntegratedSessionTests precedent). The sale
+            // consumes the pack, charges labor −60 (Commerce), and pays via a
+            // DELAYED MAIL (canonical 22 h): the payout is asserted by formula
+            // against the created mail and recorded as IN TRANSIT — never added
+            // to Money, so the run currency law stays EXACT.
+            //
+            // Fidelity repair (M4Exit rig precedent): ChangeLabor(-60, Commerce)
+            // indexes the Commerce actability directly; live characters always
+            // carry it, headless rigs may not.
+            character.Actability.Actabilities.TryAdd((uint)ActabilityType.Commerce,
+                new Actability(new ActabilityTemplate { Id = (uint)ActabilityType.Commerce }));
+
+            var mailsBefore = SpecialityMailCopper(character.Id);
+            var priceRatio = SpecialtyManager.Instance.GetRatioForSpecialty(character);
+
+            var beforeSellGold = EconomySnapshot.Capture(character);
+            var basePrice = SpecialtyManager.Instance.SellSpecialty(character, goldTraderObjId);
+            stages.Add(new BotScenarioRunner.ScenarioStageVerdict(
+                $"SELL-GOLD-{cycle}", 1,
+                basePrice > 0 ? "Sold" : "Refused", basePrice.ToString(),
+                $"pack {options.PackItemTemplateId} @ trader {goldTraderObjId} (base {basePrice}, ratio {priceRatio}%)" +
+                SpecialitySaleRefusalHint(basePrice)));
+            if (basePrice == 0)
+                return Fail($"SELL-GOLD-{cycle}", null,
+                    $"specialty sale refused by engine (pack {options.PackItemTemplateId} @ trader {goldTraderObjId}; " +
+                    "gates: level ≥ MinLevelToCraftSell, ≤ 2.5m range, bundle membership, origin-zone exclusion)",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            // The documented payout law (SellSpecialty, gold trader — coin id 0,
+            // no ÷10000 conversion): payout == round(base × ratio% × 1.05 interest).
+            var finalNoInterest = basePrice * (priceRatio / 100f);
+            var expectedPayout = (long)Math.Round(finalNoInterest + finalNoInterest * 0.05f);
+            var mailPayout = SpecialityMailCopper(character.Id) - mailsBefore;
+
+            var packConsumed = character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack) == null;
+            var payoutOk = mailPayout == expectedPayout && packConsumed;
+            criteria.Add(new BotScenarioRunner.CriterionVerdict($"haul-payout-formula-{cycle}",
+                payoutOk,
+                payoutOk
+                    ? $"payout mail {mailPayout}c == round(base {basePrice} × {priceRatio}% × 1.05) = {expectedPayout}c; " +
+                      $"pack consumed; labor −{SellLaborCostPerPack}"
+                    : $"payout MISMATCH: mail delta {mailPayout}c vs expected {expectedPayout}c " +
+                      $"(base {basePrice}, ratio {priceRatio}%), packConsumed={packConsumed}"));
+            if (!payoutOk)
+                return Fail($"SELL-GOLD-{cycle}", null, "specialty payout formula violated",
+                    rigNotes, stages, criteria, ledger, traceRecords);
+
+            ledger.SpecialtySellsCharged++;
+            ledger.SpecialtyPayoutTotal += mailPayout;
+            ledger.ExpectedSpecialtyPayoutTotal += expectedPayout;
+            ledger.Entries.Add(new LedgerEntry($"SELL-GOLD-{cycle}", beforeSellGold, EconomySnapshot.Capture(character)));
+
+            rigNotes.Add($"hauler {cycle}: pack {options.PackItemTemplateId} crafted → loaded → driven → unloaded → sold " +
+                         $"(base {basePrice}, payout mail {mailPayout}c in transit, labor −{SellLaborCostPerPack})");
+            return null;
+        }
     }
 
     // ------------------------------------------------------------- helpers
+
+    /// <summary>
+    /// Drives an ASYNC leg (Move / Drive / craft-queue drain) to a TERMINAL
+    /// state through the pump, then appends ITS audit record resolved by
+    /// TraceId — never <c>AuditTrace.Last()</c> before the terminal transition.
+    /// A warm-world resolve keeps such requests Running past creation, so an
+    /// early Last() throws "Sequence contains no elements" on an empty trace or
+    /// captures the PREVIOUS action's record (the same fix the m3a-m4 replay's
+    /// TryDriveLegToTerminal landed). Returns false when the leg exhausts its
+    /// budget WITHOUT a terminal transition; the caller then fails closed with
+    /// the §17 reason (never an InvalidOperationException).
+    /// </summary>
+    private static bool TryDriveLegToTerminal(GameplayActor actor, ICyclePump pump,
+        ActorRequest request, TimeSpan maxWait,
+        List<ActorAuditRecord> traceRecords, out ActorRequest driven)
+    {
+        driven = pump.Drive(actor, request, maxWait);
+        var drivenTraceId = driven.TraceId;
+        var record = actor.AuditTrace.LastOrDefault(r => r.TraceId == drivenTraceId);
+        if (record != null)
+            traceRecords.Add(record);
+        return driven.IsTerminal;
+    }
+
+    /// <summary>Σ CopperCoins over a character's mails — the same read surface
+    /// AuctionHouseScenario uses for mail money. AllPlayerMails (not
+    /// GetCurrentMailList) because the specialty payout mail's RecvDate sits a
+    /// canonical 22 h in the future and GetCurrentMailList only returns
+    /// delivered mail.</summary>
+    private static long SpecialityMailCopper(uint characterId)
+        => MailManager.Instance.AllPlayerMails.Values
+            .Where(m => m.Header.ReceiverId == characterId)
+            .Sum(m => m.Body.CopperCoins);
+
+    /// <summary>Human-readable gate hint appended to a refused SELL-GOLD stage.</summary>
+    private static string SpecialitySaleRefusalHint(int basePrice)
+        => basePrice > 0 ? "" : " — engine refusal (error-packet surface; see gates)";
+
+    /// <summary>The pack doodad currently loaded on the slave's cargo (attached,
+    /// item-linked — the exact state PackVehicleService leaves after a load).</summary>
+    private static Doodad? FindLoadedPackDoodad(Character character, uint packItemTemplateId, uint slaveObjId)
+        => character.ParentWorld?.GetAllDoodads()
+            .FirstOrDefault(d => d.ItemTemplateId == packItemTemplateId
+                                 && d.ParentObjId == slaveObjId
+                                 && d.AttachPoint != AttachPointKind.None);
 
     /// <summary>Documented labor cost of a skill (ConsumeLaborPower), 0 when absent.</summary>
     private static int SkillLaborCost(uint skillId)
@@ -878,6 +1358,12 @@ internal static class EconomyDayCycleLedgerExtensions
         target.SeedsPlanted = source.SeedsPlanted;
         target.SeedsBought = source.SeedsBought;
         target.SeedsHeldEnd = source.SeedsHeldEnd;
+        target.PackCraftsCharged = source.PackCraftsCharged;
+        target.PackCraftLaborCostEach = source.PackCraftLaborCostEach;
+        target.SpecialtySellsCharged = source.SpecialtySellsCharged;
+        target.SpecialtySellLaborCostEach = source.SpecialtySellLaborCostEach;
+        target.SpecialtyPayoutTotal = source.SpecialtyPayoutTotal;
+        target.ExpectedSpecialtyPayoutTotal = source.ExpectedSpecialtyPayoutTotal;
         target.Entries.Clear();
         target.Entries.AddRange(source.Entries);
     }

@@ -1138,7 +1138,13 @@ public sealed class BotDriveBridge
     ///
     ///   {"cmd":"scenario","template":"m8-economy-cycle-v0",
     ///    "bot":"m8economy","fresh":true,"cycles":1,
-    ///    "deposit":"proceeds","fixedAmount":0}
+    ///    "deposit":"proceeds","fixedAmount":0,
+    ///    "hauler":false}
+    ///
+    /// "hauler": true extends each cycle with the trade-pack + vehicle leg
+    /// (PACK-CRAFT → SUMMON → BOARD → LOAD → DRIVE → UNBOARD → UNLOAD →
+    /// SELL-GOLD at the specialty gold trader; payout asserted by formula
+    /// against the created mail, labor −60/pack).
     ///
     /// Flow: fresh-wipe the bot row → plain headless provisioning → run the
     /// day cycle(s) through its default overload (LiveCyclePump) → return
@@ -1163,7 +1169,8 @@ public sealed class BotDriveBridge
                    Enum.TryParse<EconomyDayCycleScenario.DepositMode>(depEl.GetString(), ignoreCase: true, out var mode)
                 ? mode
                 : EconomyDayCycleScenario.DepositMode.Proceeds,
-            FixedDepositAmount = root.TryGetProperty("fixedAmount", out var faEl) && faEl.TryGetInt64(out var fa) ? fa : 0
+            FixedDepositAmount = root.TryGetProperty("fixedAmount", out var faEl) && faEl.TryGetInt64(out var fa) ? fa : 0,
+            Hauler = root.TryGetProperty("hauler", out var haulerEl) && haulerEl.GetBoolean()
         };
 
         // Fresh-rig contract (the template runner's semantics): wipe prior

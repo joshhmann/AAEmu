@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Citizen01",
+    "race": "Nuian",
+    "gender": "Male",
+    "level": 5
+  },
+  {
+    "name": "Citizen02",
+    "race": "Nuian",
+    "gender": "Male",
+    "level": 5
+  },
+  {
+    "name": "Citizen03",
+    "race": "Nuian",
+    "gender": "Male",
+    "level": 5
+  }
+]

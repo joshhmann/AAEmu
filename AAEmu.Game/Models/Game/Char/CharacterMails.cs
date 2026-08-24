@@ -297,22 +297,7 @@ public class CharacterMails
 
     public void ReturnMail(long id)
     {
-        if (MailManager.Instance._allPlayerMails.TryGetValue(id, out var thisMail))
-        {
-            var itemSlots = new List<(SlotType slotType, byte slot)>();
-            for (var i = 0; i < MailBody.MaxMailAttachments; i++)
-            {
-                var item = ItemManager.Instance.GetItemByItemId(thisMail.Body.Attachments[i].Id);
-                itemSlots.Add(item.SlotType == SlotType.None
-                    ? ((SlotType slotType, byte slot))(0, 0)
-                    : (item.SlotType, (byte)item.Slot));
-            }
-
-            SendMailToPlayer(thisMail.Header.Type, thisMail.Header.SenderName, thisMail.Header.Title, thisMail.Body.Text,
-                thisMail.Header.Attachments, thisMail.Body.CopperCoins, thisMail.Body.BillingAmount, thisMail.Body.MoneyAmount2,
-                    thisMail.Header.Extra, itemSlots);
-
-            DeleteMail(id, false);
-        }
+        // Ownership/status validation and attachment-safe bouncing live in MailManager
+        MailManager.Instance.ReturnMail(Self, id);
     }
 }
