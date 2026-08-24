@@ -380,10 +380,16 @@ public sealed class BotPresenceCoordinator
                 var character = session.Character;
                 // Same B4 home precedence as the legacy path, but with the
                 // per-entry manifest home as the explicit override (entry home
-                // > config home override > persisted metadata > template spawn).
+                // > config home override > persisted metadata > ACTUAL SPAWN
+                // POSITION). Soak stage-1 finding (a): falling back to the
+                // default demo home here anchored the patrol route kilometers
+                // from where race-template provisioning actually spawned the
+                // bot — the route was unreachable and the bots walked until
+                // they drowned. When nothing explicit/persisted exists, the
+                // spawn position IS the home.
                 var explicitHome = entry.Home ?? config.HomePosition;
                 var metadata = PlayerBotMetadataStore.Instance.GetForRead(character.Id);
-                var home = ResolveHome(explicitHome, metadata, defaultHome);
+                var home = ResolveHome(explicitHome, metadata, character.Transform.Local.Position);
                 if (explicitHome != default || metadata.HasHome)
                     character.Transform.Local.SetPosition(home.X, home.Y, home.Z);
 

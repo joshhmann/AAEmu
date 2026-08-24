@@ -217,6 +217,39 @@ public class BotPresenceManifestTests
     }
 
     [Test]
+    public async Task Start_ManifestEntryWithoutHome_RouteAnchoredAtSpawn_NotDefaultHome()
+    {
+        // Soak stage-1 finding (a) regression: a roster entry without an
+        // explicit home used to spawn at its race-template start position
+        // while the patrol route anchored on the DEFAULT demo home — the bot
+        // then walked kilometers toward an unreachable route (the drowning
+        // elves). Home precedence must end at the ACTUAL SPAWN POSITION.
+        SeedFixtureSingletons();
+        Character? noHome = null;
+        var rig = ManifestRig(probe: (_, _) => 0f);
+        rig.Coordinator = withProvider(rig, () =>
+        [
+            new PresenceManifestEntry("NoHomeElf", Race.Elf, Gender.Female, 7)
+        ]);
+        rig.OnProvisionedCharacter = c => noHome ??= c;
+
+        var result = rig.Coordinator.Start(Config());
+        await Assert.That(result).IsTrue();
+        await Assert.That(noHome).IsNotNull();
+
+        var spawn = noHome!.Transform.World.Position;
+        var route = rig.StepExecutor.GetRoamRoute(noHome.Id);
+        await Assert.That(route).IsNotNull();
+
+        // Every waypoint circles the SPAWN position, not the default home.
+        foreach (var wp in route!.Waypoints)
+        {
+            await Assert.That(Math.Abs(wp.X - spawn.X)).IsLessThanOrEqualTo(30f);
+            await Assert.That(Math.Abs(wp.Y - spawn.Y)).IsLessThanOrEqualTo(30f);
+        }
+    }
+
+    [Test]
     public async Task Start_NoManifest_LegacyHardcodedCitizenPath()
     {
         SeedFixtureSingletons();
@@ -371,6 +404,7 @@ public class BotPresenceManifestTests
         public Action<Character>? OnProvisionedCharacter { get; set; }
         public required Func<IReadOnlyList<PresenceManifestEntry>?> ProviderSlot { get; set; }
         public BotPresenceCoordinator Coordinator { get; set; } = null!;
+        public BotRoamStepExecutor StepExecutor { get; set; } = null!;
     }
 
     private static Rig ManifestRig(Func<Vector3, uint, float>? probe = null)
@@ -392,6 +426,7 @@ public class BotPresenceManifestTests
             Provisioned = provisioned,
             NextIds = nextIds,
             ProviderSlot = () => null,
+            StepExecutor = stepExecutor,
         };
 
         var provisioner = (string username, string name, Race race, Gender gender, byte level) =>
