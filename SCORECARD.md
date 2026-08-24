@@ -93,14 +93,14 @@ Graphify and must be promoted by an end-to-end exploration.
 | MAIL-01 | Send, receive, attach, return, expire, persist | Later | U | 1 | U | 1 | U | U | `MailManager`; mail audit. **2026-08-23 (6b2f15a6d):** ReturnMail implemented + expiry bounce/destruction semantics rig-tested → A=1 (rig level). ⚠️ CSReturnMailPacket opcode confirmed a 0xfff placeholder — NOT registered — so the client-facing return path is still unwired; W stays 1. H=UNKNOWN |
 | TRANSFER-01 | Fixed-route transport board/ride/disembark/recover | M4 | U | 2 | U | 1 | U | U | `TransferManager`; route audit. **2026-08-24 (3a534b539): transfer FUNCTIONAL + LIVE PROVEN** — CSBoardingTransferPacket TlId shadowing FIXED (multi-part transfers share the master's TlId but seats exist only on child parts; FirstOrDefault always resolved the seatless master, so boarding could never bond); read-only `transfers` bridge dump command; TransferRideE2eTests LIVE PASS (board Marianople Gondola tlId=1 ap=2 BondChairDouble → ride route samples → disembark at current position). W=2 (real engine path end-to-end); A=1 live board/ride/disembark E2E — recover/restart legs still open; H=UNKNOWN |
 | INDUN-01 | Instance entry, limits, party, completion, exit/recovery | M7+ | U | 1 | U | U | U | U | `IndunManager`; selected dungeon audit |
-| FISH-01 | Fishing interaction, loot, labor, contest integration | M9.5 | U | U | U | U | U | U | Fishing audit |
+| FISH-01 | Fishing interaction, loot, labor, contest integration | M9.5 | U | 2 | U | 1 | U | U | Fishing audit. **2026-08-24 (cd5eedf11 / 33b4df563):** dossier `mechanics/fishing-domain.md` — basic 1.2 fishing is canonically encoded in plot 809 and the plot engine/reagents/labor/zone-loot-packs/radar/FishingLoot are all implemented + wired; `CastAt(position)` contract action added; **FishingVerificationE2eTests LIVE PASS** — labor −5, worm consumed via plot reagents, Fishing actability XP, loot item landed on bite (cast 2 of 2). W=2 (real engine path end-to-end); A=1 single-scenario live proof — sports-fishing stratum still orphaned (SpawnFishEffect unreachable, catch/convert/buy funcs stubbed); H=UNKNOWN |
 | PVP-01 | Flagging, factions, damage, honor, death/recovery | Later | U | U | U | U | U | U | PvP audit |
-| DUEL-01 | Invite, accept, bounds, result, cleanup | Later | U | 1 | U | U | U | N/A | `DuelManager`; duel audit |
+| DUEL-01 | Invite, accept, bounds, result, cleanup | Later | U | 2 | U | 1 | U | N/A | `DuelManager`; duel audit. **2026-08-24 (f8252a37b):** headless verification rig — request → accept state transitions (IsInDuel) → stop cleanup + faction restoration; **found & fixed stuck-duel bug**: a failed flag-spawn left both duelists permanently IsInDuel (two NREs inside the stop path's catch-all: RestoreFaction bare indexer + flag delete path). W=2 (real engine path); A=1 rig-level — faction swap + bounds need live-stack geodata (on record); H=UNKNOWN |
 | CRIME-01 | Crime evidence/points, reporting, persistence | M9 | U | 1 | U | U | U | U | `CrimeManager`; justice audit |
 | TRIAL-01 | Arrest, jury selection, testimony, verdict, sentence | M9 | U | 1 | U | U | U | U | `TrialManager`; justice audit |
 | PRISON-01 | Imprisonment, sentence time, labor/escape/release | M9 | U | U | U | U | U | U | No `PrisonManager` found; trace model/packet paths before scoping |
 | PARTY-01 | Invite/join/leave, leader, follow/assist, recovery | M7 | U | 2 | U | 1 | U | U | Party audit. **2026-08-21→23:** PartyInvite/PartyAccept contract actions through the real TeamManager engine paths (rig GameplayActorPartyTests 6/6); `PartyFollowAssistScenario` (rig 4/4); **party spike LIVE E2E PASS 2026-08-23 (c98da8a53)** — `PartySpikeScenario` m7-party-spike: 3-bot rally → assist → kill elite NPC 1870 inside the leash window over the N-actor bridge seam, with causal cast-effect traces (ActorAuditRecord v2: target_hp_before/after, effect_observed, effect_wait_ms). W=2 (invite/join/follow/assist/rally live-proven through real paths); **A=1 — partial scenario coverage** (roles, avoid-extra-pulls, resurrect, mount+travel, lifecycle fault matrix still open); H=UNKNOWN |
-| EXPEDITION-01 | Expedition membership, roles, persistence | M9/M10 | U | 1 | U | U | U | U | `ExpeditionManager`; organization audit |
+| EXPEDITION-01 | Expedition membership, roles, persistence | M9/M10 | U | 2 | U | 1 | U | U | `ExpeditionManager`; organization audit. **2026-08-24 (f8252a37b):** headless verification rig — full lifecycle through the real manager with capture-backed connections: create (party auto-join) → reply-accept outsider → leave → disband; create-without-party refused before mutation. W=2 (real engine path end-to-end); A=1 rig-level — persistence (terminal Save) is integration-env scope, no bot contract actions yet; H=UNKNOWN |
 | CHAT-01 | Local/zone/party/expedition chat, moderation, bot identity | M7/M8 | U | 1 | U | U | N/A | U | `ChatManager`; social audit |
 | ZONE-01 | Peace/conflict/war state transitions and PvP rules | Later | U | 2 | U | 1 | U | U | `ZoneManager`; conflict-state audit. **2026-08-24 (0482ba3f0): zone state machine data-wired + enforced** — hard-coded Conflict boot state removed → data-driven Peace default (legacy World.ConflictZonesStartAtConflict flag kept for tests); Peace-state PvP protection at the BaseUnit.CanAttack chokepoint (fail-open when no conflict entry; Hostile stays attackable). W=2 (real engine path end-to-end); A=1 rig-level state machine + enforcement tests — no live PvP scenario yet (kept honest); H=UNKNOWN |
 | ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; architecture spike first |
@@ -109,6 +109,19 @@ Graphify and must be promoted by an end-to-end exploration.
 
 Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
 bugs, cards, tests, and zone reports can refer to the same scope.
+
+> **2026-08-24 scorecard update (through develop @ cab6e4dc9 → f8252a37b):**
+> FISH-01 promoted W=2/A=1 — fishing dossier + CastAt(position) contract
+> action + FishingVerificationE2eTests LIVE PASS (labor/worm/proficiency/loot
+> through plot 809) · DUEL-01 promoted W=2/A=1 — headless lifecycle rig +
+> stuck-duel bug found & fixed (faction-restore NRE in the stop catch-all) ·
+> EXPEDITION-01 promoted W=2/A=1 — full lifecycle headless rig through the
+> real ExpeditionManager · QUEST-01 evidence note — ConReportJournal wired-
+> noop fixed (466 quests gated on the journal report auto-passed; 59 instantly
+> completable) + ConReportDoodad FinalizeQuest double-subscribe leak;
+> golden-route contract replay re-PASS on current tip · M1/M2 sweep: quest act
+> audit of all 50 families — no other stubs; ConAcceptComponent flagged
+> NOVEL-MECHANICS (Josh design call).
 
 > **2026-08-24 scorecard update (through develop @ 3a534b539):** ZONE-01
 > promoted W=2/A=1 — data-driven Peace boot state + Peace PvP protection at the
