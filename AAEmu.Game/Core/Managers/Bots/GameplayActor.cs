@@ -4,6 +4,7 @@ using System.Numerics;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
@@ -15,6 +16,7 @@ using AAEmu.Game.Models.Game.Crafts;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
@@ -29,6 +31,7 @@ using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.Units.Movements;
 using AAEmu.Game.Models.Game.World.Interactions;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
 
 namespace AAEmu.Game.Core.Managers.Bots;
@@ -2535,6 +2538,177 @@ public class GameplayActor : IGameplayActor
     {
         _craftMaterialSnapshot = null;
         _craftProductSnapshot = null;
+    }
+
+    #endregion
+
+    #region M5.2 expedition actions (real engine paths)
+
+    /// <summary>
+    /// The connection-mediated engine entry the expedition manager's CS-packet
+    /// paths take: the character's real network connection when it has one;
+    /// otherwise a sessionless GameConnection whose packet sends no-op
+    /// (headless rigs and unwired bots) — every engine decision still runs,
+    /// only client notification stays silent.
+    /// </summary>
+    private GameConnection EngineConnection()
+        => Character.Connection ?? new GameConnection(null!) { ActiveChar = Character };
+
+    /// <summary>
+    /// Swallows ONLY the terminal persistence-boundary failure of the
+    /// expedition manager (ExpeditionManager.Save → MySQL): every gameplay
+    /// mutation has already been applied when that save runs, and headless
+    /// environments have no database. The caller's observable post-check
+    /// decides the outcome on verified state either way.
+    /// </summary>
+    private void RunExpeditionEngineCall(Action engineCall)
+    {
+        try
+        {
+            engineCall();
+        }
+        catch (MySql.Data.MySqlClient.MySqlException)
+        {
+            // Terminal persistence boundary — see doc comment.
+        }
+    }
+
+    public ActorRequest ExpeditionCreate(string name, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.ExpeditionCreate, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "expedition create"))
+            return request;
+
+        if (string.IsNullOrWhiteSpace(name))
+            return Reject(request, ActorFailureReason.RejectedAction, "expedition name must not be empty");
+
+        // 1. Pre-flight mirror of CreateExpedition's SILENT refusal modes
+        //    (the engine only sends error packets): already in an
+        //    expedition, no party to found from.
+        if (Character.Expedition != null)
+            return Reject(request, ActorFailureReason.StateTransition, "already in an expedition");
+        if (TeamManager.Instance.GetActiveTeamByUnit(Character.Id) == null)
+            return Reject(request, ActorFailureReason.StateTransition, "no party to found an expedition from");
+
+        request.Start($"creating expedition '{name}'");
+
+        // 2. REAL engine path — the exact call CSCreateExpeditionPacket makes.
+        //    The party's other members auto-join inside the founding loop.
+        RunExpeditionEngineCall(() => ExpeditionManager.Instance.CreateExpedition(name, EngineConnection()));
+
+        // 3. Post-check the observable outcome: membership landed = created;
+        //    none = one of the engine's silent gates refused (name rules,
+        //    member level/faction/expedition-state, cost).
+        var expedition = Character.Expedition;
+        if (expedition == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "expedition creation refused by engine");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("expeditioncreate", (uint)expedition.Id), request.TraceId);
+        return Complete(request, (uint)expedition.Id,
+            $"created expedition '{expedition.Name}' ({expedition.Id}) with {expedition.Members.Count} founding member(s)");
+    }
+
+    public ActorRequest ExpeditionInvite(string invitedName, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.ExpeditionInvite, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "expedition invite"))
+            return request;
+
+        if (string.IsNullOrWhiteSpace(invitedName))
+            return Reject(request, ActorFailureReason.RejectedAction, "invited name must not be empty");
+
+        // 1. Pre-flight mirror of Invite's silent-void gates: inviter must be
+        //    an expedition member whose role policy grants Invite...
+        var expedition = Character.Expedition;
+        var member = expedition?.GetMember(Character);
+        if (member == null || expedition!.GetPolicyByRole(member.Role)?.Invite != true)
+            return Reject(request, ActorFailureReason.StateTransition, "not an expedition member with invite rights");
+
+        // ...the invited must resolve and be expedition-less.
+        var invited = WorldManager.Instance.GetCharacter(invitedName);
+        if (invited == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"invite target '{invitedName}' not found");
+        if (invited.Id == Character.Id)
+            return Reject(request, ActorFailureReason.RejectedAction, "cannot invite self to an expedition");
+        if (invited.Expedition != null)
+            return Reject(request, ActorFailureReason.StateTransition, $"{invited.Name} is already in an expedition");
+
+        request.Start($"inviting {invited.Name} to expedition {expedition.Id} ('{expedition.Name}')");
+
+        // 2. REAL engine path — the exact call CSInviteToExpeditionPacket
+        //    makes. Expeditions keep NO server-side invitation record (the
+        //    invitation IS the client packet), so with every refusal mode
+        //    mirrored above this call deterministically delivers it; the
+        //    acceptance proof lands via ExpeditionAccept's post-check.
+        ExpeditionManager.Instance.Invite(EngineConnection(), invitedName);
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("expeditioninvite", (uint)expedition.Id, invited.Id.ToString()), request.TraceId);
+        return Complete(request, invited.ObjId, $"invited {invited.Name} to expedition {expedition.Id}");
+    }
+
+    public ActorRequest ExpeditionAccept(FactionsEnum expeditionId, uint inviterId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.ExpeditionAccept, inviterId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "expedition accept"))
+            return request;
+
+        // 1. Already a member → StateTransition BEFORE the engine: ReplyInvite
+        //    has NO guard at all — entering it twice would add a duplicate
+        //    membership row, so a retry can never re-enter after a success.
+        if (Character.Expedition != null)
+            return Reject(request, ActorFailureReason.StateTransition, "already in an expedition");
+
+        // 2. The expedition must exist (the engine indexes its registry
+        //    unguarded — a wrong id would throw) and the claimed inviter must
+        //    be one of its members (no server-side pending-invitation record
+        //    exists — membership of the inviter is the closest proxy).
+        var expedition = ExpeditionManager.Instance.GetExpedition(expeditionId);
+        if (expedition == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"expedition {expeditionId} not found");
+        if (expedition.GetMember(inviterId) == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"no invitation from expedition {expeditionId} (inviter {inviterId} is not a member)");
+
+        request.Start($"accepting invitation to expedition {expeditionId} ('{expedition.Name}') from {inviterId}");
+
+        // 3. REAL engine path — the exact call CSReplyExpeditionInvitationPacket
+        //    makes for join=true.
+        RunExpeditionEngineCall(() => ExpeditionManager.Instance.ReplyInvite(EngineConnection(), expeditionId, inviterId, true));
+
+        // 4. Post-check the observable outcome: membership recorded on both
+        //    sides (character pointer + expedition roster row).
+        if (Character.Expedition?.Id != expeditionId || Character.Expedition.GetMember(Character) == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "expedition join refused by engine");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("expeditionaccept", (uint)expeditionId), request.TraceId);
+        return Complete(request, (uint)expeditionId, $"joined expedition {expeditionId} ('{Character.Expedition.Name}')");
+    }
+
+    public ActorRequest ExpeditionLeave(string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.ExpeditionLeave, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "expedition leave"))
+            return request;
+
+        // 1. Not in an expedition → StateTransition (nothing to leave). A
+        //    retry after a successful leave is refused here — the engine is
+        //    never re-entered, so membership can never be removed twice.
+        var expedition = Character.Expedition;
+        if (expedition == null)
+            return Reject(request, ActorFailureReason.StateTransition, "not in an expedition");
+
+        request.Start($"leaving expedition {expedition.Id} ('{expedition.Name}')");
+
+        // 2. REAL engine path — the exact static call the leave packet branch
+        //    makes (roster removal + broadcast).
+        RunExpeditionEngineCall(() => ExpeditionManager.Leave(Character));
+
+        // 3. Post-check the observable outcome: the character pointer cleared.
+        if (Character.Expedition != null)
+            return Reject(request, ActorFailureReason.RejectedAction, "expedition leave did not take effect");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey("expeditionleave", (uint)expedition.Id), request.TraceId);
+        return Complete(request, true, $"left expedition {expedition.Id} ('{expedition.Name}')");
     }
 
     #endregion

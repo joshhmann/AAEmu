@@ -82,6 +82,18 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest PartyAccept(string? idempotencyKey = null)
         => Actor.PartyAccept(idempotencyKey);
 
+    public ActorRequest ExpeditionCreate(string name, string? idempotencyKey = null)
+        => Actor.ExpeditionCreate(name, idempotencyKey);
+
+    public ActorRequest ExpeditionInvite(string invitedName, string? idempotencyKey = null)
+        => Actor.ExpeditionInvite(invitedName, idempotencyKey);
+
+    public ActorRequest ExpeditionAccept(Models.StaticValues.FactionsEnum expeditionId, uint inviterId, string? idempotencyKey = null)
+        => Actor.ExpeditionAccept(expeditionId, inviterId, idempotencyKey);
+
+    public ActorRequest ExpeditionLeave(string? idempotencyKey = null)
+        => Actor.ExpeditionLeave(idempotencyKey);
+
     public ActorRequest TradeOffer(uint targetCharacterObjId, string? idempotencyKey = null)
         => Actor.TradeOffer(targetCharacterObjId, idempotencyKey);
 

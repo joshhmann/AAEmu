@@ -3,8 +3,10 @@ using System.Numerics;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.StaticValues;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -195,6 +197,61 @@ public interface IGameplayActor
     /// pending invitation (the engine consumed it) — StateTransition.
     /// </summary>
     ActorRequest PartyAccept(string? idempotencyKey = null);
+
+    /// <summary>
+    /// Founds an expedition from the actor's party through the real engine
+    /// path — the exact CSCreateExpeditionPacket call
+    /// (ExpeditionManager.CreateExpedition with the character's connection;
+    /// headless actors without a network connection use a sessionless
+    /// GameConnection whose packet sends no-op). The party's other members
+    /// auto-join (the engine's founding-member loop).
+    /// Validates: name non-empty, not already in an expedition, a party
+    /// exists (the engine's silent refusal modes mirrored pre-flight).
+    /// The engine's remaining gates (name regex/length/duplicate, member
+    /// level/faction/expedition-state, cost) are SILENT voids, so the
+    /// post-check is the observable outcome: owner.Expedition != null after
+    /// the call = created; none = Rejected("refused by engine").
+    /// Same-key retries are refused pre-flight by the ledger.
+    /// </summary>
+    ActorRequest ExpeditionCreate(string name, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Invites a character to the actor's expedition through the real engine
+    /// path — the exact CSInviteToExpeditionPacket call
+    /// (ExpeditionManager.Invite). Expeditions keep NO server-side pending
+    /// invitation record (the invitation is the client packet), and every
+    /// engine refusal is a silent void, so the contract mirrors ALL of them
+    /// pre-flight: inviter is an expedition member whose role policy grants
+    /// Invite, target resolves by name, target expedition-less. After those
+    /// gates pass the engine call deterministically delivers the invitation.
+    /// Same-key retries are refused pre-flight by the ledger.
+    /// </summary>
+    ActorRequest ExpeditionInvite(string invitedName, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Accepts an expedition invitation through the real engine path — the
+    /// exact CSReplyExpeditionInvitationPacket call
+    /// (ExpeditionManager.ReplyInvite, join=true). Because the engine has no
+    /// pending-invitation registry AND ReplyInvite has no guards at all
+    /// (it would even throw on an unknown expedition id), the contract
+    /// refuses pre-flight: already in an expedition (StateTransition — a
+    /// retry can never add a duplicate membership), unknown expedition
+    /// (RejectedAction), inviter not an expedition member (RejectedAction —
+    /// the closest engine-true proxy for "no such invitation"). Post-check:
+    /// Character.Expedition.Id matches and the membership row exists in
+    /// Expedition.Members. Same-key retries are refused pre-flight by the
+    /// ledger.
+    /// </summary>
+    ActorRequest ExpeditionAccept(FactionsEnum expeditionId, uint inviterId, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Leaves the actor's current expedition through the real engine path —
+    /// the static ExpeditionManager.Leave call (the CSLeaveExpeditionPacket
+    /// branch). Not-in-expedition is Rejected(StateTransition) — the engine
+    /// is never entered, so retries cannot double-leave. Post-check:
+    /// Character.Expedition cleared.
+    /// </summary>
+    ActorRequest ExpeditionLeave(string? idempotencyKey = null);
 
     /// <summary>
     /// Offers a direct player-to-player trade through the REAL engine path —
@@ -755,7 +812,19 @@ public enum ActorActionType : byte
     TradeLockOk = 38,
 
     /// <summary>Position-target skill cast through Skill.Use with a SkillCastPositionTarget (the CSStartSkillPacket Pos branch — fishing et al.).</summary>
-    CastAt = 39
+    CastAt = 39,
+
+    /// <summary>Founding an expedition through ExpeditionManager.CreateExpedition (the CSCreateExpeditionPacket path).</summary>
+    ExpeditionCreate = 40,
+
+    /// <summary>Inviting a character to an expedition through ExpeditionManager.Invite (the CSInviteToExpeditionPacket path).</summary>
+    ExpeditionInvite = 41,
+
+    /// <summary>Accepting an expedition invitation through ExpeditionManager.ReplyInvite (the CSReplyExpeditionInvitationPacket path).</summary>
+    ExpeditionAccept = 42,
+
+    /// <summary>Leaving the current expedition through the static ExpeditionManager.Leave (the CSLeaveExpeditionPacket path).</summary>
+    ExpeditionLeave = 43
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

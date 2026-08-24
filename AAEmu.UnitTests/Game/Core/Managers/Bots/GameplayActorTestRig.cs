@@ -818,6 +818,21 @@ public static class GameplayActorTestRig
     /// <summary>Seeds the actor's copper balance directly (the ordinary Money property; MarkDirty only).</summary>
     public static void SetMoney(GameplayActor actor, long amount) => actor.Character.Money = amount;
 
+    /// <summary>
+    /// Attaches a CAPTURE-backed GameConnection to the actor's character —
+    /// the ExpeditionManagerRigTests.Conn convention, extracted so contract
+    /// actions that drive connection-mediated engine paths (expedition
+    /// manager) run through the exact GameConnection surface. The capture
+    /// session records every packet the engine emits; nothing reaches a
+    /// network.
+    /// </summary>
+    public static GameConnection AttachCaptureConnection(GameplayActor actor)
+    {
+        var conn = new GameConnection(new PacketCaptureSession()) { ActiveChar = actor.Character };
+        actor.Character.Connection = conn;
+        return conn;
+    }
+
     /// <summary>First bag instance of the given item template (or null).</summary>
     public static Item? FindBagItem(GameplayActor actor, uint itemTemplateId)
         => actor.Character.Inventory.Bag.Items.FirstOrDefault(i => i?.TemplateId == itemTemplateId);
