@@ -195,14 +195,14 @@ public class AuctionHouseRestartE2eTests
             SavePass(bridge2, "save-before-expiry-kill");
             Assert.NotNull(SnapshotLotRow(lotExpired)); // L2 durably listed
 
-            E2eStack.RestartGameServer(); // kill -9 with the listing live
-
             // Time-travel the PERSISTED row while the server is down (the DB
             // is the auction state between boots — this simulates the 6h
-            // passage without waiting for it). No live-state mutation: the
-            // game process does not exist right now.
-            ExecDb($"UPDATE auction_house SET end_time = DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 MINUTE) WHERE id = {lotExpired}");
-
+            // passage without waiting for it). CRITICAL: this MUST run in the
+            // afterStop seam — Stage-2 data loads read auction_house early in
+            // boot, so an update after RestartGameServer returns races (and
+            // loses to) the load and the lot boots with a future end_time.
+            E2eStack.RestartGameServer(() =>
+                ExecDb($"UPDATE auction_house SET end_time = DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 MINUTE) WHERE id = {lotExpired}"));
             using var bridge3 = new BotDriveClient(E2eStack.BridgePort);
             Trace(bridge3, "readopt-seller-final",
                 $"{{\"cmd\":\"provision\",\"bot\":\"{SellerBot}\",\"fresh\":false}}", 120_000);

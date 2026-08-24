@@ -26,6 +26,8 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
     public ConcurrentDictionary<ulong, AuctionLot> AuctionLots { get; } = [];
     private ConcurrentBag<long> DeletedAuctionItemIds { get; } = [];
 
+    private bool _auctionTaskScheduled;
+
     private static int MaxListingFee => 1000000; // 100g, 100 copper coins = 1 silver, 100 silver = 1 gold.
 
     private void RemoveAuctionLotSold(AuctionLot itemToRemove, string buyer, int soldAmount)
@@ -69,7 +71,18 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
         }
 
         // Item did not sell by end of the timer.
-        var newItem = itemManager.GetItemByItemId(itemToRemove.Item.Id);
+        var newItem = itemManager.GetItemByItemId(itemToRemove.Item?.Id ?? 0);
+        if (newItem == null)
+        {
+            // The listing's item is not in ItemManager memory (e.g. a row
+            // that predates the boot). Expire the lot without a return mail
+            // rather than throwing — the sweep must keep running.
+            Logger.Warn(
+                $"Auction lot {itemToRemove.Id}: item {itemToRemove.Item?.Id} not found in item memory — expiring WITHOUT return mail to {itemToRemove.ClientName}");
+            RemoveAuctionLot(itemToRemove);
+            return;
+        }
+
         if (newItem != null)
         {
             // TODO: Read this from saved data
@@ -78,10 +91,21 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
 
             if (itemToRemove.ClientName != "")
             {
-                var failMail = new MailForAuction(newItem, itemToRemove.ClientId, itemToRemove.DirectMoney,
-                    (int)recalculatedFee);
-                failMail.FinalizeForFail();
-                failMail.Send();
+                try
+                {
+                    var failMail = new MailForAuction(newItem, itemToRemove.ClientId, itemToRemove.DirectMoney,
+                        (int)recalculatedFee);
+                    failMail.FinalizeForFail();
+                    failMail.Send();
+                }
+                catch (Exception ex)
+                {
+                    // A failed return mail must never wedge the lot in the
+                    // house forever (the sweep would retry every 5s and keep
+                    // failing). Log loudly; the item row stays recoverable.
+                    Logger.Error(ex,
+                        $"Auction lot {itemToRemove.Id}: expiry mail to {itemToRemove.ClientName} failed — expiring lot anyway");
+                }
             }
         }
 
@@ -288,10 +312,21 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
 
         foreach (var item in itemsToRemove)
         {
-            if (item.BidderId != 0)
-                RemoveAuctionLotSold(item, item.BidderName, item.BidMoney);
-            else
-                RemoveAuctionLotFail(item);
+            // Per-lot isolation: a single bad lot (missing item memory, mail
+            // refusal, …) must never kill the recurring sweep — the previous
+            // behavior let any exception escape into Task.Run where it was
+            // silently swallowed, permanently stalling expiry processing.
+            try
+            {
+                if (item.BidderId != 0)
+                    RemoveAuctionLotSold(item, item.BidderName, item.BidMoney);
+                else
+                    RemoveAuctionLotFail(item);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Failed to expire auction lot {item.Id} (item {item.Item?.Id}, seller {item.ClientName}) — lot left in place for the next sweep");
+            }
         }
     }
 
@@ -384,8 +419,12 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
                     }
                 }
             }
-            var auctionTask = new AuctionHouseTask();
-            taskManager.Schedule(auctionTask, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+            if (!_auctionTaskScheduled)
+            {
+                var auctionTask = new AuctionHouseTask();
+                taskManager.Schedule(auctionTask, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+                _auctionTaskScheduled = true;
+            }
         }
         catch (Exception ex)
         {

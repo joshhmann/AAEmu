@@ -481,9 +481,17 @@ public static class E2eStack
     // --------------------------------------------------------------- control
 
     /// <summary>Stops and restarts ONLY the game server (MySQL + login stay).</summary>
-    public static void RestartGameServer()
+    /// <summary>
+    /// Kills and reboots ONLY the game server. <paramref name="afterStop"/>
+    /// runs AFTER the old process is confirmed dead and BEFORE the new one
+    /// starts writing/reading state — the seam for persisted-state surgery
+    /// (e.g. rolling a MySQL timestamp forward/back while the world is down;
+    /// anything later races the new process's Stage-2 data loads).
+    /// </summary>
+    public static void RestartGameServer(Action? afterStop = null)
     {
         StopGameServer();
+        afterStop?.Invoke();
         _gameProc = StartServerProcess("game", RuntimeGameDir, "AAEmu.Game.dll",
             Path.Combine(E2eRoot, "logs", "game-restart.log"));
         WaitTcp("127.0.0.1", GamePort, 300);
