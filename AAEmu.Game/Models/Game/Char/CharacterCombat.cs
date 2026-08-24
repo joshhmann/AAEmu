@@ -112,7 +112,7 @@ public partial class Character
         // Resolve the victim's zone-conflict state once for both PvP-honor award and War-zone honor-loss
         var victimZone = ZoneManager.Instance.GetZoneByKey(Transform.ZoneId);
         var conflictData = victimZone != null
-            ? ZoneManager.Instance.GetConflicts().FirstOrDefault(c => c.ZoneGroupId == victimZone.GroupId)
+            ? ZoneManager.Instance.GetConflictByGroup((ushort)victimZone.GroupId)
             : null;
         var zoneState = conflictData?.CurrentZoneState ?? ZoneConflictType.Peace;
 

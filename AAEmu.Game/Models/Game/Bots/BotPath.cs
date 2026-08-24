@@ -16,8 +16,9 @@ namespace AAEmu.Game.Models.Game.Bots;
 /// (RangeToCheckPoint 0.5f, nearest-checkpoint indexing).
 ///
 /// The route never writes the character itself — it returns the next
-/// position; the caller (PlayerBotBehaviorController) applies it through
-/// the ordinary Transform, exactly like Simulation.MoveTo does for NPCs.
+/// position; the caller (BotRoamStepExecutor / schedule behaviors) applies
+/// it through the ordinary Transform, exactly like Simulation.MoveTo does
+/// for NPCs.
 /// </summary>
 public class BotPath
 {

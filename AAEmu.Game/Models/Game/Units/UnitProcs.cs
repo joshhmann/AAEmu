@@ -7,12 +7,18 @@ public class UnitProcs(Unit owner)
 {
     private readonly List<ItemProc> _procs = [];
     private readonly Dictionary<ProcChanceKind, List<ItemProc>> _procsByChanceKind = [];
+    private readonly Func<uint, ItemProc> _procFactory;
 
     public Unit Owner { get; set; } = owner;
 
+    public UnitProcs(Unit owner, Func<uint, ItemProc> procFactory) : this(owner)
+    {
+        _procFactory = procFactory;
+    }
+
     public void AddProc(uint procId)
     {
-        var proc = new ItemProc(procId);
+        var proc = _procFactory != null ? _procFactory(procId) : new ItemProc(procId);
         _procs.Add(proc);
         if (!_procsByChanceKind.ContainsKey(proc.Template.ChanceKind))
             _procsByChanceKind.Add(proc.Template.ChanceKind, []);
@@ -33,7 +39,8 @@ public class UnitProcs(Unit owner)
             return;
         foreach (var proc in procs)
         {
-            if (proc.LastProc.AddSeconds(proc.Template.CooldownSec) <= DateTime.UtcNow)
+            // Skip while on cooldown (mirrors ItemProc.Apply's own check)
+            if (proc.LastProc.AddSeconds(proc.Template.CooldownSec) > DateTime.UtcNow)
                 continue;
 
             proc.Apply(Owner);

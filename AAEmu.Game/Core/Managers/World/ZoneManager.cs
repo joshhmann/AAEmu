@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 
 using AAEmu.Commons.Utils;
+using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.World.Zones;
 using AAEmu.Game.Models.StaticValues;
@@ -22,6 +23,13 @@ public class ZoneManager(IWorldManager worldManager) : Singleton<ZoneManager>, I
     private Dictionary<uint, ZoneClimateElem> _climateElem;
 
     public ZoneConflict[] GetConflicts() => _conflicts.Values.ToArray();
+
+    /// <summary>
+    /// Gets the zone-conflict state machine for a zone group, or null when the
+    /// group has no conflict entry (non-conflict zones).
+    /// </summary>
+    public ZoneConflict GetConflictByGroup(ushort zoneGroupId) =>
+        _conflicts.GetValueOrDefault(zoneGroupId);
 
     public Zone GetZoneById(uint zoneId)
     {
@@ -154,10 +162,15 @@ public class ZoneManager(IWorldManager worldManager) : Singleton<ZoneManager>, I
                             _groups[zoneGroupId].Conflict = template;
                             _conflicts.Add(zoneGroupId, template);
 
-                            // Only do intial setup when the zone isn't closed
+                            // Only do initial setup when the zone isn't closed.
+                            // Canonical 1.2 boots a conflict-zone cycle in Peace (the shielded
+                            // phase); escalation then happens through kill counters and the
+                            // state timer chain. Legacy test behavior (boot straight into
+                            // Conflict) stays available via World.ConflictZonesStartAtConflict.
                             if (!template.Closed)
-                                template.SetState(ZoneConflictType
-                                    .Conflict); // Set to Conflict for testing, normally it should start at Tension
+                                template.SetState(AppConfiguration.Instance.World.ConflictZonesStartAtConflict
+                                    ? ZoneConflictType.Conflict
+                                    : ZoneConflictType.Peace);
                         }
                         else
                             Logger.Warn("ZoneGroupId: {0} doesn't exist for conflict", zoneGroupId);

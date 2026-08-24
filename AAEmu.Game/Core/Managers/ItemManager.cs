@@ -64,6 +64,7 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
     private Dictionary<uint, uint> _wearableItemLookConverts;
 
     private Dictionary<uint, ItemProcTemplate> _itemProcTemplates;
+    private Dictionary<uint, List<uint>> _itemProcBindings;
     private Dictionary<ArmorType, Dictionary<ItemGrade, ArmorGradeBuff>> _armorGradeBuffs;
     private Dictionary<uint, EquipItemSet> _equipItemSets;
     private Dictionary<uint, uint> _defaultDyeIds;
@@ -360,6 +361,13 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
         return _itemProcTemplates.GetValueOrDefault(templateId);
     }
 
+    public List<uint> GetItemProcBindings(uint itemId)
+    {
+        if (_itemProcBindings.TryGetValue(itemId, out var procIds))
+            return procIds;
+        return [];
+    }
+
     public List<BonusTemplate> GetUnitModifiers(uint itemId)
     {
         if (_itemUnitModifiers.TryGetValue(itemId, out var modifiers))
@@ -460,6 +468,7 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
         */
         _itemDoodadTemplates = [];
         _itemProcTemplates = [];
+        _itemProcBindings = [];
         _armorGradeBuffs = [];
         _itemUnitModifiers = [];
         _equipItemSets = [];
@@ -762,6 +771,32 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
                         };
 
                         _itemProcTemplates.Add(template.Id, template);
+                    }
+                }
+            }
+
+            // Item proc bindings - which item templates carry which procs
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM item_proc_bindings";
+                command.Prepare();
+                using (var reader = new SQLiteWrapperReader(command.ExecuteReader()))
+                {
+                    while (reader.Read())
+                    {
+                        var itemId = reader.GetUInt32("item_id");
+                        var procId = reader.GetUInt32("proc_id");
+
+                        if (!_itemProcTemplates.ContainsKey(procId))
+                        {
+                            Logger.Warn($"item_proc_bindings {reader.GetUInt32("id")} references unknown proc {procId}, skipping");
+                            continue;
+                        }
+
+                        if (!_itemProcBindings.TryGetValue(itemId, out var procIds))
+                            _itemProcBindings.Add(itemId, procIds = []);
+
+                        procIds.Add(procId);
                     }
                 }
             }

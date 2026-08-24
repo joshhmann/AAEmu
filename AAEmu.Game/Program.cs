@@ -250,7 +250,32 @@ public static class Program
                 // broadcast). Bots without a route behave like the plain
                 // actor executor (tick-only).
                 services.AddSingleton<BotRoamStepExecutor>();
-                services.AddSingleton<IBotStepExecutor>(sp => sp.GetRequiredService<BotRoamStepExecutor>());
+
+                // G3-B3 goal arbitration (IBotActivityModule seam): modules
+                // negotiate ONE active activity per bot per scheduler wake —
+                // highest priority wins, ties break by registration order.
+                // The existing behaviors are the first modules:
+                //   Schedules(100) — C1 phase behavior when EnableSchedules is on
+                //   PresenceRoam(50) — baseline presence roam (schedules off)
+                //   Idle(0) — terminal fallback (clear route, dormant)
+                services.AddSingleton(_ => BotScheduleOptions.FromEnvironment());
+                services.AddSingleton<RoamRouteScheduleBehavior>();
+                services.AddSingleton<IBotScheduleBehavior>(sp => sp.GetRequiredService<RoamRouteScheduleBehavior>());
+                services.AddSingleton<IBotActivityModule, SchedulePhaseActivityModule>();
+                services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
+                services.AddSingleton<IBotActivityModule, IdleActivityModule>();
+                services.AddSingleton<BotGoalArbiter>();
+                services.AddSingleton<IBotGoalArbiter>(sp => sp.GetRequiredService<BotGoalArbiter>());
+
+                // Production IBotStepExecutor binding: the arbitration
+                // decorator around the roam executor. One arbitration pass per
+                // wake, then the ordinary M5 step. Zero registered modules ⇒
+                // inert pass-through.
+                services.AddSingleton<BotGoalArbiterStepExecutor>(sp =>
+                    new BotGoalArbiterStepExecutor(
+                        sp.GetRequiredService<IBotGoalArbiter>(),
+                        sp.GetRequiredService<BotRoamStepExecutor>()));
+                services.AddSingleton<IBotStepExecutor>(sp => sp.GetRequiredService<BotGoalArbiterStepExecutor>());
 
                 // Control-plane action queue (M5 stage 3): the enqueue-only
                 // path from the WebApi into bot execution. SINGLETON — it

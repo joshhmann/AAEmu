@@ -85,6 +85,14 @@ public class WorldConfig
     public bool GodMode { get; set; }
 
     /// <summary>
+    /// Legacy test behavior: boot open conflict zones straight into the Conflict state.
+    /// Default (false) follows the 1.2 conflict cycle: zones boot into Peace, the
+    /// shielded phase, and escalate via kill counters and the state timer chain.
+    /// Configure in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.ConflictZonesStartAtConflict</c>.
+    /// </summary>
+    public bool ConflictZonesStartAtConflict { get; set; }
+
+    /// <summary>
     /// Enables the loading of NavMesh data for dungeons
     /// </summary>
     public bool GeoDataMode { get; set; }

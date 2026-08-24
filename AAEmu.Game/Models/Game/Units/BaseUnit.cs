@@ -8,6 +8,7 @@ using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.World.Zones;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
 
@@ -121,6 +122,17 @@ public class BaseUnit : GameObject, IBaseUnit
             player.SendMessage(ChatType.Shout, $"CanAttack? in Zone:{zoneFaction.Name} => {player.Name} {player.Faction?.Name} => {targetName} ({target.ObjId}) {target.Faction?.Name} = {relation}");
         }
         */
+
+        // Zone-conflict protection (C6/ZONE-01): while a conflict zone is in Peace,
+        // non-hostile players are shielded from zone-conflict PvP damage. Hostile
+        // relations and the flagged/ForceAttack exceptions above stay attackable.
+        // Zones without a conflict entry fall through unchanged.
+        if (me != null && targetOtherOwner != null && zone != null &&
+            ZoneConflict.BlocksPvpDamage(
+                ZoneManager.Instance.GetConflictByGroup((ushort)zone.GroupId), relation))
+        {
+            return false;
+        }
 
         return relation == RelationState.Hostile;
     }

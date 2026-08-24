@@ -72,6 +72,7 @@ public class Unit : BaseUnit, IUnit
     }
 
     private int _hp;
+    private readonly HashSet<uint> _appliedEquipItemProcs = [];
 
     public int Hp
     {
@@ -1155,6 +1156,7 @@ public class Unit : BaseUnit, IUnit
         ApplyWeaponWieldBuff();
         ApplyArmorGradeBuff(itemAdded, itemRemoved);
         ApplyEquipItemSetBonuses();
+        ApplyEquipItemProcs();
     }
 
     private void ApplyWeaponWieldBuff()
@@ -1256,6 +1258,28 @@ public class Unit : BaseUnit, IUnit
                 }
             }
         }
+    }
+
+    private void ApplyEquipItemProcs()
+    {
+        // Not every unit carries a UnitProcs instance (only characters do)
+        if (Procs == null)
+            return;
+
+        // Recompute the set of procs bound to currently equipped items
+        // (item_proc_bindings) and sync them into UnitProcs.
+        var boundProcs = new HashSet<uint>();
+        foreach (var item in Equipment.GetItemsSnapshot())
+            boundProcs.UnionWith(ItemManager.Instance.GetItemProcBindings(item.TemplateId));
+
+        foreach (var procId in _appliedEquipItemProcs)
+            if (!boundProcs.Contains(procId))
+                Procs.RemoveProc(procId);
+        _appliedEquipItemProcs.IntersectWith(boundProcs);
+
+        foreach (var procId in boundProcs)
+            if (_appliedEquipItemProcs.Add(procId))
+                Procs.AddProc(procId);
     }
 
     private void ApplyArmorGradeBuff(Item itemAdded, Item itemRemoved)

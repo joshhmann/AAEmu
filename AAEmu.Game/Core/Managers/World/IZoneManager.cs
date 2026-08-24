@@ -7,6 +7,7 @@ namespace AAEmu.Game.Core.Managers.World;
 public interface IZoneManager : ILoadable
 {
     ZoneConflict[] GetConflicts();
+    ZoneConflict GetConflictByGroup(ushort zoneGroupId);
     Zone GetZoneById(uint zoneId);
     Zone GetZoneByKey(uint zoneKey);
     ZoneGroup GetZoneGroupById(uint zoneId);

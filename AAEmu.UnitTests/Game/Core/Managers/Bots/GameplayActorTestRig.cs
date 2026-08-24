@@ -2629,6 +2629,7 @@ public sealed class FakeZoneManager : IZoneManager
     public Zone GetZoneByKey(uint zoneKey) => zoneKey == _zoneKey ? _zone : null;
     public Zone GetZoneById(uint zoneId) => zoneId == _zone.Id ? _zone : null;
     public ZoneConflict[] GetConflicts() => [];
+    public ZoneConflict GetConflictByGroup(ushort zoneGroupId) => null;
     public ZoneGroup GetZoneGroupById(uint zoneId) => null;
     public List<uint> GetZoneKeysInZoneGroupById(uint zoneGroupId) => [];
     public uint GetTargetIdByZoneId(uint zoneId) => 0;

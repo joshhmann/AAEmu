@@ -1,4 +1,6 @@
 ﻿using AAEmu.Game.Core.Packets.G2C;
+using AAEmu.Game.GameData;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Units;
 
 namespace AAEmu.Game.Models.Game.Items.Containers;
@@ -9,6 +11,52 @@ public class MateEquipmentContainer : EquipmentContainer
     {
         // Fancy way of getting the last enum value + 1 for equipment slots
         ContainerSize = (int)Enum.GetValues<EquipmentItemSlot>().Max() + 1;
+    }
+
+    public override bool CanAccept(Item item, int targetSlot)
+    {
+        if (item == null)
+            return true; // always allow empty item slot (un-equip a item)
+
+        // Fail closed: this container must belong to a Mate to accept equipment
+        if (ParentUnit is not Units.Mate mate)
+            return false;
+
+        if (targetSlot < 0 || targetSlot >= ContainerSize)
+        {
+            Logger.Warn($"{Owner?.Name ?? mate.Template?.Id.ToString() ?? "?"} ({OwnerId}) tried to equip a item that is out of range of the valid slots {targetSlot}/{ContainerSize}");
+            return false;
+        }
+
+        // Mate legality gate from the mate_equip_* tables:
+        // the item's template must be bound to one of this mate's packs (fail closed
+        // when either side has no data), and the mate's slot pack must allow the
+        // targeted equipment slot.
+        var allowed = MateGameData.Instance.IsMateEquipAllowed(
+            mate.Template.Id, mate.Template.MateEquipSlotPackId,
+            item.TemplateId, (EquipmentItemSlot)targetSlot);
+
+        if (!allowed)
+        {
+            Logger.Warn($"{Owner?.Name ?? "Unknown"} ({OwnerId}) tried to equip a illegal mate equipment {item.Template?.Name} ({item.TemplateId}) on mate npc {mate.Template.Id}, TargetSlot:{(EquipmentItemSlot)targetSlot}");
+            return false;
+        }
+
+        // Level requirement gate (same pattern as EquipmentContainer.CanAccept).
+        // Mate containers normally have no direct Owner character, which makes
+        // base.CanAccept short-circuit before its checks, so evaluate it against
+        // the mate's owner character instead.
+        if (Owner != null)
+            return base.CanAccept(item, targetSlot);
+
+        var ownerChar = mate.GetOwnerCharacter();
+        if (ownerChar != null && item.Template is { LevelRequirement: > 0 } template && template.LevelRequirement > ownerChar.Level)
+        {
+            Logger.Warn($"{ownerChar.Name} ({ownerChar.Id}) tried to equip a item above their level on their mate {item.Template.Name} ({item.TemplateId}), Id:{item.Id}, RequiredLevel:{template.LevelRequirement}, CharacterLevel:{ownerChar.Level}, TargetSlot:{(EquipmentItemSlot)targetSlot}");
+            return false;
+        }
+
+        return true;
     }
 
     public override void OnEnterContainer(Item item, ItemContainer lastContainer, byte previousSlot)

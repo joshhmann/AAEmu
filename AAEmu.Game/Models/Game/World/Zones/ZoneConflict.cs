@@ -1,6 +1,7 @@
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Packets.G2C;
+using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Tasks.Zones;
 
 using NLog;
@@ -30,6 +31,29 @@ public class ZoneConflict(ZoneGroup owner)
     public ZoneConflictType CurrentZoneState { get; protected set; } = ZoneConflictType.Tension;
     public DateTime NextStateTime { get; protected set; } = DateTime.MinValue;
     public uint KillCount { get; protected set; }
+
+    /// <summary>
+    /// True while the zone-conflict cycle is in the Peace state.
+    /// In canonical 1.2, Peace is the shielded phase of a conflict zone:
+    /// non-hostile players there are protected from zone-conflict PvP.
+    /// </summary>
+    public bool IsPeaceProtectionActive => CurrentZoneState == ZoneConflictType.Peace;
+
+    /// <summary>
+    /// True when zone-conflict rules forbid this attacker→victim PvP damage.
+    /// During Peace, players whose faction relation to the attacker is not
+    /// Hostile cannot be damaged through zone-conflict PvP paths. Hostile
+    /// relations (e.g. pirates, flagged enemies) stay attackable.
+    /// </summary>
+    public bool BlocksPvpDamage(RelationState attackerToVictimRelation) =>
+        IsPeaceProtectionActive && attackerToVictimRelation != RelationState.Hostile;
+
+    /// <summary>
+    /// Null-safe variant used by damage-validation chokepoints: zones without a
+    /// conflict entry never block damage (behavior unchanged outside conflict zones).
+    /// </summary>
+    public static bool BlocksPvpDamage(ZoneConflict conflict, RelationState attackerToVictimRelation) =>
+        conflict?.BlocksPvpDamage(attackerToVictimRelation) ?? false;
 
     /// <summary>
     /// Call this function if a PvP kill happens in a zone
@@ -94,7 +118,9 @@ public class ZoneConflict(ZoneGroup owner)
         }
     }
 
-    public void SendSwitchZoneState()
+    // Virtual so headless rigs / unit tests can observe state changes without
+    // touching the TaskManager / WorldManager singletons.
+    public virtual void SendSwitchZoneState()
     {
         // Schedule the next timer FIRST, before broadcasting to clients.
         // This guarantees the timer chain is preserved even if BroadcastPacketToServer

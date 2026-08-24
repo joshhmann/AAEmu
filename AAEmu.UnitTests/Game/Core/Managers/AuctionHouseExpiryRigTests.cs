@@ -59,6 +59,7 @@ public class AuctionHouseExpiryRigTests
         public ItemTemplate GetItemTemplateFromItemId(uint itemId) => throw new NotSupportedException();
         public List<ItemTemplate> GetItemTemplatesForAuctionSearch(AuctionSearch searchTemplate) => [];
         public ItemProcTemplate GetItemProcTemplate(uint templateId) => throw new NotSupportedException();
+        public List<uint> GetItemProcBindings(uint itemId) => [];
         public List<BonusTemplate> GetUnitModifiers(uint itemId) => [];
         public ArmorGradeBuff GetArmorGradeBuff(ArmorType type, ItemGrade grade) => throw new NotSupportedException();
         public Item Create(uint templateId, int count, byte grade, bool generateId = true) => throw new NotSupportedException();

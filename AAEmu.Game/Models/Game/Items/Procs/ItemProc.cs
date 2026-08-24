@@ -13,7 +13,7 @@ public class ItemProc(uint templateId)
     public ItemProcTemplate Template { get; set; } = ItemManager.Instance.GetItemProcTemplate(templateId);
     public DateTime LastProc { get; set; } = DateTime.MinValue;
 
-    public bool Apply(Unit owner, bool ignoreRoll = false)
+    public virtual bool Apply(Unit owner, bool ignoreRoll = false)
     {
         if (DateTime.UtcNow < LastProc.AddSeconds(Template.CooldownSec))
             return false;
