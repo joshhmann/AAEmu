@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-22 · by Codex (M7 Party v1 slice 2 + cold-start fox follow-up)
-Branch of record: develop @ 2549d487e (origin/develop)
+Updated: 2026-08-23 · by Codex (M7 party spike COMPLETE + mechanics sweep)
+Branch of record: develop @ f3bb787ce (origin/develop)
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
@@ -119,9 +119,10 @@ threat→bot vector, recovers (configured heal item through the real UseItem
 path when bagged; out-of-combat regen fallback), and re-engages at 0.8 —
 bounded rounds fail CLOSED with Starvation. Rig E-M7-3/4/5 green; live
 exercise awaits level-appropriate content (foxes can't hurt the level-50
-spike bot — recorded). Potion data note: no low-level direct-heal potion in
-canonical compact.sqlite3 (retail heal pots are buff-tick shaped) —
-HealItemTemplateId defaults to 0 until the right template is verified.
+spike bot — recorded). Potion data note **CORRECTED 2026-08-23** (the old
+"no direct-heal potion" claim was WRONG): direct-heal potions DO exist —
+8515/8518/15580/15581 verified in canonical compact.sqlite3 —
+HealItemTemplateId default flipped 0→8518 (c98da8a53).
 Spike shortcuts on the record: level-50 provisioning, straight-line Move (no
 pathfinding), death/resurrection (**RESOLVED 2026-08-20** —
 scheduler death watch + CharacterResurrection, see M6 exit blockers below).
@@ -220,6 +221,45 @@ or a leader without a target. Rig `PartyFollowAssistScenarioRigTests` 4/4
 green: distant follow + assist, in-formation hold + assist, non-party
 pre-flight refusal, and no-target refusal. Full gate 2163/0/1. Remaining:
 M7 party spike. H UNKNOWN.
+**M7 PARTY SPIKE COMPLETE 2026-08-23 (c98da8a53)** — `PartySpikeScenario`
+(template m7-party-spike): a real 3-bot party completes rally → assist →
+kill of elite NPC 1870 inside the leash window — live E2E PASS over the
+generalized multi-actor bridge seam (`HandlePartyFollowAssistScenario`
+generalized to N actors). Causal cast-effect traces landed in the same pass:
+ActorAuditRecord v2 additive fields target_hp_before/target_hp_after,
+effect_observed, effect_wait_ms (delayed effects now distinguishable from
+failed hits). **Party v1 feature list COMPLETE — Adventurer v1 (2026-08-20)
+AND Party v1 both done; scheduling unblocked.** H UNKNOWN.
+
+**2026-08-23 mechanics sweep (8c198f13d → f3bb787ce, all pushed, gate green
+at each step):** C2 social v1 — BotChatterService, 8 archetypes × 4 lines,
+cooldowns/budgets/combat-suppressed, default OFF (Bots.EnableChatter /
+AAEMU_BOT_CHATTER_ENABLED); movement stuck detection — NoProgressWindow 2.5s
+→ TimedOut(Navigation) "stuck" + one unstick nudge. C1 schedules v1 —
+BotScheduleService Home/Work/Travel/Rest phase machine w/ hysteresis,
+persisted additively inside the schedule JSON blob (B4 byte-equality
+preserved), default OFF (Bots.EnableSchedules / AAEMU_BOT_SCHEDULES_ENABLED);
+economy day-cycle v0 (m8-economy-cycle-v0) — buy seed→plant→harvest→craft→
+sell→deposit with explicit ledger + reconciliation laws, live E2E incl.
+kill -9 restart ledger-equality PASS. Engine/harness hardening — equip
+level_requirement gate in EquipmentContainer.CanAccept (engine hole closed);
+M51AttachedPackRestartE2eTests closes the M5.1 attached-pack GAP FLAG
+(survives kill -9, PASS ×2); M3aM4ReplayScenario warm-world AuditTrace.Last
+crash fix; E2eStack.CleanupBotRows SQL IN-list fix; silent-catch sweep
+80→0. A6 manifest provisioning — presence_manifest.json (Bots.PresenceManifest
+/ AAEMU_PRESENCE_MANIFEST), AAEMU_PRESENCE_MAX_BOTS clamp default 10;
+QuestActEtcItemObtain credit path (~51 live quests fixed); hauler leg on the
+economy cycle (pack craft→LoadPackOntoVehicle→DriveVehicle→gold trader→
+deposit); mail ReturnMail + expiry bounce/destruction semantics
+(CSReturnMailPacket opcode confirmed 0xfff placeholder — NOT registered).
+Trade functional (TRADE-01): OkTrade cancel-then-finish KeyNotFoundException
+fixed; both-locked AND both-ok gate (was !a && !b single-side exploit);
+TradeOffer/TradePutup/TradeLockOk contract actions;
+TradeHandshakeScenarioRigTests 5/5. Auction expiry sweep hardened (per-lot
+isolation, null-safe missing-item expiry, mail-fail no longer wedges lots,
+_auctionTaskScheduled guard); AuctionHouseRestartE2eTests PASS (post→buy→
+settle→expiry-mail across kill -9, 3m26s); E2eStack.RestartGameServer(afterStop)
+seam.
 
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
@@ -339,6 +379,13 @@ deploy is a separate Josh decision.
 
 ## Last scorecard update
 
+- 2026-08-23 — this commit: SCORECARD promotions from the 08-23 sweep —
+  AUCTION-01 W/A/R → 2 (live E2E incl. kill -9 restart pin, strongest of the
+  sweep) · TRADE-01 W=2/A=1 (trade handshake rig + engine fixes; A stays
+  honest: rig-level) · PARTY-01 W=2/A=1 (party spike live E2E c98da8a53) ·
+  MAIL-01 A=1 (return+expiry rig-tested; CSReturnMailPacket opcode still an
+  unregistered 0xfff placeholder) · QUEST-01 EtcItemObtain credit note
+  (~51 quests). H stays UNKNOWN everywhere. Branch of record → f3bb787ce.
 - 2026-08-13 — **canonical sync (t_c9f0d7f6)**: M5.1 recovery plan recorded —
   Kimi memo + Codex reconciliation (salvage order Deposit/Withdraw → Harvest →
   BoardVehicle → Craft split with card ids; work preserved, no

@@ -1457,7 +1457,14 @@ Split by archetype, not one universal mind.
   scenario composition over `MoveToUnit` and `SetTarget`, with real active
   party/owner/world pre-flights and fail-closed no-leader-target behavior;
   rig PartyFollowAssistScenarioRigTests 4 green, full gate 2163/0/1.
-  Remaining: party spike)*
+  Remaining: party spike — **DONE 2026-08-23 @ c98da8a53**:
+  `PartySpikeScenario` (template m7-party-spike) ran a real 3-bot party
+  through rally → assist → kill of elite NPC 1870 inside the leash window as
+  LIVE E2E PASS over the generalized multi-actor bridge seam
+  (`HandlePartyFollowAssistScenario` generalized to N actors), with causal
+  cast-effect traces (ActorAuditRecord v2 additive fields
+  target_hp_before/target_hp_after, effect_observed, effect_wait_ms).
+  **Party v1 feature list COMPLETE.**)*
 
 **Exit test:** one human + three bots complete the curated leveling route
 and a selected group encounter.
@@ -1500,6 +1507,18 @@ reproduced, its root cause remains UNKNOWN, and no speculative Npc AI change
 is authorized by this evidence. A second local repeat stalled during harness
 startup before producing a scenario report and is not gameplay evidence.
 
+**Party spike — DONE (2026-08-23, c98da8a53):** `PartySpikeScenario`
+(template m7-party-spike): one real party of 3 bots completes rally →
+assist → kill of elite NPC 1870 inside the leash window — live E2E PASS.
+The multi-actor bridge seam landed with it (`HandlePartyFollowAssistScenario`
+generalized to N actors — forward-queue item 1), plus causal cast-effect
+traces: ActorAuditRecord v2 additive fields target_hp_before/target_hp_after,
+effect_observed, effect_wait_ms (forward-queue item 4 — delayed effects are
+now distinguishable from failed hits). With this pass **Adventurer v1
+(2026-08-20) AND Party v1 feature lists are both COMPLETE.** The M7 exit
+(one human + three bots on the curated route + a selected group encounter)
+remains open; H stays UNKNOWN — Josh confirms feel.
+
 **Forward hardening queue (2026-08-22; non-blocking, ordered for M7→M8):**
 
 1. **Party spike first** — one real party completes a selected group
@@ -1508,6 +1527,11 @@ startup before producing a scenario report and is not gameplay evidence.
    `PartyFollowAssistScenario` is currently rig-only: give multi-actor
    scenarios an explicit `BotScenarioRunner` template/bridge execution seam
    before counting the feature as live E2E coverage.
+   **DONE 2026-08-23 (c98da8a53):** bridge execution seam landed —
+   `HandlePartyFollowAssistScenario` generalized to N actors;
+   `PartySpikeScenario` (m7-party-spike) ran the real 3-bot rally→assist→
+   kill as LIVE E2E PASS. Role/avoid-extra-pull/mount-together legs remain
+   open scenario work.
 2. **Party lifecycle fault matrix** — exercise leader/member death,
    disconnect, restart, world change, invitation retry, target death, and
    leash/return while preserving party membership, no duplicate work, and
@@ -1519,6 +1543,10 @@ startup before producing a scenario report and is not gameplay evidence.
 4. **Causal traces** — standardize action accepted → effect observed → target
    state change → bounded timeout/failure reason. This distinguishes delayed
    effects from failed hits and makes a recurrence of the fox issue diagnosable.
+   **DONE 2026-08-23 (c98da8a53):** ActorAuditRecord v2 additive fields
+   target_hp_before/target_hp_after + effect_observed/effect_wait_ms give
+   exactly that chain — cast accepted → effect observed within a bounded
+   wait, with the target HP delta on the record.
 5. **Group movement and navigation** — replace curated straight-line movement
    workarounds with terrain/obstacle-aware movement, formation cohesion, and
    explicit stuck recovery before dungeon-scale party scenarios.
@@ -1533,6 +1561,22 @@ startup before producing a scenario report and is not gameplay evidence.
    matrix (rig, isolated E2E, integrated route, human-feel status) and add
    controlled disconnect, server restart, delayed-effect, and persistence
    fault cases to the reusable harness.
+9. **C2 social v1 — DONE 2026-08-23 (8c198f13d):** BotChatterService, 8
+   archetypes × 4 canned lines, cooldowns/budgets/combat-suppressed, default
+   OFF via Bots.EnableChatter / AAEMU_BOT_CHATTER_ENABLED (G4/C2 + M8.5a).
+10. **Movement stuck detection — DONE 2026-08-23 (8c198f13d):**
+   NoProgressWindow 2.5s → TimedOut(Navigation) "stuck" + one unstick nudge
+   (the stuck-recovery slice of queue item 5; terrain-aware group movement
+   itself stays open).
+11. **C1 schedules v1 — DONE 2026-08-23 (62f13fdc7):** BotScheduleService
+   Home/Work/Travel/Rest phase machine with hysteresis, persisted additively
+   inside the schedule JSON blob (B4 restart byte-equality preserved),
+   default OFF via Bots.EnableSchedules / AAEMU_BOT_SCHEDULES_ENABLED.
+12. **Economy day-cycle v0 — DONE 2026-08-23 (62f13fdc7,
+   m8-economy-cycle-v0):** buy seed → plant → harvest → craft → sell →
+   deposit with explicit ledger + reconciliation laws; live E2E incl. kill -9
+   restart ledger-equality PASS. Hauler leg added same day (6b2f15a6d):
+   pack craft → LoadPackOntoVehicle → DriveVehicle → gold trader → deposit.
 
 These are test-platform investments, not a claim that bots can replace the
 Josh-owned human-feel gates; client feel, visual correctness, and balance
