@@ -26,9 +26,10 @@ public class DoodadFuncBuyFish : DoodadFuncTemplate
 
             owner.ItemTemplateId = backpack.TemplateId; // to display the phase animation correctly for doodad
 
-            // TODO receiving money and removing the back pack
+            // Sell the fish bundle: single currency credit through the normal
+            // money path (the previous code credited `Money += total` AND
+            // AddMoney — double-paying the seller).
             var total = backpack.Template.Refund;
-            character.Money += total;
 
             character.Equipment.RemoveItem(ItemTaskType.SkillEffectConsumption, backpack, true);
             character.AddMoney(SlotType.Inventory, total);
