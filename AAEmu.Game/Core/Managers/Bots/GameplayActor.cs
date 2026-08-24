@@ -355,6 +355,86 @@ public class GameplayActor : IGameplayActor
         return Reject(request, ActorFailureReason.RejectedAction, $"skill {skillId} refused: {result}");
     }
 
+    public ActorRequest CastAt(uint skillId, Vector3 position, string? idempotencyKey = null)
+    {
+        // REQ-M5.3-7 (carries REQ-M5-10): every action executes only on the
+        // A1 marshal seam — CastAt mutates Character/world state.
+        ExecutionBoundary.AssertOnExecutionThread("CastAt");
+
+        var request = NewRequest(ActorActionType.CastAt, 0, position, skillId: skillId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "cast at"))
+            return request;
+
+        if (!position.IsFinite())
+            return Reject(request, ActorFailureReason.RejectedAction, "cast position must be finite");
+
+        // Validation gate 1: the skill template must exist (same gate as Cast).
+        var template = SkillManager.Instance.GetSkillTemplate(skillId);
+        if (template == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"unknown skill {skillId}");
+
+        // Validation gate 2: the character must actually know the skill
+        // (learned, default/common, or a variant of one) — same rule the
+        // CSStartSkillPacket learned-skill branch applies (identical to Cast;
+        // fishing 21571 passes through need_learn=f → common/default surface).
+        var known = Character.Skills?.Skills.ContainsKey(skillId) == true
+                    || Character.Skills?.IsVariantOfSkill(skillId) == true
+                    || SkillManager.Instance.IsDefaultSkill(skillId)
+                    || SkillManager.Instance.IsCommonSkill(skillId);
+        if (!known)
+            return Reject(request, ActorFailureReason.RejectedAction, $"skill {skillId} not learned");
+
+        // Validation gate 3: reagent availability — a pre-flight mirror of the
+        // engine's skill_reagents consumption (ApplyReagents / ShipyardManager
+        // pattern): refuse BEFORE the engine call so a reagent-less cast can
+        // never start its plot. A skill without reagents skips this gate.
+        var inventory = Character.Inventory;
+        if (inventory == null && SkillManager.Instance.GetSkillReagentsBySkillId(skillId).Count > 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+        foreach (var reagent in SkillManager.Instance.GetSkillReagentsBySkillId(skillId))
+        {
+            if (inventory!.GetItemsCount(reagent.ItemId) < reagent.Amount)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"missing reagent item {reagent.ItemId} x{reagent.Amount} for skill {skillId}");
+        }
+
+        request.Start($"casting {skillId} at ({position.X:F1},{position.Y:F1},{position.Z:F1})");
+
+        // Execute through the REAL engine path — the SAME seam the
+        // CSStartSkillPacket Pos-target branch drives: Skill.Use with a unit
+        // SkillCaster and a SkillCastPositionTarget. The engine's
+        // GetInitialTarget SkillTargetType.Pos case resolves that target into
+        // a detached position unit (SetInitialTarget), which is what plot 809
+        // and friends consume. bypassGcd=true mirrors Unit.UseSkill (the
+        // Character.UseSkill call shape the existing Cast action rides).
+        var skill = new Skill(template);
+        var caster = SkillCaster.GetByType(SkillCasterType.Unit);
+        caster.ObjId = Character.ObjId;
+        var castTarget = SkillCastTarget.GetByType(SkillCastTargetType.Position);
+        if (castTarget is SkillCastPositionTarget positionTarget)
+        {
+            positionTarget.PosX = position.X;
+            positionTarget.PosY = position.Y;
+            positionTarget.PosZ = position.Z;
+            // PosRot is client-facing yaw; a bot has no facing semantics for a
+            // water cast — 0 matches a north-facing caster.
+            positionTarget.PosRot = 0f;
+        }
+
+        var result = skill.Use(Character, caster, castTarget, null, true, out _);
+        if (result == SkillResult.Success)
+        {
+            // Plot-only skills (fishing 21571) return Success at PLOT START:
+            // their labor/loot effects land asynchronously through the plot
+            // runtime (channeling + bite chance), NOT synchronously with this
+            // call. Completion here means "the cast was accepted and the
+            // engine started it" — outcome observation is the controller's job
+            // (the same async-effect stance the unit-target Cast takes).
+            return Complete(request, result, $"skill {skillId} cast at position succeeded");
+        }
+        return Reject(request, ActorFailureReason.RejectedAction, $"skill {skillId} refused: {result}");
+    }
+
     public bool Interrupt(Guid traceId)
     {
         if (_active == null || _active.TraceId != traceId || _active.IsTerminal)

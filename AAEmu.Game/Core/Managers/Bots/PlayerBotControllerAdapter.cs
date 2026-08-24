@@ -61,6 +61,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest Cast(uint skillId, uint targetObjId, string? idempotencyKey = null)
         => Actor.Cast(skillId, targetObjId, idempotencyKey);
 
+    public ActorRequest CastAt(uint skillId, System.Numerics.Vector3 position, string? idempotencyKey = null)
+        => Actor.CastAt(skillId, position, idempotencyKey);
+
     public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null)
         => Actor.Interact(doodadObjId, skillId, idempotencyKey);
 

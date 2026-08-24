@@ -5,19 +5,6 @@
 > Engine: real QuestManager.Load + real unit_reqs from canonical compact.sqlite3;
 > bots = ordinary Character records (no Connection); all mutations through normal gameplay services.
 
-## level22-gate
-```
-# Scenario: level22-gate
-Verdict: PASS
-- gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
-- stage START: 0 events, advance=ran, step=Ready, status=Ready
-- stage READY: 1 events, advance=skipped (quest terminal), step=Dropped, status=Completed
-- criterion [quest-168-completed]: PASS quest 168 completed (flag set, not active)
-- criterion [level-at-22]: PASS level 22 >= 22
-- actor requests: 4
-
-```
-
 ## deposit-withdraw-cycle
 ```
 # Scenario: deposit-withdraw-cycle
@@ -30,6 +17,19 @@ Verdict: PASS
 - criterion [bag-item-restored]: PASS Inventory holds 5 of item 15589 (expected 5)
 - criterion [bank-item-empty]: PASS Bank holds 0 of item 15589 (expected 0)
 - actor requests: 4
+
+```
+
+## level22-gate
+```
+# Scenario: level22-gate
+Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' failed: quest 168 not completed: active=True, flag=False
+- gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
+- stage START: 0 events, advance=ran, step=Ready, status=Ready
+- stage READY: 1 events, advance=ran, step=Ready, status=Ready
+- stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
+- criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
+- actor requests: 6
 
 ```
 
@@ -65,13 +65,13 @@ Verdict: PASS
 ## level22-gate
 ```
 # Scenario: level22-gate
-Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' failed: quest 168 not completed: active=True, flag=False
+Verdict: PASS
 - gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
 - stage START: 0 events, advance=ran, step=Ready, status=Ready
-- stage READY: 1 events, advance=ran, step=Ready, status=Ready
-- stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
-- criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
-- actor requests: 6
+- stage READY: 1 events, advance=skipped (quest terminal), step=Dropped, status=Completed
+- criterion [quest-168-completed]: PASS quest 168 completed (flag set, not active)
+- criterion [level-at-22]: PASS level 22 >= 22
+- actor requests: 4
 
 ```
 

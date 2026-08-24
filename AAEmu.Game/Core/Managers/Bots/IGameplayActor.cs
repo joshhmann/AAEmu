@@ -97,6 +97,22 @@ public interface IGameplayActor
     ActorRequest Cast(uint skillId, uint targetObjId, string? idempotencyKey = null);
 
     /// <summary>
+    /// Casts a position-target skill through the real engine path — the same
+    /// Skill.Use seam CSStartSkillPacket's Pos-target branch drives, with a
+    /// SkillCastPositionTarget constructed from <paramref name="position"/>
+    /// (the engine's GetInitialTarget SkillTargetType.Pos case resolves it to
+    /// a detached position unit). This is the entry point for skills the unit-
+    /// target <see cref="Cast"/> cannot reach (fishing 21571, target_type=Pos).
+    /// Validates: skill template exists, character knows the skill, reagent
+    /// available in inventory (skill_reagents pre-flight mirror), finite
+    /// position. Engine refusal maps to Rejected(RejectedAction).
+    /// Plot-only skills return Success at plot start; their delayed effects
+    /// (labor, loot) land asynchronously through the plot runtime and are NOT
+    /// part of this request's completion semantics.
+    /// </summary>
+    ActorRequest CastAt(uint skillId, Vector3 position, string? idempotencyKey = null);
+
+    /// <summary>
     /// Interacts with a doodad through the real engine path (Doodad.Use —
     /// the same call the interaction skills / Interactions make). skillId 0
     /// executes the skill-less loot-func branch (LootItem/LootPack/
@@ -736,7 +752,10 @@ public enum ActorActionType : byte
     TradePutup = 37,
 
     /// <summary>Locking + oking the trade through TradeManager.LockTrade + ConfirmTrade (the CSTradeLock/CSTradeOk packet paths).</summary>
-    TradeLockOk = 38
+    TradeLockOk = 38,
+
+    /// <summary>Position-target skill cast through Skill.Use with a SkillCastPositionTarget (the CSStartSkillPacket Pos branch — fishing et al.).</summary>
+    CastAt = 39
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

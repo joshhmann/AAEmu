@@ -43,6 +43,8 @@ using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Buffs;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Effects.Enums;
+using AAEmu.Game.Models.Game.Skills.Plots;
+using AAEmu.Game.Models.Game.Skills.Plots.Tree;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Slaves;
 using AAEmu.Game.Models.Game.Team;
@@ -92,6 +94,19 @@ public static class GameplayActorTestRig
     /// </summary>
     public const uint TestItemTemplateId = 1234;
     public const uint TestItemUseSkillId = 90002;
+
+    /// <summary>
+    /// Position-target skill seed (CastAt tests): a real SkillTemplate with
+    /// TargetType.Pos carrying a minimal live Plot tree, plus a one-unit
+    /// reagent mapping onto <see cref="TestItemTemplateId"/> (the worm slot)
+    /// so the reagent pre-flight gate and its engine-true backstop both run.
+    /// NOTE: 90003 is taken by GameplayActorM53CoreSurfaceTests.SeedCooldownSkill
+    /// (its missing-only seed would silently adopt THIS template otherwise).
+    /// </summary>
+    public const uint TestPosSkillId = 90004;
+    public const uint TestPosPlotId = 9001;
+    /// <summary>Delay (ms) on the seeded plot's second event — keeps the plot state alive long enough for tests to observe it deterministically.</summary>
+    public const int TestPosPlotChildDelayMs = 1200;
 
     /// <summary>Object id assigned to the actor character (nonzero, registered in its world).</summary>
     public const uint ActorObjId = 0x1001;
@@ -496,6 +511,80 @@ public static class GameplayActorTestRig
                 Amount = 1
             };
         }
+
+        // Position-target skill (CastAt tests): TargetType.Pos so the engine's
+        // GetInitialTarget Pos case resolves the SkillCastPositionTarget, and
+        // a minimal live plot so the plot-start seam (Template.Plot.RunAsync)
+        // runs exactly like a real plot-only skill (fishing 21571). The
+        // worm-slot reagent mapping rides the same ordinary consumption path.
+        if (!skills.ContainsKey(TestPosSkillId))
+        {
+            skills[TestPosSkillId] = new SkillTemplate
+            {
+                Id = TestPosSkillId,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 100,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Pos,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target,
+                PlotOnly = true,
+                Plot = BuildMinimalPlot(TestPosPlotId, TestPosPlotChildDelayMs)
+            };
+        }
+        if (reagents != null && !reagents.ContainsKey(TestPosSkillId))
+        {
+            reagents[TestPosSkillId] = new SkillReagent
+            {
+                SkillId = TestPosSkillId,
+                ItemId = TestItemTemplateId,
+                Amount = 1
+            };
+        }
+    }
+
+    /// <summary>
+    /// Builds a minimal but REAL plot tree: root event → delayed second event.
+    /// Both events resolve source/target to the original caster (update-method
+    /// ids 1 = OriginalSource), carry no conditions/effects, and the child's
+    /// ParentNextEvent delay keeps the plot state alive long enough for tests
+    /// to observe the start → end lifecycle deterministically headless. This
+    /// is the same runtime surface plot 809 (fishing) executes through — only
+    /// the event payload differs.
+    /// </summary>
+    private static Plot BuildMinimalPlot(uint plotId, int childDelayMs)
+    {
+        const uint originalSourceUpdateMethod = 1;
+
+        var tree = new PlotTree(plotId);
+        var rootEvent = new PlotEventTemplate
+        {
+            Id = 1,
+            PlotId = plotId,
+            Tickets = 1,
+            SourceUpdateMethodId = originalSourceUpdateMethod,
+            TargetUpdateMethodId = originalSourceUpdateMethod
+        };
+        var childEvent = new PlotEventTemplate
+        {
+            Id = 2,
+            PlotId = plotId,
+            Tickets = 1,
+            SourceUpdateMethodId = originalSourceUpdateMethod,
+            TargetUpdateMethodId = originalSourceUpdateMethod
+        };
+        var rootNode = new PlotNode { Tree = tree, Event = rootEvent };
+        var childNode = new PlotNode
+        {
+            Tree = tree,
+            Parent = rootNode,
+            Event = childEvent,
+            ParentNextEvent = new PlotNextEvent { Id = 2, Event = childEvent, Delay = childDelayMs }
+        };
+        rootNode.Children.Add(childNode);
+        tree.RootNode = rootNode;
+        return new Plot { Id = plotId, Tree = tree };
     }
 
     /// <summary>
