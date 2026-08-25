@@ -2183,6 +2183,12 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
 - A3 (M) PopulationDirector O(1): incremental per-zone/per-activity counters;
   RefreshPressure on a 5s timer (never called today); human-proximity wake
   trigger. Acceptance: 1,000-bot wake storm transition p99 < 100ms.
+  **Progress 2026-08-25 (d6cabcfd4): RefreshPressure DRIVEN** — proximity-
+  fidelity sweep runs it once per interval; human-proximity tier ladder
+  (Full ≤75m / Reduced ≤200m / Dormant beyond, 2-sweep hysteresis, safety
+  gate respected, Wake() re-arms stepping) landed behind
+  Bots.EnableProximityFidelity (default OFF). Remaining A3: incremental
+  per-zone/activity counters + the 1,000-bot wake-storm acceptance number.
 - A4 (M) Save scalability: per-character dirty tracking + batching.
   Acceptance: autosave p95 < 2s at 250 characters; zero _isSaving skips.
   ✅ implementation merged 5ed5d6493 (2026-08-10, t_8c18eb1c, Rei gate
