@@ -664,6 +664,19 @@ public sealed class BotDriveBridge
                     state = connection.State.ToString(),
                     activeQuests = character.Quests.ActiveQuests.Count
                 });
+            case "charPos":
+                // Read-only diagnostic (PB-003 exit E2E): engine-truth transform
+                // for the bot, independent of GM command access levels.
+                return Ok(new
+                {
+                    x = character.Transform.World.Position.X,
+                    y = character.Transform.World.Position.Y,
+                    z = character.Transform.World.Position.Z,
+                    zoneId = character.Transform.ZoneId,
+                    instanceId = character.Transform.InstanceId,
+                    worldId = character.ParentWorld?.Id ?? 0u,
+                    worldName = character.ParentWorld?.Template.Name ?? string.Empty
+                });
             default:
                 return Err($"unknown drive op '{op}'");
         }
