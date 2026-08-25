@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Create a Mai prod-deploy handoff card for a verified AAEmu commit.
+set -euo pipefail
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: aaemu-prod-intake <sha> [--note TEXT] [--scope TEXT] [--repo PATH] [--dry-run]
+
+Creates a Kanban handoff for Mai. This script never deploys or mutates prod.
+EOF
+  exit 2
+}
+
+sha=""
+note="OpenCode reports this commit is ready for production deployment."
+scope="presence-demo / CT 133"
+repo="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+dry_run=0
+
+while (($#)); do
+  case "$1" in
+    --note)  (($# >= 2)) || usage; note="$2"; shift 2 ;;
+    --scope) (($# >= 2)) || usage; scope="$2"; shift 2 ;;
+    --repo)  (($# >= 2)) || usage; repo="$2"; shift 2 ;;
+    --dry-run) dry_run=1; shift ;;
+    -h|--help) usage ;;
+    -*) echo "unknown option: $1" >&2; usage ;;
+    *) [[ -z "$sha" ]] || { echo "only one SHA may be supplied" >&2; usage; }; sha="$1"; shift ;;
+  esac
+done
+
+[[ -n "$sha" ]] || usage
+[[ "$sha" =~ ^[0-9a-fA-F]{7,40}$ ]] || { echo "invalid SHA: use 7-40 hexadecimal characters" >&2; exit 1; }
+[[ -d "$repo/.git" ]] || { echo "not a git worktree: $repo" >&2; exit 1; }
+
+# Resolve the repository and verify the exact object without fetching or changing it.
+sha_full="$(git -C "$repo" rev-parse --verify "$sha^{commit}" 2>/dev/null)" || {
+  echo "commit not found in $repo: $sha" >&2; exit 1;
+}
+commit_subject="$(git -C "$repo" log -1 --format=%s "$sha_full")"
+commit_author="$(git -C "$repo" log -1 --format='%an <%ae>' "$sha_full")"
+
+# Production intake is fork-develop only. Require the remote tip to be present
+# locally, but do not fetch automatically: OpenCode must hand off a known state.
+if ! git -C "$repo" show-ref --verify --quiet refs/remotes/origin/develop; then
+  echo "missing origin/develop; fetch and retry (no fetch is performed by this script)" >&2
+  exit 1
+fi
+if ! git -C "$repo" merge-base --is-ancestor "$sha_full" refs/remotes/origin/develop; then
+  echo "SHA is not an ancestor of origin/develop; refusing prod handoff: $sha_full" >&2
+  exit 1
+fi
+
+repo_name="$(basename "$repo")"
+short_sha="$(git -C "$repo" rev-parse --short=12 "$sha_full")"
+title="AAEmu prod deploy handoff ${short_sha}"
+body=$(cat <<EOF
+## OpenCode → Mai production handoff
+
+OpenCode reports this commit is ready for Mai's production deployment runbook.
+
+- **Repository:** ${repo_name}
+- **Commit:** ${sha_full}
+- **Subject:** ${commit_subject}
+- **Author:** ${commit_author}
+- **Scope:** ${scope}
+- **Requested note:** ${note}
+
+## Required Mai execution
+
+- Re-verify the SHA against fork origin/develop before deployment.
+- Follow the AAEmu CT 133 prod runbook, including rollback tag first.
+- Build/retag the production image, force-recreate only the intended service,
+  verify health and the startup bar, then record deployment evidence.
+- Never push to or open a PR against upstream AAEmu/AAEmu.
+
+This card is an intake signal only. Creating it does not deploy anything.
+EOF
+)
+
+if ((dry_run)); then
+  printf 'title=%s\nsha=%s\nrepo=%s\nscope=%s\n' "$title" "$sha_full" "$repo_name" "$scope"
+  printf '%s\n' "$body"
+  exit 0
+fi
+
+command -v hermes >/dev/null || { echo "hermes CLI not found" >&2; exit 1; }
+hermes kanban create "$title" \
+  --body "$body" \
+  --assignee mai \
+  --priority 80 \
+  --created-by opencode \
+  --idempotency-key "aaemu-prod-intake-${sha_full}" \
+  --json
+
+printf 'Created Mai prod-deploy handoff for %s. No production changes were made.\n' "$sha_full" >&2
