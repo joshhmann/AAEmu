@@ -228,26 +228,22 @@ public class AiGeoDataManager(WorldTemplate worldTemplate)
             }
         }
 
-        // Check all eligible chunks
+        // Check all eligible chunks — each loader answers via its lazily built
+        // 256 m block spatial grid instead of scanning every node of every reader.
         foreach (var bLoader in toCheckChunkList)
         {
             if (bLoader == null)
                 continue;
-            foreach (var netMission in bLoader.NetMissionReaders)
+            var candidate = bLoader.FindClosestNetMissionNode(pos);
+            if (candidate == null)
+                continue;
+            var distance = Vector3.Distance(candidate.Pos, pos);
+            if (distance < minDist)
             {
-                foreach (var (_, nodeDescriptor) in netMission.NodeDescriptorList)
-                {
-                    var distance = (nodeDescriptor.Pos - pos).Length();
-                    if (distance < minDist)
-                    {
-                        closestPointFound = nodeDescriptor;
-                        minDist = distance;
-                    }
-                }
+                closestPointFound = candidate;
+                minDist = distance;
             }
         }
-
-        // Logger.Warn($"# Found near position index: {index}...");
         return closestPointFound;
     }
 
@@ -270,46 +266,27 @@ public class AiGeoDataManager(WorldTemplate worldTemplate)
             var bai = worldTemplate.GetBaiByPos(pos);
             if (bai != null)
             {
-                if (bai.NetMissionReaders.Count > 0)
+                // Exact nearest netmission node and obstacle vertex of this block via the
+                // lazily built spatial grid; ties resolve to the netmission node, matching
+                // the previous reader-ordered scan.
+                var closestNode = bai.FindClosestNetMissionNode(pos);
+                if (closestNode != null)
                 {
-                    foreach (var netMission in bai.NetMissionReaders)
-                    {
-                        foreach (var (_, nodeDescriptor) in netMission.NodeDescriptorList)
-                        {
-                            var dist = (nodeDescriptor.Pos - pos).Length();
-                            if (dist < closestDistance)
-                            {
-                                closestDistance = dist;
-                                closestPoint = nodeDescriptor.Pos;
-                                // Slightly optimize if very close to target point
-                                if (closestDistance < 0.01f)
-                                {
-                                    return closestPoint.Z;
-                                }
-                            }
-                        }
-                    }
+                    closestDistance = Vector3.Distance(closestNode.Pos, pos);
+                    closestPoint = closestNode.Pos;
+                    // Slightly optimize if very close to target point
+                    if (closestDistance < 0.01f)
+                        return closestPoint.Z;
                 }
 
-                if (bai.VertexMissionReaders.Count > 0)
+                var closestVertex = bai.FindClosestVertexPoint(pos, out var vertexDistance);
+                if (vertexDistance < closestDistance)
                 {
-                    foreach (var vertexMission in bai.VertexMissionReaders)
-                    {
-                        foreach (var obstacleDataDescriptor in vertexMission.ObstacleDataDescriptorList)
-                        {
-                            var dist = (obstacleDataDescriptor.Pos - pos).Length();
-                            if (dist < closestDistance)
-                            {
-                                closestDistance = dist;
-                                closestPoint = obstacleDataDescriptor.Pos;
-                                // Slightly optimize if very close to target point
-                                if (closestDistance < 0.01f)
-                                {
-                                    return closestPoint.Z;
-                                }
-                            }
-                        }
-                    }
+                    closestDistance = vertexDistance;
+                    closestPoint = closestVertex;
+                    // Slightly optimize if very close to target point
+                    if (closestDistance < 0.01f)
+                        return closestPoint.Z;
                 }
             }
             

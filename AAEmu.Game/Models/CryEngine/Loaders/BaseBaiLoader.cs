@@ -15,6 +15,10 @@ public class BaseBaiLoader(WorldTemplate parentWorldTemplate)
     private WorldTemplate ParentWorldTemplate { get; } = parentWorldTemplate;
     public List<AreasMissionReader> AreasMissionReaders { get; } = [];
     public List<NetMissionReader> NetMissionReaders { get; } = [];
+    private BaiPointGrid<NodeDescriptor> _netMissionGrid;
+    private BaiPointGrid<Vector3> _vertexGrid;
+    private readonly Lock _gridLock = new();
+
     public List<VertexMissionReader> VertexMissionReaders { get; } = [];
     public List<NetMissionReader> HideMissionReaders { get; } = [];
 
@@ -248,35 +252,76 @@ public class BaseBaiLoader(WorldTemplate parentWorldTemplate)
         NetMissionReaders.Clear();
         VertexMissionReaders.Clear();
         HideMissionReaders.Clear();
+        lock (_gridLock)
+        {
+            Volatile.Write(ref _netMissionGrid, null);
+            Volatile.Write(ref _vertexGrid, null);
+        }
     }
 
-    public NodeDescriptor FindClosestNetMissionNode(Vector3 pos)
+    /// <summary>
+    /// Lazily built exact nearest-node index over this loader's NetMission readers
+    /// (one loaded 256 m path-block). Built once on first query; never for unloaded blocks.
+    /// </summary>
+    private BaiPointGrid<NodeDescriptor> NetMissionGrid
     {
-        NodeDescriptor nearestNode = null;
-        var nearestDistance = float.MaxValue;
-        foreach (var netMissionReader in NetMissionReaders)
+        get
         {
-            foreach (var (index, nodeDescriptor) in netMissionReader.NodeDescriptorList)
+            var grid = Volatile.Read(ref _netMissionGrid);
+            if (grid != null)
+                return grid;
+            lock (_gridLock)
             {
-                if (nearestNode == null)
+                if (_netMissionGrid == null)
                 {
-                    nearestNode = nodeDescriptor;
-                    nearestDistance = (nearestNode.Pos - pos).Length();
-                    continue;
+                    var built = new BaiPointGrid<NodeDescriptor>(node => node.Pos);
+                    foreach (var netMissionReader in NetMissionReaders)
+                        foreach (var (_, nodeDescriptor) in netMissionReader.NodeDescriptorList)
+                            built.Add(nodeDescriptor);
+                    built.Build();
+                    Volatile.Write(ref _netMissionGrid, built);
                 }
-                var thisDistance = (pos - nodeDescriptor.Pos).Length();
-                if (thisDistance < nearestDistance)
-                {
-                    nearestNode = nodeDescriptor;
-                    nearestDistance = thisDistance;
-                }
-
-                if (nearestDistance <= 0.0001f)
-                {
-                    return nearestNode;
-                }
+                return _netMissionGrid;
             }
         }
-        return nearestNode;
+    }
+
+    /// <summary>Lazily built exact nearest-point index over this loader's VertexMission obstacle points.</summary>
+    internal BaiPointGrid<Vector3> VertexGrid
+    {
+        get
+        {
+            var grid = Volatile.Read(ref _vertexGrid);
+            if (grid != null)
+                return grid;
+            lock (_gridLock)
+            {
+                if (_vertexGrid == null)
+                {
+                    var built = new BaiPointGrid<Vector3>(pos => pos);
+                    foreach (var vertexMission in VertexMissionReaders)
+                        foreach (var obstacleDataDescriptor in vertexMission.ObstacleDataDescriptorList)
+                            built.Add(obstacleDataDescriptor.Pos);
+                    built.Build();
+                    Volatile.Write(ref _vertexGrid, built);
+                }
+                return _vertexGrid;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Finds the nearest navigation node in this loader's block via the spatial grid
+    /// (exact minimum, same result as the previous full linear scan).
+    /// </summary>
+    public NodeDescriptor FindClosestNetMissionNode(Vector3 pos)
+    {
+        return NetMissionGrid.FindNearest(pos, out _);
+    }
+
+    /// <summary>Finds the nearest obstacle vertex point in this loader's block via the spatial grid.</summary>
+    internal Vector3 FindClosestVertexPoint(Vector3 pos, out float distance)
+    {
+        return VertexGrid.FindNearest(pos, out distance);
     }
 }
