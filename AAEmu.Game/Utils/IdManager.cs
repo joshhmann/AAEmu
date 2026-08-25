@@ -179,6 +179,15 @@ public class IdManager
     {
         lock (_lock)
         {
+            // Boot-race guard (found by measurement 2026-08-25, G2-A3 storm
+            // probe): ItemContainer's ctor allocates through
+            // ContainerIdManager.Instance during ItemManager.LoadUserItems,
+            // which can run before this manager's Stage-2 Load() populated
+            // the bitset — a cold GetNextId then NRE'd the boot. Initialize
+            // on first use instead of crashing.
+            if (_freeIds == null && !Initialize())
+                throw new GameException($"{_name} could not be initialized for GetNextId");
+
             var newId = _nextFreeId;
             _freeIds.Set(newId);
             Interlocked.Decrement(ref _freeIdCount);
