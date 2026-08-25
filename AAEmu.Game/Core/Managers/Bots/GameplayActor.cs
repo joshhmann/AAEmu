@@ -587,6 +587,101 @@ public class GameplayActor : IGameplayActor
 
     #endregion
 
+    #region Quest discovery (PB-002 perception primitive)
+
+    /// <summary>
+    /// Maximum flat distance for a quest-discovery request. The engine has
+    /// NO server-side range gate on CSStartQuestContextPacket (the client
+    /// decides who is near enough to talk to), so the contract applies its
+    /// own Interact-range discipline — the same PLAYER_MODE boundary the
+    /// Buy action draws with the shop range.
+    /// </summary>
+    public const float MaxQuestDiscoverRange = MaxInteractRange;
+
+    public ActorRequest DiscoverQuests(uint targetObjId, string? idempotencyKey = null)
+    {
+        // Observe-family query: reads world state that is only consistent on
+        // the A1 marshal seam (REQ-M5.3-7).
+        ExecutionBoundary.AssertOnExecutionThread("DiscoverQuests");
+
+        var request = NewRequest(ActorActionType.DiscoverQuests, targetObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "discover quests"))
+            return request;
+
+        // 1. Resolve the world target — NPC first, then doodad (quest
+        //    board), the two branches CSStartQuestContextPacket dispatches on.
+        var npc = Character.ParentWorld?.GetNpc(targetObjId);
+        var doodad = npc == null ? Character.ParentWorld?.GetDoodad(targetObjId) : null;
+        if (npc == null && doodad == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"quest target {targetObjId} not found in world");
+
+        // 2. Interaction range — discovery surfaces only what a real client
+        //    standing here could see (PLAYER_MODE; no other-player state, no
+        //    GM shortcuts).
+        var targetPosition = npc?.Transform.World.Position ?? doodad!.Transform.World.Position;
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, targetPosition) > MaxQuestDiscoverRange)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"quest target {targetObjId} out of interaction range");
+
+        request.Start($"discovering quests offered by {targetObjId}");
+
+        // 3. Data-driven offer linkage: Start components carrying a
+        //    ConAcceptNpc / ConAcceptDoodad act for this template id (the
+        //    rows the client's quest markers are built from;
+        //    quest_components.npc_id is almost always empty). The acceptor
+        //    triple returned here is exactly what AcceptQuest consumes.
+        var acceptorType = npc != null ? QuestAcceptorType.Npc : QuestAcceptorType.Doodad;
+        var acceptorTemplateId = npc?.TemplateId ?? doodad!.TemplateId;
+        var candidates = npc != null
+            ? QuestManager.Instance.GetQuestsOfferedByNpc(acceptorTemplateId)
+            : QuestManager.Instance.GetQuestsOfferedByDoodad(acceptorTemplateId);
+
+        // 4. Fail-closed filter through the REAL AddQuest pre-conditions —
+        //    everything AcceptQuest would refuse is not discoverable.
+        var offerings = new List<QuestOffering>();
+        foreach (var questId in candidates.Order())
+        {
+            if (!IsDiscoverable(questId))
+                continue;
+            var template = QuestManager.Instance.GetTemplate(questId)!;
+            offerings.Add(new QuestOffering(questId, template.Level, acceptorType, acceptorTemplateId));
+        }
+
+        var result = new QuestDiscoveryResult(targetObjId, acceptorType, acceptorTemplateId, offerings);
+        return Complete(request, result,
+            $"discovered {offerings.Count} quest(s) at {acceptorType} {acceptorTemplateId}");
+    }
+
+    /// <summary>
+    /// True when AddQuest would accept this quest RIGHT NOW (pre-conditions
+    /// only — no mutation): known template, no active duplicate, supply-item
+    /// gate passes, every Start component's unit_reqs pass for THIS
+    /// character (level/race/chain …), and a completed non-repeatable quest
+    /// stays hidden.
+    /// </summary>
+    private bool IsDiscoverable(uint questId)
+    {
+        var template = QuestManager.Instance.GetTemplate(questId);
+        var quests = Character.Quests;
+        if (template == null || quests == null)
+            return false;
+        if (quests.ActiveQuests.ContainsKey(questId))
+            return false;
+        if (!quests.CanAcceptSupplyItems(template))
+            return false;
+        foreach (var startComponent in template.GetComponents(QuestComponentKind.Start))
+        {
+            if (!UnitRequirementsGameData.Instance.CanComponentRun(startComponent, Character))
+                return false;
+        }
+        if (quests.HasQuestCompleted(questId) && !template.Repeatable)
+            return false;
+        return true;
+    }
+
+    #endregion
+
     #region B1 actions (M5 vocabulary — real engine paths)
 
     /// <summary>Maximum flat distance for an Interact request (doodad interaction range).</summary>

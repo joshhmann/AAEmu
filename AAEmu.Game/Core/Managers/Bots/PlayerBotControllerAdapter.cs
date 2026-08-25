@@ -165,6 +165,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null)
         => Actor.AutoTurnInQuest(questId, selectedReward, idempotencyKey);
 
+    public ActorRequest DiscoverQuests(uint targetObjId, string? idempotencyKey = null)
+        => Actor.DiscoverQuests(targetObjId, idempotencyKey);
+
     public ActorRequest Buy(uint merchantNpcObjId, uint itemTemplateId, int count, string? idempotencyKey = null)
         => Actor.Buy(merchantNpcObjId, itemTemplateId, count, idempotencyKey);
 

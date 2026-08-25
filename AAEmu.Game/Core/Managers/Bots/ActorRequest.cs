@@ -195,6 +195,19 @@ public sealed record QuestAcceptParams(QuestAcceptorType AcceptorType, uint Acce
 public sealed record QuestTurnInParams(uint TargetObjId, int SelectedReward);
 
 /// <summary>
+/// One quest an NPC/doodad offers (quest-DISCOVERY perception primitive,
+/// blocker PB-002). Level is the quest_contexts.LEVEL display value the
+/// client shows; titles are client-localized and intentionally NOT part of
+/// the server-side payload.
+/// </summary>
+public sealed record QuestOffering(uint QuestId, byte Level, QuestAcceptorType AcceptorType, uint AcceptorId);
+
+/// <summary>Result payload of a Completed DiscoverQuests request.</summary>
+public sealed record QuestDiscoveryResult(
+    uint TargetObjId, QuestAcceptorType AcceptorType, uint AcceptorTemplateId,
+    IReadOnlyList<QuestOffering> Offerings);
+
+/// <summary>
 /// Plant request payload — placement parameters for a seed/young-tree
 /// planting (M5.1). The seed item is addressed by the request TargetId;
 /// the doodad template id is resolved by the actor from the item's

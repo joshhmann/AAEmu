@@ -610,6 +610,31 @@ public interface IGameplayActor
     ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1, string? idempotencyKey = null);
 
     /// <summary>
+    /// Quest-DISCOVERY perception primitive (blocker PB-002): which quests
+    /// does THIS world target offer ME, right now? Resolves the target as a
+    /// live NPC or doodad (quest board) in the owning world — the two
+    /// branches CSStartQuestContextPacket dispatches on — and enumerates the
+    /// quest templates whose Start component carries a ConAcceptNpc /
+    /// ConAcceptDoodad act for that target's template id. Every offering is
+    /// then filtered through the REAL AddQuest pre-conditions, so discovery
+    /// is fail-closed equal to the accept path: an active duplicate, a
+    /// supply-item-blocked quest, a Start component whose unit_reqs
+    /// (level/race/chain …) the character fails, and a completed
+    /// non-repeatable quest are all invisible. PLAYER_MODE: only what a
+    /// client standing in interaction range could see; no other-player state,
+    /// no GM shortcuts.
+    ///
+    /// Guarantees: every returned quest id passes CharacterQuests.AddQuest's
+    /// pre-flight gate set at query time (accept may still fail later on
+    /// concurrent state). Leaves UNKNOWN (client-side data): localized
+    /// titles, and offer channels outside the v1 surface (item/skill/buff/
+    /// sphere acceptors). Query semantics like Observe: completes
+    /// immediately, still emits the audit record. Payload:
+    /// <see cref="QuestDiscoveryResult"/>.
+    /// </summary>
+    ActorRequest DiscoverQuests(uint targetObjId, string? idempotencyKey = null);
+
+    /// <summary>
     /// Turn-in at a doodad (DoReportEvents doodad branch). Payload:
     /// <see cref="QuestTurnInParams"/>.
     /// </summary>
@@ -824,7 +849,13 @@ public enum ActorActionType : byte
     ExpeditionAccept = 42,
 
     /// <summary>Leaving the current expedition through the static ExpeditionManager.Leave (the CSLeaveExpeditionPacket path).</summary>
-    ExpeditionLeave = 43
+    ExpeditionLeave = 43,
+
+    /// <summary>
+    /// Quest discovery through the real offer linkage + AddQuest pre-conditions
+    /// (PB-002 perception primitive — Observe-family query, no mutation).
+    /// </summary>
+    DiscoverQuests = 44
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

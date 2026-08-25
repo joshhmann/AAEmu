@@ -39,6 +39,8 @@ using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Buffs;
 using AAEmu.Game.Models.Game.Skills.Effects;
@@ -2691,6 +2693,103 @@ public static class GameplayActorTestRig
         var effect = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart };
         effect.Apply(actor.Character, null, bench, null,
             new CastSkill(CraftTestSkillId, 0), new EffectSource(), null, DateTime.UtcNow);
+    }
+
+    // ------------------------------------------------------------------ quest discovery (PB-002)
+
+    /// <summary>Fixture ids unique to the quest-discovery suite (90_7xx range).</summary>
+    public const uint DiscoveryQuestId = 90_710;
+    public const uint DiscoveryLevelGatedQuestId = 90_711;
+    public const uint DiscoveryDoodadQuestId = 90_712;
+    public const uint DiscoveryComponentId = 90_720;
+    public const uint DiscoveryLevelGatedComponentId = 90_721;
+    public const uint DiscoveryDoodadComponentId = 90_722;
+    public const uint DiscoveryNpcTemplateId = 90_700;
+    public const uint DiscoveryGatedNpcTemplateId = 90_702;
+    public const uint DiscoveryDoodadTemplateId = 90_701;
+
+    /// <summary>
+    /// Seeds a quest template whose Start component carries a ConAcceptNpc /
+    /// ConAcceptDoodad act for <paramref name="acceptorTemplateId"/> — the
+    /// same data-driven offer linkage QuestManager loads from
+    /// quest_components + quest_act_con_accept_{npcs,doodads}. Additive and
+    /// collision-free with canonical data (fixture ids) and with whatever
+    /// manager instance is currently established (empty scenario mock or
+    /// real pilot load — never replaces the singleton).
+    /// </summary>
+    public static void SeedQuestOffer(uint questId, uint componentId, uint acceptorTemplateId,
+        bool doodad = false, byte level = 10)
+    {
+        var manager = QuestManager.Instance;
+
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GetField(manager, "_questTemplates");
+        if (!questTemplates.TryGetValue(questId, out var questTemplate))
+        {
+            questTemplate = new QuestTemplate { Id = questId, Level = level, Repeatable = false };
+            questTemplates[questId] = questTemplate;
+        }
+
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GetField(manager, "_componentTemplates");
+        if (!componentTemplates.TryGetValue(componentId, out var component))
+        {
+            component = new QuestComponentTemplate(questTemplate)
+            {
+                Id = componentId,
+                KindId = QuestComponentKind.Start
+            };
+            componentTemplates[componentId] = component;
+        }
+        if (!questTemplate.Components.ContainsKey(componentId))
+            questTemplate.Components[componentId] = component;
+
+        var detailType = doodad ? nameof(QuestActConAcceptDoodad) : nameof(QuestActConAcceptNpc);
+        var actsByType = (Dictionary<string, Dictionary<uint, QuestActTemplate>>)GetField(manager, "_actTemplatesByDetailType");
+        if (!actsByType.TryGetValue(detailType, out var acts))
+        {
+            acts = [];
+            actsByType[detailType] = acts;
+        }
+        acts[componentId] = doodad
+            ? new QuestActConAcceptDoodad(component) { DetailId = componentId, DoodadId = acceptorTemplateId }
+            : new QuestActConAcceptNpc(component) { DetailId = componentId, NpcId = acceptorTemplateId };
+    }
+
+    /// <summary>
+    /// Seeds a unit_reqs Level row owned by a QuestComponent (owner_type
+    /// 'QuestComponent') so UnitRequirementsGameData.CanComponentRun gates
+    /// the Start component on min level — the REAL engine level gate.
+    /// Works against the empty scenario instance and the real canonical
+    /// load alike; the fixture row id keeps it collision-free.
+    /// </summary>
+    public static void SeedQuestComponentLevelRequirement(uint componentId, uint minLevel)
+    {
+        var data = UnitRequirementsGameData.Instance;
+        const string ownerType = "QuestComponent";
+        const uint reqId = 90_730;
+
+        var reqsField = typeof(UnitRequirementsGameData).GetField("<_unitReqs>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var reqs = (Dictionary<uint, UnitReqs>)reqsField!.GetValue(data)!;
+        reqs[reqId] = new UnitReqs
+        {
+            Id = reqId,
+            OwnerId = componentId,
+            OwnerType = ownerType,
+            KindType = AAEmu.Game.Models.Game.Units.Static.UnitReqsKindType.Level,
+            Value1 = minLevel,
+            Value2 = 0
+        };
+
+        var byOwnerField = typeof(UnitRequirementsGameData).GetField("<_unitReqsByOwnerType>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var byOwner = (Dictionary<string, List<UnitReqs>>)byOwnerField!.GetValue(data)!;
+        if (!byOwner.TryGetValue(ownerType, out var list))
+        {
+            list = [];
+            byOwner[ownerType] = list;
+        }
+        if (!list.Any(r => r.Id == reqId))
+            list.Add(reqs[reqId]);
     }
 }
 

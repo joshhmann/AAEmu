@@ -2073,4 +2073,45 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
     {
         return _componentTemplates.GetValueOrDefault(componentId);
     }
+    /// <summary>
+    /// Quest template ids OFFERED by an NPC template — the Start components
+    /// carrying a QuestActConAcceptNpc act for that NPC (the data-driven
+    /// "who offers what" linkage the client's quest markers are built from;
+    /// quest_components.npc_id is almost always empty, the accept acts carry
+    /// the linkage). Computed on demand from the loaded act index so it never
+    /// goes stale against late-registered templates.
+    /// </summary>
+    public List<uint> GetQuestsOfferedByNpc(uint npcTemplateId)
+        => GetQuestsOfferedByAct<QuestActConAcceptNpc>(
+            nameof(QuestActConAcceptNpc), a => a.NpcId == npcTemplateId);
+
+    /// <summary>
+    /// Quest template ids OFFERED by a doodad template (quest boards et al.)
+    /// — the Start components carrying a QuestActConAcceptDoodad act for
+    /// that doodad. Same linkage rule as <see cref="GetQuestsOfferedByNpc"/>.
+    /// </summary>
+    public List<uint> GetQuestsOfferedByDoodad(uint doodadTemplateId)
+        => GetQuestsOfferedByAct<QuestActConAcceptDoodad>(
+            nameof(QuestActConAcceptDoodad), a => a.DoodadId == doodadTemplateId);
+
+    private List<uint> GetQuestsOfferedByAct<TAct>(string detailType, Func<TAct, bool> match)
+        where TAct : QuestActTemplate
+    {
+        var result = new List<uint>();
+        if (!_actTemplatesByDetailType.TryGetValue(detailType, out var acts))
+            return result;
+        foreach (var act in acts.Values)
+        {
+            if (act is not TAct accept || !match(accept))
+                continue;
+            // Offers live on Start components only (Progress/Report acts of
+            // the same families describe other steps).
+            if (accept.ParentComponent?.KindId != QuestComponentKind.Start)
+                continue;
+            var questId = accept.ParentComponent.ParentQuestTemplate?.Id ?? 0;
+            if (questId != 0 && !result.Contains(questId))
+                result.Add(questId);
+        }
+        return result;
+    }
 }

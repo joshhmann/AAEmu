@@ -42,7 +42,14 @@ public class CharacterQuests(Character owner)
         return CompletedQuests.TryGetValue(questBlockId, out var questBlock) && questBlock.Body.Get(questBlockIndex);
     }
 
-    private bool CanAcceptSupplyItems(QuestTemplate template)
+    /// <summary>
+    /// Supply-item acceptance gate (backpack occupancy for pack-supply
+    /// quests). Public so the quest-DISCOVERY actor primitive can apply the
+    /// exact same precondition AddQuest applies — discovery must never
+    /// surface a quest the real accept path would refuse (same
+    /// observable-outcome exposure precedent as TeamManager.GetActiveInvitation).
+    /// </summary>
+    public bool CanAcceptSupplyItems(QuestTemplate template)
     {
         foreach (var component in template.GetComponents(QuestComponentKind.Supply))
         {
