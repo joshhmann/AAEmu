@@ -38,8 +38,8 @@ using AAEmu.Game.Models.Game.Merchant;
 using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
-using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Buffs;
@@ -2791,6 +2791,81 @@ public static class GameplayActorTestRig
         if (!list.Any(r => r.Id == reqId))
             list.Add(reqs[reqId]);
     }
+
+    // ------------------------------------------------------------------ InteractWith rig (gap #3)
+
+    /// <summary>Use-skill bound to the portal-style rig doodad's func.</summary>
+    public const uint InteractWithUseSkillId = 90_740;
+    /// <summary>Buff applied by the portal-style rig doodad's func (caster-only radius).</summary>
+    public const uint InteractWithBuffId = 90_741;
+    /// <summary>Phase group of the portal-style rig doodad.</summary>
+    public const uint InteractWithPortalGroupId = 90_750;
+    /// <summary>Func id of the portal-style rig doodad's buff func.</summary>
+    public const uint InteractWithPortalFuncId = 90_760;
+    /// <summary>Phase group with NO funcs — the engine's silent-refusal case.</summary>
+    public const uint InteractWithEmptyGroupId = 90_751;
+
+    /// <summary>
+    /// Seeds a portal-style interaction: a func in <paramref name="groupId"/>
+    /// bound to an explicit use-skill (the SkillId the client's
+    /// CSStartSkillPacket carries for such doodads) whose template is a
+    /// caster-only DoodadFuncBuff — an observable engine effect reached
+    /// through the exact DoFunc chain a real portal func
+    /// (DoodadFuncEnterInstance et al.) rides.
+    /// </summary>
+    public static void SeedSkillBoundDoodad(uint groupId = InteractWithPortalGroupId,
+        uint funcId = InteractWithPortalFuncId, uint? useSkillId = null, uint? buffId = null)
+    {
+        SeedDoodadManager();
+        SeedBuffTemplate(buffId ?? InteractWithBuffId);
+        var manager = DoodadManager.Instance;
+        var funcsByGroups = (Dictionary<uint, List<DoodadFunc>>)GetField(manager, "_funcsByGroups");
+        var funcTemplates = (Dictionary<string, Dictionary<uint, DoodadFuncTemplate>>)GetField(manager, "_funcTemplates");
+
+        if (!funcsByGroups.TryGetValue(groupId, out var group))
+        {
+            group = [];
+            funcsByGroups[groupId] = group;
+        }
+        if (group.All(f => f.FuncId != funcId))
+        {
+            group.Add(new DoodadFunc
+            {
+                GroupId = groupId,
+                FuncId = funcId,
+                FuncKey = funcId,
+                FuncType = "DoodadFuncBuff",
+                NextPhase = -1,
+                SkillId = useSkillId ?? InteractWithUseSkillId
+            });
+        }
+
+        // The buff template must carry a real BuffKind — GetAllBuffs throws
+        // on the default kind, and the actor's observable-delta fingerprint
+        // counts active buffs.
+        var buffs = (Dictionary<uint, BuffTemplate>)GetField(SkillManager.Instance, "_buffs");
+        buffs[buffId ?? InteractWithBuffId] = new BuffTemplate { Id = buffId ?? InteractWithBuffId, Kind = BuffKind.Good };
+        if (!funcTemplates.TryGetValue("DoodadFuncBuff", out var buffTemplates))
+        {
+            buffTemplates = [];
+            funcTemplates["DoodadFuncBuff"] = buffTemplates;
+        }
+        buffTemplates[funcId] = new DoodadFuncBuff { BuffId = buffId ?? InteractWithBuffId }; // Radius 0 → caster only
+    }
+
+    /// <summary>
+    /// Spawns a raw world doodad on the given phase group (template id
+    /// doubles as the group). Empty Template.FuncGroups keeps one-shot
+    /// doodads alive through DoFunc's start-only rule (Doodad.cs:795).
+    /// </summary>
+    public static uint SpawnGroupedDoodad(HeadlessSession session, uint groupId)
+    {
+        var doodadObjId = session.SpawnDoodad(groupId);
+        var doodad = session.World.GetDoodad(doodadObjId);
+        doodad.FuncGroupId = groupId;
+        doodad.Template = new DoodadTemplate { Id = groupId, FuncGroups = [] };
+        return doodadObjId;
+    }
 }
 
 /// <summary>
@@ -2808,6 +2883,7 @@ public sealed class FakeIdManager : IIdManager, IHousingIdManager, IHousingTldMa
     public void Load() { }
     public bool Initialize(bool forceReset = false) => true;
     public uint GetNextId() => _next++;
+
     public uint[] GetNextId(int count) => Enumerable.Range(0, count).Select(_ => _next++).ToArray();
     public void ReleaseId(uint usedObjectId) { }
     public void ReleaseId(IEnumerable<uint> usedObjectIds) { }

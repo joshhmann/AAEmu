@@ -635,6 +635,33 @@ public interface IGameplayActor
     ActorRequest DiscoverQuests(uint targetObjId, string? idempotencyKey = null);
 
     /// <summary>
+    /// First-class doodad interaction (capability-matrix gap #3 —
+    /// generalizes the fishing/indun portal "real doodad-cast injection"
+    /// into one reusable action). Resolves the live doodad in the owning
+    /// world, derives the use-skill the client's CSStartSkillPacket would
+    /// carry for the doodad's CURRENT phase group (the same matching rules
+    /// DoodadManager.GetFunc applies: explicit func.SkillId binding first,
+    /// then DoodadFuncUse/DoodadFuncFakeUse template skill ids; 0 =
+    /// skill-less loot/phase-driven use), then drives the REAL engine path
+    /// (Doodad.Use — the exact call the InteractionEffect world-interaction
+    /// chain makes).
+    ///
+    /// Fail-closed: the engine's Use() refuses silently (no funcs on the
+    /// phase group, failed phase conditions), so the actor post-checks an
+    /// observable state delta — doodad phase/visited-groups change,
+    /// character world/position change (indun portal entry), inventory
+    /// growth (loot grant), or active-buff count change. No delta at all is
+    /// Rejected(RejectedAction) instead of a silent void.
+    ///
+    /// Guarantees: Completed means the engine path ran AND produced a
+    /// directly observable effect (payload lists each delta). Leaves
+    /// UNKNOWN: effects that are deferred/scheduled or purely UI-side
+    /// (craft-start timers, open-bank/auction dialogs) are not observable
+    /// synchronously and report as no-change refusals; finer refusal
+    /// reasons are unknowable — the engine gives no structured error.
+    /// </summary>
+    ActorRequest InteractWith(uint doodadObjId, string? idempotencyKey = null);
+    /// <summary>
     /// Turn-in at a doodad (DoReportEvents doodad branch). Payload:
     /// <see cref="QuestTurnInParams"/>.
     /// </summary>
@@ -855,7 +882,13 @@ public enum ActorActionType : byte
     /// Quest discovery through the real offer linkage + AddQuest pre-conditions
     /// (PB-002 perception primitive — Observe-family query, no mutation).
     /// </summary>
-    DiscoverQuests = 44
+    DiscoverQuests = 44,
+
+    /// <summary>
+    /// First-class doodad interaction through Doodad.Use with a derived use-skill
+    /// (capability-matrix gap #3 — portal/interactable unlock, fail-closed post-check).
+    /// </summary>
+    InteractWith = 45
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

@@ -715,6 +715,110 @@ public class GameplayActor : IGameplayActor
         return Complete(request, true, $"doodad {doodadObjId} interacted (phase {doodad.FuncGroupId})");
     }
 
+    /// <summary>Position delta treated as a real move (portal teleport detection).</summary>
+    public const float InteractionPositionDeltaEpsilon = 0.01f;
+
+    public ActorRequest InteractWith(uint doodadObjId, string? idempotencyKey = null)
+    {
+        ExecutionBoundary.AssertOnExecutionThread("InteractWith");
+
+        var request = NewRequest(ActorActionType.InteractWith, doodadObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "interact with"))
+            return request;
+
+        var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
+        if (doodad == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} not found in world");
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, doodad.Transform.World.Position, false) > MaxInteractRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} out of interaction range");
+        // The engine's own #1443 guard — mirrored pre-flight so the refusal
+        // is a Rejected instead of a silent engine no-op.
+        if (doodad.Despawn > DateTime.MinValue)
+            return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} scheduled for despawn");
+
+        // The use-skill the client's CSStartSkillPacket would carry for this
+        // phase group — derived from the doodad's OWN func table via the
+        // same matching rules DoodadManager.GetFunc applies.
+        var useSkillId = ResolveInteractionSkill(doodad);
+
+        request.Start($"interacting with doodad {doodadObjId} (template {doodad.TemplateId}, derived skill {useSkillId})");
+
+        // Observable pre-state. The engine's Use() refuses SILENTLY (no
+        // funcs on the phase group, failed phase conditions), so the actor
+        // fails closed on no observable delta (PartyInvite post-check
+        // precedent) instead of reporting a void as success.
+        var beforePhase = doodad.FuncGroupId;
+        var beforeInstanceId = Character.Transform.InstanceId;
+        var beforePosition = Character.Transform.World.Position;
+        var beforeBagCount = Character.Inventory?.Bag.Items.Count ?? -1;
+        var beforeBuffCount = CountActiveBuffs();
+
+        // The REAL engine path — Doodad.Use, the exact call the client's
+        // skill-driven world-interaction chain (InteractionEffect → Use.Execute)
+        // and the CSLootOpenBagPacket func branch make.
+        doodad.Use(Character, useSkillId);
+
+        var changes = new List<string>();
+        var afterInstanceId = Character.Transform.InstanceId;
+        if (afterInstanceId != beforeInstanceId)
+            changes.Add($"world {beforeInstanceId}→{afterInstanceId}");
+        var afterPosition = Character.Transform.World.Position;
+        if (MathUtil.CalculateDistance(beforePosition, afterPosition) > InteractionPositionDeltaEpsilon)
+            changes.Add($"position ({beforePosition.X:0.#},{beforePosition.Y:0.#})→({afterPosition.X:0.#},{afterPosition.Y:0.#})");
+        if (doodad.FuncGroupId != beforePhase)
+            changes.Add($"phase {beforePhase}→{doodad.FuncGroupId}");
+        var afterBagCount = Character.Inventory?.Bag.Items.Count ?? -1;
+        if (afterBagCount != beforeBagCount)
+            changes.Add($"bag {beforeBagCount}→{afterBagCount}");
+        var afterBuffCount = CountActiveBuffs();
+        if (afterBuffCount != beforeBuffCount)
+            changes.Add($"buffs {beforeBuffCount}→{afterBuffCount}");
+
+        if (changes.Count == 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"doodad {doodadObjId} produced no state change " +
+                $"(no funcs on phase {doodad.FuncGroupId} or engine conditions refused)");
+
+        var result = new InteractWithResult(doodadObjId, doodad.TemplateId, useSkillId, changes);
+        return Complete(request, result, $"doodad {doodadObjId}: {string.Join("; ", changes)}");
+    }
+
+    /// <summary>
+    /// Derives the use-skill for a doodad's current phase group with the
+    /// SAME matching rules DoodadManager.GetFunc(funcGroupId, skillId)
+    /// applies to the client's CSStartSkillPacket target: an explicit
+    /// func.SkillId binding first, then DoodadFuncUse / DoodadFuncFakeUse
+    /// template skill ids; 0 = plain skill-less use (loot / phase funcs).
+    /// </summary>
+    private static uint ResolveInteractionSkill(Doodad doodad)
+    {
+        foreach (var func in DoodadManager.Instance.GetFuncsForGroup(doodad.FuncGroupId))
+        {
+            if (func == null)
+                continue;
+            if (func.SkillId > 0)
+                return func.SkillId;
+            var template = DoodadManager.Instance.GetFuncTemplate(func.FuncId, func.FuncType);
+            if (template is DoodadFuncUse { SkillId: > 0 } useTemplate)
+                return useTemplate.SkillId;
+            if (template is DoodadFuncFakeUse { FakeSkillId: > 0 } fakeUseTemplate)
+                return fakeUseTemplate.FakeSkillId;
+        }
+        return 0;
+    }
+
+    private int CountActiveBuffs()
+    {
+        if (Character.Buffs == null)
+            return -1;
+        var good = new List<Buff>();
+        var bad = new List<Buff>();
+        var hidden = new List<Buff>();
+        Character.Buffs.GetAllBuffs(good, bad, hidden, false);
+        return good.Count + bad.Count + hidden.Count;
+    }
+
+
     public ActorRequest Loot(uint lootOwnerObjId, string? idempotencyKey = null)
     {
         var request = NewRequest(ActorActionType.Loot, lootOwnerObjId, idempotencyKey: idempotencyKey);

@@ -168,6 +168,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest DiscoverQuests(uint targetObjId, string? idempotencyKey = null)
         => Actor.DiscoverQuests(targetObjId, idempotencyKey);
 
+    public ActorRequest InteractWith(uint doodadObjId, string? idempotencyKey = null)
+        => Actor.InteractWith(doodadObjId, idempotencyKey);
+
     public ActorRequest Buy(uint merchantNpcObjId, uint itemTemplateId, int count, string? idempotencyKey = null)
         => Actor.Buy(merchantNpcObjId, itemTemplateId, count, idempotencyKey);
 

@@ -208,6 +208,15 @@ public sealed record QuestDiscoveryResult(
     IReadOnlyList<QuestOffering> Offerings);
 
 /// <summary>
+/// Result payload of a Completed InteractWith request — each entry in
+/// <see cref="ObservedChanges"/> is one directly observable engine delta
+/// (phase/world/position/inventory/buffs) that proves the interaction
+/// landed.
+/// </summary>
+public sealed record InteractWithResult(
+    uint DoodadObjId, uint TemplateId, uint UsedSkillId, IReadOnlyList<string> ObservedChanges);
+
+/// <summary>
 /// Plant request payload — placement parameters for a seed/young-tree
 /// planting (M5.1). The seed item is addressed by the request TargetId;
 /// the doodad template id is resolved by the actor from the item's
