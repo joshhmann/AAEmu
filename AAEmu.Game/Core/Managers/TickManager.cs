@@ -247,17 +247,17 @@ internal sealed class SampleRing
             _count++;
     }
 
-    public (long Count, double P50Ms, double P95Ms, double MaxMs) Summarize()
+    public (long Count, double P50Ms, double P95Ms, double P99Ms, double MaxMs) Summarize()
     {
         if (_count == 0)
-            return (0, 0, 0, 0);
+            return (0, 0, 0, 0, 0);
 
         var ordered = new double[_count];
         for (var i = 0; i < _count; i++)
             ordered[i] = _samples[(_head - _count + i + Capacity) % Capacity];
         Array.Sort(ordered);
 
-        return (_count, Percentile(ordered, 0.50), Percentile(ordered, 0.95), ordered[^1]);
+        return (_count, Percentile(ordered, 0.50), Percentile(ordered, 0.95), Percentile(ordered, 0.99), ordered[^1]);
     }
 
     private static double Percentile(double[] sorted, double percentile)

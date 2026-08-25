@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -70,6 +71,15 @@ public sealed class PopulationDirector : IPopulationDirector
     private int _pressureBand;
     private int _started;
     private bool _proximityFailureLoggedThisEpisode;
+
+    // G2-A3 storm instrumentation: wall-clock rings for fidelity-transition
+    // operations (TrySetFidelity/Wake/Sleep, outer op only) and proximity
+    // sweeps. Purely passive — sampled for the acceptance report, never gates
+    // behavior.
+    private readonly object _transitionLatencyLock = new();
+    private readonly SampleRing _transitionLatencyRing = new();
+    private readonly object _sweepLatencyLock = new();
+    private readonly SampleRing _sweepLatencyRing = new();
 
     public PopulationDirector(
         IPlayerBotManager manager,
@@ -160,6 +170,21 @@ public sealed class PopulationDirector : IPopulationDirector
 
     /// <inheritdoc />
     public FidelityTransitionResult TrySetFidelity(uint characterId, BotFidelity target, string reason)
+    {
+        var startTimestamp = Stopwatch.GetTimestamp();
+        try
+        {
+            return TrySetFidelityCore(characterId, target, reason);
+        }
+        finally
+        {
+            RecordTransitionLatency(startTimestamp);
+        }
+    }
+
+    /// <summary>Transition policy proper (timing wrapper lives in <see cref="TrySetFidelity"/>).
+    /// Nested callers (<see cref="WakeCore"/>) use this so only the OUTER operation is sampled.</summary>
+    private FidelityTransitionResult TrySetFidelityCore(uint characterId, BotFidelity target, string reason)
     {
         if (!_manager.TryGet(characterId, out var runtime))
             return FidelityTransitionResult.UnknownBot;
@@ -266,13 +291,27 @@ public sealed class PopulationDirector : IPopulationDirector
     /// <inheritdoc />
     public FidelityTransitionResult Wake(uint characterId, string reason)
     {
+        var startTimestamp = Stopwatch.GetTimestamp();
+        try
+        {
+            return WakeCore(characterId, reason);
+        }
+        finally
+        {
+            RecordTransitionLatency(startTimestamp);
+        }
+    }
+
+    /// <summary>Wake policy proper (timing wrapper lives in <see cref="Wake"/>).</summary>
+    private FidelityTransitionResult WakeCore(uint characterId, string reason)
+    {
         if (!_manager.TryGet(characterId, out var runtime))
             return FidelityTransitionResult.UnknownBot;
 
         // Dormant bot waking = upgrade to Reduced (full policy path).
         if (GetFidelity(characterId) == BotFidelity.Dormant)
         {
-            var upgrade = TrySetFidelity(characterId, BotFidelity.Reduced, reason);
+            var upgrade = TrySetFidelityCore(characterId, BotFidelity.Reduced, reason);
             if (upgrade != FidelityTransitionResult.Applied)
                 return upgrade;
         }
@@ -289,6 +328,20 @@ public sealed class PopulationDirector : IPopulationDirector
 
     /// <inheritdoc />
     public FidelityTransitionResult Sleep(uint characterId, string reason)
+    {
+        var startTimestamp = Stopwatch.GetTimestamp();
+        try
+        {
+            return SleepCore(characterId, reason);
+        }
+        finally
+        {
+            RecordTransitionLatency(startTimestamp);
+        }
+    }
+
+    /// <summary>Sleep policy proper (timing wrapper lives in <see cref="Sleep"/>).</summary>
+    private FidelityTransitionResult SleepCore(uint characterId, string reason)
     {
         if (!_manager.TryGet(characterId, out var runtime))
             return FidelityTransitionResult.UnknownBot;
@@ -427,6 +480,99 @@ public sealed class PopulationDirector : IPopulationDirector
         return ServerPressure.Healthy;
     }
 
+    // -- G2-A3 storm instrumentation + staggered wakes --
+
+    /// <summary>
+    /// PB-004 wake re-arm, optionally phase-staggered (G2-A3): when
+    /// EnableStaggeredWakes is set, the freshly materialized bot's first step
+    /// is scheduled at a DETERMINISTIC per-bot offset within
+    /// StaggeredWakeWindowMs (hash-derived from the bot id — reproducible
+    /// across runs and processes, not random), so a population-scale
+    /// materialization burst does not synchronize the whole roster onto one
+    /// scheduler scan cadence. Unset (the default) this is exactly
+    /// <see cref="Wake"/> — byte-identical behavior.
+    /// </summary>
+    private FidelityTransitionResult WakeStaggered(uint characterId, string reason)
+    {
+        if (!_options.EnableStaggeredWakes || _options.StaggeredWakeWindowMs <= 0)
+            return Wake(characterId, reason);
+
+        var startTimestamp = Stopwatch.GetTimestamp();
+        try
+        {
+            if (!_manager.TryGet(characterId, out var runtime))
+                return FidelityTransitionResult.UnknownBot;
+
+            if (GetFidelity(characterId) == BotFidelity.Dormant)
+            {
+                var upgrade = TrySetFidelityCore(characterId, BotFidelity.Reduced, reason);
+                if (upgrade != FidelityTransitionResult.Applied)
+                    return upgrade;
+            }
+
+            var offsetMs = StablePhaseOffset(characterId, _options.StaggeredWakeWindowMs);
+            if (!_scheduler.WakeAfter(characterId, TimeSpan.FromMilliseconds(offsetMs)))
+            {
+                Interlocked.Increment(ref _totalTransitionsRejected);
+                return FidelityTransitionResult.SchedulerRefused;
+            }
+
+            Interlocked.Increment(ref _totalWakes);
+            return FidelityTransitionResult.Applied;
+        }
+        finally
+        {
+            RecordTransitionLatency(startTimestamp);
+        }
+    }
+
+    /// <summary>
+    /// Deterministic per-bot phase in [0, windowMs): SplitMix32-scrambled id.
+    /// Same id → same offset always; distinct ids spread uniformly.
+    /// </summary>
+    internal static int StablePhaseOffset(uint characterId, int windowMs)
+    {
+        var x = characterId * 0x9E3779B9u;
+        x ^= x >> 16;
+        x *= 0x85EBCA6Bu;
+        x ^= x >> 13;
+        x *= 0xC2B2AE35u;
+        x ^= x >> 16;
+        return (int)(x % (uint)windowMs);
+    }
+
+    private void RecordTransitionLatency(long startTimestamp)
+    {
+        var elapsedMs = (Stopwatch.GetTimestamp() - startTimestamp) * 1000d / Stopwatch.Frequency;
+        lock (_transitionLatencyLock)
+            _transitionLatencyRing.Add(elapsedMs);
+    }
+
+    /// <summary>
+    /// Percentile wall-clock of fidelity-transition operations
+    /// (TrySetFidelity/Wake/Sleep, outer operation only — the G2-A3 wake-storm
+    /// transition acceptance number). Acceptance seam: read via the concrete
+    /// director, same pattern as DormantBotRegistry.GetMaterializationLatency.
+    /// </summary>
+    public FidelityTransitionLatencySnapshot GetTransitionLatency()
+    {
+        lock (_transitionLatencyLock)
+        {
+            var (count, p50, p95, p99, max) = _transitionLatencyRing.Summarize();
+            return new FidelityTransitionLatencySnapshot(count, p50, p95, p99, max);
+        }
+    }
+
+    /// <summary>Percentile wall-clock of proximity sweeps (incremental-counter profiling evidence).</summary>
+    public ProximitySweepLatencySnapshot GetProximitySweepLatency()
+    {
+        lock (_sweepLatencyLock)
+        {
+            var (count, p50, p95, p99, max) = _sweepLatencyRing.Summarize();
+            return new ProximitySweepLatencySnapshot(count, p50, p95, p99, max);
+        }
+    }
+
     #region Proximity fidelity tiers (G2-A3)
 
     /// <summary>True between a successful gated <see cref="Start"/> and <see cref="StopAsync"/>.</summary>
@@ -510,6 +656,22 @@ public sealed class PopulationDirector : IPopulationDirector
     }
 
     private void RunProximitySweep()
+    {
+        var startTimestamp = Stopwatch.GetTimestamp();
+        try
+        {
+            RunProximitySweepCore();
+        }
+        finally
+        {
+            var elapsedMs = (Stopwatch.GetTimestamp() - startTimestamp) * 1000d / Stopwatch.Frequency;
+            lock (_sweepLatencyLock)
+                _sweepLatencyRing.Add(elapsedMs);
+        }
+    }
+
+    /// <summary>Sweep body proper (timing wrapper lives in <see cref="RunProximitySweep"/>).</summary>
+    private void RunProximitySweepCore()
     {
         Interlocked.Increment(ref _totalProximitySweeps);
 
@@ -704,7 +866,7 @@ public sealed class PopulationDirector : IPopulationDirector
                     // Reduced here, so Wake() goes straight to the scheduler re-arm
                     // (+ its counters) — exactly what the `due` path at the bottom
                     // of RunProximitySweep does for proximity upgrades.
-                    var wake = Wake(spec.CharacterId, "true-dormancy-materialize");
+                    var wake = WakeStaggered(spec.CharacterId, "true-dormancy-materialize");
                     if (wake != FidelityTransitionResult.Applied)
                         Logger.Warn("True dormancy: materialized {CharacterId} but the scheduler wake was refused ({Result})",
                             spec.CharacterId, wake);

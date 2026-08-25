@@ -330,7 +330,12 @@ public sealed class BotDriveBridge
                     totalStepsTimedOut = m.TotalStepsTimedOut,
                     avgWakeLatencyMs = m.AverageWakeLatencyMs,
                     maxWakeLatencyMs = m.MaxWakeLatencyMs,
-                    workerUtilization = m.WorkerUtilization
+                    workerUtilization = m.WorkerUtilization,
+
+                    // G2-A3: synchronized-cadence exposure — bots popped per
+                    // wake-scan cycle (last) and worst cycle ever seen.
+                    lastCycleDue = m.LastCycleDue,
+                    maxCycleDue = m.MaxCycleDue
                 };
             }
         }
@@ -367,6 +372,7 @@ public sealed class BotDriveBridge
                             materializeCount = lat.SampleCount,
                             materializeP50Ms = lat.P50Ms,
                             materializeP95Ms = lat.P95Ms,
+                            materializeP99Ms = lat.P99Ms,
                             materializeMaxMs = lat.MaxMs
                         };
                     }
@@ -374,6 +380,39 @@ public sealed class BotDriveBridge
                 catch (Exception ex)
                 {
                     Logger.Debug(ex, "gate metrics: dormant registry snapshot unavailable");
+                }
+                // G2-A3 storm instrumentation: fidelity-transition wall-clock
+                // percentiles + proximity-sweep wall-clock percentiles, from
+                // the concrete director (registry-latency precedent).
+                object transitions = null;
+                object sweep = null;
+                try
+                {
+                    if (p is PopulationDirector director)
+                    {
+                        var tl = director.GetTransitionLatency();
+                        transitions = new
+                        {
+                            count = tl.SampleCount,
+                            p50Ms = tl.P50Ms,
+                            p95Ms = tl.P95Ms,
+                            p99Ms = tl.P99Ms,
+                            maxMs = tl.MaxMs
+                        };
+                        var sl = director.GetProximitySweepLatency();
+                        sweep = new
+                        {
+                            count = sl.SampleCount,
+                            p50Ms = sl.P50Ms,
+                            p95Ms = sl.P95Ms,
+                            p99Ms = sl.P99Ms,
+                            maxMs = sl.MaxMs
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Debug(ex, "gate metrics: director latency snapshots unavailable");
                 }
 
                 population = new
@@ -388,7 +427,9 @@ public sealed class BotDriveBridge
                     transitionsRejected = m.TotalTransitionsRejected,
                     totalMaterializations = m.TotalMaterializations,
                     totalDematerializations = m.TotalDematerializations,
-                    dormancy
+                    dormancy,
+                    transitions,
+                    sweep
                 };
             }
         }

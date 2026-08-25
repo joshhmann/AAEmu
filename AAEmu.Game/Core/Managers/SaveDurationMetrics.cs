@@ -38,7 +38,7 @@ internal sealed class SaveDurationMetrics
 
     public SaveDurationMetricsSnapshot Snapshot()
     {
-        var (count, p50, p95, max) = _samples.Summarize();
+        var (count, p50, p95, _, max) = _samples.Summarize();
         return new SaveDurationMetricsSnapshot
         {
             SampleCount = count,

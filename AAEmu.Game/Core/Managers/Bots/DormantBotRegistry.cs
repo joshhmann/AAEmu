@@ -24,7 +24,7 @@ public sealed record DormantBotSpec(uint CharacterId, string Name);
 /// <see cref="DormantBotRegistry.Materialize"/> success duration.
 /// </summary>
 public readonly record struct MaterializationLatencySnapshot(
-    long SampleCount, double P50Ms, double P95Ms, double MaxMs);
+    long SampleCount, double P50Ms, double P95Ms, double P99Ms, double MaxMs);
 
 /// <summary>
 /// Discovery seam for dormant bot specs (G2-A5). The production source is a
@@ -297,8 +297,8 @@ public sealed class DormantBotRegistry
     {
         lock (_latencyLock)
         {
-            var (count, p50, p95, max) = _latencyRing.Summarize();
-            return new MaterializationLatencySnapshot(count, p50, p95, max);
+            var (count, p50, p95, p99, max) = _latencyRing.Summarize();
+            return new MaterializationLatencySnapshot(count, p50, p95, p99, max);
         }
     }
 

@@ -38,3 +38,14 @@ public sealed record PopulationDirectorMetrics(
     /// <summary>Embodied bots (Reduced + Full).</summary>
     public int Embodied => ReducedCount + FullCount;
 }
+
+/// <summary>
+/// Percentile wall-clock of fidelity-transition operations (G2-A3 wake-storm
+/// acceptance instrumentation; outer operation only, rejections included).
+/// </summary>
+public readonly record struct FidelityTransitionLatencySnapshot(
+    long SampleCount, double P50Ms, double P95Ms, double P99Ms, double MaxMs);
+
+/// <summary>Percentile wall-clock of proximity sweeps (incremental-counter profiling evidence).</summary>
+public readonly record struct ProximitySweepLatencySnapshot(
+    long SampleCount, double P50Ms, double P95Ms, double P99Ms, double MaxMs);

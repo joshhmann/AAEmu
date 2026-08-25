@@ -112,6 +112,19 @@ public sealed class PopulationDirectorOptions
     /// <summary>Consecutive no-human sweeps before an embodied bot is dematerialized. Default 3.</summary>
     public int TrueDormancyNoHumanSweepsToDematerialize { get; init; } = 3;
 
+    // -- Staggered wakes (G2-A3) --
+    /// <summary>
+    /// When ON, the first scheduler step of a freshly materialized dormant bot
+    /// is scheduled at a deterministic per-bot offset within
+    /// <see cref="StaggeredWakeWindowMs"/> instead of immediately, spreading
+    /// wake-storm bursts across the window. Default OFF — byte-identical to
+    /// the pre-stagger behavior.
+    /// </summary>
+    public bool EnableStaggeredWakes { get; init; }
+
+    /// <summary>Width of the deterministic per-bot first-step stagger window. Default 5000 ms.</summary>
+    public int StaggeredWakeWindowMs { get; init; } = 5000;
+
     /// <summary>The inert default: everything off.</summary>
     public static PopulationDirectorOptions Disabled { get; } = new();
 
@@ -170,7 +183,6 @@ public sealed class PopulationDirectorOptions
     /// Reads the runtime gate + overrides: env first (AAEMU_BOT_PROXIMITY_*),
     /// then Config.Local.json → Config.json "Bots" object via
     /// <see cref="ReadProximityEnabledFlag"/>. Missing everything reads as disabled.
-    /// </summary>
     public static PopulationDirectorOptions FromEnvironment()
     {
         float? full = null;
@@ -184,12 +196,26 @@ public sealed class PopulationDirectorOptions
         if (float.TryParse(envReduced, out var reducedParsed) && reducedParsed > 0f)
             reduced = reducedParsed;
 
+        // G2-A3 storm-probe knobs (all default to the code defaults when unset):
+        int? materializeMax = null;
+        var envMaterializeMax = Environment.GetEnvironmentVariable("AAEMU_BOT_DORMANCY_MATERIALIZE_PER_SWEEP");
+        if (int.TryParse(envMaterializeMax, out var materializeParsed) && materializeParsed > 0)
+            materializeMax = materializeParsed;
+
+        int? staggerWindowMs = null;
+        var envStaggerWindow = Environment.GetEnvironmentVariable("AAEMU_BOT_STAGGER_WINDOW_MS");
+        if (int.TryParse(envStaggerWindow, out var staggerWindowParsed) && staggerWindowParsed > 0)
+            staggerWindowMs = staggerWindowParsed;
+
         return new PopulationDirectorOptions
         {
             EnableProximityFidelity = ReadProximityEnabledFlag(),
             EnableTrueDormancy = ReadTrueDormancyEnabledFlag(),
+            EnableStaggeredWakes = ReadBotsBoolFlag("AAEMU_BOT_STAGGERED_WAKES", "EnableStaggeredWakes"),
             FullProximityRadiusM = full ?? 75f,
             ReducedProximityRadiusM = reduced ?? 200f,
+            TrueDormancyMaterializePerSweepMax = materializeMax ?? 3,
+            StaggeredWakeWindowMs = staggerWindowMs ?? 5000,
         };
     }
 }

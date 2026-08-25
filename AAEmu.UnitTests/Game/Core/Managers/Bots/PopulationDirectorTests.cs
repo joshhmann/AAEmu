@@ -98,7 +98,8 @@ public class PopulationDirectorTests
         /// <summary>Counts activity-resolver invocations (scan-work measurement seam).</summary>
         public long ActivityResolverCalls { get; set; }
         public Rig(Action<PopulationDirectorOptions>? configureOptions = null,
-            Func<PlayerBotManager, DormantBotRegistry?>? dormantRegistryFactory = null)
+            Func<PlayerBotManager, DormantBotRegistry?>? dormantRegistryFactory = null,
+            Func<PopulationDirectorOptions>? optionsFactory = null)
         {
             Manager = new PlayerBotManager(new RecordingLifecycle());
             var schedulerOptions = new PlayerBotSchedulerOptions
@@ -110,7 +111,10 @@ public class PopulationDirectorTests
             };
             Scheduler = new PlayerBotScheduler(Manager, Executor, schedulerOptions, Time);
             Scheduler.Start();
-            var directorOptions = new PopulationDirectorOptions();
+            // PopulationDirectorOptions is init-only: callers that need
+            // non-default flags pass optionsFactory; configureOptions mutates
+            // what is mutable (density-cap dictionaries).
+            var directorOptions = optionsFactory?.Invoke() ?? new PopulationDirectorOptions();
             configureOptions?.Invoke(directorOptions);
             var dormantBots = dormantRegistryFactory?.Invoke(Manager);
             Director = new PopulationDirector(
@@ -803,6 +807,119 @@ public class PopulationDirectorTests
         await Assert.That(metrics.TotalMaterializations).IsEqualTo(0);
         await Assert.That(metrics.TotalWakes).IsEqualTo(0);
     }
+    #endregion
+
+    #region Staggered wakes + storm instrumentation (G2-A3)
+
+    [Test]
+    public async Task StablePhaseOffset_IsDeterministic_AndSpreadsAcrossWindow()
+    {
+        const int window = 5000;
+
+        // Deterministic: the same id always maps to the same phase.
+        foreach (var id in (uint[]) [1u, 2u, 700u, uint.MaxValue, 123456789u])
+            await Assert.That(PopulationDirector.StablePhaseOffset(id, window))
+                .IsEqualTo(PopulationDirector.StablePhaseOffset(id, window));
+
+        // In range + spread: consecutive ids populate the window broadly
+        // (the whole point — no synchronized cadence exposure).
+        var offsets = new HashSet<int>();
+        for (uint id = 0; id < 10_000u; id++)
+        {
+            var offset = PopulationDirector.StablePhaseOffset(id, window);
+            await Assert.That(offset).IsGreaterThanOrEqualTo(0);
+            await Assert.That(offset).IsLessThan(window);
+            offsets.Add(offset);
+        }
+
+        // 10k ids over 5k buckets: a bad hash collapses; a good one covers ~87%.
+        await Assert.That(offsets.Count).IsGreaterThanOrEqualTo(4_000);
+    }
+
+    [Test]
+    public async Task MaterializeNearbyDormant_Staggered_FirstStepDeferredByPhaseOffset()
+    {
+        const uint botId = 710u;
+        var homes = new StubHomeSource();
+        homes.Homes[botId] = new Vector3(110f, 100f, 0f); // inside the reduced radius
+        DormantBotRegistry? registry = null;
+        using var rig = new Rig(
+            optionsFactory: () => new PopulationDirectorOptions
+            {
+                EnableStaggeredWakes = true,
+                StaggeredWakeWindowMs = 5000
+            },
+            dormantRegistryFactory: manager => registry ??= new DormantBotRegistry(
+                manager,
+                new StubDormantSource(new DormantBotSpec(botId, "staggered")),
+                characterLoader: id => new Character(new UnitCustomModelParams())
+                {
+                    Id = id,
+                    Name = "staggered",
+                    MaxHp = 100,
+                    Hp = 100
+                },
+                homeSource: homes));
+
+        rig.Director.MaterializeNearbyDormantSpecs([HumanAt(999u, 100f, 100f, 0f)]);
+
+        // Materialized + fidelity Reduced + wake accepted — same as PB-004.
+        var metrics = rig.Director.GetMetrics();
+        await Assert.That(metrics.TotalMaterializations).IsEqualTo(1);
+        await Assert.That(metrics.TotalWakes).IsEqualTo(1);
+        await Assert.That(rig.Director.GetFidelity(botId)).IsEqualTo(BotFidelity.Reduced);
+
+        // BUT the first step is deferred to the bot's deterministic phase:
+        // pumping the scan cycle NOW must not step it (due is in the future).
+        rig.Pump();
+        SchedulerDrainQuietly(rig);
+        await Assert.That(rig.Executor.Starts.Contains(botId)).IsFalse();
+
+        // Past the phase offset the step runs on the real scheduler path.
+        var offsetMs = PopulationDirector.StablePhaseOffset(botId, 5000);
+        rig.Time.Advance(TimeSpan.FromMilliseconds(offsetMs + 1));
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.Starts.Contains(botId));
+        await Assert.That(rig.Executor.Starts.Contains(botId)).IsTrue();
+    }
+
+    [Test]
+    public async Task TransitionLatencyRing_SamplesOuterOperations_OncePerCall()
+    {
+        using var rig = new Rig();
+        var idA = rig.AddActiveBot(20u);
+        var idB = rig.AddActiveBot(21u);
+
+        // Three outer transition ops. Wake() nests TrySetFidelityCore — the
+        // ring must count each OUTER call exactly once (no inner double-sample).
+        rig.Director.Wake(idA, "test");
+        rig.Director.Wake(idB, "test");
+        rig.Director.Sleep(idA, "test");
+
+        var lat = rig.Director.GetTransitionLatency();
+        await Assert.That(lat.SampleCount).IsEqualTo(3);
+        await Assert.That(lat.MaxMs).IsGreaterThanOrEqualTo(0);
+        await Assert.That(lat.P99Ms).IsGreaterThanOrEqualTo(lat.P50Ms);
+    }
+
+    [Test]
+    public async Task ProximitySweepLatencyRing_SamplesEachSweep()
+    {
+        using var rig = new Rig(optionsFactory: () => new PopulationDirectorOptions { EnableProximityFidelity = true });
+        rig.Director.RefreshProximityFidelity();
+        rig.Director.RefreshProximityFidelity();
+
+        var sweep = rig.Director.GetProximitySweepLatency();
+        await Assert.That(sweep.SampleCount).IsEqualTo(2);
+        await Assert.That(sweep.P99Ms).IsGreaterThanOrEqualTo(0);
+    }
+
+    /// <summary>Best-effort boundary drain (steps may already be marshalled).</summary>
+    private static void SchedulerDrainQuietly(Rig rig)
+    {
+        try { rig.Scheduler.DrainTickQueue(); } catch { /* nothing queued */ }
+    }
+
     #endregion
 
 }
