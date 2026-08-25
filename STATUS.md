@@ -57,6 +57,25 @@ three verified defects (wrong zone loader selection WorldTemplate.cs:235-238,
 linear nearest-node scans AiGeodataManager.cs:232-314, PathNode G-cost bug
 PathNode.cs:226); strategy = compose/harden the existing .bai spine.
 
+
+**2026-08-25 wave 3 (lane integration, develop @ 9a8fbc8e8):**
+**G2-A3 ACCEPTANCE MET (full run):** 1,000-registered-dormant wake-storm
+fidelity-transition p99 = 0.00008 ms unstaggered / 0.000061 ms staggered vs
+the <100 ms bar — both arms 1000/1000 materialized through the REAL live-TCP-
+human → proximity-sweep → materialize path, clean dematerialize-on-leave.
+Incremental per-zone/activity counters REJECTED on profiling evidence (sweep
+scan pass p50 ≈ 0.066 ms; hot cost is the budget-paced materializer by
+design); event-driven human-proximity wake DEFERRED with rationale — full
+numbers: scorecard-explorations/generated/g2-a3-storm-report.md §4.2/§5.
+IdManager boot race (§10.2 above) FIXED same day: lazy-init guard,
+95bf502ad. **Nav G-cost fix measured:** detour factor 1.91×→1.22×, plan avg
+6954→1187 ms, rig 81/81 held (nav/slice-gcost @ 7e5d96e74; lazy per-block
+.bai spatial grid + heap openSet included). **First autonomous leveling
+loop:** LevelingLoopScenario completes the delivery+ItemGather chain
+unprompted 254→255, XP +620/+680 through real quest gates
+(bots/leveling-loop @ 2a124be70); remaining primitives captured in the
+capability-matrix / blockers taxonomy.
+
 **M0 — Foundation: ✅ CLOSED (2026-08-03, Josh signoff)**
 Workflow v4 (permanent one-way upstream gate), community guidelines,
 kanban template set (Nei), gate.sh verified, scorecard + 3 exploration
