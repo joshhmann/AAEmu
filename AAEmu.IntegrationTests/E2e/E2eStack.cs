@@ -56,11 +56,14 @@ public static class E2eStack
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, ".git")))
+        // .git may be a DIRECTORY (normal clone) or a FILE (git worktree —
+        // e.g. the a5-acceptance worktree): both anchor the repo root.
+        while (dir != null &&
+               !Directory.Exists(Path.Combine(dir.FullName, ".git")) &&
+               !File.Exists(Path.Combine(dir.FullName, ".git")))
             dir = dir.Parent;
         return dir?.FullName ?? throw new InvalidOperationException("Cannot locate repo root");
     }
-
     // ---------------------------------------------------------------- boot
 
     public static void EnsureUp()

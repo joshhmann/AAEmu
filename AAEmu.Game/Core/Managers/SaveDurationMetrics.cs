@@ -14,6 +14,13 @@ public sealed class SaveDurationMetricsSnapshot
     public double P50Ms { get; init; }
     public double P95Ms { get; init; }
     public double MaxMs { get; init; }
+
+    /// <summary>
+    /// Autosave ticks dropped because a DoSave pass was still in flight
+    /// (SaveManager._isSaving guard). Cumulative since boot; nonzero means
+    /// saves overran their interval (A4 gate observability).
+    /// </summary>
+    public long SkipCount { get; init; }
 }
 
 /// <summary>

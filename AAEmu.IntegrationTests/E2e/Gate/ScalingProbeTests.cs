@@ -39,7 +39,7 @@ public class ScalingProbeTests
         var tiers = new List<TierResult>();
         try
         {
-            foreach (var n in new[] { 10, 20, 30 })
+            foreach (var n in ParseTiers())
             {
                 var result = await RunTier(n, minutesPerTier);
                 tiers.Add(result);
@@ -51,9 +51,34 @@ public class ScalingProbeTests
         }
 
         // Validity only: every tier must have actually embodied its citizens.
-        foreach (var t in tiers)
-            Assert.True(t.Embodied >= t.Citizens,
-                $"tier N={t.Citizens} never fully embodied (reached {t.Embodied}) — scaling curve invalid");
+        // Dormancy-aware (G2-A5): under AAEMU_BOT_TRUE_DORMANCY=1 the
+        // by-design steady state with no humans nearby is 0 embodied — the
+        // boot-validity assertion would contradict the engine's correct
+        // dematerialization behavior, so it only applies to the classic
+        // always-embodied probe mode.
+        var trueDormancy = Environment.GetEnvironmentVariable("AAEMU_BOT_TRUE_DORMANCY") == "1";
+        if (!trueDormancy)
+            foreach (var t in tiers)
+                Assert.True(t.Embodied >= t.Citizens,
+                    $"tier N={t.Citizens} never fully embodied (reached {t.Embodied}) — scaling curve invalid");
+    }
+
+    /// <summary>
+    /// Tier list, env-driven so non-default shapes (e.g. a single-tier
+    /// dormancy run) are constructible without editing the probe.
+    /// SCALING_PROBE_TIERS="10,20,30" (default when unset).
+    /// </summary>
+    private static int[] ParseTiers()
+    {
+        var spec = Environment.GetEnvironmentVariable("SCALING_PROBE_TIERS");
+        if (string.IsNullOrWhiteSpace(spec))
+            return [10, 20, 30];
+        var tiers = spec
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => int.TryParse(s, out var v) ? v : 0)
+            .Where(v => v > 0)
+            .ToArray();
+        return tiers.Length > 0 ? tiers : [10, 20, 30];
     }
 
     // -------------------------------------------------------------- runner

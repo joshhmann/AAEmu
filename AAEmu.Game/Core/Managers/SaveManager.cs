@@ -27,6 +27,14 @@ public class SaveManager(
     private double Delay = 1;
     private bool _enabled = false;
     private bool _isSaving = false;
+
+    /// <summary>
+    /// Autosave ticks dropped because a previous DoSave pass was still running
+    /// (the <see cref="_isSaving"/> guard). Gate observability for the A4
+    /// budget: skips mean saves are overrunning their interval. Cumulative,
+    /// monotonic, Interlocked.
+    /// </summary>
+    private long _saveSkips;
     private readonly object _lock = new();
     private readonly SaveDurationMetrics _saveMetrics = new();
     private SaveTickStartTask saveTask;
@@ -41,7 +49,15 @@ public class SaveManager(
     {
         lock (_lock)
         {
-            return _saveMetrics.Snapshot();
+            var snapshot = _saveMetrics.Snapshot();
+            return new SaveDurationMetricsSnapshot
+            {
+                SampleCount = snapshot.SampleCount,
+                P50Ms = snapshot.P50Ms,
+                P95Ms = snapshot.P95Ms,
+                MaxMs = snapshot.MaxMs,
+                SkipCount = Interlocked.Read(ref _saveSkips)
+            };
         }
     }
 
@@ -79,7 +95,10 @@ public class SaveManager(
     public bool DoSave(bool saveAllCharacters = false)
     {
         if (_isSaving)
+        {
+            Interlocked.Increment(ref _saveSkips);
             return false;
+        }
         var saved = false;
         lock (_lock)
         {

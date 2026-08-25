@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 
 using AAEmu.Commons.Utils;
@@ -16,6 +17,14 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// <param name="CharacterId">The characters.id row.</param>
 /// <param name="Name">The characters.name display name.</param>
 public sealed record DormantBotSpec(uint CharacterId, string Name);
+
+/// <summary>
+/// Percentile snapshot of dormant-spec materialization wall-clock (G2-A5
+/// acceptance instrumentation): row-load → home restore → activate, i.e.
+/// <see cref="DormantBotRegistry.Materialize"/> success duration.
+/// </summary>
+public readonly record struct MaterializationLatencySnapshot(
+    long SampleCount, double P50Ms, double P95Ms, double MaxMs);
 
 /// <summary>
 /// Discovery seam for dormant bot specs (G2-A5). The production source is a
@@ -143,6 +152,12 @@ public sealed class DormantBotRegistry
     private readonly object _lock = new();
     private Dictionary<uint, DormantBotSpec>? _dormant;
 
+    // Acceptance instrumentation (G2-A5): wall-clock of each SUCCESSFUL
+    // Materialize (row-load → home restore → activate). Purely passive —
+    // sampled only on the materialization path, never gates behavior.
+    private readonly object _latencyLock = new();
+    private readonly SampleRing _latencyRing = new();
+
     public DormantBotRegistry(
         IPlayerBotManager manager,
         IDormantBotSource source,
@@ -201,6 +216,8 @@ public sealed class DormantBotRegistry
             existing!.State == PlayerBotState.Active)
             return false; // already embodied
 
+        var latencyStopwatch = Stopwatch.StartNew();
+
         var character = _characterLoader(spec.CharacterId);
         if (character == null)
         {
@@ -225,7 +242,12 @@ public sealed class DormantBotRegistry
         lock (_lock)
             _dormant?.Remove(spec.CharacterId);
 
-        Logger.Info("True dormancy: materialized '{Name}' (id {CharacterId})", character.Name, spec.CharacterId);
+        latencyStopwatch.Stop();
+        lock (_latencyLock)
+            _latencyRing.Add(latencyStopwatch.Elapsed.TotalMilliseconds);
+
+        Logger.Info("True dormancy: materialized '{Name}' (id {CharacterId}) in {LatencyMs:F0}ms",
+            character.Name, spec.CharacterId, latencyStopwatch.Elapsed.TotalMilliseconds);
         return true;
     }
 
@@ -265,6 +287,19 @@ public sealed class DormantBotRegistry
         }
 
         return _homeSource.TryGetHome(characterId, out worldId, out position);
+    }
+
+    /// <summary>
+    /// Percentile snapshot of successful-materialization wall-clock
+    /// (acceptance instrumentation seam — read by the E2E bridge metrics).
+    /// </summary>
+    public MaterializationLatencySnapshot GetMaterializationLatency()
+    {
+        lock (_latencyLock)
+        {
+            var (count, p50, p95, max) = _latencyRing.Summarize();
+            return new MaterializationLatencySnapshot(count, p50, p95, max);
+        }
     }
 
     /// <summary>Lazily runs the one-time source discovery.</summary>
