@@ -305,6 +305,31 @@ aggregate (~0.3/min or severity+same-world-only) per t_18fccd09 precedent.
 Remaining engineering follow-up: Transform.FinalizeTransform allocation per
 move (engine-wide, benefits players too).
 
+**2026-08-24 mechanics rounds 3-5 (0482ba3f0 → 0d1a6b8fe):**
+Round 3 (0482ba3f0) — G3-B3 DONE: IBotActivityModule + BotGoalArbiter
+(single-active activity per bot per wake; schedule P100 / roam P50 / idle P0;
+dead PlayerBotBehaviorController stack deleted); ITEM-01 item_proc_bindings
+wired; MATE-01 equip-pack legality; HOUSING-01 race regression; ZONE-01 Peace
+boot + CanAttack enforcement. Round 4 — TRANSFER-01 fixed + live-proven
+(TlId shadowing); soak STAGE 1 executed + run 3 verified home/churn fixes;
+physics recalibration = OPEN JOSH DECISION (~0.3/min case recorded). Round 5
+(cab6e4dc9 → 0d1a6b8fe) — M1 Lane-B: ConReportJournal wired-noop FIXED (466
+quests auto-passed the journal gate; 59 instantly completable) +
+ConReportDoodad FinalizeQuest double-subscribe leak fixed; golden-route
+replay re-PASS; full 50-act audit clean except ConAcceptComponent (NOVEL-
+MECHANICS, Josh design call). FISH-01: dossier + CastAt(position) contract
+action + FishingVerificationE2eTests LIVE PASS (labor/worm/proficiency/loot
+through plot 809); DoodadFuncBuyFish double-credit fixed. C7: expedition
+contract actions ExpeditionCreate/Invite/Accept/Leave + lifecycle rig. C9:
+duel rig found & fixed stuck-duel bug (RestoreFaction NRE in stop catch-all
+left both players permanently IsInDuel). M7#2 party lifecycle fault matrix
+(4 rigs: member/leader death → membership preserved through real
+CharacterResurrection; invitation retry; target-loss fail-closed) — surfaced
++ fixed null-killer environmental-death NRE in Unit.DoDie/CharacterCombat.
+M7#6 npc state telemetry: aggro-change snapshots (hp/pct/top-aggro) +
+return-home entry Debug logs — fox pinned-HP diagnosable without speculative
+AI changes.
+
 **M6 exit blockers (as of 2026-08-20):** physics-warning regression
 t_eecc5604 ✅ done · adopt-heal fix t_555ed207 ✅ done (merged; prod
 re-provision verified by presence deploy chain) · **B4 playerbot_metadata
