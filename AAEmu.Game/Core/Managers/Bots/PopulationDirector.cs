@@ -663,7 +663,7 @@ public sealed class PopulationDirector : IPopulationDirector
     /// per sweep. Specs without a known home cannot be proximity-matched and
     /// stay dormant. A materialized bot starts the ladder at Reduced.
     /// </summary>
-    private void MaterializeNearbyDormantSpecs(IReadOnlyList<Character> humans)
+    internal void MaterializeNearbyDormantSpecs(IReadOnlyList<Character> humans)
     {
         var budget = _options.TrueDormancyMaterializePerSweepMax;
         if (humans.Count == 0 || budget <= 0)
@@ -698,6 +698,16 @@ public sealed class PopulationDirector : IPopulationDirector
                     _fidelity[spec.CharacterId] = BotFidelity.Reduced;
                     Interlocked.Increment(ref _totalTransitionsApplied);
                     Interlocked.Increment(ref _totalMaterializations);
+
+                    // PB-004: a materialized bot must be scheduler-indistinguishable
+                    // from a due-path Dormant→Reduced wake. Fidelity is already
+                    // Reduced here, so Wake() goes straight to the scheduler re-arm
+                    // (+ its counters) — exactly what the `due` path at the bottom
+                    // of RunProximitySweep does for proximity upgrades.
+                    var wake = Wake(spec.CharacterId, "true-dormancy-materialize");
+                    if (wake != FidelityTransitionResult.Applied)
+                        Logger.Warn("True dormancy: materialized {CharacterId} but the scheduler wake was refused ({Result})",
+                            spec.CharacterId, wake);
                 }
                 break; // one human match is enough for this spec
             }
@@ -795,8 +805,18 @@ internal static class PopulationDirectorProximityBootstrap
                 if (SingletonContainer.ServiceProvider == null)
                     return;
 
-                var director = SingletonContainer.ServiceProvider
-                    .GetRequiredService<PopulationDirector>();
+                var services = SingletonContainer.ServiceProvider;
+                var director = services.GetRequiredService<PopulationDirector>();
+
+                // PB-004 (consumer side): Wake() only means something if the
+                // scheduler's wake-scan loop is running. A dormancy-only boot
+                // (no presence demo, no schedules flag) starts NO loop — the
+                // due path's wakes AND materialization wakes would queue up
+                // forever. Arm it here, gated behind this bootstrap's already-
+                // non-default proximity-fidelity flag; Start() is idempotent,
+                // so a later presence/schedules start stays a no-op.
+                services.GetRequiredService<IPlayerBotScheduler>().Start();
+
                 if (director.Start())
                     Logger.Info("PopulationDirectorBootstrap: proximity fidelity armed");
             }

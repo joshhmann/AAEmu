@@ -1643,9 +1643,24 @@ public sealed class BotDriveBridge
                     session.Character.Transform.WorldId,
                     session.Character.Transform.ZoneId,
                     hx, hy, hz);
+
+                // PB-004 companion: real dormant specs (dematerialized presence
+                // citizens) carry the presence coordinator's roam-loop schedule,
+                // which is what keeps a woken bot STEPPING after its wake.
+                // Without it a materialized bot executes one step and goes
+                // quiet again — faithful seeds need the same descriptor.
+                PlayerBotMetadataStore.Instance.RecordSchedule(
+                    session.Character.Id,
+                    System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        kind = "roam-loop",
+                        radius = 15f,
+                        phase = seeded.Count, // per-bot phase seed, same role as BuildRoamScheduleJson's
+                        loop = true,
+                        home = new[] { hx, hy, hz }
+                    }));
                 hasHome = true;
             }
-
             try
             {
                 CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);

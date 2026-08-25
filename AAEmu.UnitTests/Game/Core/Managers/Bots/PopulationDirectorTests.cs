@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Numerics;
 
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Models.Game.World.Transform;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Units;
 
@@ -95,8 +97,8 @@ public class PopulationDirectorTests
 
         /// <summary>Counts activity-resolver invocations (scan-work measurement seam).</summary>
         public long ActivityResolverCalls { get; set; }
-
-        public Rig(Action<PopulationDirectorOptions>? configureOptions = null)
+        public Rig(Action<PopulationDirectorOptions>? configureOptions = null,
+            Func<PlayerBotManager, DormantBotRegistry?>? dormantRegistryFactory = null)
         {
             Manager = new PlayerBotManager(new RecordingLifecycle());
             var schedulerOptions = new PlayerBotSchedulerOptions
@@ -108,9 +110,9 @@ public class PopulationDirectorTests
             };
             Scheduler = new PlayerBotScheduler(Manager, Executor, schedulerOptions, Time);
             Scheduler.Start();
-
             var directorOptions = new PopulationDirectorOptions();
             configureOptions?.Invoke(directorOptions);
+            var dormantBots = dormantRegistryFactory?.Invoke(Manager);
             Director = new PopulationDirector(
                 Manager,
                 Scheduler,
@@ -126,8 +128,10 @@ public class PopulationDirectorTests
                 {
                     ActivityResolverCalls++;
                     return Activities.TryGetValue(c.Id, out var a) ? a : null;
-                });
+                },
+                dormantBots: dormantBots);
         }
+
 
         /// <summary>Spawns + activates a bot through the real manager registry.</summary>
         public uint AddActiveBot(uint id, string name = "bot")
@@ -681,4 +685,124 @@ public class PopulationDirectorTests
     }
 
     #endregion
+
+    #region True dormancy: proximity materialization (PB-004)
+
+    /// <summary>DormantBotSource stub with one scripted spec.</summary>
+    private sealed class StubDormantSource(params DormantBotSpec[] specs) : IDormantBotSource
+    {
+        public IReadOnlyList<DormantBotSpec> ListSpecs() => specs;
+    }
+
+    /// <summary>Home-source stub: per-id home or none.</summary>
+    private sealed class StubHomeSource : IDormantBotHomeSource
+    {
+        public Dictionary<uint, Vector3> Homes { get; } = [];
+
+        public bool TryGetHome(uint characterId, out uint worldId, out Vector3 position)
+        {
+            if (Homes.TryGetValue(characterId, out position))
+            {
+                worldId = 0; // 0 = world-agnostic (matches the production compare skip)
+                return true;
+            }
+
+            worldId = 0;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// A live human standing near a dormant spec's recorded home. The
+    /// proximity compare is squared-distance over
+    /// <see cref="Transform.ComputeWorldPosition"/> — parentless transforms
+    /// resolve to their local position, so no world instance is needed.
+    /// </summary>
+    private static Character HumanAt(uint id, float x, float y, float z)
+    {
+        var human = new Character(new UnitCustomModelParams()) { Id = id, Name = $"human{id}" };
+        human.Transform = new Transform(human, null, x, y, z);
+        return human;
+    }
+    [Test]
+    public async Task MaterializeNearbyDormant_WakesScheduler_StepsResume()
+    {
+        var homes = new StubHomeSource();
+        homes.Homes[700u] = new Vector3(110f, 100f, 0f); // 10 m from the human — inside ReducedProximityRadiusM
+        DormantBotRegistry? registry = null;
+        using var rig = new Rig(dormantRegistryFactory: manager => registry ??= new DormantBotRegistry(
+            manager,
+            new StubDormantSource(new DormantBotSpec(700u, "dormbot")),
+            characterLoader: id => new Character(new UnitCustomModelParams())
+            {
+                Id = id,
+                Name = "dormbot",
+                MaxHp = 100,
+                Hp = 100
+            },
+            homeSource: homes));
+        const uint botId = 700u;
+
+        var human = HumanAt(999u, 100f, 100f, 0f);
+
+        rig.Director.MaterializeNearbyDormantSpecs([human]);
+
+        // Materialized through the registry + fidelity set + WAKE path taken.
+        await Assert.That(registry.IsDormant(botId)).IsFalse();
+        await Assert.That(rig.Director.GetFidelity(botId)).IsEqualTo(BotFidelity.Reduced);
+        var metrics = rig.Director.GetMetrics();
+        await Assert.That(metrics.TotalMaterializations).IsEqualTo(1);
+        // THE PB-004 regression signal: the fix routes materialization through
+        // Wake() — without it TotalWakes stays 0 and the scheduler never arms.
+        await Assert.That(metrics.TotalWakes).IsEqualTo(1);
+
+        // Steps resume: pump the real scheduler until the materialized bot executes.
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.Starts.Contains(botId));
+        await Assert.That(rig.Executor.Starts.Contains(botId)).IsTrue();
+    }
+
+    [Test]
+    public async Task MaterializeNearbyDormant_SpecWithoutHome_StaysDormant_NoWake()
+    {
+        const uint botId = 701u;
+        DormantBotRegistry? registry = null;
+        using var rig = new Rig(dormantRegistryFactory: manager => registry ??= new DormantBotRegistry(
+            manager,
+            new StubDormantSource(new DormantBotSpec(botId, "homeless")),
+            characterLoader: id => new Character(new UnitCustomModelParams()) { Id = id, Name = "homeless" },
+            homeSource: new StubHomeSource())); // no home rows at all
+
+        rig.Director.MaterializeNearbyDormantSpecs([HumanAt(999u, 100f, 100f, 0f)]);
+
+        await Assert.That(registry.IsDormant(botId)).IsTrue();
+        var metrics = rig.Director.GetMetrics();
+        await Assert.That(metrics.TotalMaterializations).IsEqualTo(0);
+        await Assert.That(metrics.TotalWakes).IsEqualTo(0);
+        rig.Pump();
+        await Assert.That(rig.Executor.Starts.Contains(botId)).IsFalse();
+    }
+
+    [Test]
+    public async Task MaterializeNearbyDormant_HomeBeyondRadius_StaysDormant_NoWake()
+    {
+        const uint botId = 702u;
+        var homes = new StubHomeSource();
+        homes.Homes[botId] = new Vector3(100f + new PopulationDirectorOptions().ReducedProximityRadiusM + 50f, 100f, 0f);
+        DormantBotRegistry? registry = null;
+        using var rig = new Rig(dormantRegistryFactory: manager => registry ??= new DormantBotRegistry(
+            manager,
+            new StubDormantSource(new DormantBotSpec(botId, "faraway")),
+            characterLoader: id => new Character(new UnitCustomModelParams()) { Id = id, Name = "faraway", MaxHp = 100, Hp = 100 },
+            homeSource: homes));
+
+        rig.Director.MaterializeNearbyDormantSpecs([HumanAt(999u, 100f, 100f, 0f)]);
+
+        await Assert.That(registry.IsDormant(botId)).IsTrue();
+        var metrics = rig.Director.GetMetrics();
+        await Assert.That(metrics.TotalMaterializations).IsEqualTo(0);
+        await Assert.That(metrics.TotalWakes).IsEqualTo(0);
+    }
+    #endregion
+
 }
