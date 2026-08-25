@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-24 · by Codex (mechanics sweep wave 2 + soak STAGE 1 + TRANSFER-01 live) + Mai (post-deploy verify: bot-regression 7/7 PASS on deployed 2cc75ff9f; soak STAGE 1 needs clean uncontended 30-min window — indun opencode session collides on E2E ports)
-Branch of record: develop @ 3a534b539 (origin/develop)
+Updated: 2026-08-25 · by ox-alpha docs wave (G2-A5 + A4 near-term gates MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same day; first-class InteractWith doodad contract action)
+Branch of record: develop @ 6ba363a28 (origin/develop; was e672b9579 at day start)
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
@@ -21,6 +21,41 @@ ROADMAP.md "Deferred validation gates".
    PASS) — what remains is the full-M6-exit LABEL decision, not code.
 
 ## Milestone state
+
+**2026-08-25 wave (e672b9579 → 6ba363a28):**
+PB-002 quest-discovery perception primitive LANDED (c1073d883) —
+IGameplayActor.DiscoverQuests through the real CharacterQuests.AddQuest
+pre-flight chain; offer linkage = QuestActConAcceptNpc/Doodad acts;
+canonical smoke vs compact.sqlite3 PASS. First-class InteractWith doodad
+contract action (13f502673) — derived use-skill, fail-closed observable-
+effect post-check. G2/A5 harness instrumentation merged (4e3004f33) —
+dormancy latency ring, bridge seedDormant command, worktree-safe E2eStack,
+ScalingProbeTests env tiers, new A5AcceptanceProbeTests +
+A4AcceptanceProbeTests. Roam allocation-budget guard widened 512→768B/step
+(d989f6639) — zero-margin boundary flake, JIT-variance evidence documented.
+**G2-A5 NEAR-TERM GATE MET:** ~100 dormant/~10 embodied constructed via real
+paths (live TCP human trigger); RSS +2.09% vs baseline (<15% target);
+materialize p95 251.7ms pre-fix / 260.1ms post-PB-004-fix (<3s target).
+Evidence: scorecard-explorations/generated/g2-a5-acceptance-report.md §8+§10.
+**G2-A4 GATE MET:** autosave p95 393.1ms @ 250 active characters (target
+<2000ms; actual headroom 80.3%), 0 save skips — report §9. **PB-003 CLOSED,
+premise REFUTED:** exit portals always shipped — static spawns are JSON world
+data (Data/Worlds/instance_hadir_farm/doodad_spawns.json 4289/4927),
+compact.sqlite3 never held them; party-clear-then-exit E2E PASS 11/11
+post-rebase (IndunExitE2eTests, .worktrees/pb003-exit branch pb003/exit-e2e
+@ 9e824d34f); ledger flipped FIXED with layer correction DATA→E2E-coverage.
+**PB-004 FOUND AND FIXED same day (6ba363a28):** materialized dormant bots
+never stepped — no Wake() on proximity materialization + dormancy-only boot
+never started the scheduler loop; post-fix steps/min 0→3001 with 10 embodied,
+dematerialize-on-leave clean; seedDormant records roam schedule. New engine
+finding logged, NOT fixed (report §10.2): pre-existing ManagerOrchestrator
+parallel-init boot race (IdManager.GetNextId NRE ← ItemContainer ctor ←
+ItemManager.LoadUserItems), one observed crash, rerun green. Navigation
+dossier landed: scorecard-explorations/mechanics/navigation-domain.md
+(487 lines) — server already loads CryEngine .bai nav graphs + has A* with
+three verified defects (wrong zone loader selection WorldTemplate.cs:235-238,
+linear nearest-node scans AiGeodataManager.cs:232-314, PathNode G-cost bug
+PathNode.cs:226); strategy = compose/harden the existing .bai spine.
 
 **M0 — Foundation: ✅ CLOSED (2026-08-03, Josh signoff)**
 Workflow v4 (permanent one-way upstream gate), community guidelines,

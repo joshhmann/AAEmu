@@ -1366,6 +1366,10 @@ Rules:
 5. **PLAYER_MODE vs TEST_MODE**: bots perceive what a player could
    perceive; test-only instrumentation (DB asserts, packet captures) never
    leaks into autonomous behavior.
+   *Status 2026-08-25:* rule documented, mechanical guard not yet proven —
+   the headless-roam BroadcastMovement opt-out (615a645c9), bridge metrics,
+   and rig seed seams are gated by inspection only; B5 owns the audit +
+   negative tests that make the separation enforced rather than asserted.
 6. **Capability matrix** (`scorecard-explorations/mechanics/playerbot-
    capability-matrix.md`): Perceive / Decide / Act / Verify per system,
    populated from implementation reality. A system is BOT_TESTED only when
@@ -1687,6 +1691,112 @@ remains open; H stays UNKNOWN — Josh confirms feel.
 These are test-platform investments, not a claim that bots can replace the
 Josh-owned human-feel gates; client feel, visual correctness, and balance
 remain human acceptance work.
+
+**Next-wave execution specs (2026-08-25; integrated development-loop
+priorities — excludes the three already-delegated slices: PB-002
+quest-discovery, doodad-interact contract action, A5 acceptance run):**
+
+1. **PB-001 navigation strategy dossier + coarse-travel slice design**
+   · Owner-role: evidence scout + systems designer (docs/design first, no
+   engine code in this task) · Area: BOT + SERVER navigation · Priority: HIGH
+   (blocker ledger outranks features) · Depends on: nothing · Milestone:
+   feeds M8 (G4 C3/C4 travel legs) and the indun/party loops.
+   *Goal:* pick the waypoint-network vs coarse-route-graph strategy from
+   evidence before any engine work. *Work:* archaeology dossier
+   `scorecard-explorations/mechanics/navigation-domain.md` — what canonical
+   1.2 data exists (NPC paths/waypoints in compact.sqlite3? client-side nav
+   data?), how neighboring movement code resolves terrain; grade
+   VERIFIED/INFERRED/UNKNOWN; write the behavioral contract and size the
+   vertical slice (one cross-region leg, travel-as-progress for background
+   bots per the fidelity ladder). *Acceptance criteria:* dossier exists with
+   grades; strategy decision recorded with evidence citations; a sized slice
+   plan a follow-up card can execute. *Outputs:* dossier + ROADMAP lane
+   annotation. *Follow-up unlocked:* dungeon interiors (PB-001), cross-region
+   caravans, believable background travel.
+  **DONE 2026-08-25 — premise refuted (data always existed); exit E2E PASS
+  11/11; see playerbot-blockers.md PB-003 FIXED.** Original spec preserved
+  below:
+2. **PB-003 Hadir Farm exit-portal SQL patch candidate** · Owner-role: data
+   archivist · Area: DATA (read-only-reference overlay patch) · Priority:
+   MEDIUM · Depends on: canonical verification vs reference client data ·
+   Milestone: closes an indun-loop gap found by the party spike.
+   *Goal:* give cleared dungeon parties a way out. *Work:* per the blockers
+   ledger (PB-003: zone 46 ships no exit doodad spawn data, 4289/4927
+   absent, no indun_events), verify absence against REFERENCE CLIENT DATA
+   FIRST; sibling-dungeon exit-doodad pattern mining is the fallback ONLY if
+   the reference data lacks zone 46, and any such inference is graded
+   INFERRED (never VERIFIED). Then author the overlay SQL patch +
+   rig/E2E asserting post-clear exit returns the party to the main world.
+   *Acceptance criteria:* patch applied to the E2E stack only (compact.sqlite3
+   stays READ-ONLY); party-clear-then-exit E2E PASS; blockers ledger PB-003 →
+   FIXED with evidence. *Outputs:* SQL patch + `indun-domain.md` addendum +
+   ledger status flip. *Follow-up unlocked:* repeatable dungeon loop.
+3. **A4 acceptance measurement — autosave p95 @ 250 characters** · Owner-role:
+   perf/validation engineer · Area: persistence (G2-A4 gate) · Priority: HIGH
+   (milestone-gate item) · Depends on: existing scaling-probe harness ·
+   Milestone: G2-A4. *Goal:* record or fail the explicit pending gate
+   (autosave p95 < 2s @ 250 characters). *Baseline:* M3b measured 1301ms p95
+   at 25 bots + 2 homesteads; dirty-only periodic saves merged 5ed5d6493.
+   *Hypothesis:* dirty-only tracking holds p95 < 2s at 250 characters with ≥
+   30% headroom [INFERRED]. *Metric:* autosave p95 via SaveDurationMetrics +
+   `_isSaving` skip count. *Expected improvement:* gate MET at scale.
+   *Regression checks:* M3bExitPersistence re-run as-is; soak budgets hold.
+   *Work/Acceptance:* extend ScalingProbeTests-style probe to 250 characters,
+   sample across a soak window, annotate G2-A4 with MET/FAILED + numbers.
+   *Outputs:* probe report JSON + G2-A4 gate annotation. *Follow-up
+   unlocked:* Gate G1's "250 staged" rung.
+4. **A3 remainder — incremental counters, staggered cadences, wake-storm
+   probe** · Owner-role: server perf engineer · Area: scheduler/fidelity
+   machinery (G2-A3) · Priority: MEDIUM · Depends on: proximity-fidelity
+   sweep (d6cabcfd4) + true dormancy slice (e672b9579) · Milestone: G2-A3.
+   *Goal:* meet the A3 acceptance — 1,000-bot wake-storm transition p99 <
+   100ms. *Baseline:* RefreshPressure driven once/sweep;
+   ScanEmbodiedInZone budgeted O(cap); ONE global scheduler scan cadence
+   (100ms) shared by all bots. *Hypothesis:* incremental per-zone/activity
+   counters plus staggered per-bot wake offsets remove synchronized spikes
+   and keep transition p99 under bar without behavior change. *Metric:*
+   wake-storm transition p99, sweep wall time. *Expected improvement:*
+   synchronized-cadence spikes eliminated pre-scale. *Regression checks:*
+   SchedulerSoakStage1Tests budgets PASS unchanged; proximity-tier rig green.
+   *Work/Acceptance:* implement counters + stagger behind the existing
+   default-OFF gates; run a 1,000-registered-dormant storm probe; annotate
+   A3 with the number. *Outputs:* PopulationDirector/scheduler changes +
+   probe report. *Follow-up unlocked:* Gate G1 50→100 profiling rungs.
+5. **Allocation wave 2 — A2 broadcast-economics numbers** · Owner-role:
+   server perf engineer · Area: broadcast/GC hot path (G2-A2, still open) ·
+   Priority: MEDIUM · Depends on: A4 measurement (shares the probe harness)
+   · Milestone: G2-A2. *Goal:* measure, then meet, the A2 acceptance (100
+   bots / 0 humans ⇒ zero bot-originated packets; gen0 GC < 1/min).
+   *Baseline:* roam heap churn cut 38%/wake by the BroadcastMovement opt-out
+   (615a645c9; RSS plateau ~5.5GB → GC reclaim ~3.7GB); Region.GetList array
+   copies + allocation-free GetAround overload still on the table.
+   *Hypothesis:* remaining churn concentrates in per-wake allocations
+   (audit records, observation snapshots); humans-nearby short-circuit +
+   allocation-free GetAround close most of it. *Metric:* gen0 GC/min, bytes
+   allocated/wake, RSS band. *Expected improvement:* A2 acceptance met at
+   100 bots. *Regression checks:* all seven bot-regression scenarios stay
+   green (movement packets must still reach real clients); B5 leakage audit
+   confirms the opt-out never touches player-visible sessions. *Work/
+   Acceptance:* profile first (optimize-in-waves discipline), implement the
+   two named seams, record before/after numbers in the G2-A2 entry.
+   *Outputs:* profiling note + WorldManager changes + gate annotation.
+   *Follow-up unlocked:* 100-bot village runs inside budget.
+6. **Behavioral scenario library + PLAYER_MODE/TEST_MODE leakage audit**
+   (= G3-B5) · Owner-role: test-platform engineer · Area: validation
+   infrastructure · Priority: MEDIUM · Depends on: none · Milestone: G3-B5 /
+   development-loop rule 5. *Goal:* make the regression-validation stage of
+   the integrated loop a registry lookup instead of tribal knowledge.
+   *Work:* index the seven live scenarios from
+   `Scripts/e2e/bot-regression-pass.sh` into a library doc (contract,
+   inputs, observable outcomes, layer-tagged failure attribution,
+   capability-matrix row links); enumerate every test-only seam (bridge
+   metrics, headless-roam BroadcastMovement opt-out, rig seed hooks) with
+   its gate and a negative test proving unreachability from player sessions
+   and autonomy. *Acceptance criteria:* library doc exists and every matrix
+   row maps to ≥0 scenarios with gaps named; each seam has a gate citation
+   or a filed negative-test task. *Outputs:* scenario-library doc + audit
+   section. *Follow-up unlocked:* new systems register regression coverage
+   as part of their vertical slice (loop stage 6 becomes mechanical).
 
 **Low-lift first moves (2026-08-22; use existing seams):**
 
@@ -2188,23 +2298,39 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   (Full ≤75m / Reduced ≤200m / Dormant beyond, 2-sweep hysteresis, safety
   gate respected, Wake() re-arms stepping) landed behind
   Bots.EnableProximityFidelity (default OFF). Remaining A3: incremental
-  per-zone/activity counters + the 1,000-bot wake-storm acceptance number.
+  per-zone/activity counters, **staggered per-bot wake cadences** (the
+  scheduler scan interval is one global 100ms cadence today — synchronized
+  spikes are exactly what the scaling model forbids), the **event-driven
+  human-proximity wake trigger** (proximity tiers currently change fidelity
+  on sweep polls, they do not wake on transition), and the 1,000-bot
+  wake-storm acceptance number. Incremental-perception ownership is folded
+  here (ruling 2026-08-25) — no separate lane owner.
 - A4 (M) Save scalability: per-character dirty tracking + batching.
   Acceptance: autosave p95 < 2s at 250 characters; zero _isSaving skips.
   ✅ implementation merged 5ed5d6493 (2026-08-10, t_8c18eb1c, Rei gate
   t_53025996 ACCEPT — dirty-only periodic saves, force-all on shutdown + /save);
-  acceptance measurement still a milestone-gate item.
+  ✅ **GATE MET 2026-08-25: autosave p95 393.1ms @ 250 active (80.3%
+  headroom), 0 skips — report §9**
 - A5 (L) TRUE DORMANCY — the pivotal item: Dormant = DB row + metadata only,
-  no Character materialized, no region presence, no per-second tick; Tier 3 =
-  **Vertical slice landed 2026-08-25 (dormant registry + materialize/
-  dematerialize through the real lifecycle, proximity-budgeted, default OFF
-  via AAEMU_BOT_TRUE_DORMANCY — see DormantBotRegistry; full acceptance
-  [1000 registered / ≤50 embodied / wake p95] pending a scaling-probe run
-  with the flag ON);** Tier 3 =
-  DB-driven scheduled simulation (harvest/travel timers advance while nobody
-  is embodied). Acceptance: 1,000 registered / ≤50 embodied, RSS within 15%
-  of the 50-only baseline; wake-to-visible p95 < 3s; dormant timers advance
-  over 6h.
+  no Character materialized, no region presence, no per-second tick.
+  ✅ **Vertical slice LANDED 2026-08-25 (e672b9579):** dormant registry +
+  materialize/dematerialize through the real lifecycle, proximity-budgeted,
+  default OFF via `AAEMU_BOT_TRUE_DORMANCY` (`DormantBotRegistry`; DI wiring
+  in Program.cs). **Acceptance gates PENDING:**
+  - NEAR-TERM GATE (official — verbatim from the owner's 2026-08-25
+    handoff): RSS within 15% of the no-bot baseline AND
+    materialize-to-visible p95 < 3s, at ~100 dormant registered / ~10
+    embodied (ScalingProbeTests rerun with the flag ON);
+    ✅ MET 2026-08-25: RSS +2.09%, materialize p95 260.1ms post-PB-004-fix,
+    100 dormant/10 embodied real-path proven — report §8/§10
+  - **PB-004 discovered-by-measurement and fixed same day (2026-08-25,
+    6ba363a28):** materialized dormant bots never stepped (no Wake() +
+    dormancy-only boot skipped scheduler start); post-fix 3001 steps/min
+    with 10 embodied, dematerialize-on-leave clean.
+  - FINAL Tier-3 acceptance: 1,000 registered / ≤50 embodied,
+    RSS within 15% of the 50-only baseline; wake-to-visible p95 < 3s;
+    dormant timers advance over 6h (Tier 3 = DB-driven scheduled simulation:
+    harvest/travel timers advance while nobody is embodied).
 - A6 (M) Manifest-driven mass provisioning (citizen manifest as data;
   replaces hardcoded CitizenNN + 10-bot clamp). Acceptance: cold boot →
   100 citizens on schedule < 60s. **Note 2026-08-24 (4e460305b):** soak
@@ -2237,6 +2363,20 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   (bounded, drop-oldest, in-memory append on the boundary thread only) and
   batch-flushes to `playerbot_audit` inside the SaveManager transaction
   (5 hermetic tests).
+- B5 (S) Behavioral scenario library + mode-leakage audit: the seven live
+  scenarios in `Scripts/e2e/bot-regression-pass.sh` (goldenroute, economy,
+  fishing, duels, transfers, packrestart, partyspike) exist only as a shell
+  registry — promote each into an indexed scenario entry (behavioral
+  contract, inputs, observable outcomes, layer-tagged failure attribution,
+  capability-matrix row link) so the integrated loop's regression-validation
+  stage registers new systems for free. Same pass: audit that test-only seams
+  (bridge metrics surface, headless-roam BroadcastMovement opt-out, rig seed
+  hooks) are provably unreachable from player-visible sessions and never feed
+  autonomous bot decisions (development-loop rule 5, PLAYER_MODE vs
+  TEST_MODE).
+  Acceptance includes: a **BroadcastMovement opt-out negative test proving
+  player-visible sessions are unaffected** — required before ANY default-ON
+  flip of proximity fidelity or true dormancy.
 
 ### G4 — Living Village content (M8)
 
