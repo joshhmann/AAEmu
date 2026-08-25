@@ -12,15 +12,24 @@ dotnet build --configuration Release AAEmu.slnx 2>&1 | tail -2
 echo "== 2/3 compiler-check (in-game scripts must compile) =="
 dotnet run --configuration Release --no-build --project AAEmu.Game/AAEmu.Game.csproj compiler-check 2>&1 | tail -2
 
-echo "== 3/3 Tests =="
 FILTER="${1:-}"
+OUT_FILE="$(mktemp /tmp/aaemu-gate-tests.XXXXXX.log)"
+TEST_ARGS=(dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build)
 if [ -n "$FILTER" ]; then
   # MTP runner (global.json: Microsoft.Testing.Platform) uses treenode-filter.
   # Class-name match: /*/*/<Class>/* ; namespace match: /*/*/<Namespace>/*
-  dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build \
-    --treenode-filter "/*/*/${FILTER}/*" 2>&1 | tail -5
+  TEST_ARGS+=(--treenode-filter "/*/*/${FILTER}/*")
+fi
+
+RC=0
+"${TEST_ARGS[@]}" 2>&1 | tee "$OUT_FILE" | tail -5 || RC=${PIPESTATUS[0]}
+
+echo "== Failing tests =="
+if grep -E '^ *failed ' "$OUT_FILE"; then
+  :
 else
-  dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build 2>&1 | tail -5
+  echo "(no failed-test lines matched — full log: $OUT_FILE)"
 fi
 
 echo "== GATE DONE =="
+exit $RC
