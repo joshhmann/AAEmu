@@ -577,3 +577,77 @@ Artifacts (uncommitted, session-scoped): `/root/aaemu-nav-paktool/`
 `corridor-probe.txt`); `.worktrees/nav-probe/Tools/NavProbeScratch/` (engine
 cross-check); `[navprobe]` diagnostics in `WorldTemplate.cs`/`WorldCell.cs`
 (uncommitted in `.worktrees/nav-probe`). compact.sqlite3 untouched; no pushes.
+
+---
+
+## Addendum — 2026-08-25 nav slice executed: G-cost fix + spatial index measured (nav-slice session)
+
+Executes the GO verdict's measured defect-fix order (1 and 2; defect 3 stays demoted per T3).
+All engine edits, builds and tests in isolated worktree `.worktrees/nav-slice`, branch
+`nav/slice-gcost` (base `41ddb889a`); main tree touched only for this file. compact.sqlite3
+read-only (a copy was placed into the worktree for DB-backed unit tests); no pushes.
+
+### Changes
+
+1. **`PathNode.cs:226` G-cost bug fixed** (`1b8bf260e`): G now accumulates walked cost
+   (parent G + link length) instead of storing distance-to-goal. The loop cap
+   (`maxLoopsLeft`) and Douglas–Peucker post-pass contracts are unchanged.
+2. **Binary-heap openSet** (same commit): `PriorityQueue` on F with insertion-sequence
+   tie-break reproduces the old stable `OrderBy(F)` selection; hash-set closed/open
+   membership keyed on exact position equality; stale heap entries skipped without
+   burning loop budget. Diagnostics: `ExpandedNodesLastSearch`.
+3. **Per-block spatial grid** (`0d6736282`): new `BaiPointGrid<T>` (64 m world-space
+   buckets over one 256 m path-block, ring-spiral exact-minimum queries) built lazily on
+   first query per loaded block — never eager over the 3.56 M-node world. Wired into
+   `BaseBaiLoader.FindClosestNetMissionNode`/`FindClosestVertexPoint`,
+   `AiGeoDataManager.FindСlosestToTheCurrent` and `GetHeight` (netmission-first tie order
+   preserved). Grids reset on additive reload (`ClearData`).
+
+### T5 — before/after on the real engine chain (VERIFIED measurement)
+
+Rig: `Tools/NavGCostProbe` drives the REAL chain (ClientFileManager → BaseBaiLoader →
+NetMissionReader/AreasMissionReader → AiGeoDataManager → PathNode.FindPath) headlessly
+over the T4 corridor rectangle blocks[41..61]×[45..61] (357 blocks, 465,485 nodes,
+1,512,526 links — engine-parser totals identical to T2). Matrix = T4's 9×9 Solzreed-shore ↔
+Marianople grid. BASELINE ran on unmodified `develop` code at the same commit; both runs
+identical matrix order.
+
+| Metric | Baseline (buggy G, linear scans) | After (G-fix + heap + grid) |
+|---|---|---|
+| Success | **81/81 GoalReached** | **81/81 GoalReached** (0 NoGraphPath, 0 LoopExhausted) |
+| Detour ratio (path/direct) | 1.91× (avg 10,014 m vs 5,253 m) | **1.22×** (avg 6,419 m) |
+| Path length range | 7,961–13,659 m | 5,838–7,020 m — **all 81 paths shorter than baseline's best** |
+| Total plan time (81 plans) | 563.3 s | **96.1 s** |
+| Avg / max plan time | 6,954 ms / 23,634 ms | **1,187 ms / 1,709 ms** (~5.9× faster avg) |
+| Node expansions avg / max | 18,360 / 55,866 | 52,611 / 57,911 |
+
+Honest notes: expansions rose ~2.9× because true A* explores more of the graph than the
+greedy-degraded search did; each expansion is far cheaper (heap + grid), so wall-clock plan
+time still dropped ~5.9×. Plan quality improved outright: every post-fix path is shorter
+than every baseline path, and the detour ratio (1.22×) beats the T4 rig's buggy-G 1.83× by
+a wide margin. Residual detour reflects the designer-authored sparse node graph plus DP
+tolerance, not search error. Remaining max plan time (~1.7 s) is dominated by expansion
+volume near the loop cap on the longest legs; a per-plan time budget with straight-leg
+fail-closed (§5 open question 4) is the natural next lever.
+
+### Tests (VERIFIED green)
+
+New rig `AAEmu.UnitTests/Game/Navigation/BaiNavigationRigTests.cs` (TUnit, loads real
+.bai through the real NetMissionReader read-only from game_pak; self-skips without data):
+
+- `RealNetMissionBlocks_ParseWithLinkContinuity` — parse + zero dangling links
+- `SpatialIndex_MatchesLinearScan_OnRealNodes` — exact-minimum agreement, 64 samples/block
+- `SpatialIndex_VertexGrid_MatchesLinearScan` — obstacle-vertex grid vs linear scan
+- `FindPath_GCostAccumulatesAlongWalkedPath_PrefersCheapRoute` — synthetic weighted graph;
+  regression guard that A* takes the cheap bent chain over the greedy hub decoy
+- `FindPath_IsDeterministic_OnRealData` — identical input → identical waypoint list
+- `FindPath_ReachesGoals_OnlyWhenBfsConnectsThem` — BFS reachability agreement
+
+Full `AAEmu.UnitTests` run in the worktree: **2385 total, 2384 passed, 1 skipped (env-
+conditional), 0 failed**. NPC combat consumers call the same `Npc.FindPath` →
+`PathNode.FindPath` surface; changes are strictly-better-or-equal there (same or better
+paths in less time, success rate unchanged).
+
+Artifacts: `/tmp/navprobe-baseline.txt`, `/tmp/navprobe-after.txt` (raw matrix dumps);
+committed rig + probe under `.worktrees/nav-slice`. Branch tip at addendum time:
+`7e5d96e74`.
