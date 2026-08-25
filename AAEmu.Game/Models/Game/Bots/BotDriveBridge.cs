@@ -410,7 +410,8 @@ public sealed class BotDriveBridge
                 sampleCount = m.SampleCount,
                 p50Ms = m.P50Ms,
                 p95Ms = m.P95Ms,
-                maxMs = m.MaxMs
+                maxMs = m.MaxMs,
+                skipCount = m.SkipCount
             };
         }
         catch (Exception ex)
