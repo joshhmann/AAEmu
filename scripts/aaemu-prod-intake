@@ -74,6 +74,21 @@ OpenCode reports this commit is ready for Mai's production deployment runbook.
   verify health and the startup bar, then record deployment evidence.
 - Never push to or open a PR against upstream AAEmu/AAEmu.
 
+## Post-deploy validation (hours-long — child card)
+
+After the deploy is live and immediate health checks pass:
+
+1. Create child card "AAEmu post-deploy full sweep + soak ${short_sha}"
+   (assignee mai, parents = this card). Do NOT hold this deploy card hostage
+   to the long run.
+2. Child runs the FULL fill/regression sweep against the deployed build, then
+   a multi-hour SOAK (bounded runtime + heartbeat budget).
+3. Child records evidence: sweep result, soak duration, crash/restart status,
+   health/resource drift, gameplay/bot regression, final pass/fail +
+   rollback recommendation.
+4. This deploy card completes with "deployed ${short_sha}, health OK,
+   validation child running" and links the child.
+
 This card is an intake signal only. Creating it does not deploy anything.
 EOF
 )
