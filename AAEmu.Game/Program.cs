@@ -292,8 +292,12 @@ public static class Program
                 services.AddSingleton<IPlayerBotScheduler>(sp => sp.GetRequiredService<PlayerBotScheduler>());
 
                 // Fidelity authority: the ONLY bot fidelity assigner. Wired
-                // for the presence demo; pressure sweeps stay dormant until
-                // RefreshPressure() is driven.
+                // for the presence demo. G2-A3: options come from env/config
+                // ("Bots"."EnableProximityFidelity" / AAEMU_BOT_PROXIMITY_*);
+                // when proximity fidelity is enabled the
+                // PopulationDirectorProximityBootstrap arms Start() — pressure
+                // sweeps + proximity tiers then run on TickManager.
+                services.AddSingleton(_ => PopulationDirectorOptions.FromEnvironment());
                 services.AddSingleton<PopulationDirector>();
                 services.AddSingleton<IPopulationDirector>(sp => sp.GetRequiredService<PopulationDirector>());
 

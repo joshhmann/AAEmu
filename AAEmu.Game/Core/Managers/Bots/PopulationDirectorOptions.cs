@@ -1,3 +1,7 @@
+using AAEmu.Commons.IO;
+
+using NLog;
+
 namespace AAEmu.Game.Core.Managers.Bots;
 
 /// <summary>
@@ -74,4 +78,90 @@ public sealed class PopulationDirectorOptions
 
     /// <summary>Default activity cap used when an activity has no explicit entry. -1 = uncapped. Default -1.</summary>
     public int DefaultActivityCap { get; init; } = -1;
+
+    // -- Proximity fidelity tiers (G2-A3) --
+    /// <summary>
+    /// Master gate for the proximity fidelity driver. When off (the default),
+    /// <see cref="PopulationDirector"/> behaves exactly as before: no sweeps,
+    /// no tick subscription — only explicit TrySetFidelity/Wake/Sleep calls
+    /// (presence coordinator, admin) assign fidelity.
+    /// </summary>
+    public bool EnableProximityFidelity { get; init; }
+
+    /// <summary>Humans at or within this distance (meters) target Full fidelity. Default 75.</summary>
+    public float FullProximityRadiusM { get; init; } = 75f;
+
+    /// <summary>Humans beyond Full but at or within this distance (meters) target Reduced. Default 200.</summary>
+    public float ReducedProximityRadiusM { get; init; } = 200f;
+
+    /// <summary>Cadence of the proximity sweep when subscribed to the game-loop tick. Default 2000ms.</summary>
+    public int ProximitySweepIntervalMs { get; init; } = 2000;
+
+    /// <summary>The inert default: everything off.</summary>
+    public static PopulationDirectorOptions Disabled { get; } = new();
+
+    /// <summary>
+    /// True only when proximity fidelity is explicitly enabled:
+    /// AAEMU_BOT_PROXIMITY_FIDELITY=1/true, or "Bots"."EnableProximityFidelity"
+    /// boolean true in Config.Local.json / Config.json.
+    /// </summary>
+    public static bool ReadProximityEnabledFlag()
+    {
+        var env = Environment.GetEnvironmentVariable("AAEMU_BOT_PROXIMITY_FIDELITY");
+        if (env is "1" or "true" or "True")
+            return true;
+
+        foreach (var fileName in new[] { "Config.Local.json", "Config.json" })
+        {
+            var path = Path.Combine(FileManager.AppPath, fileName);
+            if (!File.Exists(path))
+                continue;
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+                if (doc.RootElement.TryGetProperty("Bots", out var bots) &&
+                    bots.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    bots.TryGetProperty("EnableProximityFidelity", out var flag) &&
+                    (flag.ValueKind == System.Text.Json.JsonValueKind.True ||
+                     (flag.ValueKind == System.Text.Json.JsonValueKind.String &&
+                      flag.GetString() is "true" or "True" or "1")))
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.GetCurrentClassLogger().Warn(ex,
+                    "PopulationDirectorOptions: failed to read {Path}", path);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Reads the runtime gate + overrides: env first (AAEMU_BOT_PROXIMITY_*),
+    /// then Config.Local.json → Config.json "Bots" object via
+    /// <see cref="ReadProximityEnabledFlag"/>. Missing everything reads as disabled.
+    /// </summary>
+    public static PopulationDirectorOptions FromEnvironment()
+    {
+        float? full = null;
+        float? reduced = null;
+
+        var envFull = Environment.GetEnvironmentVariable("AAEMU_BOT_PROXIMITY_FULL_M");
+        if (float.TryParse(envFull, out var fullParsed) && fullParsed > 0f)
+            full = fullParsed;
+
+        var envReduced = Environment.GetEnvironmentVariable("AAEMU_BOT_PROXIMITY_REDUCED_M");
+        if (float.TryParse(envReduced, out var reducedParsed) && reducedParsed > 0f)
+            reduced = reducedParsed;
+
+        return new PopulationDirectorOptions
+        {
+            EnableProximityFidelity = ReadProximityEnabledFlag(),
+            FullProximityRadiusM = full ?? 75f,
+            ReducedProximityRadiusM = reduced ?? 200f,
+        };
+    }
 }

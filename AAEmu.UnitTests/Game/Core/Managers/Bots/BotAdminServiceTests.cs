@@ -144,6 +144,7 @@ public class BotAdminServiceTests
         public int EmbodiedInZone(uint zoneId) => Fidelity.Count;
         public int EmbodiedOnActivity(string activity) => Fidelity.Count;
         public PopulationDirectorMetrics GetMetrics() => new(0, 0, 0, ServerPressure.Healthy, 0, 0, 0, 0, 0);
+        public void RefreshProximityFidelity() { }
     }
 
     private sealed class Rig

@@ -14,6 +14,9 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// <param name="TotalWakes">Cumulative accepted wake requests.</param>
 /// <param name="TotalSleeps">Cumulative accepted sleep requests.</param>
 /// <param name="TotalPressureSweeps">Cumulative pressure-policy sweeps executed.</param>
+/// <param name="TotalProximitySweeps">Cumulative proximity-fidelity sweeps executed (G2-A3).</param>
+/// <param name="TotalProximityUpgrades">Cumulative proximity-driven upgrades applied (toward Full).</param>
+/// <param name="TotalProximityDemotions">Cumulative proximity-driven demotions applied (toward Dormant).</param>
 public sealed record PopulationDirectorMetrics(
     int DormantCount,
     int ReducedCount,
@@ -23,7 +26,10 @@ public sealed record PopulationDirectorMetrics(
     long TotalTransitionsRejected,
     long TotalWakes,
     long TotalSleeps,
-    long TotalPressureSweeps)
+    long TotalPressureSweeps,
+    long TotalProximitySweeps = 0,
+    long TotalProximityUpgrades = 0,
+    long TotalProximityDemotions = 0)
 {
     /// <summary>Embodied bots (Reduced + Full).</summary>
     public int Embodied => ReducedCount + FullCount;

@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-24 · by Codex (mechanics sweep wave 2 + soak STAGE 1 + TRANSFER-01 live)
+Updated: 2026-08-24 · by Codex (mechanics sweep wave 2 + soak STAGE 1 + TRANSFER-01 live) + Mai (post-deploy verify: bot-regression 7/7 PASS on deployed 2cc75ff9f; soak STAGE 1 needs clean uncontended 30-min window — indun opencode session collides on E2E ports)
 Branch of record: develop @ 3a534b539 (origin/develop)
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)

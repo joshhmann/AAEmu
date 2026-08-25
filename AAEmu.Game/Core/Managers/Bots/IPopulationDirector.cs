@@ -67,4 +67,16 @@ public interface IPopulationDirector
 
     /// <summary>Thread-safe metrics snapshot (fidelity counts, pressure, transition counters).</summary>
     PopulationDirectorMetrics GetMetrics();
+
+    /// <summary>
+    /// Runs ONE proximity-fidelity sweep (G2-A3): classifies each registered
+    /// bot's target tier from the nearest HUMAN (never another bot), then moves
+    /// it along the ladder one step per sweep toward that target — Dormant→
+    /// Reduced via Wake, Reduced→Full via TrySetFidelity, demotions via
+    /// TrySetFidelity/Sleep (gate-respecting). A target must hold for TWO
+    /// consecutive sweeps before a transition is attempted (hysteresis). Also
+    /// runs <see cref="RefreshPressure"/> once per sweep. Inert while
+    /// EnableProximityFidelity is off.
+    /// </summary>
+    void RefreshProximityFidelity();
 }

@@ -105,6 +105,7 @@ public class BotPresenceCoordinatorTests
         public int EmbodiedInZone(uint zoneId) => Embodied;
         public int EmbodiedOnActivity(string activity) => Embodied;
         public PopulationDirectorMetrics GetMetrics() => new(0, 0, 0, ServerPressure.Healthy, 0, 0, 0, 0, 0);
+        public void RefreshProximityFidelity() { }
     }
 
     private static (BotPresenceCoordinator Coordinator,

@@ -391,6 +391,7 @@ public class BotPresenceManifestTests
         public int EmbodiedInZone(uint zoneId) => 0;
         public int EmbodiedOnActivity(string activity) => 0;
         public PopulationDirectorMetrics GetMetrics() => new(0, 0, 0, ServerPressure.Healthy, 0, 0, 0, 0, 0);
+        public void RefreshProximityFidelity() { }
     }
 
     /// <summary>Mutable rig handle — tests assign the manifest provider after creation.</summary>
