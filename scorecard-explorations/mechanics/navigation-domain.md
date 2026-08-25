@@ -485,3 +485,95 @@ worth running for that measurement alone.
 | IO/config | `IO/ClientFileManager.cs`; `Configurations/ClientData.json`; `Configurations/World.json` |
 | Tooling | `Tools/WorldConverter/README.MD` |
 | Ledger context | `playerbot-blockers.md` (PB-001); `playerbot-capability-matrix.md` (Movement row, Scaling posture); `STATUS.md` (M7 notes); `AGENTS.md` |
+
+---
+
+## Addendum — 2026-08-25 pak coverage + corridor measurement (nav-coverage-probe session)
+
+Answers §5 open question 1. Method: (1) direct `AAPak` enumeration of the deployed 1.2
+runtime pak (`/root/aaemu-e2e/runtime/game-data/ClientData/game_pak`, 16 GB);
+(2) a standalone offline probe (`/root/aaemu-nav-paktool/navprobe`, uncommitted rig)
+that re-implements the `NetMissionReader`/`AreasMissionReader` binary parse and the
+`PathNode.FindPath` traversal semantics — **byte-exact cross-validated against the
+engine's own parsers** (same file/node/link totals, see T2) via a scratch project
+referencing `AAEmu.Game` (`.worktrees/nav-probe/Tools/NavProbeScratch`, uncommitted);
+(3) live isolated-stack boot (`E2E_ROOT=/root/aaemu-e2e-nav`, compose project
+`navacc`, GeoDataMode=true) with READ-ONLY `[navprobe]` log telemetry added to
+`WorldTemplate.LoadZoneBaiFiles` and `WorldCell.LoadBaiFiles` (uncommitted in
+`.worktrees/nav-probe`; passive, inert unless logged). No engine behavior changed.
+
+### T1 — pak `.bai` inventory (VERIFIED)
+
+| Family | Files | main_world? |
+|---|---|---|
+| netmission*.bai | 9,447 | yes — all under `paths/<X>_<Y>/` (256 m blocks) |
+| areasmission*.bai | 9,447 | yes, same blocks |
+| vertsmission*.bai | 9,447 | yes, same blocks |
+| hidemission*.bai | 7,399 | yes |
+| fnavmission / roadnavmission / v3dmission / waypt3dsfcmission | 22 each | **NO — dungeon worlds only** |
+
+Total pak entries 218,068; total .bai 35,828. The §2.2 UNKNOWN "additional unused nav
+formats" is resolved: they exist but never for main_world.
+
+### T2 — main_world census (VERIFIED; engine-parser-identical)
+
+| Metric | Value |
+|---|---|
+| path-blocks with netmission0.bai | 7,937 (all >20 B → all eligible for engine load) |
+| parse failures | 0 (standalone rig AND engine `NetMissionReader`: identical) |
+| total nodes / links | 3,561,122 / 12,035,252 (both parsers agree exactly) |
+| zero-node files | 0 |
+
+### T3 — structural finding: zone loaders are NOT how main_world loads (VERIFIED live)
+
+Boot telemetry: `[navprobe] main_world: ZoneKeys=122, zones with zone-folder .bai=0,
+ZoneBaiLoaders=0 — path-block lazy loading active: True`. All main_world graph data is
+per-path-block; `WorldTemplate.LoadZoneBaiFiles()` registers nothing for it and the
+§1.4 defect #1 (`GetBaiByPos` first-zone TODO) is **unreachable for main_world**
+(`ZoneBaiLoader.Count == 0` → per-position `PathBaiLoader` branch runs). Live cell
+loads during one presence-demo run confirmed the lazy path (16 readers = 4×4 blocks
+per cell), e.g. Marianople cell (10,11): 45,674 nodes / 160,684 links; Solzreed coast
+cells (14,14)/(15,14)/(15,15): 15,616 / 9,807 / 1,064 nodes.
+
+### T4 — corridor probe Solzreed shore ↔ Marianople (VERIFIED measurement)
+
+Corridor rectangle blocks[41..61]×[45..61] (357 blocks, ~5.2 km direct between anchors
+from `Data/Portal/respawns.json`): **357/357 blocks carry a navgraph**; 465,485 nodes,
+1,512,526 links, 22,219 forbidden-area polygons. Probe matrix: 9 start points around
+the Solzreed shore anchor × 9 goals around Marianople (±192 m grid).
+
+| Probe | Result |
+|---|---|
+| A* (engine semantics incl. G-cost bug, loop cap, DP-reduce) | **81/81 GoalReached**, 0 NoGraphPath, 0 LoopExhausted |
+| BFS reachability (same filtered graph) | 81/81 reachable; every start snap reaches the SAME component of **453,616 nodes** (97.5 % of corridor nodes; only 680 isolated nodes total) |
+| Path length (post-DP) | avg 9,607 m vs 5,256 m direct (**detour ratio 1.83×**), range 8,202–11,352 m |
+| Raw waypoint chain | ~600–950 hops pre-reduction |
+| Plan time (rig) | ~80–175 ms per cross-region plan; engine's linear openSet scan makes real-engine cost superlinear in frontier size |
+
+### Data-quality caveat (VERIFIED anomaly, impact bounded)
+
+369 of 2,872 checked main_world `areasmission0.bai` files declare absurd point counts
+in later sections (e.g. 4.19 B points vs <40 KB remaining). Engine parsing is defensive
+(per-file try/catch keeps partial data, `BaseBaiLoader.cs:75-78`), so this degrades
+forbidden-area coverage locally but does not crash. One affected block sits near the
+corridor (059_052); probes still passed 81/81. Root cause in canonical data: UNKNOWN.
+
+### VERDICT — criterion 2 of the slice: **GO**
+
+Canonical `.bai` coverage along a real cross-region corridor is complete, connected,
+and dense enough for the waypoint-spine slice (option (c)). Measured fix order for the
+three known defects:
+
+1. **`PathNode.cs:226` G-cost bug** — first; pure-local change, directly distorts plan
+   quality and search size at corridor scale (measured here).
+2. **Linear-scan hotspots** (`AiGeodataManager.FindСlosestToTheCurrent` /
+   `GetHeight`, nearest-node-in-reader) — second; per-plan costs are already
+   ~100 ms+ at 5 km scale on a faithful replica, and every expansion re-scans.
+3. **`GetBaiByPos` zone TODO** — demoted: measured moot for main_world (T3); revisit
+   only if dungeon-zone graphs ever join bot routing.
+
+Artifacts (uncommitted, session-scoped): `/root/aaemu-nav-paktool/`
+(pak enumerator + navprobe rig + outputs `pak-bai-listing.txt`,
+`corridor-probe.txt`); `.worktrees/nav-probe/Tools/NavProbeScratch/` (engine
+cross-check); `[navprobe]` diagnostics in `WorldTemplate.cs`/`WorldCell.cs`
+(uncommitted in `.worktrees/nav-probe`). compact.sqlite3 untouched; no pushes.

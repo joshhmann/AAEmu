@@ -2297,14 +2297,35 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   fidelity sweep runs it once per interval; human-proximity tier ladder
   (Full ≤75m / Reduced ≤200m / Dormant beyond, 2-sweep hysteresis, safety
   gate respected, Wake() re-arms stepping) landed behind
-  Bots.EnableProximityFidelity (default OFF). Remaining A3: incremental
-  per-zone/activity counters, **staggered per-bot wake cadences** (the
-  scheduler scan interval is one global 100ms cadence today — synchronized
-  spikes are exactly what the scaling model forbids), the **event-driven
-  human-proximity wake trigger** (proximity tiers currently change fidelity
-  on sweep polls, they do not wake on transition), and the 1,000-bot
-  wake-storm acceptance number. Incremental-perception ownership is folded
-  here (ruling 2026-08-25) — no separate lane owner.
+  Bots.EnableProximityFidelity (default OFF).
+  **A3 REMAINDER EXECUTED 2026-08-25 (same day, server-perf wave):**
+  (1) **Incremental per-zone/activity counters REJECTED as speculative** —
+  the new sweep-wall-time ring shows the entire O(dormant-specs) scan pass
+  costs p50 ≈ 0.066 ms/sweep at population scale, and sweep p95 is pure
+  budget-paced materialization work (≈3 × ~250 ms DB row-load); density scans
+  short-circuit when caps are unset (-1 default). No counter work exists to
+  incrementally maintain — evidence over hypothesis.
+  (2) **Staggered per-bot wake offsets LANDED** behind
+  `Bots.EnableStaggeredWakes` / `AAEMU_BOT_STAGGERED_WAKES` (default OFF,
+  byte-identical when unset): first step of a freshly materialized bot is
+  scheduled at a deterministic SplitMix32 phase within
+  `StaggeredWakeWindowMs` (default 5 s) instead of synchronizing onto one
+  scan cadence. Unit-proved deterministic + spreading + deferred-first-step.
+  (3) **Event-driven human-proximity wake DEFERRED** with rationale
+  (no WorldManager movement/enter event seam exists; an off-tick sweep would
+  run ~250 ms world-mutating materializations on connection threads; the
+  measured detection-latency bound is just the 2 s sweep cadence and does not
+  affect the transition-cost acceptance) — see g2-a3-storm-report.md §6.
+  (4) **Wake-storm probe LANDED** (`A3StormProbeTests`, real-TCP-human
+  trigger, 1,000 seeded dormant in a Reduced-tier annulus): transition
+  latency ring added to the director (count/p50/p95/p99/max exposed via
+  bridge `population.transitions`). Numbers: see §4.2 of
+  scorecard-explorations/generated/g2-a3-storm-report.md.
+  (5) **Boot race FIXED en route** (`IdManager.GetNextId` lazy-init guard):
+  ItemContainer's ctor allocation through `ContainerIdManager.Instance`
+  raced Stage-2 Load — flaky at 40 chars (§10.2 of the A5 report),
+  reproducible at 1,000 seeded characters; now initializes on first use
+  instead of NRE-ing the boot.
 - A4 (M) Save scalability: per-character dirty tracking + batching.
   Acceptance: autosave p95 < 2s at 250 characters; zero _isSaving skips.
   ✅ implementation merged 5ed5d6493 (2026-08-10, t_8c18eb1c, Rei gate

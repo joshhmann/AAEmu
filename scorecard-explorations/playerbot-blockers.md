@@ -25,7 +25,7 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 - Observed: bots provision artificial levels; no autonomous next-quest selection
 - Layer: DATA + BOT (quest discovery/perception primitive missing: "find available quests at my level nearby")
 - Evidence: adventurer v1 runs curated chains only
-- Status: OPEN — QuestDiscovery perception primitive LANDED 2026-08-25 (c1073d883, verified through the real AddQuest gate + canonical smoke); remaining open = zone-by-zone runnable-content sweep (which offers exist within walking distance per zone/level band — spawn positions joined with the new QuestManager offer indexes) + autonomous leveling composition on top
+- Status: OPEN — QuestDiscovery perception primitive LANDED 2026-08-25 (c1073d883, verified through the real AddQuest gate + canonical smoke); remaining open = zone-by-zone runnable-content sweep (which offers exist within walking distance per zone/level band — spawn positions joined with the new QuestManager offer indexes) + autonomous leveling composition on top. Zone sweep LANDED 2026-08-25: scorecard-explorations/generated/quest-discovery-sweep-2026-08-25.md (3,000 discoverable quests / 57 zone groups mapped; recommended loops Solzreed→Lilyut→Gweonid and the 45-quest Tiger Spine→Mahadevi→Sunrise chain; ~900 quests on offer channels not yet surfaced by DiscoverQuests).
 
 
 
