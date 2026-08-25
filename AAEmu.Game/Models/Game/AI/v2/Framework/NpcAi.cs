@@ -204,6 +204,19 @@ $"Trying to set Npc {Owner.TemplateId}:{Owner.ObjId} current behavior, but it is
 
     public void OnAggroTargetChanged()
     {
+        // M7 queue #6 (npc state telemetry): structured snapshot at every
+        // aggro-table change — the fox pinned-HP anomaly is diagnosable from
+        // these alone (damage events arriving vs HP never moving).
+        if (Logger.IsDebugEnabled && Owner is NPChar.Npc npc)
+        {
+            var top = Owner.AggroTable.Values.OrderByDescending(a => a.DamageAggro).FirstOrDefault();
+            var hpPct = npc.MaxHp > 0 ? (double)npc.Hp / npc.MaxHp * 100.0 : 0.0;
+            Logger.Debug(
+                "Npc {TemplateId}:{ObjId} aggro changed — hp {Hp}/{MaxHp} ({Pct:F1}%), top damage aggro {TopObjId} ({TopDamage} dmg), entries {Entries}",
+                Owner.TemplateId, Owner.ObjId, npc.Hp, npc.MaxHp, hpPct,
+                top?.Owner?.ObjId ?? 0, top?.DamageAggro ?? 0, Owner.AggroTable.Count);
+        }
+
         Transition(TransitionEvent.OnAggroTargetChanged);
     }
 
@@ -257,6 +270,12 @@ $"Trying to set Npc {Owner.TemplateId}:{Owner.ObjId} current behavior, but it is
 
     public virtual void GoToReturn()
     {
+        // M7 queue #6: return-home entry is a key anomaly signal (leash
+        // resets full-heal; a bot mid-fight sees the "pinned-HP" signature).
+        Logger.Debug("Npc {TemplateId}:{ObjId} returning home — pos {X:F1}/{Y:F1}/{Z:F1}, idle {Ix:F1}/{Iy:F1}",
+            Owner.TemplateId, Owner.ObjId,
+            Owner.Transform.World.Position.X, Owner.Transform.World.Position.Y, Owner.Transform.World.Position.Z,
+            IdlePosition.X, IdlePosition.Y);
         SetCurrentBehavior(BehaviorKind.ReturnState);
     }
 
