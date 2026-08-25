@@ -39,6 +39,7 @@ public sealed class PopulationDirector : IPopulationDirector
     private readonly Func<Character, string?> _activityResolver;
     private readonly Func<IReadOnlyList<Character>> _humanSnapshotProvider;
     private readonly ITickManager _tickManager;
+    private readonly DormantBotRegistry? _dormantBots;
 
     private readonly object _stateLock = new();
     private readonly ConcurrentDictionary<uint, BotFidelity> _fidelity = new();
@@ -47,6 +48,13 @@ public sealed class PopulationDirector : IPopulationDirector
     // consecutive sweeps it has held. A transition needs a streak of 2.
     // Mutated only under _stateLock.
     private readonly Dictionary<uint, (BotFidelity Target, int Streak)> _proximityStreak = [];
+
+    // True dormancy (G2-A5): per-bot count of consecutive sweeps whose
+    // proximity target was Dormant (no humans nearby). An embodied bot that
+    // holds the streak for TrueDormancyNoHumanSweepsToDematerialize is
+    // DEMATERIALIZED instead of merely labeled Dormant. Mutated only under
+    // _stateLock; only maintained while true dormancy is enabled.
+    private readonly Dictionary<uint, int> _noHumanStreak = [];
 
     // Metrics counters (Interlocked; Volatile.Read for snapshots).
     private long _totalTransitionsApplied;
@@ -57,6 +65,8 @@ public sealed class PopulationDirector : IPopulationDirector
     private long _totalProximitySweeps;
     private long _totalProximityUpgrades;
     private long _totalProximityDemotions;
+    private long _totalMaterializations;
+    private long _totalDematerializations;
     private int _pressureBand;
     private int _started;
     private bool _proximityFailureLoggedThisEpisode;
@@ -70,7 +80,8 @@ public sealed class PopulationDirector : IPopulationDirector
         Func<Character, uint>? zoneResolver = null,
         Func<Character, string?>? activityResolver = null,
         Func<IReadOnlyList<Character>>? humanSnapshotProvider = null,
-        ITickManager? tickManager = null)
+        ITickManager? tickManager = null,
+        DormantBotRegistry? dormantBots = null)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
@@ -81,6 +92,7 @@ public sealed class PopulationDirector : IPopulationDirector
         _activityResolver = activityResolver ?? (_ => null);
         _humanSnapshotProvider = humanSnapshotProvider ?? DefaultHumanSnapshot;
         _tickManager = tickManager ?? TickManager.Instance;
+        _dormantBots = dormantBots;
     }
 
     /// <inheritdoc />
@@ -330,7 +342,9 @@ public sealed class PopulationDirector : IPopulationDirector
             TotalPressureSweeps: Volatile.Read(ref _totalPressureSweeps),
             TotalProximitySweeps: Volatile.Read(ref _totalProximitySweeps),
             TotalProximityUpgrades: Volatile.Read(ref _totalProximityUpgrades),
-            TotalProximityDemotions: Volatile.Read(ref _totalProximityDemotions));
+            TotalProximityDemotions: Volatile.Read(ref _totalProximityDemotions),
+            TotalMaterializations: Volatile.Read(ref _totalMaterializations),
+            TotalDematerializations: Volatile.Read(ref _totalDematerializations));
     }
 
     /// <summary>Runs the spec §11 safety gate; returns Applied or the specific block.</summary>
@@ -504,6 +518,13 @@ public sealed class PopulationDirector : IPopulationDirector
 
         var humans = _humanSnapshotProvider();
 
+        // G2-A5 true dormancy: dormant specs whose recorded home sits within
+        // ReducedProximityRadiusM of any human rematerialize (bounded per
+        // sweep). Runs before the embodied-bot passes so a fresh arrival is
+        // picked up by the next sweep's tier ladder at Reduced.
+        if (_options.EnableTrueDormancy && _dormantBots != null)
+            MaterializeNearbyDormantSpecs(humans);
+
         // Pass 1 (lock-free reads): classify each EMBODIED bot's target tier.
         // The manager registry is the source of truth here — a bot that has
         // never been assigned a fidelity still has an implicit tier (Dormant)
@@ -520,6 +541,7 @@ public sealed class PopulationDirector : IPopulationDirector
 
         // Pass 2 (locked): advance hysteresis streaks, collect transitions due.
         List<(uint Id, BotFidelity Target)>? due = null;
+        List<uint>? dematerialize = null;
         lock (_stateLock)
         {
             foreach (var (botId, _, target) in decisions)
@@ -533,6 +555,23 @@ public sealed class PopulationDirector : IPopulationDirector
                 // consecutive sweeps before a transition is attempted.
                 if (_proximityStreak[botId].Streak >= 2)
                     (due ??= []).Add((botId, target));
+
+                // G2-A5 true dormancy: count consecutive no-human observations.
+                // An embodied bot (any tier — decisions only contain Active
+                // runtimes) that holds the streak long enough is queued for
+                // DEMATERIALIZATION instead of the ordinary terminal Dormant
+                // label that leaves it fully embodied.
+                if (_options.EnableTrueDormancy && _dormantBots != null)
+                {
+                    if (target == BotFidelity.Dormant)
+                        _noHumanStreak[botId] = _noHumanStreak.TryGetValue(botId, out var s) ? s + 1 : 1;
+                    else
+                        _noHumanStreak.Remove(botId);
+
+                    if (target == BotFidelity.Dormant &&
+                        _noHumanStreak[botId] >= _options.TrueDormancyNoHumanSweepsToDematerialize)
+                        (dematerialize ??= []).Add(botId);
+                }
             }
 
             // Prune bots that left the registry this sweep.
@@ -546,13 +585,41 @@ public sealed class PopulationDirector : IPopulationDirector
                     if (!seen.Contains(botId))
                         stale.Add(botId);
                 foreach (var botId in stale)
+                {
                     _proximityStreak.Remove(botId);
+                    _noHumanStreak.Remove(botId);
+                }
             }
         }
 
         // Pass 3 (outside the state lock): single-step along the ladder. Every
         // path runs through TrySetFidelity/Wake/Sleep semantics — safety gate,
         // pressure bands and density caps all still apply.
+
+        // G2-A5 true dormancy first: dematerialization replaces the terminal
+        // Dormant label. The §11 safety gate still applies — a bot in combat,
+        // carrying a pack etc. stays embodied and retries next sweep.
+        if (dematerialize != null)
+        {
+            foreach (var botId in dematerialize)
+            {
+                var runtime = runtimeOf(botId);
+                if (runtime == null || _dormantBots == null)
+                    continue;
+                if (CheckSafetyGate(runtime.Character) != FidelityTransitionResult.Applied)
+                    continue;
+
+                if (_dormantBots.Dematerialize(runtime.Character))
+                {
+                    _fidelity[botId] = BotFidelity.Dormant;
+                    Interlocked.Increment(ref _totalTransitionsApplied);
+                    Interlocked.Increment(ref _totalDematerializations);
+                    Logger.Info("True dormancy ({Streak} no-human sweeps): dematerialized {CharacterId}",
+                        _options.TrueDormancyNoHumanSweepsToDematerialize, botId);
+                }
+            }
+        }
+
         if (due == null)
             return;
 
@@ -586,6 +653,54 @@ public sealed class PopulationDirector : IPopulationDirector
                 result != FidelityTransitionResult.UnknownBot)
                 Logger.Debug("PlayerBot proximity step refused for {CharacterId}: {Result} ({Target})",
                     botId, result, target);
+        }
+    }
+
+    /// <summary>
+    /// G2-A5 true dormancy: rematerialize dormant specs whose recorded home
+    /// position sits within <see cref="PopulationDirectorOptions.ReducedProximityRadiusM"/>
+    /// of any human, bounded at <see cref="PopulationDirectorOptions.TrueDormancyMaterializePerSweepMax"/>
+    /// per sweep. Specs without a known home cannot be proximity-matched and
+    /// stay dormant. A materialized bot starts the ladder at Reduced.
+    /// </summary>
+    private void MaterializeNearbyDormantSpecs(IReadOnlyList<Character> humans)
+    {
+        var budget = _options.TrueDormancyMaterializePerSweepMax;
+        if (humans.Count == 0 || budget <= 0)
+            return;
+
+        var reducedSq = _options.ReducedProximityRadiusM * _options.ReducedProximityRadiusM;
+
+        foreach (var spec in _dormantBots!.ListSpecs())
+        {
+            if (budget <= 0)
+                return;
+
+            if (!_dormantBots.TryGetHome(spec.CharacterId, out var homeWorldId, out var home))
+                continue;
+
+            foreach (var human in humans)
+            {
+                if (human == null || human.Transform == null)
+                    continue;
+                // Cross-world distances are meaningless — compare worlds when
+                // both sides carry an id (a dematerialized bot has no live
+                // world, so only the recorded home id speaks for it).
+                var humanWorldId = human.ParentWorld?.Id ?? 0;
+                if (homeWorldId != 0 && humanWorldId != 0 && homeWorldId != humanWorldId)
+                    continue;
+                if (Vector3.DistanceSquared(home, human.Transform.ComputeWorldPosition()) > reducedSq)
+                    continue;
+
+                if (_dormantBots.Materialize(spec))
+                {
+                    budget--;
+                    _fidelity[spec.CharacterId] = BotFidelity.Reduced;
+                    Interlocked.Increment(ref _totalTransitionsApplied);
+                    Interlocked.Increment(ref _totalMaterializations);
+                }
+                break; // one human match is enough for this spec
+            }
         }
     }
 

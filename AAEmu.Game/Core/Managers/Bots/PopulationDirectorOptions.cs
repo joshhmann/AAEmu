@@ -97,6 +97,21 @@ public sealed class PopulationDirectorOptions
     /// <summary>Cadence of the proximity sweep when subscribed to the game-loop tick. Default 2000ms.</summary>
     public int ProximitySweepIntervalMs { get; init; } = 2000;
 
+    // -- True dormancy (G2-A5) --
+    /// <summary>
+    /// When ON, dormant specs near a human are MATERIALIZED (world presence
+    /// restored through <see cref="DormantBotRegistry"/>) and embodied bots
+    /// with enough consecutive no-human sweeps are DEMATERIALIZED instead of
+    /// merely labeled Dormant. Default off.
+    /// </summary>
+    public bool EnableTrueDormancy { get; init; }
+
+    /// <summary>Max dormant specs materialized per proximity sweep. Default 3.</summary>
+    public int TrueDormancyMaterializePerSweepMax { get; init; } = 3;
+
+    /// <summary>Consecutive no-human sweeps before an embodied bot is dematerialized. Default 3.</summary>
+    public int TrueDormancyNoHumanSweepsToDematerialize { get; init; } = 3;
+
     /// <summary>The inert default: everything off.</summary>
     public static PopulationDirectorOptions Disabled { get; } = new();
 
@@ -106,8 +121,20 @@ public sealed class PopulationDirectorOptions
     /// boolean true in Config.Local.json / Config.json.
     /// </summary>
     public static bool ReadProximityEnabledFlag()
+        => ReadBotsBoolFlag("AAEMU_BOT_PROXIMITY_FIDELITY", "EnableProximityFidelity");
+
+    /// <summary>
+    /// True only when true dormancy is explicitly enabled:
+    /// AAEMU_BOT_TRUE_DORMANCY=1/true, or "Bots"."EnableTrueDormancy"
+    /// boolean true in Config.Local.json / Config.json.
+    /// </summary>
+    public static bool ReadTrueDormancyEnabledFlag()
+        => ReadBotsBoolFlag("AAEMU_BOT_TRUE_DORMANCY", "EnableTrueDormancy");
+
+    /// <summary>Env var first, then "Bots".&lt;configProperty&gt; in Config.Local.json → Config.json.</summary>
+    private static bool ReadBotsBoolFlag(string envVariable, string configProperty)
     {
-        var env = Environment.GetEnvironmentVariable("AAEMU_BOT_PROXIMITY_FIDELITY");
+        var env = Environment.GetEnvironmentVariable(envVariable);
         if (env is "1" or "true" or "True")
             return true;
 
@@ -121,7 +148,7 @@ public sealed class PopulationDirectorOptions
                 using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
                 if (doc.RootElement.TryGetProperty("Bots", out var bots) &&
                     bots.ValueKind == System.Text.Json.JsonValueKind.Object &&
-                    bots.TryGetProperty("EnableProximityFidelity", out var flag) &&
+                    bots.TryGetProperty(configProperty, out var flag) &&
                     (flag.ValueKind == System.Text.Json.JsonValueKind.True ||
                      (flag.ValueKind == System.Text.Json.JsonValueKind.String &&
                       flag.GetString() is "true" or "True" or "1")))
@@ -160,6 +187,7 @@ public sealed class PopulationDirectorOptions
         return new PopulationDirectorOptions
         {
             EnableProximityFidelity = ReadProximityEnabledFlag(),
+            EnableTrueDormancy = ReadTrueDormancyEnabledFlag(),
             FullProximityRadiusM = full ?? 75f,
             ReducedProximityRadiusM = reduced ?? 200f,
         };

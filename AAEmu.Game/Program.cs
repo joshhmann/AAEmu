@@ -244,6 +244,19 @@ public static class Program
                 services.AddSingleton<PlayerBotManager>();
                 services.AddSingleton<IPlayerBotManager>(sp => sp.GetRequiredService<PlayerBotManager>());
 
+                // G2-A5 true dormancy: dormant-bot discovery + rematerialization.
+                // MySqlDormantBotSource joins characters ↔ managed bot accounts;
+                // the registry loads rows via Character.Load (the HeadlessSession
+                // adoption-path loader) and embodies through IPlayerBotManager →
+                // CharacterLifecycleService.ActivateHeadless. Strictly inert until
+                // PopulationDirector runs a sweep with EnableTrueDormancy on
+                // ("Bots"."EnableTrueDormancy" / AAEMU_BOT_TRUE_DORMANCY).
+                services.AddSingleton<IDormantBotSource, MySqlDormantBotSource>();
+                services.AddSingleton<DormantBotRegistry>(sp => new DormantBotRegistry(
+                    sp.GetRequiredService<IPlayerBotManager>(),
+                    sp.GetRequiredService<IDormantBotSource>(),
+                    homeSource: PlayerBotMetadataHomeSource.Instance));
+
                 // Step executor seam: the roam-driven M5 actor executor —
                 // issues MoveTo legs from a BotPath, ticks the actor, and
                 // applies Option A visibility (ground clamp + 4-6 Hz movement

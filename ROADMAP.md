@@ -2196,6 +2196,11 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   acceptance measurement still a milestone-gate item.
 - A5 (L) TRUE DORMANCY — the pivotal item: Dormant = DB row + metadata only,
   no Character materialized, no region presence, no per-second tick; Tier 3 =
+  **Vertical slice landed 2026-08-25 (dormant registry + materialize/
+  dematerialize through the real lifecycle, proximity-budgeted, default OFF
+  via AAEMU_BOT_TRUE_DORMANCY — see DormantBotRegistry; full acceptance
+  [1000 registered / ≤50 embodied / wake p95] pending a scaling-probe run
+  with the flag ON);** Tier 3 =
   DB-driven scheduled simulation (harvest/travel timers advance while nobody
   is embodied). Acceptance: 1,000 registered / ≤50 embodied, RSS within 15%
   of the 50-only baseline; wake-to-visible p95 < 3s; dormant timers advance
