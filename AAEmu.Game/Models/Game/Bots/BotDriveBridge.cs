@@ -229,6 +229,8 @@ public sealed class BotDriveBridge
                 return HandleDeactivate(root);
             case "auction":
                 return HandleAuctionOp(root);
+            case "seedDormant":
+                return HandleSeedDormant(root);
             default:
                 return Err($"unknown cmd '{cmd}'");
         }
@@ -346,6 +348,34 @@ public sealed class BotDriveBridge
             if (p != null)
             {
                 var m = p.GetMetrics();
+
+                // G2-A5 acceptance instrumentation: true-dormancy registry
+                // counters + materialization latency percentiles (nulls when
+                // the registry is absent, e.g. a build without slice A5).
+                object dormancy = null;
+                try
+                {
+                    var reg = SingletonContainer.ServiceProvider?.GetService<DormantBotRegistry>();
+                    if (reg != null)
+                    {
+                        var lat = reg.GetMaterializationLatency();
+                        dormancy = new
+                        {
+                            dormantSpecs = reg.ListSpecs().Count,
+                            totalMaterializations = m.TotalMaterializations,
+                            totalDematerializations = m.TotalDematerializations,
+                            materializeCount = lat.SampleCount,
+                            materializeP50Ms = lat.P50Ms,
+                            materializeP95Ms = lat.P95Ms,
+                            materializeMaxMs = lat.MaxMs
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Debug(ex, "gate metrics: dormant registry snapshot unavailable");
+                }
+
                 population = new
                 {
                     available = true,
@@ -355,7 +385,10 @@ public sealed class BotDriveBridge
                     embodied = m.Embodied,
                     pressure = m.Pressure.ToString(),
                     transitionsApplied = m.TotalTransitionsApplied,
-                    transitionsRejected = m.TotalTransitionsRejected
+                    transitionsRejected = m.TotalTransitionsRejected,
+                    totalMaterializations = m.TotalMaterializations,
+                    totalDematerializations = m.TotalDematerializations,
+                    dormancy
                 };
             }
         }
@@ -1543,6 +1576,90 @@ public sealed class BotDriveBridge
         }
 
         return Ok(new { removed = true, id = session.Character.Id });
+    }
+
+    /// <summary>
+    /// G2-A5 acceptance bulk seeder: mints N managed bot accounts + character
+    /// rows through the REAL provisioning path (the same
+    /// <see cref="HeadlessSession.Provision"/> the 'provision' command uses),
+    /// records each bot's playerbot_metadata home (the hard HasHome
+    /// prerequisite for proximity materialization), then deactivates —
+    /// leaving exactly what true dormancy discovers: a durable characters row
+    /// on a HeadlessBot account, not embodied, with a known home.
+    ///
+    /// Request shape:
+    ///   { "cmd": "seedDormant", "level": 5,
+    ///     "bots": [ { "name": "DormNear001", "home": {"x":..,"y":..,"z":..} }, ... ] }
+    /// Batched by the caller (each entry is a synchronous provision +
+    /// deactivate round-trip); rows persist across game restarts.
+    /// </summary>
+    private string HandleSeedDormant(JsonElement root)
+    {
+        if (!root.TryGetProperty("bots", out var botsEl) ||
+            botsEl.ValueKind != JsonValueKind.Array ||
+            botsEl.GetArrayLength() == 0)
+            return Err("seedDormant requires 'bots': [{name, home:{x,y,z}}, ...]");
+        var level = (byte)GetInt(root, "level", 10);
+
+        var seeded = new List<object>();
+        foreach (var entry in botsEl.EnumerateArray())
+        {
+            var rawName = entry.TryGetProperty("name", out var n) ? n.GetString() : null;
+            if (string.IsNullOrWhiteSpace(rawName))
+                return Err("seedDormant: every bots[] entry requires 'name'");
+            var botName = rawName.NormalizeName();
+            var username = BotAccountProvisioningService.ManagedUsernamePrefix + botName.ToLowerInvariant();
+
+            try
+            {
+                EnsureFreshBotRow(botName, username);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "seedDormant: fresh wipe failed for '{Bot}' — continuing with adoption semantics", botName);
+            }
+
+            HeadlessSession session;
+            try
+            {
+                session = HeadlessSession.Provision(username, botName, Race.Nuian, Gender.Male, level);
+            }
+            catch (Exception ex)
+            {
+                return Err($"seedDormant: provision failed for '{botName}': {ex.GetType().Name}: {ex.Message}");
+            }
+
+            // Home metadata is the proximity prerequisite: a spec without a
+            // recorded home is skipped forever by MaterializeNearbyDormantSpecs.
+            var hasHome = false;
+            if (entry.TryGetProperty("home", out var homeEl) && homeEl.ValueKind == JsonValueKind.Object)
+            {
+                var hx = homeEl.GetProperty("x").GetSingle();
+                var hy = homeEl.GetProperty("y").GetSingle();
+                var hz = homeEl.GetProperty("z").GetSingle();
+                PlayerBotMetadataStore.Instance.RecordHome(
+                    session.Character.Id,
+                    session.Character.Transform.WorldId,
+                    session.Character.Transform.ZoneId,
+                    hx, hy, hz);
+                hasHome = true;
+            }
+
+            try
+            {
+                CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "seedDormant: deactivate failed for '{Bot}'", botName);
+                return Err($"seedDormant: deactivate failed for '{botName}': {ex.Message}");
+            }
+
+            seeded.Add(new { name = session.Character.Name, id = session.Character.Id, hasHome });
+        }
+
+        Logger.Info("seedDormant: seeded {Count} dormant specs", seeded.Count);
+        return Ok(new { seeded = seeded.Count, bots = seeded });
     }
 
     /// <summary>
