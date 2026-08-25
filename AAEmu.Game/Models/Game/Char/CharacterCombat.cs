@@ -116,6 +116,16 @@ public partial class Character
             : null;
         var zoneState = conflictData?.CurrentZoneState ?? ZoneConflictType.Peace;
 
+        // Null-safe: environmental deaths have no killer unit — skip the
+        // entire PvP-honor/arrest/crime-evidence block (all of it is
+        // killer-dependent).
+        if (killer == null)
+        {
+            DropTradePackToFloor();
+            ClearAllAggro();
+            return;
+        }
+
         var relationState = killer.GetRelationStateTo(this);
         var possibleArrest = false;
         Character arrestor = null;

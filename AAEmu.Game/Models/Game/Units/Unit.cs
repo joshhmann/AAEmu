@@ -509,7 +509,8 @@ public class Unit : BaseUnit, IUnit
             resurrectWaitTime = thisNpc.Spawner.RespawnTime;
         }
         
-        killer.BroadcastPacket(new SCUnitDeathPacket(ObjId, killReason, resurrectWaitTime, lostExp, durabilityLoss, killerUnit), true);
+        // Null-safe: environmental deaths (drowning, fall) have no killer unit.
+        killer?.BroadcastPacket(new SCUnitDeathPacket(ObjId, killReason, resurrectWaitTime, lostExp, durabilityLoss, killerUnit), true);
         if (killer == this)
         {
             switch (this)
