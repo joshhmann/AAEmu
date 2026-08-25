@@ -1,6 +1,5 @@
 ﻿// https://lsreg.ru/realizaciya-algoritma-poiska-a-na-c/
 
-using System.Collections.ObjectModel;
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
@@ -14,6 +13,11 @@ namespace AAEmu.Game.Models.Game.AI.AStar;
 /// </summary>
 public class PathNode
 {
+    /// <summary>
+    /// Diagnostics: number of nodes expanded (moved from open to closed) during the last
+    /// FindPath call on this instance. For measurement rigs and tests; not used for routing.
+    /// </summary>
+    public long ExpandedNodesLastSearch { get; private set; }
     /// <summary>
     /// Current zone.Id 
     /// </summary>
@@ -83,9 +87,16 @@ public class PathNode
         EndPointPos = goal;
         var rawDistance = Vector3.Distance(start, goal);
 
+        ExpandedNodesLastSearch = 0;
+
         // Step 1.
-        var closedSet = new Collection<PathNode>();
-        var openSet = new Collection<PathNode>();
+        var closedPositions = new HashSet<Vector3>();
+        var openByPosition = new Dictionary<Vector3, PathNode>();
+        // Binary min-heap on F with an insertion-sequence tie-breaker, reproducing the
+        // previous OrderBy(F)-stable selection order without rescanning the open set.
+        // Improved nodes are re-pushed; their superseded entries are skipped as stale.
+        var sequence = 0;
+        var openSet = new PriorityQueue<PathNode, (float Estimate, int Sequence)>();
 
         // Step 2.
         var startNode = new PathNode
@@ -97,15 +108,21 @@ public class PathNode
             PathLengthFromStart = 0,
             PathLengthToEnd = GetHeuristicPathLength(start)
         };
-        openSet.Add(startNode);
+        openSet.Enqueue(startNode, (startNode.EstimateFullPathLength, sequence++));
+        openByPosition[startNode.Position] = startNode;
 
         var maxLoopsLeft = (int)MathF.Ceiling(rawDistance * 10) + 50; // This is to prevent the pathfinder from traveling too far off
-        while (openSet.Count > 0)
+        while (openSet.TryDequeue(out var currentNode, out _))
         {
-            maxLoopsLeft--;
+            // Skip stale heap entries (closed or superseded by a cheaper path).
+            if (closedPositions.Contains(currentNode.Position)
+                || !openByPosition.TryGetValue(currentNode.Position, out var liveNode)
+                || !ReferenceEquals(liveNode, currentNode))
+            {
+                continue;
+            }
 
-            // Step 3.
-            var currentNode = openSet.OrderBy(node => node.EstimateFullPathLength).First();
+            maxLoopsLeft--;
 
             // Step 4.
             if (currentNode.Position.Equals(goal) || maxLoopsLeft <= 0)
@@ -123,46 +140,36 @@ public class PathNode
             }
 
             // Step 5.
-            openSet.Remove(currentNode);
-            closedSet.Add(currentNode);
+            openByPosition.Remove(currentNode.Position);
+            closedPositions.Add(currentNode.Position);
+            ExpandedNodesLastSearch++;
 
             // Step 6.
             foreach (var neighbourNode in GetNeighbours(world, currentNode))
             {
                 // Step 7.
-                if (closedSet.Any(node => node.Position.Equals(neighbourNode.Position)))
+                if (closedPositions.Contains(neighbourNode.Position))
                 {
                     continue;
                 }
 
-                var openNode = openSet.FirstOrDefault(node => node.Position.Equals(neighbourNode.Position));
-                // Step 8.
-                if (openNode == null)
+                if (!openByPosition.TryGetValue(neighbourNode.Position, out var openNode))
                 {
-                    openSet.Add(neighbourNode);
+                    // Step 8.
+                    openByPosition.Add(neighbourNode.Position, neighbourNode);
+                    openSet.Enqueue(neighbourNode, (neighbourNode.EstimateFullPathLength, sequence++));
                 }
                 else if (openNode.PathLengthFromStart > neighbourNode.PathLengthFromStart)
                 {
                     // Step 9.
                     openNode.CameFrom = currentNode;
                     openNode.PathLengthFromStart = neighbourNode.PathLengthFromStart;
+                    openSet.Enqueue(openNode, (openNode.EstimateFullPathLength, sequence++));
                 }
             }
         }
         // Step 10.
         return [];
-    }
-
-    /// <summary>
-    /// G: Function for the distance from the starting point to the current point.
-    /// </summary>
-    /// <param name="to"></param>
-    /// <returns></returns>
-    private float GetDistanceFromStart(Vector3 to)
-    {
-        var fromVector = new Vector3(StartPointPos.X, StartPointPos.Y, StartPointPos.Z);
-        var toVector = new Vector3(to.X, to.Y, to.Z);
-        return MathUtil.CalculateDistance(fromVector, toVector);
     }
 
     /// <summary>
@@ -184,9 +191,9 @@ public class PathNode
     /// <param name="world"></param>
     /// <param name="pathNode"></param>
     /// <returns></returns>
-    private Collection<PathNode> GetNeighbours(WorldInstance world, PathNode pathNode)
+    private List<PathNode> GetNeighbours(WorldInstance world, PathNode pathNode)
     {
-        var result = new Collection<PathNode>();
+        var result = new List<PathNode>();
 
         // Check which navmesh file is valid at this position
         var bai = world.Template.GetBaiByPos(pathNode.CurrentTargetPos);
@@ -223,8 +230,11 @@ public class PathNode
                 Position = linkDescriptor.TargetNodeDescriptor.Pos,
                 EndPointPos = pathNode.EndPointPos,
                 CameFrom = pathNode,
-                PathLengthFromStart = (linkDescriptor.SourceNodeDescriptor.Pos - pathNode.EndPointPos).Length(), // GetDistanceFromStart(linkDescriptor.SourceNodeDescriptor.Pos),
-                PathLengthToEnd = (linkDescriptor.TargetNodeDescriptor.Pos - pathNode.EndPointPos).Length() // GetHeuristicPathLength(linkDescriptor.TargetNodeDescriptor.Pos)
+                // G accumulates the walked cost from the start: parent G plus this link's
+                // step length (the old code stored distance-to-goal here, which broke
+                // A*'s cost model). H estimates the remaining distance to the goal.
+                PathLengthFromStart = pathNode.PathLengthFromStart + Vector3.Distance(linkDescriptor.SourceNodeDescriptor.Pos, linkDescriptor.TargetNodeDescriptor.Pos),
+                PathLengthToEnd = GetHeuristicPathLength(linkDescriptor.TargetNodeDescriptor.Pos)
             };
 
             result.Add(neighbourNode);
