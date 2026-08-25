@@ -1333,6 +1333,78 @@ gate; a silently gearless or bridge-dead bot population is a failed gate;
 
 ---
 
+## PlayerBot-Validated Development Loop (added 2026-08-25)
+
+The development methodology for all NEW system work (locks in what M1-M7
+actually did, makes it explicit for M8+):
+
+```
+client/server evidence → system archaeology → behavioral contract
+  → minimum vertical slice → validation → PlayerBot interaction
+  → bot/regression validation → PROGRESSION BLOCKER discovered
+  → gap fixed → bots progress farther → repeat
+```
+
+Rules:
+1. **Reconstruct, don't invent.** Unimplemented systems are built from
+   evidence (neighboring implementations, packets/opcodes, compact.sqlite3,
+   DB schemas, client data, logs). Findings graded VERIFIED /
+   STRONGLY_INFERRED / PLAUSIBLE / UNKNOWN. UNKNOWN areas stay unfilled
+   until evidence arrives (see mechanics dossiers: fishing-domain.md,
+   indun-domain.md — the template).
+2. **Contract before implementation**: player intent → client action →
+   server validation → domain logic → state mutation → world effects →
+   persistence → broadcast → client-visible result.
+3. **Vertical slices**, not horizontal systems: perform action → state
+   updates → world reflects → restart → still correct. Expand from there.
+4. **PLAYERBOT_BLOCKER ledger** (`scorecard-explorations/playerbot-
+   blockers.md`): when a bot cannot continue playing normally, capture
+   {scenario, bot state, intended action, observed vs expected, suspected
+   layer (bot/server/data/unknown), evidence, repro}. Blockers feed the
+   backlog and outrank speculative features. Do not work around server
+   faults inside the bot — find the layer that is actually wrong.
+5. **PLAYER_MODE vs TEST_MODE**: bots perceive what a player could
+   perceive; test-only instrumentation (DB asserts, packet captures) never
+   leaks into autonomous behavior.
+6. **Capability matrix** (`scorecard-explorations/mechanics/playerbot-
+   capability-matrix.md`): Perceive / Decide / Act / Verify per system,
+   populated from implementation reality. A system is BOT_TESTED only when
+   a bot can do all four through real engine paths.
+7. **Completeness lifecycle** per system: UNKNOWN → EVIDENCE_COLLECTED →
+   CONTRACT_DEFINED → VERTICAL_SLICE → PLAYABLE → PERSISTENT →
+   CLIENT_VALIDATED → BOT_INTERACTABLE → BOT_TESTED → COMPLETE.
+   Implementation alone ≠ complete.
+
+## Simulation-Fidelity Scaling Model (G2-A5/A3, added 2026-08-25)
+
+Measured basis (g2-scaling-curve-report.json): marginal embodied bot ≈
+16.5MB RSS; tick p95 0.42ms at 30 citizens vs 100ms budget; baseload ~5.2GB
+is world data. Raw count is NOT the wall — per-bot simulation frequency,
+broadcast cost near players, and synchronized cadences are.
+
+Fidelity ladder (PopulationDirector Dormant/Reduced/Full + scheduler
+cadence), driven by RELEVANCE not count:
+
+```
+DORMANT (db row + metadata, near-zero cost)
+  → BACKGROUND (coarse/event-driven: schedules, travel-as-progress)
+    → ACTIVE (normal gameplay cadence)
+      → OBSERVED/ENGAGED (player within radius; full fidelity)
+```
+
+Principles:
+- Spend computation only where a bot can affect or be affected by gameplay.
+- Real players always win scheduling priority over background bots.
+- Event-driven wakes > polling; staggered cadences > synchronized spikes.
+- Bots exercise the REAL game systems — an optimization that bypasses the
+  system under test destroys the bot's reason to exist.
+- Graceful degradation: load ↑ → background fidelity ↓ first; queues bounded;
+  real gameplay stable.
+- Optimization waves: PROFILE → remove pathological work → reduce frequency
+  → event-driven wakeups → staggering → incremental perception → interest
+  management → pathfinding → shared immutable knowledge → persistence
+  batching → allocation work. Measure before/after every wave.
+
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
 Josh's directive: prior human-test waivers are **authorized sequencing, not
