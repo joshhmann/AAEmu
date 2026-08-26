@@ -94,13 +94,18 @@ public class NpcSpawnerNpc : Spawner<Npc>
 
         Logger.Trace($"Spawn npc templateId {MemberId} objId {npc.ObjId} from spawnerId {NpcSpawnerTemplateId} at Position: {npcSpawner.Position}");
 
-        if (!npc.CanFly)
+        // PB-005 remedy A: ground units more than 2 m above sampled terrain are snapped to
+        // that terrain height (the old rule only "corrected" deltas < 1 m, which let frozen-z
+        // source data reach clients verbatim). Fly/swim and whitelisted units keep their
+        // spawner z; sub-threshold and negative offsets remain unchanged because raw terrain
+        // cannot distinguish roads/decks, caves, and interiors.
+        var groundZ = npcSpawner.ParentWorld.Template.GeoData.GetHeight(npcSpawner.Position.AsPositionVector());
+        switch (NpcGroundingPolicy.ResolveSpawnZ(MemberId, npc.CanFly, npcSpawner.Position.Z, groundZ, out var resolvedZ))
         {
-            var newZ = npcSpawner.ParentWorld.Template.GeoData.GetHeight(npcSpawner.Position.AsPositionVector());// WorldManager.Instance.GetHeight(npcSpawner.Position.ZoneId, npcSpawner.Position.X, npcSpawner.Position.Y, npcSpawner.Position.Z);
-            if (Math.Abs(npcSpawner.Position.Z - newZ) < 1f)
-            {
-                npcSpawner.Position.Z = newZ;
-            }
+            case NpcGroundingPolicy.SpawnGroundingAction.ClampedToGround:
+                NpcGroundingPolicy.ReportClamp(MemberId, npcSpawner.Position.X, npcSpawner.Position.Y, npcSpawner.Position.Z, resolvedZ);
+                npcSpawner.Position.Z = resolvedZ;
+                break;
         }
 
         npc.Transform.ApplyWorldSpawnPosition(npcSpawner.Position);
