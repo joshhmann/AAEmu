@@ -194,6 +194,16 @@ CREATE TABLE IF NOT EXISTS `completed_quests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Quests marked as completed for character';
 
 
+CREATE TABLE IF NOT EXISTS `dominions` (
+  `zone_group_id` int unsigned NOT NULL COMMENT 'zone_groups.id of the owned zone',
+  `expedition_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Owning expedition Id',
+  `expedition_name` varchar(128) NOT NULL DEFAULT '' COMMENT 'Owning expedition name (denormalized for display)',
+  `tax_rate` int NOT NULL DEFAULT '50' COMMENT 'Tax rate set by the owner expedition',
+  `declared_at` datetime DEFAULT NULL COMMENT 'When the dominion was declared',
+  PRIMARY KEY (`zone_group_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Declared dominions per castle zone group';
+
+
 CREATE TABLE IF NOT EXISTS `doodads` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `owner_id` int DEFAULT NULL COMMENT 'Character DB Id',

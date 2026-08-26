@@ -249,6 +249,8 @@ public sealed class BotDriveBridge
                 return HandleDeactivate(root);
             case "auction":
                 return HandleAuctionOp(root);
+            case "dominion":
+                return HandleDominionOp(root);
             case "seedDormant":
                 return HandleSeedDormant(root);
             default:
@@ -1925,6 +1927,51 @@ public sealed class BotDriveBridge
                 return Err($"unknown auction op '{op}'");
         }
     }
+    /// <summary>
+    /// Dominion slice-1 rig ops (test seam — the direct-manager-API declare
+    /// route documented for the persistence proof):
+    ///   declare — persist + broadcast a dominion via DominionManager.Declare
+    ///             (zoneGroup, expeditionId, expeditionName, taxRate)
+    ///   list    — dump the manager's in-memory dominion store (post-restart
+    ///             this reflects what was reloaded from MySQL)
+    /// </summary>
+    private string HandleDominionOp(JsonElement root)
+    {
+        var op = root.GetProperty("op").GetString();
+        switch (op)
+        {
+            case "declare":
+            {
+                var zoneGroup = GetUInt(root, "zoneGroup");
+                if (zoneGroup == 0)
+                    return Err("dominion declare requires 'zoneGroup'");
+                var expeditionId = GetUInt(root, "expeditionId");
+                var expeditionName = root.TryGetProperty("expeditionName", out var en) ? en.GetString() : "rig";
+                var taxRate = GetInt(root, "taxRate", 50);
+
+                var dominion = Core.Managers.DominionManager.BuildDominionData(
+                    zoneGroup, expeditionId, 0, 0f, 0f, 0f, taxRate, DateTime.UtcNow);
+                Core.Managers.DominionManager.Instance.Declare(dominion, expeditionName ?? "rig");
+                return Ok(new { declared = zoneGroup, expeditionId, taxRate });
+            }
+            case "list":
+            {
+                var dominions = Core.Managers.DominionManager.Instance.Dominions
+                    .Select(d => new
+                    {
+                        zoneGroupId = d.ZoneGroupId,
+                        expeditionId = d.ExpeditionId,
+                        expeditionName = d.ExpeditionName,
+                        taxRate = d.TaxRate,
+                        declaredAt = d.DeclaredAt
+                    }).ToArray();
+                return Ok(new { count = dominions.Length, dominions });
+            }
+            default:
+                return Err($"unknown dominion op '{op}'");
+        }
+    }
+
 
     private static object[] LotDumps(IEnumerable<AuctionLot> lots)
         => lots.Select(l => new

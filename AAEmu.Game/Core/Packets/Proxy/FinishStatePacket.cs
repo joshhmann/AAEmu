@@ -1,4 +1,5 @@
 ﻿using AAEmu.Commons.Network;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Game;
 using AAEmu.Game.Core.Packets.G2C;
@@ -30,6 +31,9 @@ public class FinishStatePacket() : GamePacket(PPOffsets.FinishStatePacket, 2)
                 }
                 Connection.SendPacket(new SetGameTypePacket(levelname, 0, 1)); // TODO - level
                 Connection.SendPacket(new SCInitialConfigPacket());
+                // Re-broadcast dominions declared before this session (persisted state).
+                if (Connection.ActiveChar != null)
+                    DominionManager.Instance.SendDominions(Connection);
 
                 // Test URLs                                          // Original Trion values
                 // Client treats these as folders and will add a trailing slash (/) with whatever it needs
