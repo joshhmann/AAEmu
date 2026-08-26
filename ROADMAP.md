@@ -16,6 +16,10 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
+**Current branch record (2026-08-26 recovery):** `develop @ e5db6d390`
+(= `origin/develop`). Recovery status is tracked below; milestone shape and
+historical evidence are unchanged.
+
 ## Three phases
 
 1. **Playable Classic Loop** (M1-M4) — a dependable slice humans can enjoy
@@ -1825,21 +1829,20 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    survives restart; Wanted buff appears at the 50-point boundary (inject via
    CrimeAddPointSubCommand). Client report-dialog rendering stays UNKNOWN.
 8. **PvP slice-1 — flagged-aggression handshake live E2E** · Area: PVP
-   (PVP-01) · Priority: HIGH · Depends on: proven party/indun live-E2E seams ·
-   Milestone: Later-lane promotion candidate. *Goal:* prove flag → aggress →
-   peace-refusal → honor on the real server with ZERO source changes
-   (pvp-domain §6). *Work/Acceptance:* CS 0x04f → SCForceAttackSetPacket +
-   Bloodlust 1482; same-faction damage turns attacker purple (Retribution
-   2167), assault lists populate, evidence doodad spawns; Peace-zone refusal
-   demonstrated in the SAME binary as the allowed kill; kill awards honor +
-   death penalties apply.
+   (PVP-01) · Priority: HIGH · **STATUS 2026-08-26: OPEN, narrowed** after
+   recovery. The corrected Retribution rig proves first application and
+   Refresh broadcasts; a corrected live rerun with buff-state dump and packet
+   accounting is still pending. *Next acceptance:* prove flag → aggress →
+   peace-refusal → honor on the real server; no grade promotion from rig-only
+   evidence.
 9. **Mail security fix — receive-path ownership checks** · Area: MAIL
    (MAIL-01, SECURITY priority) · Depends on: none · *Goal:* close the 4-of-5
    ReceiverId gap found by mail-domain.md (read/take-item/take-money/delete
    trust client mailId). *Work:* mirror CSTakeAttachmentSequentially's guard
    into ReadMail/GetAttached/GetAttached(money)/DeleteMail. *Acceptance:*
    non-owner read/take/delete refused with MailInvalid; owner flows unchanged;
-   MailTests/MailReturnTests stay green.
+   MailTests/MailReturnTests stay green. **Mail S3 is separate and remains
+   incomplete/uncommitted in `.worktrees/mails3`; it is not landed.**
 10. **Ships slice-1 — rowboat E2E** · Area: SLAVE-01 naval half (ships-domain
     Slice 1) · Priority: MEDIUM · Depends on: indun/party bridge charPos +
     packet-tap seams. *Goal:* first live proof of sailing physics + lifecycle:
@@ -1861,15 +1864,13 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     TickManager phase cron (Peace/Declare/Warmup/Siege/Payoff) announcing via
     a new SCSiegeAlertPacket marshaler. *Acceptance:* declared dominion
     survives game-server restart; tax-rate change round-trips C2G→store→G2C.
-12. **Merchant bug-fix trio** · Area: ECONOMY (MERCHANT-01 open defects;
-    economy-domain MER-C) · Priority: HIGH (dupe vector) · Depends on: none ·
-    *Fixes:* funds gate `&&`→`\|\|` (insolvent buys currently drive money
-    negative — ChangeMoney has no funds guard); buyback refund accumulated
-    only inside the success branch of the move (container-full ⇒ item kept
-    AND money paid today); AcquireDefaultItem return checked (full bag ⇒
-    charged, no item today). *Acceptance:* rig tests inverted — insolvent buy
-    rejected with money unchanged, full-bag buy charges nothing; conservation
-    invariant 9 holds on the buy path.
+12. **Merchant bug-fix trio** · Area: ECONOMY (MERCHANT-01) · ✅ **LANDED
+    2026-08-26** in merge `e5db6d390`: funds gate `cb514c42e`, buyback refund
+    `beaf9b82e`, and grant-failure rollback `3ba33b3af`. Rig tests now refuse
+    insolvent buys without changing money, refuse full-bag/late-grant purchases
+    atomically, and pay no buyback refund when the move is refused. The live
+    `EconomyDayCycleE2eTests` conservation run passed across kill -9 restart.
+    MERCHANT-01 W/A fixes are merged; H remains UNKNOWN.
 13. **Labor regen tick decision — schedule or delete** · Area: LABOR-01
     (economy-domain LAB-A) · Priority: MEDIUM (decision card). *Fact on
     record:* TimedRewardsManager.Initialize has NO caller anywhere — online
@@ -1878,6 +1879,17 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     0/min. *Work:* owner decision recorded; if scheduled: integration test
     shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
     deleted: remove task + config stubs (clean cutover).
+
+**Recovery queue status (2026-08-26; develop @ e5db6d390):**
+
+- **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
+  intentional-floater whitelist landed; cave/deck/submerged classification and
+  duplicate-row decisions remain open.
+- **PB-007:** **OPEN, narrowed** after `a4f7820ba` — corrected rig proves first
+  and Refresh Retribution broadcasts; corrected live rerun remains pending.
+- **Mail S3:** incomplete and uncommitted in `.worktrees/mails3`; no landed
+  claim or scorecard grade.
+
 
 **Low-lift first moves (2026-08-22; use existing seams):**
 

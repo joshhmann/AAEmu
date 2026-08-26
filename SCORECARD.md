@@ -87,7 +87,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | PACK-01 | Craft, carry, place, load, unload, sell trade pack | M4 | 2 | 2 | U | 2 | 2 | U | M4-2 (fix/m4-2-trade-packs, t_449d0c41): level-10 craft/sell gates, origin-zone StoreCantSellSameZone, 6-day placed-pack expiry, 22 h mail delay; `SpecialtyManagerTests` 21/21 (sale math, 80/20, coin routes, gates); `M4_2TradePackRestartE2eTests` — plant_time + made_unit_id survive kill -9 (PASS on merged tree 2m12s); `M4ExitIntegratedSessionTests` — full craft→load→travel→unload→sell→reward loop, reward math 91238 base / 124540 payout verified, 2× repeat (4 scripted actors = M5-stand-in). **H=U (reconciled 2026-08-12): exit driven by scripted actors — proxy/bot-functional, H UNKNOWN until Josh runs it; M4 economic/navigation replay = deferred gate** |
 | SLAVE-01 | Cart/ship summon, seats/cargo, cleanup, recovery | M4 | 2 | 2 | U | 2 | 2 | U | M4-3 (fix/m4-3-vehicle-lifecycle, t_4a91a4f5, Rei gate t_5019f7b1 PASS): despawn gates owner/312/288/801, BindSlave 324, RidersEscape 640; `SlaveLifecycleTests` 29/29; `M4VehiclesE2eTests` — two kill -9 restarts, row intact, exactly 1 row (PASS on merged tree 3m09s); `M4ExitIntegratedSessionTests` — pack loaded on slave, 801 despawn refusal, unload → despawn allowed (4 scripted actors = M5-stand-in). **H=U (reconciled 2026-08-12): exit driven by scripted actors — proxy/bot-functional, H UNKNOWN until Josh runs it; M4 navigation replay = deferred gate** |
 | TRADE-01 | Direct player-to-player item/currency trade | Later | U | 2 | U | 1 | U | N/A | `TradeManager`; separate from trade packs. **2026-08-23 (d4b5e524c): trade FUNCTIONAL** — OkTrade cancel-then-finish KeyNotFoundException fixed; both-locked AND both-ok gate (was !a && !b single-side exploit); TradeOffer/TradePutup/TradeLockOk contract actions; `TradeHandshakeScenarioRigTests` 5/5. W=2 (real engine path end-to-end); **A=1 rig-level only — no live/restart evidence yet (kept honest)**; H=UNKNOWN |
-| MERCHANT-01 | NPC vendor buy/sell, price, stock, refund/error paths | M2/M4 | U | 2 | U | 2 | U | N/A | **2026-08-25 (mechanics/economy-domain.md): stale row promoted.** MerchantRigTests drive the REAL CSBuyItemsPacket/CSSellItemsPacket classes over capture-backed connections with real NpcManager goods packs; bot Buy/Sell contract actions replicate the packet seam call-for-call; EconomyDayCycleE2eTests LIVE PASS and m8-economy-cycle-reconcile.md conservation (money/bank/items) held across a kill -9 restart → W=2/A=2. Three documented engine bugs remain OPEN defects (rig asserts them honestly): funds gate ANDs its three checks where canonical behavior needs an OR (insolvent buy drives money negative), sell refund accumulated outside the buyback-move success branch (container-full ⇒ item kept AND money paid — dupe vector), AcquireDefaultItem return unchecked (full bag ⇒ charged, no item). No stock/depletion or vendor-discount system exists (AddItemToStock static; merchant_price_ratios dead table). C stays U (canonical market audit); H=UNKNOWN — no human shop-UI run |
+| MERCHANT-01 | NPC vendor buy/sell, price, stock, refund/error paths | M2/M4 | U | 2 | U | 2 | U | N/A | **2026-08-26 recovery:** MerchantRigTests drive the REAL CSBuyItemsPacket/CSSellItemsPacket paths over capture-backed connections with real NpcManager goods packs; bot Buy/Sell actions replicate the packet seam. Merchant trio is now merged on develop (`cb514c42e` funds gate, `beaf9b82e` buyback refund, `3ba33b3af` grant-failure rollback; merge `e5db6d390`). `EconomyDayCycleE2eTests` live conservation E2E passed, with money/bank/items held across kill -9 restart (`/root/aaemu-e2e/logs/m8-economy-cycle-reconcile.md`). W=2/A=2; **H=U** — no human-client shop run. |
 | AUCTION-01 | List, search, bid/buy, settle, cancel, expire | M8 | U | 2 | U | 2 | 2 | U | `AuctionManager`; market audit. **2026-08-23 (f3bb787ce) — strongest promotion of the sweep: W/A/R = 2** — expiry sweep hardened (per-lot isolation, null-safe missing-item expiry, mail-fail no longer wedges lots, `_auctionTaskScheduled` guard); `AuctionHouseRestartE2eTests` live E2E PASS 3m26s — post → buy → settle → expiry-mail across kill -9 (E2eStack.RestartGameServer(afterStop) seam). C stays U pending the canonical market audit; H=UNKNOWN |
 | ECON-01 | Currency/item/labor conservation across economy | M4/M8 | U | U | U | U | U | U | Cross-mechanic invariant audit |
 | MAIL-01 | Send, receive, attach, return, expire, persist | Later | U | 1 | U | 1 | U | U | `MailManager`; mail audit. **2026-08-23 (6b2f15a6d):** ReturnMail implemented + expiry bounce/destruction semantics rig-tested → A=1 (rig level). ⚠️ CSReturnMailPacket opcode confirmed a 0xfff placeholder — NOT registered — so the client-facing return path is still unwired; W stays 1. **2026-08-25 (mechanics/mail-domain.md) evidence notes:** SECURITY-GRADE finding — ownership checks missing on 4 of 5 receive paths (read / take-item / take-money / delete trust the client-supplied mailId; only CSTakeAttachmentSequentially verifies ReceiverId) and mailbox proximity is enforced for SENDING only; attachments verdict INSTANCE-FAITHFUL (the same Item object moves sender→mail container→receiver preserving grade/flags/details blob; persisted as items-table references, not serialization); Charged (COD) type advertised but never enforced. Hardening slice S1 spec'd. Grades unchanged; H=UNKNOWN |
@@ -145,34 +145,28 @@ Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
 bugs, cards, tests, and zone reports can refer to the same scope.
 
 
-> **2026-08-26 scorecard update (wave 7, through develop @ 94f5425a8):**
-> G3-B5 DONE — behavioral scenario library promoted
-> (generated/b5-scenario-library-2026-08-26.md: 7 scenarios indexed with
-> contracts/failure-attribution; executable index remains
-> bot-regression-pass.sh) + PLAYER_MODE/TEST_MODE leakage audit ALL THREE
-> seams PROVEN-UNREACHABLE with 6 negative regression tests (bridge gated +
-> loopback + private dispatch; BroadcastMovement opt-out confined to the roam
-> executor with observer stream preserved; rig hooks compile-time isolated)
-> on branch feat/b5-scenario-library @ 46fe4332d · NEW ledger row DOMINION-01
-> with slice-1 LANDED — first real reconstruction of the dominion system
-> (manager data load, additive MySQL table, tax-rate packet round-trip, phase
-> cron, kill -9 persistence E2E PASS; combat explicitly NOT implemented) ·
-> PVP-01 MAJOR FINDING + PARTIAL FIX — flagged-aggression composed flow
-> FAILED live (handshake + targeting passed, zero damage applied; caught by
-> the new PvpHandshakeE2eTests); root cause buff 2423 "LoggedOn" ~20 s full
-> damage-immunity at every login whose immune early-return skipped HP loss
-> AND the crime branch; fixes: crime branch extracted to
-> RegisterCrimeForAttempt and called even on immune early-return, Skill
-> apply-loop exceptions logged+rethrown (TaskManager was silently discarding
-> them), E2E hardened to wait out the protection window — real damage,
-> bloodstain, and crime chain now execute; RESIDUAL: Retribution 2167
-> wire-observable on immune hits (AddBuff stack-rule silent return suspect;
-> follow-up probe documented); ZONE-01 Peace enforcement + homeland
-> mother-shield LIVE-verified in the same runs · CRIME-01 crime-points
-> vertical LIVE-PROVEN (JusticeCrimeE2eTests 8 stages incl. restart
-> persistence + wanted seam) + engine fix MarkDirty() on CrimePoint/
-> InfamyPoint setters (silent-persistence-vanish bug). H stays UNKNOWN
-> everywhere (hard rule — never recorded as H=2).
+> **2026-08-26 recovery scorecard update (develop @ e5db6d390):** recovery
+> contents are confirmed on develop: grounding `38c4997d3`, recovered
+> Retribution wire-test merge `a4f7820ba`, and merchant merge `e5db6d390`;
+> earlier committed wave-7 features remain in ancestry. G3-B5 scenario library
+> and PLAYER_MODE/TEST_MODE leakage audit remain DONE (7 scenarios indexed;
+> all three seams proven unreachable with 6 negative tests). DOMINION-01
+> slice-1 remains LANDED (tax round-trip, phase cron, kill -9 persistence;
+> combat deferred).
+>
+> **PB-005 grounding = FIXED-PARTIAL:** positive-only clamp + intentional
+> aerial/water/structure whitelist are landed; terrain-only replay corrected
+> 593 non-whitelisted severe-positive rows and left 702 whitelisted rows
+> unchanged. Cave/deck/submerged behavior and duplicate-row decisions remain
+> open; no grade inflation.
+>
+> **PB-007 remains OPEN, narrowed:** corrected rig proves Retribution 2167
+> broadcasts on first application and on Refresh; corrected live rerun remains
+> pending. The merchant trio is landed (funds gate `cb514c42e`, buyback refund
+> `beaf9b82e`, grant-failure rollback `3ba33b3af`, merged by `e5db6d390`) and
+> the live economy conservation E2E passed across kill -9 restart. MERCHANT-01
+> remains W=2/A=2 with **H=U**. Mail S3 is incomplete/uncommitted in
+> `.worktrees/mails3`; no Mail S3 grade is claimed. H stays UNKNOWN everywhere.
 > **2026-08-25 scorecard update (completeness-census wave, through develop @
 > 214bed834):** master mechanic inventory landed
 > (generated/mechanic-inventory-2026-08-25.md) — 65 canonical player-facing
@@ -184,10 +178,10 @@ bugs, cards, tests, and zone reports can refer to the same scope.
 > packets), TOWERDEF-01 all four tower_def_* groups 100% wired (best-wired
 > missing system), music_note_limits/premium_*/ranks/moulds zero-wired, race
 > tracks zero .cs references · Grade promotions from today's six domain
-> dossiers — MERCHANT-01 W=2/A=2 (stale row: MerchantRigTests drive the real
-> CSBuyItemsPacket/CSSellItemsPacket path; m8-economy-cycle reconcile PASS
-> across kill -9 restart; funds-gate `&&`, buyback refund-on-refused-move and
-> grant-failure bugs stay OPEN defects) · CRIME-01 + TRIAL-01 C=2
+> dossiers — MERCHANT-01 W=2/A=2 (the stale row's wiring/live evidence was
+> promoted here; at that point the funds-gate `&&`, buyback
+> refund-on-refused-move, and grant-failure bugs were documented OPEN, then
+> fixed and merged in the 2026-08-26 recovery) · CRIME-01 + TRIAL-01 C=2
 > (justice-domain: managers fully wired, packet tables complete/near-complete;
 > W stays 1 — zero E2E proof; prison labor/escape honestly absent) · PVP-01
 > C=2 (pvp-domain: CanAttack chokepoint ordering + honor formulas + faction
