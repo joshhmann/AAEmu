@@ -39,18 +39,16 @@
 		"TickMinutes": 5
 	},
 	"Labor": {
-		"DailyLogin": 0,
 		"Default": 50,
-		"TickAmount": 5,
-		"TickAmountPremium": 10,
-		"TickMinutes": 5
-	},
-	"LaborOffline": {
-		"DailyLogin": 0, // unused
-		"Default": 0, // unused
-		"TickAmount": 0,
-		"TickAmountPremium": 5,
-		"TickMinutes": 5
+		"TickMinutes": 5,
+		"Mode": "Unchained", // Unchained (default) = uniform premium-grade regen; "VanillaRetail" = retail free/patron tiers
+		"TickAmountVanilla": 5, // VanillaRetail free tier: 5 per 5 min online
+		"TickAmountPatron": 10, // patron rate: 10 per 5 min online AND offline; universal rate in Unchained mode
+		"CapLabor": 5000, // Unchained universal cap
+		"CapFree": 2000, // VanillaRetail free cap
+		"CapPremium": 5000, // VanillaRetail patron cap
+		"UnlimitedCap": false, // true = skip cap clamping entirely
+		"DisableConsumption": false // true = labor spends become no-ops (also disables labor-XP that rides the spend path)
 	},
 	"Loyalty": {
 		"DailyLogin": 5,

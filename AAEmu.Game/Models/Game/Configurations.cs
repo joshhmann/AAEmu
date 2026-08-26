@@ -274,6 +274,89 @@ public class CurrencyValuesConfig
     }
 }
 
+/// <summary>
+/// Labor regeneration posture.
+/// Defaults flatten retail monetization tiers: every account gets
+/// premium-grade regen without paying for it (ArcheAge-without-paywalls /
+/// Unchained posture). Vanilla tiers remain selectable via Mode.
+/// </summary>
+public enum LaborRegenMode
+{
+    /// <summary>Uniform premium-grade regen and cap for every account (default).</summary>
+    Unchained = 0,
+
+    /// <summary>Reproduces the confirmed retail free/patron tier table.</summary>
+    VanillaRetail = 1,
+}
+
+/// <summary>
+/// Labor regeneration configuration (online AND offline — offline regen shares
+/// this section's cadence by design).
+///
+/// Retail-source citation (scorecard-explorations/generated/
+/// formula-corroboration-2026-08-25.md L1–L4, community-confirmed against
+/// https://archeage.fandom.com/wiki/Labor_Points): FREE users regenerated
+/// 5 labor per 5 min online only (cap 2000); PATRONS 10 per 5 min online AND
+/// 10 per 5 min offline (cap 5000). Those exact values live behind
+/// Mode = VanillaRetail; the shipped defaults are Unchained instead.
+/// </summary>
+public class LaborConfig
+{
+    /// <summary>Starting labor balance for brand-new accounts.</summary>
+    public int Default { get; set; } = 50;
+
+    /// <summary>Minutes between labor ticks (retail: 5).</summary>
+    public int TickMinutes { get; set; } = 5;
+
+    /// <summary>Tier posture — see <see cref="LaborRegenMode"/>.</summary>
+    public LaborRegenMode Mode { get; set; } = LaborRegenMode.Unchained;
+
+    /// <summary>VanillaRetail free-tier online tick amount (retail: 5 per tick).</summary>
+    public int TickAmountVanilla { get; set; } = 5;
+
+    /// <summary>
+    /// Patron-tier tick amount (retail: 10 per tick, online and offline).
+    /// In Unchained mode this is the universal rate for every account.
+    /// </summary>
+    public int TickAmountPatron { get; set; } = 10;
+
+    /// <summary>Unchained universal labor cap.</summary>
+    public int CapLabor { get; set; } = 5000;
+
+    /// <summary>VanillaRetail free-account cap (retail: 2000).</summary>
+    public int CapFree { get; set; } = 2000;
+
+    /// <summary>VanillaRetail patron cap (retail: 5000).</summary>
+    public int CapPremium { get; set; } = 5000;
+
+    /// <summary>Skip cap clamping entirely — regen grants unbounded.</summary>
+    public bool UnlimitedCap { get; set; } = false;
+
+    /// <summary>
+    /// Makes labor-consuming actions no-ops. HONEST SIDE EFFECT: labor-XP
+    /// accrual rides the same spend path (Character.ChangeLabor evaluates the
+    /// ExpByLaborPower formula on consumption), so no-drain also means no
+    /// labor-XP and no actability gain charged on that spend event — this is
+    /// deliberately NOT a free-XP mode.
+    /// </summary>
+    public bool DisableConsumption { get; set; } = false;
+
+    /// <summary>Online regen amount per tick for the given account tier.</summary>
+    public int GetOnlineTickAmount(bool isPremium) =>
+        isPremium || Mode == LaborRegenMode.Unchained ? TickAmountPatron : TickAmountVanilla;
+
+    /// <summary>
+    /// Offline regen amount per tick: everyone at the patron rate in Unchained
+    /// mode; patrons-only in VanillaRetail (free accounts earn nothing offline).
+    /// </summary>
+    public int GetOfflineTickAmount(bool isPremium) =>
+        isPremium || Mode == LaborRegenMode.Unchained ? TickAmountPatron : 0;
+
+    /// <summary>Effective labor cap for the given account tier.</summary>
+    public int GetCap(bool isPremium) =>
+        Mode == LaborRegenMode.Unchained ? CapLabor : isPremium ? CapPremium : CapFree;
+}
+
 public class SpecialtyConfig
 {
     /// <summary>

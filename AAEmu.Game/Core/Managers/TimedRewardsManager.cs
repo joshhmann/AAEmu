@@ -2,6 +2,7 @@
 using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models;
+using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Tasks.TimedRewards;
 
 namespace AAEmu.Game.Core.Managers;
@@ -11,17 +12,23 @@ namespace AAEmu.Game.Core.Managers;
 /// </summary>
 public class TimedRewardsManager(ITaskManager taskManager) : Singleton<TimedRewardsManager>, ITimedRewardsManager
 {
-    private const short MaxLabor = 2000;
-    private const short MaxLaborPremium = 5000;
+    private bool _initialized;
 
     public void Initialize()
     {
+        if (_initialized)
+            return; // idempotent: a double start must not double-schedule the regen tick
+        _initialized = true;
         taskManager.Schedule(new TimedRewardsTask(), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
     }
 
+    /// <summary>
+    /// Effective labor cap for the given account tier — now config-driven;
+    /// the retail-confirmed values (2000 free / 5000 premium) live in LaborConfig.
+    /// </summary>
     public static short GetMaxLabor(bool isPremium)
     {
-        return isPremium ? MaxLaborPremium : MaxLabor;
+        return (short)Math.Clamp(AppConfiguration.Instance.Labor.GetCap(isPremium), 0, short.MaxValue);
     }
 
     /// <summary>
@@ -32,10 +39,7 @@ public class TimedRewardsManager(ITaskManager taskManager) : Singleton<TimedRewa
     /// <param name="addLabor"></param>
     private void DoAddLabor(GameConnection connection, short currentLabor, int addLabor)
     {
-        var maxLaborToAdd = GetMaxLabor(connection.Payment.PremiumState) - currentLabor;
-        if (maxLaborToAdd < 0)
-            maxLaborToAdd = 0;
-        addLabor = Math.Min(addLabor, maxLaborToAdd);
+        addLabor = ComputeGrant(AppConfiguration.Instance.Labor, connection.Payment.PremiumState, currentLabor, addLabor);
         AccountManager.Instance.UpdateTickTimes(connection.AccountId, DateTime.UtcNow, true, false, false);
         if (addLabor > 0)
         {
@@ -51,6 +55,7 @@ public class TimedRewardsManager(ITaskManager taskManager) : Singleton<TimedRewa
 
     public void DoTick()
     {
+        var laborConfig = AppConfiguration.Instance.Labor;
         var connections = GameConnectionTable.Instance.GetConnections();
         foreach (var connection in connections)
         {
@@ -59,9 +64,9 @@ public class TimedRewardsManager(ITaskManager taskManager) : Singleton<TimedRewa
             var accountDetails = AccountManager.Instance.GetAccountDetails(connection.AccountId);
 
             // Distribute Labor if needed (only for online labor)
-            if (AppConfiguration.Instance.Labor.TickMinutes > 0 && accountDetails.LastLaborTick.AddMinutes(AppConfiguration.Instance.Labor.TickMinutes) <= DateTime.UtcNow)
+            if (laborConfig.TickMinutes > 0 && accountDetails.LastLaborTick.AddMinutes(laborConfig.TickMinutes) <= DateTime.UtcNow)
             {
-                var addLabor = AppConfiguration.Instance.Labor.GetTickAmount(connection.Payment.PremiumState);
+                var addLabor = laborConfig.GetOnlineTickAmount(connection.Payment.PremiumState);
                 DoAddLabor(connection, accountDetails.Labor, addLabor);
             }
 
@@ -98,11 +103,42 @@ public class TimedRewardsManager(ITaskManager taskManager) : Singleton<TimedRewa
 
     public void AddOfflineLabor(GameConnection connection, DateTime lastLoginTime, short currentLabor)
     {
+        // Offline regen shares the online Labor section's cadence; the amount is
+        // mode-driven: everyone regenerates at the patron rate when Unchained,
+        // patrons-only in VanillaRetail (free accounts earn nothing offline —
+        // retail-confirmed, formula-corroboration-2026-08-25.md L3).
+        var laborConfig = AppConfiguration.Instance.Labor;
         var delta = DateTime.UtcNow - lastLoginTime;
-        var ticksToAdd = (int)Math.Floor(delta.TotalMinutes / AppConfiguration.Instance.LaborOffline.TickMinutes);
+        var ticksToAdd = ComputeOfflineTicks(delta, laborConfig.TickMinutes);
         if (ticksToAdd <= 0)
             return;
-        var addLabor = AppConfiguration.Instance.LaborOffline.GetTickAmount(connection.Payment.PremiumState) * ticksToAdd;
+        var addLabor = laborConfig.GetOfflineTickAmount(connection.Payment.PremiumState) * ticksToAdd;
         DoAddLabor(connection, currentLabor, addLabor);
     }
+
+    /// <summary>Floor-to-tick offline accrual model (unchanged from the original machinery).</summary>
+    internal static int ComputeOfflineTicks(TimeSpan delta, int tickMinutes) =>
+        (int)Math.Floor(delta.TotalMinutes / tickMinutes);
+
+    /// <summary>
+    /// Clamps a labor addition against the cap — additions only, never reduces
+    /// a balance below its current value.
+    /// </summary>
+    internal static int ClampLaborGrant(short currentLabor, int addLabor, int cap)
+    {
+        var maxLaborToAdd = cap - currentLabor;
+        if (maxLaborToAdd < 0)
+            maxLaborToAdd = 0;
+        return Math.Min(addLabor, maxLaborToAdd);
+    }
+
+    /// <summary>
+    /// Final regen grant for a tick: clamped at the tier cap, or unbounded
+    /// when UnlimitedCap is set.
+    /// </summary>
+    internal static int ComputeGrant(LaborConfig laborConfig, bool isPremium, short currentLabor, int addLabor) =>
+        laborConfig.UnlimitedCap
+            ? addLabor
+            : ClampLaborGrant(currentLabor, addLabor, laborConfig.GetCap(isPremium));
+
 }

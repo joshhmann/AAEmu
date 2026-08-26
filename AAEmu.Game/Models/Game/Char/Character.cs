@@ -1614,6 +1614,13 @@ public partial class Character : Unit, ICharacter
 
     public void ChangeLabor(short change, int actabilityId)
     {
+        // Unchained option: labor spends become no-ops. HONEST SIDE EFFECT:
+        // labor-XP accrual rides this same spend path (the ExpByLaborPower
+        // formula below fires only on consumption), so no-drain also means no
+        // labor-XP and no actability gain charged on that spend event — this is
+        // deliberately NOT a free-XP mode.
+        if (change < 0 && AppConfiguration.Instance.Labor.DisableConsumption)
+            return;
         var actabilityChange = 0;
         byte actabilityStep = 0;
         var expMultiplier = 1f;

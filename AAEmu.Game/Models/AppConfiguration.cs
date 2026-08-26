@@ -33,8 +33,7 @@ public partial class AppConfiguration
     public DungeonsConfig Dungeons { get; set; }
     public Dictionary<string, int> AccessLevel { get; set; } = [];
     public AccountConfig Account { get; set; }
-    public CurrencyValuesConfig Labor { get; set; }
-    public CurrencyValuesConfig LaborOffline { get; set; }
+    public LaborConfig Labor { get; set; } = new();
     public CurrencyValuesConfig Credits { get; set; }
     public CurrencyValuesConfig Loyalty { get; set; }
     public ClientDataConfig ClientData { get; set; } = new();
