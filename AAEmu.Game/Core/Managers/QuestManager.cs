@@ -2094,6 +2094,38 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
         => GetQuestsOfferedByAct<QuestActConAcceptDoodad>(
             nameof(QuestActConAcceptDoodad), a => a.DoodadId == doodadTemplateId);
 
+    /// <summary>
+    /// Quest template ids OFFERED through an item template (quest-starter
+    /// items et al.) — the Start components carrying a QuestActConAcceptItem
+    /// act for that item id. Same linkage rule as
+    /// <see cref="GetQuestsOfferedByNpc"/>: Start components only, since
+    /// Progress/Report ConAccept acts describe other steps.
+    /// </summary>
+    public List<uint> GetQuestsOfferedByItem(uint itemTemplateId)
+        => GetQuestsOfferedByAct<QuestActConAcceptItem>(
+            nameof(QuestActConAcceptItem), a => a.ItemId == itemTemplateId);
+
+    /// <summary>
+    /// Quest template ids OFFERED through an item template's counted variant
+    /// — the Start components carrying a QuestActConAcceptItemGain act for
+    /// that item id (same channel as <see cref="GetQuestsOfferedByItem"/>
+    /// but the act additionally requires owning <see cref="QuestActTemplate.Count"/>
+    /// units before its RunAct passes).
+    /// </summary>
+    public List<uint> GetQuestsOfferedByItemGain(uint itemTemplateId)
+        => GetQuestsOfferedByAct<QuestActConAcceptItemGain>(
+            nameof(QuestActConAcceptItemGain), a => a.ItemId == itemTemplateId);
+
+    /// <summary>
+    /// Quest template ids whose Start component carries a
+    /// QuestActConAcceptLevelUp act already satisfied by
+    /// <paramref name="level"/> — the level-triggered starters the engine
+    /// auto-starts in DoOnLevelUpEvents once the threshold is reached.
+    /// </summary>
+    public List<uint> GetQuestsOfferedByLevel(byte level)
+        => GetQuestsOfferedByAct<QuestActConAcceptLevelUp>(
+            nameof(QuestActConAcceptLevelUp), a => a.Level <= level);
+
     private List<uint> GetQuestsOfferedByAct<TAct>(string detailType, Func<TAct, bool> match)
         where TAct : QuestActTemplate
     {

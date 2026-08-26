@@ -24,6 +24,8 @@ using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Buffs;
 using AAEmu.Game.Models.Game.Skills.Effects;
@@ -585,6 +587,114 @@ public class GameplayActor : IGameplayActor
         return Complete(request, completed, $"quest {questId} turn-in executed (still active)");
     }
 
+
+    /// <summary>
+    /// One active quest's observable state for the Talk post-check — step,
+    /// status and objective counters. The check diffs this against the
+    /// post-event state so a void talk (no active talk objective credits
+    /// the NPC) is refused instead of reported as success
+    /// (InteractWith/PartyInvite no-delta precedent). Completion shows up
+    /// as the quest leaving ActiveQuests.
+    /// </summary>
+    private sealed record TalkQuestSnapshot(QuestComponentKind Step, QuestStatus Status, int[] Objectives);
+
+    private Dictionary<uint, TalkQuestSnapshot> SnapshotTalkState()
+    {
+        var snapshot = new Dictionary<uint, TalkQuestSnapshot>();
+        foreach (var (questId, quest) in Character.Quests.ActiveQuests)
+            snapshot[questId] = new TalkQuestSnapshot(quest.Step, quest.Status, (int[])quest.Objectives.Clone());
+        return snapshot;
+    }
+
+    public ActorRequest Talk(uint npcObjId, string? idempotencyKey = null)
+    {
+        ExecutionBoundary.AssertOnExecutionThread("Talk");
+
+        var request = NewRequest(ActorActionType.Talk, npcObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "talk"))
+            return request;
+
+        // 1. Resolve the live NPC — the same world lookup DoTalkMadeEvents
+        //    performs with the packet's npcObjId.
+        var npc = Character.ParentWorld?.GetNpc(npcObjId);
+        if (npc == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"npc {npcObjId} not found in world");
+
+        // 2. PLAYER_MODE range discipline — a client can only hold a
+        //    conversation inside interaction range (InteractWith precedent).
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, npc.Transform.World.Position, false) > MaxInteractRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"npc {npcObjId} out of interaction range");
+
+        request.Start($"talking to npc {npcObjId} (template {npc.TemplateId})");
+
+        var before = SnapshotTalkState();
+
+        // 3. The REAL packet path — CSQuestTalkMadePacket (0x0da) reads
+        //    {npcObjId, questContextId, questCompId, questActId} and calls
+        //    QuestManager.DoTalkMadeEvents(char, char, …). A real client
+        //    sends one packet per quest-dialog interaction; mirror that by
+        //    firing once per ACTIVE quest whose template carries a
+        //    talk-family objective (QuestActObjTalk / QuestActObjTalkNpcGroup).
+        //    The engine's own fan-out does the credit filtering: OnTalkMade
+        //    matches NpcId, OnTalkNpcGroupMade matches group membership of
+        //    the talked NPC's template — exactly as for real packets.
+        var talkedQuests = new List<uint>();
+        foreach (var (questId, quest) in Character.Quests.ActiveQuests)
+        {
+            var match = quest.QuestSteps.Values
+                .SelectMany(s => s.Components.Values)
+                .SelectMany(c => c.Template.ActTemplates.Select(a => (Component: c.Template, Act: a)))
+                .FirstOrDefault(pair => pair.Act is QuestActObjTalk or QuestActObjTalkNpcGroup
+                    && (pair.Act is not QuestActObjTalk talk || talk.NpcId == npc.TemplateId));
+            if (match.Act == null)
+                continue;
+            talkedQuests.Add(questId);
+            QuestManager.Instance.DoTalkMadeEvents(Character, Character, npcObjId,
+                questId, match.Component.Id, match.Act.ActId);
+        }
+
+        // 4. Drain the step machine on each touched quest — the same
+        //    post-event evaluations the world pipeline runs after talk
+        //    events land (TurnIn precedent; bounded, stopping on a false
+        //    advance keeps unmet objectives from being force-advanced).
+        foreach (var questId in talkedQuests)
+        {
+            var guard = 0;
+            while (Character.Quests.ActiveQuests.TryGetValue(questId, out var quest) && guard++ < 8)
+            {
+                if (!quest.RunCurrentStep())
+                    break;
+            }
+        }
+
+        // 5. Observable-delta post-check: a talk that credits nothing is a
+        //    void — refuse it rather than report success.
+        var changes = new List<string>();
+        foreach (var (questId, was) in before)
+        {
+            if (!Character.Quests.ActiveQuests.TryGetValue(questId, out var quest))
+            {
+                changes.Add($"quest {questId} left active state");
+                continue;
+            }
+            if (quest.Step != was.Step || quest.Status != was.Status)
+                changes.Add($"quest {questId} {was.Step}/{was.Status}→{quest.Step}/{quest.Status}");
+            if (!quest.Objectives.SequenceEqual(was.Objectives))
+                changes.Add($"quest {questId} objectives [{string.Join(",", was.Objectives)}]→[{string.Join(",", quest.Objectives)}]");
+        }
+        foreach (var questId in Character.Quests.ActiveQuests.Keys)
+            if (!before.ContainsKey(questId))
+                changes.Add($"quest {questId} newly active");
+
+        if (changes.Count == 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"talking to npc {npcObjId} produced no quest change " +
+                $"(no active talk objective credits template {npc.TemplateId})");
+
+        var result = new TalkResult(npcObjId, npc.TemplateId, changes);
+        return Complete(request, result, $"npc {npcObjId}: {string.Join("; ", changes)}");
+    }
+
     #endregion
 
     #region Quest discovery (PB-002 perception primitive)
@@ -651,6 +761,116 @@ public class GameplayActor : IGameplayActor
         var result = new QuestDiscoveryResult(targetObjId, acceptorType, acceptorTemplateId, offerings);
         return Complete(request, result,
             $"discovered {offerings.Count} quest(s) at {acceptorType} {acceptorTemplateId}");
+    }
+
+    /// <summary>
+    /// Maximum ConAcceptItemGain units check: the act's RunAct requires
+    /// CheckItems(SlotType.Inventory, ItemId, Count) — mirror the largest
+    /// Count demanded by the quest's Start components for this item so a
+    /// surfaced offering can never stall on an insufficient stack.
+    /// </summary>
+    private bool MeetsItemGainCounts(uint questId, uint itemTemplateId, int ownedCount)
+    {
+        var template = QuestManager.Instance.GetTemplate(questId);
+        if (template == null)
+            return false;
+        foreach (var component in template.GetComponents(QuestComponentKind.Start))
+        foreach (var act in component.ActTemplates)
+            if (act is QuestActConAcceptItemGain { ItemId: var gainItem } && gainItem == itemTemplateId
+                && act.Count > ownedCount)
+                return false;
+        return true;
+    }
+
+    public ActorRequest DiscoverSelfQuests(string? idempotencyKey = null)
+    {
+        // Observe-family query (REQ-M5.3-7).
+        ExecutionBoundary.AssertOnExecutionThread("DiscoverSelfQuests");
+
+        var request = NewRequest(ActorActionType.DiscoverSelfQuests, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "discover self quests"))
+            return request;
+
+        request.Start("discovering self-perceivable quest offers (items/spheres/level)");
+
+        var offerings = new List<QuestOffering>();
+        var seen = new HashSet<uint>();
+
+        // 1. ITEM channel — quests whose Start component carries a
+        //    ConAcceptItem / ConAcceptItemGain act for a template the actor
+        //    holds in the inventory BAG. Slot parity with the engine:
+        //    QuestActConAccept*.RunAct checks SlotType.Inventory only.
+        var inventory = Character.Inventory;
+        if (inventory != null)
+        {
+            foreach (var itemTemplateId in inventory.Bag.Items
+                         .Where(item => item?.Template != null)
+                         .Select(item => item.Template.Id)
+                         .Distinct()
+                         .Order())
+            {
+                foreach (var questId in QuestManager.Instance.GetQuestsOfferedByItem(itemTemplateId))
+                {
+                    if (!seen.Add(questId) || !IsDiscoverable(questId))
+                        continue;
+                    offerings.Add(new QuestOffering(questId,
+                        QuestManager.Instance.GetTemplate(questId)!.Level,
+                        QuestAcceptorType.Item, itemTemplateId));
+                }
+                foreach (var questId in QuestManager.Instance.GetQuestsOfferedByItemGain(itemTemplateId))
+                {
+                    // ItemGain's RunAct additionally demands the act's Count
+                    // in the bag — mirror it or the surfaced offer would stall.
+                    if (!seen.Add(questId) || !IsDiscoverable(questId))
+                        continue;
+                    if (!inventory.Bag.GetAllItemsByTemplate(itemTemplateId, -1, out _, out var unitsFound)
+                        || !MeetsItemGainCounts(questId, itemTemplateId, unitsFound))
+                        continue;
+                    offerings.Add(new QuestOffering(questId,
+                        QuestManager.Instance.GetTemplate(questId)!.Level,
+                        QuestAcceptorType.Item, itemTemplateId));
+                }
+            }
+        }
+
+        // 2. SPHERE channel — quest-STARTER spheres of the owning world whose
+        //    volume contains the actor's position, with the SAME trigger
+        //    guards SphereQuestManager.Tick applies before firing
+        //    DoOnEnterQuestStarterSphere (CanTriggerSphere on the sphere's
+        //    unit_reqs; no DbSphere row = always triggerable). Geometry is
+        //    whatever world data loaded — an empty set means an empty channel,
+        //    never a faked inclusion. Acceptor triple mirrors AddQuestFromSphere.
+        var position = Character.Transform.World.Position;
+        foreach (var starter in Character.ParentWorld?.SphereQuestManager?.GetQuestStartingSpheres() ?? [])
+        {
+            if (!starter.Sphere.Contains(position))
+                continue;
+            if (starter.Sphere.DbSphere != null
+                && !UnitRequirementsGameData.Instance.CanTriggerSphere(starter.Sphere.DbSphere, Character))
+                continue;
+            if (!seen.Add(starter.QuestTemplateId) || !IsDiscoverable(starter.QuestTemplateId))
+                continue;
+            offerings.Add(new QuestOffering(starter.QuestTemplateId,
+                QuestManager.Instance.GetTemplate(starter.QuestTemplateId)?.Level ?? 0,
+                QuestAcceptorType.Sphere, starter.SphereId));
+        }
+
+        // 3. LEVEL channel — ConAcceptLevelUp starters already satisfied by
+        //    the actor's level. The engine auto-starts these through
+        //    DoOnLevelUpEvents' bare AddQuest (Unknown acceptor), so that is
+        //    exactly the acceptor triple surfaced here.
+        foreach (var questId in QuestManager.Instance.GetQuestsOfferedByLevel(Character.Level))
+        {
+            if (!seen.Add(questId) || !IsDiscoverable(questId))
+                continue;
+            offerings.Add(new QuestOffering(questId,
+                QuestManager.Instance.GetTemplate(questId)!.Level,
+                QuestAcceptorType.Unknown, 0));
+        }
+
+        var result = new QuestSelfDiscoveryResult(offerings);
+        return Complete(request, result,
+            $"discovered {offerings.Count} self-perceivable quest offer(s)");
     }
 
     /// <summary>

@@ -240,6 +240,13 @@ public class SphereQuestManager(WorldInstance parent) : ISphereQuestManager
         return _sphereQuestTriggers;
     }
 
+    /// <inheritdoc />
+    public List<SphereQuestStarter> GetQuestStartingSpheres()
+    {
+        lock (_questStartingSpheresLock)
+            return [.._questStartingSpheres];
+    }
+
     /// <summary>
     /// LoadQuestSpheres by ZeromusXYZ
     /// Считываем все сферы из всех инстансов

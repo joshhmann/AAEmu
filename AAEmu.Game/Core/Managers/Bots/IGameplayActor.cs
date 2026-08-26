@@ -674,6 +674,60 @@ public interface IGameplayActor
     ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null);
 
     /// <summary>
+    /// Talks to an NPC — the talk-credit contract action for
+    /// QuestActObjTalk / QuestActObjTalkNpcGroup objectives. Drives the REAL
+    /// packet path: the exact <c>QuestManager.DoTalkMadeEvents</c> call the
+    /// client's CSQuestTalkMadePacket (0x0da) handler makes, fired once per
+    /// active quest context whose template carries a talk objective for this
+    /// NPC (the per-quest-dialog packets a real client sends). The engine's
+    /// own fan-out resolves OnTalkMade (individual NpcId match) AND
+    /// OnTalkNpcGroupMade (NpcGroup membership) exactly as it does for real
+    /// packets; the step machine is then advanced the same way the world
+    /// pipeline does after world events.
+    ///
+    /// Fail-closed: unresolvable npcObjId and out-of-interaction-range
+    /// targets are Rejected(RejectedAction) pre-flight (InteractWith
+    /// precedent); after firing, an observable-delta post-check (objective
+    /// counters, quest step/status, completion) refuses a void — talking to
+    /// an NPC that credits NO active talk objective is Rejected instead of
+    /// reporting success. Payload: <see cref="TalkResult"/>.
+    /// </summary>
+    ActorRequest Talk(uint npcObjId, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Quest-DISCOVERY perception primitive v2 — the offer channels whose
+    /// preconditions are perceivable from the actor's OWN state, with no
+    /// world target required. Enumerates:
+    ///   - ITEM channel: Start components carrying a ConAcceptItem /
+    ///     ConAcceptItemGain act for a template the actor holds in the
+    ///     inventory BAG (the exact slot QuestActConAccept*.RunAct checks).
+    ///     ItemGain additionally requires owning at least the act's Count.
+    ///   - SPHERE channel: quest-STARTER spheres of the owning world whose
+    ///     volume contains the actor's current position (the same
+    ///     SphereQuest.Contains check + CanTriggerSphere guard the engine's
+    ///     SphereQuestManager.Tick applies before DoOnEnterQuestStarterSphere
+    ///     fires AddQuestFromSphere). Geometry comes from loaded world data;
+    ///     when no sphere data is loaded the channel is simply empty — never
+    ///     faked.
+    ///   - LEVEL channel: Start components carrying a ConAcceptLevelUp act
+    ///     already satisfied by the actor's level (the quests
+    ///     QuestManager.DoOnLevelUpEvents auto-starts on level-up; surfaced
+    ///     with an Unknown acceptor triple matching that bare AddQuest call,
+    ///     so AcceptQuest replicates the engine's own start exactly).
+    ///
+    /// Every offering is filtered through the REAL AddQuest pre-conditions
+    /// (same IsDiscoverable gate as DiscoverQuests), and each offering's
+    /// acceptor triple is exactly what its engine accept path consumes —
+    /// fail-closed equality holds per channel. ConAcceptComponent is
+    /// deliberately NOT covered: its RunAct performs no checks (self-start
+    /// pattern triggered from outside the quest system) — nothing
+    /// player-perceivable to model. Query semantics like Observe: completes
+    /// immediately, still emits the audit record. Payload:
+    /// <see cref="QuestSelfDiscoveryResult"/>.
+    /// </summary>
+    ActorRequest DiscoverSelfQuests(string? idempotencyKey = null);
+
+    /// <summary>
     /// Buys goods from a merchant NPC through the REAL engine path — the
     /// same CSBuyItemsPacket branch: validates the NPC merchant + its goods
     /// pack (NpcManager.GetGoods), grants the item through
@@ -888,7 +942,16 @@ public enum ActorActionType : byte
     /// First-class doodad interaction through Doodad.Use with a derived use-skill
     /// (capability-matrix gap #3 — portal/interactable unlock, fail-closed post-check).
     /// </summary>
-    InteractWith = 45
+    InteractWith = 45,
+
+    /// <summary>NPC talk credit through QuestManager.DoTalkMadeEvents (the CSQuestTalkMadePacket 0x0da path).</summary>
+    Talk = 46,
+
+    /// <summary>
+    /// Self-perceivable quest discovery (item-held / sphere-standing /
+    /// level-reached offer channels — Observe-family query, no mutation).
+    /// </summary>
+    DiscoverSelfQuests = 47
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

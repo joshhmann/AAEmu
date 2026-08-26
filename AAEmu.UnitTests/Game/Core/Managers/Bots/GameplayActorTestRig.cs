@@ -2707,6 +2707,23 @@ public static class GameplayActorTestRig
     public const uint DiscoveryNpcTemplateId = 90_700;
     public const uint DiscoveryGatedNpcTemplateId = 90_702;
     public const uint DiscoveryDoodadTemplateId = 90_701;
+    // v2 channel fixtures (self-perceivable discovery + talk credit)
+    public const uint DiscoverySelfItemQuestId = 90_713;
+    public const uint DiscoveryItemGainQuestId = 90_714;
+    public const uint DiscoveryLevelOfferQuestId = 90_715;
+    public const uint DiscoveryTalkQuestId = 90_716;
+    public const uint DiscoveryTalkGroupQuestId = 90_717;
+    public const uint DiscoverySelfItemComponentId = 90_723;
+    public const uint DiscoveryItemGainComponentId = 90_724;
+    public const uint DiscoveryLevelOfferComponentId = 90_725;
+    public const uint DiscoveryTalkStartComponentId = 90_726;
+    public const uint DiscoveryTalkProgressComponentId = 90_727;
+    public const uint DiscoveryTalkGroupStartComponentId = 90_728;
+    public const uint DiscoveryTalkGroupProgressComponentId = 90_729;
+    public const uint DiscoverySelfItemTemplateId = 90_703;
+    public const uint DiscoveryTalkNpcTemplateId = 90_704;
+    public const uint DiscoveryTalkGroupNpcGroupId = 90_705;
+    public const uint DiscoverySphereStarterId = 90_706;
 
     /// <summary>
     /// Seeds a quest template whose Start component carries a ConAcceptNpc /
@@ -2790,6 +2807,178 @@ public static class GameplayActorTestRig
         }
         if (!list.Any(r => r.Id == reqId))
             list.Add(reqs[reqId]);
+    }
+
+
+    // ------------------------------------------------------ discovery v2 + talk (quest-surface)
+
+    /// <summary>
+    /// Ensures the quest template + Start component exist (the shared
+    /// boilerplate of every SeedQuest*Offer helper) and returns the
+    /// component for act attachment.
+    /// </summary>
+    public static QuestComponentTemplate EnsureQuestStartComponent(
+        uint questId, uint componentId, byte level)
+    {
+        var manager = QuestManager.Instance;
+
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GetField(manager, "_questTemplates");
+        if (!questTemplates.TryGetValue(questId, out var questTemplate))
+        {
+            questTemplate = new QuestTemplate { Id = questId, Level = level, Repeatable = false };
+            questTemplates[questId] = questTemplate;
+        }
+
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GetField(manager, "_componentTemplates");
+        if (!componentTemplates.TryGetValue(componentId, out var component))
+        {
+            component = new QuestComponentTemplate(questTemplate)
+            {
+                Id = componentId,
+                KindId = QuestComponentKind.Start
+            };
+            componentTemplates[componentId] = component;
+        }
+        if (!questTemplate.Components.ContainsKey(componentId))
+            questTemplate.Components[componentId] = component;
+        return component;
+    }
+
+    /// <summary>
+    /// Registers an act template under its detail type — the same
+    /// _actTemplatesByDetailType registration QuestManager.Load performs.
+    /// </summary>
+    private static void RegisterQuestAct(string detailType, uint key, QuestActTemplate act)
+    {
+        var actsByType = (Dictionary<string, Dictionary<uint, QuestActTemplate>>)GetField(
+            QuestManager.Instance, "_actTemplatesByDetailType");
+        if (!actsByType.TryGetValue(detailType, out var acts))
+        {
+            acts = [];
+            actsByType[detailType] = acts;
+        }
+        acts[key] = act;
+    }
+
+    /// <summary>
+    /// Seeds a quest offered through an ITEM the character holds: a Start
+    /// component carrying a ConAcceptItem (or counted ConAcceptItemGain)
+    /// act for <paramref name="itemTemplateId"/>. Acceptance rides
+    /// CharacterQuests.AddQuestFromItem's exact acceptor triple
+    /// (Item/itemTemplateId).
+    /// </summary>
+    public static void SeedQuestItemOffer(uint questId, uint componentId, uint itemTemplateId,
+        bool gain = false, int gainCount = 1, byte level = 10)
+    {
+        var component = EnsureQuestStartComponent(questId, componentId, level);
+        RegisterQuestAct(gain ? nameof(QuestActConAcceptItemGain) : nameof(QuestActConAcceptItem), componentId,
+            gain
+                ? new QuestActConAcceptItemGain(component) { DetailId = componentId, ItemId = itemTemplateId, Count = gainCount }
+                : new QuestActConAcceptItem(component) { DetailId = componentId, ItemId = itemTemplateId });
+    }
+
+    /// <summary>
+    /// Seeds a LEVEL-triggered starter quest: a Start component carrying a
+    /// ConAcceptLevelUp act satisfied at
+    /// <paramref name="requiredLevel"/> (the quests DoOnLevelUpEvents
+    /// auto-starts through a bare AddQuest).
+    /// </summary>
+    public static void SeedQuestLevelOffer(uint questId, uint componentId,
+        byte requiredLevel, byte level = 10)
+    {
+        var component = EnsureQuestStartComponent(questId, componentId, level);
+        RegisterQuestAct(nameof(QuestActConAcceptLevelUp), componentId,
+            new QuestActConAcceptLevelUp(component) { DetailId = componentId, Level = requiredLevel });
+    }
+
+    /// <summary>
+    /// Seeds an ACTIVE-quest shape for talk-credit tests: Start component
+    /// with a ConAcceptNpc offer (so AcceptQuest works) plus a Progress
+    /// component whose talk objective credits <paramref name="objectiveNpcTemplateId"/>
+    /// (or any NPC of <paramref name="npcGroupId"/> when group > 0). The
+    /// act's ActId is set — QuestActObjTalk.OnTalkMade filters on it.
+    /// </summary>
+    public static void SeedQuestTalkObjective(uint questId, uint startComponentId, uint progressComponentId,
+        uint offerNpcTemplateId, uint objectiveNpcTemplateId, uint npcGroupId = 0, byte level = 10)
+    {
+        SeedQuestOffer(questId, startComponentId, offerNpcTemplateId, level: level);
+
+        var manager = QuestManager.Instance;
+        var questTemplate = ((Dictionary<uint, QuestTemplate>)GetField(manager, "_questTemplates"))[questId];
+        var progress = new QuestComponentTemplate(questTemplate)
+        {
+            Id = progressComponentId,
+            KindId = QuestComponentKind.Progress
+        };
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GetField(manager, "_componentTemplates");
+        componentTemplates[progressComponentId] = progress;
+        questTemplate.Components[progressComponentId] = progress;
+
+        QuestActTemplate act = npcGroupId > 0
+            ? new QuestActObjTalkNpcGroup(progress)
+            {
+                DetailId = progressComponentId, ActId = progressComponentId,
+                NpcGroupId = npcGroupId
+            }
+            : new QuestActObjTalk(progress)
+            {
+                DetailId = progressComponentId, ActId = progressComponentId,
+                NpcId = objectiveNpcTemplateId
+            };
+        progress.ActTemplates.Add(act);
+    }
+
+    /// <summary>Registers an NPC-talk group membership (QuestManager._groupNpcs).</summary>
+    public static void SeedNpcTalkGroup(uint groupId, params uint[] npcTemplateIds)
+    {
+        var groups = (Dictionary<uint, List<uint>>)GetField(QuestManager.Instance, "_groupNpcs");
+        groups[groupId] = [..npcTemplateIds];
+    }
+
+    /// <summary>
+    /// Seeds a quest-STARTER sphere into the session world's
+    /// SphereQuestManager (created missing-only): standing inside its volume
+    /// is exactly what SphereQuestManager.Tick checks before firing
+    /// DoOnEnterQuestStarterSphere → AddQuestFromSphere(questId, sphereId).
+    /// DbSphere stays null (no sphere game-data rows loaded) — the engine's
+    /// own "always triggerable" case.
+    /// </summary>
+    public static void SeedQuestStarterSphere(HeadlessSession session, uint questId,
+        System.Numerics.Vector3 position, float radius, uint sphereId = DiscoverySphereStarterId)
+    {
+        // Missing-only game-data heal: empty dicts make SphereQuest.DbSphere
+        // resolve to null instead of NREing on unloaded tables.
+        var sphereGame = SphereGameData.Instance;
+        foreach (var fieldName in new[] { "_spheres", "_sphereQuests" })
+        {
+            var field = typeof(SphereGameData).GetField(fieldName,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field?.GetValue(sphereGame) == null)
+            {
+                field!.SetValue(sphereGame, Activator.CreateInstance(field.FieldType));
+            }
+        }
+
+        if (session.World.SphereQuestManager == null)
+            session.World.SphereQuestManager = new SphereQuestManager(session.World);
+
+        var starters = (List<SphereQuestStarter>)GetField(session.World.SphereQuestManager, "_questStartingSpheres");
+        if (starters.All(s => s.QuestTemplateId != questId))
+        {
+            starters.Add(new SphereQuestStarter
+            {
+                Sphere = new SphereQuest { Xyz = position, Radius = radius },
+                QuestTemplateId = questId,
+                SphereId = sphereId
+            });
+        }
+    }
+
+    /// <summary>Grants bag items through the engine's real acquisition path.</summary>
+    public static void GiveBagItem(GameplayActor actor, uint itemTemplateId, int count)
+    {
+        SeedItemTemplate(itemTemplateId);
+        actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.QuestSupplyItems, itemTemplateId, count, 0);
     }
 
     // ------------------------------------------------------------------ InteractWith rig (gap #3)

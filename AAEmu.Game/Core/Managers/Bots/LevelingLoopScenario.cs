@@ -277,9 +277,11 @@ public static class LevelingLoopScenario
         [nameof(QuestActObjMonsterGroupHunt)] =
             "missing composed hunt leg (primitives EXIST: SetTarget/Cast/Loot + group fanout in DoOnMonsterHuntEvents)",
         [nameof(QuestActObjTalk)] =
-            "missing talk-credit contract action (no Talk action on IGameplayActor fires OnTalkMade through a real packet path)",
+            "talk pursuit uncomposed (primitive LANDED: IGameplayActor.Talk fires OnTalkMade/" +
+            "OnTalkNpcGroupMade through the CSQuestTalkMadePacket path; loop wiring pending)",
         [nameof(QuestActObjTalkNpcGroup)] =
-            "missing talk-credit contract action (no Talk action on IGameplayActor fires OnTalkMade through a real packet path)",
+            "talk pursuit uncomposed (primitive LANDED: IGameplayActor.Talk fires OnTalkMade/" +
+            "OnTalkNpcGroupMade through the CSQuestTalkMadePacket path; loop wiring pending)",
         [nameof(QuestActObjItemUse)] =
             "missing item-use pursuit composition (UseItem primitive exists; objective wiring uncomposed)",
         [nameof(QuestActObjItemGroupUse)] =
