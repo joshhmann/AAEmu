@@ -1,24 +1,23 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-26 · recovery reconciliation after ox-alpha loss and
-recovered merges (grounding, Retribution recovery tests, merchant trio);
+Updated: 2026-08-26 · Mail S3 acceptance and recovery reconciliation;
 prior: 2026-08-25 (G2-A5 + A4 near-term gates MET with live evidence;
 PB-002 quest-discovery primitive landed; PB-003 closed premise-refuted;
 PB-004 found-by-measurement + fixed same day; first-class InteractWith
 doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop @ e5db6d390 (= origin/develop head; recovered
-after the ox-alpha loss)
+Branch of record: develop @ 31045d033 (= origin/develop head)
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
-return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated honor,
-NPC grounding tour, boats, slavetest observation, Mirage walk.
+return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
+honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
 
 ## 2026-08-26 recovery reconciliation
 
 - **Develop contents confirmed:** grounding fix `38c4997d3`, recovered
-  Retribution wire-observability test branch `a4f7820ba`, and merchant merge
-  `e5db6d390` (the three merchant fixes are in that merge); earlier committed
-  features remain in the current ancestry.
+  Retribution wire-observability test branch `a4f7820ba`, merchant merge
+  `e5db6d390` (the three merchant fixes are in that merge), and Mail S3
+  acceptance `31045d033`; earlier committed features remain in the current
+  ancestry.
 - **PB-005 grounding:** **FIXED-PARTIAL** — positive-only clamp and intentional
   aerial/water/structure whitelist landed. The terrain-only replay corrects all
   593 non-whitelisted severe-positive rows and leaves 702 whitelisted rows
@@ -26,8 +25,11 @@ NPC grounding tour, boats, slavetest observation, Mirage walk.
 - **PB-007:** **OPEN, narrowed** — corrected rig proves Retribution first
   application and Refresh both broadcast; corrected live rerun is still
   pending.
-- **Mail S3:** attach-item/restart E2E remains incomplete and uncommitted in
-  `.worktrees/mails3`; it is not landed.
+- **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
+  `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
+  passed 1/1 in 2m39s on isolated MySQL/Docker. Restart, instance-faithful
+  equipment attachment, ownership, unread-count, take, and delete assertions
+  passed; no live-client confirmation of inferred return opcode is implied.
 - **Final gate:** **2480/0/1**.
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
@@ -161,6 +163,19 @@ on CrimePoint/InfamyPoint setters (silent-persistence-vanish bug).
 E2E PASS — branch d42e708f5→66f124533. Combat/siege-battle explicitly NOT
 implemented (later slices); declare-trigger UI path still UNKNOWN
 
+**MAIL S3 ACCEPTANCE (2026-08-26, `31045d033`):** the authenticated real-packet
+E2E `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
+passed 1/1 in 2m39s on isolated MySQL/Docker. It exercised real
+`CSSendMailPacket`, mailbox proximity, equipment item instance + copper,
+kill-9/restart, persisted `SlotType.Mail=5`, receiver ownership retargeting,
+unread count 1 after registration, read transition to 0,
+`CSListMail`/`CSReadMail`, `CSTakeAttachmentSequentially`, exact item
+detail/grade/durability/rune/temper fidelity, copper transfer, and
+`CSDeleteMail` persistence deletion. Root cause: `Character.Load` recounted
+before world registration; recount now occurs after `TryAddCharacter` and
+before human client initialization. Return opcode `0x0a2` remains
+STRONGLY_INFERRED pending real-client capture; COD and expiry/bounce remain
+open follow-ups.
 **M0 — Foundation: ✅ CLOSED (2026-08-03, Josh signoff)**
 Workflow v4 (permanent one-way upstream gate), community guidelines,
 kanban template set (Nei), gate.sh verified, scorecard + 3 exploration
@@ -589,12 +604,20 @@ deploy is a separate Josh decision.
 - No new upstream branches or PRs are permitted; upstream is intake-only.
 
 ## Last scorecard update
-- 2026-08-26 — recovery reconciliation on develop @ e5db6d390: grounding
-  `38c4997d3`, recovered Retribution test branch `a4f7820ba`, and merchant
-  merge `e5db6d390` are on develop; PB-005 = FIXED-PARTIAL, PB-007 = OPEN
-  narrowed (corrected rig first + Refresh broadcasts; corrected live rerun
-  pending), Mail S3 incomplete/uncommitted in `.worktrees/mails3`; final gate
-  2480/0/1.
+
+- 2026-08-26 — Mail S3 acceptance and recovery reconciliation on develop @
+  `31045d033`: authenticated real-packet
+  `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
+  PASS 1/1 in 2m39s on isolated MySQL/Docker; instance-faithful
+  equipment+copper restart flow, ownership guards, unread recount lifecycle,
+  sequential take, and delete persistence all passed. PB-005 remains
+  FIXED-PARTIAL; PB-007 remains OPEN/narrowed with corrected live rerun
+  pending; final gate **2480/0/1**.
+- 2026-08-26 — prior recovery snapshot (superseded by the Mail S3
+  acceptance above): develop @ `e5db6d390` carried grounding `38c4997d3`,
+  recovered Retribution test branch `a4f7820ba`, and merchant merge
+  `e5db6d390`; PB-005 was FIXED-PARTIAL, PB-007 OPEN/narrowed, and Mail S3
+  was still recorded incomplete/uncommitted. Final gate **2480/0/1**.
 
 - 2026-08-24 — this commit: SCORECARD promotions from the post-f3bb787ce sweep —
   ZONE-01 W=2/A=1 (data-driven Peace boot state + CanAttack enforcement;

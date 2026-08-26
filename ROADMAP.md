@@ -16,7 +16,7 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
-**Current branch record (2026-08-26 recovery):** `develop @ e5db6d390`
+**Current branch record (2026-08-26 recovery):** `develop @ 31045d033`
 (= `origin/develop`). Recovery status is tracked below; milestone shape and
 historical evidence are unchanged.
 
@@ -1835,14 +1835,21 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    accounting is still pending. *Next acceptance:* prove flag → aggress →
    peace-refusal → honor on the real server; no grade promotion from rig-only
    evidence.
-9. **Mail security fix — receive-path ownership checks** · Area: MAIL
-   (MAIL-01, SECURITY priority) · Depends on: none · *Goal:* close the 4-of-5
-   ReceiverId gap found by mail-domain.md (read/take-item/take-money/delete
-   trust client mailId). *Work:* mirror CSTakeAttachmentSequentially's guard
-   into ReadMail/GetAttached/GetAttached(money)/DeleteMail. *Acceptance:*
-   non-owner read/take/delete refused with MailInvalid; owner flows unchanged;
-   MailTests/MailReturnTests stay green. **Mail S3 is separate and remains
-   incomplete/uncommitted in `.worktrees/mails3`; it is not landed.**
+9. **Mail security + S3 persistence slice** · Area: MAIL (MAIL-01, SECURITY
+   priority) · Depends on: none · **✅ LANDED 2026-08-26 in
+   `31045d033`**. Ownership guards now protect the receive paths that accept a
+   client-supplied mail id; owner flows remain intact. **Mail S3 acceptance:**
+   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
+   PASS 1/1 in 2m39s on isolated MySQL/Docker with real authenticated packets:
+   `CSSendMailPacket` near a mailbox; process kill-9/restart; persisted
+   `SlotType.Mail=5`; receiver ownership retargeting; unread count 1 after
+   registration; `CSListMail`/`CSReadMail`; `CSTakeAttachmentSequentially`;
+   exact equipment item-instance detail/grade/durability/rune/temper fidelity;
+   copper transfer; read transition to 0; and `CSDeleteMail` persistence
+   deletion. The root-cause fix moves `Character.Load` unread recount after
+   `TryAddCharacter` and before human client initialization. **Follow-ups:**
+   return opcode `0x0a2` remains STRONGLY_INFERRED pending real-client capture;
+   COD enforcement and expiry/bounce E2E remain open.
 10. **Ships slice-1 — rowboat E2E** · Area: SLAVE-01 naval half (ships-domain
     Slice 1) · Priority: MEDIUM · Depends on: indun/party bridge charPos +
     packet-tap seams. *Goal:* first live proof of sailing physics + lifecycle:
@@ -1880,15 +1887,19 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
     deleted: remove task + config stubs (clean cutover).
 
-**Recovery queue status (2026-08-26; develop @ e5db6d390):**
+**Recovery queue status (2026-08-26; develop @ `31045d033`):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and
   duplicate-row decisions remain open.
 - **PB-007:** **OPEN, narrowed** after `a4f7820ba` — corrected rig proves first
   and Refresh Retribution broadcasts; corrected live rerun remains pending.
-- **Mail S3:** incomplete and uncommitted in `.worktrees/mails3`; no landed
-  claim or scorecard grade.
+- **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
+  `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
+  passed 1/1 in 2m39s on isolated MySQL/Docker; the restart, instance-faithful
+  attachment, ownership, unread-recount, take, and delete assertions passed.
+  Return opcode `0x0a2` still needs real-client capture; COD and expiry/bounce
+  remain follow-ups.
 
 
 **Low-lift first moves (2026-08-22; use existing seams):**

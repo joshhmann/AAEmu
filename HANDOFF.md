@@ -1,4 +1,4 @@
-# AGENT HANDOFF — 2026-08-26 recovery reconciliation
+# AGENT HANDOFF — 2026-08-26 Mail S3 acceptance + recovery reconciliation
 
 Starting cold? Read this, then `STATUS.md` → `ROADMAP.md` →
 `SCORECARD.md` → `scorecard-explorations/playerbot-blockers.md` →
@@ -7,27 +7,32 @@ current recovery delta after the ox-alpha loss; preserve the evidence trail.
 
 ## Current state
 
-- **Branch of record:** fork `joshhmann/AAEmu` `develop @ e5db6d390`
+- **Branch of record:** fork `joshhmann/AAEmu` `develop @ 31045d033`
   (= `origin/develop`). Final gate: **2480/0/1**.
 - **On develop:** grounding fix `38c4997d3`; recovered Retribution wire-test
   merge `a4f7820ba`; merchant merge `e5db6d390` (funds gate, buyback refund,
-  and grant-failure rollback); and the earlier committed M0–M7, G3-B5,
-  Dominion slice-1, PvP/Crime, and economy features.
+  and grant-failure rollback); Mail S3 acceptance `31045d033`; and the earlier
+  committed M0–M7, G3-B5, Dominion slice-1, PvP/Crime, and economy features.
 - **PB-005:** **FIXED-PARTIAL**. Positive-only terrain clamp plus the
   intentional aerial/water/structure whitelist are landed. The bounded replay
   corrects 593 non-whitelisted severe-positive rows; cave/deck/submerged
   behavior and duplicate-row decisions remain open.
 - **PB-007:** **OPEN, narrowed**. The corrected rig proves Retribution's first
   application and Refresh broadcasts. A corrected live rerun remains pending.
-- **Mail S3:** incomplete and uncommitted in `.worktrees/mails3`; do not call
-  it landed or assign it a scorecard grade.
+- **Mail S3:** **PASS / LANDED** in `31045d033`. The authenticated
+  `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
+  E2E passed 1/1 in 2m39s on isolated MySQL/Docker, covering restart,
+  instance-faithful equipment+copper attachment, ownership guards, unread
+  recount, sequential take, and delete persistence. Return opcode `0x0a2`
+  remains STRONGLY_INFERRED pending real-client capture; no live-client
+  confirmation is implied.
 
 ## Surviving worktrees — do not delete
 
 The repository's worktrees are retained for recovery. In particular:
 
-- `.worktrees/mails3` — detached at `3fc64ae`; uncommitted Mail S3
-  `BotDriveBridge` work.
+- `.worktrees/mails3` — retained detached recovery survivor at `3fc64ae`;
+  its uncommitted `BotDriveBridge` worktree is not the landed S3 evidence.
 - `.worktrees/nav-probe` — detached at `41ddb88`; uncommitted
   `WorldCell`/`WorldTemplate` changes and `Tools/NavProbeScratch/`.
 - `.worktrees/rowboat` — detached at `bfbea40`; untracked
@@ -47,10 +52,7 @@ not evidence that their unmerged work landed on `develop`.
    packet accounting; update the blocker only from observed evidence.
 2. Review PB-005's terrain-only limits and make the registered owner decisions
    for cave/deck/submerged classifications and duplicate rows.
-3. Resume Mail S3 from `.worktrees/mails3`, finish the real send → restart →
-   receive/take assertions, and only then consider a grade; keep it
-   uncommitted until the commit lane accepts it.
-4. Continue the existing ROADMAP queue without deleting survivor worktrees or
+3. Continue the existing ROADMAP queue without deleting survivor worktrees or
    changing the H=UNKNOWN rule.
 
 ## Hard rules
