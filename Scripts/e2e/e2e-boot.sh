@@ -5,6 +5,10 @@
 #                                 already-running e2e stack)
 #   ./e2e-boot.sh --provision-data  first-time: rsync canonical game data from
 #                                 the aaemu box (read-only), then boot
+#   ./e2e-boot.sh --clone-data-from /root/aaemu-e2e
+#                                 first-time data prep on a NEW lane: hardlink-
+#                                 clone canonical game-data from an existing
+#                                 lane (seconds, no multi-GB copy)
 #   E2E_REBUILD=1 ./e2e-boot.sh   force re-publish of Login/Game binaries
 #
 # Deterministic contract: boot order MySQL -> login (:1237/:1234) -> game
@@ -26,8 +30,16 @@ case "${1:-}" in
             e2e_log "canonical data already present — skipping provision"
         fi
         ;;
+    --clone-data-from)
+        shift
+        [ -n "${1:-}" ] || e2e_fail "--clone-data-from requires a source lane E2E_ROOT path"
+        e2e_clone_game_data "$1"
+        ;;
     --help|-h)
-        echo "usage: $0 [--provision-data]"
+        echo "usage: $0 [--provision-data] [--clone-data-from <src-lane-E2E_ROOT>]"
+        echo "       $0 --clone-data-from /root/aaemu-e2e"
+        echo "                          first-time data prep: hardlink-clone game-data from"
+        echo "                          an existing lane (seconds instead of a multi-GB copy)"
         echo "       E2E_REBUILD=1 $0   force re-publish of server binaries"
         echo "       E2E_ROOT=/path $0  override stack root (default /root/aaemu-e2e)"
         exit 0

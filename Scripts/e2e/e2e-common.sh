@@ -30,12 +30,21 @@ GAME_DIR="$RUNTIME_DIR/game"
 GAME_DATA_DIR="$RUNTIME_DIR/game-data"
 CANONICAL_SQLITE="$GAME_DATA_DIR/Data/compact.sqlite3"
 RUNTIME_SQLITE="$GAME_DIR/Data/compact.sqlite3"
+PUBLISH_STAMP="$RUNTIME_DIR/.publish-stamp"   # rebuild-skip marker (see e2e_publish_stamp)
 
-PORT_LOGIN=1237      # login client-facing
-PORT_LOGIN_INT=1234  # login <-> game internal
-PORT_GAME=1239
-PORT_STREAM=1250
-PORT_BRIDGE=1260     # BotDriveBridge (game process, E2E-2 scope — OFF by default)
+# Lane overrides -- the SAME env names the E2eStack.cs test runner honors, so a
+# shell-prepared lane and a probe run can share one isolated stack:
+#   COMPOSE_PROJECT_NAME (default e2e), DB_HOST_PORT/E2E_DB_PORT,
+#   E2E_INTERNAL_PORT, E2E_LOGIN_PORT, E2E_GAME_PORT, E2E_STREAM_PORT,
+#   E2E_BRIDGE_PORT.
+COMPOSE_PROJECT="${COMPOSE_PROJECT_NAME:-e2e}"
+
+PORT_LOGIN="${E2E_LOGIN_PORT:-1237}"         # login client-facing
+PORT_LOGIN_INT="${E2E_INTERNAL_PORT:-1234}"  # login <-> game internal
+PORT_GAME="${E2E_GAME_PORT:-1239}"
+PORT_STREAM="${E2E_STREAM_PORT:-1250}"
+PORT_DB="${DB_HOST_PORT:-${E2E_DB_PORT:-3306}}"
+PORT_BRIDGE="${E2E_BRIDGE_PORT:-1260}"    # BotDriveBridge (game process, E2E-2 scope — OFF by default)
 
 # E2E_BRIDGE=1 opts into the BotDriveBridge (port 1260): the game config gets
 # the Bots section and boot waits for the bridge. Default off — this card
@@ -187,16 +196,16 @@ e2e_write_login_config() {
     mkdir -p "$LOGIN_DIR"
     cat > "$LOGIN_DIR/Config.Local.json" <<EOF
 {
-  "InternalNetwork": { "Host": "*", "Port": 1234 },
-  "Network": { "Host": "*", "Port": 1237, "NumConnections": 10 },
+  "InternalNetwork": { "Host": "*", "Port": ${PORT_LOGIN_INT} },
+  "Network": { "Host": "*", "Port": ${PORT_LOGIN}, "NumConnections": 10 },
   "Connections": {
     "MySQLProvider": {
-      "Host": "127.0.0.1", "Port": "3306", "User": "root",
+      "Host": "127.0.0.1", "Port": "${PORT_DB}", "User": "root",
       "Password": "${DB_PASSWORD}", "Database": "aaemu_login"
     }
   },
   "GameServers": [
-    { "Id": 1, "Name": "AAEmu.Game (e2e)", "Host": "127.0.0.1", "Port": 1239 }
+    { "Id": 1, "Name": "AAEmu.Game (e2e)", "Host": "127.0.0.1", "Port": ${PORT_GAME} }
   ]
 }
 EOF
@@ -206,12 +215,12 @@ e2e_write_game_config() {
     mkdir -p "$GAME_DIR"
     cat > "$GAME_DIR/Config.Local.json" <<EOF
 {
-  "Network": { "Host": "*", "Port": 1239, "NumConnections": 10 },
-  "StreamNetwork": { "Host": "*", "Port": 1250 },
-  "LoginNetwork": { "Host": "127.0.0.1", "Port": "1234" },
+  "Network": { "Host": "*", "Port": ${PORT_GAME}, "NumConnections": 10 },
+  "StreamNetwork": { "Host": "*", "Port": ${PORT_STREAM} },
+  "LoginNetwork": { "Host": "127.0.0.1", "Port": "${PORT_LOGIN_INT}" },
   "Connections": {
     "MySQLProvider": {
-      "Host": "127.0.0.1", "Port": "3306", "User": "root",
+      "Host": "127.0.0.1", "Port": "${PORT_DB}", "User": "root",
       "Password": "${DB_PASSWORD}", "Database": "aaemu_game"
     }
   },
@@ -221,7 +230,7 @@ EOF
     if [ "$E2E_BRIDGE" = 1 ]; then
         cat >> "$GAME_DIR/Config.Local.json" <<EOF
   ,
-  "Bots": { "EnableE2EBridge": true, "E2EBridgePort": 1260 }
+  "Bots": { "EnableE2EBridge": true, "E2EBridgePort": ${PORT_BRIDGE} }
 EOF
     fi
     cat >> "$GAME_DIR/Config.Local.json" <<EOF
@@ -253,6 +262,57 @@ e2e_provision_layout() {
 
     e2e_write_login_config
     e2e_write_game_config
+}
+
+# ---------------------------------------------------------------- rebuild-skip
+
+# Cheap change-detector for published binaries: git HEAD sha + dirty-source
+# status of every directory that feeds the publish output. Identical string
+# hashing to E2eStack.EnsureServerBinaries (C# side) so a lane prepared by the
+# shell scripts is recognized by the test runner and vice versa.
+e2e_publish_input() {
+    local head diff untracked
+    # NOTE: content (git diff), NOT just porcelain status -- a dirty file that
+    # gets edited again must change the stamp, or publishes get wrongly skipped
+    # (observed live: a stale pre-fix binary passed a porcelain-only stamp).
+    head="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || echo no-git)"
+    diff="$(git -C "$REPO_ROOT" diff -- \
+        AAEmu.Commons AAEmu.Commons.Network AAEmu.Game AAEmu.Login 2>/dev/null || true)"
+    untracked="$(git -C "$REPO_ROOT" ls-files --others --exclude-standard -- \
+        AAEmu.Commons AAEmu.Commons.Network AAEmu.Game AAEmu.Login 2>/dev/null || true)"
+    printf '%s\n%s\n%s' "$head" "$diff" "$untracked"
+}
+
+e2e_publish_stamp() { e2e_publish_input | sha256sum | cut -d' ' -f1; }
+
+# ---------------------------------------------------------------- data-prep (hardlink clone)
+
+# Clone canonical game-data from an existing lane WITHOUT copying bytes:
+# cp -al hardlinks every file (same volume), falling back to a real copy when
+# src/dst are on different devices. Safe because game-data files are read-only
+# in practice: the server reads Data from runtime/game/Data (a REAL copy --
+# rigs patch that one, never the canonical) and ClientData through a symlink;
+# logs live under $E2E_ROOT/logs, outside game-data.
+e2e_clone_game_data() {
+    local src="$1"
+    [ -f "$src/runtime/game-data/Data/compact.sqlite3" ] ||
+        e2e_fail "source lane has no canonical data at $src/runtime/game-data"
+    if [ -f "$CANONICAL_SQLITE" ]; then
+        e2e_log "canonical data already present -- skipping clone"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$GAME_DATA_DIR")"
+    local t0
+    t0=$(date +%s)
+    if cp -al "$src/runtime/game-data" "$GAME_DATA_DIR" 2>/dev/null; then
+        e2e_log "hardlink-cloned game-data from $src in $(( $(date +%s) - t0 ))s (no data copied)"
+    else
+        rm -rf "$GAME_DATA_DIR"
+        e2e_log "cross-device source -- falling back to a full copy from $src"
+        cp -a "$src/runtime/game-data" "$GAME_DATA_DIR"
+        e2e_log "copied game-data from $src in $(( $(date +%s) - t0 ))s"
+    fi
 }
 
 # ---------------------------------------------------------------- baseline
@@ -303,8 +363,8 @@ e2e_prepare() {
     fi
 
     # port conflicts: foreign holders hard-fail; our own procs are adopted
-    if ! e2e_db_running && [ -n "$(e2e_port_owner 3306)" ]; then
-        e2e_fail "port :3306 is held by a process outside the e2e db container ($(e2e_port_owner 3306))"
+    if ! e2e_db_running && [ -n "$(e2e_port_owner "$PORT_DB")" ]; then
+        e2e_fail "port :$PORT_DB is held by a process outside the e2e db container ($(e2e_port_owner "$PORT_DB"))"
     fi
     e2e_require_port "$PORT_LOGIN_INT" Login
     e2e_require_port "$PORT_LOGIN"     Login
@@ -314,12 +374,32 @@ e2e_prepare() {
         e2e_require_port "$PORT_BRIDGE" Game
     fi
 
-    # binaries (publish on first boot; E2E_REBUILD=1 forces)
-    if [ ! -f "$LOGIN_DIR/AAEmu.Login.dll" ] || [ ! -f "$GAME_DIR/AAEmu.Game.dll" ] || [ "${E2E_REBUILD:-0}" = 1 ]; then
+    # Binaries: first boot publishes; afterwards a publish runs only when the
+    # source inputs changed (git HEAD + dirty status of the publish source
+    # dirs, stamped next to the runtime). E2E_REBUILD=1 keeps its existing
+    # semantic: force a full re-publish and refresh the stamp.
+    local want_publish=0 stamp_now
+    if [ ! -f "$LOGIN_DIR/AAEmu.Login.dll" ] || [ ! -f "$GAME_DIR/AAEmu.Game.dll" ]; then
+        want_publish=1                      # first boot (or wiped runtime)
+    elif [ "${E2E_REBUILD:-0}" = 1 ]; then
+        want_publish=1                      # forced
+    else
+        stamp_now="$(e2e_publish_stamp)"
+        if [ ! -f "$PUBLISH_STAMP" ] || [ "$(cat "$PUBLISH_STAMP")" != "$stamp_now" ]; then
+            [ -f "$PUBLISH_STAMP" ] && e2e_log "source inputs changed since last publish -- republishing"
+            want_publish=1
+        fi
+    fi
+
+    if [ "$want_publish" = 1 ]; then
         e2e_log "publishing Login + Game (Release) ..."
         dotnet publish "$REPO_ROOT/AAEmu.Login/AAEmu.Login.csproj" -c Release -o "$LOGIN_DIR" --nologo
         dotnet publish "$REPO_ROOT/AAEmu.Game/AAEmu.Game.csproj"   -c Release -o "$GAME_DIR"   --nologo
+        mkdir -p "$RUNTIME_DIR"
+        e2e_publish_stamp > "$PUBLISH_STAMP"
         e2e_log "publish done"
+    else
+        e2e_log "publish skipped -- binaries match source inputs ($PUBLISH_STAMP); E2E_REBUILD=1 forces"
     fi
 
     # Publish copies NLog.config from the repo tree. Repo configs carry size

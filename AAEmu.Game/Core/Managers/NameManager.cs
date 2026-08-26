@@ -13,24 +13,51 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
 {
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     private Regex _characterNameRegex;
+
+    // Thread safety: the three registries below are mutated by
+    // HeadlessSession.Provision (bridge 'provision'/'seedDormant' commands),
+    // which can run on several bridge connection threads concurrently. Plain
+    // Dictionaries corrupted under that load ("Operations that change
+    // non-concurrent collections must have exclusive access" after ~100 bots,
+    // tier3 probe report §11.2). One lock guards all three so multi-registry
+    // invariants (id ↔ name ↔ account) stay linearizable — it only covers
+    // in-memory dictionary ops, never I/O, and does not serialize provisioning
+    // itself (DB work in Provision runs outside it).
+    private readonly object _registryLock = new();
+
     private Dictionary<uint, string> _characterIds = [];
     private Dictionary<string, uint> _characterNames = [];
     private Dictionary<uint, uint> _characterAccounts = [];
 
     public string GetCharacterName(uint characterId)
-        => _characterIds.TryGetValue(characterId, out var characterName)
-        ? characterName
-        : null;
+    {
+        lock (_registryLock)
+        {
+            return _characterIds.TryGetValue(characterId, out var characterName)
+                ? characterName
+                : null;
+        }
+    }
 
     public uint GetCharacterId(string normalizedCharacterName)
-        => _characterNames.TryGetValue(normalizedCharacterName, out var characterId)
-        ? characterId
-        : 0u;
+    {
+        lock (_registryLock)
+        {
+            return _characterNames.TryGetValue(normalizedCharacterName, out var characterId)
+                ? characterId
+                : 0u;
+        }
+    }
 
     public uint GetCharacterAccount(uint characterId)
-        => _characterAccounts.TryGetValue(characterId, out var accountId)
-        ? accountId
-        : 0;
+    {
+        lock (_registryLock)
+        {
+            return _characterAccounts.TryGetValue(characterId, out var accountId)
+                ? accountId
+                : 0;
+        }
+    }
 
     public NameManager() : this(null, null) { }
 
@@ -56,15 +83,18 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
                 {
                     while (reader.Read())
                     {
-                        var id = reader.GetUInt32("id");
-                        var name = reader.GetString("name").ToLower();
-                        var account = reader.GetUInt32("account_id");
-                        var deleted = reader.GetInt32("deleted");
-                        var normalizedName = name.NormalizeName();
-                        _characterIds.Add(id, normalizedName);
-                        if (deleted == 0)
-                            _characterNames.Add(normalizedName, id); // Ignore deleted names, but do add the IDs to the old account
-                        _characterAccounts.Add(id, account);
+                        lock (_registryLock)
+                        {
+                            var id = reader.GetUInt32("id");
+                            var name = reader.GetString("name").ToLower();
+                            var account = reader.GetUInt32("account_id");
+                            var deleted = reader.GetInt32("deleted");
+                            var normalizedName = name.NormalizeName();
+                            _characterIds.Add(id, normalizedName);
+                            if (deleted == 0)
+                                _characterNames.Add(normalizedName, id); // Ignore deleted names, but do add the IDs to the old account
+                            _characterAccounts.Add(id, account);
+                        }
                     }
                 }
             }
@@ -90,19 +120,25 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
             _characterNameRegex = new Regex(characterNameRegex, RegexOptions.Compiled);
         }
 
-        _characterIds = characterIds;
-        _characterNames = characterNames;
-        _characterAccounts = characterAccounts;
+        lock (_registryLock)
+        {
+            _characterIds = characterIds;
+            _characterNames = characterNames;
+            _characterAccounts = characterAccounts;
+        }
     }
 
     public CharacterCreateError ValidateCharacterName(string name)
     {
-        if (_characterNames.TryGetValue(name, out var existingId))
+        lock (_registryLock)
         {
-            if (characterManager?.Value.IsCharacterPendingDeletion(name) == true)
-                return CharacterCreateError.Failed;
+            if (_characterNames.TryGetValue(name, out _))
+            {
+                if (characterManager?.Value.IsCharacterPendingDeletion(name) == true)
+                    return CharacterCreateError.Failed;
 
-            return CharacterCreateError.NameAlreadyExists;
+                return CharacterCreateError.NameAlreadyExists;
+            }
         }
 
         if (string.IsNullOrWhiteSpace(name) || !ValidatesName(name.AsSpan()))
@@ -118,65 +154,74 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
     public void AddCharacter(uint characterId, string name, uint accountId)
     {
         var normalizedName = name.NormalizeName();
-        if (!_characterIds.TryAdd(characterId, name.NormalizeName()))
+        lock (_registryLock)
         {
-            var oldName = _characterIds.GetValueOrDefault(characterId) ?? string.Empty;
-            if (string.Compare(name, oldName, StringComparison.InvariantCultureIgnoreCase) != 0)
-                Logger.Error($"AddCharacterName, failed to register name for {name} ({characterId}), Account {accountId}, OldName {oldName}");
-        }
-        else
-        {
-            Logger.Info($"AddCharacterName, Registered character name {name} ({characterId})");
-        }
+            if (!_characterIds.TryAdd(characterId, name.NormalizeName()))
+            {
+                var oldName = _characterIds.GetValueOrDefault(characterId) ?? string.Empty;
+                if (string.Compare(name, oldName, StringComparison.InvariantCultureIgnoreCase) != 0)
+                    Logger.Error($"AddCharacterName, failed to register name for {name} ({characterId}), Account {accountId}, OldName {oldName}");
+            }
+            else
+            {
+                Logger.Info($"AddCharacterName, Registered character name {name} ({characterId})");
+            }
 
-        if (!_characterNames.TryAdd(normalizedName, characterId))
-        {
-            var oldId = _characterNames.GetValueOrDefault(normalizedName);
-            if (characterId != oldId)
-                Logger.Error($"AddCharacterName, failed to register id for {name} ({characterId}), Account {accountId}, OldId {oldId}");
-        }
-        else
-        {
-            Logger.Info($"AddCharacterName, Registered character id {name} ({characterId})");
-        }
+            if (!_characterNames.TryAdd(normalizedName, characterId))
+            {
+                var oldId = _characterNames.GetValueOrDefault(normalizedName);
+                if (characterId != oldId)
+                    Logger.Error($"AddCharacterName, failed to register id for {name} ({characterId}), Account {accountId}, OldId {oldId}");
+            }
+            else
+            {
+                Logger.Info($"AddCharacterName, Registered character id {name} ({characterId})");
+            }
 
-        if (!_characterAccounts.TryAdd(characterId, accountId))
-        {
-            var oldAccount = _characterAccounts.GetValueOrDefault(characterId);
-            if (accountId != oldAccount)
-                Logger.Error($"AddCharacterName, failed to register account for {name} ({characterId}), Account {accountId}, OldAccount {oldAccount}");
-        }
-        else
-        {
-            Logger.Info($"AddCharacterName, Registered account {accountId} for {name} ({characterId})");
+            if (!_characterAccounts.TryAdd(characterId, accountId))
+            {
+                var oldAccount = _characterAccounts.GetValueOrDefault(characterId);
+                if (accountId != oldAccount)
+                    Logger.Error($"AddCharacterName, failed to register account for {name} ({characterId}), Account {accountId}, OldAccount {oldAccount}");
+            }
+            else
+            {
+                Logger.Info($"AddCharacterName, Registered account {accountId} for {name} ({characterId})");
+            }
         }
     }
 
     public void RemoveCharacterId(uint characterId)
     {
-        if (_characterIds.TryGetValue(characterId, out var characterName))
+        lock (_registryLock)
         {
-            _characterIds.Remove(characterId);
-            _characterNames.Remove(characterName);
-            Logger.Info($"AddCharacterName, Remove name and id registrations for character Id {characterId}");
-        }
-        else
-        {
-            Logger.Error($"AddCharacterName, No name was registered for character Id {characterId}");
-        }
+            if (_characterIds.TryGetValue(characterId, out var characterName))
+            {
+                _characterIds.Remove(characterId);
+                _characterNames.Remove(characterName);
+                Logger.Info($"AddCharacterName, Remove name and id registrations for character Id {characterId}");
+            }
+            else
+            {
+                Logger.Error($"AddCharacterName, No name was registered for character Id {characterId}");
+            }
 
-        if (_characterAccounts.Remove(characterId))
-        {
-            Logger.Info($"AddCharacterName, Removed account registration for character Id {characterId}");
-        }
-        else
-        {
-            Logger.Error($"AddCharacterName, No account was registered for character Id {characterId}");
+            if (_characterAccounts.Remove(characterId))
+            {
+                Logger.Info($"AddCharacterName, Removed account registration for character Id {characterId}");
+            }
+            else
+            {
+                Logger.Error($"AddCharacterName, No account was registered for character Id {characterId}");
+            }
         }
     }
 
     public bool NoNamesRegistered()
     {
-        return _characterIds.Count <= 0;
+        lock (_registryLock)
+        {
+            return _characterIds.Count <= 0;
+        }
     }
 }

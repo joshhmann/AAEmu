@@ -44,6 +44,15 @@ public sealed class GameService : IHostedService, IDisposable
     {
         Logger.Info("Starting daemon: AAEmu.Game");
 
+        // Boot-time profile (perf/e2e-speed): cumulative wall-clock stamps at
+        // each startup phase boundary; the orchestrator logs per-manager
+        // detail inside its batches. Pure instrumentation — no behavior change.
+        var bootProfile = Stopwatch.StartNew();
+        void BootPhase(string name) =>
+            Logger.Info($"[boot-profile] phase '{name}' at {bootProfile.Elapsed.TotalSeconds:F2}s");
+
+        BootPhase("process start");
+
         // Check for updates
         using (var connection = MySQL.CreateConnection())
         {
@@ -56,6 +65,8 @@ public sealed class GameService : IHostedService, IDisposable
             }
         }
 
+        BootPhase("db schema check");
+
         ClientFileManager.Initialize();
         if (ClientFileManager.Sources.Count == 0)
         {
@@ -63,6 +74,8 @@ public sealed class GameService : IHostedService, IDisposable
             Logger.Fatal("Press Ctrl+C to quit");
             return;
         }
+
+        BootPhase("client data sources");
 
         var stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -79,13 +92,19 @@ public sealed class GameService : IHostedService, IDisposable
         ItemManager.Instance.Load();
         ItemManager.Instance.LoadUserItems();
 
+        BootPhase("formula/item direct loads");
+
         // --- Stage 2: Orchestrated parallel Load() ---
         // Managers implementing ILoadable are sorted by constructor dep graph and run in parallel batches.
         await _orchestrator.RunLoadAsync();
 
+        BootPhase("orchestrated Load() batches");
+
         // --- Stage 3: Post-load special steps ---
         GameDataManager.Instance.PostLoadGameData();
         CashShopManager.Instance.EnabledShop();
+
+        BootPhase("post-load game data");
 
         // --- Scripts ---
         if (AppConfiguration.Instance.Scripts.LoadStrategy == ScriptsConfig.LoadStrategyType.Compilation)
@@ -102,13 +121,19 @@ public sealed class GameService : IHostedService, IDisposable
         TimeManager.Instance.Start();
         TaskManager.Instance.Start();
 
+        BootPhase("scripts + time/task managers");
+
         // --- Stage 4: Orchestrated parallel Initialize() ---
         await _orchestrator.RunInitializeAsync();
+
+        BootPhase("orchestrated Initialize() batches");
 
         // --- Stage 5: World creation + network ---
         // Start main_world and other static instances
         WorldManager.Instance.CreateStaticInstances();
         WorldManager.Instance.Initialize();
+
+        BootPhase("world creation");
 
         CharacterManager.Instance.CheckForDeletedCharacters();
         CharacterManager.Instance.StartOnlineTracking();
@@ -116,6 +141,8 @@ public sealed class GameService : IHostedService, IDisposable
         GameNetwork.Instance.Start();
         StreamNetwork.Instance.Start();
         LoginNetwork.Instance.Start();
+
+        BootPhase("network bind");
 
         stopWatch.Stop();
         Logger.Info($"Server started! Took {stopWatch.Elapsed}");

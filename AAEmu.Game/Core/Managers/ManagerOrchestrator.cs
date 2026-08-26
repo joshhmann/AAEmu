@@ -1,3 +1,8 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
+
+using NLog;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AAEmu.Game.Core.Managers;
@@ -67,16 +72,37 @@ public class ManagerOrchestrator(IServiceProvider serviceProvider, IServiceColle
     }
 
     /// <summary>Runs Load() on all ILoadable managers in dependency order, parallelising within each batch.</summary>
-    public async Task RunLoadAsync()
-    {
-        foreach (var batch in BuildBatches<ILoadable>())
-            await Task.WhenAll(batch.Select(m => Task.Run(m.Load)));
-    }
+    public Task RunLoadAsync() => RunBatches<ILoadable>("Load", static m => m.Load);
 
     /// <summary>Runs Initialize() on all IInitializable managers in dependency order, parallelising within each batch.</summary>
-    public async Task RunInitializeAsync()
+    public Task RunInitializeAsync() => RunBatches<IInitializable>("Initialize", static m => m.Initialize);
+
+
+    /// <summary>
+    /// Boot-time profile (perf/e2e-speed): runs each dependency batch in
+    /// parallel and logs the batch wall-clock plus the slowest managers, so
+    /// startup cost can be attributed without touching any manager.
+    /// </summary>
+    private async Task RunBatches<T>(string phase, Func<T, Action> selector) where T : class
     {
-        foreach (var batch in BuildBatches<IInitializable>())
-            await Task.WhenAll(batch.Select(m => Task.Run(m.Initialize)));
+        var total = Stopwatch.StartNew();
+        foreach (var batch in BuildBatches<T>())
+        {
+            var batchSw = Stopwatch.StartNew();
+            var timings = new ConcurrentDictionary<T, long>();
+            await Task.WhenAll(batch.Select(m => Task.Run(() =>
+            {
+                var sw = Stopwatch.StartNew();
+                selector(m)();
+                timings[m] = sw.ElapsedMilliseconds;
+            })));
+            var slowest = string.Join(", ",
+                timings.OrderByDescending(kv => kv.Value).Take(3).Select(kv => $"{kv.Key.GetType().Name} {kv.Value}ms"));
+            Logger.Info($"[boot-profile] {phase} batch of {batch.Count} took {batchSw.Elapsed.TotalSeconds:F2}s | slowest: {slowest}");
+        }
+        Logger.Info($"[boot-profile] {phase} total {total.Elapsed.TotalSeconds:F2}s");
     }
+
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 }
+

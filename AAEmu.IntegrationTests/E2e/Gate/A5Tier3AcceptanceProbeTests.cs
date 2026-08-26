@@ -259,13 +259,13 @@ public class A5Tier3AcceptanceProbeTests
     }
     /// <summary>
     /// Seeds the dormant roster through the real provisioning path via the
-    /// bridge bulk command, SEQUENTIALLY — concurrent seedDormant calls race
-    /// inside the provisioning path on non-concurrent collections (observed:
-    /// "Operations that change non-concurrent collections must have exclusive
-    /// access" corrupting state after ~100 bots) and the measured sequential
-    /// rate (~7 s per 25-bot batch) puts 1,000 bots at ≈5 min, far inside the
-    /// 30-minute box. Per-batch elapsed logging drives an honest projection;
-    /// a failed batch aborts further batches with partials recorded.
+    /// bridge bulk command, BOUNDED-PARALLEL: SEED_CONCURRENCY workers (env
+    /// knob, default 4) each drive their own bridge connection so provisioning
+    /// runs concurrently on the server. Safe since the NameManager registry
+    /// lock fix (tier3 report §11.2 corruption); SEED_CONCURRENCY=1 restores
+    /// the legacy sequential behavior. Per-batch elapsed logging drives an
+    /// honest projection; a failed batch aborts further batches with partials
+    /// recorded.
     /// </summary>
 
     private static TimeSpan SeedDormant(float hx, float hy, float hz, int nearCount, int farCount)
@@ -296,7 +296,7 @@ public class A5Tier3AcceptanceProbeTests
         for (var offset = 0; offset < bots.Count; offset += batch)
             chunks.Add(bots.Skip(offset).Take(batch).ToList());
 
-        const int workers = 1;
+        var workers = Math.Max(1, ParseSeedConcurrency());
         var next = 0;
         var aborted = false;
         void RunWorker()
@@ -340,6 +340,13 @@ public class A5Tier3AcceptanceProbeTests
 
         return sw.Elapsed;
     }
+
+    /// <summary>SEED_CONCURRENCY env knob — bounded parallelism of seedDormant
+    /// batch workers (default 4; 1 = sequential).</summary>
+    private static int ParseSeedConcurrency()
+        => int.TryParse(Environment.GetEnvironmentVariable("SEED_CONCURRENCY"), out var n) && n > 0
+            ? n
+            : 4;
 
     // ------------------------------------------------------- metrics plumbing
 

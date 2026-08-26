@@ -265,13 +265,26 @@ public static class E2eStack
         var loginDll = Path.Combine(RuntimeLoginDir, "AAEmu.Login.dll");
         var gameDll = Path.Combine(RuntimeGameDir, "AAEmu.Game.dll");
         var rebuild = Environment.GetEnvironmentVariable("E2E_REBUILD") == "1";
+        // Same stamp the shell harness writes (Scripts/e2e/e2e-common.sh
+        // e2e_publish_stamp): sha256 of git HEAD + dirty status of the publish
+        // source dirs. Warm-stack second runs with unchanged sources skip the
+        // publish entirely; E2E_REBUILD=1 keeps its force semantic.
+        var stampPath = Path.Combine(E2eRoot, "runtime", ".publish-stamp");
 
-        if (!rebuild && File.Exists(loginDll) && File.Exists(gameDll))
+        if (!rebuild && File.Exists(loginDll) && File.Exists(gameDll)
+            && File.Exists(stampPath)
+            && File.ReadAllText(stampPath).Trim() == ComputePublishStamp())
+        {
+            Console.WriteLine("[e2e] publish skipped — binaries match source inputs (.publish-stamp); E2E_REBUILD=1 forces");
             return;
+        }
 
         Console.WriteLine("[e2e] publishing Login + Game servers (E2E_REBUILD=1 forces this)...");
         Run("dotnet", $"publish {Path.Combine(RepoRoot, "AAEmu.Login", "AAEmu.Login.csproj")} -c Release -o {RuntimeLoginDir} --nologo", RepoRoot);
         Run("dotnet", $"publish {Path.Combine(RepoRoot, "AAEmu.Game", "AAEmu.Game.csproj")} -c Release -o {RuntimeGameDir} --nologo", RepoRoot);
+
+        Directory.CreateDirectory(Path.Combine(E2eRoot, "runtime"));
+        File.WriteAllText(stampPath, ComputePublishStamp() + Environment.NewLine);
 
         // Publish copies NLog.config from the repo tree — STILL the uncapped
         // daily-rotation version until fix/thinpool-log-caps merges into local
@@ -279,6 +292,25 @@ public static class E2eStack
         // clobber them (t_a54574e9; same guard as Scripts/e2e/e2e-common.sh).
         // Idempotent no-op when already capped; throws on failure (check=true).
         Run("bash", $"{Path.Combine(E2eRoot, "ensure-log-caps.sh")} {E2eRoot}", E2eRoot);
+    }
+
+    /// <summary>sha256 over (git HEAD sha + "\n" + content diff of the
+    /// publish source dirs + "\n" + their untracked file list). Must stay
+    /// byte-identical to the shell side's e2e_publish_input. Content, NOT
+    /// porcelain status: re-editing an already-dirty file must change the
+    /// stamp or publishes get wrongly skipped (observed live).</summary>
+    private static string ComputePublishStamp()
+    {
+        var head = RunCapture("git", "rev-parse HEAD", RepoRoot).Stdout.Trim();
+        if (head.Length == 0)
+            head = "no-git";
+        var srcDirs = "AAEmu.Commons AAEmu.Commons.Network AAEmu.Game AAEmu.Login";
+        var diff = RunCapture("git", $"diff -- {srcDirs}", RepoRoot).Stdout;
+        var untracked = RunCapture("git", $"ls-files --others --exclude-standard -- {srcDirs}", RepoRoot).Stdout;
+
+        using var sha = SHA256.Create();
+        var hash = sha.ComputeHash(Encoding.UTF8.GetBytes($"{head}\n{diff}\n{untracked}"));
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     private static void EnsureRuntimeLayout()
