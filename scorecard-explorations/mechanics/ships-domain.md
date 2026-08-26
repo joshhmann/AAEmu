@@ -221,3 +221,42 @@ Slice 1 is S (all seams proven), Slice 2 M (multi-step orchestration + inventory
 6. **Launch-ceremony trigger**: `ShipyardCompletedTask` is reachable only via CraftEffect's default (ungrouped wi)
    branch (`CraftEffect.cs:142-152`) — the exact client interaction/skill that fires it on a finished frame is
    data-dependent and unverified; if no such effect exists in 1.2 data, completed frames would strand at step −1.
+
+## 11. `/testslave` ("`/slavetest`") bug-hunt — packet errors + naked slaves ROOT-CAUSED & FIXED (2026-08-25)
+
+Human prod report: "running the /slavetest GM command produces PACKET ERRORS, and the spawned slaves appear to be
+missing their clothing/equipment". There is no command literally named `slavetest`; the report maps to
+`/testslave` (alias `/test_slave`, `Scripts/Commands/TestSlave.cs`). Isolated-stack repro
+(E2E_ROOT=/root/aaemu-e2e-stest, COMPOSE_PROJECT_NAME=stestacc, ports 2337/2339/2350/2360/2334/2380/db 24306)
+reproduced both symptoms and proved causality (baseline in-world window: 0 marshal errors; post-command window:
+3).
+
+### Root causes (both from TestSlave hand-rolling a `new Slave` instead of using SlaveManager.Create)
+
+1. **Packet errors — null slave Name**: the hand-rolled Slave never set `Name`. Every G2C packet serializing the
+   unit (`SCUnitStatePacket.cs:72 stream.Write(_unit.Name)`) then threw server-side
+   `[ERROR] PacketStream - Error writing string. System.ArgumentNullException: Value cannot be null. (Parameter 's')`
+   at PacketStream.Write(String) — 3× per spawn in the repro log. A mid-write abort truncates the G2C frame, which
+   the real client surfaces as its generic "packet error". `SlaveManager.Create` sets
+   `Name = template.Name`, so the retail path never trips this.
+2. **Missing clothes/parts — InitialItems + doodad bindings skipped**: the retail summon path equips
+   `slave_initial_items` (clothes/sails/parts per `SlaveInitialItemPackId`,
+   `SlaveManager.cs` "Equip it's default items" block), spawns `Template.DoodadBindings`, and applies bonuses.
+   The hand-rolled spawn did NONE of that — no equipment serialization ever reached the client.
+
+### Fix (small, safe, clean cutover)
+
+`TestSlave.Execute` now delegates to `character.ParentWorld.SlaveManager.Create(character, null, 73)` — the exact
+path `/slave spawn <templateId>` uses. Template 73 (cotton-field cart, model 1008) carries level 50 / faction 143,
+identical to the previously hardcoded values; it has no initial-item pack in data (verified in compact.sqlite3),
+but ship templates do (pack 1 = EznaCutter parts incl. item 28852+, pack 4 = harpoon clipper), and those now equip
+correctly on any GM-spawned hull via the shared path.
+
+### Verification
+
+E2E `AAEmu.IntegrationTests.E2e.SlaveTestBugHuntE2eTests.TestSlave_GMCommand_Spawn_CapturesErrors` (committed):
+sends `/testslave` as a real CSSendChatMessagePacket over an authenticated bot link on a fresh stack; asserts
+baseline window has 0 marshal errors, ≥1 SCSlaveCreatedPacket broadcast is received post-command, and 0 marshal
+errors post-fix. PASS against rebuilt runtime; dotnet build AAEmu.Game + IntegrationTests green.
+Pre-existing, NOT touched here: CSChangeSlaveEquipmentPacket vehicle-customization TODO (SlaveManager ~537) and
+the CSChangeSlaveTargetPacket placeholder remain open gaps.

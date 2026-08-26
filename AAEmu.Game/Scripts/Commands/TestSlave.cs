@@ -1,11 +1,6 @@
 ﻿using AAEmu.Game.Core.Managers;
-using AAEmu.Game.Core.Managers.Id;
-using AAEmu.Game.Core.Managers.World;
-using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Char;
-using AAEmu.Game.Models.Game.Units;
-using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils.Scripts;
 
 namespace AAEmu.Game.Scripts.Commands;
@@ -31,17 +26,13 @@ public class TestSlave : ICommand
 
     public void Execute(Character character, string[] args, IMessageOutput messageOutput)
     {
-        var slave = new Slave { Summoner = character, TemplateId = 73, ModelId = 1008, ObjId = ObjectIdManager.Instance.GetNextId(),
-            TlId = (ushort)TlIdManager.Instance.GetNextId(),
-            Faction = FactionManager.Instance.GetFaction((FactionsEnum)143),
-            Level = 50
-        };
-        slave.Transform = character.Transform.CloneDetached(slave);
-        slave.Transform.Local.AddDistanceToFront(5f);
-        slave.Hp = slave.MaxHp = 190000;
-        slave.Faction = character.Faction;
-        slave.Template = SlaveGameData.Instance.GetSlaveTemplate(slave.TemplateId);
-
-        slave.Spawn();
+        // Spawn through the same SlaveManager.Create path as the retail
+        // item-based summon (/slave spawn): it names the slave from its
+        // template (a null Name crashes G2C serialization with
+        // ArgumentNullException in PacketStream.Write(string) — the client
+        // sees this as a packet error), equips the template's initial item
+        // pack (clothes/parts), spawns bound doodads, and applies bonuses.
+        // Hand-rolling a Slave here skipped ALL of that.
+        character.ParentWorld.SlaveManager.Create(character, null, 73);
     }
 }
