@@ -1,3 +1,5 @@
+using System.Numerics;
+
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
@@ -39,12 +41,16 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     from HighlightDoodadId among PERCEIVED nearby doodads, InteractWith
 ///     until the bag holds Count items (real acquisition → engine's own
 ///     DoItemsAcquiredEvents → OnItemGather credit), AdvanceQuest.
+///   - QuestActObjMonsterHunt / MonsterGroupHunt → resolve the hunt
+///     targets DATA-DRIVEN from the act (NpcId, or monster-group id via
+///     QuestManager.CheckGroupNpc) among PERCEIVED hostiles (alive +
+///     BaseUnit.CanAttack — the adventurer-spike selection convention),
+///     SetTarget → cast rotation → Loot each corpse. Kill credit flows
+///     through the REAL engine path either way: LIVE = real cast damage
+///     (Npc.DoDie → QuestManager.DoOnMonsterHuntEvents); RIG = the
+///     documented synthetic kill through <see cref="IKillCreditSeam"/>
+///     (the exact entry point Npc.DoDie calls for a character killer).
 ///   - everything else             → fail closed (see GapReason).
-///
-/// Kill objectives are deliberately NOT composed here yet (the primitives
-/// exist — SetTarget/Cast/Loot + the adventurer-spike kill credit — but
-/// this slice keeps one honest segment small), so hunts fail closed too,
-/// naming what exists and what is missing.
 ///
 /// World access discipline: perception rides Observe() (region graph) +
 /// DiscoverQuests() per perceived target; every world object the loop
@@ -70,6 +76,31 @@ public static class LevelingLoopScenario
     public const uint SeedGatherSourceDoodadTemplateId = 678;
     public const uint SeedGatherItemTemplateId = 13713;
 
+    /// <summary>
+    /// Quest 1652 "난폭한 선돌 수호자 퇴치" — board-accepted single-template
+    /// hunt: accept at notice-board doodad 8055 (Level ≥ 3 + mother faction
+    /// on start component 7861), Progress = MonsterHunt npc 7673 ×3
+    /// (component 7862), NO Ready component → auto-completes.
+    /// NOTE: Solzreed's other band hunts are spike-covered (250),
+    /// score-gated in this engine (266: score=100 caps the objective at 9
+    /// against Count=20 — honestly uncompletable), or kill-accepted (2374).
+    /// </summary>
+    public const uint SeedQuestBoardHuntId = 1652;
+    public const uint SeedBoardDoodadTemplateId = 8055;
+    public const uint SeedBoardHuntTargetNpcTemplateId = 7673;
+
+    /// <summary>
+    /// Quest 329 "불곰을 조심해!" — board-accepted GROUP hunt: accept at
+    /// doodad 144 (board template 5048; Level ≥ 2 + mother faction on start
+    /// component 1487), Progress = MonsterGroupHunt act 150 → group 153 ×3
+    /// (npcs 7674 성난 불곰 / 7648 배고픈 불곰), NO Ready component →
+    /// auto-completes. Verified canonical 1.2, 2026-08-25.
+    /// </summary>
+    public const uint SeedQuestGroupHuntId = 329;
+    public const uint SeedGroupHuntBoardDoodadTemplateId = 5048;
+    public const uint SeedGroupHuntTargetNpcTemplateA = 7674;
+    public const uint SeedGroupHuntTargetNpcTemplateB = 7648;
+
     /// <summary>Loop parameters. Defaults = the honest L1–9 starter band.</summary>
     public sealed record LoopOptions
     {
@@ -80,15 +111,62 @@ public static class LevelingLoopScenario
         public int MaxLinks { get; init; } = 2;
         /// <summary>Bounded InteractWith attempts per gather source before failing Navigation.</summary>
         public int MaxAttemptsPerGatherSource { get; init; } = 3;
+
+        // ---- hunt-leg parameters (composed 2026-08-25 slice) ----
+
+        /// <summary>
+        /// Skill ids in priority order — the hunt leg casts the rotation
+        /// once per burst round (Rejected ones skipped and recorded), the
+        /// adventurer-spike combo-chain shape. Live default: 18131 LEADS
+        /// (the BUG-016-fixed first hit), 18134 fallback — the spike's
+        /// proven live rotation. Rigs inject a fixture skill.
+        /// </summary>
+        public uint[] CastRotation { get; init; } =
+            [AdventurerSpikeScenario.TripleSlashSkillId, AdventurerSpikeScenario.TripleSlashFinisherSkillId];
+
+        /// <summary>Max cast-burst rounds on one target per engagement.</summary>
+        public int MaxBurstCasts { get; init; } = 8;
+
+        /// <summary>
+        /// Max distance (m) from which the rotation may start — beyond it
+        /// the hunt leg closes in with MoveToUnit first. Default 3: the
+        /// live rotation lead reaches 4 m (spike-proven slack).
+        /// </summary>
+        public float HuntEngageRange { get; init; } = 3f;
+
+        /// <summary>Bounded re-observe/re-engage rounds per hunt act.</summary>
+        public int MaxHuntRounds { get; init; } = 32;
+
+        /// <summary>
+        /// Rounds of executed casts with zero net damage on one target
+        /// before it is excluded from reselection (leash-stuck/undamageable
+        /// prey — exclusion only, NEVER a kill credit; spike E-M7-9).
+        /// </summary>
+        public int NoProgressSkipRounds { get; init; } = 3;
+
+        /// <summary>Bounded re-observe retries when no attackable target is visible.</summary>
+        public int NoTargetRetries { get; init; } = 4;
+
+        /// <summary>Move-leg pace (m/s) and per-leg budget for close-in legs.</summary>
+        public float TravelSpeed { get; init; } = 6f;
+        public TimeSpan TravelTimeout { get; init; } = TimeSpan.FromSeconds(90);
+
+        /// <summary>
+        /// Optional driver for in-flight requests (move legs). Rigs inject
+        /// their deterministic driver; when null the loop ticks the actor
+        /// inline (bounded by TravelTimeout) — deterministic headless AND
+        /// correct for synchronous dispatch.
+        /// </summary>
+        public Func<GameplayActor, ActorRequest, ActorRequest>? Drive { get; init; }
     }
 
     /// <summary>
-    /// Kill-credit seam for future hunt legs (unused by this slice — hunts
-    /// fail closed). LIVE: real cast damage only (Npc.DoDie credits). RIG:
-    /// the documented synthetic kill through the REAL
-    /// QuestManager.DoOnMonsterHuntEvents entry point (adventurer-spike
-    /// convention). Kept in the contract now so the gap report stays exact:
-    /// the seam EXISTS, the composed hunt leg does not.
+    /// Kill-credit seam for the hunt leg. LIVE runs pass null — real cast
+    /// damage must down the prey (Npc.DoDie → DoOnMonsterHuntEvents
+    /// credits). RIGS implement the documented synthetic kill through the
+    /// REAL QuestManager.DoOnMonsterHuntEvents entry point (adventurer-spike
+    /// convention): bare fixture NPCs carry no template/AI/spawner
+    /// scaffolding for a full DoDie. Returns true when the target is down.
     /// </summary>
     public interface IKillCreditSeam
     {
@@ -271,11 +349,6 @@ public static class LevelingLoopScenario
 
     private static readonly Dictionary<string, string> KnownPrimitiveGaps = new()
     {
-        [nameof(QuestActObjMonsterHunt)] =
-            "missing composed hunt leg (primitives EXIST: SetTarget/Cast/Loot + real Npc.DoDie/" +
-            "DoOnMonsterHuntEvents kill credit — see adventurer-spike-fox)",
-        [nameof(QuestActObjMonsterGroupHunt)] =
-            "missing composed hunt leg (primitives EXIST: SetTarget/Cast/Loot + group fanout in DoOnMonsterHuntEvents)",
         [nameof(QuestActObjTalk)] =
             "missing talk-credit contract action (no Talk action on IGameplayActor fires OnTalkMade through a real packet path)",
         [nameof(QuestActObjTalkNpcGroup)] =
@@ -296,10 +369,8 @@ public static class LevelingLoopScenario
             "missing craft-objective composition (Craft action exists; workbench resolution + recipe mapping uncomposed)",
         [nameof(QuestActObjAggro)] =
             "missing aggro-attribution primitive",
-        [nameof(QuestActObjExpressFire)] =
-            "missing emotion-express primitive",
         [nameof(QuestActObjZoneKill)] =
-            "missing composed hunt leg (zone-scoped kills need the hunt leg first)",
+            "missing zone-scoped kill attribution (zone-gated victim/killer composition — the plain hunt leg does not cover it)",
         [nameof(QuestActObjCompleteQuest)] =
             "missing cross-quest objective composition",
         [nameof(QuestActObjAbilityLevel)] =
@@ -350,6 +421,26 @@ public static class LevelingLoopScenario
                             failure, actor, null);
                     break;
 
+                case QuestActObjMonsterHunt hunt:
+                    {
+                        var (huntFailure, huntReason) = HuntLeg(actor, opts, killSeam, questId,
+                            hunt, hunt.NpcId, 0, perception);
+                        if (huntFailure != null)
+                            return Fail($"OBJECTIVES:hunt({hunt.NpcId})", huntReason, huntFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjMonsterGroupHunt groupHunt:
+                    {
+                        var (groupFailure, groupReason) = HuntLeg(actor, opts, killSeam, questId,
+                            groupHunt, null, groupHunt.QuestMonsterGroupId, perception);
+                        if (groupFailure != null)
+                            return Fail($"OBJECTIVES:group-hunt({groupHunt.QuestMonsterGroupId})",
+                                groupReason, groupFailure, actor, null);
+                        break;
+                    }
+
+
                 default:
                     return Fail($"OBJECTIVES:{act.GetType().Name}", ActorFailureReason.WrongDecision,
                         "unsupported objective type — FAIL-CLOSED (progress would be fake): " +
@@ -359,8 +450,10 @@ public static class LevelingLoopScenario
         }
 
         // Objectives met → evaluate the step machine once (the same call the
-        // world pipeline makes after events) and require Ready before any
-        // turn-in is attempted.
+        // world pipeline makes after events) and require a turn-in-able
+        // state before any turn-in is attempted: Ready (report quests) or
+        // Completed (auto-complete quests — the advance alone drove them
+        // through their reward step).
         var advance = actor.AdvanceQuest(questId);
         if (advance.State != ActorLifecycleState.Completed)
         {
@@ -369,10 +462,10 @@ public static class LevelingLoopScenario
         }
 
         var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
-        if (quest is { Status: not QuestStatus.Ready })
+        if (quest is { Status: not QuestStatus.Ready and not QuestStatus.Completed })
         {
             return Fail("OBJECTIVES", ActorFailureReason.WrongDecision,
-                $"objectives pursued but quest {questId} did not reach Ready " +
+                $"objectives pursued but quest {questId} did not reach a completable state " +
                 $"(step {quest.Step}, status {quest.Status}) — refusing to turn in", actor, null);
         }
 
@@ -386,6 +479,7 @@ public static class LevelingLoopScenario
     /// DoItemsAcquiredEvents → OnItemGather path credits the objective —
     /// the loop never fires quest events by hand).
     /// </summary>
+
     private static string? GatherLeg(GameplayActor actor, LoopOptions opts, uint questId,
         QuestActObjItemGather gather, PerceptionSnapshot perception)
     {
@@ -424,6 +518,212 @@ public static class LevelingLoopScenario
         return null;
     }
 
+    /// <summary>
+    /// The hunt leg: targets resolved DATA-DRIVEN from the act among
+    /// PERCEIVED hostiles — single-template hunts match <paramref name="targetNpcTemplateId"/>
+    /// (the act's NpcId), group hunts match QuestManager.CheckGroupNpc on
+    /// the act's monster-group id; every candidate must be ALIVE and
+    /// CanAttack (BaseUnit faction check — the adventurer-spike selection
+    /// convention). Each engagement is a real SetTarget → Cast rotation →
+    /// Loot. Kill credit flows through the REAL engine path either way:
+    /// LIVE (killSeam == null) the cast rotation's real damage must down
+    /// the prey (Npc.DoDie → DoOnMonsterHuntEvents credits); rigs apply
+    /// the documented synthetic kill through <see cref="IKillCreditSeam"/>.
+    /// Objective progress is read back from the REAL quest state
+    /// (act.GetObjective) every round — kills are never counted by hand.
+    /// A target pinned at full HP across NoProgressSkipRounds cast rounds
+    /// is excluded from reselection — exclusion only, NEVER a credit.
+    /// </summary>
+    private static (string? Failure, ActorFailureReason Reason) HuntLeg(GameplayActor actor, LoopOptions opts,
+        IKillCreditSeam? killSeam, uint questId, QuestActTemplate act,
+        uint? targetNpcTemplateId, uint monsterGroupId, PerceptionSnapshot perception)
+    {
+        var character = actor.Character;
+        var quest = character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return ($"quest {questId} left ActiveQuests before hunt pursuit started", ActorFailureReason.StateTransition);
+
+        // The caller's snapshot is only the FIRST sweep's evidence; every
+        // round below re-observes (the spike loop's proven shape).
+        _ = perception;
+
+        var targetLabel = targetNpcTemplateId is { } template
+            ? $"npc template {template}"
+            : $"monster group {monsterGroupId}";
+        var excluded = new HashSet<uint>();
+        var noProgress = new Dictionary<uint, int>();
+        var noTargetRounds = 0;
+        var roundsLeft = opts.MaxHuntRounds;
+
+        while (act.GetObjective(quest) < act.Count)
+        {
+            if (roundsLeft-- <= 0)
+            {
+                return ($"hunt budget exhausted ({opts.MaxHuntRounds} rounds): objective at " +
+                        $"{act.GetObjective(quest)}/{act.Count} of {targetLabel} for quest {questId}",
+                    ActorFailureReason.Starvation);
+            }
+
+            var observation = actor.Observe();
+            var target = SelectHuntTarget(character, observation, targetNpcTemplateId, monsterGroupId, excluded);
+            if (target == null)
+            {
+                noTargetRounds++;
+                if (noTargetRounds > opts.NoTargetRetries)
+                {
+                    return ($"no attackable hunt target ({targetLabel}) perceived after " +
+                            $"{opts.NoTargetRetries} re-observe rounds (nearby npcs: " +
+                            $"[{string.Join(", ", observation.NearbyNpcObjIds)}])",
+                        ActorFailureReason.Starvation);
+                }
+
+                continue;
+            }
+            noTargetRounds = 0;
+
+            var targetRequest = actor.SetTarget(target.ObjId);
+            if (targetRequest.State != ActorLifecycleState.Completed)
+            {
+                return ($"SetTarget on hunt target {target.ObjId} refused: {targetRequest.Detail}",
+                    ActorFailureReason.RejectedAction);
+            }
+
+            // Distance maintenance: beyond the engage band, close in first
+            // and re-observe from the new position next round (melee default).
+            var distance = Vector3.Distance(character.Transform.World.Position, target.Transform.World.Position);
+            if (distance > opts.HuntEngageRange)
+            {
+                var closeIn = DriveRequest(actor, opts,
+                    actor.MoveToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
+                if (closeIn.State != ActorLifecycleState.Completed)
+                {
+                    return ($"close-in move onto hunt target {target.ObjId} did not complete: " +
+                            $"{closeIn.State} ({closeIn.Detail ?? "n/a"})",
+                        closeIn.Failure ?? ActorFailureReason.Navigation);
+                }
+
+                continue;
+            }
+
+            // Cast-burst engagement: the rotation runs as a chain each burst
+            // round (Rejected skills are skipped); the round ends early when
+            // real damage drops the target or the seam applies its credit.
+            var hpRoundStart = target.Hp;
+            var executedAnyCast = false;
+            var down = false;
+            for (var burst = 0; burst < opts.MaxBurstCasts && !down; burst++)
+            {
+                var roundExecuted = false;
+                foreach (var skillId in opts.CastRotation)
+                {
+                    if (target.Hp <= 0)
+                        break; // dropped mid-chain — stop casting
+                    var cast = actor.Cast(skillId, target.ObjId);
+                    if (cast.State != ActorLifecycleState.Rejected)
+                        roundExecuted = true;
+                }
+
+                if (!roundExecuted)
+                    break; // whole rotation refused — re-observe next round
+                executedAnyCast = true;
+
+                // LIVE: real damage only. RIG: seam credit (real damage still wins).
+                down = target.Hp <= 0 || (killSeam?.TryKill(actor, target) ?? false);
+            }
+
+            if (!down)
+            {
+                // NO-PROGRESS SKIP (spike E-M7-9): casts executed but zero net
+                // damage — leash-stuck/undamageable prey is EXCLUDED from
+                // reselection after NoProgressSkipRounds (never credited).
+                if (executedAnyCast && target.Hp >= hpRoundStart)
+                {
+                    var pinned = noProgress.GetValueOrDefault(target.ObjId) + 1;
+                    noProgress[target.ObjId] = pinned;
+                    if (pinned >= opts.NoProgressSkipRounds)
+                    {
+                        excluded.Add(target.ObjId);
+                        noProgress.Remove(target.ObjId);
+                    }
+                }
+                else
+                {
+                    noProgress.Remove(target.ObjId); // damage landed (or nothing executed) — reset
+                }
+
+                continue;
+            }
+
+            // DOWN: loot the fresh corpse through the real contract path. A
+            // Rejected loot is tolerated (recorded, never fatal) — not every
+            // hunt objective drops loot.
+            excluded.Add(target.ObjId);
+            noProgress.Remove(target.ObjId);
+            var loot = actor.Loot(target.ObjId);
+            if (loot.State == ActorLifecycleState.Rejected)
+                Logger.Debug("hunt leg: loot of corpse {ObjId} rejected ({Detail}) — tolerated", target.ObjId, loot.Detail);
+        }
+
+        return (null, ActorFailureReason.None);
+    }
+
+    /// <summary>
+    /// Hostile-selection primitive (adventurer-spike SelectHostile
+    /// convention): the nearest ALIVE NPC the actor can attack
+    /// (BaseUnit.CanAttack — faction-based; bare rig NPCs read attackable)
+    /// whose template matches the hunt act — directly (single-template
+    /// hunt) or through QuestManager.CheckGroupNpc (monster-group hunt).
+    /// Observe-driven ONLY: candidates come from the observation's
+    /// nearby-NPC list, never a world scan.
+    /// </summary>
+    private static Npc? SelectHuntTarget(Character character, ActorObservation observation,
+        uint? targetNpcTemplateId, uint monsterGroupId, IReadOnlySet<uint> excluded)
+    {
+        Npc? best = null;
+        var bestDistance = float.MaxValue;
+        var position = character.Transform.World.Position;
+        foreach (var objId in observation.NearbyNpcObjIds)
+        {
+            if (excluded.Contains(objId))
+                continue;
+            if (character.ParentWorld?.GetNpc(objId) is not { } npc)
+                continue;
+            if (npc.Hp <= 0 || excluded.Contains(objId))
+                continue;
+
+            var matchesTemplate = targetNpcTemplateId is { } template && npc.TemplateId == template;
+            var matchesGroup = monsterGroupId != 0 && QuestManager.Instance.CheckGroupNpc(monsterGroupId, npc.TemplateId);
+            if ((!matchesTemplate && !matchesGroup) || !character.CanAttack(npc))
+                continue;
+
+            var distance = Vector3.DistanceSquared(position, npc.Transform.World.Position);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = npc;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// Drives one in-flight request to a terminal state. Rigs inject their
+    /// deterministic driver via <see cref="LoopOptions.Drive"/>; when null
+    /// the loop ticks the actor inline (bounded by TravelTimeout) — the
+    /// rig-spike Drive convention, deterministic headless.
+    /// </summary>
+    private static ActorRequest DriveRequest(GameplayActor actor, LoopOptions opts, ActorRequest request)
+    {
+        if (opts.Drive != null)
+            return opts.Drive(actor, request);
+
+        var deadline = Environment.TickCount64 + (long)opts.TravelTimeout.TotalMilliseconds;
+        while (!request.IsTerminal && Environment.TickCount64 < deadline)
+            actor.Tick(TimeSpan.FromMilliseconds(20));
+        return request;
+    }
+
     // ------------------------------------------------------------------ turn-in
 
     private static string DescribePursuit(QuestTemplate template)
@@ -446,6 +746,19 @@ public static class LevelingLoopScenario
             .SelectMany(c => c.ActTemplates).ToList();
         var reportNpc = readyActs.OfType<QuestActConReportNpc>().FirstOrDefault();
         var reportDoodad = readyActs.OfType<QuestActConReportDoodad>().FirstOrDefault();
+
+        // Auto-complete quests (no Ready component — the objective advance
+        // alone drives them to completion) drop from ActiveQuests during
+        // pursuit; that IS the turn-in. Anything else still active goes
+        // through the real report paths below.
+        if (actor.Character.Quests?.ActiveQuests.ContainsKey(questId) != true)
+        {
+            if (actor.Character.Quests!.HasQuestCompleted(questId))
+                return null;
+
+            return Fail("TURN-IN", ActorFailureReason.StateTransition,
+                $"quest {questId} is neither active nor completed — nothing to turn in", actor, null);
+        }
 
         ActorRequest request;
         if (reportNpc != null)
