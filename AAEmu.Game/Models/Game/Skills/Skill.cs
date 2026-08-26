@@ -1298,11 +1298,19 @@ public class Skill
                             new EffectSource(this), skillObject, DateTime.UtcNow, packets);
                     }
                 }
-                else
+                try
                 {
                     effect.Template.Apply(caster, casterCaster, target, thisTargetCaster, new CastSkill(Template.Id, TlId), new EffectSource(this), skillObject, DateTime.UtcNow, packets);
 
                     if (player is { SkillCancelled: true }) { Cancelled = true; }
+                }
+                catch (Exception ex)
+                {
+                    // Effect application runs on a TaskManager worker that swallows
+                    // thrown exceptions silently (Task.Run discard) — log before
+                    // rethrowing so failed effect applications are attributable.
+                    Logger.Error($"Effect {effect.EffectId} ({effect.Template.GetType().Name}) of skill {Template.Id} threw on target {target.ObjId}: {ex}");
+                    throw;
                 }
 
                 // Implement consumption of item sets

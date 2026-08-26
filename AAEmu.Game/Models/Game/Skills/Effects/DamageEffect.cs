@@ -96,6 +96,13 @@ public class DamageEffect : EffectTemplate
 
         if (target.Buffs.CheckDamageImmune(DamageType))
         {
+            // PB-007: an immuned hit is still an ASSAULT. The justice chain
+            // (Retribution purple state + assault lists + evidence) must
+            // register on the attack attempt exactly as it does for landed
+            // damage — otherwise any damage-shielded target (e.g. the
+            // login-protection buff) silently swallows flagged aggression.
+            RegisterCrimeForAttempt((Unit)caster, trg);
+
             target.BroadcastPacket(new SCUnitDamagedPacket(castObj, casterObj, caster.ObjId, target.ObjId, 1, 0)
             {
                 HitType = SkillHitType.Immune
@@ -366,39 +373,10 @@ public class DamageEffect : EffectTemplate
             ((Unit)caster).Mp = Math.Min(((Unit)caster).MaxMp, ((Unit)caster).Mp + manaStolen);
             caster.BroadcastPacket(new SCUnitPointsPacket(caster.ObjId, ((Unit)caster).Hp, ((Unit)caster).Mp), true);
         }
-
-        if (Bonuses != null)
-        {
-            ((Unit)caster).Bonuses[uint.MaxValue] = [];
-        }
-
         var trgCharacter = trg as Character;
         var attacker = caster as Unit;
-        
-        if (CheckCrime && caster.GetRelationStateTo(trg) == RelationState.Friendly)
-        {
-            // Set Purple state
-            if (!trg.Buffs.CheckBuff((uint)BuffConstants.Retribution))
-            {
-                ((Unit)caster).SetCriminalState(true, trg);
-            }
 
-            // Mark the owner of this unit as being assaulted
-            var targetOwner = trg.GetOwnerCharacter();
-            var sourceOwner = caster.GetOwnerCharacter();
-            if (targetOwner != null && sourceOwner != null)
-            {
-                // If both players haven't interacted with each other yet, then generate evidence for the initiator 
-                if ((!sourceOwner.AssaultedBy.Contains(targetOwner.Id)) && (!targetOwner.AssaultedBy.Contains(sourceOwner.Id)))
-                {
-                    // Update assault list
-                    targetOwner.AssaultedBy.Add(sourceOwner.Id);
-                    sourceOwner.AssaultOn.Add(targetOwner.Id);
-                    // Generate evidence
-                    _ = CrimeManager.Instance.GenerateEvidenceFromDamage(caster, trg);
-                }
-            }
-        }
+        RegisterCrimeForAttempt((Unit)caster, trg);
 
         // TODO : Use proper chance kinds (melee, magic etc.)
 
@@ -520,6 +498,40 @@ public class DamageEffect : EffectTemplate
                 durabilityRate *= ItemManager.Instance.GetDurabilityDecrementChance();
                 // Take durability damage
                 player.ApplyDurabilityLossToEquipment(1, durabilityLossTarget, durabilityRate);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Registers the justice-chain consequences of a Friendly-relation attack
+    /// attempt (PB-007): Retribution purple state on the attacker, assault-list
+    /// updates, and crime evidence. Called both for landed damage and for
+    /// damage blocked by immunities — the assault happens either way.
+    /// </summary>
+    private void RegisterCrimeForAttempt(Unit caster, Unit trg)
+    {
+        if (!CheckCrime || caster.GetRelationStateTo(trg) != RelationState.Friendly)
+            return;
+
+        // Set Purple state
+        if (!trg.Buffs.CheckBuff((uint)BuffConstants.Retribution))
+        {
+            caster.SetCriminalState(true, trg);
+        }
+
+        // Mark the owner of this unit as being assaulted
+        var targetOwner = trg.GetOwnerCharacter();
+        var sourceOwner = caster.GetOwnerCharacter();
+        if (targetOwner != null && sourceOwner != null)
+        {
+            // If both players haven't interacted with each other yet, then generate evidence for the initiator
+            if ((!sourceOwner.AssaultedBy.Contains(targetOwner.Id)) && (!targetOwner.AssaultedBy.Contains(sourceOwner.Id)))
+            {
+                // Update assault list
+                targetOwner.AssaultedBy.Add(sourceOwner.Id);
+                sourceOwner.AssaultOn.Add(targetOwner.Id);
+                // Generate evidence
+                _ = CrimeManager.Instance.GenerateEvidenceFromDamage(caster, trg);
             }
         }
     }
