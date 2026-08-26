@@ -63,6 +63,16 @@ public class RowboatE2eTests
     private const uint RowboatSlaveTemplateId = 15; // slaves.id 15 '나룻배', model_id 129, kind Boat
     private const float RowboatModelVelocity = 8.0f; // ship_models row for model 129 chain: velocity 8.0, mass 800
 
+    // PB-006 correction (f33ddf285 investigation): the engine's INTERNAL ocean
+    // surface for main_world is z=100 — data-driven from the client world.xml
+    // attribute oceanLevel="100" (WorldTemplate.OceanLevel → WaterBodies.OceanLevel,
+    // the Buoyancy fluid-box surface, and PhysicsManager's water queries all agree),
+    // while Helpers.ConvertPosition shifts WIRE heights by −100 for clients. The
+    // harness previously asserted "sea level ≈ 0" from npc_spawns z data, which is
+    // ground-level DATA ~100 m below the true surface — that false premise made a
+    // correctly-floating hull look like it spawned "100 m in the air".
+    private const float InternalOceanLevel = 100f;
+
     /// <summary>'굶주린 가루다' — npc_spawns template whose FIRST registry spawner
     /// sits at open-sea level (3090.0, 29778.0, z≈0.05; both spawns in water).
     /// teleportToNpc resolves FirstOrDefault(UnitId), so the first-entry position is what we get.</summary>
@@ -187,7 +197,7 @@ public class RowboatE2eTests
             }
 
             var spawnPos = DecodeShipFrame(firstShipFrame);
-            var atWaterLevel = MathF.Abs(spawnPos.Z) < 3f;
+            var atWaterLevel = MathF.Abs(spawnPos.Z - InternalOceanLevel) < 3f;
             var spawnDisplacement = Dist((spawnPos.X, spawnPos.Y, spawnPos.Z), (landed.X, landed.Y, landed.Z));
             Record("SUMMON-WATER-SPAWN", atWaterLevel,
                 $"first Ship frame for slave {spawn.ObjId}: pos ({spawnPos.X:F1},{spawnPos.Y:F1},{spawnPos.Z:F2}) " +
