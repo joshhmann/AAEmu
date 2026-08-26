@@ -1,10 +1,12 @@
 using System.Numerics;
 
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units.Static;
 
@@ -286,6 +288,211 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
             or ActorActionType.AutoTurnIn)).IsFalse();
         await Assert.That(character.Quests.HasQuestCompleted(5650)).IsFalse();
+    }
+
+    /// <summary>
+    /// Rig kill seam (documented rig-faked damage, adventurer-spike
+    /// convention): bare fixture NPCs carry no template/AI/spawner
+    /// scaffolding for a full Npc.DoDie, so the killing blow is applied
+    /// through the REAL QuestManager.DoOnMonsterHuntEvents entry point —
+    /// the exact call DoDie makes for a character killer (group/zone/
+    /// kill-accept fanout included). Real damage is the live stack's job.
+    /// </summary>
+    private sealed class RigKillSeam : LevelingLoopScenario.IKillCreditSeam
+    {
+        public bool TryKill(GameplayActor actor, Npc target)
+        {
+            if (target.Hp <= 0)
+                return true; // real damage already downed it — nothing to fake
+            QuestManager.Instance.DoOnMonsterHuntEvents(actor.Character, target);
+            target.Hp = 0; // down — the alive filter excludes it from reselection
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Region-joined quest board doodad (ConAcceptDoodad channel) —
+    /// perceivable by Observe + DiscoverQuests like any notice board.
+    /// </summary>
+    private uint SpawnBoardDoodad(HeadlessSession session, uint doodadTemplateId, Vector3 position)
+    {
+        var objId = session.SpawnDoodad(doodadTemplateId);
+        var doodad = session.World.GetDoodad(objId)!;
+        // DoFunc → HasOnlyGroupKindStart reads Template.FuncGroups; an empty
+        // list keeps the fixture doodad alive headless (Doodad.cs start-only rule).
+        doodad.Template = new DoodadTemplate { Id = doodadTemplateId, FuncGroups = [] };
+        doodad.Transform.Local.SetPosition(position);
+        var region = session.World.GetRegionByPos(position);
+        if (region != null)
+        {
+            region.AddObject(doodad);
+            doodad.Region = region;
+        }
+
+        return objId;
+    }
+
+    /// <summary>Seeds one corpse's loot so the Loot contract action grants an item.</summary>
+    private static void SeedCorpseLoot(HeadlessSession session, uint npcObjId)
+    {
+        GameplayActorTestRig.SeedLootContainer(session.World.GetNpc(npcObjId)!,
+            (GameplayActorTestRig.TestItemTemplateId, 1));
+    }
+
+    /// <summary>
+    /// E-HUNT-1: the composed GROUP hunt leg — canonical Solzreed bear cull,
+    /// quest 329 "불곰을 조심해!" (accept at board doodad 5048, Level ≥ 2 +
+    /// mother faction; Progress = MonsterGroupHunt act 150 → group 153 ×3
+    /// over npcs
+    /// 7674/7648; NO Ready component → auto-completes). The bot perceives
+    /// the in-band offering itself at the BOARD, accepts, hunts the
+    /// perceived bears DATA-DRIVEN from the act's monster group (membership
+    /// via QuestManager.CheckGroupNpc; SetTarget → cast rotation → kill
+    /// credit through the REAL DoOnMonsterHuntEvents via the rig seam →
+    /// Loot each corpse), and completes unprompted with XP through the real
+    /// completion path and the full audit subsequence.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_SeededGroupHuntBoard_CompletesAcceptHuntAutoCompleteUnprompted()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-group-hunt");
+        var character = session.Character;
+        character.Level = 2; // 329 gate ≥2 (real unit_reqs row)
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // World seed (ids cited in LevelingLoopScenario doc): the bear-cull
+        // board and 16 fixtures across the two group-150 bear templates —
+        // every kill credit lands on a DISTINCT alive npc (no respawner
+        // scaffolding headless).
+        SpawnBoardDoodad(session, LevelingLoopScenario.SeedGroupHuntBoardDoodadTemplateId, new Vector3(2, 0, 0));
+        uint[] bearTemplates =
+            [LevelingLoopScenario.SeedGroupHuntTargetNpcTemplateA, LevelingLoopScenario.SeedGroupHuntTargetNpcTemplateB];
+        var bearObjIds = new List<uint>();
+        for (var i = 0; i < 16; i++)
+        {
+            var position = new Vector3(1 + (i % 4) * 1.0f, -1 - (i / 4) * 1.0f, 0); // 1–4 m out
+            var objId = SpawnHubNpc(session, bearTemplates[i % bearTemplates.Length], position);
+            bearObjIds.Add(objId);
+            SeedCorpseLoot(session, objId);
+        }
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        }, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        // One link completed unprompted: discovered AT THE BOARD, accepted,
+        // hunted, auto-completed.
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedQuestGroupHuntId); // 329
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjMonsterGroupHunt));
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedQuestGroupHuntId)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedQuestGroupHuntId)).IsFalse();
+
+        // XP progression signal — LEVEL-4 quest supply through the REAL completion path = 620 exp.
+        await Assert.That(result.Links[0].ExperienceAfter - result.Links[0].ExperienceBefore).IsEqualTo(620);
+
+        // Audit-trace subsequence: perceive → accept → SetTarget → Cast →
+        // Loot, in execution order. Auto-completion drops the quest from
+        // ActiveQuests on the objective advance (the engine's own terminal
+        // path), so no TurnIn record exists — nothing was faked.
+        var trace = result.TraceRecords;
+        var firstDiscover = IndexOfFirst(trace, ActorActionType.DiscoverQuests, 0);
+        var accept329 = IndexOfFirst(trace, ActorActionType.AcceptQuest, LevelingLoopScenario.SeedQuestGroupHuntId);
+        var firstTarget = FirstAtLeast(trace, ActorActionType.Target, accept329 + 1);
+        var firstCast = FirstAtLeast(trace, ActorActionType.Cast, firstTarget + 1);
+        var firstLoot = FirstAtLeast(trace, ActorActionType.Loot, firstCast + 1);
+
+        await Assert.That(firstDiscover).IsGreaterThanOrEqualTo(0);
+        await Assert.That(accept329).IsGreaterThan(firstDiscover); // perceived BEFORE chosen
+        await Assert.That(firstTarget).IsGreaterThan(accept329);   // hostile selection from perception
+        await Assert.That(firstCast).IsGreaterThan(firstTarget);   // SetTarget precedes the rotation
+        await Assert.That(firstLoot).IsGreaterThan(firstCast);     // corpse looted after the kill
+        // Kill credits flowed through the REAL event path exactly once per
+        // bear (3 credits for group 153 ×3): one Loot attempt per distinct
+        // corpse, with the real container-grant path proven Completed.
+        await Assert.That(trace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(3);
+        await Assert.That(trace.Count(r => r.Action == ActorActionType.Loot && r.Result == ActorLifecycleState.Completed))
+            .IsGreaterThanOrEqualTo(1);
+    }
+
+
+
+    /// <summary>
+    /// E-HUNT-2: single-template MONSTER HUNT selection branch — canonical
+    /// quest 1652 "난폭한 선돌 수호자 퇴치" (board doodad 8055, Level ≥ 3 +
+    /// mother faction; Progress = MonsterHunt npc 7673 ×3; auto-completes).
+    /// Targets match the ACT'S NpcId directly among perceived hostiles.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_SeededSingleTemplateHunt_AutoCompletesWithKillPursuit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-board-hunt");
+        var character = session.Character;
+        character.Level = 3; // 1652 gate ≥3 (real unit_reqs row)
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // World seed: the notice board (doodad 8055) and 3 warden fixtures.
+        SpawnBoardDoodad(session, LevelingLoopScenario.SeedBoardDoodadTemplateId, new Vector3(2, 0, 0));
+        var wardenObjIds = new List<uint>();
+        foreach (var position in new[] { new Vector3(4, -1, 0), new Vector3(-4, -1, 0), new Vector3(0, -5, 0) })
+        {
+            var objId = SpawnHubNpc(session, LevelingLoopScenario.SeedBoardHuntTargetNpcTemplateId, position);
+            wardenObjIds.Add(objId);
+            SeedCorpseLoot(session, objId);
+        }
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        }, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedQuestBoardHuntId); // 1652
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjMonsterHunt));
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedQuestBoardHuntId)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedQuestBoardHuntId)).IsFalse();
+
+        // XP signal — LEVEL-5 quest supply = 680 exp through the real completion path.
+        await Assert.That(result.Links[0].ExperienceAfter - result.Links[0].ExperienceBefore).IsEqualTo(680);
+
+        // Audit subsequence: accept at the board → SetTarget → Cast → Loot per corpse.
+        var trace = result.TraceRecords;
+        var accept1652 = IndexOfFirst(trace, ActorActionType.AcceptQuest, LevelingLoopScenario.SeedQuestBoardHuntId);
+        var firstTarget = FirstAtLeast(trace, ActorActionType.Target, accept1652 + 1);
+        var firstCast = FirstAtLeast(trace, ActorActionType.Cast, firstTarget + 1);
+        await Assert.That(accept1652).IsGreaterThanOrEqualTo(0);
+        await Assert.That(firstTarget).IsGreaterThan(accept1652);
+        await Assert.That(firstCast).IsGreaterThan(firstTarget);
+        await Assert.That(trace.Count(r => r.Action == ActorActionType.Loot && r.Result == ActorLifecycleState.Completed))
+            .IsGreaterThanOrEqualTo(3);
+    }
+
+
+    /// <summary>Index of the first record of the action type at or after start.</summary>
+    private static int FirstAtLeast(IReadOnlyList<ActorAuditRecord> trace, ActorActionType action, int start)
+    {
+        for (var i = Math.Max(0, start); i < trace.Count; i++)
+        {
+            if (trace[i].Action == action)
+                return i;
+        }
+
+        return -1;
     }
 
     /// <summary>Index of the first audit record matching action (+ target when targetId > 0).</summary>
