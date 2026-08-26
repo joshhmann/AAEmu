@@ -139,10 +139,11 @@ public sealed class MailOwnershipGuardTests
         _malloryConn = null;
 
 
+        // NOTE: ItemManager/QuestManager singletons are deliberately NOT reset
+        // here (MailTests convention): nulling them races with TUnit's parallel
+        // classes — any rig-based class that already passed Seed() (s_seeded)
+        // then hits ItemManager.Instance with no instance and no DI provider.
         SingletonContainer.ServiceProvider = null;
-        typeof(Singleton<ItemManager>)
-            .GetField("s_instance", BindingFlags.Static | BindingFlags.NonPublic)
-            ?.SetValue(null, null);
     }
 
     // ---- fixtures ----------------------------------------------------------
