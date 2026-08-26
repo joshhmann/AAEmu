@@ -231,8 +231,8 @@ public class PvpFlaggingRigTests
         await Assert.That(ex).IsNull(); // hostile branch touches no persistence
 
         await Assert.That(killer.Character.HostileFactionKills).IsEqualTo(1u);
-        await Assert.That(killer.Character.HonorGainedInCombat).IsEqualTo(20u); // War solo award × rate 1.0
-        await Assert.That(killer.Character.HonorPoint).IsEqualTo(20);
+        await Assert.That(killer.Character.HonorGainedInCombat).IsEqualTo(40u); // War base 40 × rate 1.0
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(40);
 
         // Victim PvP-death markers + War-zone honor loss (clamped share of 10)
         await Assert.That(victim.Character.DiedInPvp).IsTrue();
@@ -265,6 +265,70 @@ public class PvpFlaggingRigTests
         await Assert.That(killer.Character.HonorGainedInCombat).IsEqualTo(0u);
         await Assert.That(killer.Character.HonorPoint).IsEqualTo(0);
         await Assert.That(victim.Character.DiedInPvpWarZone).IsFalse();
+    }
+
+    [Test]
+    public async Task DoDie_HostileKillInConflictZone_CountsKillButAwardsNoHonor()
+    {
+        // War-gating owner ruling 2026-08-25 ("keep it korean"): RU official 2.9 notes —
+        // kills during Conflict award 0 honor; honor flows in War zones only.
+        AppConfiguration.Instance.World ??= new WorldConfig();
+        AppConfiguration.Instance.World.PvpHonorRate = 1.0;
+
+        using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.Conflict));
+        var (killer, victim, session) = CreatePair("pvp-conflict");
+        _ = session;
+
+        killer.Character.Faction = new SystemFaction { Id = FactionsEnum.Hostile };
+        victim.Character.Faction = new SystemFaction { Id = (FactionsEnum)9103 };
+        SetZone(victim, TestZoneKey);
+
+        var ex = Kill(victim, killer);
+        await Assert.That(ex).IsNull();
+
+        // Flagging/kill counting still happens in a Conflict zone…
+        await Assert.That(killer.Character.HostileFactionKills).IsEqualTo(1u);
+        await Assert.That(victim.Character.DiedInPvp).IsTrue();
+        // …but the award is WAR-GATED: zero honor delta in Conflict.
+        await Assert.That(killer.Character.HonorGainedInCombat).IsEqualTo(0u);
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(0);
+        // No War-zone death penalty applies outside War.
+        await Assert.That(victim.Character.DiedInPvpWarZone).IsFalse();
+    }
+
+    [Test]
+    public async Task DoDie_HostileKillInWarZoneWithOnlineAssist_SplitsKiller32AndAssist4()
+    {
+        AppConfiguration.Instance.World ??= new WorldConfig();
+        AppConfiguration.Instance.World.PvpHonorRate = 1.0;
+
+        using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.War));
+        var (killer, victim, session) = CreatePair("pvp-split");
+        _ = session;
+
+        // Third player inside the 30-s damage window → online-assist path.
+        var (assistActor, _) = GameplayActorTestRig.CreateActor("pvp-split-assist");
+        GameplayActorTestRig.JoinActorWorld(session, assistActor);
+        Conn(assistActor.Character);
+        assistActor.Character.IsOnline = true;
+
+        killer.Character.Faction = new SystemFaction { Id = FactionsEnum.Hostile };
+        victim.Character.Faction = new SystemFaction { Id = (FactionsEnum)9104 };
+        SetZone(victim, TestZoneKey);
+
+        // Record the assistant in the victim's rolling damage history — the same seam
+        // DamageEffect feeds on every hit — without running the full skill pipeline.
+        SetField(victim.Character, "_pvpDamageHistory",
+            new ConcurrentDictionary<uint, DateTime> { [assistActor.Character.Id] = DateTime.UtcNow });
+
+        var ex = Kill(victim, killer);
+        await Assert.That(ex).IsNull();
+
+        // INFERRED split of the RU-official 40 base: 32 killer + 4 per online assist.
+        await Assert.That(killer.Character.HonorGainedInCombat).IsEqualTo(32u);
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(32);
+        await Assert.That(assistActor.Character.HonorGainedInCombat).IsEqualTo(4u);
+        await Assert.That(assistActor.Character.HonorPoint).IsEqualTo(4);
     }
 
     // ------------------------------------------------------------------ b. friendly-fire crime evidence

@@ -213,32 +213,27 @@ public partial class Character
     }
 
     /// <summary>
-    /// Awards PvP honor to the killer (and assists) based on zone conflict state.
-    /// Conflict: 10 solo (6 killer + 4 each assist). War: 20 solo (16 killer + 4 each assist).
-    /// Also registers the kill in the zone conflict system.
+    /// Awards PvP honor to the killer (and assists) for hostile kills in WAR zones only.
+    /// Owner ruling 2026-08-25 ("keep it korean"), aligned to the official RU 2.9 notes:
+    /// kills during Conflict award 0 honor (https://archeage.ru/updates/28042016/).
     /// </summary>
     private void AwardPvpHonor(Character killer, Zone victimZone, ZoneConflict conflictData, ZoneConflictType zoneState)
     {
-        int soloHonor, killerShareHonor, assistShareHonor;
-        switch (zoneState)
-        {
-            case ZoneConflictType.Conflict:
-                soloHonor = 10;
-                killerShareHonor = 6;
-                assistShareHonor = 4;
-                break;
-            case ZoneConflictType.War:
-                soloHonor = 20;
-                killerShareHonor = 16;
-                assistShareHonor = 4;
-                break;
-            default:
-                // No honor outside Conflict/War zones
-                return;
-        }
-
-        // Register zone kill (drives zone state escalation)
+        // Register zone kill (drives zone state escalation) regardless of honor eligibility.
         conflictData?.AddZoneKill();
+
+        // Honor is WAR-GATED (owner ruling 2026-08-25): official RU 2.9 notes award nothing
+        // for Conflict-state kills (https://archeage.ru/updates/28042016/).
+        if (zoneState != ZoneConflictType.War)
+            return;
+
+        // RU publishes only the base («40 очков чести за убийство на войне»).
+        // INFERRED assist split — RU gives no per-role numbers; this fork keeps its existing
+        // convention of an absolute 4-honor assist share, so the 40 base splits as
+        // 32 killer + 4 per assist (previously 20 ⇒ 16 + 4).
+        const int soloHonor = 40;
+        const int killerShareHonor = 32;
+        const int assistShareHonor = 4;
 
         var pvpRate = AppConfiguration.Instance.World.PvpHonorRate;
         var assistIds = CollectAssists(killer);
@@ -248,7 +243,7 @@ public partial class Character
         // by the time the victim dies. If none of them are reachable, fall back to
         // the solo award — otherwise the killer would only get killerShareHonor and
         // the unawarded assist share would be silently discarded (e.g. War solo with
-        // one offline assist: 20 solo − 16 killer-share = 14 honor lost).
+        // one offline assist: 40 solo − 32 killer-share = 28 honor lost).
         var onlineAssists = new List<Character>(assistIds.Count);
         foreach (var assistId in assistIds)
         {
