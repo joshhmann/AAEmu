@@ -1791,7 +1791,15 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    *Outputs:* profiling note + WorldManager changes + gate annotation.
    *Follow-up unlocked:* 100-bot village runs inside budget.
 6. **Behavioral scenario library + PLAYER_MODE/TEST_MODE leakage audit**
-   (= G3-B5) · Owner-role: test-platform engineer · Area: validation
+   (= G3-B5) · ✅ **DONE 2026-08-26** (branch feat/b5-scenario-library @
+   46fe4332d): scenario library promoted
+   (scorecard-explorations/generated/b5-scenario-library-2026-08-26.md — 7
+   scenarios indexed with contracts/failure-attribution; the executable index
+   remains `Scripts/e2e/bot-regression-pass.sh`) + leakage audit ALL THREE
+   seams PROVEN-UNREACHABLE with 6 negative regression tests (bridge gated +
+   loopback + private dispatch; BroadcastMovement opt-out confined to the
+   roam executor with observer stream preserved; rig hooks compile-time
+   isolated). Owner-role: test-platform engineer · Area: validation
    infrastructure · Priority: MEDIUM · Depends on: none · Milestone: G3-B5 /
    development-loop rule 5. *Goal:* make the regression-validation stage of
    the integrated loop a registry lookup instead of tribal knowledge.
@@ -1839,9 +1847,15 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     CSMoveUnitPacket ShipRequestMoveType throttle/steer → observe
     SCOneUnitMovementPacket stream + displacement over T → steer reversal
     flips heading sign → UnbindSlave → despawn clean (no leaked RigidBody).
-11. **Dominion slice-1 — persistence vertical (zero combat)** · Area:
-    DOMINION (siege domain zero-wired; dominion-domain Slice 1) · Priority:
-    MEDIUM · Depends on: none. *Work:* new DominionManager loading
+11. **Dominion slice-1 — persistence vertical (zero combat)** · ✅
+    **SLICE-1 LANDED 2026-08-26** (branch d42e708f5→66f124533): persistence/
+    schedule/tax live — DominionManager loads siege_zones(6)/siege_settings(11)/
+    siege_plans(158); additive MySQL `aaemu_game.dominions`;
+    CSUpdateDominionTaxRatePacket round-trip; phase cron announcing via
+    SCSiegeAlertPacket; kill -9 persistence E2E PASS. Combat/siege-battle is
+    explicitly deferred to later slices; declare-trigger UI path still UNKNOWN.
+    Area: DOMINION (siege domain zero-wired; dominion-domain Slice 1) ·
+    Priority: MEDIUM · Depends on: none. *Work:* new DominionManager loading
     siege_zones/settings/plans; additive MySQL `aaemu_game.dominions`; wire
     CSUpdateDominionTaxRate → owner-gated store → SCDominionTaxRate echo;
     TickManager phase cron (Peace/Declare/Warmup/Siege/Payoff) announcing via

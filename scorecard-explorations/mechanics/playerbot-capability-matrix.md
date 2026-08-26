@@ -1,6 +1,6 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality @ develop `214bed834` (= origin/develop head, 2026-08-25).
+Populated from implementation reality @ develop `94f5425a8` (= origin/develop head, 2026-08-26; was `214bed834`, 2026-08-25).
 Legend: ✅ through real engine paths · 🟡 partial/rig-only · ❌ missing.
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
@@ -20,6 +20,7 @@ Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 | Expeditions | ✅ membership observable | ✅ invite/accept rules | ✅ ExpeditionCreate/Invite/Accept/Leave actions | ✅ roster asserts | 🟡 rig-level lifecycle; not composed into bot gameplay |
 | Parties | ✅ team registry + member state | ✅ follow/assist/fault rules | ✅ PartyInvite/Accept/FollowAssist/SpikeScenario | ✅ membership + kill credit | ✅ party spike live (3 bots vs elite) |
 | Indun (dungeons) | ✅ instance isolation observable | 🟡 enter/clear steps scripted | ✅ first-class InteractWith(doodad) contract action (13f502673, derived use-skill + fail-closed effect post-check); exit path live-proven (PB-003 closed — data always existed); interior combat ✅ | ✅ room-clear events + isolation asserts | ✅ Hadir Farm E2E PASS ×2 + party-clear-then-exit 11/11 |
+| Dominion (castle/siege) | ✅ schedule/state observable (phase cron Peace→Declare→Warmup→Siege→Payoff + SCSiegeAlertPacket) | 🟡 scripted (no combat/battle AI) | ✅ CSUpdateDominionTaxRate + declare via real packets | ✅ restart persistence E2E (kill -9 reload PASS) | 🟡 persistence proven, combat absent |
 | Banking/storage | ✅ bank balances observable | ✅ deposit/withdraw rules | ✅ DepositMoney/Item, Withdraw actions | ✅ bank conservation across restart | ✅ in economy cycle |
 | Chat/social presence | ✅ proximity observable | ✅ greet/cooldown rules | ✅ real local-chat emission (BotChatterService) | ✅ sink capture tests | 🟡 greetings only; conversation depth open |
 | Schedules & goal arbitration | ✅ game-time phase + pressure bands observable | ✅ BotGoalArbiter priority arbitration (deterministic, one active activity per wake) | ✅ Home/Work/Travel/Rest phase machine drives roam; arbiter selects module per wake (IBotActivityModule) | ✅ phase-transition + arbitration-transition asserts | 🟡 default OFF (`Bots.EnableSchedules` / `AAEMU_BOT_SCHEDULES_ENABLED`) — soak STAGE 1 live-proven; fidelity tiers additionally behind `AAEMU_BOT_TRUE_DORMANCY` / `AAEMU_BOT_PROXIMITY_FIDELITY` (see Scaling posture below) |

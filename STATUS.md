@@ -1,7 +1,13 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-25 · by ox-alpha docs wave (G2-A5 + A4 near-term gates MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same day; first-class InteractWith doodad contract action) · + SERVER-PERF wave (G2-A3 remainder: staggered wakes landed default-OFF, incremental counters rejected by profiling, IdManager boot race fixed, wake-storm probe landed — see scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop @ 6ba363a28 (origin/develop; was e672b9579 at day start)
+Updated: 2026-08-26 · by ox-alpha docs wave 7 (G3-B5 scenario library +
+leakage audit DONE; DOMINION-01 slice-1 LANDED; PVP-01 login-immunity
+finding + partial fix; CRIME-01 vertical live-proven) · prior: 2026-08-25
+(G2-A5 + A4 near-term gates MET with live evidence; PB-002 quest-discovery
+primitive landed; PB-003 closed premise-refuted; PB-004 found-by-measurement
++ fixed same day; first-class InteractWith doodad contract action;
+SERVER-PERF wave — see scorecard-explorations/generated/g2-a3-storm-report.md)
+Branch of record: develop @ 94f5425a8 (= origin/develop head; was 6ba363a28)
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated honor,
 NPC grounding tour, boats, slavetest observation, Mirage walk.
@@ -117,6 +123,43 @@ Indun addendum refuted PB-003's data premise before its E2E closed it.
   steps/min parity 15003 vs 14995. OPEN: 6h dormant-timers soak leg;
   concurrent seedDormant corrupts server state after ~100 bots (documented;
   seeding stays sequential).
+
+**2026-08-26 wave 7 (validation infrastructure + dominion/pvp/crime
+verticals):** **G3-B5 DONE** — behavioral scenario library promoted
+(scorecard-explorations/generated/b5-scenario-library-2026-08-26.md: 7
+scenarios indexed with contracts + layer-tagged failure attribution; the
+executable index remains `Scripts/e2e/bot-regression-pass.sh`) and the
+PLAYER_MODE/TEST_MODE leakage audit PROVEN-UNREACHABLE at all three seams
+with 6 negative regression tests (bridge gated + loopback + private
+dispatch; BroadcastMovement opt-out confined to the roam executor with the
+observer stream preserved; rig hooks compile-time isolated) — branch
+feat/b5-scenario-library @ 46fe4332d. **DOMINION-01 slice-1 LANDED:** first
+real reconstruction of the dominion system — DominionManager loading
+siege_zones(6)/siege_settings(11)/siege_plans(158) from canonical compact
+data; additive MySQL `aaemu_game.dominions`
+(SQL/updates/2026-08-26_aaemu_game_dominions.sql); CSUpdateDominionTaxRate
+round-trip (policy validation → persist → echo); phase cron
+Peace→Declare→Warmup→Siege→Payoff announcing via SCSiegeAlertPacket (0xed,
+documented placeholder payload); DeclareDominion special-effect persists
+instead of hardcoded broadcast; enter-world rebroadcast; kill -9 persistence
+E2E PASS — branch d42e708f5→66f124533. Combat/siege-battle explicitly NOT
+implemented (later slices); declare-trigger UI path still UNKNOWN
+(pack-planting hypothesis from client data). **PVP-01 MAJOR FINDING +
+PARTIAL FIX:** flagged-aggression composed flow FAILED live — handshake +
+target acquisition passed but zero damage applied, caught by the new
+PvpHandshakeE2eTests. Root cause: buff 2423 "LoggedOn" grants ~20 s full
+damage-immunity at every login and DamageEffect's immune early-return
+skipped HP loss AND the crime branch. Fixes: crime branch extracted to
+RegisterCrimeForAttempt and called even on immune early-return; Skill
+apply-loop exceptions logged+rethrown (TaskManager silently discarded them);
+E2E hardened to wait out the protection window. Post-fix real damage,
+bloodstain, and the crime chain execute; ZONE-01 Peace enforcement +
+homeland mother-shield LIVE-verified in the same runs. RESIDUAL: Retribution
+2167 wire-observable on immune hits (AddBuff stack-rule silent return
+suspect — follow-up probe documented). **CRIME-01 vertical LIVE-PROVEN:**
+JusticeCrimeE2eTests 8 stages incl. restart persistence + wanted seam PASS;
+engine fix MarkDirty() on CrimePoint/InfamyPoint setters (silent-
+persistence-vanish bug).
 
 **M0 — Foundation: ✅ CLOSED (2026-08-03, Josh signoff)**
 Workflow v4 (permanent one-way upstream gate), community guidelines,
