@@ -51,6 +51,19 @@ public class CharacterMails
     {
         if (MailManager.Instance._allPlayerMails.TryGetValue(id, out var mail))
         {
+            // Ownership guard (C2S entry points CSReadMailPacket and the sent-tab
+            // variant): the sent tab only shows mails we sent, the receive tab only
+            // mails addressed to us. Mirrors the CSTakeAttachmentSequentially
+            // "check for hackers" refusal.
+            var ownsEntry = isSent
+                ? mail.Header.SenderId == Self.Id
+                : mail.Header.ReceiverId == Self.Id;
+            if (!ownsEntry)
+            {
+                Self.SendErrorMessage(ErrorMessageType.MailInvalid);
+                return;
+            }
+
             if (mail.Header.Status == MailStatus.Unread && !isSent)
             {
                 UnreadMailCount.UpdateReceived(mail.MailType, -1);
@@ -135,6 +148,16 @@ public class CharacterMails
         var res = true;
         if (MailManager.Instance._allPlayerMails.TryGetValue(mailId, out var thisMail))
         {
+            // Ownership guard (C2S entry points CSTakeAttachmentItemPacket,
+            // CSTakeAttachmentMoneyPacket, and CSTakeAllAttachmentItemPacket):
+            // only the current receiver may loot attachments. Mirrors the
+            // CSTakeAttachmentSequentially "check for hackers" refusal.
+            if (thisMail.Header.ReceiverId != Self.Id)
+            {
+                Self.SendErrorMessage(ErrorMessageType.MailInvalid);
+                return false;
+            }
+
             var tookMoney = false;
             if (thisMail.MailType == MailType.AucOffSuccess && thisMail.Body.CopperCoins > 0 && takeMoney)
             {
@@ -264,7 +287,7 @@ public class CharacterMails
                 thisMail.IsDirty = true;
             }
 
-            // TODO: Make sure attachment settings and mail info is sent back correctly 
+            // TODO: Make sure attachment settings and mail info is sent back correctly
             // taking all attachments sometimes doesn't enable the delete button when getting attachments using "GetAllSelected"
 
             // TODO: if source player is online, update their mail info (sent tab)
@@ -275,6 +298,17 @@ public class CharacterMails
 
     public void DeleteMail(long id, bool isSent)
     {
+        // Ownership guard (C2S entry point CSDeleteMailPacket): only the current
+        // receiver may delete an entry from the received tab. Mirrors the
+        // CSTakeAttachmentSequentially "check for hackers" refusal. Sent-tab
+        // deletion remains a deliberate no-op (pre-existing behavior).
+        if (MailManager.Instance._allPlayerMails.TryGetValue(id, out var mail) &&
+            mail.Header.ReceiverId != Self.Id)
+        {
+            Self.SendErrorMessage(ErrorMessageType.MailInvalid);
+            return;
+        }
+
         if (MailManager.Instance._allPlayerMails.ContainsKey(id) && !isSent)
         {
             if (MailManager.Instance._allPlayerMails[id].Header.Attachments <= 0)

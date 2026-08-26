@@ -154,7 +154,14 @@ public static class CSOffsets
     public const ushort CSPayChargeMoneyPacket = 0x0a0;
     public const ushort CSDeleteMailPacket = 0x0a1;
     public const ushort CSReportSpamPacket = 0x0a3;
-    public const ushort CSReturnMailPacket = 0xfff; // TODO: this packet is not in the offsets 
+    // STRONGLY_INFERRED as 0x0a2 (not present in client offset dumps). Evidence chain:
+    // the mailbox UI calls X2Mail:ReturnMailById verbatim (decompiled 1.2 game_pak
+    // x2ui/mailbox/mail/read_mail.lua:991-1009), and slot arithmetic over the contiguous
+    // C2S mail block pins the gap: Send=0x098, List=0x09a/b, Read=0x09c, TakeItem=0x09d,
+    // TakeMoney=0x09e, TakeSequentially=0x09f, PayChargeMoney=0x0a0, Delete=0x0a1,
+    // ReportSpam=0x0a3 — leaving 0x0a2 as the only free slot for Return. Confirm against
+    // a live-client capture before treating this as VERIFIED.
+    public const ushort CSReturnMailPacket = 0x0a2;
     public const ushort CSRemoveMatePacket = 0x0a4;
     public const ushort CSChangeMateTargetPacket = 0x0a5;
     public const ushort CSChangeMateNamePacket = 0x0a6;
