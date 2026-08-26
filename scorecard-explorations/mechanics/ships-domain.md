@@ -274,3 +274,28 @@ unreached. Stage table, log excerpts, layer attribution:
 `scorecard-explorations/generated/ships-rowboat-e2e-report.md`; ledger entry PB-005.
 Sharpest UNKNOWN #3 ("zero runtime evidence") is now answered: boats DO NOT work live.
 
+
+## 13. PB-006 RESOLVED — sailing was never physics-dead; one bridge bug silenced replication (2026-08-26)
+
+Re-investigation on `fix/pb006-boats` (`.worktrees/boatsfix`, base c733536bc; fix f33ddf285) overturns half
+of §12's verdict:
+
+1. **Spawn height was always correct.** main_world's internal ocean surface is z=100 — data-driven from
+   client `world.xml` `oceanLevel="100"` → `WorldTemplate.OceanLevel` → `WaterBodies.OceanLevel` and the same
+   value is the Jitter2 `Buoyancy` fluid surface. The §12 hull at z≈99.7/vel=0 was floating AT REST at the
+   surface (draft ≈0.3 m); live probe: `GetWaterSurface` = exactly 100.00 at the summon point. The "character
+   stood at z=0.05 nearby" premise is ground-level DATA ~100 m under the surface (PB-005 family), and client
+   wire heights are internal−100 (`Helpers.ConvertPosition`), so clients rendered the boat correctly.
+   `PhysicsManager.DefaultWaterLevel` never fired. §12's layer line "SERVER/DATA water-surface fallback" is
+   retracted.
+2. **Zero replication root cause: stale region membership from a test-control teleport.** BotDriveBridge ops
+   (`teleportToNpc` etc.) wrote `Transform.Local.Position` directly; an idle character never runs
+   `FinalizeTransform`/`AddVisibleObject` afterwards, so it stayed registered in its previous region. Live
+   proof ([bc-diag]): 1515 consecutive ship broadcasts with receivers=0, owner in region 249072 vs hull in
+   49617. Physics, packet encode and GetAround were healthy throughout. Fix:
+   `BotDriveBridge.TeleportWithRegionSync` (+ `WorldManager.AddVisibleObject` handoff) on all four direct-
+   mutation sites, f33ddf285; unit-pinned by `BotDriveBridgeTeleportRegionTests`.
+3. **Post-fix live evidence** (isolated stack /root/aaemu-e2e-boat2): summon→bind→helm green end-to-end —
+   763 Ship frames in 15 s of throttle, displacement 67.2 m, yaw-rate sign flips on steering reversal
+   (+100→−8.7°/s, −100→+8.1°/s), unbind/despawn wire clean. Sharpest UNKNOWN #3 is hereby answered
+   properly: boats DO sail on this fork once the receiver set is intact.

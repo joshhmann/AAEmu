@@ -38,21 +38,43 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 - Status: OPEN-PENDING-OWNER
 - Evidence: `scorecard-explorations/generated/npc-grounding-audit-2026-08-25.md` (method §1, tables §2–4, classification §5); harness `/root/npc-grounding-harness/`; raw matrix `/tmp/ng.tsv`; READ-ONLY audit, compact.sqlite3 SELECT-only, no behavior changed
 
-### PB-006 · Ship sailing physics non-functional live: hull spawns ~100 m in air, zero movement replication (2026-08-25)
-- Layer: SERVER (+ contributing water-surface DATA fallback)
-- Evidence: SHIPS-01 slice-1 rowboat E2E (`AAEmu.IntegrationTests.E2e.RowboatE2eTests`,
-  isolated stack /root/aaemu-e2e-boat). Real item-use summon chain works end-to-end
-  (scroll 15817 → skill 15802 → SpawnSlave → SCSlaveCreated on the wire), but the hull
-  registers/ticks in Jitter2 at pos Z≈99.7 with vel=(0,0,0) forever —
-  `PhysicsManager.DefaultWaterLevel = 100f` fallback poisons the spawn-height query at
-  genuine ocean coords (character z=0.05 nearby) — and ZERO SCOneUnitMovementPacket(Ship)
-  frames reach the client despite per-tick `slave.BroadcastPacket` execution.
-  Full stage table + log excerpts: scorecard-explorations/generated/ships-rowboat-e2e-report.md.
-- Status: OPEN — fix needs (a) water-surface/ocean-level correctness in SlaveManager boat
-  spawn, (b) physics→client movement replication for Slave units (GetAround/encode path).
-
-
 ## FIXED (evidence retained)
+### PB-006 · Ship sailing physics non-functional live (2026-08-25) — FIXED 2026-08-26
+- Layer: SERVER, but NOT where the original report pointed. Two findings:
+- Finding 1 — "hull spawns ~100 m in air" was a MISDIAGNOSIS (no engine change needed):
+  the internal ocean surface of main_world IS z=100 — data-driven from client
+  `world.xml` attribute `oceanLevel="100"` (extracted from runtime game_pak) →
+  `WorldTemplate.OceanLevel` → `WaterBodies.OceanLevel` (`InitWaterFromTemplate`),
+  and the same value is the Jitter2 `Buoyancy` fluid-box surface. Live probe
+  ([water-diag], isolated stack /root/aaemu-e2e-boat2): `GetWaterSurface` at the
+  summon point returned exactly 100.00 = OceanLevel; the hull settled at z=99.4–99.7
+  with vel=(0,0,0) — that IS floating at rest at the surface (draft), not hanging in
+  air. The character's z=0.05 is ~100 m BELOW the surface (ground-level npc/teleport
+  data; PB-005 territory). Client wire heights are internal−100
+  (`Helpers.ConvertPosition`), so clients saw the boat correctly at ≈0.
+  `PhysicsManager.DefaultWaterLevel` never fired: it is only a last-resort fallback
+  behind `SimulationWorld.Template.OceanLevel`, which is always loaded for main_world.
+- Finding 2 — zero replication ROOT-CAUSED & FIXED: the E2E bridge teleports
+  (`BotDriveBridge.teleportToNpc` et al.) mutated `Transform.Local.Position`
+  directly. For an idle character nothing ever runs `FinalizeTransform`/
+  `AddVisibleObject` afterwards, so the character stayed registered in its PREVIOUS
+  region (live proof: [bc-diag] receivers=0 on 1515 consecutive ship broadcasts;
+  owner ghost-registered in region 249072 while the hull broadcast from 49617).
+  Every proximity broadcast at the destination — ship SCOneUnitMovementPacket
+  included — resolved ZERO receivers. Physics, encode path and GetAround were
+  healthy all along; the receiver set was empty.
+- Fix: `BotDriveBridge.TeleportWithRegionSync` (position+zone write followed by the
+  normal `WorldManager.AddVisibleObject` region handoff), all four direct-mutation
+  call sites routed through it. Commit f33ddf285 on branch fix/pb006-boats
+  (.worktrees/boatsfix): + unit tests BotDriveBridgeTeleportRegionTests (defect
+  shape + fixed contract, green), RowboatE2eTests harness committed with its two
+  false-premise assertions corrected to the documented internal convention
+  (`InternalOceanLevel = 100`; DEBUG-log sink for AddShip/RemoveShip counts via
+  stack-local NLog console rule).
+- Evidence: post-fix live run — SUMMON→BIND→HELM all green: 763 Ship frames in a
+  15 s window, displacement 67.2 m under throttle, yaw-rate sign flips with steering
+  reversal (+100→−8.7°/s, −100→+8.1°/s), unbind/despawn wire clean, no leaked body.
+
 ### PB-003 · Zone 46 Hadir Farm exit path (was: "no exit portal data")
 - Scenario: party clears Hadir Farm, wants to leave
 - Intended: exit doodad back to main world
