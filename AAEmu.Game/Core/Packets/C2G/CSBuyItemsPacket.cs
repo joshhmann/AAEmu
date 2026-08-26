@@ -141,11 +141,55 @@ public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
         }
 
         var tasks = new List<ItemTask>();
+        var bag = Connection.ActiveChar.Inventory.Bag;
+        var grantedNewItems = new List<Item>();
+        var mergedStacks = new List<(Item item, int prevCount)>();
+        var grantFailed = false;
         foreach (var (itemId, grade, count) in itemsBuy)
         {
+            // Snapshot the current stack counts of this template so a failed
+            // line can undo merges made by earlier lines (atomic purchase).
+            bag.GetAllItemsByTemplate(itemId, -1, out var existingItems, out _);
+            var prevCounts = new Dictionary<ulong, int>();
+            foreach (var it in existingItems)
+                prevCounts[it.Id] = it.Count;
+
             // Omit grade when creating to prevent "cheating" when creating the grade
-            Connection.ActiveChar.Inventory.Bag.AcquireDefaultItem(ItemTaskType.StoreBuy, itemId, count, -1);
-            // Connection.ActiveChar.Inventory.Bag.AcquireDefaultItem(ItemTaskType.StoreBuy, itemId, count, grade);
+            if (!bag.AcquireDefaultItemEx(ItemTaskType.StoreBuy, itemId, count, -1, out var newItems, out var updatedItems, 0))
+            {
+                grantFailed = true;
+                break;
+            }
+
+            grantedNewItems.AddRange(newItems);
+            foreach (var it in updatedItems)
+                mergedStacks.Add((it, prevCounts[it.Id]));
+        }
+
+        if (grantFailed)
+        {
+            // Roll the whole purchase back atomically: undo every partial
+            // grant BEFORE any charge so a full bag leaves bag and money
+            // untouched. The old code ignored the grant result and charged
+            // regardless — money paid, nothing received.
+            var undoTasks = new List<ItemTask>();
+            foreach (var (item, prevCount) in mergedStacks)
+            {
+                var delta = prevCount - item.Count;
+                if (delta == 0)
+                    continue;
+                item.Count = prevCount;
+                undoTasks.Add(new ItemCountUpdate(item, delta));
+            }
+            foreach (var item in grantedNewItems)
+                bag.RemoveItem(ItemTaskType.Invalid, item, true);
+            foreach (var item in grantedNewItems)
+                undoTasks.Add(new ItemRemoveSlot(item));
+
+            if (undoTasks.Count > 0)
+                Connection.SendPacket(new SCItemTaskSuccessPacket(ItemTaskType.StoreBuy, undoTasks, []));
+            Connection.ActiveChar.SendErrorMessage(ErrorMessageType.BagFull);
+            return;
         }
 
         foreach (var (item, index) in itemsBuyBack)
