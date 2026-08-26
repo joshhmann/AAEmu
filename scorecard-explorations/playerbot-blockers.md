@@ -29,6 +29,29 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 
 
 
+
+### PB-005 · NPC spawn Z is effectively unclamped — systemic ungrounded NPCs (floating / buried)
+- Scenario: any placed NPC whose canonical `npc_spawns.json` z disagrees with local ground by ≥ 1 m (prod human report: "a lot of the NPCs are not really grounded — some floating, some under roads and clipping")
+- Observed vs expected: the only spawn-time correction (`NpcSpawnerNpc.SpawnNpc`, `AAEmu.Game/Models/Game/NPChar/NpcSpawnerNpc.cs:97-104`) applies `GeoData.GetHeight` only when |spawnerZ − newZ| < 1f, and `WorldManager.GetReferenceHeight` (`WorldManager.cs:907-921`) returns spawner Z verbatim for flyers and Idle/HoldPosition AI; `SCUnitStatePacket.cs:137-140` then sends that height to clients — so data z errors persist to players forever
+- Measured 2026-08-25 (offline engine-identical heightmap harness over all 25 118 main_world npc_spawns): of 23 058 defect-audited spawns (fly/swim excluded), 89.54 % grounded, 3.72 % minor float (0.5–2 m), **5.62 % severe float (> 2 m, worst +183.6 m)**, 2.91 % submerged (< −0.5 m, worst −270.3 m); plus 733 exact duplicate spawn rows
+- Layer: SERVER (ineffective clamp) with DATA component (bad z clusters in `npc_spawns.json`, e.g. e_hasla_2 Citizens/Maid frozen at z=538.x on 355–430 terrain); remedy options A–C in `scorecard-explorations/generated/npc-grounding-audit-2026-08-25.md` §6
+- Status: OPEN-PENDING-OWNER
+- Evidence: `scorecard-explorations/generated/npc-grounding-audit-2026-08-25.md` (method §1, tables §2–4, classification §5); harness `/root/npc-grounding-harness/`; raw matrix `/tmp/ng.tsv`; READ-ONLY audit, compact.sqlite3 SELECT-only, no behavior changed
+
+### PB-006 · Ship sailing physics non-functional live: hull spawns ~100 m in air, zero movement replication (2026-08-25)
+- Layer: SERVER (+ contributing water-surface DATA fallback)
+- Evidence: SHIPS-01 slice-1 rowboat E2E (`AAEmu.IntegrationTests.E2e.RowboatE2eTests`,
+  isolated stack /root/aaemu-e2e-boat). Real item-use summon chain works end-to-end
+  (scroll 15817 → skill 15802 → SpawnSlave → SCSlaveCreated on the wire), but the hull
+  registers/ticks in Jitter2 at pos Z≈99.7 with vel=(0,0,0) forever —
+  `PhysicsManager.DefaultWaterLevel = 100f` fallback poisons the spawn-height query at
+  genuine ocean coords (character z=0.05 nearby) — and ZERO SCOneUnitMovementPacket(Ship)
+  frames reach the client despite per-tick `slave.BroadcastPacket` execution.
+  Full stage table + log excerpts: scorecard-explorations/generated/ships-rowboat-e2e-report.md.
+- Status: OPEN — fix needs (a) water-surface/ocean-level correctness in SlaveManager boat
+  spawn, (b) physics→client movement replication for Slave units (GetAround/encode path).
+
+
 ## FIXED (evidence retained)
 ### PB-003 · Zone 46 Hadir Farm exit path (was: "no exit portal data")
 - Scenario: party clears Hadir Farm, wants to leave
@@ -71,3 +94,4 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 
 ### PB-F4 · Transfers could never be boarded (TlId shadowing)
 - Fixed 3a534b539; live ride E2E green
+

@@ -260,3 +260,17 @@ baseline window has 0 marshal errors, ≥1 SCSlaveCreatedPacket broadcast is rec
 errors post-fix. PASS against rebuilt runtime; dotnet build AAEmu.Game + IntegrationTests green.
 Pre-existing, NOT touched here: CSChangeSlaveEquipmentPacket vehicle-customization TODO (SlaveManager ~537) and
 the CSChangeSlaveTargetPacket placeholder remain open gaps.
+
+## 12. Slice-1 Rowboat E2E — first live evidence: summon chain REAL, sailing physics DEAD (2026-08-25)
+
+Run: `.worktrees/rowboat` @ `bfbea4093`, isolated stack, test `E2e.RowboatE2eTests`.
+Verdict **FAIL with diagnosis** (PB-005): the §2-grade player-facing summon path is proven
+on the wire end-to-end — scroll item 15817 → use skill 15802 → SpawnSlave special effect →
+`SCSlaveCreatedPacket` for slave 15 — but sailing is non-functional: hull ticks in Jitter2
+frozen at Z≈99.7 (`DefaultWaterLevel = 100f` fallback poisoning the boat spawn height,
+vs character z=0.05 at the same spot) and no SCOneUnitMovementPacket(Ship) frame ever
+reaches the client despite per-tick broadcast execution. Bind/helm/unbind/despawn stages
+unreached. Stage table, log excerpts, layer attribution:
+`scorecard-explorations/generated/ships-rowboat-e2e-report.md`; ledger entry PB-005.
+Sharpest UNKNOWN #3 ("zero runtime evidence") is now answered: boats DO NOT work live.
+

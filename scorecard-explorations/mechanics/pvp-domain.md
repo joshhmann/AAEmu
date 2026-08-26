@@ -273,3 +273,25 @@ enforcement is a per-second poll: either duelist ≥ **75 m** (hardcoded `Distan
 5-minute timer (:25,150-151). So the DUEL-01 "bounds need live geodata" caveat reduces to
 verifying the flag doodad spawns on terrain correctly on the live stack — the bound itself is a
 constant.
+
+## Addendum 2026-08-25 — OWNER RULING: contested honor values aligned to KR/RU official ("keep it korean")
+
+Contested rows P1/P2 of `formula-corroboration-2026-08-25.md` §3 are resolved by owner ruling,
+citing the official RU 2.9 notes (https://archeage.ru/updates/28042016/). Landed on worktree
+branch `bots/honor-krbase` @ `8d5a0fb20`:
+
+- **P1 (Conflict-zone kill honor): 10 → 0.** The award path in `AwardPvpHonor`
+  (`CharacterCombat.cs:220`) is now WAR-GATED — any zone state other than War returns before any
+  award, matching RU official («kills during Conflict award 0 honor»). Zone-kill counter
+  registration (`conflictData?.AddZoneKill()`) still fires for Conflict kills so the escalation
+  state machine is unchanged.
+- **P2 (War-zone kill honor): base 20 → 40** («40 очков чести за убийство на войне»).
+  **INFERRED assist split** — RU publishes only the base; the fork keeps its existing absolute
+  4-honor assist share, so 40 ⇒ killer 32 + 4/assist (was 20 ⇒ 16 + 4).
+- **P3 (victim −10 clamp ≥0) and P4 (30-s assist window): UNCHANGED** (P3 confirmed exact vs RU).
+- **P5 (Leech/repeat-kill diminishing returns): still out of scope**, separate owner decision.
+
+Rig cover (`AAEmu.UnitTests/Game/Core/Managers/PvpFlaggingRigTests.cs`):
+`DoDie_HostileKillInConflictZone_CountsKillButAwardsNoHonor` (war-gating regression guard),
+`DoDie_HostileKillInWarZone_AwardsKillCountAndHonorAndVictimPenalty` (updated to 40-base),
+`DoDie_HostileKillInWarZoneWithOnlineAssist_SplitsKiller32AndAssist4` (32+4 split).

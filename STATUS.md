@@ -2,6 +2,9 @@
 
 Updated: 2026-08-25 · by ox-alpha docs wave (G2-A5 + A4 near-term gates MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same day; first-class InteractWith doodad contract action) · + SERVER-PERF wave (G2-A3 remainder: staggered wakes landed default-OFF, incremental counters rejected by profiling, IdManager boot race fixed, wake-storm probe landed — see scorecard-explorations/generated/g2-a3-storm-report.md)
 Branch of record: develop @ 6ba363a28 (origin/develop; was e672b9579 at day start)
+Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
+return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated honor,
+NPC grounding tour, boats, slavetest observation, Mirage walk.
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
