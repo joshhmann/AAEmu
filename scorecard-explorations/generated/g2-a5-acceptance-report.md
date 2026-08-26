@@ -304,3 +304,53 @@ logged here for the record, NOT fixed in this change.
 lazy-initializes on first use instead of NRE-ing (95bf502ad); reproduced at
 1,000 seeded characters during the G2-A3 storm probe and no longer crashes
 the boot.**
+
+## 11. Tier-3 shape measurement (2026-08-26, worktree `.worktrees/tier3` @ 214bed834)
+
+- Executor: measurement workstream agent (`tier3-probe`). Isolated stack: `E2E_ROOT=/root/aaemu-e2e-t3`,
+  `COMPOSE_PROJECT_NAME=t3acc`, ports 2537/2539/2550/2560/2534/2580, DB 25306. New probe:
+  `AAEmu.IntegrationTests.E2e.G2.A5Tier3AcceptanceProbeTests.Probe_A5Tier3Shape_Acceptance` — PASSED, run
+  `2026-08-26T00:51:50Z`, ~15.5 min wall total. Report: `/root/aaemu-e2e-t3/logs/g2-a5-tier3-report.json`
+  (snapshot: `g2-a5-tier3-report-20260826T0051Z.json`). No source modifications beyond the new probe file;
+  default-OFF neutrality untouched; compact.sqlite3 untouched.
+- Arms: **B baseline** = dormancy OFF, 50 ACTIVE presence-demo citizens (real provisioning + roam), human online →
+  RSS median 3832.1 MB, tick p95 med 0.8 ms, region worst 83 ms, 15003 steps/min (~300×50 ✓).
+  **T tier-3** = TRUE_DORMANCY+PROXIMITY_FIDELITY, **1,000 dormant seeded** through the real provisioning path
+  (bridge `seedDormant`; seed took **4.1 min** sequential — well inside the 30-min box), human reconnects via real
+  TCP login → all 50 near-home specs materialized in **32.4 s** (budget-paced 3/sweep @ 2 s cadence, matching the
+  computed ~34 s; NO env raise of the materialize budget was needed or used).
+
+| Target | Result | Evidence |
+|---|---|---|
+| 1,000 registered dormant | PASS | seededCount = 1000/1000 (SQL join verified); dormantSpecs = 950 while 50 embodied, 1000 after leave |
+| ≤50 embodied steady state | PASS | exactly 50 materialized / 50 embodied at sample time |
+| RSS within 15 % of 50-active baseline | PASS | Δ = **+0.13 %** (3832.1 → 3837.0 MB median) |
+| Wake-to-visible p95 < 3 s | PASS | materialize latency p50 = 220.1 ms, **p95 = 280.2 ms**, p99 = 474.8 ms, max = 474.8 ms (10.7× under target) |
+| Transition p99 | recorded | 474.8 ms (n=50 samples) |
+| tick p95 | recorded | 0.8 ms median both arms (parity) |
+| steps/min | recorded | 15003 baseline vs 14995 tier-3 — proximity-materialized bots DO step post-PB-004 fix |
+| dematerialize-on-leave cleanliness | PASS | human left → 0 embodied, 50/50 dematerialized, dormantSpecs back to 1000; game log 0 ERROR/Exception |
+| 6-hour dormant-timers leg | PENDING | out of scope for this session by directive; natural home: scheduled soak |
+
+Anomalies encountered en route (both environmental/harness, neither a defect in the engine):
+1. A stale login server from an unrelated stack (`/root/aaemu-e2e-pb003`) squatted port 2437 → first run's human login
+   timed out and the login process died on Kestrel bind; fixed by shifting this stack's ports (25xx range).
+   Human connect also gained bounded retry (×3).
+2. CONCURRENT `seedDormant` (4 bridge connections) corrupts server state after ~100 bots —
+   "Operations that change non-concurrent collections must have exclusive access" from the provisioning path.
+   Seeding is therefore SEQUENTIAL in the probe; measured rate ~7 s per 25-bot batch makes 1,000 bots ≈ 4–5 min,
+   so concurrency is unnecessary as well as unsafe. The probe also restarts the game with flags off before seeding,
+   guaranteeing pristine provisioning state.
+
+Reproduce:
+```bash
+git worktree add /root/aaemu-dev/.worktrees/tier3 origin/develop
+mkdir -p /root/aaemu-e2e-t3/runtime && cp -a <canonical>/runtime/game-data /root/aaemu-e2e-t3/runtime/
+cp /root/aaemu-e2e/ensure-log-caps.sh /root/aaemu-e2e-t3/
+cd /root/aaemu-dev/.worktrees/tier3
+E2E_REBUILD=1 E2E_ROOT=/root/aaemu-e2e-t3 COMPOSE_PROJECT_NAME=t3acc DB_HOST_PORT=25306 \
+E2E_LOGIN_PORT=2537 E2E_GAME_PORT=2539 E2E_STREAM_PORT=2550 E2E_BRIDGE_PORT=2560 \
+E2E_INTERNAL_PORT=2534 E2E_WEBAPI_PORT=2580 E2E_DB_PORT=25306 \
+A5_DORMANT_COUNT=1000 A5_EMBODIED_COUNT=50 SCALING_PROBE_MINUTES=2 dotnet test --project AAEmu.IntegrationTests \
+# Report (OVERWRITTEN PER RUN): /root/aaemu-e2e-t3/logs/g2-a5-tier3-report.json
+```

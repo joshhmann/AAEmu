@@ -5,6 +5,20 @@
 > Engine: real QuestManager.Load + real unit_reqs from canonical compact.sqlite3;
 > bots = ordinary Character records (no Connection); all mutations through normal gameplay services.
 
+## cat34-daily
+```
+# Scenario: cat34-daily
+Verdict: PASS
+- gate [prereq-1958]: REFUSED (pass) refused without prereq quest 1958 completed: RejectedAction: quest 1959 accept refused by engine gate (Npc/0)
+- stage START: 0 events, advance=ran, step=Reward, status=Completed
+- stage PROGRESS: 1 events, advance=ran, step=Dropped, status=Completed
+- criterion [quest-1959-completed]: PASS quest 1959 completed (flag set, not active)
+- criterion [quest-1959-not-active]: PASS quest 1959 not active
+- criterion [reaccept-refused]: PASS re-accept of completed quest 1959 refused by engine (repeatable/daily gate)
+- actor requests: 4
+
+```
+
 ## ability-gate
 ```
 # Scenario: ability-gate
@@ -31,20 +45,6 @@ Verdict: PASS
 - criterion [bank-money-600]: PASS bank money 600 == 600
 - criterion [bag-item-restored]: PASS Inventory holds 5 of item 15589 (expected 5)
 - criterion [bank-item-empty]: PASS Bank holds 0 of item 15589 (expected 0)
-- actor requests: 4
-
-```
-
-## cat34-daily
-```
-# Scenario: cat34-daily
-Verdict: PASS
-- gate [prereq-1958]: REFUSED (pass) refused without prereq quest 1958 completed: RejectedAction: quest 1959 accept refused by engine gate (Npc/0)
-- stage START: 0 events, advance=ran, step=Reward, status=Completed
-- stage PROGRESS: 1 events, advance=ran, step=Dropped, status=Completed
-- criterion [quest-1959-completed]: PASS quest 1959 completed (flag set, not active)
-- criterion [quest-1959-not-active]: PASS quest 1959 not active
-- criterion [reaccept-refused]: PASS re-accept of completed quest 1959 refused by engine (repeatable/daily gate)
 - actor requests: 4
 
 ```

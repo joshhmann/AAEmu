@@ -76,6 +76,45 @@ unprompted 254→255, XP +620/+680 through real quest gates
 (bots/leveling-loop @ 2a124be70); remaining primitives captured in the
 capability-matrix / blockers taxonomy.
 
+**2026-08-25 wave 4 (research + promotion docs lane — six domain dossiers +
+master census):** completeness census landed
+(scorecard-explorations/generated/mechanic-inventory-2026-08-25.md): 65
+canonical player-facing 1.2 systems enumerated against opcode families,
+compact.sqlite3 domains, and the 65-manager code surface — 32 tracked, 33
+newly proposed; SCORECARD.md now carries all 33 stable-ID rows (ledger
+coverage 64/65 ≈ 98%) plus dossier-grounded grade promotions (MERCHANT-01
+W=2/A=2 stale-row fix with 3 open engine defects; CRIME/TRIAL/PVP C=2).
+Six domain dossiers landed under mechanics/: **justice** (chain one of the
+most completely reconstructed systems — gap is E2E proof, not code; prison
+labor/escape genuinely absent), **economy** (vendor loop rig-tested AND
+live-proven via m8 reconcile across kill -9; labor regen tick DEAD —
+TimedRewardsManager.Initialize has no caller; CSReturnMailPacket real 1.2
+value likely unrecoverable), **pvp** (CanAttack chokepoint ordering + honor
+formulas reconstructed; duel-bounds mystery solved: flag doodad 5014 +
+hardcoded 75 m poll, no geodata ring exists), **dominion** (richest dead-end
+domain — complete wire formats + data, zero runtime beyond a hardcoded
+DeclareDominion broadcast), **ships** (Jitter2 sailing physics REAL per-kind
+tuned; shipyard frames memory-only on restart), **mail** (instance-faithful
+attachments; SECURITY finding: 4 of 5 receive paths lack ReceiverId checks).
+Indun addendum refuted PB-003's data premise before its E2E closed it.
+- Quest-surface branch `bots/quest-surface` (@ 5fe08432e): discovery
+  CHANNELS v2 — ~801 previously-hidden quests now perceivable via Item
+  (342+25) / Sphere (431) / Level (3) channels + DiscoverSelfQuests
+  (ConAcceptComponent deferred = stub) — plus Talk contract action (Talk =
+  46) through the real DoTalkMadeEvents pipeline, fail-closed pre/post-checks;
+  full unit suite green (2400/2400 + pre-existing skip).
+- Kill-leg branch `bots/kill-leg` (@ f369f4c84): hunt objectives
+  (MonsterHunt/MonsterGroupHunt) added to LevelingLoopScenario with
+  cast-burst rotation, loot-per-corpse, no-progress exclusion; quests 329 +
+  1652 complete unprompted (+620/+680 XP); suite 2393/2394 green.
+- Tier-3 shape MEASURED (g2-a5-acceptance-report.md §11, worktree tier3):
+  1,000 dormant seeded through real provisioning (~4.1 min sequential) /
+  exactly 50 embodied; RSS +0.13% vs the 50-active baseline (3832.1 →
+  3837.0 MB median); wake-to-visible p95 280.2 ms (10.7× under the 3 s bar);
+  steps/min parity 15003 vs 14995. OPEN: 6h dormant-timers soak leg;
+  concurrent seedDormant corrupts server state after ~100 bots (documented;
+  seeding stays sequential).
+
 **M0 — Foundation: ✅ CLOSED (2026-08-03, Josh signoff)**
 Workflow v4 (permanent one-way upstream gate), community guidelines,
 kanban template set (Nei), gate.sh verified, scorecard + 3 exploration

@@ -1695,6 +1695,15 @@ remain human acceptance work.
 **Next-wave execution specs (2026-08-25; integrated development-loop
 priorities — excludes the three already-delegated slices: PB-002
 quest-discovery, doodad-interact contract action, A5 acceptance run):**
+  **UPDATE 2026-08-25 (wave 4):** PB-002 extended beyond discovery — quest
+  offer CHANNELS v2 + Talk landed on branch `bots/quest-surface` (SHAs in
+  STATUS): ~801 previously-hidden quests now perceivable via Item (342+25),
+  Sphere (431, geometry via `GetQuestStartingSpheres`) and Level (3) channels
+  plus DiscoverSelfQuests; the ConAcceptComponent channel is deliberately
+  DEFERRED (stub true-return, no player-perceivable precondition). Talk
+  contract action (Talk = 46) fires the real DoTalkMadeEvents pipeline with
+  fail-closed pre/post-checks. Hunt-leg leveling extension on branch
+  `bots/kill-leg` (MonsterHunt/MonsterGroupHunt pursuit + cast-burst).
 
 1. **PB-001 navigation strategy dossier + coarse-travel slice design**
    · Owner-role: evidence scout + systems designer (docs/design first, no
@@ -1797,6 +1806,64 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    or a filed negative-test task. *Outputs:* scenario-library doc + audit
    section. *Follow-up unlocked:* new systems register regression coverage
    as part of their vertical slice (loop stage 6 becomes mechanical).
+
+7. **Justice slice-1 — crime-points vertical** · Area: JUSTICE (CRIME-01) ·
+   Priority: HIGH · Depends on: nothing (implementation exists; pure
+   verification vertical per justice-domain.md slice plan) · Milestone: M9
+   lane. *Goal:* first live proof of evidence → points → persistence.
+   *Work/Acceptance:* bot A kills same-faction bot B unprovoked → assert
+   large-bloodstain doodad spawns (Owner=A/Data=B); CSReportCrimePacket seam →
+   CrimePoint/InfamyPoint rise + SCCrimeChanged emitted + MySQL `crime` row
+   survives restart; Wanted buff appears at the 50-point boundary (inject via
+   CrimeAddPointSubCommand). Client report-dialog rendering stays UNKNOWN.
+8. **PvP slice-1 — flagged-aggression handshake live E2E** · Area: PVP
+   (PVP-01) · Priority: HIGH · Depends on: proven party/indun live-E2E seams ·
+   Milestone: Later-lane promotion candidate. *Goal:* prove flag → aggress →
+   peace-refusal → honor on the real server with ZERO source changes
+   (pvp-domain §6). *Work/Acceptance:* CS 0x04f → SCForceAttackSetPacket +
+   Bloodlust 1482; same-faction damage turns attacker purple (Retribution
+   2167), assault lists populate, evidence doodad spawns; Peace-zone refusal
+   demonstrated in the SAME binary as the allowed kill; kill awards honor +
+   death penalties apply.
+9. **Mail security fix — receive-path ownership checks** · Area: MAIL
+   (MAIL-01, SECURITY priority) · Depends on: none · *Goal:* close the 4-of-5
+   ReceiverId gap found by mail-domain.md (read/take-item/take-money/delete
+   trust client mailId). *Work:* mirror CSTakeAttachmentSequentially's guard
+   into ReadMail/GetAttached/GetAttached(money)/DeleteMail. *Acceptance:*
+   non-owner read/take/delete refused with MailInvalid; owner flows unchanged;
+   MailTests/MailReturnTests stay green.
+10. **Ships slice-1 — rowboat E2E** · Area: SLAVE-01 naval half (ships-domain
+    Slice 1) · Priority: MEDIUM · Depends on: indun/party bridge charPos +
+    packet-tap seams. *Goal:* first live proof of sailing physics + lifecycle:
+    summon slave 15 → water-depth spawn assert → bind driver → inject
+    CSMoveUnitPacket ShipRequestMoveType throttle/steer → observe
+    SCOneUnitMovementPacket stream + displacement over T → steer reversal
+    flips heading sign → UnbindSlave → despawn clean (no leaked RigidBody).
+11. **Dominion slice-1 — persistence vertical (zero combat)** · Area:
+    DOMINION (siege domain zero-wired; dominion-domain Slice 1) · Priority:
+    MEDIUM · Depends on: none. *Work:* new DominionManager loading
+    siege_zones/settings/plans; additive MySQL `aaemu_game.dominions`; wire
+    CSUpdateDominionTaxRate → owner-gated store → SCDominionTaxRate echo;
+    TickManager phase cron (Peace/Declare/Warmup/Siege/Payoff) announcing via
+    a new SCSiegeAlertPacket marshaler. *Acceptance:* declared dominion
+    survives game-server restart; tax-rate change round-trips C2G→store→G2C.
+12. **Merchant bug-fix trio** · Area: ECONOMY (MERCHANT-01 open defects;
+    economy-domain MER-C) · Priority: HIGH (dupe vector) · Depends on: none ·
+    *Fixes:* funds gate `&&`→`\|\|` (insolvent buys currently drive money
+    negative — ChangeMoney has no funds guard); buyback refund accumulated
+    only inside the success branch of the move (container-full ⇒ item kept
+    AND money paid today); AcquireDefaultItem return checked (full bag ⇒
+    charged, no item today). *Acceptance:* rig tests inverted — insolvent buy
+    rejected with money unchanged, full-bag buy charges nothing; conservation
+    invariant 9 holds on the buy path.
+13. **Labor regen tick decision — schedule or delete** · Area: LABOR-01
+    (economy-domain LAB-A) · Priority: MEDIUM (decision card). *Fact on
+    record:* TimedRewardsManager.Initialize has NO caller anywhere — online
+    regen is dead-by-default; offline AddOfflineLabor IS called; shipped
+    configs define no Labor section, so even scheduled default regen would be
+    0/min. *Work:* owner decision recorded; if scheduled: integration test
+    shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
+    deleted: remove task + config stubs (clean cutover).
 
 **Low-lift first moves (2026-08-22; use existing seams):**
 
@@ -2352,6 +2419,17 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
     RSS within 15% of the 50-only baseline; wake-to-visible p95 < 3s;
     dormant timers advance over 6h (Tier 3 = DB-driven scheduled simulation:
     harvest/travel timers advance while nobody is embodied).
+    ✅ **SHAPE MEASURED 2026-08-26 (g2-a5-acceptance-report.md §11,
+    worktree .worktrees/tier3 @ 214bed834):** 1,000 dormant seeded through
+    the REAL provisioning path (~4.1 min sequential) / exactly 50 embodied;
+    RSS Δ = **+0.13 %** vs the 50-active baseline (3832.1 → 3837.0 MB
+    median) — trivially inside 15%; wake-to-visible p95 = **280.2 ms**
+    (p50 220.1 / p99 474.8 ms) — 10.7× under target; steps/min parity
+    15003 vs 14995 (proximity-materialized bots DO step post-PB-004 fix);
+    tick p95 parity 0.8 ms both arms. **PENDING:** the 6h dormant-timers
+    soak leg (scheduled). Documented hazard: CONCURRENT seedDormant corrupts
+    server state after ~100 bots (non-concurrent collection) — seeding stays
+    sequential (report §11.2).
 - A6 (M) Manifest-driven mass provisioning (citizen manifest as data;
   replaces hardcoded CitizenNN + 10-bot clamp). Acceptance: cold boot →
   100 citizens on schedule < 60s. **Note 2026-08-24 (4e460305b):** soak
