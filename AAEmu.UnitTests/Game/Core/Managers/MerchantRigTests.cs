@@ -168,10 +168,10 @@ public class MerchantRigTests
         await Assert.That(actor.Character.Money).IsEqualTo(10_000 - 2 * 50); // Price=50 per unit
     }
 
-    // ---- 2. buy insufficient funds — documents BUG #1 ----------------------
+    // ---- 2. buy insufficient funds — regression: BUG #1 (funds gate) ------
 
     [Test]
-    public async Task Buy_InsufficientFunds_KnownBug_PurchaseProceedsAndMoneyGoesNegative()
+    public async Task Buy_InsufficientFunds_RefusedCleanly_MoneyAndBagUntouched()
     {
         var (actor, _, conn, npcObjId) = Rig("merch-poor");
         GameplayActorTestRig.SetMoney(actor, 10); // 40 short of the 50-price item
@@ -179,13 +179,12 @@ public class MerchantRigTests
         new AAEmu.Game.Core.Packets.C2G.CSBuyItemsPacket()
             .Tap(p => Deliver(p, conn, BuyPayload(npcObjId, (GameplayActorTestRig.BuyItemTemplateId, 1))));
 
-        // SPEC expectation: refused, money unchanged, no item.
-        // ACTUAL (BUG #1, CSBuyItemsPacket.cs:119-122): the gate needs ALL
-        // THREE currencies overdrawn (&& instead of ||) — honor/vocation are
-        // 0 so it never fires; the item is granted and Money goes negative.
-        var granted = GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.BuyItemTemplateId);
-        await Assert.That(granted).IsNotNull(); // documents the bug
-        await Assert.That(actor.Character.Money).IsEqualTo(10 - 50); // -40: negative balance accepted
+        // FIXED (BUG #1, CSBuyItemsPacket.cs): the refusal gate is OR-shaped
+        // per currency — a money shortfall alone refuses the purchase before
+        // any grant or charge. The old && gate never fired when honor and
+        // vocation had no shortfall, letting Money go negative.
+        await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.BuyItemTemplateId)).IsNull();
+        await Assert.That(actor.Character.Money).IsEqualTo(10); // untouched
     }
 
     // ---- 3. buy with a full bag — documents BUG #3 -------------------------

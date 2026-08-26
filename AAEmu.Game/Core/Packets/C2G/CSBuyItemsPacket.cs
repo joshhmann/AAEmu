@@ -116,10 +116,29 @@ public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
 
         var useAAPoint = stream.ReadBoolean();
 
-        if (money > Connection.ActiveChar.Money &&
-            honorPoints > Connection.ActiveChar.HonorPoint &&
-            vocationBadges > Connection.ActiveChar.VocationPoint)
+        // Each shop line is charged in exactly ONE currency — the client
+        // declares which per line (compact.sqlite3 merchant_goods carries no
+        // currency column; pricing comes off items.price / honor_price /
+        // living_point_price, and goods are priced in a single currency).
+        // Refuse when ANY requested currency exceeds its balance: joining
+        // these with && only refused when ALL THREE were overdrawn at once,
+        // letting an insolvent money purchase through (ChangeMoney on the
+        // None→Inventory path has no funds guard, so money went negative).
+        if (money > Connection.ActiveChar.Money)
+        {
+            Connection.ActiveChar.SendErrorMessage(ErrorMessageType.NotEnoughMoney);
             return;
+        }
+        if (honorPoints > Connection.ActiveChar.HonorPoint)
+        {
+            Connection.ActiveChar.SendErrorMessage(ErrorMessageType.NotEnoughHonorPoint);
+            return;
+        }
+        if (vocationBadges > Connection.ActiveChar.VocationPoint)
+        {
+            Connection.ActiveChar.SendErrorMessage(ErrorMessageType.NotEnoughLivingPoint);
+            return;
+        }
 
         var tasks = new List<ItemTask>();
         foreach (var (itemId, grade, count) in itemsBuy)
