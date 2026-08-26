@@ -58,6 +58,26 @@ public sealed class BotDriveBridge
     }
 
     /// <summary>
+    /// Test-control teleport that keeps the world's region bookkeeping intact.
+    /// PB-006 root cause: mutating <c>Transform.Local.Position</c> alone left
+    /// the character registered in its PREVIOUS Region, so every proximity
+    /// broadcast in the destination area (SCOneUnitMovementPacket from ships,
+    /// NPC/bot movement, chat-range packets) resolved ZERO receivers for it —
+    /// units visibly stopped replicating to the teleported character. Normal
+    /// movement re-registers through GameObject.SetPosition → AddVisibleObject;
+    /// this helper restores exactly that handoff (region membership + neighbor
+    /// visibility) after the raw position write. ZoneId is kept as a parameter
+    /// because every call site pairs the position with a zone override.
+    /// </summary>
+    internal static void TeleportWithRegionSync(Character character, System.Numerics.Vector3 position, uint? zoneId = null)
+    {
+        character.Transform.Local.Position = position;
+        if (zoneId.HasValue)
+            character.Transform.ZoneId = zoneId.Value;
+        WorldManager.Instance.AddVisibleObject(character);
+    }
+
+    /// <summary>
     /// Reads config and starts the listener when enabled. Safe to call from
     /// the assembly-load bootstrap; no-ops when disabled or already running.
     /// </summary>
@@ -643,9 +663,9 @@ public sealed class BotDriveBridge
                     .FirstOrDefault(s => s.UnitId == npcTemplate);
                 if (spawner == null)
                     return Err($"teleportToNpc: no spawner found for NPC template {npcTemplate}");
-                character.Transform.Local.Position = new System.Numerics.Vector3(
-                    spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
-                character.Transform.ZoneId = spawner.Position.ZoneId;
+                TeleportWithRegionSync(character,
+                    new System.Numerics.Vector3(spawner.Position.X, spawner.Position.Y, spawner.Position.Z),
+                    spawner.Position.ZoneId);
                 character.MarkDirty(); // position changed — persist on the next save cycle
                 return Ok(new
                 {
@@ -806,9 +826,9 @@ public sealed class BotDriveBridge
                 .FirstOrDefault(s => s.UnitId == npcTemplateId);
             if (spawner != null)
             {
-                _character.Transform.Local.Position = new System.Numerics.Vector3(
-                    spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
-                _character.Transform.ZoneId = spawner.Position.ZoneId;
+                TeleportWithRegionSync(_character,
+                    new System.Numerics.Vector3(spawner.Position.X, spawner.Position.Y, spawner.Position.Z),
+                    spawner.Position.ZoneId);
 
                 var deadline = Environment.TickCount64 + 20_000;
                 while (Environment.TickCount64 < deadline)
@@ -1054,9 +1074,8 @@ public sealed class BotDriveBridge
             if (npcObjId == 0)
                 return Err($"scenario: could not resolve a live objId for NPC template {npcTemplateId}");
 
-            memberChar.Transform.Local.Position = leaderChar.Transform.Local.Position +
-                new System.Numerics.Vector3(20f, 0f, 0f);
-            memberChar.Transform.ZoneId = leaderChar.Transform.ZoneId;
+            TeleportWithRegionSync(memberChar, leaderChar.Transform.Local.Position +
+                new System.Numerics.Vector3(20f, 0f, 0f), leaderChar.Transform.ZoneId);
 
             var setTarget = new GameplayActor(leaderChar).SetTarget(npcObjId);
             if (setTarget.State != ActorLifecycleState.Completed)
@@ -1219,8 +1238,9 @@ public sealed class BotDriveBridge
             };
             for (var i = 1; i < characters.Length; i++)
             {
-                characters[i].Transform.Local.Position = leaderChar.Transform.Local.Position + offsets[(i - 1) % offsets.Length];
-                characters[i].Transform.ZoneId = leaderChar.Transform.ZoneId;
+                TeleportWithRegionSync(characters[i],
+                    leaderChar.Transform.Local.Position + offsets[(i - 1) % offsets.Length],
+                    leaderChar.Transform.ZoneId);
             }
 
             // ----------------------------------------------------------- RUN
