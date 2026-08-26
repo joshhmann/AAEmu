@@ -199,4 +199,127 @@ public class GameplayActorQuestDiscoveryTests
             QuestAcceptorType.Doodad, GameplayActorTestRig.DiscoveryDoodadTemplateId);
         await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
     }
+    // ---------------------------------------------- v2 self-perceivable channels
+
+    [Test]
+    public async Task DiscoverSelfQuests_ItemOwned_SurfacedWithEngineTriple_AndHiddenWithoutItem()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("pb002-self-1");
+        GameplayActorTestRig.SeedQuestItemOffer(GameplayActorTestRig.DiscoverySelfItemQuestId,
+            GameplayActorTestRig.DiscoverySelfItemComponentId, GameplayActorTestRig.DiscoverySelfItemTemplateId);
+
+        // Gate FAILS (no item in the bag) → the quest stays invisible.
+        var empty = actor.DiscoverSelfQuests();
+        await Assert.That(empty.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(((QuestSelfDiscoveryResult)empty.Result!).Offerings
+            .Any(o => o.QuestId == GameplayActorTestRig.DiscoverySelfItemQuestId)).IsFalse();
+
+        // Gate PASSES (item owned) → surfaced with AddQuestFromItem's exact triple.
+        GameplayActorTestRig.GiveBagItem(actor, GameplayActorTestRig.DiscoverySelfItemTemplateId, 1);
+        var request = actor.DiscoverSelfQuests();
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        var offering = ((QuestSelfDiscoveryResult)request.Result!).Offerings
+            .Single(o => o.QuestId == GameplayActorTestRig.DiscoverySelfItemQuestId);
+        await Assert.That(offering.AcceptorType).IsEqualTo(QuestAcceptorType.Item);
+        await Assert.That(offering.AcceptorId).IsEqualTo(GameplayActorTestRig.DiscoverySelfItemTemplateId);
+
+        // Fail-closed equality: everything surfaced passes the REAL accept gate.
+        var accept = actor.AcceptQuest(GameplayActorTestRig.DiscoverySelfItemQuestId,
+            QuestAcceptorType.Item, GameplayActorTestRig.DiscoverySelfItemTemplateId);
+        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        // …and once taken, the duplicate/terminal gate hides it again.
+        var after = actor.DiscoverSelfQuests();
+        await Assert.That(((QuestSelfDiscoveryResult)after.Result!).Offerings
+            .Any(o => o.QuestId == GameplayActorTestRig.DiscoverySelfItemQuestId)).IsFalse();
+
+        // Full audit record shape — every action emits one.
+        var record = actor.AuditTrace.First(r => r.Action == ActorActionType.DiscoverSelfQuests);
+        await Assert.That(record.Result).IsEqualTo(ActorLifecycleState.Completed);
+    }
+
+    [Test]
+    public async Task DiscoverSelfQuests_ItemGain_CountGate_MirrorsRunAct()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("pb002-self-2");
+        GameplayActorTestRig.SeedQuestItemOffer(GameplayActorTestRig.DiscoveryItemGainQuestId,
+            GameplayActorTestRig.DiscoveryItemGainComponentId, GameplayActorTestRig.DiscoverySelfItemTemplateId,
+            gain: true, gainCount: 2);
+
+        // QuestActConAcceptItemGain.RunAct requires CheckItems(..., Count):
+        // owning fewer than 2 units keeps the quest invisible.
+        GameplayActorTestRig.GiveBagItem(actor, GameplayActorTestRig.DiscoverySelfItemTemplateId, 1);
+        var shortStack = actor.DiscoverSelfQuests();
+        await Assert.That(((QuestSelfDiscoveryResult)shortStack.Result!).Offerings
+            .Any(o => o.QuestId == GameplayActorTestRig.DiscoveryItemGainQuestId)).IsFalse();
+
+        GameplayActorTestRig.GiveBagItem(actor, GameplayActorTestRig.DiscoverySelfItemTemplateId, 1);
+        var enough = actor.DiscoverSelfQuests();
+        await Assert.That(((QuestSelfDiscoveryResult)enough.Result!).Offerings
+            .Any(o => o.QuestId == GameplayActorTestRig.DiscoveryItemGainQuestId)).IsTrue();
+    }
+
+    [Test]
+    public async Task DiscoverSelfQuests_LevelChannel_BelowHidden_AtLevelSurfaced_EngineStartReplicated()
+    {
+        GameplayActorTestRig.SeedQuestLevelOffer(GameplayActorTestRig.DiscoveryLevelOfferQuestId,
+            GameplayActorTestRig.DiscoveryLevelOfferComponentId, requiredLevel: 20);
+
+        // Below threshold → hidden.
+        var (lowActor, _) = GameplayActorTestRig.CreateActor("pb002-self-3a");
+        var lowRequest = lowActor.DiscoverSelfQuests();
+        await Assert.That(((QuestSelfDiscoveryResult)lowRequest.Result!).Offerings
+            .Any(o => o.QuestId == GameplayActorTestRig.DiscoveryLevelOfferQuestId)).IsFalse();
+
+        // At threshold → surfaced with DoOnLevelUpEvents' bare-AddQuest triple.
+        var (actor, _) = GameplayActorTestRig.CreateActor("pb002-self-3b");
+        actor.Character.Level = 20; // rig gotcha: MaxHp derives from Level
+        actor.Character.Hp = actor.Character.MaxHp;
+        var request = actor.DiscoverSelfQuests();
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        var offering = ((QuestSelfDiscoveryResult)request.Result!).Offerings
+            .Single(o => o.QuestId == GameplayActorTestRig.DiscoveryLevelOfferQuestId);
+        await Assert.That(offering.AcceptorType).IsEqualTo(QuestAcceptorType.Unknown);
+        await Assert.That(offering.AcceptorId).IsEqualTo(0u);
+
+        // AcceptQuest with that exact triple replicates the engine's own start.
+        var accept = actor.AcceptQuest(GameplayActorTestRig.DiscoveryLevelOfferQuestId,
+            QuestAcceptorType.Unknown, 0);
+        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+    }
+
+    [Test]
+    public async Task DiscoverSelfQuests_StarterSphere_InsideSurfaced_OutsideHidden()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb002-self-4");
+        GameplayActorTestRig.EnsureQuestStartComponent(GameplayActorTestRig.DiscoveryTalkQuestId,
+            GameplayActorTestRig.DiscoveryTalkStartComponentId, level: 10);
+        var here = actor.Character.Transform.World.Position;
+        GameplayActorTestRig.SeedQuestStarterSphere(session, GameplayActorTestRig.DiscoveryTalkQuestId,
+            here, radius: 5f);
+
+        // Standing inside the starter sphere → surfaced with AddQuestFromSphere's triple.
+        var request = actor.DiscoverSelfQuests();
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        var offering = ((QuestSelfDiscoveryResult)request.Result!).Offerings
+            .Single(o => o.QuestId == GameplayActorTestRig.DiscoveryTalkQuestId);
+        await Assert.That(offering.AcceptorType).IsEqualTo(QuestAcceptorType.Sphere);
+        await Assert.That(offering.AcceptorId).IsEqualTo(GameplayActorTestRig.DiscoverySphereStarterId);
+
+        // Fail-closed equality through the REAL gate.
+        var accept = actor.AcceptQuest(GameplayActorTestRig.DiscoveryTalkQuestId,
+            QuestAcceptorType.Sphere, GameplayActorTestRig.DiscoverySphereStarterId);
+        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        // A different actor standing OUTSIDE a fresh sphere volume sees nothing.
+        var (awayActor, awaySession) = GameplayActorTestRig.CreateActor("pb002-self-4b");
+        GameplayActorTestRig.EnsureQuestStartComponent(GameplayActorTestRig.DiscoveryTalkGroupQuestId,
+            GameplayActorTestRig.DiscoveryTalkGroupStartComponentId, level: 10);
+        GameplayActorTestRig.SeedQuestStarterSphere(awaySession, GameplayActorTestRig.DiscoveryTalkGroupQuestId,
+            new System.Numerics.Vector3(here.X + 500f, here.Y + 500f, here.Z), radius: 5f);
+        var outside = awayActor.DiscoverSelfQuests();
+        await Assert.That(((QuestSelfDiscoveryResult)outside.Result!).Offerings
+            .Any(o => o.QuestId == GameplayActorTestRig.DiscoveryTalkGroupQuestId)).IsFalse();
+    }
 }
+

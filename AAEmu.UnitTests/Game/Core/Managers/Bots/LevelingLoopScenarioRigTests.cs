@@ -277,7 +277,7 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(result.FailStage.StartsWith("OBJECTIVES")).IsTrue();
         await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.WrongDecision);
         await Assert.That(result.FailReason.Contains("QuestActObjTalkNpcGroup")).IsTrue();
-        await Assert.That(result.FailReason.Contains("missing talk-credit contract action")).IsTrue();
+        await Assert.That(result.FailReason.Contains("talk pursuit uncomposed")).IsTrue();
 
         // No fake progress: the quest was accepted (real engine state) but
         // never advanced, turned in, or dropped.

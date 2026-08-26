@@ -208,6 +208,23 @@ public sealed record QuestDiscoveryResult(
     IReadOnlyList<QuestOffering> Offerings);
 
 /// <summary>
+/// Result payload of a Completed DiscoverSelfQuests request — offerings from
+/// the self-perceivable channels (item-held / sphere-standing /
+/// level-reached). Each offering's acceptor triple is exactly what its
+/// engine accept path (CharacterQuests.AddQuestFromItem / AddQuestFromSphere
+/// / DoOnLevelUpEvents' bare AddQuest) consumes.
+/// </summary>
+public sealed record QuestSelfDiscoveryResult(IReadOnlyList<QuestOffering> Offerings);
+
+/// <summary>
+/// Result payload of a Completed Talk request — each entry in
+/// <see cref="ObservedChanges"/> is one directly observable quest-state delta
+/// (objective counters, step/status advance, completion) that proves the
+/// talk credit landed through the engine's event pipeline.
+/// </summary>
+public sealed record TalkResult(uint NpcObjId, uint NpcTemplateId, IReadOnlyList<string> ObservedChanges);
+
+/// <summary>
 /// Result payload of a Completed InteractWith request — each entry in
 /// <see cref="ObservedChanges"/> is one directly observable engine delta
 /// (phase/world/position/inventory/buffs) that proves the interaction
