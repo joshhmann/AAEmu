@@ -165,6 +165,11 @@ public partial class Character : Unit, ICharacter
             {
                 field = value >= 0 ? value : (short)0;
                 CheckWantedThreshold();
+                // Crime points are DB-persisted state (characters.crime_point);
+                // without MarkDirty the periodic SaveManager cycle skips this
+                // row unless an unrelated change flagged it dirty, so reported
+                // points could silently vanish on a restart.
+                MarkDirty();
             }
         }
     }
@@ -180,6 +185,7 @@ public partial class Character : Unit, ICharacter
                 field = value;
                 field = value >= 0 ? value : 0;
                 CheckWantedThreshold();
+                MarkDirty(); // see CrimePoint setter — persistence guarantee
             }
         }
     }

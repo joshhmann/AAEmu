@@ -99,3 +99,48 @@ The 1.2 client's entire trial UI ships as Lua 5.1 bytecode (`game/scriptsbin/x2u
 - **Complete C2S trial surface exposed by UI** (native-bound, one per button): `ReportCrime`, `ConfirmCrimeRecords`, `RequestSetBountyMoney`, `SendBountyUpdate`, `ReportBotSuspect`, `ChooseVerdict`, `CancelTrial` — nothing else. No juror "accept" API exists: seat assignment is fully server-push, consistent with `SCSummonJury`→teleport→`SCJuryBeSeated`.
 
 On §Sharpest single UNKNOWN: scripts neither prove nor break the current send order — no Lua runs between the three sends (all native), and the UI treats the resulting events as independent (no client-side teleport logic; sitting comes from the seat doodad's attachment skill). The order question still needs a wire capture; grade remains UNKNOWN-from-scripts, but the ms-units and state-machine contracts above are now VERIFIED against the real client.
+
+---
+
+## Addendum A2 (2026-08-26) — Slice-1 CRIME leg verified end-to-end on a live stack
+
+Isolated stack `jus1acc` (`E2E_ROOT=/root/aaemu-e2e-jus1`, ports 2737/2739/2750/2760/2734/2780/db 27306,
+worktree `.worktrees/justice1`, branch `feat/justice-crime-vertical`). Test:
+`AAEmu.IntegrationTests.E2e.JusticeCrimeE2eTests` — **PASS, 8/8 stages**:
+
+| Stage | Result | Evidence |
+| --- | --- | --- |
+| PROVISION | PASS | Two Nuian bots charId 1/2, objIds live, level 40; first account carries GM access 100 (AccessLevelFirstAccount) |
+| KILL-EVIDENCE | PASS | Unprovoked same-faction kill (see attribution below) → SCUnitDeath observed; large-bloodstain doodad template **878** spawned with **Owner=A(1), Data=B(2)** — proven via bridge `doodadObjId` (BcId 37249) AND MySQL `doodads` row (878/1/2) |
+| REPORT | PASS | Victim B sends real `CSReportCrimePacket` (0x076) with evidence ObjId → A receives `SCCrimeChangedPacket` **(+10 delta, CP 10, infamy 10)** — value/kind from large-bloodstain `DoodadFuncEvidenceItemLoot` id 1 (crime_value 10, kind 3 murder) |
+| MYSQL-CRIME-ROW | PASS | `crime` row id 4096: criminal 1, victim 2, reporter 2 (victim!), crime_type 3 |
+| MYSQL-CHARACTER | PASS | `characters.crime_point=10`, `crime_record=10` for A |
+| RESTART-PERSISTENCE | PASS | Hard process-tree kill of the game server after one save cycle → points identical post-reboot, crime rows reloaded by `CrimeManager.Load` |
+| WANTED-SEAM | PASS | GM `/crime points self crime=45` pushes CP past 50 → `SCCrimeChanged.state=1`, which is `GetCrimeState()` computed server-side from `Buffs.CheckBuff(Wanted 3710)`; DB crime_point ≥ 50 |
+| FINAL-MYSQL | PASS | characters.crime_point=145 (test applied the +45 seam more than once across its two paths — harness artifact, not engine), crime_record=10 |
+
+### Attribution / findings
+
+1. **Kill path deviation (documented)**: ForceAttack (CSSetForceAttackPacket 0x04f) was set and Triple
+   Slash (18131) casts were accepted, but friendly-relation damage never landed in ~15 attempts — the
+   CanAttack/skill-targeting gates block same-faction damage at the Nuia spawn area even under
+   ForceAttack (mother-zone/safe-zone checks run before the ForceAttack branch). The kill therefore used
+   the documented GM-assist fallback (IndunParty precedent): `/kill` → `Kill` command →
+   `ReduceCurrentHp(character=A, …)` keeps REAL killer attribution, so `DoDie`'s friendly-fire evidence
+   branch ran unchanged. Whether ForceAttack *should* pierce zone protection is an owner question.
+2. **SCDoodadCreatedPacket is not pushed at evidence spawn** — it is visibility-driven
+   (`Doodad.AddVisibleObject`) only. Players already in range never receive it; discovery must use world
+   queries (`around`/bridge `doodadObjId`) or the persisted `doodads` row.
+3. **Engine fix shipped (small, clearly correct)**: `Character.CrimePoint`/`InfamyPoint` setters now call
+   `MarkDirty()`. Previously point changes did not dirty the character, so the periodic SaveManager cycle
+   could skip the row and reported points would silently fail to persist across a restart whenever no
+   unrelated change had flagged the character.
+4. **GM sub-command syntax**: `SubCommandBase` requires key=value form — `/crime points self crime=45`;
+   the space form ("crime 45") silently parses as the zero-arg query branch (misleading UX, not fixed).
+5. **Code-read observation (not fixed, owner territory)**: `Character.AddCrime`'s short.MaxValue ceiling
+   branch is dead — the trailing `else` overwrites the clamped value with `(short)newAmount` (wraps
+   negative → setter floors to 0). Unreachable in practice (< 32757 CP required).
+6. Rig half: `AAEmu.UnitTests … CrimePointsRigTests` (3 tests): AddCrime math/clamp-floor +
+   SCCrimeChanged wire decode (opcode 0x16f at byte offset 6 of the captured frame), the 49→50→49
+   wanted-boundary through the real setter seam (buff applied AND removed), and the new MarkDirty
+   persistence guarantee. Full suite green: 2433 passed / 0 failed / 1 skipped.
