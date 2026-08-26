@@ -25,30 +25,33 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// spawner data is required — the packets resolve the NPC purely through the
 /// world's object registries.
 ///
-/// KNOWN ENGINE BUGS surfaced by this rig (documented, NOT fixed — ownership
-/// boundary of MERCHANT-01):
+/// ENGINE BUGS surfaced by this rig — all three FIXED (each with its own
+/// regression test below; the original buggy assertions are preserved in
+/// git history as the discovery record):
 ///
-/// BUG #1 (buy funds gate) — CSBuyItemsPacket.cs:119-122: the refusal gate
-/// joins the three currency checks with &amp;&amp; instead of ||, so a purchase is
-/// only refused when ALL THREE (money AND honor AND vocation) exceed their
-/// balances simultaneously. With honor/vocation shortfalls absent (both 0,
-/// the normal case), the gate never fires: an insolvent buy GRANTS the item
-/// and then drives Money NEGATIVE through ChangeMoney(None→Inventory), which
-/// has no funds guard on that path. Same finding already annotated in the
-/// actor layer (GameplayActor.cs:1697-1699 "The packet's check is buggy").
-/// Verified by Buy_InsufficientFunds_KnownBug_PurchaseProceedsAndMoneyGoesNegative.
+/// BUG #1 (buy funds gate) — CSBuyItemsPacket: the refusal gate used to
+/// join the three currency checks with &amp;&amp; instead of per-currency
+/// refusal, so a purchase was only refused when ALL THREE balances were
+/// overdrawn simultaneously. An insolvent money buy granted the item and
+/// drove Money NEGATIVE through ChangeMoney(None→Inventory), which has no
+/// funds guard on that path. FIXED: three independent OR-shaped gates with
+/// matching error feedback (NotEnoughMoney / NotEnoughHonorPoint /
+/// NotEnoughLivingPoint).
+/// Regression: Buy_InsufficientFunds_RefusedCleanly_MoneyAndBagUntouched.
 ///
-/// BUG #2 (sell refund on refused move) — CSSellItemsPacket.cs:49-65: the
-/// refund is accumulated OUTSIDE the success branch of the BuyBackItems
-/// move. When AddOrMoveExistingItem fails (full/refused target container) the
-/// item stays in the bag, but the payout is still credited — a dupe vector.
-/// Verified by Sell_BuyBackContainerFull_KnownBug_RefundPaidWhileItemStaysInBag.
+/// BUG #2 (sell refund on refused move) — CSSellItemsPacket: the refund
+/// was accumulated OUTSIDE the success branch of the BuyBackItems move.
+/// When AddOrMoveExistingItem failed the item stayed in the bag while the
+/// payout was still credited — a dupe vector. FIXED: refund accumulation
+/// lives strictly inside the success branch.
+/// Regression: Sell_BuyBackContainerFull_Refused_NoRefundItemStaysInBag.
 ///
-/// BUG #3 (buy ignores grant failure) — CSBuyItemsPacket.cs:128: the return
-/// value of AcquireDefaultItem is ignored; with a full bag the grant silently
-/// fails (AcquireDefaultItemEx returns false on the space pre-check) yet the
-/// purchase price is still charged (lines 162-165). Verified by
-/// Buy_FullBag_KnownBug_ChargesMoneyWithoutGrantingItem.
+/// BUG #3 (buy ignores grant failure) — CSBuyItemsPacket: the return value
+/// of AcquireDefaultItem was ignored; a full bag silently failed the grant
+/// while the purchase price was still charged. FIXED: grants run through
+/// AcquireDefaultItemEx with per-line stack snapshots and any failure rolls
+/// the whole purchase back atomically before any charge (BagFull error).
+/// Regression: Buy_FullBag_RefusedAtomically_NoChargeNoPartialItems.
 /// </summary>
 [NotInParallel]
 public class MerchantRigTests
@@ -168,10 +171,10 @@ public class MerchantRigTests
         await Assert.That(actor.Character.Money).IsEqualTo(10_000 - 2 * 50); // Price=50 per unit
     }
 
-    // ---- 2. buy insufficient funds — documents BUG #1 ----------------------
+    // ---- 2. buy insufficient funds — regression: BUG #1 (funds gate) ------
 
     [Test]
-    public async Task Buy_InsufficientFunds_KnownBug_PurchaseProceedsAndMoneyGoesNegative()
+    public async Task Buy_InsufficientFunds_RefusedCleanly_MoneyAndBagUntouched()
     {
         var (actor, _, conn, npcObjId) = Rig("merch-poor");
         GameplayActorTestRig.SetMoney(actor, 10); // 40 short of the 50-price item
@@ -179,19 +182,18 @@ public class MerchantRigTests
         new AAEmu.Game.Core.Packets.C2G.CSBuyItemsPacket()
             .Tap(p => Deliver(p, conn, BuyPayload(npcObjId, (GameplayActorTestRig.BuyItemTemplateId, 1))));
 
-        // SPEC expectation: refused, money unchanged, no item.
-        // ACTUAL (BUG #1, CSBuyItemsPacket.cs:119-122): the gate needs ALL
-        // THREE currencies overdrawn (&& instead of ||) — honor/vocation are
-        // 0 so it never fires; the item is granted and Money goes negative.
-        var granted = GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.BuyItemTemplateId);
-        await Assert.That(granted).IsNotNull(); // documents the bug
-        await Assert.That(actor.Character.Money).IsEqualTo(10 - 50); // -40: negative balance accepted
+        // FIXED (BUG #1, CSBuyItemsPacket.cs): the refusal gate is OR-shaped
+        // per currency — a money shortfall alone refuses the purchase before
+        // any grant or charge. The old && gate never fired when honor and
+        // vocation had no shortfall, letting Money go negative.
+        await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.BuyItemTemplateId)).IsNull();
+        await Assert.That(actor.Character.Money).IsEqualTo(10); // untouched
     }
 
-    // ---- 3. buy with a full bag — documents BUG #3 -------------------------
+    // ---- 3. buy with a full bag — regression: BUG #3 -----------------------
 
     [Test]
-    public async Task Buy_FullBag_KnownBug_ChargesMoneyWithoutGrantingItem()
+    public async Task Buy_FullBag_RefusedAtomically_NoChargeNoPartialItems()
     {
         var (actor, session, conn, npcObjId) = Rig("merch-fullbag");
         GameplayActorTestRig.SetMoney(actor, 10_000);
@@ -206,11 +208,38 @@ public class MerchantRigTests
         new AAEmu.Game.Core.Packets.C2G.CSBuyItemsPacket()
             .Tap(p => Deliver(p, conn, BuyPayload(npcObjId, (GameplayActorTestRig.BuyItemTemplateId, 1))));
 
-        // SPEC expectation: no grant AND no charge.
-        // ACTUAL (BUG #3, CSBuyItemsPacket.cs:128): the grant's false return
-        // is ignored; the purchase price is still deducted (lines 162-165).
+        // FIXED (BUG #3, CSBuyItemsPacket.cs): grant failure rolls the whole
+        // purchase back atomically — no charge, no partial items. The old
+        // code ignored the grant result and deducted the price regardless.
         await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.BuyItemTemplateId)).IsNull();
-        await Assert.That(actor.Character.Money).IsEqualTo(before - 50); // paid, received nothing
+        await Assert.That(actor.Character.Money).IsEqualTo(before); // untouched
+    }
+
+    // ---- 3b. multi-line buy with a late grant failure — BUG #3 atomicity ---
+
+    [Test]
+    public async Task Buy_MultiLineLateGrantFailure_RollsBackEarlierLines()
+    {
+        var (actor, session, conn, npcObjId) = Rig("merch-multibuy");
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        GameplayActorTestRig.SeedMerchantPack(GameplayActorTestRig.SellItemTemplateId); // second line
+        // Two-slot bag holding one max-size stack: line 1 grants into the
+        // single free slot (succeeds), line 2 then fails its space pre-check
+        // — the earlier line's grant must be rolled back, not kept as a
+        // partial purchase.
+        actor.Character.Inventory.Bag.ContainerSize = 2;
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 99);
+        var before = actor.Character.Money;
+
+        new AAEmu.Game.Core.Packets.C2G.CSBuyItemsPacket()
+            .Tap(p => Deliver(p, conn, BuyPayload(npcObjId,
+                (GameplayActorTestRig.BuyItemTemplateId, 2),
+                (GameplayActorTestRig.SellItemTemplateId, 1))));
+
+        // Atomic purchase: neither line landed, nothing was charged.
+        await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.BuyItemTemplateId)).IsNull();
+        await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.SellItemTemplateId)).IsNull();
+        await Assert.That(actor.Character.Money).IsEqualTo(before);
     }
 
     // ---- 4. sell happy path ------------------------------------------------
@@ -234,10 +263,10 @@ public class MerchantRigTests
         await Assert.That(actor.Character.BuyBackItems.GetItemByItemId(item!.Id)).IsNotNull();
     }
 
-    // ---- 5. sell into a full buyback container — documents BUG #2 ----------
+    // ---- 5. sell into a full buyback container — regression: BUG #2 -------
 
     [Test]
-    public async Task Sell_BuyBackContainerFull_KnownBug_RefundPaidWhileItemStaysInBag()
+    public async Task Sell_BuyBackContainerFull_Refused_NoRefundItemStaysInBag()
     {
         var (actor, session, conn, npcObjId) = Rig("merch-sellfull");
         GameplayActorTestRig.SetMoney(actor, 1_000);
@@ -251,13 +280,13 @@ public class MerchantRigTests
         new AAEmu.Game.Core.Packets.C2G.CSSellItemsPacket()
             .Tap(p => Deliver(p, conn, SellPayload(npcObjId, item!)));
 
-        // SPEC expectation: refusal — no payout while the item never left
-        // the seller's possession.
-        // ACTUAL (BUG #2, CSSellItemsPacket.cs:49-65): the failed move only
-        // warns; the refund is accumulated outside the success branch and
-        // paid unconditionally — the player keeps the item AND gets the gold.
+        // FIXED (BUG #2, CSSellItemsPacket.cs): the refund is accumulated
+        // strictly inside the success branch of the buyback move — a refused
+        // move pays nothing. The old code paid the refund unconditionally,
+        // leaving the item in the bag AND the gold credited (dupe vector).
         await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.SellItemTemplateId)).IsNotNull();
-        await Assert.That(actor.Character.Money).IsEqualTo(1_000 + 25); // refund paid anyway
+        await Assert.That(actor.Character.Money).IsEqualTo(1_000); // refund withheld
+        await Assert.That(actor.Character.BuyBackItems.GetItemByItemId(item!.Id)).IsNull();
     }
 }
 
