@@ -295,3 +295,27 @@ Rig cover (`AAEmu.UnitTests/Game/Core/Managers/PvpFlaggingRigTests.cs`):
 `DoDie_HostileKillInConflictZone_CountsKillButAwardsNoHonor` (war-gating regression guard),
 `DoDie_HostileKillInWarZone_AwardsKillCountAndHonorAndVictimPenalty` (updated to 40-base),
 `DoDie_HostileKillInWarZoneWithOnlineAssist_SplitsKiller32AndAssist4` (32+4 split).
+
+## Addendum 2026-08-26 — CORRECTION (PB-007 root-caused): flagged aggression DOES land; the slice-1 failure was login-protection immunity + a silent crime-branch skip
+
+This supersedes the 2026-08-25 refuted-flow note: §"Aggression" flow IS wired end-to-end.
+Instrumented live trace (`[PB7]` probes, worktree `.worktrees/pvpfix`):
+
+1. Acquisition → AoE filter → per-effect gates ALL pass for a ForceAttack-flagged
+   same-faction cast of 18131 (`possibleTargets=[victim/rel=Friendly/canAtk=True]`,
+   `effectsToApply=1`). The suspected second CanAttack-family gate was NOT the drop point.
+2. The actual gate was `DamageEffect.Apply`'s `CheckDamageImmune` early-return
+   (`DamageEffect.cs:97-104`): the victim was inside the **login-protection window** —
+   buff 2423 "LoggedOn", granted at every login (`CharacterLifecycleService.cs:263`),
+   carries all-type damage immunity for ~20 s (compact.sqlite3 `buffs` row). The immune
+   branch broadcasts an Immune-tagged SCUnitDamaged frame and returned WITHOUT running
+   `ReduceCurrentHp` OR the crime branch — hence zero HP loss, no Retribution, no bloodstain,
+   while naive wire scans still "saw damage frames".
+3. Engine fix: `DamageEffect.RegisterCrimeForAttempt` (extracted from the landed-damage path)
+   is now invoked on the immune path too — an immuned hit is still an assault; HP protection
+   itself is unchanged. Mother-zone shield, Peace-state `BlocksPvpDamage`, hostile combat, and
+   non-PvP paths are untouched (regression-rig-covered).
+4. Residual (PB-007 stays OPEN on this single point): Retribution 2167 SCBuffCreated is not
+   observed on either bot's wire even though the crime branch provably executes server-side
+   (bloodstain doodad spawns). Suspect `Buffs.AddBuff` silent early-returns
+   (`Buffs.cs:424-449`) for buff 2167's stack rule.

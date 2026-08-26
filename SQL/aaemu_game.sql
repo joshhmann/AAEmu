@@ -203,7 +203,6 @@ CREATE TABLE IF NOT EXISTS `dominions` (
   PRIMARY KEY (`zone_group_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Declared dominions per castle zone group';
 
-
 CREATE TABLE IF NOT EXISTS `doodads` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `owner_id` int DEFAULT NULL COMMENT 'Character DB Id',
