@@ -233,10 +233,10 @@ public class MerchantRigTests
         await Assert.That(actor.Character.BuyBackItems.GetItemByItemId(item!.Id)).IsNotNull();
     }
 
-    // ---- 5. sell into a full buyback container — documents BUG #2 ----------
+    // ---- 5. sell into a full buyback container — regression: BUG #2 -------
 
     [Test]
-    public async Task Sell_BuyBackContainerFull_KnownBug_RefundPaidWhileItemStaysInBag()
+    public async Task Sell_BuyBackContainerFull_Refused_NoRefundItemStaysInBag()
     {
         var (actor, session, conn, npcObjId) = Rig("merch-sellfull");
         GameplayActorTestRig.SetMoney(actor, 1_000);
@@ -250,13 +250,13 @@ public class MerchantRigTests
         new AAEmu.Game.Core.Packets.C2G.CSSellItemsPacket()
             .Tap(p => Deliver(p, conn, SellPayload(npcObjId, item!)));
 
-        // SPEC expectation: refusal — no payout while the item never left
-        // the seller's possession.
-        // ACTUAL (BUG #2, CSSellItemsPacket.cs:49-65): the failed move only
-        // warns; the refund is accumulated outside the success branch and
-        // paid unconditionally — the player keeps the item AND gets the gold.
+        // FIXED (BUG #2, CSSellItemsPacket.cs): the refund is accumulated
+        // strictly inside the success branch of the buyback move — a refused
+        // move pays nothing. The old code paid the refund unconditionally,
+        // leaving the item in the bag AND the gold credited (dupe vector).
         await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.SellItemTemplateId)).IsNotNull();
-        await Assert.That(actor.Character.Money).IsEqualTo(1_000 + 25); // refund paid anyway
+        await Assert.That(actor.Character.Money).IsEqualTo(1_000); // refund withheld
+        await Assert.That(actor.Character.BuyBackItems.GetItemByItemId(item!.Id)).IsNull();
     }
 }
 
