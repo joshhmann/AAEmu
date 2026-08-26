@@ -82,6 +82,9 @@ public class CharacterLifecycleService : Singleton<CharacterLifecycleService>, I
         AssignObjId(character);
         // Add to server pool
         WorldManager.Instance.TryAddCharacter(character);
+        // MailManager's recount needs WorldManager.GetCharacterById to resolve
+        // this character; Character.Load runs before registration.
+        MailManager.Instance.GetCurrentMailList(character.Id);
 
         CancelOwnedSlaveTask(character);
 
@@ -102,6 +105,7 @@ public class CharacterLifecycleService : Singleton<CharacterLifecycleService>, I
         AssignObjId(character);
         // Add to server pool
         WorldManager.Instance.TryAddCharacter(character);
+        MailManager.Instance.GetCurrentMailList(character.Id);
 
         CancelOwnedSlaveTask(character);
 

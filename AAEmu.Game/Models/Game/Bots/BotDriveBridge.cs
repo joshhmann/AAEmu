@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using AAEmu.Commons.Network;
 using AAEmu.Commons.IO;
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
@@ -15,7 +16,11 @@ using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
+using AAEmu.Game.Models.Game.DoodadObj.Templates;
+using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Static;
@@ -251,6 +256,8 @@ public sealed class BotDriveBridge
                 return HandleAuctionOp(root);
             case "dominion":
                 return HandleDominionOp(root);
+            case "mail":
+                return HandleMailOp(root);
             case "seedDormant":
                 return HandleSeedDormant(root);
             default:
@@ -1992,6 +1999,243 @@ public sealed class BotDriveBridge
 
     #endregion
 
+    #region MAIL-01 S3 E2E seam (real networked bots + real mail packets)
+
+    /// <summary>
+    /// Resolves a REAL networked session by character name (same discipline as
+    /// HandleDrive: only characters that entered the world through the real
+    /// login flow are drivable; the bridge never fabricates sessions).
+    /// </summary>
+    private static bool TryResolveNetworkedBot(string rawName, out Character? character, out string error)
+    {
+        character = null;
+        error = "";
+        if (string.IsNullOrWhiteSpace(rawName))
+        {
+            error = "mail op requires 'bot'";
+            return false;
+        }
+
+        var connection = GameConnectionTable.Instance.GetConnections().FirstOrDefault(c =>
+            c.ActiveChar != null &&
+            string.Equals(c.ActiveChar.Name, rawName.NormalizeName(), StringComparison.OrdinalIgnoreCase));
+        if (connection?.ActiveChar == null)
+        {
+            error = $"bot '{rawName}' is not in the world (no active networked session)";
+            return false;
+        }
+
+        character = connection.ActiveChar;
+        return true;
+    }
+
+
+
+    /// <summary>
+    /// MAIL-01 slice-S3 observation/rig ops over REAL networked bot sessions.
+    /// All gameplay mutations ride normal engine paths; the actual send /
+    /// read / take / delete flows are driven by the test over the wire with
+    /// real C2G mail packets. Ops:
+    ///   rig    — set money and stock ONE equipment-grade item instance with
+    ///            explicit grade/enchant state (durability, rune, tempers)
+    ///   delay  — shrink MailManager.NormalMailDelay (existing runtime-tunable
+    ///            static, same seam /settradepackmaildelay uses) so a Normal
+    ///            mail delivers inside the E2E window
+    ///   mailbox— position the bot at a live DoodadFuncNaviOpenMailbox doodad
+    ///            (teleport to its spawner position, wait for the world's
+    ///            NORMAL spawn path) and return the doodad ObjId + distance
+    ///   char   — observable character state (id/money/unread counters)
+    ///   mails  — dump MailManager.GetCurrentMailList incl. full attachment
+    ///            instance fidelity (grade/durability/rune/tempers/details)
+    ///   inv    — dump the bot's bag items (post-take fidelity check)
+    /// </summary>
+    private string HandleMailOp(JsonElement root)
+    {
+        var op = root.GetProperty("op").GetString();
+
+        // Server-wide tuning op needs no bot.
+        if (op == "delay")
+        {
+            var seconds = GetInt(root, "seconds", 15);
+            Core.Managers.MailManager.NormalMailDelay = TimeSpan.FromSeconds(seconds);
+            return Ok(new { normalMailDelaySeconds = seconds });
+        }
+
+        if (!TryResolveNetworkedBot(root.TryGetProperty("bot", out var b) ? b.GetString() : null, out var character, out var err))
+            return Err(err);
+
+        switch (op)
+        {
+            case "rig":
+            {
+                if (root.TryGetProperty("money", out var moneyEl) && moneyEl.TryGetInt64(out var money))
+                    character!.Money = money;
+
+                var templateId = GetUInt(root, "itemTemplate");
+                Item item = null;
+                if (templateId > 0)
+                {
+                    var before = character!.Inventory.Bag.Items
+                        .Where(i => i.TemplateId == templateId).Select(i => i.Id).ToHashSet();
+                    // Normal acquisition path (quest-supply shape), with the
+                    // requested grade.
+                    character.Inventory.Bag.AcquireDefaultItem(
+                        ItemTaskType.QuestSupplyItems, templateId, GetInt(root, "count", 1), GetInt(root, "grade", 1));
+                    item = character.Inventory.Bag.Items
+                        .FirstOrDefault(i => i.TemplateId == templateId && !before.Contains(i.Id));
+                    if (item == null)
+                        return Err($"mail rig: no new bag item of template {templateId} appeared");
+
+                    // Enchant-state rig on the SAME instance that will travel:
+                    // durability + rune (enchant) + temper levels. The details
+                    // blob written from these fields is the fidelity payload.
+                    if (item is Items.EquipItem equip)
+                    {
+                        equip.Durability = (byte)GetInt(root, "durability", (int)equip.Durability);
+                        equip.RuneId = (uint)GetLong(root, "runeId", (long)equip.RuneId);
+                        equip.TemperPhysical = (ushort)GetInt(root, "temperPhysical", equip.TemperPhysical);
+                        equip.TemperMagical = (ushort)GetInt(root, "temperMagical", equip.TemperMagical);
+                        item.IsDirty = true; // details must reach MySQL on the save pass
+                    }
+                    else
+                    {
+                        return Err($"mail rig: template {templateId} is not an equipment-grade item (no details blob)");
+                    }
+                }
+
+                return Ok(new
+                {
+                    name = character!.Name,
+                    id = character.Id,
+                    money = character.Money,
+                    itemId = item?.Id ?? 0,
+                    grade = item?.Grade ?? 0,
+                    durability = (item as Items.EquipItem)?.Durability ?? 0,
+                    runeId = (item as Items.EquipItem)?.RuneId ?? 0,
+                    temperPhysical = (item as Items.EquipItem)?.TemperPhysical ?? 0,
+                    temperMagical = (item as Items.EquipItem)?.TemperMagical ?? 0,
+                    slot = item?.Slot ?? -1
+                });
+            }
+            case "mailbox":
+            {
+                // Find an ACTIVE mailbox doodad in this real world. The
+                // send packet validates the instance's CurrentFuncs and
+                // proximity, so selecting from GetAllDoodads keeps this rig
+                // on the same live object instead of manufacturing a doodad
+                // or relying on an unavailable NPC-spawner collection.
+                var mailbox = character!.ParentWorld.GetAllDoodads()
+                    .FirstOrDefault(d => d.CurrentFuncs?.Any(f => f.FuncType == "DoodadFuncNaviOpenMailbox") == true);
+                if (mailbox == null)
+                    return Err("mailbox: no active DoodadFuncNaviOpenMailbox doodad in this world");
+
+                var pos = mailbox.Transform.World.Position;
+                TeleportWithRegionSync(character,
+                    new System.Numerics.Vector3(pos.X + 2f, pos.Y + 2f, pos.Z),
+                    mailbox.Transform.ZoneId);
+                character.MarkDirty();
+
+                var dist = System.Numerics.Vector3.Distance(
+                    character.Transform.World.Position, mailbox.Transform.World.Position);
+                return Ok(new
+                {
+                    doodadObjId = mailbox.ObjId,
+                    doodadTemplateId = mailbox.TemplateId,
+                    distance = dist,
+                    withinRange = dist <= 5f
+                });
+            }
+            case "char":
+            {
+                return Ok(new
+                {
+                    name = character!.Name,
+                    id = character.Id,
+                    objId = character.ObjId,
+                    money = character.Money,
+                    unread = new
+                    {
+                        sent = character.Mails.UnreadMailCount.Sent,
+                        received = character.Mails.UnreadMailCount.Received
+                    }
+                });
+            }
+            case "mails":
+            {
+                var mails = Core.Managers.MailManager.Instance.AllPlayerMails.Values
+                    .Where(m => m.Body.RecvDate <= DateTime.UtcNow &&
+                                (m.Header.ReceiverId == character!.Id || m.Header.SenderId == character.Id))
+                    .OrderBy(m => m.Id)
+                    .Select(m => new
+                    {
+                        id = m.Id,
+                        type = (int)m.MailType,
+                        title = m.Title,
+                        status = (int)m.Header.Status,
+                        senderId = m.Header.SenderId,
+                        senderName = m.Header.SenderName,
+                        receiverId = m.Header.ReceiverId,
+                        receiverName = m.Header.ReceiverName,
+                        attachmentsHeader = m.Header.Attachments,
+                        copperCoins = m.Body.CopperCoins,
+                        returned = m.Header.Returned,
+                        attachments = m.Body.Attachments.Select(a => new
+                        {
+                            itemId = a.Id,
+                            templateId = a.TemplateId,
+                            count = a.Count,
+                            grade = a.Grade,
+                            slotType = (int)a.SlotType,
+                            slot = a.Slot,
+                            durability = (a as Items.EquipItem)?.Durability ?? 0,
+                            runeId = (a as Items.EquipItem)?.RuneId ?? 0,
+                            temperPhysical = (a as Items.EquipItem)?.TemperPhysical ?? 0,
+                            temperMagical = (a as Items.EquipItem)?.TemperMagical ?? 0,
+                            detailB64 = ItemDetailB64(a)
+                        }).ToArray()
+                    }).ToArray();
+                return Ok(new { charId = character.Id, mails });
+            }
+            case "inv":
+            {
+                var items = character!.Inventory.Bag.Items.Select(i => new
+                {
+                    itemId = i.Id,
+                    templateId = i.TemplateId,
+                    count = i.Count,
+                    grade = i.Grade,
+                    slotType = (int)i.SlotType,
+                    slot = i.Slot,
+                    durability = (i as Items.EquipItem)?.Durability ?? 0,
+                    runeId = (i as Items.EquipItem)?.RuneId ?? 0,
+                    temperPhysical = (i as Items.EquipItem)?.TemperPhysical ?? 0,
+                    temperMagical = (i as Items.EquipItem)?.TemperMagical ?? 0,
+                    detailB64 = ItemDetailB64(i)
+                }).ToArray();
+                return Ok(new { items });
+            }
+            default:
+                return Err($"unknown mail op '{op}'");
+        }
+    }
+
+    private static string ItemDetailB64(Item item)
+    {
+        if (item.Detail is { Length: > 0 })
+            return Convert.ToBase64String(item.Detail);
+
+        var detail = new PacketStream();
+        detail.Write((byte)item.DetailType);
+        item.WriteDetails(detail);
+        return Convert.ToBase64String(detail.GetBytes());
+    }
+
+
+    private static long GetLong(JsonElement root, string name, long defaultValue = 0)
+        => root.TryGetProperty(name, out var el) && el.TryGetInt64(out var v) ? v : defaultValue;
+
+    #endregion
+
     #region Fresh provisioning (template rig hygiene)
 
     /// <summary>
@@ -2003,6 +2247,7 @@ public sealed class BotDriveBridge
     /// from a clean slate: prior runs' accepted quests / completed flags
     /// would be enforced by the real accept gates and poison the rig.
     /// </summary>
+
     private static void EnsureFreshBotRow(string botName, string username)
     {
         var characterId = NameManager.Instance.GetCharacterId(botName);
