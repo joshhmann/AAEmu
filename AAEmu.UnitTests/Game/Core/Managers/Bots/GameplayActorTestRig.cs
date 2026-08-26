@@ -2858,6 +2858,13 @@ public static class GameplayActorTestRig
             actsByType[detailType] = acts;
         }
         acts[key] = act;
+
+        // Loader parity (QuestManager.Load): every act lives BOTH in the
+        // reverse-search dict above AND on its owning component's
+        // ActTemplates — the runtime step machine reads the latter
+        // (QuestManager.GetActsInComponent).
+        if (!act.ParentComponent!.ActTemplates.Contains(act))
+            act.ParentComponent.ActTemplates.Add(act);
     }
 
     /// <summary>
@@ -2914,17 +2921,27 @@ public static class GameplayActorTestRig
         componentTemplates[progressComponentId] = progress;
         questTemplate.Components[progressComponentId] = progress;
 
-        QuestActTemplate act = npcGroupId > 0
-            ? new QuestActObjTalkNpcGroup(progress)
+        QuestActTemplate act;
+        if (npcGroupId > 0)
+        {
+            act = new QuestActObjTalkNpcGroup(progress)
             {
                 DetailId = progressComponentId, ActId = progressComponentId,
-                NpcGroupId = npcGroupId
-            }
-            : new QuestActObjTalk(progress)
-            {
-                DetailId = progressComponentId, ActId = progressComponentId,
-                NpcId = objectiveNpcTemplateId
+                NpcGroupId = npcGroupId,
+                // Loader parity (QuestManager.Load:220): objective acts get a
+                // sequential index into the quest's Objectives counters.
+                ThisComponentObjectiveIndex = 0
             };
+        }
+        else
+        {
+            act = new QuestActObjTalk(progress)
+            {
+                DetailId = progressComponentId, ActId = progressComponentId,
+                NpcId = objectiveNpcTemplateId,
+                ThisComponentObjectiveIndex = 0
+            };
+        }
         progress.ActTemplates.Add(act);
     }
 
