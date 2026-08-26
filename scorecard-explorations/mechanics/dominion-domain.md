@@ -110,3 +110,21 @@ Follow-on slices: 2 = declare flow made real (replace hardcoded `DeclareDominion
 
 ---
 *Boundary notes: crime/trial/prison → justice-domain.md; flagging/factions/honor/conflict-zones → pvp-domain.md. Cross-ref: `scorecard-explorations/zero-wired-domains.md` §2 (this dossier independently re-verified its claims against `214bed834`; no discrepancies found).*
+
+---
+
+## Addendum A1 (2026-08-25, later) — Client game_pak mining: declare trigger RESOLVED
+
+Method: `game/scriptsbin/x2ui/**` in the deployed 1.2 `game_pak` are **standard Lua 5.1 bytecode** (`.alb`, header `\27LuaQ` v0x51), fully decompiled with unluac → `/root/aaemu-pak-lua/dec/x2ui/` (730 files, zero failures; evidence tree kept session-scoped). Cross-checked against client `Data/compact.sqlite3` (SELECT-only).
+
+**Finding 1 — there is NO declare/join send API anywhere in the client UI.** Exhaustive sweep of every `X2Dominion:*` / `X2Faction:*` / `X2Nation:*` call across all decompiled UI: only getters plus write-APIs `ChangeDominionTaxRate`, `SetNationalTaxRate`, `WithdrawToNation`, `DeclareIndependence` (nation feature, not siege). `expedMgmt.RP.DOMINION_DECLARE = 8` (`dec/x2ui/expedition/expedition_management.lua:13`) and `locale.expedition.joinSiege`/`dominionDeclare` (`baselib/locale_helper.lua:5950-5954`) are **expedition role-policy permission labels**, not buttons. The expedition siege tab (`expedition_management_siege_tab.lua`) is display-only (schedules, participant counts, guard-tower HP). This independently explains why the repo defines zero C2G declare/join packets: the client never sends one.
+
+**Finding 2 — declaration is world-driven via a planted pack.** compact.sqlite3:
++
+- `doodad_funcs` id 6855 = `actual_func_type='DoodadFuncDeclareSiege'`, `next_phase=7627`.
+- `doodad_func_groups` 7627 = name `"공성 선포 상태"` ("siege-declared state"), model `prefab://prefabs/backpack.xml/backpack.ocom_backpack_b_all`; its `doodad_almighties` 3304 = `"내려놓은 공성 선포 등짐"` ("planted siege-declaration backpack").
+- `siege_zones` (6 rows): `monument_doodad_id` = **7229–7234** (the 영지 석상 monuments), `declare_item_id` = "공성 진지 : <zone>" siege-camp items (21130/21134/21135/21136/27744/27745), defense/offense ticket ids ("수호의 인장"/"진격의 인장" seals), declare window columns (`start_declare_weekday=5`, 22:30), auction + payout columns.
+
+So the live flow is: carry/plant the siege-declaration pack at the monument during the declare window → generic putdown/doodad-create traffic (`CSCreateDoodadPacket` family, i.e. item-use skill-driven) → server-side phase transition into `DoodadFuncDeclareSiege` state 7627. Ticket purchase is likewise doodad/merchant-driven (`doodad_func_purchase_siege_tickets` table exists; prices in `siege_ticket_offense_prices`: count=2 per zone, per_price 2–5). No dedicated opcode exists to reverse-engineer.
+
+Verdict on §Sharpest UNKNOWN: **RESOLVED at the trigger level (VERIFIED from client data)** — it is neither a dedicated packet nor a UI button; it is a doodad putdown of the declaration pack, and `DeclareDominion`'s house/pack-target requirement is consistent with real client behavior.

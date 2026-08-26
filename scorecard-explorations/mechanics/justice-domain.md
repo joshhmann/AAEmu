@@ -85,3 +85,17 @@ Implementation exists; slices are **verification verticals**, cheapest-first:
 ## Sharpest single UNKNOWN
 
 Whether the **client accepts this server's packet ordering during the jury summon sequence** — everything server-side composes cleanly, but `SCSummonJuryPacket` → teleport → `SCJuryBeSeated` order is explicitly flagged unverified against a real 1.2 capture (`TrialData.cs:240`), and a wrong order strands the whole TRIAL leg even though every individual piece is implemented.
+
+---
+
+## Addendum A1 (2026-08-25, later) — Client UI scripts mined (game_pak x2ui bytecode)
+
+The 1.2 client's entire trial UI ships as Lua 5.1 bytecode (`game/scriptsbin/x2ui/usertrial/*.alb`, header `\27LuaQ`) and decompiles cleanly (unluac; evidence in `/root/aaemu-pak-lua/dec/x2ui/usertrial/`). The SC→UI mapping is native (x2game.dll carries no plaintext packet names — checked ASCII+UTF-16, string-obfuscated), so packet *opcodes/order* are not recoverable from scripts; what the scripts do prove is the client-side contract:
+
+- **State machine VERIFIED**: `TRIAL_STATUS(state, cur)` event drives a 5-icon progress bar over **9 server-defined states** (`locale.trial.stateMessage[1..9]`); UI logic: `state > TRIAL_FREE && state < TRIAL_TESTIMONY` → init icon, then `TRIAL_TESTIMONY` → `TRIAL_FINAL_STATEMENT` → `TRIAL_SENTENCE` → ruling (`usertrial/trial_status.lua:79-95`). Matches AAEmu's `TrialState` ordering.
+- **Jury button times TODO (`TrialData.cs:416`) → RESOLVED direction**: the client does NOT compute them. A separate `TRIAL_TIMER(state, remainTable)` event delivers remaining time, rendered verbatim via `locale.time.GetPeriodToMinutesSecondFormat(remainTable)` (`usertrial/verdict.lua:93-99`). Server must push remaining time with state changes.
+- **Jury count/verdict**: `MAX_VERDICT = 6` juror buttons (`verdict.lua:1`), submit = `X2Trial:ChooseVerdict(idx)` (`verdict.lua:44`); live jury tally via `JURY_OK_COUNT`-style `remainCount(count,total)` labels and `SCChangeJuryOKCount`-fed updates (`crime_records.lua:260-267`).
+- **Defendant wait window**: event `SHOW_DEPENDANT_WAIT_JURY(count, total, sentenceTime)` displays `sentenceTime / 60000` as minutes (`defendant_wait.lua:58-59`) — **confirms millisecond units** on the wait-status payloads AAEmu sends; cancel button fires `X2Trial:CancelTrial`. Same ms convention in ruling display (`ruling_status.lua:131`).
+- **Complete C2S trial surface exposed by UI** (native-bound, one per button): `ReportCrime`, `ConfirmCrimeRecords`, `RequestSetBountyMoney`, `SendBountyUpdate`, `ReportBotSuspect`, `ChooseVerdict`, `CancelTrial` — nothing else. No juror "accept" API exists: seat assignment is fully server-push, consistent with `SCSummonJury`→teleport→`SCJuryBeSeated`.
+
+On §Sharpest single UNKNOWN: scripts neither prove nor break the current send order — no Lua runs between the three sends (all native), and the UI treats the resulting events as independent (no client-side teleport logic; sitting comes from the seat doodad's attachment skill). The order question still needs a wire capture; grade remains UNKNOWN-from-scripts, but the ms-units and state-machine contracts above are now VERIFIED against the real client.

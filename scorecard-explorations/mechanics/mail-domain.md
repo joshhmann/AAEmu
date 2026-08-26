@@ -112,3 +112,13 @@ What survives restart:
 **S5 (S, optional QoL) — COD enforcement or feature-flag Charged off.** Either gate `GetAttached` on payment like `PayChargeMoney`, or map incoming Charged sends to SysExpress with a logged deviation. PASS: documented choice + test proving attachments unreachable without payment (or that Charged never reaches the wire).
 
 Sequencing: S1+S2 independent, land first (security); S3 is the A=2 anchor; S4 converts the existing unit-rig into restart-proof evidence (R=2); S5 discretionary.
+
+---
+
+## Addendum A1 (2026-08-25, later) — Client mail UI mined: return button + fee constants
+
+Source: `game/scriptsbin/x2ui/mailbox/**` from the deployed 1.2 `game_pak` — Lua 5.1 bytecode (`.alb`), decompiled with unluac; evidence at `/root/aaemu-pak-lua/dec/x2ui/mailbox/`.
+
+**Return button handler VERIFIED** (`dec/x2ui/mailbox/mail/read_mail.lua:991-1009`, mirrored in `comercialmail/read_mia_mail.lua`): `returnButton:OnClick` → confirmation dialog ("return_title"/"return_content") → `X2Mail:ReturnMailById(window.mailId)`. Return is offered only for readable sender mails (`returnButton:Enable(not isMySelf)` paths, lines 65-96). The opcode itself is native-bound (x2game.dll strings are obfuscated — ASCII and UTF-16 sweeps found nothing), but slot arithmetic pins it: the full `X2Mail:*` send-API set used by the UI enumerates 1:1 onto AAEmu's contiguous C2S mail block — Send=0x098, List/ListContinue=0x09a/b, Read=0x09c, TakeItem=0x09d, TakeMoney=0x09e, TakeSequentially=0x09f, PayChargeMoney=0x0a0, Delete=0x0a1, ReportSpam=0x0a3. Every operation has a known opcode except Return, and the only gap in the block is **0x0a2**. The stale comment at `GameNetwork.cs:174` proposing 0x0a1 collides with `CSDeleteMailPacket=0x0a1`. Grade: **STRONGLY_INFERRED 0x0a2** — wire `CSReturnMailPacket` there.
+
+**Fee constants VERIFIED** (`mailbox/mail/write_mail.lua:125-134`): normal mail = **50 copper + 30 per attachment**; express = **100 + 80 per attachment** — matches the fee schedule already assumed in S3. `MAX_ATTACHMENT_COUNT = 10` (`mailbox/mail/common.lua:2`). `X2Mail:SendMail(mailInfo)` payload fields: `receiver, title, text, gold, silver, copper, doodadId, type, withReceiver` (`write_mail.lua:91-103`) — consistent with `CSSendMailPacket`'s field order expectations. No client-side delay/expiry constants exist (server-owned), supporting the dossier's server-side delay model.
