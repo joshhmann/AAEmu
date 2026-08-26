@@ -1,4 +1,5 @@
 ﻿using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Housing;
@@ -38,81 +39,20 @@ public class DeclareDominion : SpecialEffectAction
 
         // Advance building step on target
 
-        // Create new dominion data
-        var dominion = new DominionData
-        {
-            House = lodestone.Id,
-            X = lodestone.Transform.World.Position.X,
-            Y = lodestone.Transform.World.Position.Y,
-            Z = lodestone.Transform.World.Position.Z,
-            TaxRate = 50,
-            ReignStartTime = DateTime.UtcNow,
-            ExpeditionId = (uint)((Unit)caster).Expedition.Id,
-            CurHouseTaxMoney = 500000,
-            CurHuntTaxMoney = 9000,
-            PeaceTaxMoney = 300000,
-            CurHouseTaxAaPoint = 0,
-            PeaceTaxAaPoint = 0,
-            LastPaidTime = DateTime.UtcNow,
-            LastSiegeEndTime = DateTime.UtcNow,
-            LastTaxRateChangedTime = DateTime.UtcNow,
-            LastNationalTaxRateChagedTime = DateTime.UtcNow,
-            NationalTaxRate = 500,
-            NationalMonumentDbId = 0,
-            NationalMonumentX = 0,
-            NationalMonumentY = 0,
-            NationalMonumentZ = 0,
-            TerritoryData = new DominionTerritoryData
-            {
-                Id = 6,
-                Id2 = 4771,
-                MaxGates = 1,
-                MaxWalls = 50,
-                RadiusDeclare = 250,
-                RadiusDominion = 110,
-                RadiusSiege = 250,
-                RadiusOffenseHq = 100
-            },
-            SiegeTimers = new DominionSiegeTimers
-            {
-                Bdm = 0,
-                Durations = [0, 0, 0, 0, 0],
-                Fixed = DateTime.MinValue,
-                Started = DateTime.MinValue,
-                SiegePeriod = 1,
-                UnkData = new DominionUnkData
-                {
-                    Id = 0,
-                    Limit = 0,
-                    Ni = 0,
-                    Nr = 0,
-                    X = 0,
-                    Y = 0,
-                    Z = 0,
-                    ObjId = 4,
-                    UnkIds = []
-                },
-                Unk2Data = new DominionUnkData
-                {
-                    Id = 0,
-                    Limit = 0,
-                    Ni = 0,
-                    Nr = 0,
-                    X = 0,
-                    Y = 0,
-                    Z = 0,
-                    ObjId = 0,
-                    UnkIds = []
-                }
-            },
-            NonPvPDuration = 0,
-            NonPvPStart = DateTime.UtcNow,
-            ZoneId = (ushort)ZoneManager.Instance.GetZoneByKey(lodestone.Transform.ZoneId).GroupId,
-            ObjId = 0
-        };
-
-        // Broadcast packet to the entire server
-        WorldManager.Instance.BroadcastPacketToServer(new SCDominionDataPacket(dominion, true, true));
+        // Create new dominion data (canonical blob shape lives in DominionManager),
+        // persist it in the MySQL dominions table and broadcast server-wide.
+        // Slice-2 will replace the remaining seed values with real zone data,
+        // monument targeting and declare-window/permission checks.
+        var expedition = ((Unit)caster).Expedition;
+        var position = lodestone.Transform.World.Position;
+        var dominion = DominionManager.BuildDominionData(
+            ZoneManager.Instance.GetZoneByKey(lodestone.Transform.ZoneId).GroupId,
+            (uint)expedition.Id,
+            lodestone.Id,
+            position.X, position.Y, position.Z,
+            50,
+            DateTime.UtcNow);
+        DominionManager.Instance.Declare(dominion, expedition.Name);
         if (caster is Character character)
         {
             // character.Inventory.Equipment.

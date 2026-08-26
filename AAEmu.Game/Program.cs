@@ -165,6 +165,8 @@ public static class Program
                 services.AddSingleton<CrimeManager>();
                 services.AddSingleton<ICrimeManager>(sp => sp.GetRequiredService<CrimeManager>());
 
+                services.AddSingleton<DominionManager>();
+                services.AddSingleton<IDominionManager>(sp => sp.GetRequiredService<DominionManager>());
                 services.AddSingleton<DuelManager>();
                 services.AddSingleton<IDuelManager>(sp => sp.GetRequiredService<DuelManager>());
 
