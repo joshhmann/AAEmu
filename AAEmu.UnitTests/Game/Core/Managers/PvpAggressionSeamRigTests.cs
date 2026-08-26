@@ -26,6 +26,7 @@ using AAEmu.Commons.Utils;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Static;
+using AAEmu.Game.Models.Game.Skills.Buffs;
 
 
 using MySql.Data.MySqlClient;
@@ -43,7 +44,9 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// Proven contracts:
 ///   - ForceAttack-flagged attacker DEALS DAMAGE to a Friendly-relation victim
 ///     (the ForceAttack exception must survive the AoE relation filter and the
-///     DamageEffect CanAttack safeguard), and the crime branch runs.
+///     DamageEffect CanAttack safeguard), and Retribution applies.
+///   - Damage-immune Friendly targets remain protected while Retribution applies.
+///     Assault/evidence persistence is intentionally outside this DB-free rig.
 ///   - Unflagged attacker in a Peace conflict zone: acquisition refuses (NoTarget)
 ///     — Peace-state protection unchanged (ZONE-01).
 ///   - Hostile-relation attacker: damage lands unchanged.
@@ -72,10 +75,14 @@ public class PvpAggressionSeamRigTests
         public void Close() { }
     }
 
+    private static readonly Dictionary<uint, PacketCaptureSession> s_captureByCharId = new();
+
     private static GameConnection Conn(Character c)
     {
-        var conn = new GameConnection(new PacketCaptureSession()) { ActiveChar = c };
+        var capture = new PacketCaptureSession();
+        var conn = new GameConnection(capture) { ActiveChar = c };
         c.Connection = conn;
+        s_captureByCharId[c.Id] = capture;
         return conn;
     }
 
@@ -169,12 +176,29 @@ public class PvpAggressionSeamRigTests
     {
         var manager = new SkillManager(Mock.Of<IAnimationManager>().Object, Mock.Of<IPlotManager>().Object);
         SetField(manager, "_skills", new Dictionary<uint, SkillTemplate> { [template.Id] = template });
+        // Mirrors compact.sqlite3 buffs row 2167 ("나쁜사람"): 30 s,
+        // stack_rule_id=1 (BuffStackRule.Refresh), max_stack=1, kind_id=2 (Bad).
         SetField(manager, "_buffs", new Dictionary<uint, BuffTemplate>
         {
-            [(uint)BuffConstants.Retribution] = new BuffTemplate { Id = (uint)BuffConstants.Retribution }
+            [(uint)BuffConstants.Retribution] = new()
+            {
+                Id = (uint)BuffConstants.Retribution,
+                Duration = 30000,
+                StackRule = BuffStackRule.Refresh,
+                MaxStack = 1,
+                Kind = BuffKind.Bad
+            }
         });
-        return SingletonSwap.Install(typeof(Singleton<SkillManager>), manager);
+        return new CompositeSwap(
+            SingletonSwap.Install(typeof(Singleton<SkillManager>), manager),
+            SeedEffectTaskManager());
     }
+
+    /// <summary>Provides the real scheduling seam without starting a game loop.</summary>
+    private static IDisposable SeedEffectTaskManager()
+        => SingletonSwap.Install(
+            typeof(Singleton<EffectTaskManager>),
+            new EffectTaskManager(Mock.Of<ITaskManager>().Object));
 
     /// <summary>Empty UnitRequirementsGameData: every skill resolves to "no requirements".</summary>
     private static IDisposable SeedEmptyUnitRequirements()
@@ -185,6 +209,7 @@ public class PvpAggressionSeamRigTests
         req.Load(AAEmu.Game.Utils.DB.SQLite.CreateConnection());
         return SingletonSwap.Install(typeof(Singleton<UnitRequirementsGameData>), req);
     }
+
 
     private static IDisposable SeedConflictZone(TestableZoneConflict conflict)
     {
@@ -223,20 +248,28 @@ public class PvpAggressionSeamRigTests
     /// </summary>
     private static IDisposable EnsureItemManagerConfig()
     {
+        var cfgField = typeof(ItemManager).GetField("_config", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
         var existing = GetSingletonInstance(typeof(Singleton<ItemManager>));
-        if (existing != null)
+        if (existing == null)
         {
-            var cfgField = typeof(ItemManager).GetField("_config", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-            if (cfgField.GetValue(existing) == null)
-                cfgField.SetValue(existing, new ItemConfig());
-            return new CompositeSwap();
+            // ItemManager is a DI singleton (no parameterless ctor): build it the
+            // same way GameplayActorTestRig.SeedBaseSurface does, so ordering
+            // between this seam rig and the actor rig never matters.
+            ItemIdManager.Instance.Initialize(true);
+            existing = new ItemManager(
+                Mock.Of<ISkillManager>().Object,
+                ItemIdManager.Instance,
+                Mock.Of<IContainerIdManager>().Object,
+                Mock.Of<ILocalizationManager>().Object,
+                Mock.Of<ITaskManager>().Object,
+                Mock.Of<IWorldManager>().Object);
+            SetField(existing, "_templates", new Dictionary<uint, AAEmu.Game.Models.Game.Items.Templates.ItemTemplate>());
+            SetField(existing, "_removedItems", new List<ulong>());
+            SetField(existing, "_allItems", new System.Collections.Concurrent.ConcurrentDictionary<ulong, Item>());
+            GameplayActorTestRig.SeedSingleton(typeof(Singleton<ItemManager>), existing);
         }
-        // No instance yet: install one via reflection over the DI ctor is fragile;
-        // instead rely on the engine's own construction and just patch after.
-        var created = Singleton<ItemManager>.Instance;
-        var field = typeof(ItemManager).GetField("_config", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-        if (field.GetValue(created) == null)
-            field.SetValue(created, new ItemConfig());
+        if (cfgField.GetValue(existing) == null)
+            cfgField.SetValue(existing, new ItemConfig());
         return new CompositeSwap();
     }
 
@@ -271,6 +304,13 @@ public class PvpAggressionSeamRigTests
             .GetField("_zoneId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .SetValue(actor.Character.Transform, zoneKey);
 
+    /// <summary>
+    /// Avoids invoking the persistence-backed bloodstain path in this DB-free rig.
+    /// Live evidence generation is covered by the PB-007 instrumented run.
+    /// </summary>
+    private static void SeedExistingAssault(Character attacker, Character victim)
+        => victim.AssaultedBy.Add(attacker.Id);
+
     /// <summary>Initializes requirement stores on WHATEVER UnitRequirementsGameData instance is live.</summary>
     private static void EnsureRequirementsStores(UnitRequirementsGameData req)
     {
@@ -279,34 +319,41 @@ public class PvpAggressionSeamRigTests
     }
 
     /// <summary>Casts the seam skill through the REAL Skill.Use pipeline.</summary>
-    private static (SkillResult Result, Exception? Error) CastSeamSkill(GameplayActor attacker, GameplayActor victim)
+    private static SkillResult CastSeamSkill(GameplayActor attacker, GameplayActor victim)
     {
         EnsureRequirementsStores(UnitRequirementsGameData.Instance);
         var skill = new Skill(BuildSeamSkillTemplate());
-        try
-        {
-            var result = skill.Use(
-                attacker.Character,
-                new SkillCasterUnit(attacker.Character.ObjId),
-                new SkillCastUnitTarget(victim.Character.ObjId),
-                null,
-                true,
-                out _);
-            return (result, null);
-        }
-        catch (Exception ex)
-        {
-            // Expected terminal failure of the crime evidence-doodad chain
-            // (CrimeManager/DoodadManager persistence headless): the justice-chain
-            // in-memory state is already mutated by the time this fires.
-            return (SkillResult.Success, ex);
-        }
+        return skill.Use(
+            attacker.Character,
+            new SkillCasterUnit(attacker.Character.ObjId),
+            new SkillCastUnitTarget(victim.Character.ObjId),
+            null,
+            true,
+            out _);
     }
+
+
+    // ------------------------------------------------------- wire observability (PB-007 residual)
+
+    /// <summary>
+    /// GamePacket.Encode prefixes a two-byte frame length, then DD <level>
+    /// [hash count when level==1] <typeid:u16le>; SCBuffCreatedPacket is
+    /// typeId 0x0B6 at level 1 → bytes 02..07 DD 01 00 00 B6 00.
+    /// </summary>
+    private static int CapturedBuffCreatedCount(Character owner)
+        => s_captureByCharId.TryGetValue(owner.Id, out var capture)
+            ? capture.CapturedPackets.Count(p => p.Length >= 8
+                && p[2] == 0xDD && p[3] == 0x01 && p[4] == 0x00 && p[5] == 0x00
+                && p[6] == 0xB6 && p[7] == 0x00)
+            : 0;
+
+    private static bool CapturedBuffCreated(Character owner)
+        => CapturedBuffCreatedCount(owner) > 0;
 
     // ------------------------------------------------------------------ tests
 
     [Test]
-    public async Task Use_FlaggedSameFaction_DamageLandsAndCrimeBranchRuns()
+    public async Task Use_FlaggedSameFaction_DamageLandsAndRetributionApplies()
     {
         using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.Peace));
         using var skillSwap = SeedSkillManager(BuildSeamSkillTemplate());
@@ -325,30 +372,18 @@ public class PvpAggressionSeamRigTests
         SetZone(victim, TestZoneKey);
 
         attacker.Character.ForceAttack = true;
+        SeedExistingAssault(attacker.Character, victim.Character);
         var hpBefore = victim.Character.Hp;
-
-        var (result, error) = CastSeamSkill(attacker, victim);
+        var result = CastSeamSkill(attacker, victim);
 
         await Assert.That(result).IsEqualTo(SkillResult.Success);
-
-        // THE SEAM: damage must land on the Friendly-relation victim.
         await Assert.That(victim.Character.Hp).IsLessThan(hpBefore);
-
-        // Crime branch ran: victim was marked assaulted by the attacker before any
-        // evidence-doodad persistence. When that persistence explodes headless
-        // (terminal MySQL save), the exception is the proof the branch executed.
-        // The justice chain registers in-memory BEFORE the terminal evidence-doodad
-        // persistence step; when that step fails headless the exception is its proof.
-        var crimeRegistered = victim.Character.AssaultedBy.Contains(attacker.Character.Id)
-                              || (error?.StackTrace?.Contains("GenerateEvidenceFromDamage") ?? false);
-        await Assert.That(crimeRegistered).IsTrue();
-
-        // Retribution applied to the caster via SetCriminalState.
+        // Existing assault state keeps this DB-free seam away from evidence persistence.
         await Assert.That(attacker.Character.Buffs.CheckBuff((uint)BuffConstants.Retribution)).IsTrue();
     }
 
     [Test]
-    public async Task Use_FlaggedSameFaction_VictimDamageImmune_CrimeStillRegisters()
+    public async Task Use_FlaggedSameFaction_VictimDamageImmune_RetributionStillApplies()
     {
         using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.Peace));
         using var skillSwap = SeedSkillManager(BuildSeamSkillTemplate());
@@ -364,34 +399,32 @@ public class PvpAggressionSeamRigTests
         victim.Character.Faction = sharedFaction;
         SetZone(attacker, TestZoneKey);
         SetZone(victim, TestZoneKey);
-
         attacker.Character.ForceAttack = true;
+        SeedExistingAssault(attacker.Character, victim.Character);
 
         // Mirror login buff 2423 ("LoggedOn"): full all-type damage immunity.
-        var immuneTemplate = new BuffTemplate { Id = 902423, Duration = 20000, MeleeImmune = true, SpellImmune = true, RangedImmune = true, SiegeImmune = true };
-        var buffsField = typeof(SkillManager).GetField("_buffs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var immuneTemplate = new BuffTemplate
+        {
+            Id = 902423,
+            Duration = 20000,
+            MeleeImmune = true,
+            SpellImmune = true,
+            RangedImmune = true,
+            SiegeImmune = true
+        };
+        var buffsField = typeof(SkillManager).GetField("_buffs",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
         var buffsDict = (Dictionary<uint, BuffTemplate>)buffsField.GetValue(SkillManager.Instance)!;
-        buffsDict[902423] = immuneTemplate; // AddBuff resolves Stun/Sleep/etc. via this lookup
+        buffsDict[902423] = immuneTemplate;
         victim.Character.Buffs.AddBuff(new Buff(
             victim.Character, victim.Character,
             new SkillCasterUnit(victim.Character.ObjId),
             immuneTemplate, null, DateTime.UtcNow));
 
         var hpBefore = victim.Character.Hp;
+        var result = CastSeamSkill(attacker, victim);
 
-        var (result, error) = CastSeamSkill(attacker, victim);
-
-        await Assert.That(result).IsEqualTo(SkillResult.Success);
-
-        // Login-protection semantics preserved: NO HP loss through the shield...
         await Assert.That(victim.Character.Hp).IsEqualTo(hpBefore);
-
-        // ...but PB-007 justice chain: the assault itself must register even
-        // against an immuned target. The evidence-doodad step may terminate
-        // headless (CreatePlayerDoodad) AFTER in-memory state was mutated.
-        var crimeRegistered = victim.Character.AssaultedBy.Contains(attacker.Character.Id)
-                              || (error?.StackTrace?.Contains("GenerateEvidenceFromDamage") ?? false);
-        await Assert.That(crimeRegistered).IsTrue();
         await Assert.That(attacker.Character.Buffs.CheckBuff((uint)BuffConstants.Retribution)).IsTrue();
     }
 
@@ -412,13 +445,10 @@ public class PvpAggressionSeamRigTests
         victim.Character.Faction = sharedFaction;
         SetZone(attacker, TestZoneKey);
         SetZone(victim, TestZoneKey);
-
-        attacker.Character.ForceAttack = false; // PEACE-BLOCK case
+        attacker.Character.ForceAttack = false;
         var hpBefore = victim.Character.Hp;
+        var result = CastSeamSkill(attacker, victim);
 
-        var (result, error) = CastSeamSkill(attacker, victim);
-
-        await Assert.That(error).IsNull();
         await Assert.That(result).IsEqualTo(SkillResult.NoTarget);
         await Assert.That(victim.Character.Hp).IsEqualTo(hpBefore);
     }
@@ -426,7 +456,7 @@ public class PvpAggressionSeamRigTests
     [Test]
     public async Task Use_HostileRelation_DamageLandsUnchanged()
     {
-        using var zoneSwap = SeedConflictZone(CreateConflict(CreatePeace()));
+        using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.Peace));
         using var skillSwap = SeedSkillManager(BuildSeamSkillTemplate());
         using var reqSwap = SeedEmptyUnitRequirements();
         using var factionSwap = SeedFactionManager();
@@ -442,12 +472,88 @@ public class PvpAggressionSeamRigTests
         SetZone(victim, TestZoneKey);
 
         var hpBefore = victim.Character.Hp;
+        var result = CastSeamSkill(attacker, victim);
 
-        var (result, error) = CastSeamSkill(attacker, victim);
-
-        await Assert.That(error).IsNull();
         await Assert.That(result).IsEqualTo(SkillResult.Success);
         await Assert.That(victim.Character.Hp).IsLessThan(hpBefore);
+    }
+
+    [Test]
+    public async Task Use_ImmuneCrime_RetributionBuffCreatedObservedOnAttackerWire()
+    {
+        using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.Peace));
+        using var skillSwap = SeedSkillManager(BuildSeamSkillTemplate());
+        using var reqSwap = SeedEmptyUnitRequirements();
+        using var factionSwap = SeedFactionManager();
+        using var itemSwap = EnsureItemManagerConfig();
+
+        var (attacker, victim, session) = CreatePair("pb7wire");
+        _ = session;
+
+        var sharedFaction = new SystemFaction { Id = (FactionsEnum)9111 };
+        attacker.Character.Faction = sharedFaction;
+        victim.Character.Faction = sharedFaction;
+        SetZone(attacker, TestZoneKey);
+        SetZone(victim, TestZoneKey);
+        attacker.Character.ForceAttack = true;
+        SeedExistingAssault(attacker.Character, victim.Character);
+
+        var immuneTemplate = new BuffTemplate
+        {
+            Id = 902424,
+            Duration = 20000,
+            MeleeImmune = true,
+            SpellImmune = true,
+            RangedImmune = true,
+            SiegeImmune = true
+        };
+        var buffsField = typeof(SkillManager).GetField("_buffs",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var buffsDict = (Dictionary<uint, BuffTemplate>)buffsField.GetValue(SkillManager.Instance)!;
+        buffsDict[902424] = immuneTemplate;
+        victim.Character.Buffs.AddBuff(new Buff(
+            victim.Character, victim.Character,
+            new SkillCasterUnit(victim.Character.ObjId),
+            immuneTemplate, null, DateTime.UtcNow));
+
+        var result = CastSeamSkill(attacker, victim);
+
+        await Assert.That(result).IsEqualTo(SkillResult.Success);
+        await Assert.That(attacker.Character.Buffs.CheckBuff((uint)BuffConstants.Retribution)).IsTrue();
+        await Assert.That(CapturedBuffCreated(attacker.Character)).IsTrue();
+    }
+
+    [Test]
+    public async Task Use_RepeatedCrimeWhileRetributionHeld_RefreshStaysApplied()
+    {
+        using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.Peace));
+        using var skillSwap = SeedSkillManager(BuildSeamSkillTemplate());
+        using var reqSwap = SeedEmptyUnitRequirements();
+        using var factionSwap = SeedFactionManager();
+        using var itemSwap = EnsureItemManagerConfig();
+
+        var (attacker, victim, session) = CreatePair("pb7refresh");
+        _ = session;
+
+        var sharedFaction = new SystemFaction { Id = (FactionsEnum)9112 };
+        attacker.Character.Faction = sharedFaction;
+        victim.Character.Faction = sharedFaction;
+        SetZone(attacker, TestZoneKey);
+        SetZone(victim, TestZoneKey);
+        attacker.Character.ForceAttack = true;
+        SeedExistingAssault(attacker.Character, victim.Character);
+
+        var first = CastSeamSkill(attacker, victim);
+        await Assert.That(first).IsEqualTo(SkillResult.Success);
+        await Assert.That(attacker.Character.Buffs.CheckBuff((uint)BuffConstants.Retribution)).IsTrue();
+        var createdAfterFirst = CapturedBuffCreatedCount(attacker.Character);
+        await Assert.That(createdAfterFirst).IsGreaterThan(0);
+
+        // The canonical row uses stack_rule_id=1 (BuffStackRule.Refresh).
+        var second = CastSeamSkill(attacker, victim);
+        await Assert.That(second).IsEqualTo(SkillResult.Success);
+        await Assert.That(attacker.Character.Buffs.CheckBuff((uint)BuffConstants.Retribution)).IsTrue();
+        await Assert.That(CapturedBuffCreatedCount(attacker.Character)).IsGreaterThan(createdAfterFirst);
     }
 
     private static ZoneConflictType CreatePeace() => ZoneConflictType.Peace;
