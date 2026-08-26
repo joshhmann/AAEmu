@@ -32,16 +32,18 @@ Verdict: PASS
 
 ```
 
-## level22-gate
+## ability-gate
 ```
-# Scenario: level22-gate
-Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' failed: quest 168 not completed: active=True, flag=False
-- gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
+# Scenario: ability-gate
+Verdict: PASS
+- gate [ability-gate-5531]: REFUSED (pass) refused with Fight below 50: RejectedAction: quest 5531 accept refused by engine gate (Npc/13497)
 - stage START: 0 events, advance=ran, step=Ready, status=Ready
-- stage READY: 1 events, advance=ran, step=Ready, status=Ready
-- stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
-- criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
-- actor requests: 6
+- stage READY: 1 events, advance=skipped (quest terminal), step=Dropped, status=Completed
+- criterion [quest-5531-completed]: PASS quest 5531 completed (flag set, not active)
+- criterion [fight-50]: PASS Fight at level 50 (need 50)
+- criterion [magic-50]: PASS Magic at level 50 (need 50)
+- criterion [love-50]: PASS Love at level 50 (need 50)
+- actor requests: 4
 
 ```
 
@@ -60,18 +62,16 @@ Verdict: PASS
 
 ```
 
-## ability-gate
+## level22-gate
 ```
-# Scenario: ability-gate
-Verdict: PASS
-- gate [ability-gate-5531]: REFUSED (pass) refused with Fight below 50: RejectedAction: quest 5531 accept refused by engine gate (Npc/13497)
+# Scenario: level22-gate
+Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' failed: quest 168 not completed: active=True, flag=False
+- gate [level-gate-168]: REFUSED (pass) refused at probe level 21 (below 22): RejectedAction: quest 168 accept refused by engine gate (Npc/641)
 - stage START: 0 events, advance=ran, step=Ready, status=Ready
-- stage READY: 1 events, advance=skipped (quest terminal), step=Dropped, status=Completed
-- criterion [quest-5531-completed]: PASS quest 5531 completed (flag set, not active)
-- criterion [fight-50]: PASS Fight at level 50 (need 50)
-- criterion [magic-50]: PASS Magic at level 50 (need 50)
-- criterion [love-50]: PASS Love at level 50 (need 50)
-- actor requests: 4
+- stage READY: 1 events, advance=ran, step=Ready, status=Ready
+- stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
+- criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
+- actor requests: 6
 
 ```
 
