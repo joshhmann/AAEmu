@@ -390,7 +390,17 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
             return false;
         }
 
-        return BounceMailToOriginalSender(mail);
+        var bounced = BounceMailToOriginalSender(mail);
+        if (bounced && character is Character returner)
+        {
+            // Wire-level semantics for the C2S return path (CSReturnMailPacket):
+            // tell the returning receiver their mail went back, mirroring the
+            // legacy BaseMail.ReturnToSender notification. The expiry-bounce
+            // path has no interactive returner and stays silent here.
+            returner.SendPacket(new SCMailReturnedPacket(mailId, mail.Header));
+        }
+
+        return bounced;
     }
 
     /// <summary>
