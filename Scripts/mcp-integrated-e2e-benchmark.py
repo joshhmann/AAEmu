@@ -116,6 +116,8 @@ def main():
     parser.add_argument("--transcript", type=Path, default=Path("mcp-integrated-transcript.jsonl"))
     parser.add_argument("--bridge-port", type=int, default=int(os.getenv("E2E_BRIDGE_PORT", "1260")))
     parser.add_argument("--skip-bridge", action="store_true")
+    parser.add_argument("--safe-doodad-obj-id", type=int,
+                        help="Known-safe nearby doodad object id for interact_with; omitted when none is available")
     args = parser.parse_args()
     transcript = args.transcript.resolve()
     transcript.parent.mkdir(parents=True, exist_ok=True)
@@ -147,6 +149,29 @@ def main():
         _, observed = wait_terminal(actions, 4, observe["trace_id"], 1.0, 12)
         actions.call({"jsonrpc": "2.0", "id": 20, "method": "tools/call", "params": {
             "name": "trace", "arguments": {"bot": args.bot, "limit": 10}}})
+        discover_self_ack = tool(actions, 10, "discover_self_quests", {"bot": args.bot})
+        discover_self = text_result(discover_self_ack)
+        discover_self_status = None
+        if discover_self and discover_self.get("trace_id"):
+            _, discover_self_status = wait_terminal(
+                actions, 11, discover_self["trace_id"], 1.0, 12)
+        actions.call({"jsonrpc": "2.0", "id": 12, "method": "tools/call", "params": {
+            "name": "trace", "arguments": {"bot": args.bot, "limit": 10}}})
+
+        interaction = {
+            "status": "skipped",
+            "reason": "no known-safe doodad object id supplied; refusing to guess a mutating target",
+        }
+        if args.safe_doodad_obj_id is not None:
+            interact_ack = tool(actions, 13, "interact_with", {
+                "bot": args.bot, "doodadObjId": args.safe_doodad_obj_id})
+            interact = text_result(interact_ack)
+            interaction = {"ack": interact}
+            if interact and interact.get("trace_id"):
+                _, interaction["status"] = wait_terminal(
+                    actions, 14, interact["trace_id"], 1.0, 12)
+            actions.call({"jsonrpc": "2.0", "id": 15, "method": "tools/call", "params": {
+                "name": "trace", "arguments": {"bot": args.bot, "limit": 20}}})
 
         position = observed["result_payload"]["Position"]
         move_args = {
@@ -171,9 +196,16 @@ def main():
                 bridge_reply = {"error": str(error)}
                 with transcript.open("a", encoding="utf-8") as stream:
                     stream.write(f"bridge-error <- {json.dumps(bridge_reply, separators=(',', ':'))}\n")
-        print(json.dumps({"bot": args.bot, "observe_trace": observe["trace_id"],
-                          "move_trace": move.get("trace_id") if move else None,
-                          "bridge": bridge_reply, "transcript": str(transcript)}))
+        print(json.dumps({
+            "bot": args.bot,
+            "observe_trace": observe["trace_id"],
+            "discover_self_trace": discover_self.get("trace_id") if discover_self else None,
+            "discover_self_status": discover_self_status,
+            "move_trace": move.get("trace_id") if move else None,
+            "interaction": interaction,
+            "bridge": bridge_reply,
+            "transcript": str(transcript),
+        }))
     finally:
         if actions:
             actions.close()

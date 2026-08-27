@@ -38,7 +38,18 @@ public enum BotActionKind : byte
     Interrupt = 16,
 
     /// <summary>One engine craft step (M5.1 economy surface — workbench in the payload).</summary>
-    Craft = 17
+    Craft = 17,
+
+    /// <summary>Discover quest offers from a perceived NPC or doodad.</summary>
+    DiscoverQuests = 18,
+    /// <summary>Discover quest offers from self-perceivable channels.</summary>
+    DiscoverSelfQuests = 19,
+    /// <summary>Interact with a doodad using its derived use skill.</summary>
+    InteractWith = 20,
+    /// <summary>Credit an NPC talk through the normal quest event path.</summary>
+    Talk = 21,
+    /// <summary>Equip a bagged item through the normal inventory path.</summary>
+    Equip = 22
 }
 
 /// <summary>Move speed for Move/MoveToUnit commands.</summary>
@@ -485,6 +496,20 @@ public sealed class BotActionCommandQueue
                 var mate = spec.Payload is DismountActionParams p ? p.MateObjId : 0u;
                 return (actor.Dismount(mate, key), null);
             }
+            case BotActionKind.DiscoverQuests:
+                return (actor.DiscoverQuests(spec.TargetId, key), null);
+
+            case BotActionKind.DiscoverSelfQuests:
+                return (actor.DiscoverSelfQuests(key), null);
+
+            case BotActionKind.InteractWith:
+                return (actor.InteractWith(spec.TargetId, key), null);
+
+            case BotActionKind.Talk:
+                return (actor.Talk(spec.TargetId, key), null);
+
+            case BotActionKind.Equip:
+                return (actor.Equip(spec.TargetId, key), null);
 
             case BotActionKind.AcceptQuest:
             {

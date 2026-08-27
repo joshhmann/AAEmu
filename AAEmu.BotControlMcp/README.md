@@ -28,6 +28,11 @@ authenticated `/api/actors/*` route are explicitly deferred there.
 | `observe` | `POST /api/actors/observe` | Observation snapshot (position, targets, nearby) |
 | `move` | `POST /api/actors/move` | Walk to an absolute position |
 | `interact` | `POST /api/actors/interact` | Interact with a doodad |
+| `discover_quests` | `POST /api/actors/discover_quests` | Discover offers from a nearby NPC or doodad |
+| `discover_self_quests` | `POST /api/actors/discover_self_quests` | Discover self-perceivable quest offers |
+| `interact_with` | `POST /api/actors/interact_with` | Use a doodad's derived interaction skill |
+| `talk` | `POST /api/actors/talk` | Credit NPC talk through the quest event path |
+| `equip` | `POST /api/actors/equip` | Equip a bagged item by template |
 | `accept_quest` | `POST /api/actors/accept_quest` | Accept a quest (real AddQuest gate) |
 | `turn_in_quest` | `POST /api/actors/turn_in_quest` | Turn in a quest at an NPC |
 | `loot` | `POST /api/actors/loot` | Loot a corpse/bag owner |
@@ -74,12 +79,13 @@ deterministic CI smoke tests without a live game server.
 
 ## Deferred actor actions
 
-The actor contract contains additional real engine methods (`DiscoverQuests`,
-`DiscoverSelfQuests`, `InteractWith`, `Talk`, `Equip`, farming/crafting/pack
-actions, economy, party/expedition, trade, auction, vehicle, and bank
-actions), but this checkout has no authenticated `/api/actors/*` endpoint for
-them. They remain deferred in `MCP-ACTION-MATRIX.md`; no fake route, hidden
-state, or management alias is exposed.
+The first MCP expansion batch now exposes `DiscoverQuests`, `DiscoverSelfQuests`,
+`InteractWith`, `Talk`, and `Equip` through authenticated actor routes. Other
+real actor methods (farming/crafting/pack actions, economy,
+party/expedition, trade, auction, vehicle, and bank actions) remain deferred
+in `MCP-ACTION-MATRIX.md` because they do not yet have an authenticated
+`/api/actors/*` enqueue endpoint. No fake route, hidden state, or management
+alias is exposed.
 
 
 ## Running
@@ -175,6 +181,13 @@ Use the `trace_id` from each enqueue acknowledgement for a subsequent
 by this sidecar. A live run must record exact JSON-RPC replies and HTTP
 status/body evidence, and must stop on a missing state assertion rather than
 claiming success.
+
+`Scripts/mcp-integrated-e2e-benchmark.py` runs the same bounded workflow and
+also calls `discover_self_quests`, recording its enqueue acknowledgement,
+`action_status`, and a follow-up `trace`. It refuses to guess a mutating
+doodad target; pass `--safe-doodad-obj-id <objId>` only when an independently
+verified safe nearby doodad is available to exercise `interact_with`. The
+benchmark's direct bridge observation remains an independent state check.
 
 ## Security
 

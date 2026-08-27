@@ -247,6 +247,138 @@ internal class BotActionController : BaseController
             return Error(ex, "interact failed");
         }
     }
+    [WebApiPost("^/api/actors/discover_quests$")]
+    public HttpResponse DiscoverQuests(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<DiscoverQuestsRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.TargetObjId.HasValue || body.TargetObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("targetObjId is required"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.DiscoverQuests, TargetId: body.TargetObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "discover_quests failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/discover_self_quests$")]
+    public HttpResponse DiscoverSelfQuests(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<DiscoverSelfQuestsRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.DiscoverSelfQuests, IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "discover_self_quests failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/interact_with$")]
+    public HttpResponse InteractWith(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<InteractWithRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.DoodadObjId.HasValue || body.DoodadObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("doodadObjId is required"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.InteractWith, TargetId: body.DoodadObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "interact_with failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/talk$")]
+    public HttpResponse Talk(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<TalkRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.NpcObjId.HasValue || body.NpcObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("npcObjId is required"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.Talk, TargetId: body.NpcObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "talk failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/equip$")]
+    public HttpResponse Equip(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<EquipRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.ItemTemplateId.HasValue || body.ItemTemplateId.Value == 0)
+                return BadRequestJson(new ErrorModel("itemTemplateId is required"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.Equip, TargetId: body.ItemTemplateId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "equip failed");
+        }
+    }
+
 
     [WebApiPost("^/api/actors/loot$")]
     public HttpResponse Loot(HttpRequest request)
