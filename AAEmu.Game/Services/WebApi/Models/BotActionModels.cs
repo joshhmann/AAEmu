@@ -56,6 +56,20 @@ public sealed record AutoTurnInRequest(string? Bot, uint? QuestId, int? Selected
 
 /// <summary>POST /api/actors/interrupt — cancel a running request by its API trace id.</summary>
 public sealed record InterruptRequest(string? Bot, string? TraceId);
+/// <summary>POST /api/actors/discover_quests — discover offers from an NPC or doodad.</summary>
+public sealed record DiscoverQuestsRequest(string? Bot, uint? TargetObjId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/discover_self_quests — discover item/sphere/level offers for the actor.</summary>
+public sealed record DiscoverSelfQuestsRequest(string? Bot, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/interact_with — use a doodad's derived interaction skill.</summary>
+public sealed record InteractWithRequest(string? Bot, uint? DoodadObjId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/talk — credit an NPC talk through the normal quest event path.</summary>
+public sealed record TalkRequest(string? Bot, uint? NpcObjId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/equip — equip a bagged item by template through the normal inventory path.</summary>
+public sealed record EquipRequest(string? Bot, uint? ItemTemplateId, string? IdempotencyKey);
 
 // ----------------------------------------------------------------- responses
 

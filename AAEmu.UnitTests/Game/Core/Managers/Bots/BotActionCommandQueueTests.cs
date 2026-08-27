@@ -501,4 +501,31 @@ public class BotActionCommandQueueTests
         await Assert.That(done.AuditJson).IsNotNull();
         await Assert.That(Math.Abs(rig.Actor.Character.Transform.World.Position.X - 4f) <= 0.5f).IsTrue();
     }
+
+    [Test]
+    public async Task NewMcpActions_EnqueueAndDispatchThroughSharedActorBoundary()
+    {
+        var cases = new[]
+        {
+            (BotActionKind.DiscoverQuests, 0xDEADu),
+            (BotActionKind.DiscoverSelfQuests, 0u),
+            (BotActionKind.InteractWith, 0xDEADu),
+            (BotActionKind.Talk, 0xDEADu),
+            (BotActionKind.Equip, 0xDEADu),
+        };
+
+        foreach (var (kind, targetId) in cases)
+        {
+            var rig = CreateRig($"mcp-{kind}");
+            var result = rig.Queue.Enqueue(rig.Actor.Character.Name, new BotActionSpec(kind, TargetId: targetId));
+            await Assert.That(result.TraceId).IsNotEqualTo(Guid.Empty);
+
+            rig.Queue.DrainCommands();
+
+            await Assert.That(rig.Queue.TryGetSnapshot(result.TraceId, out var snapshot)).IsTrue();
+            await Assert.That(snapshot.Action).IsEqualTo(kind.ToString());
+            await Assert.That(snapshot.State is nameof(ActorLifecycleState.Completed)
+                or nameof(ActorLifecycleState.Rejected)).IsTrue();
+        }
+    }
 }

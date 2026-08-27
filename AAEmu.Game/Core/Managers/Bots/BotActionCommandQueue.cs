@@ -41,7 +41,17 @@ public enum BotActionKind : byte
     Craft = 17,
 
     /// <summary>Routed navigation via navmesh A* with waypoint stepping (PB-001).</summary>
-    Navigate = 18
+    Navigate = 18,
+    /// <summary>Discover quest offers from a perceived NPC or doodad.</summary>
+    DiscoverQuests = 19,
+    /// <summary>Discover quest offers from self-perceivable channels.</summary>
+    DiscoverSelfQuests = 20,
+    /// <summary>Interact with a doodad using its derived use skill.</summary>
+    InteractWith = 21,
+    /// <summary>Credit an NPC talk through the normal quest event path.</summary>
+    Talk = 22,
+    /// <summary>Equip a bagged item through the normal inventory path.</summary>
+    Equip = 23
 }
 
 /// <summary>Move speed for Move/MoveToUnit commands.</summary>
@@ -496,6 +506,20 @@ public sealed class BotActionCommandQueue
                 var mate = spec.Payload is DismountActionParams p ? p.MateObjId : 0u;
                 return (actor.Dismount(mate, key), null);
             }
+            case BotActionKind.DiscoverQuests:
+                return (actor.DiscoverQuests(spec.TargetId, key), null);
+
+            case BotActionKind.DiscoverSelfQuests:
+                return (actor.DiscoverSelfQuests(key), null);
+
+            case BotActionKind.InteractWith:
+                return (actor.InteractWith(spec.TargetId, key), null);
+
+            case BotActionKind.Talk:
+                return (actor.Talk(spec.TargetId, key), null);
+
+            case BotActionKind.Equip:
+                return (actor.Equip(spec.TargetId, key), null);
 
             case BotActionKind.AcceptQuest:
             {
@@ -684,6 +708,11 @@ public sealed class BotActionCommandQueue
             BotActionKind.TurnInDoodad => ActorActionType.TurnInDoodad,
             BotActionKind.AutoTurnIn => ActorActionType.AutoTurnIn,
             BotActionKind.Craft => ActorActionType.Craft,
+            BotActionKind.DiscoverQuests => ActorActionType.DiscoverQuests,
+            BotActionKind.DiscoverSelfQuests => ActorActionType.DiscoverSelfQuests,
+            BotActionKind.InteractWith => ActorActionType.InteractWith,
+            BotActionKind.Talk => ActorActionType.Talk,
+            BotActionKind.Equip => ActorActionType.Equip,
             BotActionKind.Interrupt => ActorActionType.Stop, // control op; never constructed via a running request
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "unknown bot action kind")
         };

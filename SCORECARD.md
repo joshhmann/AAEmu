@@ -47,22 +47,32 @@ cell; it is NEVER recorded as `H=2`. `H` stays `U` (UNKNOWN) until Josh runs
 the curated scenario. (ROADMAP M5-stand-in rule: bots prove function, never
 feel.)
 
-## MCP workflow integration (2026-08-27)
+## MCP expansion (2026-08-27)
+- MCP sidecars and the management gateway remain client-neutral; availability
+  is not external-client actor lifecycle evidence.
+- Historical coverage merge `8a22dcb4` and its 33-test / 19-tool smoke record
+  are retained; current validation and the 24-tool catalog are recorded below.
 
-- MCP sidecar tools and the management gateway are **client-neutral**.
-- Coverage merge `8a22dcb4` records 33 `BotControlActionMcp` tests passing and
-  the 19-tool stdio protocol smoke passing.
-- Real live smoke is **BLOCKED**:
-  `scorecard-explorations/generated/mcp-live-smoke-2026-08-27.md`
-  (report-only commit `7e109d550`) records that isolated Game exited before
-  WebApi because client-world/compact assets were missing. No actor lifecycle
-  or trace evidence exists.
-- Coverage verified no authenticated WebApi routes for `DiscoverQuests`,
-  `Talk`, `InteractWith`, `Equip`, `Plant`, `Craft`, party, and related newer
-  actions. They remain deferred and are not claimed as MCP-exposed actions.
-- **Next step:** after a valid asset-complete Game stack is available, rerun
-  real MCP smoke with `observe → action → action_status → trace` for a real
-  scenario.
+- Commit `1638b007c` adds five authenticated actor routes and matching MCP
+  tools: `POST /api/actors/discover_quests`,
+  `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
+  `POST /api/actors/talk`, and `POST /api/actors/equip`. The MCP catalog is
+  now 24 tools.
+- Focused validation passed: `BotActionControllerRouteTests` 2/2,
+  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP
+  projects Release build clean; stdio smoke 24 tools; full gate **2486 total /
+  2485 succeeded / 0 failed / 1 skipped**.
+- The live `discover_self_quests` MCP benchmark passed with `action_status`,
+  `trace`, and an independent MySQL character-row cross-check. No safe doodad
+  interaction was attempted.
+- The earlier asset-missing
+  `mcp-live-smoke-2026-08-27.md` run at `7e109d550` remains historical: Game
+  exited before WebApi; it is not the current benchmark verdict.
+- Plant, Harvest, Craft, party, trade, expeditions, and related newer actor
+  actions still lack authenticated routes. They remain explicitly deferred
+  and are not claimed as MCP-exposed. Grades in the ledger are unchanged;
+  **H remains U (UNKNOWN)**.
+>>>>>>> origin/develop
 
 **Proxy vs authentic replay (2026-08-13, canonical sync t_c9f0d7f6):** the
 M3a/M4 `A`-dimension grades above rest on scripted-actor PROXY evidence
@@ -121,7 +131,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | EXPEDITION-01 | Expedition membership, roles, persistence | M9/M10 | U | 2 | U | 1 | U | U | `ExpeditionManager`; organization audit. **2026-08-24 (f8252a37b):** headless verification rig — full lifecycle through the real manager with capture-backed connections: create (party auto-join) → reply-accept outsider → leave → disband; create-without-party refused before mutation. W=2 (real engine path end-to-end); A=1 rig-level — persistence (terminal Save) is integration-env scope, no bot contract actions yet; H=UNKNOWN |
 | CHAT-01 | Local/zone/party/expedition chat, moderation, bot identity | M7/M8 | U | 1 | U | U | N/A | U | `ChatManager`; social audit |
 | ZONE-01 | Peace/conflict/war state transitions and PvP rules | Later | U | 2 | U | 1 | U | U | `ZoneManager`; conflict-state audit. **2026-08-24 (0482ba3f0): zone state machine data-wired + enforced** — hard-coded Conflict boot state removed → data-driven Peace default (legacy World.ConflictZonesStartAtConflict flag kept for tests); Peace-state PvP protection at the BaseUnit.CanAttack chokepoint (fail-open when no conflict entry; Hostile stays attackable). W=2 (real engine path end-to-end); A=1 rig-level state machine + enforcement tests — no live PvP scenario yet (kept honest); **2026-08-25 (mechanics/pvp-domain.md):** enforcement confirmed as exactly ONE hook inside CanAttack; missing for a real war cycle: war-declaration input (CSFactionDeclareHostile stub), runtime conflict seeding, war towers. H=UNKNOWN |
-| ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; MCP contract coverage merge `8a22dcb4`: 33 `BotControlActionMcp` tests and 19-tool stdio smoke pass. Real MCP live smoke is BLOCKED by isolated Game exiting before WebApi on missing client-world/compact assets; no actor lifecycle/trace evidence. No authenticated WebApi routes for newer actions (`DiscoverQuests`, `Talk`, `InteractWith`, `Equip`, `Plant`, `Craft`, party, etc.); deferred. |
+| ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; commit `1638b007c` adds five authenticated routes (`discover_quests`, `discover_self_quests`, `interact_with`, `talk`, `equip`) with matching MCP tools. Catalog is now 24 tools. Focused validation passed: `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP projects Release build clean; stdio smoke 24 tools; full gate 2486 total / 2485 succeeded / 0 failed / 1 skipped. Live `discover_self_quests` benchmark passed with `action_status`, `trace`, and an independent MySQL character row; no safe doodad interaction attempted. Plant, Harvest, Craft, party, trade, expeditions, and related newer actions still lack authenticated routes and remain deferred. Grades unchanged; H remains U (UNKNOWN). |
 | BOT-01 | Headless account/session/Character lifecycle | M6 | U | 0 | U | 0 | 0 | U | New fork capability |
 | BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Staged 30m/1h/6h soak. **2026-08-24 (4e460305b):** scheduler soak STAGE 1 executed — SchedulerSoakStage1Tests, 10 manifest citizens × 30min through real IPlayerBotScheduler wakes; two valid runs ~90k steps, 0 failed/timed-out, wake avg ~99ms, DB writes 14–19/min/citizen, tick+region budgets PASS; staged ladder continues (1h/6h rungs + physics-recalibration decision open). Adjacent G3-B3 arbitration landed same sweep (0482ba3f0): IBotActivityModule + BotGoalArbiter — priority-based single-active activity per bot per wake. Notes only — grades unchanged (kept honest) |
 | REGRADE-01 | Gear regrading: spend regrade charms/scrolls to raise equipment tier with success/downgrade odds | Later | U | U | U | U | U | U | NEW 2026-08-25 (generated/mechanic-inventory-2026-08-25.md §3#1): item_grades/_grade_buffs/_enchanting_supports/_distributions + equip_slot_enchanting_costs tables; SCGradeEnchantResult/Broadcast G2C confirmations; GradeEnchant refs in ItemManager. Own dossier pending |
@@ -162,14 +172,19 @@ Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
 bugs, cards, tests, and zone reports can refer to the same scope.
 
 
-> **2026-08-27 MCP workflow integration checkpoint (current docs/source
-> head `7e109d550`; coverage merge `8a22dcb4`):** sidecar tools and management
-> gateway are client-neutral. The 33 `BotControlActionMcp` tests and 19-tool
-> stdio protocol smoke pass, but real MCP live smoke is **BLOCKED** because
-> isolated Game exited before WebApi on missing client-world/compact assets;
-> no actor lifecycle or trace evidence exists. No authenticated WebApi routes
-> were found for newer actions including `DiscoverQuests`, `Talk`,
-> `InteractWith`, `Equip`, `Plant`, `Craft`, or party; those remain deferred.
+> **2026-08-27 MCP expansion checkpoint (current docs/source
+> head `1638b007c`):** commit `1638b007c` adds five authenticated actor routes
+> and matching MCP tools (`discover_quests`, `discover_self_quests`,
+> `interact_with`, `talk`, `equip`); the catalog is now 24 tools. Focused route,
+> contract, queue, Release-build, stdio, and full-gate validation passed
+> (2/2, 33/33, 16/16; 24 tools; 2486 total / 2485 succeeded / 0 failed /
+> 1 skipped). The live `discover_self_quests` benchmark passed with
+> `action_status`, `trace`, and an independent MySQL character-row check; no
+> safe doodad interaction was attempted. The prior asset-missing
+> `mcp-live-smoke-2026-08-27.md` run at `7e109d550` is historical. Plant,
+> Harvest, Craft, party, trade, expeditions, and related newer actor actions
+> still lack authenticated routes and remain explicitly deferred; grades are
+> unchanged and H remains U (UNKNOWN).
 > **2026-08-26 recovery scorecard update (develop @ e5db6d390):** recovery
 > contents are confirmed on develop: grounding `38c4997d3`, recovered
 > Retribution wire-test merge `a4f7820ba`, and merchant merge `e5db6d390`;

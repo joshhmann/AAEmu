@@ -77,21 +77,22 @@ public class BotControlActionMcpTests
     }
 
     [Test]
-    public async Task ToolsList_ExposesNineteenContractActionTools()
+    public async Task ToolsList_ExposesTwentyFourContractActionTools()
     {
         var server = new ActionMcpServer(new FakeClient());
 
         var response = Parse(await server.HandleAsync("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""));
 
         var tools = response?["result"]?["tools"]?.AsArray();
-        await Assert.That(tools).HasCount().EqualTo(19);
+        await Assert.That(tools).HasCount().EqualTo(24);
         var names = tools!.Select(t => t?["name"]?.GetValue<string>()).OrderBy(n => n).ToArray();
         await Assert.That(names).IsEquivalentTo(new[]
         {
             "accept_quest", "action_status", "advance_quest", "auto_turn_in", "cast",
-            "dismount", "interact", "interrupt", "loot", "mount",
-            "move", "move_to_unit", "observe", "stop", "target",
-            "trace", "turn_in_doodad", "turn_in_quest", "use_item",
+            "discover_quests", "discover_self_quests", "dismount", "equip", "interact",
+            "interact_with", "interrupt", "loot", "mount", "move", "move_to_unit",
+            "observe", "stop", "talk", "target", "trace", "turn_in_doodad",
+            "turn_in_quest", "use_item",
         });
     }
 
@@ -476,6 +477,11 @@ public class BotControlActionMcpTests
         {
             ("observe", """{"bot":"McpBot01"}""", "POST", "/api/actors/observe", """{"bot":"McpBot01"}"""),
             ("move", """{"bot":"McpBot01","x":1,"y":2,"z":3,"speed":2,"timeoutSec":20,"idempotencyKey":"k"}""", "POST", "/api/actors/move", """{"bot":"McpBot01","x":1,"y":2,"z":3,"speed":2,"timeoutSec":20,"idempotencyKey":"k"}"""),
+            ("discover_quests", """{"bot":"McpBot01","targetObjId":43,"idempotencyKey":"k"}""", "POST", "/api/actors/discover_quests", """{"bot":"McpBot01","targetObjId":43,"idempotencyKey":"k"}"""),
+            ("discover_self_quests", """{"bot":"McpBot01","idempotencyKey":"k"}""", "POST", "/api/actors/discover_self_quests", """{"bot":"McpBot01","idempotencyKey":"k"}"""),
+            ("interact_with", """{"bot":"McpBot01","doodadObjId":44,"idempotencyKey":"k"}""", "POST", "/api/actors/interact_with", """{"bot":"McpBot01","doodadObjId":44,"idempotencyKey":"k"}"""),
+            ("talk", """{"bot":"McpBot01","npcObjId":45,"idempotencyKey":"k"}""", "POST", "/api/actors/talk", """{"bot":"McpBot01","npcObjId":45,"idempotencyKey":"k"}"""),
+            ("equip", """{"bot":"McpBot01","itemTemplateId":46,"idempotencyKey":"k"}""", "POST", "/api/actors/equip", """{"bot":"McpBot01","itemTemplateId":46,"idempotencyKey":"k"}"""),
             ("interact", """{"bot":"McpBot01","doodadObjId":42,"skillId":7,"idempotencyKey":"k"}""", "POST", "/api/actors/interact", """{"bot":"McpBot01","doodadObjId":42,"skillId":7,"idempotencyKey":"k"}"""),
             ("accept_quest", """{"bot":"McpBot01","questId":1001,"acceptorType":"Npc","acceptorId":500,"idempotencyKey":"k"}""", "POST", "/api/actors/accept_quest", """{"bot":"McpBot01","questId":1001,"acceptorType":"Npc","acceptorId":500,"idempotencyKey":"k"}"""),
             ("turn_in_quest", """{"bot":"McpBot01","questId":1001,"npcObjId":500,"selectedReward":2,"idempotencyKey":"k"}""", "POST", "/api/actors/turn_in_quest", """{"bot":"McpBot01","questId":1001,"npcObjId":500,"selectedReward":2,"idempotencyKey":"k"}"""),

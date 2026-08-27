@@ -13,10 +13,10 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 | `Cast` | `POST /api/actors/cast` | `cast` | `Call_cast_PostsSkillAndTarget`; generic exact mapping |
 | `CastAt` | — | — | Deferred: no actor WebApi route |
 | `Interact` | `POST /api/actors/interact` | `interact` | `Call_interact_PostsDoodad`; generic exact mapping |
-| `InteractWith` | — | — | Deferred: no actor WebApi route; do not alias to `interact` because semantics differ |
+| `InteractWith` | `POST /api/actors/interact_with` | `interact_with` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `Loot` | `POST /api/actors/loot` | `loot` | `Call_loot_PostsLootOwner`; generic exact mapping |
 | `UseItem` | `POST /api/actors/use_item` | `use_item` | `Call_use_item_PostsTemplateAndOptionalTarget`; generic exact mapping |
-| `Equip` | — | — | Deferred: no actor WebApi route |
+| `Equip` | `POST /api/actors/equip` | `equip` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `PartyInvite` | — | — | Deferred: no actor WebApi route |
 | `PartyAccept` | — | — | Deferred: no actor WebApi route |
 | `ExpeditionCreate` | — | — | Deferred: no actor WebApi route |
@@ -45,11 +45,11 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 | `AcceptQuest` | `POST /api/actors/accept_quest` | `accept_quest` | `Call_accept_quest_PostsQuestAndAcceptor`; generic exact mapping |
 | `AdvanceQuest` | `POST /api/actors/advance_quest` | `advance_quest` | `Call_advance_quest_PostsQuest`; generic exact mapping |
 | `TurnInQuest` | `POST /api/actors/turn_in_quest` | `turn_in_quest` | `Call_turn_in_quest_PostsNpcAndReward`; generic exact mapping |
-| `DiscoverQuests` | — | — | Deferred: no actor WebApi route |
+| `DiscoverQuests` | `POST /api/actors/discover_quests` | `discover_quests` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `TurnInAtDoodad` | `POST /api/actors/turn_in_doodad` | `turn_in_doodad` | `Call_turn_in_doodad_PostsDoodad`; generic exact mapping |
 | `AutoTurnInQuest` | `POST /api/actors/auto_turn_in` | `auto_turn_in` | `Call_auto_turn_in_PostsQuest`; generic exact mapping |
-| `Talk` | — | — | Deferred: no actor WebApi route |
-| `DiscoverSelfQuests` | — | — | Deferred: no actor WebApi route |
+| `Talk` | `POST /api/actors/talk` | `talk` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
+| `DiscoverSelfQuests` | `POST /api/actors/discover_self_quests` | `discover_self_quests` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `Buy` | — | — | Deferred: no actor WebApi route |
 | `Sell` | — | — | Deferred: no actor WebApi route |
 | `PostAuction` | — | — | Deferred: no actor WebApi route |
@@ -63,7 +63,7 @@ Lifecycle/audit reads are not `IGameplayActor` actions, but are part of the auth
 | `GET /api/actors/actions/{traceId}` | `action_status` | `Call_action_status_GetsTraceEndpoint`; generic exact mapping and escaped path argument |
 | `GET /api/actors/trace?bot=...&limit=...` | `trace` | `Call_trace_GetsTraceQueryWithLimit`, `Call_trace_WithoutLimit_GetsTraceQuery`; generic exact mapping and escaped bot argument |
 
-`Tick`, `FindByKey`, `ActorId`, `Character`, `ActiveRequest`, and `AuditTrace` are actor internals/engine scheduling or correlation surfaces, not standalone HTTP actions. The existing authenticated `BotActionController` routes are the complete safe MCP surface in this checkout; no fake routes or management aliases are added.
+`Tick`, `FindByKey`, `ActorId`, `Character`, `ActiveRequest`, and `AuditTrace` are actor internals/engine scheduling or correlation surfaces, not standalone HTTP actions. The authenticated `BotActionController` routes listed above are the complete safe MCP surface for this batch; all remaining deferred actions lack a reviewed authenticated enqueue mapping, so no fake routes or management aliases are added.
 
 Other WebApi controllers do not widen this contract: for example,
 `ExpeditionController` exposes `GET /api/expedition/list` as a server-wide
