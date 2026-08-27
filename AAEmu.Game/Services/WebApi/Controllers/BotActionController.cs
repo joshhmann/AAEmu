@@ -379,6 +379,116 @@ internal class BotActionController : BaseController
         }
     }
 
+    [WebApiPost("^/api/actors/deposit_money$")]
+    public HttpResponse DepositMoney(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<DepositMoneyRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.Amount.HasValue || body.Amount.Value <= 0)
+                return BadRequestJson(new ErrorModel("amount is required and must be positive"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.DepositMoney,
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new MoneyActionParams(body.Amount.Value)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "deposit_money failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/withdraw_money$")]
+    public HttpResponse WithdrawMoney(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<WithdrawMoneyRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.Amount.HasValue || body.Amount.Value <= 0)
+                return BadRequestJson(new ErrorModel("amount is required and must be positive"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.WithdrawMoney,
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new MoneyActionParams(body.Amount.Value)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "withdraw_money failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/deposit_item$")]
+    public HttpResponse DepositItem(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<DepositItemRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.ItemTemplateId.HasValue || body.ItemTemplateId.Value == 0)
+                return BadRequestJson(new ErrorModel("itemTemplateId is required"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.DepositItem, TargetId: body.ItemTemplateId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "deposit_item failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/withdraw_item$")]
+    public HttpResponse WithdrawItem(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<WithdrawItemRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.ItemTemplateId.HasValue || body.ItemTemplateId.Value == 0)
+                return BadRequestJson(new ErrorModel("itemTemplateId is required"));
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.WithdrawItem, TargetId: body.ItemTemplateId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "withdraw_item failed");
+        }
+    }
+
 
     [WebApiPost("^/api/actors/loot$")]
     public HttpResponse Loot(HttpRequest request)

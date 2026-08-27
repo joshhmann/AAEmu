@@ -51,17 +51,16 @@ feel.)
 - MCP sidecars and the management gateway remain client-neutral; availability
   is not external-client actor lifecycle evidence.
 - Historical coverage merge `8a22dcb4` and its 33-test / 19-tool smoke record
-  are retained; current validation and the 24-tool catalog are recorded below.
+  are retained; current validation and the 28-tool catalog are recorded below.
 
-- Commit `1638b007c` adds five authenticated actor routes and matching MCP
-  tools: `POST /api/actors/discover_quests`,
-  `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
-  `POST /api/actors/talk`, and `POST /api/actors/equip`. The MCP catalog is
-  now 24 tools.
+- Authenticated actor routes and matching MCP tools: added `deposit_money`,
+  `withdraw_money`, `deposit_item`, and `withdraw_item`, joining
+  `discover_quests`, `discover_self_quests`, `interact_with`, `talk`, and
+  `equip`. The MCP catalog is now **28 tools**.
 - Focused validation passed: `BotActionControllerRouteTests` 2/2,
-  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP
-  projects Release build clean; stdio smoke 24 tools; full gate **2486 total /
-  2485 succeeded / 0 failed / 1 skipped**.
+  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18; MCP
+  projects Release build clean; stdio smoke 28 tools; full gate **2490 total /
+  2489 succeeded / 0 failed / 1 skipped**.
 - The live `discover_self_quests` MCP benchmark passed with `action_status`,
   `trace`, and an independent MySQL character-row cross-check. No safe doodad
   interaction was attempted.
@@ -72,7 +71,6 @@ feel.)
   actions still lack authenticated routes. They remain explicitly deferred
   and are not claimed as MCP-exposed. Grades in the ledger are unchanged;
   **H remains U (UNKNOWN)**.
->>>>>>> origin/develop
 
 **Proxy vs authentic replay (2026-08-13, canonical sync t_c9f0d7f6):** the
 M3a/M4 `A`-dimension grades above rest on scripted-actor PROXY evidence

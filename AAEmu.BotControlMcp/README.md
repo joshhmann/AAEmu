@@ -33,6 +33,10 @@ authenticated `/api/actors/*` route are explicitly deferred there.
 | `interact_with` | `POST /api/actors/interact_with` | Use a doodad's derived interaction skill |
 | `talk` | `POST /api/actors/talk` | Credit NPC talk through the quest event path |
 | `equip` | `POST /api/actors/equip` | Equip a bagged item by template |
+| `deposit_money` | `POST /api/actors/deposit_money` | Deposit copper from inventory into bank |
+| `withdraw_money` | `POST /api/actors/withdraw_money` | Withdraw copper from bank into inventory |
+| `deposit_item` | `POST /api/actors/deposit_item` | Deposit an item stack from bag into bank |
+| `withdraw_item` | `POST /api/actors/withdraw_item` | Withdraw an item stack from bank into bag |
 | `accept_quest` | `POST /api/actors/accept_quest` | Accept a quest (real AddQuest gate) |
 | `turn_in_quest` | `POST /api/actors/turn_in_quest` | Turn in a quest at an NPC |
 | `loot` | `POST /api/actors/loot` | Loot a corpse/bag owner |

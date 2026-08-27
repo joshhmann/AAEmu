@@ -38,10 +38,10 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 | `LoadPackOntoVehicle` | — | — | Deferred: no actor WebApi route |
 | `Plant` | — | — | Deferred: no actor WebApi route |
 | `BuildHouse` | — | — | Deferred: no actor WebApi route |
-| `DepositMoney` | — | — | Deferred: no actor WebApi route |
-| `WithdrawMoney` | — | — | Deferred: no actor WebApi route |
-| `DepositItem` | — | — | Deferred: no actor WebApi route |
-| `WithdrawItem` | — | — | Deferred: no actor WebApi route |
+| `DepositMoney` | `POST /api/actors/deposit_money` | `deposit_money` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
+| `WithdrawMoney` | `POST /api/actors/withdraw_money` | `withdraw_money` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
+| `DepositItem` | `POST /api/actors/deposit_item` | `deposit_item` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
+| `WithdrawItem` | `POST /api/actors/withdraw_item` | `withdraw_item` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `AcceptQuest` | `POST /api/actors/accept_quest` | `accept_quest` | `Call_accept_quest_PostsQuestAndAcceptor`; generic exact mapping |
 | `AdvanceQuest` | `POST /api/actors/advance_quest` | `advance_quest` | `Call_advance_quest_PostsQuest`; generic exact mapping |
 | `TurnInQuest` | `POST /api/actors/turn_in_quest` | `turn_in_quest` | `Call_turn_in_quest_PostsNpcAndReward`; generic exact mapping |

@@ -37,23 +37,22 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   passed; no live-client confirmation of inferred return opcode is implied.
 - **PB-001 routed navigation:** **COMPLETE** — `IGameplayActor.NavigateTo` landed and verified with `GameplayActorNavigateTests` (6/6 green) supporting multi-waypoint navigation with automatic A* pathfinding over CryEngine GeoData and graceful fallback to direct leg. First-class `Navigate` action exposed to `BotActionCommandQueue` and verified with `BotActionCommandQueueTests` (16/16 green).
 - **PB-002 autonomous leveling loop:** **COMPLETE** — full autonomous quest execution loop composed in `LevelingLoopScenario` supporting Talk (`QuestActObjTalk`, `QuestActObjTalkNpcGroup`), Hunt/Kill (`QuestActObjKillMonster`, `QuestActObjKillMonsterGroup`), Gather/Interact (`QuestActObjActDoodad`), and delivery quests, alongside autonomous sustain recovery (HP < 35% consumable usage) and auto-equipping item upgrades. Template library and runner wired via `BotScenarioTemplates` / `BotScenarioRunner` (`BotScenarioRigTests` 10/10 green).
-- **Final gate:** **2489 total: 2488 succeeded, 0 failed, 1 skipped**.
+- **Final gate:** **2490 total: 2489 succeeded, 0 failed, 1 skipped**.
 
 ## 2026-08-27 MCP expansion
 - **Client-neutral integration:** MCP sidecars and the management gateway remain
   client-neutral; they do not constitute external-client actor evidence.
 - **Historical coverage retained:** merge `8a22dcb4` recorded the earlier
-  33-test contract coverage and 19-tool stdio smoke; the current checkpoint
-  records the 24-tool catalog and current validation below.
+  33-test contract coverage and 19-tool stdio smoke; the subsequent 24-tool
+  expansion added quest/doodad/talk/equip actor routes.
 
-- **Authenticated actor routes and MCP tools:** commit `1638b007c` adds five
-  matching routes: `POST /api/actors/discover_quests`,
-  `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
-  `POST /api/actors/talk`, and `POST /api/actors/equip`.
-- **MCP catalog:** now 24 tools. Focused validation passed:
+- **Deposit/Withdraw actor routes and MCP tools:** added four matching routes:
+  `POST /api/actors/deposit_money`, `POST /api/actors/withdraw_money`,
+  `POST /api/actors/deposit_item`, and `POST /api/actors/withdraw_item`.
+- **MCP catalog:** now **28 tools**. Focused validation passed:
   `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
-  `BotActionCommandQueueTests` 16/16; MCP projects Release build clean; stdio
-  smoke 24 tools; full gate **2486 total / 2485 succeeded / 0 failed /
+  `BotActionCommandQueueTests` 18/18; MCP projects Release build clean; stdio
+  smoke 28 tools; full gate **2490 total / 2489 succeeded / 0 failed /
   1 skipped**.
 - **Live benchmark:** `discover_self_quests` MCP benchmark passed with
   `action_status` and `trace`, plus an independent MySQL character-row

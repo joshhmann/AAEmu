@@ -16,6 +16,10 @@ public sealed class BotActionControllerRouteTests
         ("/api/actors/interact_with", "InteractWith", "{\"bot\":\"McpBot01\",\"doodadObjId\":42}", "doodadObjId"),
         ("/api/actors/talk", "Talk", "{\"bot\":\"McpBot01\",\"npcObjId\":42}", "npcObjId"),
         ("/api/actors/equip", "Equip", "{\"bot\":\"McpBot01\",\"itemTemplateId\":42}", "itemTemplateId"),
+        ("/api/actors/deposit_money", "DepositMoney", "{\"bot\":\"McpBot01\",\"amount\":100}", "amount"),
+        ("/api/actors/withdraw_money", "WithdrawMoney", "{\"bot\":\"McpBot01\",\"amount\":100}", "amount"),
+        ("/api/actors/deposit_item", "DepositItem", "{\"bot\":\"McpBot01\",\"itemTemplateId\":42}", "itemTemplateId"),
+        ("/api/actors/withdraw_item", "WithdrawItem", "{\"bot\":\"McpBot01\",\"itemTemplateId\":42}", "itemTemplateId"),
     ];
 
     private string? _oldEnabled;
@@ -70,6 +74,7 @@ public sealed class BotActionControllerRouteTests
                 "doodadObjId" => body.Replace("\"doodadObjId\":42", string.Empty),
                 "npcObjId" => body.Replace("\"npcObjId\":42", string.Empty),
                 "itemTemplateId" => body.Replace("\"itemTemplateId\":42", string.Empty),
+                "amount" => body.Replace("\"amount\":100", string.Empty),
                 _ => throw new InvalidOperationException(missingField),
             };
             var invalid = new HttpRequest("POST", path, "HTTP/1.1");

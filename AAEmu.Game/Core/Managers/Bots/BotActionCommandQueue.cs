@@ -51,8 +51,19 @@ public enum BotActionKind : byte
     /// <summary>Credit an NPC talk through the normal quest event path.</summary>
     Talk = 22,
     /// <summary>Equip a bagged item through the normal inventory path.</summary>
-    Equip = 23
+    Equip = 23,
+    /// <summary>Deposit copper from inventory into bank.</summary>
+    DepositMoney = 24,
+    /// <summary>Withdraw copper from bank into inventory.</summary>
+    WithdrawMoney = 25,
+    /// <summary>Deposit an item stack from bag into bank.</summary>
+    DepositItem = 26,
+    /// <summary>Withdraw an item stack from bank into bag.</summary>
+    WithdrawItem = 27
 }
+
+/// <summary>Money amount parameter for DepositMoney/WithdrawMoney.</summary>
+public sealed record MoneyActionParams(long Amount);
 
 /// <summary>Move speed for Move/MoveToUnit commands.</summary>
 public sealed record MoveActionParams(float Speed = 5f);
@@ -565,6 +576,24 @@ public sealed class BotActionCommandQueue
                 return (actor.Craft(spec.TargetId, doodad, spec.Timeout, key), null);
             }
 
+            case BotActionKind.DepositMoney:
+            {
+                var amount = spec.Payload is MoneyActionParams p ? p.Amount : (long)spec.TargetId;
+                return (actor.DepositMoney(amount, key), null);
+            }
+
+            case BotActionKind.WithdrawMoney:
+            {
+                var amount = spec.Payload is MoneyActionParams p ? p.Amount : (long)spec.TargetId;
+                return (actor.WithdrawMoney(amount, key), null);
+            }
+
+            case BotActionKind.DepositItem:
+                return (actor.DepositItem(spec.TargetId, key), null);
+
+            case BotActionKind.WithdrawItem:
+                return (actor.WithdrawItem(spec.TargetId, key), null);
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(spec), spec.Kind, "unknown bot action kind");
         }
@@ -713,6 +742,10 @@ public sealed class BotActionCommandQueue
             BotActionKind.InteractWith => ActorActionType.InteractWith,
             BotActionKind.Talk => ActorActionType.Talk,
             BotActionKind.Equip => ActorActionType.Equip,
+            BotActionKind.DepositMoney => ActorActionType.DepositMoney,
+            BotActionKind.WithdrawMoney => ActorActionType.WithdrawMoney,
+            BotActionKind.DepositItem => ActorActionType.DepositItem,
+            BotActionKind.WithdrawItem => ActorActionType.WithdrawItem,
             BotActionKind.Interrupt => ActorActionType.Stop, // control op; never constructed via a running request
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "unknown bot action kind")
         };

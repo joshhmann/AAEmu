@@ -505,19 +505,23 @@ public class BotActionCommandQueueTests
     [Test]
     public async Task NewMcpActions_EnqueueAndDispatchThroughSharedActorBoundary()
     {
-        var cases = new[]
+        var cases = new (BotActionKind Kind, uint TargetId, object? Payload)[]
         {
-            (BotActionKind.DiscoverQuests, 0xDEADu),
-            (BotActionKind.DiscoverSelfQuests, 0u),
-            (BotActionKind.InteractWith, 0xDEADu),
-            (BotActionKind.Talk, 0xDEADu),
-            (BotActionKind.Equip, 0xDEADu),
+            (BotActionKind.DiscoverQuests, 0xDEADu, null),
+            (BotActionKind.DiscoverSelfQuests, 0u, null),
+            (BotActionKind.InteractWith, 0xDEADu, null),
+            (BotActionKind.Talk, 0xDEADu, null),
+            (BotActionKind.Equip, 0xDEADu, null),
+            (BotActionKind.DepositMoney, 0u, new MoneyActionParams(100)),
+            (BotActionKind.WithdrawMoney, 0u, new MoneyActionParams(100)),
+            (BotActionKind.DepositItem, 0xDEADu, null),
+            (BotActionKind.WithdrawItem, 0xDEADu, null),
         };
 
-        foreach (var (kind, targetId) in cases)
+        foreach (var (kind, targetId, payload) in cases)
         {
             var rig = CreateRig($"mcp-{kind}");
-            var result = rig.Queue.Enqueue(rig.Actor.Character.Name, new BotActionSpec(kind, TargetId: targetId));
+            var result = rig.Queue.Enqueue(rig.Actor.Character.Name, new BotActionSpec(kind, TargetId: targetId, Payload: payload));
             await Assert.That(result.TraceId).IsNotEqualTo(Guid.Empty);
 
             rig.Queue.DrainCommands();
@@ -527,5 +531,33 @@ public class BotActionCommandQueueTests
             await Assert.That(snapshot.State is nameof(ActorLifecycleState.Completed)
                 or nameof(ActorLifecycleState.Rejected)).IsTrue();
         }
+    }
+
+    [Test]
+    public async Task DepositAndWithdrawMoney_EnqueueAndDrain_TransfersCopperAccurately()
+    {
+        var rig = CreateRig("money-bot");
+        rig.Actor.Character.Money = 500;
+        rig.Actor.Character.Money2 = 200;
+
+        // Deposit 300 copper
+        var depResult = rig.Queue.Enqueue(rig.Actor.Character.Name,
+            new BotActionSpec(BotActionKind.DepositMoney, Payload: new MoneyActionParams(300)));
+        rig.Queue.DrainCommands();
+
+        await Assert.That(rig.Queue.TryGetSnapshot(depResult.TraceId, out var depSnap)).IsTrue();
+        await Assert.That(depSnap.State).IsEqualTo(nameof(ActorLifecycleState.Completed));
+        await Assert.That(rig.Actor.Character.Money).IsEqualTo(200);
+        await Assert.That(rig.Actor.Character.Money2).IsEqualTo(500);
+
+        // Withdraw 150 copper
+        var withResult = rig.Queue.Enqueue(rig.Actor.Character.Name,
+            new BotActionSpec(BotActionKind.WithdrawMoney, Payload: new MoneyActionParams(150)));
+        rig.Queue.DrainCommands();
+
+        await Assert.That(rig.Queue.TryGetSnapshot(withResult.TraceId, out var withSnap)).IsTrue();
+        await Assert.That(withSnap.State).IsEqualTo(nameof(ActorLifecycleState.Completed));
+        await Assert.That(rig.Actor.Character.Money).IsEqualTo(350);
+        await Assert.That(rig.Actor.Character.Money2).IsEqualTo(350);
     }
 }

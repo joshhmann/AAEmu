@@ -1186,19 +1186,21 @@ are not claimed as MCP-exposed.
 
 ### MCP actor-route expansion and layered validation (2026-08-27)
 
-**Current state:** 24 MCP tools; commit `1638b007c` added five authenticated
-routes/tools — `discover_quests`, `discover_self_quests`, `interact_with`,
-`talk`, and `equip`. Focused route/MCP/queue tests are **51/51**; protocol
-smoke covers 24 tools; the real local MCP benchmark passed
+**Current state:** **28 MCP tools**; added four authenticated routes/tools for
+`deposit_money`, `withdraw_money`, `deposit_item`, and `withdraw_item`, joining
+`discover_quests`, `discover_self_quests`, `interact_with`, `talk`, and `equip`.
+Focused route/MCP/queue tests are **53/53** (`BotActionControllerRouteTests` 2/2,
+`BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18); protocol
+smoke covers 28 tools; full solution gate **2490 total / 2489 succeeded /
+0 failed / 1 skipped**. The real local MCP benchmark passed
 `observe`/`move`/`discover_self_quests` with `action_status`/`trace` and
-independent DB evidence. Newer actor actions still have no authenticated
-WebApi route and remain deferred.
+independent DB evidence.
 
 **Goal:** expose only stable, player-like `IGameplayActor` actions through
 authenticated, enqueue-only `/api/actors/*` routes and matching MCP tools,
 then validate each through MCP + direct E2E + DB/wire/restart evidence as
 appropriate. Ordered families (each starts with archaeology and a reviewed
-contract): **Deposit/Withdraw → Plant/Harvest → Craft → Buy/Sell →
+contract): **Deposit/Withdraw (LANDED) → Plant/Harvest → Craft → Buy/Sell →
 Pack/vehicle → Party → Expedition → Trade → Auction**.
 
 **Acceptance per family:** route authentication/binding tests; MCP

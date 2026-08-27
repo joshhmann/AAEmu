@@ -40,7 +40,7 @@ Verdict: PASS
 - stage ADVANCE: 1 events, advance=Completed, step=257, status=quest 257 advanced (step Ready, status Ready)
 - stage TURNIN: 1 events, advance=Completed, step=257, status=quest 257 completed by turn-in
 - stage ACCEPT: 1 events, advance=Completed, step=259, status=quest 259 accepted (Npc/3517)
-- stage ADVANCE: 1 events, advance=Completed, step=259, status=quest 259 advanced (step Progress, status Progress)
+- stage ADVANCE: 1 events, advance=Completed, step=259, status=quest 259 advanced (step Ready, status Ready)
 - stage TURNIN: 1 events, advance=Completed, step=259, status=quest 259 completed by turn-in
 - stage ACCEPT: 1 events, advance=Completed, step=260, status=quest 260 accepted (Npc/3593)
 - stage ADVANCE: 1 events, advance=Completed, step=260, status=quest 260 advanced (step Ready, status Ready)
@@ -164,7 +164,7 @@ Verdict: PASS
 - stage ADVANCE: 1 events, advance=Completed, step=257, status=quest 257 advanced (step Ready, status Ready)
 - stage TURNIN: 1 events, advance=Completed, step=257, status=quest 257 completed by turn-in
 - stage ACCEPT: 1 events, advance=Completed, step=259, status=quest 259 accepted (Npc/3517)
-- stage ADVANCE: 1 events, advance=Completed, step=259, status=quest 259 advanced (step Progress, status Progress)
+- stage ADVANCE: 1 events, advance=Completed, step=259, status=quest 259 advanced (step Ready, status Ready)
 - stage TURNIN: 1 events, advance=Completed, step=259, status=quest 259 completed by turn-in
 - stage ACCEPT: 1 events, advance=Completed, step=260, status=quest 260 accepted (Npc/3593)
 - stage ADVANCE: 1 events, advance=Completed, step=260, status=quest 260 advanced (step Ready, status Ready)

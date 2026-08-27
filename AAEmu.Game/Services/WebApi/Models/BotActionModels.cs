@@ -71,6 +71,18 @@ public sealed record TalkRequest(string? Bot, uint? NpcObjId, string? Idempotenc
 /// <summary>POST /api/actors/equip — equip a bagged item by template through the normal inventory path.</summary>
 public sealed record EquipRequest(string? Bot, uint? ItemTemplateId, string? IdempotencyKey);
 
+/// <summary>POST /api/actors/deposit_money — deposit copper from inventory into bank.</summary>
+public sealed record DepositMoneyRequest(string? Bot, long? Amount, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/withdraw_money — withdraw copper from bank into inventory.</summary>
+public sealed record WithdrawMoneyRequest(string? Bot, long? Amount, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/deposit_item — deposit an item stack from bag into bank.</summary>
+public sealed record DepositItemRequest(string? Bot, uint? ItemTemplateId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/withdraw_item — withdraw an item stack from bank into bag.</summary>
+public sealed record WithdrawItemRequest(string? Bot, uint? ItemTemplateId, string? IdempotencyKey);
+
 // ----------------------------------------------------------------- responses
 
 // Action responses are shaped in the controller as lowercase JSON (JObject):
