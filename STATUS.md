@@ -57,6 +57,15 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   as MCP-exposed actions.
 - **Next step:** rerun real MCP smoke with a valid asset-complete Game stack,
   then use `observe → action → action_status → trace` for a real scenario.
+- **Integrated live benchmark (isolated, 2026-08-27; source checkpoint
+  `12ff5b504`):** asset-complete Login/Game + WebApi reached both generic MCP
+  sidecars; management add/adopt/status/list and action observe → move →
+  action_status → trace all passed. The independent same-character
+  `aaemu_game.characters` row cross-check passed and is recorded at
+  `scorecard-explorations/generated/integrated-mcp-e2e-benchmark-2026-08-27.md`.
+  The short move had no Navigation timeout. The managed headless bot has no
+  authenticated client TCP session, so the BotDriveBridge wire leg is
+  explicitly BLOCKED; no client visual/wire evidence is claimed.
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
