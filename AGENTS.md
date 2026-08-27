@@ -334,14 +334,25 @@ Per-character / world mutable state → managers + MySQL.
 
 ## Build and test
 
-```powershell
-dotnet build
-dotnet test
+```bash
+# Tier 1 — Standard gate (every change, ~1 min):
+./scripts/gate.sh
+
+# Tier 1 with targeted class filter:
+./scripts/gate.sh BotActionControllerRouteTests
+
+# Tier 2 — Targeted Integration / E2E scenario (seconds):
+dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --treenode-filter "/*/*/BotControlActionMcpE2eTests/*"
+
+# Tier 3 — Heavy soak / storm probes (milestone validation, 35-45+ min):
+# Runs unfiltered AAEmu.IntegrationTests (GateSoakRunner, scale probes)
 ```
 
 - SDK: .NET **10** (`global.json`).
 - Solution: `AAEmu.slnx`.
-- Filter example: `dotnet test --filter "FullyQualifiedName~GameNetworkTests"`.
+- **Tier 1 (Fast Gate — `./scripts/gate.sh`):** Release build + ScriptCompiler + `AAEmu.UnitTests` + MCP stdio protocol smoke.
+- **Tier 2 (Targeted Integration):** Specific network, MCP API, or restart persistence scenarios via treenode filter.
+- **Tier 3 (Heavy Soak / Probes):** Unfiltered `AAEmu.IntegrationTests` for milestone exits and scale benchmarking.
 - Test projects: `AAEmu.UnitTests` (primary), `AAEmu.IntegrationTests`, `AAEmu.Login.IntegrationTests`.
 - Unit test bases: `TestBase`, `SqliteTestBase`, `IntegrationTestBase`; mocks under `Utils/Mocks/`.
 - Naming: `MethodName_Scenario_ExpectedResult` (see `AAEmu.UnitTests/README.md`).

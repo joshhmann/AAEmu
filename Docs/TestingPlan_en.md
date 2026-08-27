@@ -134,9 +134,17 @@ AAEmu.UnitTests/
 - **Regular refactoring**: if coverage drops, add missing tests.
 - **Documentation**: in test project `README.md`, describe structure, execution, and rules for writing new tests.
 
+### 7. Tiered Test Execution Workflow
+
+| Tier | Purpose | Execution Command | Typical Runtime |
+| --- | --- | --- | --- |
+| **Tier 1 — Fast Gate** | Standard verification for every commit/PR: Release build, in-game ScriptCompiler check, full unit/contract suite, and MCP protocol stdio smoke. | `./scripts/gate.sh` | ~1 minute |
+| **Tier 2 — Targeted Integration / E2E** | Verifies specific subsystem lifecycles, network clients, WebApi auth routes, or DB persistence. | `dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --treenode-filter "/*/*/<Class>/*"` | 1–5 seconds |
+| **Tier 3 — Heavy Soak & Scale Probes** | Validates long-term stability, memory leak resistance, and multi-bot scheduler performance over extended tick cycles. Run for major milestone exits (M4, M5, M7) and pre-production staging. | `dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release` | 35–45+ minutes |
+
 ______________________________________________________________________
 
-**Summary**: The proposed plan covers critical architecture parts, defines testing priorities, provides specific scenarios and Moq usage recommendations. Following this plan, the team will obtain a reliable unit test suite that accelerates project development and improves code stability.
+**Summary**: The proposed plan covers critical architecture parts, defines testing priorities, provides specific scenarios, and establishes a clear three-tiered execution workflow. Following this plan accelerates project development while keeping feedback loops fast and reliable.
 
 ## Related
 

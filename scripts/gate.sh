@@ -31,5 +31,10 @@ else
   echo "(no failed-test lines matched — full log: $OUT_FILE)"
 fi
 
+if [ -z "$FILTER" ] && [ $RC -eq 0 ]; then
+  echo "== 4/4 MCP stdio protocol smoke =="
+  bash ./Scripts/mcp-stdio-smoke.sh
+fi
+
 echo "== GATE DONE =="
 exit $RC
