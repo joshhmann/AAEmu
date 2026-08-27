@@ -2,7 +2,7 @@
 
 ## Current checkpoint
 
-- The engineering checkpoint is the fork's `develop` branch at `241d3e34d`, which was aligned with `origin/develop` at the Mail S3/PB-007 reconciliation point. The checkout has since received a documentation-only head refresh: `HEAD -> develop`, `origin/develop`, and `origin/HEAD` are now all `824789938` (`docs(recovery): refresh PB-007 evidence and current head`), with `241d3e34d` immediately beneath it. Do not describe `241d3e34d` as the literal current commit without this qualification.
+- The engineering checkpoint remains the fork's `develop` branch at `241d3e34d`, the Mail S3/PB-007 reconciliation point. The current documentation head is `HEAD -> develop`, `origin/develop`, and `origin/HEAD` at `cd1807de1` (`docs(recovery): add verified Gemini takeover handoff`), with `241d3e34d` immediately beneath it. Do not describe `241d3e34d` as the literal current commit.
 - `git status --short --branch` currently reports `develop...origin/develop` and only `?? .worktrees/`; the tracked source tree is clean. The exact gate count below is therefore historical where noted.
 - The latest **source** gate at the Mail S3 integration checkpoint was **2479 passed / 0 failed / 1 skipped**. The later docs-only refresh records **2480/0/1** in `STATUS.md`; use the 2479/0/1 number as the Mail S3 source checkpoint and the 2480/0/1 number only as the later historical documentation count.
 - The fork boundary is permanent: `origin` is the writable fork (`joshhmann/AAEmu`); `upstream` fetches only and its push URL is `DISABLED`. Never push a branch or PR upstream.
