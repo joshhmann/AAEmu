@@ -6,7 +6,7 @@ PB-002 quest-discovery primitive landed; PB-003 closed premise-refuted;
 PB-004 found-by-measurement + fixed same day; first-class InteractWith
 doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop @ 31045d033 (= origin/develop head)
+Branch of record: develop @ 241d3e34d (= origin/develop head)
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
 honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
@@ -22,9 +22,10 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   aerial/water/structure whitelist landed. The terrain-only replay corrects all
   593 non-whitelisted severe-positive rows and leaves 702 whitelisted rows
   unchanged; cave/deck/submerged behavior and duplicate-row decisions remain.
-- **PB-007:** **OPEN, narrowed** — corrected rig proves Retribution first
-  application and Refresh both broadcast; corrected live rerun is still
-  pending.
+- **PB-007:** **OPEN, narrowed** — targeted rig PASS 1/1 (real `Skill.Use`,
+  same-faction `ForceAttack` HP decrease, Retribution present; first
+  application and Refresh broadcasts); live non-immune damage-frame proof
+  remains pending.
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker. Restart, instance-faithful
@@ -155,9 +156,10 @@ The engine fix extracts `RegisterCrimeForAttempt` and invokes it on the immune
 path; apply-loop exceptions are logged and rethrown; the E2E waits out the
 protection window. Post-fix real damage, bloodstain, and crime chain execute;
 ZONE-01 Peace enforcement + homeland mother-shield remain LIVE-verified.
-**PB-007 residual is narrowed:** recovered corrected rig evidence proves
-Retribution 2167 broadcasts on first application and on Refresh; corrected
-live rerun is still pending. **CRIME-01 vertical LIVE-PROVEN:** JusticeCrimeE2eTests
+**PB-007 residual is narrowed:** targeted rig PASS 1/1 (real `Skill.Use`,
+same-faction `ForceAttack` HP decrease, Retribution present; first application
+and Refresh broadcasts); live non-immune damage-frame proof remains pending.
+**CRIME-01 vertical LIVE-PROVEN:** JusticeCrimeE2eTests
 8 stages incl. restart persistence + wanted seam PASS; engine fix MarkDirty()
 on CrimePoint/InfamyPoint setters (silent-persistence-vanish bug).
 E2E PASS — branch d42e708f5→66f124533. Combat/siege-battle explicitly NOT

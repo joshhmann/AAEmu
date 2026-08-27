@@ -160,9 +160,10 @@ bugs, cards, tests, and zone reports can refer to the same scope.
 > unchanged. Cave/deck/submerged behavior and duplicate-row decisions remain
 > open; no grade inflation.
 >
-> **PB-007 remains OPEN, narrowed:** corrected rig proves Retribution 2167
-> broadcasts on first application and on Refresh; corrected live rerun remains
-> pending. The merchant trio is landed (funds gate `cb514c42e`, buyback refund
+> **PB-007 remains OPEN, narrowed:** targeted rig PASS 1/1 (real `Skill.Use`,
+> same-faction `ForceAttack` HP decrease, Retribution present; first
+> application and Refresh broadcasts); live non-immune damage-frame proof
+> remains pending. The merchant trio is landed (funds gate `cb514c42e`, buyback
 > `beaf9b82e`, grant-failure rollback `3ba33b3af`, merged by `e5db6d390`) and
 > the live economy conservation E2E passed across kill -9 restart. MERCHANT-01
 > remains W=2/A=2 with **H=U**. Mail S3 is incomplete/uncommitted in

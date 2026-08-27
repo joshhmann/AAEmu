@@ -16,7 +16,7 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
-**Current branch record (2026-08-26 recovery):** `develop @ 31045d033`
+**Current branch record (2026-08-26 recovery):** `develop @ 241d3e34d`
 (= `origin/develop`). Recovery status is tracked below; milestone shape and
 historical evidence are unchanged.
 
@@ -1830,11 +1830,11 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    CrimeAddPointSubCommand). Client report-dialog rendering stays UNKNOWN.
 8. **PvP slice-1 — flagged-aggression handshake live E2E** · Area: PVP
    (PVP-01) · Priority: HIGH · **STATUS 2026-08-26: OPEN, narrowed** after
-   recovery. The corrected Retribution rig proves first application and
-   Refresh broadcasts; a corrected live rerun with buff-state dump and packet
-   accounting is still pending. *Next acceptance:* prove flag → aggress →
-   peace-refusal → honor on the real server; no grade promotion from rig-only
-   evidence.
+   recovery. Targeted rig PASS 1/1 (real `Skill.Use`, same-faction
+   `ForceAttack` HP decrease, Retribution present; first application and
+   Refresh broadcasts); live non-immune damage-frame proof remains pending.
+   *Next acceptance:* prove flag → aggress → peace-refusal → honor on the real
+   server; no grade promotion from rig-only evidence.
 9. **Mail security + S3 persistence slice** · Area: MAIL (MAIL-01, SECURITY
    priority) · Depends on: none · **✅ LANDED 2026-08-26 in
    `31045d033`**. Ownership guards now protect the receive paths that accept a
@@ -1887,13 +1887,15 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
     deleted: remove task + config stubs (clean cutover).
 
-**Recovery queue status (2026-08-26; develop @ `31045d033`):**
+**Recovery queue status (2026-08-26; develop @ `241d3e34d`):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and
   duplicate-row decisions remain open.
-- **PB-007:** **OPEN, narrowed** after `a4f7820ba` — corrected rig proves first
-  and Refresh Retribution broadcasts; corrected live rerun remains pending.
+- **PB-007:** **OPEN, narrowed** after `a4f7820ba` — targeted rig PASS 1/1
+  (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution
+  present; first application and Refresh broadcasts); live non-immune
+  damage-frame proof remains pending.
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker; the restart, instance-faithful

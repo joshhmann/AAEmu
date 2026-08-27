@@ -7,7 +7,7 @@ current recovery delta after the ox-alpha loss; preserve the evidence trail.
 
 ## Current state
 
-- **Branch of record:** fork `joshhmann/AAEmu` `develop @ 31045d033`
+- **Branch of record:** fork `joshhmann/AAEmu` `develop @ 241d3e34d`
   (= `origin/develop`). Final gate: **2480/0/1**.
 - **On develop:** grounding fix `38c4997d3`; recovered Retribution wire-test
   merge `a4f7820ba`; merchant merge `e5db6d390` (funds gate, buyback refund,
@@ -17,8 +17,10 @@ current recovery delta after the ox-alpha loss; preserve the evidence trail.
   intentional aerial/water/structure whitelist are landed. The bounded replay
   corrects 593 non-whitelisted severe-positive rows; cave/deck/submerged
   behavior and duplicate-row decisions remain open.
-- **PB-007:** **OPEN, narrowed**. The corrected rig proves Retribution's first
-  application and Refresh broadcasts. A corrected live rerun remains pending.
+- **PB-007:** **OPEN, narrowed**. Targeted rig PASS 1/1 (real `Skill.Use`,
+  same-faction `ForceAttack` HP decrease, Retribution present; first
+  application and Refresh broadcasts); live non-immune damage-frame proof
+  remains pending.
 - **Mail S3:** **PASS / LANDED** in `31045d033`. The authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   E2E passed 1/1 in 2m39s on isolated MySQL/Docker, covering restart,
