@@ -3,8 +3,13 @@
 ## Current checkpoint
 
 - The prior Mail S3/PB-007 reconciliation point `241d3e34d` is historical.
-  The current docs/source checkpoint is `develop @ 1638b007c`
-  (= `origin/develop`); do not use older points as the current head.
+  The docs audit started from clean `origin/develop @ 07230fe5d`
+  (`07230fe5d3b471c5b6c8ec23b4ab7805b7f57453`); verify the remote head before
+  relying on any embedded SHA. `1638b007c` is the historical route feature
+  commit, not the branch head.
+- Start from [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md) for
+  the safe temporary-worktree workflow, current MCP evidence boundary, and
+  ordered continuation gates.
 - Commit `1638b007c` adds five authenticated actor routes and matching MCP
   tools: `POST /api/actors/discover_quests`,
   `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
@@ -147,17 +152,12 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 
 ## Exact next steps for Gemini
 
-1. **Establish the checkpoint before editing.** Run:
-   ```bash
-   git status --short
-   git log -8 --oneline --decorate
-   git rev-parse develop origin/develop
-   ./scripts/gate.sh
-   ```
-   Confirm the current docs/source checkpoint is `1638b007c`, source
-   cleanliness, and the recorded MCP/full-gate results above. The prior
-   `241d3e34d` relationship and the 2479/0/1 Mail S3 checkpoint are historical;
-   do not call them a fresh head or run.
+1. **Establish the checkpoint before editing.** Follow
+   [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md): inspect the
+   dirty main checkout read-only, fetch `origin/develop`, and create a clean
+   temporary worktree. Confirm the live `origin/develop` SHA there; do not run
+   the gate from the dirty main checkout. The prior `241d3e34d` relationship
+   and the 2479/0/1 Mail S3 checkpoint are historical.
 2. **Do not rerun PB-007 live blindly.** First use the targeted TUnit selector and/or add a narrowly scoped server branch trace. Preserve corrected packet framing and dump buff state/immune status. Close PB-007 only after a victim-matched, non-immune `SCUnitDamaged` frame is observed on the real server, alongside the existing HP/Retribution/crime checks. When the selector works, the known form is:
    ```bash
    dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --no-build \
