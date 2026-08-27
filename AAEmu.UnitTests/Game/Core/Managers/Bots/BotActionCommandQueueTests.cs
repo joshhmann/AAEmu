@@ -518,6 +518,8 @@ public class BotActionCommandQueueTests
             (BotActionKind.WithdrawItem, 0xDEADu, null),
             (BotActionKind.Plant, 0xDEADu, new PlantActionParams()),
             (BotActionKind.Harvest, 0xDEADu, null),
+            (BotActionKind.Buy, 0xDEADu, new BuyActionParams(1, 1)),
+            (BotActionKind.Sell, 0xDEADu, new SellActionParams(1)),
         };
 
         foreach (var (kind, targetId, payload) in cases)

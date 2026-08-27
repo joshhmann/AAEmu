@@ -50,8 +50,8 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 | `AutoTurnInQuest` | `POST /api/actors/auto_turn_in` | `auto_turn_in` | `Call_auto_turn_in_PostsQuest`; generic exact mapping |
 | `Talk` | `POST /api/actors/talk` | `talk` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `DiscoverSelfQuests` | `POST /api/actors/discover_self_quests` | `discover_self_quests` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
-| `Buy` | — | — | Deferred: no actor WebApi route |
-| `Sell` | — | — | Deferred: no actor WebApi route |
+| `Buy` | `POST /api/actors/buy` | `buy` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
+| `Sell` | `POST /api/actors/sell` | `sell` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `PostAuction` | — | — | Deferred: no actor WebApi route |
 | `BuyAuction` | — | — | Deferred: no actor WebApi route |
 | `Interrupt(Guid)` | `POST /api/actors/interrupt` | `interrupt` | `Call_interrupt_PostsTraceId`; generic exact mapping |

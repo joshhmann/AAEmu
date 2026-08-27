@@ -583,6 +583,73 @@ internal class BotActionController : BaseController
         }
     }
 
+    [WebApiPost("^/api/actors/buy$")]
+    public HttpResponse Buy(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<BuyRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.MerchantNpcObjId.HasValue || body.MerchantNpcObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("merchantNpcObjId is required"));
+            if (!body.ItemTemplateId.HasValue || body.ItemTemplateId.Value == 0)
+                return BadRequestJson(new ErrorModel("itemTemplateId is required"));
+            var count = body.Count ?? 1;
+            if (count <= 0)
+                return BadRequestJson(new ErrorModel("count must be positive"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.Buy,
+                    TargetId: body.MerchantNpcObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new BuyActionParams(body.ItemTemplateId.Value, count)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "buy failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/sell$")]
+    public HttpResponse Sell(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<SellRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.MerchantNpcObjId.HasValue || body.MerchantNpcObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("merchantNpcObjId is required"));
+            if (!body.ItemId.HasValue || body.ItemId.Value == 0)
+                return BadRequestJson(new ErrorModel("itemId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.Sell,
+                    TargetId: body.MerchantNpcObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new SellActionParams(body.ItemId.Value)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "sell failed");
+        }
+    }
+
 
     [WebApiPost("^/api/actors/loot$")]
     public HttpResponse Loot(HttpRequest request)

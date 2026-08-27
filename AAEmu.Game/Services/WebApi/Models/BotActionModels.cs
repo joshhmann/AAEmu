@@ -92,6 +92,12 @@ public sealed record HarvestRequest(string? Bot, uint? DoodadObjId, string? Idem
 /// <summary>POST /api/actors/craft — craft a recipe at a workbench doodad.</summary>
 public sealed record CraftRequest(string? Bot, uint? CraftId, uint? DoodadObjId, string? IdempotencyKey);
 
+/// <summary>POST /api/actors/buy — buy an item from an NPC merchant.</summary>
+public sealed record BuyRequest(string? Bot, uint? MerchantNpcObjId, uint? ItemTemplateId, int? Count, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/sell — sell an item to an NPC merchant.</summary>
+public sealed record SellRequest(string? Bot, uint? MerchantNpcObjId, ulong? ItemId, string? IdempotencyKey);
+
 // ----------------------------------------------------------------- responses
 
 // Action responses are shaped in the controller as lowercase JSON (JObject):

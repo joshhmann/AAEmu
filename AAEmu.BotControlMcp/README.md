@@ -40,6 +40,8 @@ authenticated `/api/actors/*` route are explicitly deferred there.
 | `plant` | `POST /api/actors/plant` | Plant a seed/young tree at a world position |
 | `harvest` | `POST /api/actors/harvest` | Harvest a mature crop doodad |
 | `craft` | `POST /api/actors/craft` | Craft ONE recipe step at a workbench |
+| `buy` | `POST /api/actors/buy` | Buy an item from an NPC merchant |
+| `sell` | `POST /api/actors/sell` | Sell an item to an NPC merchant |
 | `accept_quest` | `POST /api/actors/accept_quest` | Accept a quest (real AddQuest gate) |
 | `turn_in_quest` | `POST /api/actors/turn_in_quest` | Turn in a quest at an NPC |
 | `loot` | `POST /api/actors/loot` | Loot a corpse/bag owner |

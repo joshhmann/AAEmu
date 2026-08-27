@@ -53,13 +53,14 @@ feel.)
 - Historical coverage merge `8a22dcb4` and its 33-test / 19-tool smoke record
   are retained; current validation and the 28-tool catalog are recorded below.
 
-- Authenticated actor routes and matching MCP tools: added `craft`, `plant`,
-  `harvest`, `deposit_money`, `withdraw_money`, `deposit_item`, and
-  `withdraw_item`, joining `discover_quests`, `discover_self_quests`,
-  `interact_with`, `talk`, and `equip`. The MCP catalog is now **31 tools**.
+- Authenticated actor routes and matching MCP tools: added `buy`, `sell`,
+  `craft`, `plant`, `harvest`, `deposit_money`, `withdraw_money`,
+  `deposit_item`, and `withdraw_item`, joining `discover_quests`,
+  `discover_self_quests`, `interact_with`, `talk`, and `equip`. The MCP catalog
+  is now **33 tools**.
 - Focused validation passed: `BotActionControllerRouteTests` 2/2,
   `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18; MCP
-  projects Release build clean; stdio smoke 31 tools; full gate **2490 total /
+  projects Release build clean; stdio smoke 33 tools; full gate **2490 total /
   2489 succeeded / 0 failed / 1 skipped**.
 - The live `discover_self_quests` MCP benchmark passed with `action_status`,
   `trace`, and an independent MySQL character-row cross-check. No safe doodad
@@ -67,7 +68,7 @@ feel.)
 - The earlier asset-missing
   `mcp-live-smoke-2026-08-27.md` run at `7e109d550` remains historical: Game
   exited before WebApi; it is not the current benchmark verdict.
-- Buy/Sell, pack/vehicle, party, trade, expeditions, and related newer actor
+- Pack/vehicle, party, trade, expeditions, and related newer actor
   actions still lack authenticated routes. They remain explicitly deferred
   and are not claimed as MCP-exposed. Grades in the ledger are unchanged;
   **H remains U (UNKNOWN)**.

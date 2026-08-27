@@ -23,6 +23,8 @@ public sealed class BotActionControllerRouteTests
         ("/api/actors/plant", "Plant", "{\"bot\":\"McpBot01\",\"seedItemTemplateId\":42,\"x\":1,\"y\":2,\"z\":3}", "seedItemTemplateId"),
         ("/api/actors/harvest", "Harvest", "{\"bot\":\"McpBot01\",\"doodadObjId\":42}", "doodadObjId"),
         ("/api/actors/craft", "Craft", "{\"bot\":\"McpBot01\",\"craftId\":42}", "craftId"),
+        ("/api/actors/buy", "Buy", "{\"bot\":\"McpBot01\",\"merchantNpcObjId\":42,\"itemTemplateId\":7}", "merchantNpcObjId"),
+        ("/api/actors/sell", "Sell", "{\"bot\":\"McpBot01\",\"merchantNpcObjId\":42,\"itemId\":1001}", "merchantNpcObjId"),
     ];
 
     private string? _oldEnabled;
@@ -76,6 +78,7 @@ public sealed class BotActionControllerRouteTests
                 "targetObjId" => body.Replace("\"targetObjId\":42", string.Empty),
                 "doodadObjId" => body.Replace("\"doodadObjId\":42", string.Empty),
                 "npcObjId" => body.Replace("\"npcObjId\":42", string.Empty),
+                "merchantNpcObjId" => body.Replace("\"merchantNpcObjId\":42", string.Empty),
                 "itemTemplateId" => body.Replace("\"itemTemplateId\":42", string.Empty),
                 "seedItemTemplateId" => body.Replace("\"seedItemTemplateId\":42", string.Empty),
                 "craftId" => body.Replace("\"craftId\":42", string.Empty),

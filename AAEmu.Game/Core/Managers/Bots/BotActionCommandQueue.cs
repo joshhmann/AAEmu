@@ -63,7 +63,11 @@ public enum BotActionKind : byte
     /// <summary>Plant a seed or young tree at a world position.</summary>
     Plant = 28,
     /// <summary>Harvest a mature crop doodad.</summary>
-    Harvest = 29
+    Harvest = 29,
+    /// <summary>Buy an item from an NPC merchant.</summary>
+    Buy = 30,
+    /// <summary>Sell an item to an NPC merchant.</summary>
+    Sell = 31
 }
 
 /// <summary>Money amount parameter for DepositMoney/WithdrawMoney.</summary>
@@ -71,6 +75,12 @@ public sealed record MoneyActionParams(long Amount);
 
 /// <summary>Plant rotation and scale parameters.</summary>
 public sealed record PlantActionParams(float ZRot = 0f, float Scale = 1f);
+
+/// <summary>Buy item parameters (template id and count).</summary>
+public sealed record BuyActionParams(uint ItemTemplateId, int Count = 1);
+
+/// <summary>Sell item parameters (item id).</summary>
+public sealed record SellActionParams(ulong ItemId);
 
 /// <summary>Move speed for Move/MoveToUnit commands.</summary>
 public sealed record MoveActionParams(float Speed = 5f);
@@ -617,6 +627,24 @@ public sealed class BotActionCommandQueue
             case BotActionKind.Harvest:
                 return (actor.Harvest(spec.TargetId, key), null);
 
+            case BotActionKind.Buy:
+            {
+                var template = 0u;
+                var count = 1;
+                if (spec.Payload is BuyActionParams p)
+                {
+                    template = p.ItemTemplateId;
+                    count = p.Count;
+                }
+                return (actor.Buy(spec.TargetId, template, count, key), null);
+            }
+
+            case BotActionKind.Sell:
+            {
+                var itemId = spec.Payload is SellActionParams p ? p.ItemId : 0UL;
+                return (actor.Sell(spec.TargetId, itemId, key), null);
+            }
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(spec), spec.Kind, "unknown bot action kind");
         }
@@ -771,6 +799,8 @@ public sealed class BotActionCommandQueue
             BotActionKind.WithdrawItem => ActorActionType.WithdrawItem,
             BotActionKind.Plant => ActorActionType.Plant,
             BotActionKind.Harvest => ActorActionType.Harvest,
+            BotActionKind.Buy => ActorActionType.Buy,
+            BotActionKind.Sell => ActorActionType.Sell,
             BotActionKind.Interrupt => ActorActionType.Stop, // control op; never constructed via a running request
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "unknown bot action kind")
         };
