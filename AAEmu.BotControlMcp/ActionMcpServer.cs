@@ -6,21 +6,18 @@ using AAEmu.BotControl;
 namespace AAEmu.BotControlMcp;
 
 /// <summary>
-/// MCP stdio sidecar (M5 stage 4, t_446228b5) exposing the game's
-/// CONTRACT-ACTION API (/api/actors/*) as MCP tools — the AGENT tier
-/// frontend for bot control. Tools map 1:1 to the M5 contract actions
-/// (observe/move/interact/accept_quest/turn_in/loot/use_item/mount/trace
-/// plus the B1 surface: move_to_unit/stop/target/cast/dismount/advance_quest/
-/// turn_in_doodad/auto_turn_in/interrupt + lifecycle poll).
+/// MCP stdio sidecar exposing the authenticated actor-action API
+/// (/api/actors/*) as client-neutral tools. Each registered tool maps 1:1 to
+/// an endpoint in BotActionController; contract actions without an
+/// authenticated actor endpoint remain deferred rather than being faked here.
 ///
 /// This sidecar is a SEPARATE PROCESS: it only speaks HTTP to the game's
-/// WebApi (enqueue-only path). No engine internals, no game-process code.
-/// A crashed MCP client can never wedge the world — the sidecar's request
-/// goes through the API's enqueue-only queue, and the pending action
-/// completes or times out server-side per its lifecycle.
+/// WebApi (enqueue-only path). No engine internals, no game-process code, and
+/// no management operations are exposed. A crashed MCP client cannot wedge
+/// the world — pending actions complete or time out server-side per lifecycle.
 ///
-/// The P1 management surface (bot_add/remove/list/relocate/status, t_2ea94a20)
-/// lives in AAEmu.BotControl and is deliberately NOT duplicated here.
+/// The P1 management surface (bot_add/remove/list/relocate/status) lives in
+/// AAEmu.BotControl and is deliberately NOT duplicated here.
 /// </summary>
 public sealed class ActionMcpServer
 {
@@ -124,7 +121,7 @@ public sealed class ActionMcpServer
             "interrupt" => await _client.PostAsync("/api/actors/interrupt",
                 Body(arguments, "bot", "traceId")),
             // ---- lifecycle / audit reads ----
-            "action_status" => await _client.GetAsync($"/api/actors/actions/{Arg(arguments, "traceId")}"),
+            "action_status" => await _client.GetAsync($"/api/actors/actions/{Uri.EscapeDataString(Arg(arguments, "traceId"))}"),
             "trace" => await _client.GetAsync($"/api/actors/trace?bot={Uri.EscapeDataString(Arg(arguments, "bot"))}"
                 + (arguments.ContainsKey("limit") ? $"&limit={arguments["limit"]}" : string.Empty)),
             _ => throw new InvalidOperationException($"Unknown tool: {name}"),
