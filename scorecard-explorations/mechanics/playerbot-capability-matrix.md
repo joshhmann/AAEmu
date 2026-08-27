@@ -1,7 +1,7 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality @ develop `241d3e34d` (= origin/develop
-head, 2026-08-26; Mail S3 acceptance and recovery reconciliation).
+Populated from implementation reality @ develop `7e109d550` (= origin/develop
+head, 2026-08-27; MCP workflow integration checkpoint).
 Legend: ✅ through real engine paths · 🟡 partial/rig-only · ❌ missing.
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
@@ -26,6 +26,28 @@ Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 | Banking/storage | ✅ bank balances observable | ✅ deposit/withdraw rules | ✅ DepositMoney/Item, Withdraw actions | ✅ bank conservation across restart; Mail S3 copper transfer is separately asserted and does not change banking semantics | ✅ in economy cycle |
 | Chat/social presence | ✅ proximity observable | ✅ greet/cooldown rules | ✅ real local-chat emission (BotChatterService) | ✅ sink capture tests | 🟡 greetings only; conversation depth open |
 | Schedules & goal arbitration | ✅ game-time phase + pressure bands observable | ✅ BotGoalArbiter priority arbitration (deterministic, one active activity per wake) | ✅ Home/Work/Travel/Rest phase machine drives roam; arbiter selects module per wake (IBotActivityModule) | ✅ phase-transition + arbitration-transition asserts | 🟡 default OFF (`Bots.EnableSchedules` / `AAEMU_BOT_SCHEDULES_ENABLED`) — soak STAGE 1 live-proven; fidelity tiers additionally behind `AAEMU_BOT_TRUE_DORMANCY` / `AAEMU_BOT_PROXIMITY_FIDELITY` (see Scaling posture below) |
+
+## MCP workflow integration (2026-08-27)
+
+MCP sidecar tools and the management gateway are client-neutral. Coverage merge
+`8a22dcb4` records 33 `BotControlActionMcp` tests passing and the 19-tool
+stdio protocol smoke passing.
+
+The real MCP live smoke is **BLOCKED**:
+`scorecard-explorations/generated/mcp-live-smoke-2026-08-27.md` (report-only
+commit `7e109d550`) records that isolated Game exited before WebApi because
+client-world/compact assets were missing. No actor lifecycle or trace evidence
+exists.
+
+The coverage matrix verified no authenticated WebApi routes for
+`DiscoverQuests`, `Talk`, `InteractWith`, `Equip`, `Plant`, `Craft`, party, and
+related newer actions. These remain deferred. The action cells above describe
+contract/engine paths, not MCP exposure; do not claim newer actor actions are
+exposed through MCP.
+
+**Next step:** rerun real MCP smoke after a valid asset-complete Game stack is
+available, then use `observe → action → action_status → trace` for a real
+scenario.
 
 ## Scaling posture (2026-08-25)
 

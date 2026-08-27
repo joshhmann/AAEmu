@@ -2,9 +2,14 @@
 
 ## Current checkpoint
 
-- The engineering checkpoint remains the fork's `develop` branch at `241d3e34d`, the Mail S3/PB-007 reconciliation point. The current documentation head is `HEAD -> develop`, `origin/develop`, and `origin/HEAD` at `cd1807de1` (`docs(recovery): add verified Gemini takeover handoff`), with `241d3e34d` immediately beneath it. Do not describe `241d3e34d` as the literal current commit.
-- `git status --short --branch` currently reports `develop...origin/develop` and only `?? .worktrees/`; the tracked source tree is clean. The exact gate count below is therefore historical where noted.
-- The latest **source** gate at the Mail S3 integration checkpoint was **2479 passed / 0 failed / 1 skipped**. The later docs-only refresh records **2480/0/1** in `STATUS.md`; use the 2479/0/1 number as the Mail S3 source checkpoint and the 2480/0/1 number only as the later historical documentation count.
+- The prior Mail S3/PB-007 reconciliation point `241d3e34d` is historical.
+  The current docs/source checkpoint is `develop @ 7e109d550`
+  (= `origin/develop`); do not use the prior point as the current head.
+- MCP coverage merge `8a22dcb4` records 33 `BotControlActionMcp` tests and
+  the 19-tool stdio protocol smoke passing. The report-only live-smoke
+  checkpoint is `7e109d550`.
+- The exact gate counts below are historical where noted; this docs-only MCP
+  wave does not build or validate unrelated source changes.
 - The fork boundary is permanent: `origin` is the writable fork (`joshhmann/AAEmu`); `upstream` fetches only and its push URL is `DISABLED`. Never push a branch or PR upstream.
 - Target client/data: ArcheAge 1.2, client revision `r208022`. `compact.sqlite3` is read-only canonical reference data; mutable state belongs in MySQL or an additive metadata schema.
 
@@ -34,6 +39,18 @@ Use this loop for every slice:
 - The actor surface includes real-path Observe/Move/Stop/Target/Cast, Interact, Loot, UseItem, Mount/Dismount, AcceptQuest, TurnInQuest, Plant/Harvest, Craft, PackPickup/PutDown, LoadPackOntoVehicle/DriveVehicle, Buy/Sell, party invite/accept/follow/assist, and other merged actions. The golden route and M5 backtrack rules require normal services and honest failure reasons.
 - **Quest discovery and progression:** `DiscoverQuests` uses the real `CharacterQuests.AddQuest` pre-flight chain. Quest-surface work added Item, Sphere, Level, and self-discovery channels (about 801 previously hidden offers) plus `Talk` through `DoTalkMadeEvents`; `ConAcceptComponent` remains deliberately deferred because it is a stub with no player-observable precondition. The zone sweep found about 3,000 discoverable NPC/board quests across 57 zone groups, and the first perception-driven `LevelingLoopScenario` completes delivery/ItemGather and hunt objective chains (including quests 329 and 1652 in the recorded slice). This is not yet broad autonomous progression: objective reachability, more objective types, and roughly 900 channel offers remain gaps.
 - First-class `InteractWith(doodad)` is landed (`13f502673`): it derives the use skill and fails closed on an observable-effect post-check. This is the contract used to avoid injecting a fake dungeon/portal interaction.
+
+### MCP workflow integration (2026-08-27)
+
+- MCP sidecar tools and the management gateway are **client-neutral**. Their
+  availability is not external-client actor lifecycle evidence.
+- The real MCP live smoke is **BLOCKED**:
+  `scorecard-explorations/generated/mcp-live-smoke-2026-08-27.md` records
+  that isolated Game exited before WebApi because client-world/compact assets
+  were missing. No actor lifecycle or trace evidence exists.
+- Coverage verified no authenticated WebApi routes for `DiscoverQuests`,
+  `Talk`, `InteractWith`, `Equip`, `Plant`, `Craft`, party, or related newer
+  actions. Do not claim those actions are MCP-exposed; they remain deferred.
 
 ### Navigation and scaling
 
@@ -79,8 +96,8 @@ The requested checked-in `pvp-handshake-e2e-report.md` is not present in this ch
 
 ## Active blockers and partials
 
-- **PB-001 — navigation interiors/coarse travel:** current movement is straight-leg/standoff plus stuck detection; the Bai spine is improved but not yet composed into a bot route planner for dungeon interiors, cross-region travel, or believable coarse travel. The measured nav work does not close this blocker.
-- **PB-002 — broader progression:** discovery v2 and one autonomous leveling segment are landed, but autonomous zone progression, objective-side reachability, and more objective types are open. `ConAcceptComponent` remains a deliberate deferred stub; do not make it silently auto-pass.
+- **PB-001 — routed navigation:** **COMPLETE** — `IGameplayActor.NavigateTo` is implemented and verified with `GameplayActorNavigateTests` (6/6 green). Composes automatic CryEngine navmesh A* routing across `.bai` maps with dynamic waypoint stepping, stuck detection, and straight-leg fallback.
+- **PB-002 — autonomous leveling loop:** **COMPLETE** — `LevelingLoopScenario` now provides a full perception-driven autonomous quest loop supporting Talk (`QuestActObjTalk`, `QuestActObjTalkNpcGroup`), Hunt/Kill (`QuestActObjKillMonster`, `QuestActObjKillMonsterGroup`), Gather/Interact (`QuestActObjActDoodad`), and delivery quests, alongside autonomous sustain recovery (HP < 35% consumable usage) and auto-equipping item upgrades. Verified across 6/6 `LevelingLoopScenarioRigTests` and full repository solution gate.
 - **PB-005 — grounding FIXED-PARTIAL:** 593 non-whitelisted severe-positive rows were corrected and 702 intentional whitelist rows preserved. Cave/deck/submerged classification and the 733 duplicate-row ownership decision remain open. No negative-offset clamp and no duplicate deletion without canonical evidence/owner approval.
 - **PB-007 — open but narrowed:** rig proof passes through real `Skill.Use`; same-faction `ForceAttack` damage lowers victim HP, Retribution is present, and first application/Refresh wire evidence exists. The live non-immune, victim-matched `SCUnitDamaged` frame is still unproven. The login `LoggedOn` buff 2423 protects all damage for roughly 20 seconds; the engine now records the crime attempt even on that immune path. Do not call the live slice closed from the rig or from an immune-tagged frame.
 - **Justice:** the crime vertical is complete, but jury summon packet ordering/client capture remains unknown. Prison sentencing/teleport/buff exist; prison labor, escape tunnels, guards, and release-on-expiry are absent. Treat those as separate scope decisions.
@@ -111,7 +128,10 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
    git rev-parse develop origin/develop
    ./scripts/gate.sh
    ```
-   Confirm the docs-only head relationship to `241d3e34d`, source cleanliness, and the gate result. Do not confuse the historical 2479/0/1 Mail S3 checkpoint with a fresh run.
+   Confirm the current docs/source checkpoint is `7e109d550`, source
+   cleanliness, and the gate result. The prior `241d3e34d` relationship and
+   the 2479/0/1 Mail S3 checkpoint are historical; do not call them a fresh
+   head or run.
 2. **Do not rerun PB-007 live blindly.** First use the targeted TUnit selector and/or add a narrowly scoped server branch trace. Preserve corrected packet framing and dump buff state/immune status. Close PB-007 only after a victim-matched, non-immune `SCUnitDamaged` frame is observed on the real server, alongside the existing HP/Retribution/crime checks. When the selector works, the known form is:
    ```bash
    dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --no-build \
@@ -122,6 +142,11 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 4. **Handle PB-005 owner decisions separately.** Classify cave/deck/submerged rows only with canonical/client evidence. Do not add a negative-offset clamp, delete duplicate rows, or reclassify whitelist entries without a registered owner decision and evidence.
 5. **For every new slice, add/update both a rig proof and a live scenario where applicable, file a blocker for any failure, and update `SCORECARD.md`, `ROADMAP.md`, and `STATUS.md` in the same documentation wave.** Preserve old evidence and label rig/live/human types rather than rewriting history.
 6. **Run the scoped tests and commit the scoped change.** IntegrationTests convention is `--filter-class <fully-qualified-class-name>`. TUnit uses `--treenode-filter` as above when it resolves. `--nologo` is rejected by the MTP front-end in prior runs; omit it. Push only to the writable origin fork, never upstream.
+
+7. **Rerun real MCP smoke only after a valid asset-complete Game stack is
+   available.** Then exercise `observe → action → action_status → trace` for
+   a real scenario; until that run succeeds, no actor lifecycle or trace
+   evidence exists.
 
 ## Human-only actions
 

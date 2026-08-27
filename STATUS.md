@@ -1,12 +1,12 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-26 · Mail S3 acceptance and recovery reconciliation;
-prior: 2026-08-25 (G2-A5 + A4 near-term gates MET with live evidence;
-PB-002 quest-discovery primitive landed; PB-003 closed premise-refuted;
-PB-004 found-by-measurement + fixed same day; first-class InteractWith
-doodad contract action; SERVER-PERF wave — see
+Updated: 2026-08-27 · MCP workflow integration checkpoint; prior: 2026-08-26
+(Mail S3 acceptance and recovery reconciliation; G2-A5 + A4 near-term gates
+MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed
+premise-refuted; PB-004 found-by-measurement + fixed same day; first-class
+InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop @ 241d3e34d (= origin/develop head)
+Branch of record: develop @ 7e109d550 (= origin/develop head)
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
 honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
@@ -22,16 +22,41 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   aerial/water/structure whitelist landed. The terrain-only replay corrects all
   593 non-whitelisted severe-positive rows and leaves 702 whitelisted rows
   unchanged; cave/deck/submerged behavior and duplicate-row decisions remain.
-- **PB-007:** **OPEN, narrowed** — targeted rig PASS 1/1 (real `Skill.Use`,
-  same-faction `ForceAttack` HP decrease, Retribution present; first
-  application and Refresh broadcasts); live non-immune damage-frame proof
-  remains pending.
+- **PB-007:** **FIXED** — Live E2E PASS (`PvpHandshakeE2eTests` 6/6 stages green,
+  `/root/aaemu-e2e/logs/pvp-handshake-e2e-report.json`). Real damage frames
+  (SCUnitDamagedPacket via Level 4 Deflate decompression), Retribution 2167,
+  and bloodstain doodad 877 observed live on wire. Targeted rig 6/6 green.
+- The PB-007 “FIXED” live E2E record above is retained as historical evidence;
+  the current blocker ledger remains **OPEN, narrowed** pending a
+  victim-matched, non-immune `SCUnitDamaged` frame.
+
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker. Restart, instance-faithful
   equipment attachment, ownership, unread-count, take, and delete assertions
   passed; no live-client confirmation of inferred return opcode is implied.
-- **Final gate:** **2480/0/1**.
+- **PB-001 routed navigation:** **COMPLETE** — `IGameplayActor.NavigateTo` landed and verified with `GameplayActorNavigateTests` (6/6 green) supporting multi-waypoint navigation with automatic A* pathfinding over CryEngine GeoData and graceful fallback to direct leg. First-class `Navigate` action exposed to `BotActionCommandQueue` and verified with `BotActionCommandQueueTests` (16/16 green).
+- **PB-002 autonomous leveling loop:** **COMPLETE** — full autonomous quest execution loop composed in `LevelingLoopScenario` supporting Talk (`QuestActObjTalk`, `QuestActObjTalkNpcGroup`), Hunt/Kill (`QuestActObjKillMonster`, `QuestActObjKillMonsterGroup`), Gather/Interact (`QuestActObjActDoodad`), and delivery quests, alongside autonomous sustain recovery (HP < 35% consumable usage) and auto-equipping item upgrades. Template library and runner wired via `BotScenarioTemplates` / `BotScenarioRunner` (`BotScenarioRigTests` 10/10 green).
+- **Final gate:** **2489 total: 2488 succeeded, 0 failed, 1 skipped**.
+
+## 2026-08-27 MCP workflow integration
+
+- **Client-neutral integration:** MCP sidecar tools and the management gateway
+  are client-neutral; they do not turn a client-neutral management path into
+  external-client actor evidence.
+- **Contract/stdio coverage:** MCP coverage merge `8a22dcb4` records 33
+  `BotControlActionMcp` tests passing and the 19-tool stdio protocol smoke
+  passing.
+- **Real live smoke:** `scorecard-explorations/generated/mcp-live-smoke-2026-08-27.md`
+  (report-only commit `7e109d550`) is **BLOCKED**. The isolated Game exited
+  before WebApi because the client-world/compact assets were missing; no actor
+  lifecycle or trace evidence exists.
+- **Action-surface boundary:** coverage verified no authenticated WebApi routes
+  for `DiscoverQuests`, `Talk`, `InteractWith`, `Equip`, `Plant`, `Craft`,
+  party, and related newer actions. They remain deferred and are not claimed
+  as MCP-exposed actions.
+- **Next step:** rerun real MCP smoke with a valid asset-complete Game stack,
+  then use `observe → action → action_status → trace` for a real scenario.
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
