@@ -175,9 +175,10 @@ Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
 bugs, cards, tests, and zone reports can refer to the same scope.
 
 
-> **2026-08-27 MCP expansion checkpoint (current docs/source
-> head `53360edc842d958247dc70aab498cb02ef0bba0e`):** `1638b007c` is the
-> historical first-route commit. Flash reports fifteen additional authenticated
+> **2026-08-27 MCP expansion checkpoint (source baseline audited/verified at
+> `53360edc842d958247dc70aab498cb02ef0bba0e`; subsequent commits are
+> documentation-only reconciliation):** `1638b007c` is the historical
+> first-route commit. Flash reports fifteen additional authenticated
 > actor routes/tools, bringing the catalog to **39 tools**: Deposit/Withdraw
 > money and items, Plant/Harvest, Craft, Buy/Sell, PackPickup/PutDown/
 > LoadPackOntoVehicle, and Board/Unboard/DriveVehicle. SHA-pinned normal-clone

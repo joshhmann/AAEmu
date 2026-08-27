@@ -3,10 +3,12 @@
 ## Current checkpoint
 
 - The prior Mail S3/PB-007 reconciliation point `241d3e34d` is historical.
-  The current clean checkout resolves `origin/develop` to
-  `53360edc842d958247dc70aab498cb02ef0bba0e`; this is the current branch
-  pointer verified for this handoff. `1638b007c` remains the historical first
-  actor-route feature commit, not the branch head.
+  The source baseline was audited and verified at
+  `53360edc842d958247dc70aab498cb02ef0bba0e`, which remains
+  `origin/develop` HEAD; subsequent commits in this checkout are
+  documentation-only reconciliation. The local branch is ahead only by those
+  documentation commits. `1638b007c` remains the historical first actor-route
+  feature commit, not the source baseline.
 - Start from [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md) for
   the safe temporary-worktree workflow, current MCP evidence boundary, and
   ordered continuation gates.

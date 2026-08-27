@@ -1,8 +1,9 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality @ develop
-`53360edc842d958247dc70aab498cb02ef0bba0e` (= verified origin/develop HEAD,
-2026-08-27; MCP expansion checkpoint).
+Populated from implementation reality at the source baseline
+`53360edc842d958247dc70aab498cb02ef0bba0e` (audited and verified as
+`origin/develop` HEAD, 2026-08-27; MCP expansion checkpoint). Subsequent local
+commits are documentation-only reconciliation.
 Legend: ✅ through real engine paths · 🟡 partial/rig-only · ❌ missing.
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 

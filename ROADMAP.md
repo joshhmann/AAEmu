@@ -16,9 +16,11 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
-**Current branch record (2026-08-27 MCP expansion checkpoint):**
-`develop @ 53360edc842d958247dc70aab498cb02ef0bba0e` (= verified
-`origin/develop` HEAD). Flash reports fifteen additional authenticated actor
+**Current source baseline (2026-08-27 MCP expansion checkpoint):**
+`develop` source baseline audited and verified at
+`53360edc842d958247dc70aab498cb02ef0bba0e` (= verified `origin/develop`
+HEAD); subsequent commits in this checkout are documentation-only
+reconciliation. Flash reports fifteen additional authenticated actor
 routes/tools beyond the earlier checkpoint; the current MCP catalog is 39
 tools. Current validation, evidence boundaries, and deferred families are
 recorded below. Milestone shape and historical evidence are unchanged.
@@ -1951,7 +1953,9 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
     deleted: remove task + config stubs (clean cutover).
 
-**Recovery queue status (2026-08-27; develop @ `53360edc842d958247dc70aab498cb02ef0bba0e`):**
+**Recovery queue status (2026-08-27; source baseline audited and verified at
+`53360edc842d958247dc70aab498cb02ef0bba0e`; subsequent commits are
+documentation-only reconciliation):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and

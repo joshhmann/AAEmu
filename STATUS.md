@@ -6,8 +6,10 @@ MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed
 premise-refuted; PB-004 found-by-measurement + fixed same day; first-class
 InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop @ `53360edc842d958247dc70aab498cb02ef0bba0e` (= verified
-origin/develop head)
+Branch of record: develop; source baseline audited and verified at
+`53360edc842d958247dc70aab498cb02ef0bba0e` (= verified `origin/develop` head);
+subsequent commits are documentation-only reconciliation.
+
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
 honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
@@ -67,7 +69,7 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
 - **MCP catalog:** now **39 tools**. Flash reports focused validation:
   `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
   `BotActionCommandQueueTests` 18/18; protocol smoke 39 tools. The clean gate
-  is SHA-pinned at the current HEAD above from a normal clone.
+  is SHA-pinned at the audited source baseline above from a normal clone.
 - **Live benchmark:** Flash reports `discover_self_quests` MCP benchmark
   passed with `action_status` and `trace`, plus an independent MySQL
   character-row cross-check. This remains unpinned benchmark evidence; no

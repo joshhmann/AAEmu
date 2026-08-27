@@ -7,11 +7,10 @@ restart, scaling, or human gates.
 ## 1. Audit result and checkpoint
 
 The handoff documents were audited against a clean worktree created from
-`origin/develop` on 2026-08-27. The current branch resolves to:
-
-```text
-origin/develop = 53360edc842d958247dc70aab498cb02ef0bba0e
-```
+`origin/develop` on 2026-08-27. The source baseline was audited and verified at
+`53360edc842d958247dc70aab498cb02ef0bba0e` (`origin/develop` at the audit
+checkpoint); subsequent commits in this checkout are documentation-only
+reconciliation. The local branch is ahead only by those documentation commits.
 
 `1638b007c` is the historical feature commit that added the first five actor
 routes; it is not the current branch head. `6d9ae9f50` recorded that expansion
@@ -29,7 +28,7 @@ The current recorded state is:
   earlier checkpoint: Deposit/Withdraw money and items, Plant/Harvest, Craft,
   Buy/Sell, PackPickup/PutDown/LoadPackOntoVehicle, and
   Board/Unboard/DriveVehicle.
-- SHA-pinned clean-gate evidence at the current HEAD came from a normal clone
+- SHA-pinned clean-gate evidence at the audited source baseline came from a normal clone
   with command `./scripts/gate.sh`: Release build PASS (4 NU1903 warnings, 0
   errors), compiler check **0/0**, unit **2490 total / 2489 passed / 0 failed /
   1 skipped**, and MCP stdio smoke **39 tools**. The skip is
