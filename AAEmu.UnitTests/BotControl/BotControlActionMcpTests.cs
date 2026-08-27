@@ -77,22 +77,22 @@ public class BotControlActionMcpTests
     }
 
     [Test]
-    public async Task ToolsList_ExposesThirtyThreeContractActionTools()
+    public async Task ToolsList_ExposesThirtyNineContractActionTools()
     {
         var server = new ActionMcpServer(new FakeClient());
 
         var response = Parse(await server.HandleAsync("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""));
 
         var tools = response?["result"]?["tools"]?.AsArray();
-        await Assert.That(tools).HasCount().EqualTo(33);
+        await Assert.That(tools).HasCount().EqualTo(39);
         var names = tools!.Select(t => t?["name"]?.GetValue<string>()).OrderBy(n => n).ToArray();
         await Assert.That(names).IsEquivalentTo(new[]
         {
-            "accept_quest", "action_status", "advance_quest", "auto_turn_in", "buy", "cast", "craft",
-            "deposit_item", "deposit_money", "discover_quests", "discover_self_quests", "dismount", "equip", "harvest", "interact",
-            "interact_with", "interrupt", "loot", "mount", "move", "move_to_unit",
-            "observe", "plant", "sell", "stop", "talk", "target", "trace", "turn_in_doodad",
-            "turn_in_quest", "use_item", "withdraw_item", "withdraw_money",
+            "accept_quest", "action_status", "advance_quest", "auto_turn_in", "board_vehicle", "buy", "cast", "craft",
+            "deposit_item", "deposit_money", "discover_quests", "discover_self_quests", "dismount", "drive_vehicle", "equip", "harvest", "interact",
+            "interact_with", "interrupt", "load_pack_onto_vehicle", "loot", "mount", "move", "move_to_unit",
+            "observe", "pack_pickup", "plant", "put_down", "sell", "stop", "talk", "target", "trace", "turn_in_doodad",
+            "turn_in_quest", "unboard_vehicle", "use_item", "withdraw_item", "withdraw_money",
         });
     }
 
@@ -491,6 +491,12 @@ public class BotControlActionMcpTests
             ("craft", """{"bot":"McpBot01","craftId":42,"doodadObjId":7,"idempotencyKey":"k"}""", "POST", "/api/actors/craft", """{"bot":"McpBot01","craftId":42,"doodadObjId":7,"idempotencyKey":"k"}"""),
             ("buy", """{"bot":"McpBot01","merchantNpcObjId":42,"itemTemplateId":7,"count":2,"idempotencyKey":"k"}""", "POST", "/api/actors/buy", """{"bot":"McpBot01","merchantNpcObjId":42,"itemTemplateId":7,"count":2,"idempotencyKey":"k"}"""),
             ("sell", """{"bot":"McpBot01","merchantNpcObjId":42,"itemId":1001,"idempotencyKey":"k"}""", "POST", "/api/actors/sell", """{"bot":"McpBot01","merchantNpcObjId":42,"itemId":1001,"idempotencyKey":"k"}"""),
+            ("pack_pickup", """{"bot":"McpBot01","doodadObjId":42,"idempotencyKey":"k"}""", "POST", "/api/actors/pack_pickup", """{"bot":"McpBot01","doodadObjId":42,"idempotencyKey":"k"}"""),
+            ("put_down", """{"bot":"McpBot01","packItemTemplateId":42,"idempotencyKey":"k"}""", "POST", "/api/actors/put_down", """{"bot":"McpBot01","packItemTemplateId":42,"idempotencyKey":"k"}"""),
+            ("load_pack_onto_vehicle", """{"bot":"McpBot01","slaveObjId":42,"placedPackDoodadObjId":7,"idempotencyKey":"k"}""", "POST", "/api/actors/load_pack_onto_vehicle", """{"bot":"McpBot01","slaveObjId":42,"placedPackDoodadObjId":7,"idempotencyKey":"k"}"""),
+            ("board_vehicle", """{"bot":"McpBot01","vehicleObjId":42,"attachPoint":"Driver","idempotencyKey":"k"}""", "POST", "/api/actors/board_vehicle", """{"bot":"McpBot01","vehicleObjId":42,"attachPoint":"Driver","idempotencyKey":"k"}"""),
+            ("unboard_vehicle", """{"bot":"McpBot01","idempotencyKey":"k"}""", "POST", "/api/actors/unboard_vehicle", """{"bot":"McpBot01","idempotencyKey":"k"}"""),
+            ("drive_vehicle", """{"bot":"McpBot01","vehicleObjId":42,"x":1,"y":2,"z":3,"speed":5,"timeoutSec":10,"idempotencyKey":"k"}""", "POST", "/api/actors/drive_vehicle", """{"bot":"McpBot01","vehicleObjId":42,"x":1,"y":2,"z":3,"speed":5,"timeoutSec":10,"idempotencyKey":"k"}"""),
             ("interact", """{"bot":"McpBot01","doodadObjId":42,"skillId":7,"idempotencyKey":"k"}""", "POST", "/api/actors/interact", """{"bot":"McpBot01","doodadObjId":42,"skillId":7,"idempotencyKey":"k"}"""),
             ("accept_quest", """{"bot":"McpBot01","questId":1001,"acceptorType":"Npc","acceptorId":500,"idempotencyKey":"k"}""", "POST", "/api/actors/accept_quest", """{"bot":"McpBot01","questId":1001,"acceptorType":"Npc","acceptorId":500,"idempotencyKey":"k"}"""),
             ("turn_in_quest", """{"bot":"McpBot01","questId":1001,"npcObjId":500,"selectedReward":2,"idempotencyKey":"k"}""", "POST", "/api/actors/turn_in_quest", """{"bot":"McpBot01","questId":1001,"npcObjId":500,"selectedReward":2,"idempotencyKey":"k"}"""),

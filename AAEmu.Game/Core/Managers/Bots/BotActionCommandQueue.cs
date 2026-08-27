@@ -3,6 +3,7 @@ using System.Numerics;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Quests.Static;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -67,7 +68,19 @@ public enum BotActionKind : byte
     /// <summary>Buy an item from an NPC merchant.</summary>
     Buy = 30,
     /// <summary>Sell an item to an NPC merchant.</summary>
-    Sell = 31
+    Sell = 31,
+    /// <summary>Board a vehicle at an attach point.</summary>
+    BoardVehicle = 32,
+    /// <summary>Unboard the active vehicle.</summary>
+    UnboardVehicle = 33,
+    /// <summary>Drive a vehicle to a world destination.</summary>
+    DriveVehicle = 34,
+    /// <summary>Pick up a placed trade pack doodad into the backpack slot.</summary>
+    PackPickup = 35,
+    /// <summary>Put down a carried trade pack doodad.</summary>
+    PutDown = 36,
+    /// <summary>Load a trade pack onto a vehicle cargo box.</summary>
+    LoadPackOntoVehicle = 37
 }
 
 /// <summary>Money amount parameter for DepositMoney/WithdrawMoney.</summary>
@@ -81,6 +94,15 @@ public sealed record BuyActionParams(uint ItemTemplateId, int Count = 1);
 
 /// <summary>Sell item parameters (item id).</summary>
 public sealed record SellActionParams(ulong ItemId);
+
+/// <summary>Attach point parameter for BoardVehicle.</summary>
+public sealed record BoardVehicleActionParams(AttachPointKind AttachPoint = AttachPointKind.Driver);
+
+/// <summary>Drive vehicle parameters (destination, speed, timeout).</summary>
+public sealed record DriveVehicleActionParams(Vector3 Destination, float Speed = 5f, TimeSpan? Timeout = null);
+
+/// <summary>Load pack parameter (placed pack doodad objId or null for carried pack).</summary>
+public sealed record LoadPackOntoVehicleActionParams(uint? PlacedPackDoodadObjId = null);
 
 /// <summary>Move speed for Move/MoveToUnit commands.</summary>
 public sealed record MoveActionParams(float Speed = 5f);
@@ -645,6 +667,41 @@ public sealed class BotActionCommandQueue
                 return (actor.Sell(spec.TargetId, itemId, key), null);
             }
 
+            case BotActionKind.BoardVehicle:
+            {
+                var attach = spec.Payload is BoardVehicleActionParams p ? p.AttachPoint : AttachPointKind.Driver;
+                return (actor.BoardVehicle(spec.TargetId, attach, key), null);
+            }
+
+            case BotActionKind.UnboardVehicle:
+                return (actor.UnboardVehicle(spec.TargetId, key), null);
+
+            case BotActionKind.DriveVehicle:
+            {
+                var dest = Vector3.Zero;
+                var speed = 5f;
+                TimeSpan? timeout = null;
+                if (spec.Payload is DriveVehicleActionParams p)
+                {
+                    dest = p.Destination;
+                    speed = p.Speed;
+                    timeout = p.Timeout;
+                }
+                return (actor.DriveVehicle(spec.TargetId, dest, speed, timeout, key), null);
+            }
+
+            case BotActionKind.PackPickup:
+                return (actor.PackPickup(spec.TargetId, key), null);
+
+            case BotActionKind.PutDown:
+                return (actor.PutDown(spec.TargetId, key), null);
+
+            case BotActionKind.LoadPackOntoVehicle:
+            {
+                var placedPackId = spec.Payload is LoadPackOntoVehicleActionParams p ? p.PlacedPackDoodadObjId : null;
+                return (actor.LoadPackOntoVehicle(spec.TargetId, placedPackId, key), null);
+            }
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(spec), spec.Kind, "unknown bot action kind");
         }
@@ -801,6 +858,12 @@ public sealed class BotActionCommandQueue
             BotActionKind.Harvest => ActorActionType.Harvest,
             BotActionKind.Buy => ActorActionType.Buy,
             BotActionKind.Sell => ActorActionType.Sell,
+            BotActionKind.BoardVehicle => ActorActionType.BoardVehicle,
+            BotActionKind.UnboardVehicle => ActorActionType.UnboardVehicle,
+            BotActionKind.DriveVehicle => ActorActionType.Drive,
+            BotActionKind.PackPickup => ActorActionType.PackPickup,
+            BotActionKind.PutDown => ActorActionType.PutDown,
+            BotActionKind.LoadPackOntoVehicle => ActorActionType.LoadPackOntoVehicle,
             BotActionKind.Interrupt => ActorActionType.Stop, // control op; never constructed via a running request
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "unknown bot action kind")
         };

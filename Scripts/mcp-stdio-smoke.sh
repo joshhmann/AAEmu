@@ -24,7 +24,7 @@ assert replies[0]["id"] == 1
 assert replies[0]["result"]["protocolVersion"] == "2025-03-26"
 assert replies[1]["id"] == 2
 tools = replies[1]["result"]["tools"]
-assert len(tools) == 33, len(tools)
-assert {tool["name"] for tool in tools} >= {"observe", "discover_self_quests", "deposit_money", "deposit_item", "plant", "harvest", "craft", "buy", "sell", "action_status", "trace"}
+assert len(tools) == 39, len(tools)
+assert {tool["name"] for tool in tools} >= {"observe", "discover_self_quests", "deposit_money", "deposit_item", "plant", "harvest", "craft", "buy", "sell", "pack_pickup", "put_down", "load_pack_onto_vehicle", "board_vehicle", "unboard_vehicle", "drive_vehicle", "action_status", "trace"}
 print(f"MCP stdio protocol smoke passed: {len(tools)} tools")
 PY

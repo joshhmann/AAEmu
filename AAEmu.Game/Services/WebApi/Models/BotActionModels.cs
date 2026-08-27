@@ -98,6 +98,24 @@ public sealed record BuyRequest(string? Bot, uint? MerchantNpcObjId, uint? ItemT
 /// <summary>POST /api/actors/sell — sell an item to an NPC merchant.</summary>
 public sealed record SellRequest(string? Bot, uint? MerchantNpcObjId, ulong? ItemId, string? IdempotencyKey);
 
+/// <summary>POST /api/actors/pack_pickup — pick up a placed trade pack doodad.</summary>
+public sealed record PackPickupRequest(string? Bot, uint? DoodadObjId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/put_down — put down a carried trade pack.</summary>
+public sealed record PutDownRequest(string? Bot, uint? PackItemTemplateId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/load_pack_onto_vehicle — load a trade pack onto a vehicle cargo point.</summary>
+public sealed record LoadPackOntoVehicleRequest(string? Bot, uint? SlaveObjId, uint? PlacedPackDoodadObjId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/board_vehicle — board a vehicle at an attach point.</summary>
+public sealed record BoardVehicleRequest(string? Bot, uint? VehicleObjId, string? AttachPoint, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/unboard_vehicle — unboard the active vehicle.</summary>
+public sealed record UnboardVehicleRequest(string? Bot, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/drive_vehicle — drive a vehicle to a world destination.</summary>
+public sealed record DriveVehicleRequest(string? Bot, uint? VehicleObjId, float? X, float? Y, float? Z, float? Speed, int? TimeoutSec, string? IdempotencyKey);
+
 // ----------------------------------------------------------------- responses
 
 // Action responses are shaped in the controller as lowercase JSON (JObject):

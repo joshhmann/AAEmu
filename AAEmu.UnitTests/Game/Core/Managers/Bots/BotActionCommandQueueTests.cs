@@ -520,6 +520,12 @@ public class BotActionCommandQueueTests
             (BotActionKind.Harvest, 0xDEADu, null),
             (BotActionKind.Buy, 0xDEADu, new BuyActionParams(1, 1)),
             (BotActionKind.Sell, 0xDEADu, new SellActionParams(1)),
+            (BotActionKind.PackPickup, 0xDEADu, null),
+            (BotActionKind.PutDown, 0xDEADu, null),
+            (BotActionKind.LoadPackOntoVehicle, 0xDEADu, new LoadPackOntoVehicleActionParams()),
+            (BotActionKind.BoardVehicle, 0xDEADu, new BoardVehicleActionParams()),
+            (BotActionKind.UnboardVehicle, 0u, null),
+            (BotActionKind.DriveVehicle, 0xDEADu, new DriveVehicleActionParams(System.Numerics.Vector3.Zero)),
         };
 
         foreach (var (kind, targetId, payload) in cases)

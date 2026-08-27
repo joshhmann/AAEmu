@@ -25,6 +25,12 @@ public sealed class BotActionControllerRouteTests
         ("/api/actors/craft", "Craft", "{\"bot\":\"McpBot01\",\"craftId\":42}", "craftId"),
         ("/api/actors/buy", "Buy", "{\"bot\":\"McpBot01\",\"merchantNpcObjId\":42,\"itemTemplateId\":7}", "merchantNpcObjId"),
         ("/api/actors/sell", "Sell", "{\"bot\":\"McpBot01\",\"merchantNpcObjId\":42,\"itemId\":1001}", "merchantNpcObjId"),
+        ("/api/actors/pack_pickup", "PackPickup", "{\"bot\":\"McpBot01\",\"doodadObjId\":42}", "doodadObjId"),
+        ("/api/actors/put_down", "PutDown", "{\"bot\":\"McpBot01\",\"packItemTemplateId\":42}", "packItemTemplateId"),
+        ("/api/actors/load_pack_onto_vehicle", "LoadPackOntoVehicle", "{\"bot\":\"McpBot01\",\"slaveObjId\":42}", "slaveObjId"),
+        ("/api/actors/board_vehicle", "BoardVehicle", "{\"bot\":\"McpBot01\",\"vehicleObjId\":42}", "vehicleObjId"),
+        ("/api/actors/unboard_vehicle", "UnboardVehicle", "{\"bot\":\"McpBot01\"}", "bot"),
+        ("/api/actors/drive_vehicle", "DriveVehicle", "{\"bot\":\"McpBot01\",\"vehicleObjId\":42,\"x\":1,\"y\":2,\"z\":3}", "vehicleObjId"),
     ];
 
     private string? _oldEnabled;
@@ -80,6 +86,9 @@ public sealed class BotActionControllerRouteTests
                 "npcObjId" => body.Replace("\"npcObjId\":42", string.Empty),
                 "merchantNpcObjId" => body.Replace("\"merchantNpcObjId\":42", string.Empty),
                 "itemTemplateId" => body.Replace("\"itemTemplateId\":42", string.Empty),
+                "packItemTemplateId" => body.Replace("\"packItemTemplateId\":42", string.Empty),
+                "slaveObjId" => body.Replace("\"slaveObjId\":42", string.Empty),
+                "vehicleObjId" => body.Replace("\"vehicleObjId\":42", string.Empty),
                 "seedItemTemplateId" => body.Replace("\"seedItemTemplateId\":42", string.Empty),
                 "craftId" => body.Replace("\"craftId\":42", string.Empty),
                 "amount" => body.Replace("\"amount\":100", string.Empty),

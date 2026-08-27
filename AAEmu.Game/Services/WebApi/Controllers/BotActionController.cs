@@ -1,8 +1,10 @@
 using System.Net;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Services.WebApi.Models;
 
@@ -647,6 +649,201 @@ internal class BotActionController : BaseController
         catch (Exception ex)
         {
             return Error(ex, "sell failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/pack_pickup$")]
+    public HttpResponse PackPickup(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<PackPickupRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.DoodadObjId.HasValue || body.DoodadObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("doodadObjId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.PackPickup,
+                    TargetId: body.DoodadObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "pack_pickup failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/put_down$")]
+    public HttpResponse PutDown(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<PutDownRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.PackItemTemplateId.HasValue || body.PackItemTemplateId.Value == 0)
+                return BadRequestJson(new ErrorModel("packItemTemplateId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.PutDown,
+                    TargetId: body.PackItemTemplateId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "put_down failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/load_pack_onto_vehicle$")]
+    public HttpResponse LoadPackOntoVehicle(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<LoadPackOntoVehicleRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.SlaveObjId.HasValue || body.SlaveObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("slaveObjId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.LoadPackOntoVehicle,
+                    TargetId: body.SlaveObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new LoadPackOntoVehicleActionParams(body.PlacedPackDoodadObjId)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "load_pack_onto_vehicle failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/board_vehicle$")]
+    public HttpResponse BoardVehicle(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<BoardVehicleRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.VehicleObjId.HasValue || body.VehicleObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("vehicleObjId is required"));
+
+            var attach = AttachPointKind.Driver;
+            if (!string.IsNullOrWhiteSpace(body.AttachPoint))
+            {
+                if (!Enum.TryParse<AttachPointKind>(body.AttachPoint, true, out attach) || attach == AttachPointKind.None)
+                    return BadRequestJson(new ErrorModel($"unknown attachPoint '{body.AttachPoint}'"));
+            }
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.BoardVehicle,
+                    TargetId: body.VehicleObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new BoardVehicleActionParams(attach)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "board_vehicle failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/unboard_vehicle$")]
+    public HttpResponse UnboardVehicle(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<UnboardVehicleRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.UnboardVehicle,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "unboard_vehicle failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/drive_vehicle$")]
+    public HttpResponse DriveVehicle(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<DriveVehicleRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.VehicleObjId.HasValue || body.VehicleObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("vehicleObjId is required"));
+            if (!body.X.HasValue || !body.Y.HasValue || !body.Z.HasValue)
+                return BadRequestJson(new ErrorModel("x, y and z are required"));
+            if (!float.IsFinite(body.X.Value) || !float.IsFinite(body.Y.Value) || !float.IsFinite(body.Z.Value))
+                return BadRequestJson(new ErrorModel("x, y and z must be finite"));
+
+            var speed = body.Speed ?? 5f;
+            if (speed <= 0f)
+                return BadRequestJson(new ErrorModel("speed must be positive"));
+
+            var spec = new BotActionSpec(
+                BotActionKind.DriveVehicle,
+                TargetId: body.VehicleObjId.Value,
+                Timeout: TimeoutOrNull(body.TimeoutSec),
+                IdempotencyKey: body.IdempotencyKey,
+                Payload: new DriveVehicleActionParams(
+                    new Vector3(body.X.Value, body.Y.Value, body.Z.Value),
+                    speed,
+                    TimeoutOrNull(body.TimeoutSec)));
+
+            return EnqueueResponse(body.Bot, spec);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "drive_vehicle failed");
         }
     }
 

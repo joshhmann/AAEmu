@@ -46,15 +46,18 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   33-test contract coverage and 19-tool stdio smoke; the subsequent 24-tool
   expansion added quest/doodad/talk/equip actor routes.
 
-- **Deposit/Withdraw, Plant/Harvest, Craft & Buy/Sell actor routes and MCP tools:** added nine matching routes:
+- **Deposit/Withdraw, Plant/Harvest, Craft, Buy/Sell & Pack/Vehicle actor routes and MCP tools:** added fifteen matching routes:
   `POST /api/actors/deposit_money`, `POST /api/actors/withdraw_money`,
   `POST /api/actors/deposit_item`, `POST /api/actors/withdraw_item`,
   `POST /api/actors/plant`, `POST /api/actors/harvest`, `POST /api/actors/craft`,
-  `POST /api/actors/buy`, and `POST /api/actors/sell`.
-- **MCP catalog:** now **33 tools**. Focused validation passed:
+  `POST /api/actors/buy`, `POST /api/actors/sell`, `POST /api/actors/pack_pickup`,
+  `POST /api/actors/put_down`, `POST /api/actors/load_pack_onto_vehicle`,
+  `POST /api/actors/board_vehicle`, `POST /api/actors/unboard_vehicle`, and
+  `POST /api/actors/drive_vehicle`.
+- **MCP catalog:** now **39 tools**. Focused validation passed:
   `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
   `BotActionCommandQueueTests` 18/18; MCP projects Release build clean; stdio
-  smoke 33 tools; full gate **2490 total / 2489 succeeded / 0 failed /
+  smoke 39 tools; full gate **2490 total / 2489 succeeded / 0 failed /
   1 skipped**.
 - **Live benchmark:** `discover_self_quests` MCP benchmark passed with
   `action_status` and `trace`, plus an independent MySQL character-row
@@ -64,7 +67,7 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   historical evidence of an asset-missing Game exit before WebApi; it is not
   the current MCP benchmark verdict.
 - **Deferred action-surface boundary:** newer actor actions still lacking
-  authenticated routes — pack/vehicle, party, trade, expeditions,
+  authenticated routes — party, trade, expeditions, auction,
   and related actions — remain explicitly deferred and are not claimed as
   MCP-exposed.
 

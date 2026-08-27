@@ -42,6 +42,12 @@ authenticated `/api/actors/*` route are explicitly deferred there.
 | `craft` | `POST /api/actors/craft` | Craft ONE recipe step at a workbench |
 | `buy` | `POST /api/actors/buy` | Buy an item from an NPC merchant |
 | `sell` | `POST /api/actors/sell` | Sell an item to an NPC merchant |
+| `pack_pickup` | `POST /api/actors/pack_pickup` | Pick up a placed trade pack into backpack slot |
+| `put_down` | `POST /api/actors/put_down` | Put down a carried trade pack |
+| `load_pack_onto_vehicle` | `POST /api/actors/load_pack_onto_vehicle` | Load a trade pack onto a vehicle cargo point |
+| `board_vehicle` | `POST /api/actors/board_vehicle` | Board a vehicle at an attach point |
+| `unboard_vehicle` | `POST /api/actors/unboard_vehicle` | Unboard the active vehicle |
+| `drive_vehicle` | `POST /api/actors/drive_vehicle` | Drive a boarded vehicle to a world destination |
 | `accept_quest` | `POST /api/actors/accept_quest` | Accept a quest (real AddQuest gate) |
 | `turn_in_quest` | `POST /api/actors/turn_in_quest` | Turn in a quest at an NPC |
 | `loot` | `POST /api/actors/loot` | Loot a corpse/bag owner |
