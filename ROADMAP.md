@@ -17,10 +17,11 @@
 > passes that test, the architecture stays right.
 
 **Current branch record (2026-08-27 MCP expansion checkpoint):**
-`develop @ 1638b007c` (= `origin/develop`). Commit `1638b007c` adds five
-authenticated actor routes and matching MCP tools; the 24-tool catalog,
-validation, benchmark, and deferred action boundary are recorded below.
-Milestone shape and historical evidence are unchanged.
+`develop @ 53360edc842d958247dc70aab498cb02ef0bba0e` (= verified
+`origin/develop` HEAD). Flash reports fifteen additional authenticated actor
+routes/tools beyond the earlier checkpoint; the current MCP catalog is 39
+tools. Current validation, evidence boundaries, and deferred families are
+recorded below. Milestone shape and historical evidence are unchanged.
 
 ## Three phases
 
@@ -1157,53 +1158,47 @@ query (no packet fabrication).
   on the merged tree → REQ-M5.3-10 (carries REQ-M5-15).
 - E11 — M5.3 exit scenario (observe → move → stop → target → cast) completes
   with a machine-readable trace → REQ-M5.3-11 (carries REQ-M5-14).
-
-### MCP expansion (2026-08-27)
+### Historical MCP checkpoint (2026-08-27)
 MCP sidecars and the management gateway remain client-neutral; availability is
 not external-client actor lifecycle evidence. Historical coverage merge
-`8a22dcb4` and its 33-test / 19-tool smoke record are retained below as
-historical evidence.
+`8a22dcb4` and its 33-test / 19-tool smoke record are retained as historical
+evidence.
 
-Commit `1638b007c` adds five authenticated actor routes and matching MCP tools:
-`POST /api/actors/discover_quests`, `POST /api/actors/discover_self_quests`,
-`POST /api/actors/interact_with`, `POST /api/actors/talk`, and
-`POST /api/actors/equip`. The MCP catalog is now 24 tools.
-
-Focused validation passed: `BotActionControllerRouteTests` 2/2,
-`BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP
-projects Release build clean; stdio smoke 24 tools; full gate **2486 total /
-2485 succeeded / 0 failed / 1 skipped**.
-
-The live `discover_self_quests` MCP benchmark passed with `action_status`,
-`trace`, and an independent MySQL character-row cross-check. No safe doodad
-interaction was attempted. The earlier asset-missing
-`mcp-live-smoke-2026-08-27.md` run at `7e109d550` remains historical: Game
-exited before WebApi, and that run is not the current benchmark verdict.
-
-Plant, Harvest, Craft, party, trade, expeditions, and related newer actor
-actions still lack authenticated routes. They remain explicitly deferred and
-are not claimed as MCP-exposed.
+Commit `1638b007c` added the first five authenticated actor routes and matching
+MCP tools. Its catalog, validation, and benchmark were a then-current
+checkpoint; they are superseded by the Flash expansion below, not erased.
+The earlier asset-missing `mcp-live-smoke-2026-08-27.md` run at `7e109d550`
+also remains historical: Game exited before WebApi.
 
 ### MCP actor-route expansion and layered validation (2026-08-27)
 
-**Current state:** **39 MCP tools**; added authenticated routes/tools for
-`pack_pickup`, `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
-`unboard_vehicle`, `drive_vehicle`, `buy`, `sell`, `craft`, `plant`, and
-`harvest`, joining `deposit_money`, `withdraw_money`, `deposit_item`,
-`withdraw_item`, `discover_quests`, `discover_self_quests`, `interact_with`,
-`talk`, and `equip`. Focused route/MCP/queue tests are **53/53**
-(`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
-`BotActionCommandQueueTests` 18/18); protocol smoke covers 39 tools; full
-solution gate **2490 total / 2489 succeeded / 0 failed / 1 skipped**. The real
-local MCP benchmark passed `observe`/`move`/`discover_self_quests` with
-`action_status`/`trace` and independent DB evidence.
+**Current state:** **39 MCP tools**. Flash reports fifteen added
+authenticated routes/tools: `deposit_money`, `withdraw_money`, `deposit_item`,
+`withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`, `pack_pickup`,
+`put_down`, `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
+`drive_vehicle`.
+
+The clean-gate result is SHA-pinned to `53360edc842d958247dc70aab498cb02ef0bba0e`
+from a normal clone: command `./scripts/gate.sh`; Release build PASS (4
+NU1903 warnings, 0 errors); compiler check **0/0**; unit suite **2490 total /
+2489 passed / 0 failed / 1 skipped**; MCP stdio smoke **39 tools**. The sole
+skip is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree invocation
+fails infrastructure root resolution because `RepoRoot` sees a `.git` file;
+that is invalid gate context, not a source failure. Flash-reported focused
+route/MCP/queue validation remains **53/53** (`BotActionControllerRouteTests`
+2/2, `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18).
+Flash also reports a real local MCP benchmark passing
+`observe`/`move`/`discover_self_quests` with `action_status`/`trace` and
+independent DB evidence; no SHA-pinned benchmark artifact is checked in.
 
 **Goal:** expose only stable, player-like `IGameplayActor` actions through
 authenticated, enqueue-only `/api/actors/*` routes and matching MCP tools,
 then validate each through MCP + direct E2E + DB/wire/restart evidence as
 appropriate. Ordered families (each starts with archaeology and a reviewed
-contract): **Deposit/Withdraw (LANDED) → Plant/Harvest (LANDED) → Craft (LANDED) →
-Buy/Sell (LANDED) → Pack/vehicle (LANDED) → Party → Expedition → Trade → Auction**.
+contract): **Deposit/Withdraw (LANDED) → Plant/Harvest (LANDED) → Craft
+(LANDED) → Buy/Sell (LANDED) → Pack/vehicle (LANDED) → Party → Expedition →
+Trade → Auction**.
 
 **Acceptance per family:** route authentication/binding tests; MCP
 schema/mapping tests; negative, idempotency, and lifecycle tests; one real MCP
@@ -1221,11 +1216,8 @@ expected trace/state, record a **PLAYERBOT_BLOCKER**.
 
 **Non-goals:** fake WebApi routes; direct manager/DB/world mutation from API
 threads; hidden-state player mode; MCP replacing packet/DB/scaling/human tests;
-or mass endpoint generation. Actions without a safe authenticated controller
-route or observable contract — currently Plant/Harvest/Craft, party, trade,
-and related actions until their route contracts land — remain deferred, not
-claimed complete.
->>>>>>> origin/develop
+or mass endpoint generation. Only the later Party, Expedition, Trade, Auction,
+and related actor expansion remains deferred.
 
 ---
 
@@ -1959,7 +1951,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
     deleted: remove task + config stubs (clean cutover).
 
-**Recovery queue status (2026-08-27; develop @ `1638b007c`):**
+**Recovery queue status (2026-08-27; develop @ `53360edc842d958247dc70aab498cb02ef0bba0e`):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and
@@ -1968,17 +1960,20 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
   (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution
   present; first application and Refresh broadcasts); live non-immune
   damage-frame proof remains pending.
-- **MCP expansion:** commit `1638b007c` adds authenticated
-  `POST /api/actors/discover_quests`, `/discover_self_quests`, `/interact_with`,
-  `/talk`, and `/equip` routes with matching MCP tools; the catalog is now 24
-  tools. Focused route/contract/queue validation passed 2/2, 33/33, and 16/16;
-  MCP projects Release build clean; stdio smoke 24 tools; full gate **2486
-  total / 2485 succeeded / 0 failed / 1 skipped**. The live
-  `discover_self_quests` benchmark passed with `action_status`, `trace`, and
-  an independent MySQL character-row cross-check. No safe doodad interaction
-  was attempted. The asset-missing `7e109d550` smoke remains historical.
-  Plant, Harvest, Craft, party, trade, expeditions, and related newer actions
-  still lack routes and remain explicitly deferred.
+- **MCP expansion:** Flash reports fifteen authenticated routes/tools landed
+  beyond the earlier checkpoint, bringing the catalog to 39 tools:
+  Deposit/Withdraw money and items, Plant/Harvest, Craft, Buy/Sell,
+  PackPickup/PutDown/LoadPackOntoVehicle, Board/Unboard/DriveVehicle.
+  SHA-pinned normal-clone clean-gate evidence at
+  `53360edc842d958247dc70aab498cb02ef0bba0e` is Release build PASS (4 NU1903
+  warnings, 0 errors), compiler 0/0, unit 2490 total / 2489 passed / 0 failed /
+  1 skipped, and MCP stdio smoke 39 tools. Skip:
+  `Provision_Activate_Persist_Deactivate_RoundTrip` requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Linked-worktree failure is
+  invalid infrastructure context because `RepoRoot` sees a `.git` file, not a
+  source failure. The earlier asset-missing `7e109d550` smoke remains
+  historical. Only Party, Expedition, Trade, Auction, and related actor
+  expansion remains deferred.
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker; the restart, instance-faithful

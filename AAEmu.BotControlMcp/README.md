@@ -94,13 +94,14 @@ deterministic CI smoke tests without a live game server.
 
 ## Deferred actor actions
 
-The first MCP expansion batch now exposes `DiscoverQuests`, `DiscoverSelfQuests`,
-`InteractWith`, `Talk`, and `Equip` through authenticated actor routes. Other
-real actor methods (farming/crafting/pack actions, economy,
-party/expedition, trade, auction, vehicle, and bank actions) remain deferred
-in `MCP-ACTION-MATRIX.md` because they do not yet have an authenticated
-`/api/actors/*` enqueue endpoint. No fake route, hidden state, or management
-alias is exposed.
+The current catalog contains 39 tools and includes the Flash routes for
+Deposit/Withdraw money and items, Plant/Harvest, Craft, Buy/Sell, and
+PackPickup/PutDown/LoadPackOntoVehicle plus Board/Unboard/DriveVehicle.
+Only later actor expansion remains deferred: Party, Expedition, Trade, Auction,
+and related actions still lack an authenticated `/api/actors/*` enqueue route.
+`NavigateTo`, `CastAt`, and `BuildHouse` also remain outside this MCP catalog
+where the matrix records no authenticated actor route; no fake route, hidden
+state, or management alias is exposed.
 
 
 ## Running

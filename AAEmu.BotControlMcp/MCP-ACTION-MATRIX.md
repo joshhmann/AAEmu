@@ -6,7 +6,7 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 |---|---|---|---|
 | `Observe` | `POST /api/actors/observe` | `observe` | `Call_observe_PostsObserveEndpoint`; generic exact mapping |
 | `MoveTo` | `POST /api/actors/move` | `move` | `Call_move_PostsCoordinatesWithOptionalArgs`; generic exact mapping |
-| `NavigateTo` | — | — | Deferred: no actor WebApi route |
+| `NavigateTo` | — | — | Deferred for MCP: implementation is landed, but no authenticated actor WebApi route |
 | `MoveToUnit` | `POST /api/actors/move_to_unit` | `move_to_unit` | `Call_move_to_unit_PostsTargetAndSpeed`; generic exact mapping |
 | `Stop` | `POST /api/actors/stop` | `stop` | `Call_stop_PostsBotOnly`; generic exact mapping |
 | `SetTarget` | `POST /api/actors/target` | `target` | `Call_target_PostsTarget`; generic exact mapping |
@@ -63,7 +63,7 @@ Lifecycle/audit reads are not `IGameplayActor` actions, but are part of the auth
 | `GET /api/actors/actions/{traceId}` | `action_status` | `Call_action_status_GetsTraceEndpoint`; generic exact mapping and escaped path argument |
 | `GET /api/actors/trace?bot=...&limit=...` | `trace` | `Call_trace_GetsTraceQueryWithLimit`, `Call_trace_WithoutLimit_GetsTraceQuery`; generic exact mapping and escaped bot argument |
 
-`Tick`, `FindByKey`, `ActorId`, `Character`, `ActiveRequest`, and `AuditTrace` are actor internals/engine scheduling or correlation surfaces, not standalone HTTP actions. The authenticated `BotActionController` routes listed above are the complete safe MCP surface for this batch; all remaining deferred actions lack a reviewed authenticated enqueue mapping, so no fake routes or management aliases are added.
+`Tick`, `FindByKey`, `ActorId`, `Character`, `ActiveRequest`, and `AuditTrace` are actor internals/engine scheduling or correlation surfaces, not standalone HTTP actions. The authenticated `BotActionController` routes listed above are the complete safe 39-tool MCP surface for this batch; only later Party, Expedition, Trade, Auction, and related actor expansion remains deferred, so no fake routes or management aliases are added.
 
 Other WebApi controllers do not widen this contract: for example,
 `ExpeditionController` exposes `GET /api/expedition/list` as a server-wide

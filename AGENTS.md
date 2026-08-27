@@ -358,6 +358,22 @@ dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --con
 - Naming: `MethodName_Scenario_ExpectedResult` (see `AAEmu.UnitTests/README.md`).
 - Subsystem test priorities: [`Docs/TestingPlan_en.md`](Docs/TestingPlan_en.md).
 
+### Evidence record and gate classification
+
+Every Tier 1/2/3 report MUST include the exact `git rev-parse HEAD` SHA,
+command, environment and assets, build/compiler result, unit total/pass/fail/
+skip counts with the skip identity, and whether downstream MCP stdio smoke
+ran. An infrastructure or repository-root-resolution failure is not a green
+gate. In particular, `./scripts/gate.sh` fails from linked worktrees because
+`RepoRoot` sees a `.git` file; use a normal clone, or fix the script in a
+separate code task, and never classify that failure as a source/code failure.
+
+Classify evidence by layer: contract/reflection/fake mapping; deterministic
+rig; live authenticated server/client; or human/client. Contract, reflection,
+fake-mapping, and rig evidence do not prove live behavior; live bot/client
+evidence does not prove human feel. `H` remains UNKNOWN until an actual human
+completes the named scenario.
+
 ---
 
 ## Code changes — read first, then match the repo

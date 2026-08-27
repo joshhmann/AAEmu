@@ -1,13 +1,14 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality @ develop `1638b007c` (= origin/develop
-head, 2026-08-27; MCP expansion checkpoint).
+Populated from implementation reality @ develop
+`53360edc842d958247dc70aab498cb02ef0bba0e` (= verified origin/develop HEAD,
+2026-08-27; MCP expansion checkpoint).
 Legend: ✅ through real engine paths · 🟡 partial/rig-only · ❌ missing.
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |
 |---|---|---|---|---|---|
-| Movement | 🟡 positions via Observe; no terrain awareness | ✅ simple (straight-leg, standoff band, stuck detection) | ✅ MoveTo/MoveToUnit/DriveVehicle (real CSMoveUnit path); nav A* G-cost fix MEASURED (nav/slice-gcost @ 7e5d96e74; lazy per-block .bai spatial grid + heap openSet): detour factor 1.91×→1.22×, plan avg 6954→1187 ms, 81/81 corridor rig held | ✅ arrival events + stuck reasons; PB-005 positive-only grounding clamp + intentional-floater whitelist landed, but cave/deck/submerged and duplicate-row decisions remain | 🟡 open courtyards only — PB-001; PB-005 FIXED-PARTIAL |
+| Movement | 🟡 positions via Observe; no terrain awareness | ✅ simple (straight-leg, standoff band, stuck detection) | ✅ MoveTo/MoveToUnit/DriveVehicle plus landed `NavigateTo` implementation (real CryEngine GeoData A* pathing, waypoint stepping, stuck detection, and straight-leg fallback) | 🟡 arrival events + stuck reasons; PB-001 implementation is landed, but the named six-test `GameplayActorNavigateTests` file is not tracked here and exists only under `.worktrees/recovery` as a prototype; PB-005 positive-only grounding clamp + intentional-floater whitelist landed, cave/deck/submerged and duplicate-row decisions remain | 🟡 PB-001 test evidence partial; broad interior/region traversal open |
 | Combat | ✅ Observe (units, hp, targets) + causal traces (hp deltas) | ✅ rotation priority, sustain thresholds, no-progress skip | ✅ SetTarget/Cast (real skill pipeline) | ✅ kill credit + hp-delta traces; PB-007 OPEN, narrowed: targeted rig PASS 1/1 (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution present; first application and Refresh broadcasts); live non-immune damage-frame proof remains pending | ✅ party spike live-proven |
 | Quests | ✅ DiscoverQuests through the real AddQuest gate (PB-002, c1073d883); titles are client-localized and zone-sweep coverage still open; **channels v2 (2026-08-25, branch bots/quest-surface):** ~801 previously-hidden quests now perceivable — Item 342+25 (ConAcceptItem/ItemGain), Sphere 431 (geometry via GetQuestStartingSpheres), Level 3 (+ DiscoverSelfQuests); ConAcceptComponent channel DEFERRED = stub (true-return, no player-perceivable precondition) | ✅ FIRST AUTONOMOUS LEVELING SLICE (2026-08-25): `LevelingLoopScenario` — discover → lowest-level offering in band → accept → data-driven objective pursuit → turn-in → re-discover; no scripted chain ids in decision logic | ✅ AcceptQuest/TurnInQuest/AdvanceQuest (real gates); gather objectives via InteractWith on HighlightDoodadId sources (real OnItemGather credit); Talk contract action (Talk = 46) fires DoTalkMadeEvents once per active talk-objective quest through the real pipeline, fail-closed pre-flight (range/unresolvable npcObjId) + observable-delta post-check | ✅ rig-proven: Solzreed 254→255 completed unprompted, +1300 exp through real quest_supplies turn-in path (`leveling-loop-2026-08-25.md`); fail-closed proofs: band starvation → Starvation; unsupported objective type (5650 QuestActObjTalkNpcGroup) stops naming the missing primitive | 🟡 one chain segment rig-level; hunt legs not composed (primitives exist), talk/sphere/cinema/craft objective gaps named in `KnownPrimitiveGaps`; live E2E open |
 | Loot | ✅ corpse/inventory via contract | ✅ loot-after-kill step | ✅ Loot action | ✅ item-granted criteria | ✅ within hunt loops |
@@ -31,29 +32,33 @@ Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 MCP sidecars and the management gateway remain client-neutral; availability is
 not external-client actor lifecycle evidence. Historical coverage merge
 `8a22dcb4` and its 33-test / 19-tool smoke record remain retained historical
-evidence; current validation and the 28-tool catalog are recorded below.
+evidence; earlier route-count checkpoints are superseded by the current
+39-tool catalog.
 
-Authenticated actor routes and matching MCP tools: added `pack_pickup`,
-`put_down`, `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`,
-`drive_vehicle`, `buy`, `sell`, `craft`, `plant`, `harvest`, `deposit_money`,
-`withdraw_money`, `deposit_item`, and `withdraw_item`, joining
+Flash reports fifteen additional authenticated actor routes/tools:
+`pack_pickup`, `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
+`unboard_vehicle`, `drive_vehicle`, `buy`, `sell`, `craft`, `plant`, `harvest`,
+`deposit_money`, `withdraw_money`, `deposit_item`, and `withdraw_item`, joining
 `discover_quests`, `discover_self_quests`, `interact_with`, `talk`, and
 `equip`. The MCP catalog is now **39 tools**.
 
-Focused validation passed: `BotActionControllerRouteTests` 2/2,
-`BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18; MCP
-projects Release build clean; stdio smoke 39 tools; full gate **2490 total /
-2489 succeeded / 0 failed / 1 skipped**.
+SHA-pinned clean-gate evidence at
+`53360edc842d958247dc70aab498cb02ef0bba0e` is from a normal clone:
+`./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
+compiler check **0/0**; unit **2490 total / 2489 passed / 0 failed / 1
+skipped**; MCP stdio smoke 39 tools. The skip is
+`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree gate failure
+is invalid infrastructure context because `RepoRoot` sees a `.git` file, not a
+source failure. Flash-reported focused route/MCP/queue validation remains
+**53/53**.
 
-The live `discover_self_quests` MCP benchmark passed with `action_status`,
-`trace`, and an independent MySQL character-row cross-check. No safe doodad
-interaction was attempted. The earlier asset-missing
-`mcp-live-smoke-2026-08-27.md` run at `7e109d550` remains historical.
-
-The action cells above describe contract/engine paths, not MCP exposure.
-Party, trade, expeditions, auction, and related newer actor
-actions still lack authenticated routes; they remain explicitly deferred and
-are not claimed as MCP-exposed.
+Flash reports a live `discover_self_quests` MCP benchmark passing with
+`action_status`, `trace`, and an independent MySQL character-row cross-check;
+no SHA-pinned benchmark artifact is checked in. The action cells above describe
+contract/engine paths, not MCP exposure. Only later Party, Trade, Expedition,
+Auction, and related actor expansion remains explicitly deferred and is not
+claimed as MCP-exposed.
 
 ## Scaling posture (2026-08-25)
 

@@ -6,7 +6,8 @@ MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed
 premise-refuted; PB-004 found-by-measurement + fixed same day; first-class
 InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop @ 1638b007c (= origin/develop head)
+Branch of record: develop @ `53360edc842d958247dc70aab498cb02ef0bba0e` (= verified
+origin/develop head)
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
 honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
@@ -22,53 +23,61 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   aerial/water/structure whitelist landed. The terrain-only replay corrects all
   593 non-whitelisted severe-positive rows and leaves 702 whitelisted rows
   unchanged; cave/deck/submerged behavior and duplicate-row decisions remain.
-- **PB-007:** **FIXED** — Live E2E PASS (`PvpHandshakeE2eTests` 6/6 stages green,
-  `/root/aaemu-e2e/logs/pvp-handshake-e2e-report.json`). Real damage frames
-  (SCUnitDamagedPacket via Level 4 Deflate decompression), Retribution 2167,
-  and bloodstain doodad 877 observed live on wire. Targeted rig 6/6 green.
-- The PB-007 “FIXED” live E2E record above is retained as historical evidence;
-  the current blocker ledger remains **OPEN, narrowed** pending a
-  victim-matched, non-immune `SCUnitDamaged` frame.
+- **PB-007:** The prior **FIXED** live E2E record (`PvpHandshakeE2eTests`
+  6/6 stages, `/root/aaemu-e2e/logs/pvp-handshake-e2e-report.json`) is retained
+  as historical evidence. The current blocker ledger remains **OPEN, narrowed**:
+  no current source-pinned artifact proves a victim-matched, non-immune
+  `SCUnitDamaged` frame. Do not promote the immune-tagged or historical frame.
 
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker. Restart, instance-faithful
   equipment attachment, ownership, unread-count, take, and delete assertions
   passed; no live-client confirmation of inferred return opcode is implied.
-- **PB-001 routed navigation:** **COMPLETE** — `IGameplayActor.NavigateTo` landed and verified with `GameplayActorNavigateTests` (6/6 green) supporting multi-waypoint navigation with automatic A* pathfinding over CryEngine GeoData and graceful fallback to direct leg. First-class `Navigate` action exposed to `BotActionCommandQueue` and verified with `BotActionCommandQueueTests` (16/16 green).
-- **PB-002 autonomous leveling loop:** **COMPLETE** — full autonomous quest execution loop composed in `LevelingLoopScenario` supporting Talk (`QuestActObjTalk`, `QuestActObjTalkNpcGroup`), Hunt/Kill (`QuestActObjKillMonster`, `QuestActObjKillMonsterGroup`), Gather/Interact (`QuestActObjActDoodad`), and delivery quests, alongside autonomous sustain recovery (HP < 35% consumable usage) and auto-equipping item upgrades. Template library and runner wired via `BotScenarioTemplates` / `BotScenarioRunner` (`BotScenarioRigTests` 10/10 green).
-- **Final gate:** **2490 total: 2489 succeeded, 0 failed, 1 skipped**.
+- **PB-001 routed navigation:** **IMPLEMENTATION LANDED / TEST EVIDENCE
+  PARTIAL** — `IGameplayActor.NavigateTo` supports CryEngine GeoData A*
+  routing, dynamic waypoint stepping, stuck detection, and straight-leg
+  fallback. The named six-test `GameplayActorNavigateTests` file is not
+  tracked in this checkout; it exists only as a prototype under
+  `.worktrees/recovery`, so its claimed 6/6 is not current checked-in proof.
+  `BotActionCommandQueueTests` covers the first-class `Navigate` queue action.
+- **PB-002 autonomous leveling loop:** **SCOPED ACTOR/RIG SLICES LANDED;
+  BROAD CLAIM OPEN** — `LevelingLoopScenario` and related actor/rig slices
+  cover selected perception-driven quest steps. Broad autonomous quest-loop
+  coverage, live-server breadth, and human/client breadth remain open; do not
+  call the broad claim complete.
+- **Final gate (SHA-pinned normal-clone evidence at
+  `53360edc842d958247dc70aab498cb02ef0bba0e`):** command `./scripts/gate.sh`;
+  Release build PASS (4 NU1903 warnings, 0 errors), compiler check 0/0, unit
+  **2490 total / 2489 passed / 0 failed / 1 skipped**, MCP stdio smoke 39
+  tools. Skip: `Provision_Activate_Persist_Deactivate_RoundTrip` requires
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree gate
+  failure is invalid infrastructure context because `RepoRoot` sees a `.git`
+  file, not a source failure.
 
 ## 2026-08-27 MCP expansion
 - **Client-neutral integration:** MCP sidecars and the management gateway remain
   client-neutral; they do not constitute external-client actor evidence.
 - **Historical coverage retained:** merge `8a22dcb4` recorded the earlier
-  33-test contract coverage and 19-tool stdio smoke; the subsequent 24-tool
-  expansion added quest/doodad/talk/equip actor routes.
-
-- **Deposit/Withdraw, Plant/Harvest, Craft, Buy/Sell & Pack/Vehicle actor routes and MCP tools:** added fifteen matching routes:
-  `POST /api/actors/deposit_money`, `POST /api/actors/withdraw_money`,
-  `POST /api/actors/deposit_item`, `POST /api/actors/withdraw_item`,
-  `POST /api/actors/plant`, `POST /api/actors/harvest`, `POST /api/actors/craft`,
-  `POST /api/actors/buy`, `POST /api/actors/sell`, `POST /api/actors/pack_pickup`,
-  `POST /api/actors/put_down`, `POST /api/actors/load_pack_onto_vehicle`,
-  `POST /api/actors/board_vehicle`, `POST /api/actors/unboard_vehicle`, and
-  `POST /api/actors/drive_vehicle`.
-- **MCP catalog:** now **39 tools**. Focused validation passed:
+  33-test contract coverage and 19-tool stdio smoke; earlier route-count
+  checkpoints are historical and superseded by the current 39-tool catalog.
+- **Flash route expansion:** fifteen authenticated actor routes/tools landed:
+  Deposit/Withdraw money and items, Plant/Harvest, Craft, Buy/Sell,
+  PackPickup/PutDown/LoadPackOntoVehicle, and Board/Unboard/DriveVehicle.
+- **MCP catalog:** now **39 tools**. Flash reports focused validation:
   `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
-  `BotActionCommandQueueTests` 18/18; MCP projects Release build clean; stdio
-  smoke 39 tools; full gate **2490 total / 2489 succeeded / 0 failed /
-  1 skipped**.
-- **Live benchmark:** `discover_self_quests` MCP benchmark passed with
-  `action_status` and `trace`, plus an independent MySQL character-row
-  cross-check. No safe doodad interaction was attempted.
+  `BotActionCommandQueueTests` 18/18; protocol smoke 39 tools. The clean gate
+  is SHA-pinned at the current HEAD above from a normal clone.
+- **Live benchmark:** Flash reports `discover_self_quests` MCP benchmark
+  passed with `action_status` and `trace`, plus an independent MySQL
+  character-row cross-check. This remains unpinned benchmark evidence; no
+  SHA-pinned artifact is checked in. No safe doodad interaction was attempted.
 - **Historical smoke retained:** the earlier
   `mcp-live-smoke-2026-08-27.md` report-only run at `7e109d550` is retained as
   historical evidence of an asset-missing Game exit before WebApi; it is not
   the current MCP benchmark verdict.
-- **Deferred action-surface boundary:** newer actor actions still lacking
-  authenticated routes — party, trade, expeditions, auction,
-  and related actions — remain explicitly deferred and are not claimed as
+- **Deferred action-surface boundary:** only later Party, Trade, Expedition,
+  Auction, and related actor expansion remains deferred and is not claimed as
   MCP-exposed.
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)

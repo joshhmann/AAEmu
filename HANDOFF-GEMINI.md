@@ -3,31 +3,40 @@
 ## Current checkpoint
 
 - The prior Mail S3/PB-007 reconciliation point `241d3e34d` is historical.
-  The docs audit started from clean `origin/develop @ 07230fe5d`
-  (`07230fe5d3b471c5b6c8ec23b4ab7805b7f57453`); verify the remote head before
-  relying on any embedded SHA. `1638b007c` is the historical route feature
-  commit, not the branch head.
+  The current clean checkout resolves `origin/develop` to
+  `53360edc842d958247dc70aab498cb02ef0bba0e`; this is the current branch
+  pointer verified for this handoff. `1638b007c` remains the historical first
+  actor-route feature commit, not the branch head.
 - Start from [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md) for
   the safe temporary-worktree workflow, current MCP evidence boundary, and
   ordered continuation gates.
-- Commit `1638b007c` adds five authenticated actor routes and matching MCP
-  tools: `POST /api/actors/discover_quests`,
-  `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
-  `POST /api/actors/talk`, and `POST /api/actors/equip`. The MCP catalog is
-  now 24 tools.
-- Focused validation passed: `BotActionControllerRouteTests` 2/2,
-  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP
-  projects Release build clean; stdio smoke 24 tools; full gate **2486 total /
-  2485 succeeded / 0 failed / 1 skipped**.
-- The live `discover_self_quests` MCP benchmark passed with `action_status`
-  and `trace`, plus an independent MySQL character-row cross-check. No safe  doodad interaction was attempted.
+- Flash reports fifteen additional authenticated actor routes/tools beyond the
+  earlier route-count checkpoint: `deposit_money`, `withdraw_money`,
+  `deposit_item`, `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`,
+  `pack_pickup`, `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
+  `unboard_vehicle`, and `drive_vehicle`. The current MCP catalog is 39 tools.
+- The clean-gate result is SHA-pinned to
+  `53360edc842d958247dc70aab498cb02ef0bba0e` from a normal clone:
+  `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
+  compiler check **0/0**; unit suite **2490 total / 2489 passed / 0 failed /
+  1 skipped**; MCP stdio smoke **39 tools**. The sole skip is
+  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The linked-worktree gate
+  failure is invalid infrastructure context (`RepoRoot` sees a `.git` file),
+  not source evidence. Focused route/MCP/queue validation remains
+  Flash-reported **53/53** (`BotActionControllerRouteTests` 2/2,
+  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18).
+- Flash reports that the live `discover_self_quests` MCP benchmark passed with
+  `action_status` and `trace`, plus an independent MySQL character-row
+  cross-check. This current benchmark remains unpinned, not a checked-in
+  SHA-pinned artifact; no safe doodad interaction was attempted.
 - The earlier asset-missing `mcp-live-smoke-2026-08-27.md` run at
   `7e109d550` remains historical; it recorded Game exiting before WebApi and
   is not the current benchmark verdict.
-- Newer actor actions still lacking authenticated routes — Plant, Harvest,
-  Craft, party, trade, expeditions, and related actions — remain explicitly
-  deferred.
->>>>>>> origin/develop
+- Only the later actor expansion remains deferred: Party, Trade, Expedition,
+  Auction, and related actions still lack authenticated routes. The Flash
+  Deposit/Withdraw, Plant/Harvest, Craft, Buy/Sell, and Pack/Vehicle routes
+  are not deferred.
 - The exact gate counts below are historical where noted; this docs-only MCP
   wave does not build or validate unrelated source changes.
 - The fork boundary is permanent: `origin` is the writable fork (`joshhmann/AAEmu`); `upstream` fetches only and its push URL is `DISABLED`. Never push a branch or PR upstream.
@@ -64,24 +73,32 @@ Use this loop for every slice:
 - MCP sidecars and the management gateway remain client-neutral; availability
   is not external-client actor lifecycle evidence.
 - Historical coverage merge `8a22dcb4` and its 33-test / 19-tool smoke record
-  are retained; current validation and the 24-tool catalog are recorded below.
-
-- Commit `1638b007c` adds five authenticated actor routes and matching MCP
-  tools: `POST /api/actors/discover_quests`,
-  `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
-  `POST /api/actors/talk`, and `POST /api/actors/equip`; the catalog is now
-  24 tools.
-- Focused validation passed: `BotActionControllerRouteTests` 2/2,
-  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP
-  projects Release build clean; stdio smoke 24 tools; full gate **2486 total /
-  2485 succeeded / 0 failed / 1 skipped**.
-- Live `discover_self_quests` MCP benchmark passed with `action_status`,
-  `trace`, and an independent MySQL character-row cross-check. No safe doodad
-  interaction was attempted.
+  are retained. The earlier five-route `1638b007c` checkpoint and its
+  then-current validation remain historical, not the current catalog verdict.
+- Flash reports fifteen additional authenticated actor routes/tools beyond that
+  checkpoint: `deposit_money`, `withdraw_money`, `deposit_item`,
+  `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`, `pack_pickup`,
+  `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
+  `unboard_vehicle`, and `drive_vehicle`. The current catalog is 39 tools.
+- The clean-gate result is SHA-pinned to
+  `53360edc842d958247dc70aab498cb02ef0bba0e` from a normal clone:
+  `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
+  compiler check **0/0**; unit suite **2490 total / 2489 passed / 0 failed /
+  1 skipped**; MCP stdio smoke **39 tools**. The sole skip is
+  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree gate
+  failure is invalid infrastructure context (`RepoRoot` sees a `.git` file),
+  not source evidence. Focused route/MCP/queue validation remains
+  Flash-reported **53/53** (`BotActionControllerRouteTests` 2/2,
+  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18).
+- Flash reports that the live `discover_self_quests` MCP benchmark passed with
+  `action_status`, `trace`, and an independent MySQL character-row
+  cross-check. This is current unpinned evidence, not a checked-in
+  SHA-pinned artifact; no safe doodad interaction was attempted.
 - The prior asset-missing live-smoke run at `7e109d550` is historical, not the
-  current verdict. Plant, Harvest, Craft, party, trade, expeditions, and
-  related newer actor actions still lack authenticated routes and remain
-  explicitly deferred.
+  current verdict. Only the later Party, Trade, Expedition, Auction, and
+  related actor expansion remains deferred; the fifteen Flash routes are not
+  deferred.
 
 ### Navigation and scaling
 
@@ -127,8 +144,17 @@ The requested checked-in `pvp-handshake-e2e-report.md` is not present in this ch
 
 ## Active blockers and partials
 
-- **PB-001 — routed navigation:** **COMPLETE** — `IGameplayActor.NavigateTo` is implemented and verified with `GameplayActorNavigateTests` (6/6 green). Composes automatic CryEngine navmesh A* routing across `.bai` maps with dynamic waypoint stepping, stuck detection, and straight-leg fallback.
-- **PB-002 — autonomous leveling loop:** **COMPLETE** — `LevelingLoopScenario` now provides a full perception-driven autonomous quest loop supporting Talk (`QuestActObjTalk`, `QuestActObjTalkNpcGroup`), Hunt/Kill (`QuestActObjKillMonster`, `QuestActObjKillMonsterGroup`), Gather/Interact (`QuestActObjActDoodad`), and delivery quests, alongside autonomous sustain recovery (HP < 35% consumable usage) and auto-equipping item upgrades. Verified across 6/6 `LevelingLoopScenarioRigTests` and full repository solution gate.
+- **PB-001 — routed navigation:** **IMPLEMENTATION LANDED / TEST EVIDENCE
+  PARTIAL** — `IGameplayActor.NavigateTo` is implemented with CryEngine
+  navmesh A* routing, dynamic waypoint stepping, stuck detection, and
+  straight-leg fallback. The named six-test `GameplayActorNavigateTests` file
+  is not tracked in this checkout; it exists only as a prototype under
+  `.worktrees/recovery`. Do not treat that prototype as checked-in proof.
+- **PB-002 — autonomous leveling loop:** **SCOPED ACTOR/RIG SLICES LANDED;
+  BROAD CLAIM OPEN** — `LevelingLoopScenario` and its actor/rig slices cover
+  selected perception-driven quest steps, but broad autonomous quest-loop
+  coverage, live-server breadth, and human/client breadth remain open. Do not
+  promote the scoped implementation to broad completion.
 - **PB-005 — grounding FIXED-PARTIAL:** 593 non-whitelisted severe-positive rows were corrected and 702 intentional whitelist rows preserved. Cave/deck/submerged classification and the 733 duplicate-row ownership decision remain open. No negative-offset clamp and no duplicate deletion without canonical evidence/owner approval.
 - **PB-007 — open but narrowed:** rig proof passes through real `Skill.Use`; same-faction `ForceAttack` damage lowers victim HP, Retribution is present, and first application/Refresh wire evidence exists. The live non-immune, victim-matched `SCUnitDamaged` frame is still unproven. The login `LoggedOn` buff 2423 protects all damage for roughly 20 seconds; the engine now records the crime attempt even on that immune path. Do not call the live slice closed from the rig or from an immune-tagged frame.
 - **Justice:** the crime vertical is complete, but jury summon packet ordering/client capture remains unknown. Prison sentencing/teleport/buff exist; prison labor, escape tunnels, guards, and release-on-expiry are absent. Treat those as separate scope decisions.
@@ -146,9 +172,24 @@ The current untracked `.worktrees/` directory contains these retained survivors/
 - Detached retained probes: `.worktrees/nav-probe` at `41ddb889a`, `.worktrees/pb007-live` at `9359b5a38`, `.worktrees/rowboat` at `bfbea4093`, and `.worktrees/rei-g1-rv2` at `ae4ccf385`.
 - An additional registered rig worktree is outside `.worktrees/`: `/root/.hermes/kanban/workspaces/t_6b5ac43e/rig-repo` at `e7e7ef0fe`.
 
-Do not add `.worktrees/` wholesale to a commit. Do not delete, reset, or overwrite a survivor before inspecting its branch, dirty state, and evidence role. In particular, `.worktrees/rowboat` and `.worktrees/nav-probe` are stale/research duplicates, not proof that their unmerged changes are on develop; avoid confusing them with the landed region-sync and nav-slice commits. `git worktree list --porcelain` also shows prunable `/tmp` research worktrees; do not use those as current source.
+Do not add `.worktrees/` wholesale to a commit. Do not delete, reset, or overwrite a survivor before inspecting its branch, dirty state, and evidence role. In particular, `.worktrees/rowboat` and `.worktrees/nav-probe` are stale/research duplicates, not proof that their unmerged changes are on develop; avoid confusing them with the landed region-sync and nav-slice commits. `git worktree list --porcelain` also shows prunable `/tmp` research worktrees; do not use those as current source. The nested `.hermes`/`rig-repo` topology anomaly is preserved for owner reconciliation; do not manipulate it.
 
 The compact SQLite database is SELECT-only. Never patch it in place; use reviewed code/config or an additive SQL/MySQL migration when mutable state is required.
+
+## Immediate next instructions for Gemini
+
+1. From a clean temporary worktree, run the clean gate and publish its output
+   with the exact HEAD SHA, command, environment/assets, build/compiler result,
+   unit totals (including skip identity), and downstream MCP-smoke result.
+2. Land the PB-001 real-data `GameplayActorNavigateTests` contract tests, or
+   explicitly explain why they cannot be landed; the existing prototype under
+   `.worktrees/recovery` is not tracked evidence.
+3. Narrow PB-002 to the landed actor/rig slices; keep broad autonomous
+   quest-loop coverage and live/human breadth open.
+4. Pursue PB-007 proof using a victim-matched, non-immune live
+   `SCUnitDamaged` frame with the existing HP/Retribution/crime checks.
+5. Preserve the nested `.hermes`/`rig-repo` topology anomaly for owner
+   reconciliation; do not manipulate that topology.
 
 ## Exact next steps for Gemini
 
@@ -168,11 +209,12 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 4. **Handle PB-005 owner decisions separately.** Classify cave/deck/submerged rows only with canonical/client evidence. Do not add a negative-offset clamp, delete duplicate rows, or reclassify whitelist entries without a registered owner decision and evidence.
 5. **For every new slice, add/update both a rig proof and a live scenario where applicable, file a blocker for any failure, and update `SCORECARD.md`, `ROADMAP.md`, and `STATUS.md` in the same documentation wave.** Preserve old evidence and label rig/live/human types rather than rewriting history.
 6. **Run the scoped tests and commit the scoped change.** IntegrationTests convention is `--filter-class <fully-qualified-class-name>`. TUnit uses `--treenode-filter` as above when it resolves. `--nologo` is rejected by the MTP front-end in prior runs; omit it. Push only to the writable origin fork, never upstream.
-7. **Live MCP benchmark:** the authenticated `discover_self_quests` benchmark
-   is complete and passed with `action_status`, `trace`, and an independent
-   MySQL character-row cross-check. No safe doodad interaction was attempted.
-   Keep Plant, Harvest, Craft, party, trade, expeditions, and related newer
-   actor actions deferred until authenticated routes exist.
+7. **Live MCP benchmark:** Flash reports the authenticated
+   `discover_self_quests` benchmark passed with `action_status`, `trace`, and
+   an independent MySQL character-row cross-check; this remains unpinned
+   evidence pending a clean SHA-pinned rerun. No safe doodad interaction was
+   attempted. The fifteen Flash route families are landed; only later Party,
+   Trade, Expedition, Auction, and related actor expansion remains deferred.
 
 ## Human-only actions
 

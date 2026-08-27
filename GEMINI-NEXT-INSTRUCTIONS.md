@@ -7,43 +7,49 @@ restart, scaling, or human gates.
 ## 1. Audit result and checkpoint
 
 The handoff documents were audited against a clean worktree created from
-`origin/develop` on 2026-08-27. At audit start the remote branch resolved to:
+`origin/develop` on 2026-08-27. The current branch resolves to:
 
 ```text
-origin/develop = 07230fe5d3b471c5b6c8ec23b4ab7805b7f57453
+origin/develop = 53360edc842d958247dc70aab498cb02ef0bba0e
 ```
 
-`1638b007c` is the historical feature commit that added the five actor routes;
-it is not the current branch head. `6d9ae9f50` recorded that expansion in the
-status/scorecard/capability documents, and `07230fe5d` added the later roadmap
-record. The older `241d3e34d` Mail/PB-007 reconciliation point and
+`1638b007c` is the historical feature commit that added the first five actor
+routes; it is not the current branch head. `6d9ae9f50` recorded that expansion
+in the status/scorecard/capability documents, and `07230fe5d` added the earlier
+roadmap record. The older `241d3e34d` Mail/PB-007 reconciliation point and
 `7e109d550` asset-missing MCP smoke are historical. The checked-in integrated
 benchmark report was run from the earlier `12ff5b504` base and its 19-tool
 protocol count is historical; do not use it as the current catalog verdict.
 
 The current recorded state is:
 
-- **24 MCP action tools** are exposed by `AAEmu.BotControlMcp`; management tools
-  remain on the separate `AAEmu.BotControl` sidecar.
-- The five newly authenticated actor routes are
-  `POST /api/actors/discover_quests`,
-  `POST /api/actors/discover_self_quests`,
-  `POST /api/actors/interact_with`, `POST /api/actors/talk`, and
-  `POST /api/actors/equip`.
-- The 24-tool smoke passed. Focused route/MCP/queue validation is **51/51**:
+- **39 MCP action tools** are exposed by `AAEmu.BotControlMcp`; management
+  tools remain on the separate `AAEmu.BotControl` sidecar.
+- Flash reports fifteen additional authenticated actor routes/tools beyond the
+  earlier checkpoint: Deposit/Withdraw money and items, Plant/Harvest, Craft,
+  Buy/Sell, PackPickup/PutDown/LoadPackOntoVehicle, and
+  Board/Unboard/DriveVehicle.
+- SHA-pinned clean-gate evidence at the current HEAD came from a normal clone
+  with command `./scripts/gate.sh`: Release build PASS (4 NU1903 warnings, 0
+  errors), compiler check **0/0**, unit **2490 total / 2489 passed / 0 failed /
+  1 skipped**, and MCP stdio smoke **39 tools**. The skip is
+  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
+- A linked-worktree gate failure is invalid infrastructure context because
+  `RepoRoot` sees a `.git` file; it is not source evidence or a code failure.
+  Use a normal clone (or fix the script in a separate code task), never
+  classify that failure as a green gate.
+- Flash-reported focused route/MCP/queue validation is **53/53**:
   `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33, and
-  `BotActionCommandQueueTests` 16/16. Release builds and the full recorded gate
-  (2486 total / 2485 succeeded / 0 failed / 1 skipped) are historical evidence;
-  this documentation review does not rerun them.
-- The live recorded MCP+DB benchmark is **PASS** for authenticated management
+  `BotActionCommandQueueTests` 18/18.
+- Flash reports the live MCP+DB benchmark passed for authenticated management
   provisioning plus actor `observe`/`move`/`discover_self_quests`, terminal
   `action_status`, follow-up `trace`, and an independent MySQL character-row
-  cross-check. It does not prove a client packet transition, restart parity,
-  broad navigation, scaling, or human feel.
+  cross-check. This benchmark remains unpinned; it does not prove a client
+  packet transition, restart parity, broad navigation, scaling, or human feel.
 - The client-wire leg is bounded by lifecycle: managed `HeadlessBot` accounts
   are blocked from public client login and are not `BotNetworkSession` actors.
-  The attempted bridge check therefore reports no active networked session. A
-  future wire proof needs a separately authenticated, client-login-allowed
+  A future wire proof needs a separately authenticated, client-login-allowed
   ordinary account; never relabel the managed headless DB row as wire evidence.
 - `H` remains human-only. MCP, scripted actors, headless sessions, rigs, and
   bots can prove functional/proxy behavior but cannot promote a human-feel
@@ -117,12 +123,14 @@ git worktree remove "$TMP"
 ## 3. Current MCP contract and evidence loop
 
 The action sidecar is a client-neutral MCP stdio process that sends authenticated
-HTTP requests to enqueue-only `/api/actors/*` routes. The current 24 tools are:
+HTTP requests to enqueue-only `/api/actors/*` routes. The current 39 tools are:
 
 ```text
 observe move interact discover_quests discover_self_quests interact_with talk
-equip accept_quest turn_in_quest loot use_item mount move_to_unit stop target cast
-dismount advance_quest turn_in_doodad auto_turn_in interrupt action_status trace
+equip deposit_money withdraw_money deposit_item withdraw_item plant harvest craft
+buy sell pack_pickup put_down load_pack_onto_vehicle board_vehicle unboard_vehicle
+drive_vehicle accept_quest turn_in_quest loot use_item mount move_to_unit stop target
+cast dismount advance_quest turn_in_doodad auto_turn_in interrupt action_status trace
 ```
 
 Use the separate management sidecar for `bot_add`, `bot_remove`, `bot_list`,
@@ -149,6 +157,22 @@ adopts a bot, runs `observe`, `discover_self_quests`, `move`, status/trace polls
 and optionally exercises `interact_with` only with the safe object argument.
 Its bridge result is an independent diagnostic, not managed-bot client-wire
 proof.
+### Required evidence record for every tier
+
+Every Tier 1, Tier 2, and Tier 3 report MUST record the exact HEAD SHA, command,
+environment and assets, build/compiler result, unit totals (total/pass/fail/
+skip, with the skip identity), and whether downstream MCP stdio smoke ran.
+An infrastructure or repository-root-resolution failure is not a green gate
+and MUST be reported separately from source/test evidence. The current
+`gate.sh` fails from linked worktrees because `RepoRoot` sees a `.git` file;
+run it from a normal clone or fix the script in a separate code task, and do
+not classify that infrastructure failure as a code failure.
+
+Label evidence by what it actually proves: contract/reflection/fake mapping,
+deterministic rig, live authenticated server/client, or human/client evidence.
+Contract/reflection/fake mapping and rig results do not become live proof;
+live bot/client results do not become human proof. `H` remains UNKNOWN unless
+an actual human completes the named scenario.
 
 ## 4. Combined workflow for every new actor family
 
@@ -235,30 +259,28 @@ rm -rf "$E2E_ROOT"   # E2E_ROOT is the mktemp directory created above only
 
 ## 6. Ordered next work
 
-Do not mass-generate endpoints. For each family, perform archaeology and write
-the player-visible contract before implementation. The ordered route backlog is:
+Do not mass-generate endpoints. The Flash routes for Deposit/Withdraw money and
+items, Plant/Harvest, Craft, Buy/Sell, and Pack/vehicle are landed. Only later
+Party, Expedition, Trade, Auction, and related actor expansion remains deferred.
+Continue in this order:
 
-1. **Deposit/Withdraw** (money and item bank paths; include `BuildHouse` only
-   if a separate reviewed actor route is justified).
-2. **Plant/Harvest** (including livestock/farm object legality and observable
-   inventory/doodad effects).
-3. **Craft** (canonical recipe/skill/labor requirements and completion effects).
-4. **Buy/Sell** (real vendor paths and conservation/error behavior).
-5. **Pack/vehicle** — `PackPickup`, `PutDown`, `LoadPackOntoVehicle`,
-   `DriveVehicle`, `BoardVehicle`, and `UnboardVehicle` only after each route's
-   target and persistence/wire contract is reviewed.
-6. **Party** — invite, accept, follow, assist; no management alias.
-7. **Expedition** — create, invite, accept, leave; server-wide reads are not
-   actor actions.
-8. **Trade** — offer, put-up, lock/OK; preserve the existing trade-pack and
-   payout evidence boundaries.
-9. **Auction** — post and buy; include expiry/restart and fee/money invariants.
+1. Run the clean gate from a normal clone and publish SHA-pinned output with
+   the complete tier evidence record described above.
+2. Land the PB-001 real-data `GameplayActorNavigateTests` contract tests, or
+   explicitly explain why they cannot be landed; the `.worktrees/recovery`
+   prototype is not tracked evidence.
+3. Narrow PB-002 to the landed actor/rig slices; keep broad autonomous
+   quest-loop coverage and live/human breadth open.
+4. Pursue PB-007 only to a victim-matched, non-immune live
+   `SCUnitDamaged` frame with the existing HP/Retribution/crime checks.
+5. Preserve the nested `.hermes`/`rig-repo` topology anomaly for owner
+   reconciliation; do not manipulate it.
 
-The matrix also marks `NavigateTo` and `CastAt` deferred because they have no
-actor WebApi route. Do not call a contract method MCP-exposed merely because a
-headless rig can call it. Plant, Harvest, Craft, party, trade, expeditions,
-pack/vehicle, bank/economy, auction, and related newer actions remain deferred
-until authenticated enqueue routes and reviewed observable contracts exist.
+The matrix also marks `NavigateTo` and `CastAt` outside MCP because they have no
+authenticated actor WebApi route; `NavigateTo` implementation being landed does
+not make it MCP-exposed. Do not call a contract method MCP-exposed merely
+because a headless rig can call it. Use the deferred families above only after
+authenticated enqueue routes and reviewed observable contracts exist.
 
 Parallel to that route work, the required gates are:
 

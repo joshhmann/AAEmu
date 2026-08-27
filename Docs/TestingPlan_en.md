@@ -142,6 +142,23 @@ AAEmu.UnitTests/
 | **Tier 2 — Targeted Integration / E2E** | Verifies specific subsystem lifecycles, network clients, WebApi auth routes, or DB persistence. | `dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --treenode-filter "/*/*/<Class>/*"` | 1–5 seconds |
 | **Tier 3 — Heavy Soak & Scale Probes** | Validates long-term stability, memory leak resistance, and multi-bot scheduler performance over extended tick cycles. Run for major milestone exits (M4, M5, M7) and pre-production staging. | `dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release` | 35–45+ minutes |
 
+### Evidence required for every tier
+
+Every Tier 1, Tier 2, and Tier 3 report MUST record the exact `git rev-parse
+HEAD` SHA, command, environment/assets, build/compiler result, unit
+total/pass/fail/skip counts with the skip identity, and whether downstream MCP
+stdio smoke ran. An infrastructure or repository-root-resolution failure is
+not a green gate. `./scripts/gate.sh` currently fails from linked worktrees
+because `RepoRoot` sees a `.git` file; run it from a normal clone or fix the
+script in a separate code task, and do not classify that failure as a code
+failure.
+
+Evidence labels are mandatory: distinguish contract/reflection/fake mapping,
+deterministic rig, live authenticated server/client, and human/client
+evidence. Contract/reflection/fake mapping and rig evidence are not live proof;
+live bot/client evidence is not human proof. `H` remains UNKNOWN without an
+actual human completing the named scenario.
+
 ______________________________________________________________________
 
 **Summary**: The proposed plan covers critical architecture parts, defines testing priorities, provides specific scenarios, and establishes a clear three-tiered execution workflow. Following this plan accelerates project development while keeping feedback loops fast and reliable.
