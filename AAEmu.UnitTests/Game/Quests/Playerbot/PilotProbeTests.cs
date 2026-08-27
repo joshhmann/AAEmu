@@ -16,7 +16,9 @@ public static class PlayerbotPilotTestsAccess
     public static QuestScenarioManifest LoadManifest(string tier, uint questId)
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, ".git")))
+        while (dir != null &&
+               !Directory.Exists(Path.Combine(dir.FullName, ".git")) &&
+               !File.Exists(Path.Combine(dir.FullName, ".git")))
             dir = dir.Parent;
         var root = dir?.FullName ?? throw new InvalidOperationException("Cannot locate repo root");
         var path = Path.Combine(root, "AAEmu.UnitTests", "Game", "Quests", "Scenario", "Manifests", tier, $"{questId}.json");

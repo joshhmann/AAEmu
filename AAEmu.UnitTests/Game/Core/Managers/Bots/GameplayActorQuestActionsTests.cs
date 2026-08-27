@@ -42,7 +42,9 @@ public class GameplayActorQuestActionsTests
     private static QuestScenarioManifest LoadManifest()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, ".git")))
+        while (dir != null &&
+               !Directory.Exists(Path.Combine(dir.FullName, ".git")) &&
+               !File.Exists(Path.Combine(dir.FullName, ".git")))
             dir = dir.Parent;
         var path = Path.Combine(dir!.FullName, "AAEmu.UnitTests", "Game", "Quests", "Scenario", "Manifests", "t1", $"{QuestId}.json");
         return QuestScenarioManifest.LoadFromFile(path);

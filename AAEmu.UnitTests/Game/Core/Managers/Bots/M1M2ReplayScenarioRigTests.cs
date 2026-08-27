@@ -66,7 +66,9 @@ public class M1M2ReplayScenarioRigTests
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, ".git")))
+        while (dir != null &&
+               !Directory.Exists(Path.Combine(dir.FullName, ".git")) &&
+               !File.Exists(Path.Combine(dir.FullName, ".git")))
             dir = dir.Parent;
         return dir?.FullName
                ?? throw new InvalidOperationException("Cannot locate repo root from " + AppContext.BaseDirectory);
