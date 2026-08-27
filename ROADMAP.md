@@ -17,13 +17,15 @@
 > passes that test, the architecture stays right.
 
 **Current source baseline (2026-08-27 MCP expansion checkpoint):**
-`develop` source baseline audited and verified at
-`53360edc842d958247dc70aab498cb02ef0bba0e` (= verified `origin/develop`
-HEAD); subsequent commits in this checkout are documentation-only
-reconciliation. Flash reports fifteen additional authenticated actor
-routes/tools beyond the earlier checkpoint; the current MCP catalog is 39
-tools. Current validation, evidence boundaries, and deferred families are
-recorded below. Milestone shape and historical evidence are unchanged.
+`develop` source/test evidence and the new normal-clone gate are pinned to
+`246803f6fa94c532f1d4a26265c051c5b1210b9f`. Before editing,
+`origin/develop` was verified at `d95836692eb3ef02e28aaca5279d11981a48b441`.
+The source/test commits are `0c57ef0c9` (tracked PB-001 navigation contract
+tests) and `57b6e2960` (linked-worktree helper compatibility). Flash reports
+fifteen additional authenticated actor routes/tools beyond the earlier
+checkpoint; the current MCP catalog is 39 tools. Current validation, evidence
+boundaries, and deferred families are recorded below. Milestone shape and
+historical evidence are unchanged.
 
 ## Three phases
 
@@ -1180,19 +1182,19 @@ authenticated routes/tools: `deposit_money`, `withdraw_money`, `deposit_item`,
 `put_down`, `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
 `drive_vehicle`.
 
-The clean-gate result is SHA-pinned to `53360edc842d958247dc70aab498cb02ef0bba0e`
-from a normal clone: command `./scripts/gate.sh`; Release build PASS (4
-NU1903 warnings, 0 errors); compiler check **0/0**; unit suite **2490 total /
-2489 passed / 0 failed / 1 skipped**; MCP stdio smoke **39 tools**. The sole
-skip is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree invocation
-fails infrastructure root resolution because `RepoRoot` sees a `.git` file;
-that is invalid gate context, not a source failure. Flash-reported focused
-route/MCP/queue validation remains **53/53** (`BotActionControllerRouteTests`
-2/2, `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18).
-Flash also reports a real local MCP benchmark passing
-`observe`/`move`/`discover_self_quests` with `action_status`/`trace` and
-independent DB evidence; no SHA-pinned benchmark artifact is checked in.
+The clean-gate result is SHA-pinned to
+`246803f6fa94c532f1d4a26265c051c5b1210b9f` from a normal clone: command
+`./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
+compiler check **0/0**; unit suite **2495 total / 2494 passed / 0 failed /
+1 skipped**; MCP stdio smoke **39 tools**. The sole skip is
+`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers now
+accept both `.git` directories and `.git` files after `57b6e2960`; the linked-
+worktree `QuestScenarioTierTests` regression passed 1/1 after that helper
+compatibility fix. The normal clone remains canonical for full-gate evidence.
+Focused PB-001 result:
+`dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
+→ `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
 
 **Goal:** expose only stable, player-like `IGameplayActor` actions through
 authenticated, enqueue-only `/api/actors/*` routes and matching MCP tools,
@@ -1775,27 +1777,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
   fail-closed pre/post-checks. Hunt-leg leveling extension on branch
   `bots/kill-leg` (MonsterHunt/MonsterGroupHunt pursuit + cast-burst).
 
-1. **PB-001 navigation strategy dossier + coarse-travel slice design**
-   · Owner-role: evidence scout + systems designer (docs/design first, no
-   engine code in this task) · Area: BOT + SERVER navigation · Priority: HIGH
-   (blocker ledger outranks features) · Depends on: nothing · Milestone:
-   feeds M8 (G4 C3/C4 travel legs) and the indun/party loops.
-   *Goal:* pick the waypoint-network vs coarse-route-graph strategy from
-   evidence before any engine work. *Work:* archaeology dossier
-   `scorecard-explorations/mechanics/navigation-domain.md` — what canonical
-   1.2 data exists (NPC paths/waypoints in compact.sqlite3? client-side nav
-   data?), how neighboring movement code resolves terrain; grade
-   VERIFIED/INFERRED/UNKNOWN; write the behavioral contract and size the
-   vertical slice (one cross-region leg, travel-as-progress for background
-   bots per the fidelity ladder). *Acceptance criteria:* dossier exists with
-   grades; strategy decision recorded with evidence citations; a sized slice
-   plan a follow-up card can execute. *Outputs:* dossier + ROADMAP lane
-   annotation. *Follow-up unlocked:* dungeon interiors (PB-001), cross-region
-   caravans, believable background travel.
-  **DONE 2026-08-25 — premise refuted (data always existed); exit E2E PASS
-  11/11; see playerbot-blockers.md PB-003 FIXED.** Original spec preserved
-  below:
-2. **PB-003 Hadir Farm exit-portal SQL patch candidate** · Owner-role: data
+1. **PB-003 Hadir Farm exit-portal SQL patch candidate** · Owner-role: data
    archivist · Area: DATA (read-only-reference overlay patch) · Priority:
    MEDIUM · Depends on: canonical verification vs reference client data ·
    Milestone: closes an indun-loop gap found by the party spike.
@@ -1810,7 +1792,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    stays READ-ONLY); party-clear-then-exit E2E PASS; blockers ledger PB-003 →
    FIXED with evidence. *Outputs:* SQL patch + `indun-domain.md` addendum +
    ledger status flip. *Follow-up unlocked:* repeatable dungeon loop.
-3. **A4 acceptance measurement — autosave p95 @ 250 characters** · Owner-role:
+2. **A4 acceptance measurement — autosave p95 @ 250 characters** · Owner-role:
    perf/validation engineer · Area: persistence (G2-A4 gate) · Priority: HIGH
    (milestone-gate item) · Depends on: existing scaling-probe harness ·
    Milestone: G2-A4. *Goal:* record or fail the explicit pending gate
@@ -1824,7 +1806,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    sample across a soak window, annotate G2-A4 with MET/FAILED + numbers.
    *Outputs:* probe report JSON + G2-A4 gate annotation. *Follow-up
    unlocked:* Gate G1's "250 staged" rung.
-4. **A3 remainder — incremental counters, staggered cadences, wake-storm
+3. **A3 remainder — incremental counters, staggered cadences, wake-storm
    probe** · Owner-role: server perf engineer · Area: scheduler/fidelity
    machinery (G2-A3) · Priority: MEDIUM · Depends on: proximity-fidelity
    sweep (d6cabcfd4) + true dormancy slice (e672b9579) · Milestone: G2-A3.
@@ -1841,7 +1823,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    default-OFF gates; run a 1,000-registered-dormant storm probe; annotate
    A3 with the number. *Outputs:* PopulationDirector/scheduler changes +
    probe report. *Follow-up unlocked:* Gate G1 50→100 profiling rungs.
-5. **Allocation wave 2 — A2 broadcast-economics numbers** · Owner-role:
+4. **Allocation wave 2 — A2 broadcast-economics numbers** · Owner-role:
    server perf engineer · Area: broadcast/GC hot path (G2-A2, still open) ·
    Priority: MEDIUM · Depends on: A4 measurement (shares the probe harness)
    · Milestone: G2-A2. *Goal:* measure, then meet, the A2 acceptance (100
@@ -1860,7 +1842,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    two named seams, record before/after numbers in the G2-A2 entry.
    *Outputs:* profiling note + WorldManager changes + gate annotation.
    *Follow-up unlocked:* 100-bot village runs inside budget.
-6. **Behavioral scenario library + PLAYER_MODE/TEST_MODE leakage audit**
+5. **Behavioral scenario library + PLAYER_MODE/TEST_MODE leakage audit**
    (= G3-B5) · ✅ **DONE 2026-08-26** (branch feat/b5-scenario-library @
    46fe4332d): scenario library promoted
    (scorecard-explorations/generated/b5-scenario-library-2026-08-26.md — 7
@@ -1885,7 +1867,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    section. *Follow-up unlocked:* new systems register regression coverage
    as part of their vertical slice (loop stage 6 becomes mechanical).
 
-7. **Justice slice-1 — crime-points vertical** · Area: JUSTICE (CRIME-01) ·
+6. **Justice slice-1 — crime-points vertical** · Area: JUSTICE (CRIME-01) ·
    Priority: HIGH · Depends on: nothing (implementation exists; pure
    verification vertical per justice-domain.md slice plan) · Milestone: M9
    lane. *Goal:* first live proof of evidence → points → persistence.
@@ -1894,14 +1876,14 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    CrimePoint/InfamyPoint rise + SCCrimeChanged emitted + MySQL `crime` row
    survives restart; Wanted buff appears at the 50-point boundary (inject via
    CrimeAddPointSubCommand). Client report-dialog rendering stays UNKNOWN.
-8. **PvP slice-1 — flagged-aggression handshake live E2E** · Area: PVP
+7. **PvP slice-1 — flagged-aggression handshake live E2E** · Area: PVP
    (PVP-01) · Priority: HIGH · **STATUS 2026-08-26: OPEN, narrowed** after
    recovery. Targeted rig PASS 1/1 (real `Skill.Use`, same-faction
    `ForceAttack` HP decrease, Retribution present; first application and
    Refresh broadcasts); live non-immune damage-frame proof remains pending.
    *Next acceptance:* prove flag → aggress → peace-refusal → honor on the real
    server; no grade promotion from rig-only evidence.
-9. **Mail security + S3 persistence slice** · Area: MAIL (MAIL-01, SECURITY
+8. **Mail security + S3 persistence slice** · Area: MAIL (MAIL-01, SECURITY
    priority) · Depends on: none · **✅ LANDED 2026-08-26 in
    `31045d033`**. Ownership guards now protect the receive paths that accept a
    client-supplied mail id; owner flows remain intact. **Mail S3 acceptance:**
@@ -1916,14 +1898,14 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    `TryAddCharacter` and before human client initialization. **Follow-ups:**
    return opcode `0x0a2` remains STRONGLY_INFERRED pending real-client capture;
    COD enforcement and expiry/bounce E2E remain open.
-10. **Ships slice-1 — rowboat E2E** · Area: SLAVE-01 naval half (ships-domain
+9. **Ships slice-1 — rowboat E2E** · Area: SLAVE-01 naval half (ships-domain
     Slice 1) · Priority: MEDIUM · Depends on: indun/party bridge charPos +
     packet-tap seams. *Goal:* first live proof of sailing physics + lifecycle:
     summon slave 15 → water-depth spawn assert → bind driver → inject
     CSMoveUnitPacket ShipRequestMoveType throttle/steer → observe
     SCOneUnitMovementPacket stream + displacement over T → steer reversal
     flips heading sign → UnbindSlave → despawn clean (no leaked RigidBody).
-11. **Dominion slice-1 — persistence vertical (zero combat)** · ✅
+10. **Dominion slice-1 — persistence vertical (zero combat)** · ✅
     **SLICE-1 LANDED 2026-08-26** (branch d42e708f5→66f124533): persistence/
     schedule/tax live — DominionManager loads siege_zones(6)/siege_settings(11)/
     siege_plans(158); additive MySQL `aaemu_game.dominions`;
@@ -1937,14 +1919,14 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     TickManager phase cron (Peace/Declare/Warmup/Siege/Payoff) announcing via
     a new SCSiegeAlertPacket marshaler. *Acceptance:* declared dominion
     survives game-server restart; tax-rate change round-trips C2G→store→G2C.
-12. **Merchant bug-fix trio** · Area: ECONOMY (MERCHANT-01) · ✅ **LANDED
+11. **Merchant bug-fix trio** · Area: ECONOMY (MERCHANT-01) · ✅ **LANDED
     2026-08-26** in merge `e5db6d390`: funds gate `cb514c42e`, buyback refund
     `beaf9b82e`, and grant-failure rollback `3ba33b3af`. Rig tests now refuse
     insolvent buys without changing money, refuse full-bag/late-grant purchases
     atomically, and pay no buyback refund when the move is refused. The live
     `EconomyDayCycleE2eTests` conservation run passed across kill -9 restart.
     MERCHANT-01 W/A fixes are merged; H remains UNKNOWN.
-13. **Labor regen tick decision — schedule or delete** · Area: LABOR-01
+12. **Labor regen tick decision — schedule or delete** · Area: LABOR-01
     (economy-domain LAB-A) · Priority: MEDIUM (decision card). *Fact on
     record:* TimedRewardsManager.Initialize has NO caller anywhere — online
     regen is dead-by-default; offline AddOfflineLabor IS called; shipped
@@ -1953,13 +1935,22 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
     deleted: remove task + config stubs (clean cutover).
 
-**Recovery queue status (2026-08-27; source baseline audited and verified at
-`53360edc842d958247dc70aab498cb02ef0bba0e`; subsequent commits are
-documentation-only reconciliation):**
+**Recovery queue status (2026-08-27; source/test evidence and the new
+normal-clone gate are pinned to
+`246803f6fa94c532f1d4a26265c051c5b1210b9f`; `origin/develop` was verified at
+`d95836692eb3ef02e28aaca5279d11981a48b441` before editing):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and
   duplicate-row decisions remain open.
+- **PB-001:** **IMPLEMENTATION + TRACKED FIVE-TEST CONTRACT EVIDENCE** —
+  source/test commits `0c57ef0c9` and `57b6e2960`; focused
+  `GameplayActorNavigateTests` result:
+  `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
+  → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
+  `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved
+  prototype waypoint test was invalid because it injected private state via
+  reflection; do not claim waypoint coverage from it.
 - **PB-007:** **OPEN, narrowed** after `a4f7820ba` — targeted rig PASS 1/1
   (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution
   present; first application and Refresh broadcasts); live non-immune
@@ -1969,15 +1960,17 @@ documentation-only reconciliation):**
   Deposit/Withdraw money and items, Plant/Harvest, Craft, Buy/Sell,
   PackPickup/PutDown/LoadPackOntoVehicle, Board/Unboard/DriveVehicle.
   SHA-pinned normal-clone clean-gate evidence at
-  `53360edc842d958247dc70aab498cb02ef0bba0e` is Release build PASS (4 NU1903
-  warnings, 0 errors), compiler 0/0, unit 2490 total / 2489 passed / 0 failed /
-  1 skipped, and MCP stdio smoke 39 tools. Skip:
+  `246803f6fa94c532f1d4a26265c051c5b1210b9f` is Release build PASS (4 NU1903
+  warnings, 0 errors), compiler 0/0, unit **2495 total / 2494 passed / 0 failed /
+  1 skipped**, and MCP stdio smoke 39 tools. Skip:
   `Provision_Activate_Persist_Deactivate_RoundTrip` requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Linked-worktree failure is
-  invalid infrastructure context because `RepoRoot` sees a `.git` file, not a
-  source failure. The earlier asset-missing `7e109d550` smoke remains
-  historical. Only Party, Expedition, Trade, Auction, and related actor
-  expansion remains deferred.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
+  now accept both `.git` directories and `.git` files after `57b6e2960`; the
+  linked-worktree `QuestScenarioTierTests` regression passed 1/1 after that
+  helper compatibility fix. The normal clone remains canonical for full-gate
+  evidence. The earlier asset-missing `7e109d550` smoke remains historical.
+  Only Party, Expedition, Trade, Auction, and related actor expansion remains
+  deferred.
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker; the restart, instance-faithful

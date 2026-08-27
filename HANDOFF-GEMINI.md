@@ -3,12 +3,14 @@
 ## Current checkpoint
 
 - The prior Mail S3/PB-007 reconciliation point `241d3e34d` is historical.
-  The source baseline was audited and verified at
-  `53360edc842d958247dc70aab498cb02ef0bba0e`, which remains
-  `origin/develop` HEAD; subsequent commits in this checkout are
-  documentation-only reconciliation. The local branch is ahead only by those
-  documentation commits. `1638b007c` remains the historical first actor-route
-  feature commit, not the source baseline.
+  The source/test baseline and new normal-clone gate are pinned to
+  `246803f6fa94c532f1d4a26265c051c5b1210b9f`. Before editing,
+  `origin/develop` was verified at
+  `d95836692eb3ef02e28aaca5279d11981a48b441`. Source/test commits are
+  `0c57ef0c9` (tracked PB-001 navigation contract tests) and `57b6e2960`
+  (linked-worktree helper compatibility). Subsequent changes in this checkout
+  are documentation-only reconciliation; `1638b007c` remains the historical
+  first actor-route feature commit, not the source baseline.
 - Start from [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md) for
   the safe temporary-worktree workflow, current MCP evidence boundary, and
   ordered continuation gates.
@@ -18,20 +20,25 @@
   `pack_pickup`, `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current MCP catalog is 39 tools.
 - The clean-gate result is SHA-pinned to
-  `53360edc842d958247dc70aab498cb02ef0bba0e` from a normal clone:
+  `246803f6fa94c532f1d4a26265c051c5b1210b9f` from a normal clone:
   `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
-  compiler check **0/0**; unit suite **2490 total / 2489 passed / 0 failed /
+  compiler check **0/0**; unit suite **2495 total / 2494 passed / 0 failed /
   1 skipped**; MCP stdio smoke **39 tools**. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The linked-worktree gate
-  failure is invalid infrastructure context (`RepoRoot` sees a `.git` file),
-  not source evidence. Focused route/MCP/queue validation remains
-  Flash-reported **53/53** (`BotActionControllerRouteTests` 2/2,
-  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18).
-- Flash reports that the live `discover_self_quests` MCP benchmark passed with
-  `action_status` and `trace`, plus an independent MySQL character-row
-  cross-check. This current benchmark remains unpinned, not a checked-in
-  SHA-pinned artifact; no safe doodad interaction was attempted.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
+  now accept both `.git` directories and `.git` files after `57b6e2960`; the
+  linked-worktree `QuestScenarioTierTests` regression passed 1/1 after that
+  helper compatibility fix. A normal clone remains canonical for full-gate
+  evidence.
+- Focused PB-001 result:
+  `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
+  → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
+  `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved
+  prototype waypoint test was invalid because it injected private state via
+  reflection; do not claim waypoint coverage from it.
+  Focused route/MCP/queue validation remains Flash-reported **53/53**
+  (`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
+  `BotActionCommandQueueTests` 18/18).
 - The earlier asset-missing `mcp-live-smoke-2026-08-27.md` run at
   `7e109d550` remains historical; it recorded Game exiting before WebApi and
   is not the current benchmark verdict.
@@ -83,24 +90,27 @@ Use this loop for every slice:
   `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current catalog is 39 tools.
 - The clean-gate result is SHA-pinned to
-  `53360edc842d958247dc70aab498cb02ef0bba0e` from a normal clone:
+  `246803f6fa94c532f1d4a26265c051c5b1210b9f` from a normal clone:
   `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
-  compiler check **0/0**; unit suite **2490 total / 2489 passed / 0 failed /
+  compiler check **0/0**; unit suite **2495 total / 2494 passed / 0 failed /
   1 skipped**; MCP stdio smoke **39 tools**. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree gate
-  failure is invalid infrastructure context (`RepoRoot` sees a `.git` file),
-  not source evidence. Focused route/MCP/queue validation remains
-  Flash-reported **53/53** (`BotActionControllerRouteTests` 2/2,
-  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18).
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
+  now accept both `.git` directories and `.git` files after `57b6e2960`; the
+  linked-worktree `QuestScenarioTierTests` regression passed 1/1 after that
+  helper compatibility fix. A normal clone remains canonical for full-gate
+  evidence.
+- Focused PB-001 evidence is tracked five-test contract coverage. Exact
+  command:
+  `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`.
+  Exact result: `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
+  `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved
+  prototype waypoint test was invalid because it injected private state via
+  reflection; do not claim waypoint coverage from it.
 - Flash reports that the live `discover_self_quests` MCP benchmark passed with
-  `action_status`, `trace`, and an independent MySQL character-row
+  `action_status` and `trace`, plus an independent MySQL character-row
   cross-check. This is current unpinned evidence, not a checked-in
   SHA-pinned artifact; no safe doodad interaction was attempted.
-- The prior asset-missing live-smoke run at `7e109d550` is historical, not the
-  current verdict. Only the later Party, Trade, Expedition, Auction, and
-  related actor expansion remains deferred; the fifteen Flash routes are not
-  deferred.
 
 ### Navigation and scaling
 
@@ -146,12 +156,14 @@ The requested checked-in `pvp-handshake-e2e-report.md` is not present in this ch
 
 ## Active blockers and partials
 
-- **PB-001 — routed navigation:** **IMPLEMENTATION LANDED / TEST EVIDENCE
-  PARTIAL** — `IGameplayActor.NavigateTo` is implemented with CryEngine
-  navmesh A* routing, dynamic waypoint stepping, stuck detection, and
-  straight-leg fallback. The named six-test `GameplayActorNavigateTests` file
-  is not tracked in this checkout; it exists only as a prototype under
-  `.worktrees/recovery`. Do not treat that prototype as checked-in proof.
+- **PB-001 — routed navigation:** **IMPLEMENTATION + TRACKED FIVE-TEST
+  CONTRACT EVIDENCE** — `IGameplayActor.NavigateTo` is implemented with
+  CryEngine navmesh A* routing, dynamic waypoint stepping, stuck detection,
+  and straight-leg fallback. Source/test commits are `0c57ef0c9` and
+  `57b6e2960`. The focused `GameplayActorNavigateTests` command/result is
+  recorded above (5/5); `BaiNavigationRigTests` supplies GeoData/navmesh
+  coverage. The preserved prototype waypoint test was invalid because it
+  injected private state via reflection; do not claim waypoint coverage from it.
 - **PB-002 — autonomous leveling loop:** **SCOPED ACTOR/RIG SLICES LANDED;
   BROAD CLAIM OPEN** — `LevelingLoopScenario` and its actor/rig slices cover
   selected perception-driven quest steps, but broad autonomous quest-loop
@@ -180,17 +192,23 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 
 ## Immediate next instructions for Gemini
 
-1. From a clean temporary worktree, run the clean gate and publish its output
-   with the exact HEAD SHA, command, environment/assets, build/compiler result,
-   unit totals (including skip identity), and downstream MCP-smoke result.
-2. Land the PB-001 real-data `GameplayActorNavigateTests` contract tests, or
-   explicitly explain why they cannot be landed; the existing prototype under
-   `.worktrees/recovery` is not tracked evidence.
-3. Narrow PB-002 to the landed actor/rig slices; keep broad autonomous
-   quest-loop coverage and live/human breadth open.
-4. Pursue PB-007 proof using a victim-matched, non-immune live
+1. From a clean normal clone, publish the full-gate output pinned to source
+   SHA `246803f6fa94c532f1d4a26265c051c5b1210b9f`, with the exact command,
+   environment/assets, build/compiler result, unit totals and skip identity,
+   and downstream MCP-smoke result. Normal clone remains canonical for this
+   full-gate evidence.
+2. Keep PB-002 scoped to the landed actor/rig slices; broad autonomous
+   quest-loop coverage and live/human breadth remain open.
+3. Pursue PB-007 proof using a victim-matched, non-immune live
    `SCUnitDamaged` frame with the existing HP/Retribution/crime checks.
-5. Preserve the nested `.hermes`/`rig-repo` topology anomaly for owner
+4. Preserve the six-hour dormant-timer soak as open: retain sequential seeding,
+   stage the no-bot baseline, one bot for 30 minutes, 10 bots for one hour,
+   then 10 bots for six hours, and approve numeric p95/p99 tick, memory,
+   DB-write, queue, and recovery budgets before calling it a pass.
+5. Keep Party, Expedition, Trade, Auction, and related actor expansion
+   deferred until authenticated enqueue routes and reviewed observable
+   contracts exist.
+6. Preserve the nested `.hermes`/`rig-repo` topology anomaly for owner
    reconciliation; do not manipulate that topology.
 
 ## Exact next steps for Gemini
@@ -207,7 +225,7 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
      --treenode-filter '/*/*/PvpAggressionSeamRigTests/<method>' \
      --output Normal --log-level Error
    ```
-3. **Choose one high-leverage gameplay slice and state its evidence contract before code.** Preferred options are: (a) justice trial packet-order/client capture if a suitable client/capture is available; (b) Mail return client confirmation; or (c) the PB-001 navigation route-planner/coarse-travel slice. Keep canonical data and human-vs-bot boundaries explicit.
+3. **Choose one high-leverage gameplay slice and state its evidence contract before code.** Preferred options are: (a) justice trial packet-order/client capture if a suitable client/capture is available; or (b) Mail return client confirmation. Keep canonical data and human-vs-bot boundaries explicit.
 4. **Handle PB-005 owner decisions separately.** Classify cave/deck/submerged rows only with canonical/client evidence. Do not add a negative-offset clamp, delete duplicate rows, or reclassify whitelist entries without a registered owner decision and evidence.
 5. **For every new slice, add/update both a rig proof and a live scenario where applicable, file a blocker for any failure, and update `SCORECARD.md`, `ROADMAP.md`, and `STATUS.md` in the same documentation wave.** Preserve old evidence and label rig/live/human types rather than rewriting history.
 6. **Run the scoped tests and commit the scoped change.** IntegrationTests convention is `--filter-class <fully-qualified-class-name>`. TUnit uses `--treenode-filter` as above when it resolves. `--nologo` is rejected by the MTP front-end in prior runs; omit it. Push only to the writable origin fork, never upstream.

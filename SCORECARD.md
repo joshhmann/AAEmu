@@ -59,14 +59,23 @@ feel.)
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
 - SHA-pinned clean-gate evidence at
-  `53360edc842d958247dc70aab498cb02ef0bba0e` from a normal clone:
+  `246803f6fa94c532f1d4a26265c051c5b1210b9f` from a normal clone:
   `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
-  compiler check **0/0**; unit suite **2490 total / 2489 passed / 0 failed /
+  compiler check **0/0**; unit suite **2495 total / 2494 passed / 0 failed /
   1 skipped**; MCP stdio smoke **39 tools**. The skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree gate
-  failure is invalid infrastructure context because `RepoRoot` sees a `.git`
-  file, not a source failure.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
+  now accept both `.git` directories and `.git` files after `57b6e2960`; the
+  linked-worktree `QuestScenarioTierTests` regression passed 1/1 after that
+  helper compatibility fix. The normal clone remains canonical for full-gate
+  evidence.
+- PB-001 is **IMPLEMENTATION + TRACKED FIVE-TEST CONTRACT EVIDENCE**:
+  source/test commits `0c57ef0c9` and `57b6e2960`; focused command/result:
+  `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
+  → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
+  `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved
+  prototype waypoint test was invalid because it injected private state via
+  reflection; do not claim waypoint coverage from it.
 - Flash-reported focused route/MCP/queue validation is **53/53**
   (`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
   `BotActionCommandQueueTests` 18/18). Flash also reports a live
@@ -134,7 +143,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | EXPEDITION-01 | Expedition membership, roles, persistence | M9/M10 | U | 2 | U | 1 | U | U | `ExpeditionManager`; organization audit. **2026-08-24 (f8252a37b):** headless verification rig — full lifecycle through the real manager with capture-backed connections: create (party auto-join) → reply-accept outsider → leave → disband; create-without-party refused before mutation. W=2 (real engine path end-to-end); A=1 rig-level — persistence (terminal Save) is integration-env scope, no bot contract actions yet; H=UNKNOWN |
 | CHAT-01 | Local/zone/party/expedition chat, moderation, bot identity | M7/M8 | U | 1 | U | U | N/A | U | `ChatManager`; social audit |
 | ZONE-01 | Peace/conflict/war state transitions and PvP rules | Later | U | 2 | U | 1 | U | U | `ZoneManager`; conflict-state audit. **2026-08-24 (0482ba3f0): zone state machine data-wired + enforced** — hard-coded Conflict boot state removed → data-driven Peace default (legacy World.ConflictZonesStartAtConflict flag kept for tests); Peace-state PvP protection at the BaseUnit.CanAttack chokepoint (fail-open when no conflict entry; Hostile stays attackable). W=2 (real engine path end-to-end); A=1 rig-level state machine + enforcement tests — no live PvP scenario yet (kept honest); **2026-08-25 (mechanics/pvp-domain.md):** enforcement confirmed as exactly ONE hook inside CanAttack; missing for a real war cycle: war-declaration input (CSFactionDeclareHostile stub), runtime conflict seeding, war towers. H=UNKNOWN |
-| ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; at SHA `53360edc842d958247dc70aab498cb02ef0bba0e`, Flash reports 39 MCP tools with fifteen added authenticated routes/tools covering Deposit/Withdraw money and items, Plant/Harvest, Craft, Buy/Sell, PackPickup/PutDown/LoadPackOntoVehicle, and Board/Unboard/DriveVehicle. SHA-pinned normal-clone gate: Release build PASS (4 NU1903 warnings, 0 errors), compiler 0/0, unit 2490 total/2489 passed/0 failed/1 skipped, MCP stdio 39 tools; skip `Provision_Activate_Persist_Deactivate_RoundTrip` requires `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Linked-worktree gate failure is invalid infrastructure context because `RepoRoot` sees a `.git` file. Focused route/MCP/queue validation remains Flash-reported 53/53; live MCP benchmark remains unpinned. Only later Party, Trade, Expedition, Auction, and related actor expansion is deferred; H=UNKNOWN |
+| ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; at SHA `246803f6fa94c532f1d4a26265c051c5b1210b9f`, Flash reports 39 MCP tools with fifteen added authenticated routes/tools covering Deposit/Withdraw money and items, Plant/Harvest, Craft, Buy/Sell, PackPickup/PutDown/LoadPackOntoVehicle, and Board/Unboard/DriveVehicle. SHA-pinned normal-clone gate: Release build PASS (4 NU1903 warnings, 0 errors), compiler 0/0, unit 2495 total/2494 passed/0 failed/1 skipped, MCP stdio 39 tools; skip `Provision_Activate_Persist_Deactivate_RoundTrip` requires `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Known six root helpers accept both `.git` directories and `.git` files after `57b6e2960`; linked-worktree `QuestScenarioTierTests` regression passed 1/1 after the helper compatibility fix. Focused PB-001 `GameplayActorNavigateTests` is tracked five-test evidence (source/test `0c57ef0c9`, `57b6e2960`), command `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'` → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`; `BaiNavigationRigTests` covers GeoData/navmesh. The preserved prototype waypoint test was invalid because it injected private state via reflection; it is not waypoint coverage. Focused route/MCP/queue validation remains Flash-reported 53/53; live MCP benchmark remains unpinned. Only later Party, Trade, Expedition, Auction, and related actor expansion is deferred; H=UNKNOWN |
 | BOT-01 | Headless account/session/Character lifecycle | M6 | U | 0 | U | 0 | 0 | U | New fork capability |
 | BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Staged 30m/1h/6h soak. **2026-08-24 (4e460305b):** scheduler soak STAGE 1 executed — SchedulerSoakStage1Tests, 10 manifest citizens × 30min through real IPlayerBotScheduler wakes; two valid runs ~90k steps, 0 failed/timed-out, wake avg ~99ms, DB writes 14–19/min/citizen, tick+region budgets PASS; staged ladder continues (1h/6h rungs + physics-recalibration decision open). Adjacent G3-B3 arbitration landed same sweep (0482ba3f0): IBotActivityModule + BotGoalArbiter — priority-based single-active activity per bot per wake. Notes only — grades unchanged (kept honest) |
 | REGRADE-01 | Gear regrading: spend regrade charms/scrolls to raise equipment tier with success/downgrade odds | Later | U | U | U | U | U | U | NEW 2026-08-25 (generated/mechanic-inventory-2026-08-25.md §3#1): item_grades/_grade_buffs/_enchanting_supports/_distributions + equip_slot_enchanting_costs tables; SCGradeEnchantResult/Broadcast G2C confirmations; GradeEnchant refs in ItemManager. Own dossier pending |
@@ -175,23 +184,36 @@ Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
 bugs, cards, tests, and zone reports can refer to the same scope.
 
 
-> **2026-08-27 MCP expansion checkpoint (source baseline audited/verified at
-> `53360edc842d958247dc70aab498cb02ef0bba0e`; subsequent commits are
-> documentation-only reconciliation):** `1638b007c` is the historical
-> first-route commit. Flash reports fifteen additional authenticated
-> actor routes/tools, bringing the catalog to **39 tools**: Deposit/Withdraw
-> money and items, Plant/Harvest, Craft, Buy/Sell, PackPickup/PutDown/
+> **2026-08-27 MCP expansion checkpoint (source/test baseline and new gate
+> pinned to
+> `246803f6fa94c532f1d4a26265c051c5b1210b9f`; `origin/develop` verified at
+> `d95836692eb3ef02e28aaca5279d11981a48b441` before editing; subsequent
+> changes are documentation-only reconciliation):** `1638b007c` is the
+> historical first-route commit. Source/test commits `0c57ef0c9` and
+> `57b6e2960` record PB-001 navigation tests and linked-worktree helper
+> compatibility. Flash reports fifteen additional authenticated actor
+> routes/tools, bringing the catalog to **39 tools**: Deposit/Withdraw money
+> and items, Plant/Harvest, Craft, Buy/Sell, PackPickup/PutDown/
 > LoadPackOntoVehicle, and Board/Unboard/DriveVehicle. SHA-pinned normal-clone
 > gate evidence is Release build PASS (4 NU1903 warnings, 0 errors), compiler
-> 0/0, unit 2490 total / 2489 passed / 0 failed / 1 skipped, and MCP stdio
+> 0/0, unit **2495 total / 2494 passed / 0 failed / 1 skipped**, and MCP stdio
 > smoke 39 tools; the skip is
 > `Provision_Activate_Persist_Deactivate_RoundTrip` requiring
-> `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree gate
-> failure is invalid infrastructure context because `RepoRoot` sees a `.git`
-> file. Focused route/MCP/queue validation remains Flash-reported 53/53 and
-> the live MCP benchmark remains unpinned; grades are unchanged and H remains
-> U (UNKNOWN). Only later Party, Trade, Expedition, Auction, and related actor
-> expansion remains deferred.
+> `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
+> now accept both `.git` directories and `.git` files after `57b6e2960`; the
+> linked-worktree `QuestScenarioTierTests` regression passed 1/1 after that
+> helper compatibility fix. The normal clone remains canonical for full-gate
+> evidence.
+> PB-001 focused command:
+> `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
+> → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
+> `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved
+> prototype waypoint test was invalid because it injected private state via
+> reflection; do not claim waypoint coverage from it. Flash-reported focused
+> route/MCP/queue validation remains **53/53** and the live MCP benchmark
+> remains unpinned; grades are unchanged and H remains U (UNKNOWN). Only later
+> Party, Trade, Expedition, Auction, and related actor expansion remains
+> deferred.
 > **2026-08-26 recovery scorecard update (develop @ e5db6d390):** recovery
 > contents are confirmed on develop: grounding `38c4997d3`, recovered
 > Retribution wire-test merge `a4f7820ba`, and merchant merge `e5db6d390`;

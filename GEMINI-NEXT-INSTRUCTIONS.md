@@ -6,11 +6,14 @@ restart, scaling, or human gates.
 
 ## 1. Audit result and checkpoint
 
-The handoff documents were audited against a clean worktree created from
-`origin/develop` on 2026-08-27. The source baseline was audited and verified at
-`53360edc842d958247dc70aab498cb02ef0bba0e` (`origin/develop` at the audit
-checkpoint); subsequent commits in this checkout are documentation-only
-reconciliation. The local branch is ahead only by those documentation commits.
+The handoff documents were audited against a clean worktree created from the
+current source/test HEAD on 2026-08-27. The source/test baseline and new
+normal-clone gate are pinned to
+`246803f6fa94c532f1d4a26265c051c5b1210b9f`; before editing,
+`origin/develop` was verified at `d95836692eb3ef02e28aaca5279d11981a48b441`.
+The source/test commits are `0c57ef0c9` (tracked PB-001 navigation contract
+tests) and `57b6e2960` (linked-worktree helper compatibility). This checkout
+contains documentation-only reconciliation after that evidence.
 
 `1638b007c` is the historical feature commit that added the first five actor
 routes; it is not the current branch head. `6d9ae9f50` recorded that expansion
@@ -28,24 +31,26 @@ The current recorded state is:
   earlier checkpoint: Deposit/Withdraw money and items, Plant/Harvest, Craft,
   Buy/Sell, PackPickup/PutDown/LoadPackOntoVehicle, and
   Board/Unboard/DriveVehicle.
-- SHA-pinned clean-gate evidence at the audited source baseline came from a normal clone
-  with command `./scripts/gate.sh`: Release build PASS (4 NU1903 warnings, 0
-  errors), compiler check **0/0**, unit **2490 total / 2489 passed / 0 failed /
+- SHA-pinned clean-gate evidence at the new source SHA
+  `246803f6fa94c532f1d4a26265c051c5b1210b9f` came from a normal clone with
+  command `./scripts/gate.sh`: Release build PASS (4 NU1903 warnings, 0
+  errors), compiler check **0/0**, unit **2495 total / 2494 passed / 0 failed /
   1 skipped**, and MCP stdio smoke **39 tools**. The skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
   `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
-- A linked-worktree gate failure is invalid infrastructure context because
-  `RepoRoot` sees a `.git` file; it is not source evidence or a code failure.
-  Use a normal clone (or fix the script in a separate code task), never
-  classify that failure as a green gate.
+- The known six root helpers now accept both `.git` directories and `.git`
+  files after `57b6e2960`; the linked-worktree `QuestScenarioTierTests`
+  regression passed 1/1 after that helper compatibility fix. A normal clone
+  remains canonical for full-gate evidence.
+- Focused PB-001 evidence is tracked five-test contract coverage. Exact command:
+  `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`.
+  Exact result: `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
+  `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved
+  prototype waypoint test was invalid because it injected private state via
+  reflection; do not claim waypoint coverage from it.
 - Flash-reported focused route/MCP/queue validation is **53/53**:
   `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33, and
   `BotActionCommandQueueTests` 18/18.
-- Flash reports the live MCP+DB benchmark passed for authenticated management
-  provisioning plus actor `observe`/`move`/`discover_self_quests`, terminal
-  `action_status`, follow-up `trace`, and an independent MySQL character-row
-  cross-check. This benchmark remains unpinned; it does not prove a client
-  packet transition, restart parity, broad navigation, scaling, or human feel.
 - The client-wire leg is bounded by lifecycle: managed `HeadlessBot` accounts
   are blocked from public client login and are not `BotNetworkSession` actors.
   A future wire proof needs a separately authenticated, client-login-allowed
@@ -162,10 +167,11 @@ Every Tier 1, Tier 2, and Tier 3 report MUST record the exact HEAD SHA, command,
 environment and assets, build/compiler result, unit totals (total/pass/fail/
 skip, with the skip identity), and whether downstream MCP stdio smoke ran.
 An infrastructure or repository-root-resolution failure is not a green gate
-and MUST be reported separately from source/test evidence. The current
-`gate.sh` fails from linked worktrees because `RepoRoot` sees a `.git` file;
-run it from a normal clone or fix the script in a separate code task, and do
-not classify that infrastructure failure as a code failure.
+and MUST be reported separately from source/test evidence. The known six root
+helpers now accept both `.git` directories and `.git` files after
+`57b6e2960`; the linked-worktree `QuestScenarioTierTests` regression passed 1/1
+after that helper compatibility fix. The normal clone remains canonical for
+full-gate evidence; do not call a prior linked-worktree failure current.
 
 Label evidence by what it actually proves: contract/reflection/fake mapping,
 deterministic rig, live authenticated server/client, or human/client evidence.
@@ -263,23 +269,22 @@ items, Plant/Harvest, Craft, Buy/Sell, and Pack/vehicle are landed. Only later
 Party, Expedition, Trade, Auction, and related actor expansion remains deferred.
 Continue in this order:
 
-1. Run the clean gate from a normal clone and publish SHA-pinned output with
-   the complete tier evidence record described above.
-2. Land the PB-001 real-data `GameplayActorNavigateTests` contract tests, or
-   explicitly explain why they cannot be landed; the `.worktrees/recovery`
-   prototype is not tracked evidence.
-3. Narrow PB-002 to the landed actor/rig slices; keep broad autonomous
+1. Publish the new normal-clone full-gate evidence at source SHA
+   `246803f6fa94c532f1d4a26265c051c5b1210b9f`, retaining the exact
+   `2495/2494/0/1` totals, MCP stdio 39-tool result, and skip identity above.
+2. Narrow PB-002 to the landed actor/rig slices; keep broad autonomous
    quest-loop coverage and live/human breadth open.
-4. Pursue PB-007 only to a victim-matched, non-immune live
+3. Pursue PB-007 only to a victim-matched, non-immune live
    `SCUnitDamaged` frame with the existing HP/Retribution/crime checks.
-5. Preserve the nested `.hermes`/`rig-repo` topology anomaly for owner
+4. Preserve the six-hour dormancy soak as open: retain sequential seeding,
+   stage the no-bot baseline, one bot for 30 minutes, 10 bots for one hour,
+   then 10 bots for six hours, and approve numeric p95/p99 tick, memory,
+   DB-write, queue, and recovery budgets before calling it a pass.
+5. Keep Party, Expedition, Trade, Auction, and related actor expansion
+   deferred until authenticated enqueue routes and reviewed observable
+   contracts exist.
+6. Preserve the nested `.hermes`/`rig-repo` topology anomaly for owner
    reconciliation; do not manipulate it.
-
-The matrix also marks `NavigateTo` and `CastAt` outside MCP because they have no
-authenticated actor WebApi route; `NavigateTo` implementation being landed does
-not make it MCP-exposed. Do not call a contract method MCP-exposed merely
-because a headless rig can call it. Use the deferred families above only after
-authenticated enqueue routes and reviewed observable contracts exist.
 
 Parallel to that route work, the required gates are:
 

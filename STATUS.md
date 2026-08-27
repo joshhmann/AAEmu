@@ -6,9 +6,10 @@ MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed
 premise-refuted; PB-004 found-by-measurement + fixed same day; first-class
 InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; source baseline audited and verified at
-`53360edc842d958247dc70aab498cb02ef0bba0e` (= verified `origin/develop` head);
-subsequent commits are documentation-only reconciliation.
+Branch of record: develop; source/test evidence and the new normal-clone gate
+are pinned to `246803f6fa94c532f1d4a26265c051c5b1210b9f`. Before editing,
+`origin/develop` was verified at `d95836692eb3ef02e28aaca5279d11981a48b441`;
+this documentation reconciliation follows the source/test commits below.
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
@@ -36,26 +37,34 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   passed 1/1 in 2m39s on isolated MySQL/Docker. Restart, instance-faithful
   equipment attachment, ownership, unread-count, take, and delete assertions
   passed; no live-client confirmation of inferred return opcode is implied.
-- **PB-001 routed navigation:** **IMPLEMENTATION LANDED / TEST EVIDENCE
-  PARTIAL** — `IGameplayActor.NavigateTo` supports CryEngine GeoData A*
-  routing, dynamic waypoint stepping, stuck detection, and straight-leg
-  fallback. The named six-test `GameplayActorNavigateTests` file is not
-  tracked in this checkout; it exists only as a prototype under
-  `.worktrees/recovery`, so its claimed 6/6 is not current checked-in proof.
-  `BotActionCommandQueueTests` covers the first-class `Navigate` queue action.
+- **PB-001 routed navigation:** **IMPLEMENTATION + TRACKED FIVE-TEST
+  CONTRACT EVIDENCE** — `IGameplayActor.NavigateTo` supports CryEngine
+  GeoData A* routing, dynamic waypoint stepping, stuck detection, and
+  straight-leg fallback. Source/test commits: `0c57ef0c9` (tracked
+  `GameplayActorNavigateTests`) and `57b6e2960` (linked-worktree helper
+  compatibility). Focused result:
+  `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
+  → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
+  `BaiNavigationRigTests` supplies the GeoData/navmesh coverage. The preserved
+  prototype waypoint test was invalid because it injected private state via
+  reflection; do not claim waypoint coverage from it. `BotActionCommandQueueTests`
+  covers the first-class `Navigate` queue action.
 - **PB-002 autonomous leveling loop:** **SCOPED ACTOR/RIG SLICES LANDED;
   BROAD CLAIM OPEN** — `LevelingLoopScenario` and related actor/rig slices
   cover selected perception-driven quest steps. Broad autonomous quest-loop
   coverage, live-server breadth, and human/client breadth remain open; do not
   call the broad claim complete.
-- **Final gate (SHA-pinned normal-clone evidence at
-  `53360edc842d958247dc70aab498cb02ef0bba0e`):** command `./scripts/gate.sh`;
-  Release build PASS (4 NU1903 warnings, 0 errors), compiler check 0/0, unit
-  **2490 total / 2489 passed / 0 failed / 1 skipped**, MCP stdio smoke 39
-  tools. Skip: `Provision_Activate_Persist_Deactivate_RoundTrip` requires
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree gate
-  failure is invalid infrastructure context because `RepoRoot` sees a `.git`
-  file, not a source failure.
+- **Final gate (new source SHA
+  `246803f6fa94c532f1d4a26265c051c5b1210b9f`, normal-clone evidence):**
+  command `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors),
+  compiler check 0/0, unit **2495 total / 2494 passed / 0 failed / 1 skipped**,
+  MCP stdio **39 tools**. Skip identity:
+  `Provision_Activate_Persist_Deactivate_RoundTrip` requires
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
+  now accept both `.git` directories and `.git` files after `57b6e2960`;
+  the linked-worktree `QuestScenarioTierTests` regression passed 1/1 after
+  that helper compatibility fix. The normal clone remains canonical for
+  full-gate evidence.
 
 ## 2026-08-27 MCP expansion
 - **Client-neutral integration:** MCP sidecars and the management gateway remain

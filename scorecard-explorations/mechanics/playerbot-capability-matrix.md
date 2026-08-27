@@ -1,15 +1,17 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality at the source baseline
-`53360edc842d958247dc70aab498cb02ef0bba0e` (audited and verified as
-`origin/develop` HEAD, 2026-08-27; MCP expansion checkpoint). Subsequent local
-commits are documentation-only reconciliation.
+Populated from implementation reality at the source/test baseline and new
+normal-clone gate
+`246803f6fa94c532f1d4a26265c051c5b1210b9f` (2026-08-27; `origin/develop`
+verified at `d95836692eb3ef02e28aaca5279d11981a48b441` before editing).
+Source/test commits: `0c57ef0c9` and `57b6e2960`. Subsequent local commits are
+documentation-only reconciliation.
 Legend: ✅ through real engine paths · 🟡 partial/rig-only · ❌ missing.
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |
 |---|---|---|---|---|---|
-| Movement | 🟡 positions via Observe; no terrain awareness | ✅ simple (straight-leg, standoff band, stuck detection) | ✅ MoveTo/MoveToUnit/DriveVehicle plus landed `NavigateTo` implementation (real CryEngine GeoData A* pathing, waypoint stepping, stuck detection, and straight-leg fallback) | 🟡 arrival events + stuck reasons; PB-001 implementation is landed, but the named six-test `GameplayActorNavigateTests` file is not tracked here and exists only under `.worktrees/recovery` as a prototype; PB-005 positive-only grounding clamp + intentional-floater whitelist landed, cave/deck/submerged and duplicate-row decisions remain | 🟡 PB-001 test evidence partial; broad interior/region traversal open |
+| Movement | 🟡 positions via Observe; no terrain awareness | ✅ simple (straight-leg, standoff band, stuck detection) | ✅ MoveTo/MoveToUnit/DriveVehicle plus landed `NavigateTo` implementation (real CryEngine GeoData A* pathing, waypoint stepping, stuck detection, and straight-leg fallback) | ✅ tracked PB-001 five-test `GameplayActorNavigateTests` contract evidence: `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'` → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`; `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved prototype waypoint test was invalid because it injected private state via reflection; do not claim waypoint coverage from it. PB-005 positive-only grounding clamp + intentional-floater whitelist landed, cave/deck/submerged and duplicate-row decisions remain | 🟡 broad interior/region traversal open |
 | Combat | ✅ Observe (units, hp, targets) + causal traces (hp deltas) | ✅ rotation priority, sustain thresholds, no-progress skip | ✅ SetTarget/Cast (real skill pipeline) | ✅ kill credit + hp-delta traces; PB-007 OPEN, narrowed: targeted rig PASS 1/1 (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution present; first application and Refresh broadcasts); live non-immune damage-frame proof remains pending | ✅ party spike live-proven |
 | Quests | ✅ DiscoverQuests through the real AddQuest gate (PB-002, c1073d883); titles are client-localized and zone-sweep coverage still open; **channels v2 (2026-08-25, branch bots/quest-surface):** ~801 previously-hidden quests now perceivable — Item 342+25 (ConAcceptItem/ItemGain), Sphere 431 (geometry via GetQuestStartingSpheres), Level 3 (+ DiscoverSelfQuests); ConAcceptComponent channel DEFERRED = stub (true-return, no player-perceivable precondition) | ✅ FIRST AUTONOMOUS LEVELING SLICE (2026-08-25): `LevelingLoopScenario` — discover → lowest-level offering in band → accept → data-driven objective pursuit → turn-in → re-discover; no scripted chain ids in decision logic | ✅ AcceptQuest/TurnInQuest/AdvanceQuest (real gates); gather objectives via InteractWith on HighlightDoodadId sources (real OnItemGather credit); Talk contract action (Talk = 46) fires DoTalkMadeEvents once per active talk-objective quest through the real pipeline, fail-closed pre-flight (range/unresolvable npcObjId) + observable-delta post-check | ✅ rig-proven: Solzreed 254→255 completed unprompted, +1300 exp through real quest_supplies turn-in path (`leveling-loop-2026-08-25.md`); fail-closed proofs: band starvation → Starvation; unsupported objective type (5650 QuestActObjTalkNpcGroup) stops naming the missing primitive | 🟡 one chain segment rig-level; hunt legs not composed (primitives exist), talk/sphere/cinema/craft objective gaps named in `KnownPrimitiveGaps`; live E2E open |
 | Loot | ✅ corpse/inventory via contract | ✅ loot-after-kill step | ✅ Loot action | ✅ item-granted criteria | ✅ within hunt loops |
@@ -44,15 +46,16 @@ Flash reports fifteen additional authenticated actor routes/tools:
 `equip`. The MCP catalog is now **39 tools**.
 
 SHA-pinned clean-gate evidence at
-`53360edc842d958247dc70aab498cb02ef0bba0e` is from a normal clone:
+`246803f6fa94c532f1d4a26265c051c5b1210b9f` is from a normal clone:
 `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
-compiler check **0/0**; unit **2490 total / 2489 passed / 0 failed / 1
+compiler check **0/0**; unit **2495 total / 2494 passed / 0 failed / 1
 skipped**; MCP stdio smoke 39 tools. The skip is
 `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. A linked-worktree gate failure
-is invalid infrastructure context because `RepoRoot` sees a `.git` file, not a
-source failure. Flash-reported focused route/MCP/queue validation remains
-**53/53**.
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers now
+accept both `.git` directories and `.git` files after `57b6e2960`; the linked-
+worktree `QuestScenarioTierTests` regression passed 1/1 after that helper
+compatibility fix. The normal clone remains canonical for full-gate evidence.
+Flash-reported focused route/MCP/queue validation remains **53/53**.
 
 Flash reports a live `discover_self_quests` MCP benchmark passing with
 `action_status`, `trace`, and an independent MySQL character-row cross-check;
@@ -60,6 +63,7 @@ no SHA-pinned benchmark artifact is checked in. The action cells above describe
 contract/engine paths, not MCP exposure. Only later Party, Trade, Expedition,
 Auction, and related actor expansion remains explicitly deferred and is not
 claimed as MCP-exposed.
+
 
 ## Scaling posture (2026-08-25)
 
@@ -103,7 +107,7 @@ of it default-OFF, so unset deployments behave byte-identically to before:
 
 ## Highest-leverage gaps (one primitive unlocks many loops)
 1. **QuestDiscovery perception** (PB-002) → ✅ LANDED 2026-08-25 (c1073d883) — autonomous leveling still needs the runnable-content sweep
-2. **Waypoint-network movement** (PB-001) → unlocks dungeons, cross-region caravans, believable travel
+2. **Routed navigation contract** (PB-001) → ✅ implementation + tracked five-test contract evidence; `BaiNavigationRigTests` covers GeoData/navmesh; broad interior/region traversal remains open
 3. **Doodad-interact contract action** (generalize the fishing portal-injection into a first-class InteractWith(doodad)) → unlocks dungeon portals, convert/buy fish stands, world interactables
    ✅ CLOSED 2026-08-25 — first-class InteractWith(doodad) contract action landed (13f502673)
 4. **Proximity-fidelity validation at scale** (A3/A5: machinery landed behind default-OFF gates — RefreshPressure driven, true dormancy slice in; A4 + A5 NEAR-TERM gates MET 2026-08-25, report §8/§9/§10; A3 remainder + FINAL Tier-3 still open) → unlocks 100+ bot villages cheaply
