@@ -3,11 +3,26 @@
 ## Current checkpoint
 
 - The prior Mail S3/PB-007 reconciliation point `241d3e34d` is historical.
-  The current docs/source checkpoint is `develop @ 7e109d550`
-  (= `origin/develop`); do not use the prior point as the current head.
-- MCP coverage merge `8a22dcb4` records 33 `BotControlActionMcp` tests and
-  the 19-tool stdio protocol smoke passing. The report-only live-smoke
-  checkpoint is `7e109d550`.
+  The current docs/source checkpoint is `develop @ 1638b007c`
+  (= `origin/develop`); do not use older points as the current head.
+- Commit `1638b007c` adds five authenticated actor routes and matching MCP
+  tools: `POST /api/actors/discover_quests`,
+  `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
+  `POST /api/actors/talk`, and `POST /api/actors/equip`. The MCP catalog is
+  now 24 tools.
+- Focused validation passed: `BotActionControllerRouteTests` 2/2,
+  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP
+  projects Release build clean; stdio smoke 24 tools; full gate **2486 total /
+  2485 succeeded / 0 failed / 1 skipped**.
+- The live `discover_self_quests` MCP benchmark passed with `action_status`
+  and `trace`, plus an independent MySQL character-row cross-check. No safe
+  doodad interaction was attempted.
+- The earlier asset-missing `mcp-live-smoke-2026-08-27.md` run at
+  `7e109d550` remains historical; it recorded Game exiting before WebApi and
+  is not the current benchmark verdict.
+- Newer actor actions still lacking authenticated routes — Plant, Harvest,
+  Craft, party, trade, expeditions, and related actions — remain explicitly
+  deferred.
 - The exact gate counts below are historical where noted; this docs-only MCP
   wave does not build or validate unrelated source changes.
 - The fork boundary is permanent: `origin` is the writable fork (`joshhmann/AAEmu`); `upstream` fetches only and its push URL is `DISABLED`. Never push a branch or PR upstream.
@@ -40,17 +55,28 @@ Use this loop for every slice:
 - **Quest discovery and progression:** `DiscoverQuests` uses the real `CharacterQuests.AddQuest` pre-flight chain. Quest-surface work added Item, Sphere, Level, and self-discovery channels (about 801 previously hidden offers) plus `Talk` through `DoTalkMadeEvents`; `ConAcceptComponent` remains deliberately deferred because it is a stub with no player-observable precondition. The zone sweep found about 3,000 discoverable NPC/board quests across 57 zone groups, and the first perception-driven `LevelingLoopScenario` completes delivery/ItemGather and hunt objective chains (including quests 329 and 1652 in the recorded slice). This is not yet broad autonomous progression: objective reachability, more objective types, and roughly 900 channel offers remain gaps.
 - First-class `InteractWith(doodad)` is landed (`13f502673`): it derives the use skill and fails closed on an observable-effect post-check. This is the contract used to avoid injecting a fake dungeon/portal interaction.
 
-### MCP workflow integration (2026-08-27)
+### MCP expansion (2026-08-27)
+- MCP sidecars and the management gateway remain client-neutral; availability
+  is not external-client actor lifecycle evidence.
+- Historical coverage merge `8a22dcb4` and its 33-test / 19-tool smoke record
+  are retained; current validation and the 24-tool catalog are recorded below.
 
-- MCP sidecar tools and the management gateway are **client-neutral**. Their
-  availability is not external-client actor lifecycle evidence.
-- The real MCP live smoke is **BLOCKED**:
-  `scorecard-explorations/generated/mcp-live-smoke-2026-08-27.md` records
-  that isolated Game exited before WebApi because client-world/compact assets
-  were missing. No actor lifecycle or trace evidence exists.
-- Coverage verified no authenticated WebApi routes for `DiscoverQuests`,
-  `Talk`, `InteractWith`, `Equip`, `Plant`, `Craft`, party, or related newer
-  actions. Do not claim those actions are MCP-exposed; they remain deferred.
+- Commit `1638b007c` adds five authenticated actor routes and matching MCP
+  tools: `POST /api/actors/discover_quests`,
+  `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
+  `POST /api/actors/talk`, and `POST /api/actors/equip`; the catalog is now
+  24 tools.
+- Focused validation passed: `BotActionControllerRouteTests` 2/2,
+  `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP
+  projects Release build clean; stdio smoke 24 tools; full gate **2486 total /
+  2485 succeeded / 0 failed / 1 skipped**.
+- Live `discover_self_quests` MCP benchmark passed with `action_status`,
+  `trace`, and an independent MySQL character-row cross-check. No safe doodad
+  interaction was attempted.
+- The prior asset-missing live-smoke run at `7e109d550` is historical, not the
+  current verdict. Plant, Harvest, Craft, party, trade, expeditions, and
+  related newer actor actions still lack authenticated routes and remain
+  explicitly deferred.
 
 ### Navigation and scaling
 
@@ -128,10 +154,10 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
    git rev-parse develop origin/develop
    ./scripts/gate.sh
    ```
-   Confirm the current docs/source checkpoint is `7e109d550`, source
-   cleanliness, and the gate result. The prior `241d3e34d` relationship and
-   the 2479/0/1 Mail S3 checkpoint are historical; do not call them a fresh
-   head or run.
+   Confirm the current docs/source checkpoint is `1638b007c`, source
+   cleanliness, and the recorded MCP/full-gate results above. The prior
+   `241d3e34d` relationship and the 2479/0/1 Mail S3 checkpoint are historical;
+   do not call them a fresh head or run.
 2. **Do not rerun PB-007 live blindly.** First use the targeted TUnit selector and/or add a narrowly scoped server branch trace. Preserve corrected packet framing and dump buff state/immune status. Close PB-007 only after a victim-matched, non-immune `SCUnitDamaged` frame is observed on the real server, alongside the existing HP/Retribution/crime checks. When the selector works, the known form is:
    ```bash
    dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --no-build \
@@ -143,10 +169,11 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 5. **For every new slice, add/update both a rig proof and a live scenario where applicable, file a blocker for any failure, and update `SCORECARD.md`, `ROADMAP.md`, and `STATUS.md` in the same documentation wave.** Preserve old evidence and label rig/live/human types rather than rewriting history.
 6. **Run the scoped tests and commit the scoped change.** IntegrationTests convention is `--filter-class <fully-qualified-class-name>`. TUnit uses `--treenode-filter` as above when it resolves. `--nologo` is rejected by the MTP front-end in prior runs; omit it. Push only to the writable origin fork, never upstream.
 
-7. **Rerun real MCP smoke only after a valid asset-complete Game stack is
-   available.** Then exercise `observe → action → action_status → trace` for
-   a real scenario; until that run succeeds, no actor lifecycle or trace
-   evidence exists.
+7. **Live MCP benchmark:** the authenticated `discover_self_quests` benchmark
+   is complete and passed with `action_status`, `trace`, and an independent
+   MySQL character-row cross-check. No safe doodad interaction was attempted.
+   Keep Plant, Harvest, Craft, party, trade, expeditions, and related newer
+   actor actions deferred until authenticated routes exist.
 
 ## Human-only actions
 

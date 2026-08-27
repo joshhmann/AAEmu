@@ -16,10 +16,11 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
-**Current branch record (2026-08-27 MCP checkpoint):** `develop @ 7e109d550`
-(= `origin/develop`). MCP coverage merge `8a22dcb4` and the report-only
-live-smoke checkpoint are recorded below; milestone shape and historical
-evidence are unchanged.
+**Current branch record (2026-08-27 MCP expansion checkpoint):**
+`develop @ 1638b007c` (= `origin/develop`). Commit `1638b007c` adds five
+authenticated actor routes and matching MCP tools; the 24-tool catalog,
+validation, benchmark, and deferred action boundary are recorded below.
+Milestone shape and historical evidence are unchanged.
 
 ## Three phases
 
@@ -1157,26 +1158,31 @@ query (no packet fabrication).
 - E11 — M5.3 exit scenario (observe → move → stop → target → cast) completes
   with a machine-readable trace → REQ-M5.3-11 (carries REQ-M5-14).
 
-### MCP workflow integration (2026-08-27)
+### MCP expansion (2026-08-27)
+MCP sidecars and the management gateway remain client-neutral; availability is
+not external-client actor lifecycle evidence. Historical coverage merge
+`8a22dcb4` and its 33-test / 19-tool smoke record are retained below as
+historical evidence.
 
-MCP sidecar tools and the management gateway are client-neutral. The coverage
-merge `8a22dcb4` records 33 `BotControlActionMcp` tests passing and a passing
-19-tool stdio protocol smoke. This is contract/stdio coverage, not actor
-lifecycle evidence.
+Commit `1638b007c` adds five authenticated actor routes and matching MCP tools:
+`POST /api/actors/discover_quests`, `POST /api/actors/discover_self_quests`,
+`POST /api/actors/interact_with`, `POST /api/actors/talk`, and
+`POST /api/actors/equip`. The MCP catalog is now 24 tools.
 
-The real MCP live smoke is **BLOCKED**:
-`scorecard-explorations/generated/mcp-live-smoke-2026-08-27.md` (report-only
-commit `7e109d550`) records that isolated Game exited before WebApi because
-client-world/compact assets were missing. No actor lifecycle or trace evidence
-exists.
+Focused validation passed: `BotActionControllerRouteTests` 2/2,
+`BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 16/16; MCP
+projects Release build clean; stdio smoke 24 tools; full gate **2486 total /
+2485 succeeded / 0 failed / 1 skipped**.
 
-Coverage verified no authenticated WebApi routes for `DiscoverQuests`, `Talk`,
-`InteractWith`, `Equip`, `Plant`, `Craft`, party, and related newer actions.
-They remain deferred; do not claim that newer actor actions are MCP-exposed.
+The live `discover_self_quests` MCP benchmark passed with `action_status`,
+`trace`, and an independent MySQL character-row cross-check. No safe doodad
+interaction was attempted. The earlier asset-missing
+`mcp-live-smoke-2026-08-27.md` run at `7e109d550` remains historical: Game
+exited before WebApi, and that run is not the current benchmark verdict.
 
-**Next step:** rerun real MCP smoke after a valid asset-complete Game stack is
-available, then use `observe → action → action_status → trace` for a real
-scenario.
+Plant, Harvest, Craft, party, trade, expeditions, and related newer actor
+actions still lack authenticated routes. They remain explicitly deferred and
+are not claimed as MCP-exposed.
 
 ---
 
@@ -1910,7 +1916,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
     deleted: remove task + config stubs (clean cutover).
 
-**Recovery queue status (2026-08-27; develop @ `7e109d550`):**
+**Recovery queue status (2026-08-27; develop @ `1638b007c`):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and
@@ -1919,13 +1925,17 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
   (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution
   present; first application and Refresh broadcasts); live non-immune
   damage-frame proof remains pending.
-- **MCP workflow integration:** client-neutral sidecar/gateway contract
-  coverage is recorded by merge `8a22dcb4` (33 `BotControlActionMcp` tests and
-  19-tool stdio smoke pass). Real live smoke is **BLOCKED** because isolated
-  Game exited before WebApi on missing client-world/compact assets; no actor
-  lifecycle/trace evidence exists. No authenticated WebApi routes were found
-  for newer actions such as `DiscoverQuests`, `Talk`, `InteractWith`, `Equip`,
-  `Plant`, `Craft`, or party; these remain deferred.
+- **MCP expansion:** commit `1638b007c` adds authenticated
+  `POST /api/actors/discover_quests`, `/discover_self_quests`, `/interact_with`,
+  `/talk`, and `/equip` routes with matching MCP tools; the catalog is now 24
+  tools. Focused route/contract/queue validation passed 2/2, 33/33, and 16/16;
+  MCP projects Release build clean; stdio smoke 24 tools; full gate **2486
+  total / 2485 succeeded / 0 failed / 1 skipped**. The live
+  `discover_self_quests` benchmark passed with `action_status`, `trace`, and
+  an independent MySQL character-row cross-check. No safe doodad interaction
+  was attempted. The asset-missing `7e109d550` smoke remains historical.
+  Plant, Harvest, Craft, party, trade, expeditions, and related newer actions
+  still lack routes and remain explicitly deferred.
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker; the restart, instance-faithful

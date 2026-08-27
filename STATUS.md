@@ -1,12 +1,12 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-27 · MCP workflow integration checkpoint; prior: 2026-08-26
+Updated: 2026-08-27 · MCP expansion checkpoint; prior: 2026-08-26
 (Mail S3 acceptance and recovery reconciliation; G2-A5 + A4 near-term gates
 MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed
 premise-refuted; PB-004 found-by-measurement + fixed same day; first-class
 InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop @ 7e109d550 (= origin/develop head)
+Branch of record: develop @ 1638b007c (= origin/develop head)
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
 honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
@@ -39,33 +39,33 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
 - **PB-002 autonomous leveling loop:** **COMPLETE** — full autonomous quest execution loop composed in `LevelingLoopScenario` supporting Talk (`QuestActObjTalk`, `QuestActObjTalkNpcGroup`), Hunt/Kill (`QuestActObjKillMonster`, `QuestActObjKillMonsterGroup`), Gather/Interact (`QuestActObjActDoodad`), and delivery quests, alongside autonomous sustain recovery (HP < 35% consumable usage) and auto-equipping item upgrades. Template library and runner wired via `BotScenarioTemplates` / `BotScenarioRunner` (`BotScenarioRigTests` 10/10 green).
 - **Final gate:** **2489 total: 2488 succeeded, 0 failed, 1 skipped**.
 
-## 2026-08-27 MCP workflow integration
+## 2026-08-27 MCP expansion
+- **Client-neutral integration:** MCP sidecars and the management gateway remain
+  client-neutral; they do not constitute external-client actor evidence.
+- **Historical coverage retained:** merge `8a22dcb4` recorded the earlier
+  33-test contract coverage and 19-tool stdio smoke; the current checkpoint
+  records the 24-tool catalog and current validation below.
 
-- **Client-neutral integration:** MCP sidecar tools and the management gateway
-  are client-neutral; they do not turn a client-neutral management path into
-  external-client actor evidence.
-- **Contract/stdio coverage:** MCP coverage merge `8a22dcb4` records 33
-  `BotControlActionMcp` tests passing and the 19-tool stdio protocol smoke
-  passing.
-- **Real live smoke:** `scorecard-explorations/generated/mcp-live-smoke-2026-08-27.md`
-  (report-only commit `7e109d550`) is **BLOCKED**. The isolated Game exited
-  before WebApi because the client-world/compact assets were missing; no actor
-  lifecycle or trace evidence exists.
-- **Action-surface boundary:** coverage verified no authenticated WebApi routes
-  for `DiscoverQuests`, `Talk`, `InteractWith`, `Equip`, `Plant`, `Craft`,
-  party, and related newer actions. They remain deferred and are not claimed
-  as MCP-exposed actions.
-- **Next step:** rerun real MCP smoke with a valid asset-complete Game stack,
-  then use `observe → action → action_status → trace` for a real scenario.
-- **Integrated live benchmark (isolated, 2026-08-27; source checkpoint
-  `12ff5b504`):** asset-complete Login/Game + WebApi reached both generic MCP
-  sidecars; management add/adopt/status/list and action observe → move →
-  action_status → trace all passed. The independent same-character
-  `aaemu_game.characters` row cross-check passed and is recorded at
-  `scorecard-explorations/generated/integrated-mcp-e2e-benchmark-2026-08-27.md`.
-  The short move had no Navigation timeout. The managed headless bot has no
-  authenticated client TCP session, so the BotDriveBridge wire leg is
-  explicitly BLOCKED; no client visual/wire evidence is claimed.
+- **Authenticated actor routes and MCP tools:** commit `1638b007c` adds five
+  matching routes: `POST /api/actors/discover_quests`,
+  `POST /api/actors/discover_self_quests`, `POST /api/actors/interact_with`,
+  `POST /api/actors/talk`, and `POST /api/actors/equip`.
+- **MCP catalog:** now 24 tools. Focused validation passed:
+  `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
+  `BotActionCommandQueueTests` 16/16; MCP projects Release build clean; stdio
+  smoke 24 tools; full gate **2486 total / 2485 succeeded / 0 failed /
+  1 skipped**.
+- **Live benchmark:** `discover_self_quests` MCP benchmark passed with
+  `action_status` and `trace`, plus an independent MySQL character-row
+  cross-check. No safe doodad interaction was attempted.
+- **Historical smoke retained:** the earlier
+  `mcp-live-smoke-2026-08-27.md` report-only run at `7e109d550` is retained as
+  historical evidence of an asset-missing Game exit before WebApi; it is not
+  the current MCP benchmark verdict.
+- **Deferred action-surface boundary:** newer actor actions still lacking
+  authenticated routes — Plant, Harvest, Craft, party, trade, expeditions,
+  and related actions — remain explicitly deferred and are not claimed as
+  MCP-exposed.
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 
