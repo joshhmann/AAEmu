@@ -1,10 +1,9 @@
-# AAEmu.BotControlMcp — contract-action MCP sidecar (agent tier)
+# AAEmu.BotControlMcp — contract-action MCP sidecar
 
-MCP stdio sidecar exposing the game's **contract-action API** (`/api/actors/*`,
-M5 stage 3, t_7b6d7a4b) as MCP tools so Hermes profiles / LLM agents can
-drive registered bots as **players** (consumer tier 2). Tools map 1:1 to the
-M5 CONTRACT ACTIONS — each tool issues a validated action request with the
-full lifecycle, never engine internals.
+MCP stdio sidecar exposing the game's **authenticated actor-action API**
+(`/api/actors/*`) as client-neutral MCP tools. Any MCP client (Claude,
+Cursor, Gemini, Codex, or another implementation) can spawn the same process
+and use the same newline-delimited JSON-RPC contract.
 
 - **Transport:** MCP stdio (newline-delimited JSON-RPC 2.0)
 - **Backend:** HTTP calls to the game's WebApi `/api/actors/*` endpoints,
@@ -14,10 +13,15 @@ full lifecycle, never engine internals.
   client cannot wedge the world (the pending action completes or times out
   server-side per its lifecycle).
 - **No management ops:** `bot_add/remove/list/relocate/status` stay on the
-  P1 MCP surface (`AAEmu.BotControl`, t_2ea94a20) — deliberately not
-  duplicated here.
+  management MCP surface (`AAEmu.BotControl`) — deliberately not duplicated
+  here.
 
-## Tools (1:1 with the contract API)
+The source-grounded actor/API/tool/test matrix is maintained in
+[`MCP-ACTION-MATRIX.md`](MCP-ACTION-MATRIX.md). This sidecar currently exposes
+every safe actor route in `BotActionController`; actor methods without an
+authenticated `/api/actors/*` route are explicitly deferred there.
+
+## Tools (complete current surface)
 
 | Tool | Maps to | Purpose |
 |------|---------|---------|
@@ -47,6 +51,37 @@ Every action tool returns the **enqueue acknowledgement** (`success`,
 (Requested → Running → Completed/Failed) — the same async-response
 pattern the scripted fleet (tier 1) uses over HTTP.
 
+## Client-neutral workflow
+
+All clients should use the same evidence loop; the MCP client is only a
+transport and orchestration layer:
+
+1. `observe` the actor and record the returned `trace_id` and snapshot.
+2. Call one action tool with the request shape shown in the table.
+3. Poll `action_status` with that `trace_id` until the lifecycle is terminal
+   (`Completed`, `Rejected`, `Interrupted`, or `TimedOut`).
+4. Retrieve `trace` for the bot to correlate the audit record and state
+   changes.
+5. Assert the resulting observable state from `observe`, the action payload,
+   or the game's ordinary API.
+6. If the expected state change is absent, record the exact tool arguments,
+   trace response, and API error as a blocker; do not replace it with a
+   client-side shortcut.
+
+The same sequence works when Claude, Cursor, Gemini, Codex, or another MCP
+client spawns this stdio server. Raw JSON-RPC is also suitable for
+deterministic CI smoke tests without a live game server.
+
+## Deferred actor actions
+
+The actor contract contains additional real engine methods (`DiscoverQuests`,
+`DiscoverSelfQuests`, `InteractWith`, `Talk`, `Equip`, farming/crafting/pack
+actions, economy, party/expedition, trade, auction, vehicle, and bank
+actions), but this checkout has no authenticated `/api/actors/*` endpoint for
+them. They remain deferred in `MCP-ACTION-MATRIX.md`; no fake route, hidden
+state, or management alias is exposed.
+
+
 ## Running
 
 ```bash
@@ -70,26 +105,76 @@ printf '%s\n' \
 | dotnet run --project AAEmu.BotControlMcp
 ```
 
-## Registering in Hermes (native MCP client)
+## Registering with an MCP client
 
-Add to `~/.hermes/config.yaml` of the sister profile:
+Configure the client's stdio server entry using its normal MCP settings. The
+command and environment are client-neutral; for example, a generic JSON
+configuration is:
 
-```yaml
-mcp_servers:
-  aaemu_bot_actions:
-    command: "dotnet"
-    args: ["run", "--project", "/root/aaemu-dev/AAEmu.BotControlMcp", "--no-launch-profile"]
-    env:
-      AAEMU_BOT_CTRL_URL: "http://127.0.0.1:1280"
-      AAEMU_BOT_CTRL_TOKEN: "<shared secret>"
+```json
+{
+  "mcpServers": {
+    "aaemu_bot_actions": {
+      "command": "dotnet",
+      "args": ["run", "--project", "/root/aaemu-dev/AAEmu.BotControlMcp", "--no-launch-profile"],
+      "env": {
+        "AAEMU_BOT_CTRL_URL": "http://127.0.0.1:1280",
+        "AAEMU_BOT_CTRL_TOKEN": "<shared secret>"
+      }
+    }
+  }
+}
 ```
 
-Restart Hermes — tools appear as `mcp_aaemu_bot_actions_observe`,
-`mcp_aaemu_bot_actions_move`, etc.
+Claude, Cursor, Gemini, Codex, and other MCP clients can all spawn this same
+stdio process. A published binary is preferable for persistent registrations:
 
-> Prefer a published binary over `dotnet run` for a persistent registration:
-> `dotnet publish AAEmu.BotControlMcp -c Release -o /opt/aaemu-bot-actions`
-> and point `command` at `/opt/aaemu-bot-actions/AAEmu.BotControlMcp`.
+```bash
+dotnet publish AAEmu.BotControlMcp -c Release -o /opt/aaemu-bot-actions
+```
+
+Point the client's `command` at
+`/opt/aaemu-bot-actions/AAEmu.BotControlMcp` while retaining the same
+environment variables.
+
+## Bounded live smoke (requires an isolated Game WebApi)
+
+The protocol smoke in `Scripts/mcp-stdio-smoke.sh` is deterministic and does
+not require a game server. When an isolated Game WebApi is running with a
+registered bot and a token, use this raw stdio sequence as the next live
+smoke task:
+
+```bash
+export AAEMU_BOT_CTRL_URL=http://127.0.0.1:1280
+export AAEMU_BOT_CTRL_TOKEN='<token supplied out-of-band; never commit it>'
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+  '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"observe","arguments":{"bot":"McpBot01"}}}' \
+  '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"move","arguments":{"bot":"McpBot01","x":15572,"y":15364,"z":126.5,"speed":2,"timeoutSec":20}}}' \
+  | dotnet run --project AAEmu.BotControlMcp --no-launch-profile
+```
+
+Before the actor call, verify the registered bot through the separate
+management MCP (not this sidecar):
+
+```bash
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"bot_list","arguments":{}}}' \
+  '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"bot_status","arguments":{}}}' \
+  | dotnet run --project AAEmu.BotControl --no-launch-profile
+```
+
+Use the `trace_id` from each enqueue acknowledgement for a subsequent
+`action_status` call, then query `trace` and assert the changed position with
+`observe`. For setup/teardown, use `AAEmu.BotControl`'s separate
+`bot_status`/`bot_list` management tools; they are intentionally not exposed
+by this sidecar. A live run must record exact JSON-RPC replies and HTTP
+status/body evidence, and must stop on a missing state assertion rather than
+claiming success.
 
 ## Security
 

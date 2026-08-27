@@ -1,0 +1,71 @@
+# Gameplay actor to MCP coverage matrix
+
+Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract), `AAEmu.Game/Services/WebApi/Controllers/BotActionController.cs` (authenticated actor routes), and `AAEmu.UnitTests/BotControl/BotControlActionMcpTests.cs` (sidecar contract tests). A route is considered exposed only when `BotActionController` has an authenticated `/api/actors/*` endpoint that enqueues the matching actor action. Management routes are intentionally excluded from this sidecar.
+
+| `IGameplayActor` action | Authenticated WebApi endpoint | MCP tool | Coverage |
+|---|---|---|---|
+| `Observe` | `POST /api/actors/observe` | `observe` | `Call_observe_PostsObserveEndpoint`; generic exact mapping |
+| `MoveTo` | `POST /api/actors/move` | `move` | `Call_move_PostsCoordinatesWithOptionalArgs`; generic exact mapping |
+| `NavigateTo` | — | — | Deferred: no actor WebApi route |
+| `MoveToUnit` | `POST /api/actors/move_to_unit` | `move_to_unit` | `Call_move_to_unit_PostsTargetAndSpeed`; generic exact mapping |
+| `Stop` | `POST /api/actors/stop` | `stop` | `Call_stop_PostsBotOnly`; generic exact mapping |
+| `SetTarget` | `POST /api/actors/target` | `target` | `Call_target_PostsTarget`; generic exact mapping |
+| `Cast` | `POST /api/actors/cast` | `cast` | `Call_cast_PostsSkillAndTarget`; generic exact mapping |
+| `CastAt` | — | — | Deferred: no actor WebApi route |
+| `Interact` | `POST /api/actors/interact` | `interact` | `Call_interact_PostsDoodad`; generic exact mapping |
+| `InteractWith` | — | — | Deferred: no actor WebApi route; do not alias to `interact` because semantics differ |
+| `Loot` | `POST /api/actors/loot` | `loot` | `Call_loot_PostsLootOwner`; generic exact mapping |
+| `UseItem` | `POST /api/actors/use_item` | `use_item` | `Call_use_item_PostsTemplateAndOptionalTarget`; generic exact mapping |
+| `Equip` | — | — | Deferred: no actor WebApi route |
+| `PartyInvite` | — | — | Deferred: no actor WebApi route |
+| `PartyAccept` | — | — | Deferred: no actor WebApi route |
+| `ExpeditionCreate` | — | — | Deferred: no actor WebApi route |
+| `ExpeditionInvite` | — | — | Deferred: no actor WebApi route |
+| `ExpeditionAccept` | — | — | Deferred: no actor WebApi route |
+| `ExpeditionLeave` | — | — | Deferred: no actor WebApi route |
+| `TradeOffer` | — | — | Deferred: no actor WebApi route |
+| `TradePutup` | — | — | Deferred: no actor WebApi route |
+| `TradeLockOk` | — | — | Deferred: no actor WebApi route |
+| `Mount` | `POST /api/actors/mount` | `mount` | `Call_mount_PostsMate`; generic exact mapping |
+| `Dismount` | `POST /api/actors/dismount` | `dismount` | `Call_dismount_PostsOptionalMate`; generic exact mapping |
+| `BoardVehicle` | — | — | Deferred: no actor WebApi route |
+| `UnboardVehicle` | — | — | Deferred: no actor WebApi route |
+| `Harvest` | — | — | Deferred: no actor WebApi route |
+| `Craft` | — | — | Deferred: no actor WebApi route |
+| `DriveVehicle` | — | — | Deferred: no actor WebApi route |
+| `PackPickup` | — | — | Deferred: no actor WebApi route |
+| `PutDown` | — | — | Deferred: no actor WebApi route |
+| `LoadPackOntoVehicle` | — | — | Deferred: no actor WebApi route |
+| `Plant` | — | — | Deferred: no actor WebApi route |
+| `BuildHouse` | — | — | Deferred: no actor WebApi route |
+| `DepositMoney` | — | — | Deferred: no actor WebApi route |
+| `WithdrawMoney` | — | — | Deferred: no actor WebApi route |
+| `DepositItem` | — | — | Deferred: no actor WebApi route |
+| `WithdrawItem` | — | — | Deferred: no actor WebApi route |
+| `AcceptQuest` | `POST /api/actors/accept_quest` | `accept_quest` | `Call_accept_quest_PostsQuestAndAcceptor`; generic exact mapping |
+| `AdvanceQuest` | `POST /api/actors/advance_quest` | `advance_quest` | `Call_advance_quest_PostsQuest`; generic exact mapping |
+| `TurnInQuest` | `POST /api/actors/turn_in_quest` | `turn_in_quest` | `Call_turn_in_quest_PostsNpcAndReward`; generic exact mapping |
+| `DiscoverQuests` | — | — | Deferred: no actor WebApi route |
+| `TurnInAtDoodad` | `POST /api/actors/turn_in_doodad` | `turn_in_doodad` | `Call_turn_in_doodad_PostsDoodad`; generic exact mapping |
+| `AutoTurnInQuest` | `POST /api/actors/auto_turn_in` | `auto_turn_in` | `Call_auto_turn_in_PostsQuest`; generic exact mapping |
+| `Talk` | — | — | Deferred: no actor WebApi route |
+| `DiscoverSelfQuests` | — | — | Deferred: no actor WebApi route |
+| `Buy` | — | — | Deferred: no actor WebApi route |
+| `Sell` | — | — | Deferred: no actor WebApi route |
+| `PostAuction` | — | — | Deferred: no actor WebApi route |
+| `BuyAuction` | — | — | Deferred: no actor WebApi route |
+| `Interrupt(Guid)` | `POST /api/actors/interrupt` | `interrupt` | `Call_interrupt_PostsTraceId`; generic exact mapping |
+
+Lifecycle/audit reads are not `IGameplayActor` actions, but are part of the authenticated actor API and remain exposed:
+
+| API read | MCP tool | Coverage |
+|---|---|---|
+| `GET /api/actors/actions/{traceId}` | `action_status` | `Call_action_status_GetsTraceEndpoint`; generic exact mapping and escaped path argument |
+| `GET /api/actors/trace?bot=...&limit=...` | `trace` | `Call_trace_GetsTraceQueryWithLimit`, `Call_trace_WithoutLimit_GetsTraceQuery`; generic exact mapping and escaped bot argument |
+
+`Tick`, `FindByKey`, `ActorId`, `Character`, `ActiveRequest`, and `AuditTrace` are actor internals/engine scheduling or correlation surfaces, not standalone HTTP actions. The existing authenticated `BotActionController` routes are the complete safe MCP surface in this checkout; no fake routes or management aliases are added.
+
+Other WebApi controllers do not widen this contract: for example,
+`ExpeditionController` exposes `GET /api/expedition/list` as a server-wide
+read and has no actor/bot target or authenticated action enqueue semantics.
+It is therefore not an MCP actor tool.

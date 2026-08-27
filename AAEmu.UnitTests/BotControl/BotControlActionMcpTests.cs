@@ -406,6 +406,19 @@ public class BotControlActionMcpTests
     }
 
     [Test]
+    public async Task Call_action_status_EncodesTraceArgument()
+    {
+        var client = new FakeClient();
+        var server = new ActionMcpServer(client);
+
+        await server.HandleAsync(
+            """{"jsonrpc":"2.0","id":27,"method":"tools/call","params":{"name":"action_status","arguments":{"traceId":"11111111-2222-3333-4444-555555555555/extra"}}}""");
+
+        await Assert.That(client.Calls[0].Path)
+            .IsEqualTo("/api/actors/actions/11111111-2222-3333-4444-555555555555%2Fextra");
+    }
+
+    [Test]
     public async Task Call_trace_GetsTraceQueryWithLimit()
     {
         var client = new FakeClient();
@@ -429,6 +442,86 @@ public class BotControlActionMcpTests
             """{"jsonrpc":"2.0","id":23,"method":"tools/call","params":{"name":"trace","arguments":{"bot":"Mcp Bot"}}}""");
 
         await Assert.That(client.Calls[0].Path).IsEqualTo("/api/actors/trace?bot=Mcp%20Bot");
+    }
+
+    [Test]
+    public async Task ToolsList_EveryToolHasRequiredSchemaFields()
+    {
+        var server = new ActionMcpServer(new FakeClient());
+
+        var response = Parse(await server.HandleAsync("""{"jsonrpc":"2.0","id":30,"method":"tools/list"}"""));
+        var tools = response?["result"]?["tools"]?.AsArray()!;
+
+        foreach (var tool in tools)
+        {
+            var name = tool?["name"]?.GetValue<string>();
+            var schema = tool?["inputSchema"]?.AsObject();
+            await Assert.That(name).IsNotNull();
+            await Assert.That(schema?["type"]?.GetValue<string>()).IsEqualTo("object");
+            var properties = schema?["properties"]?.AsObject();
+            var required = schema?["required"]?.AsArray();
+            await Assert.That(properties).IsNotNull();
+            await Assert.That(required).IsNotNull();
+            await Assert.That(required!.Count).IsGreaterThan(0);
+
+            foreach (var requiredName in required!)
+                await Assert.That(properties!.ContainsKey(requiredName!.GetValue<string>())).IsTrue();
+        }
+    }
+
+    [Test]
+    public async Task CallTool_MapsEveryRegisteredToolToExactWireRequest()
+    {
+        var cases = new[]
+        {
+            ("observe", """{"bot":"McpBot01"}""", "POST", "/api/actors/observe", """{"bot":"McpBot01"}"""),
+            ("move", """{"bot":"McpBot01","x":1,"y":2,"z":3,"speed":2,"timeoutSec":20,"idempotencyKey":"k"}""", "POST", "/api/actors/move", """{"bot":"McpBot01","x":1,"y":2,"z":3,"speed":2,"timeoutSec":20,"idempotencyKey":"k"}"""),
+            ("interact", """{"bot":"McpBot01","doodadObjId":42,"skillId":7,"idempotencyKey":"k"}""", "POST", "/api/actors/interact", """{"bot":"McpBot01","doodadObjId":42,"skillId":7,"idempotencyKey":"k"}"""),
+            ("accept_quest", """{"bot":"McpBot01","questId":1001,"acceptorType":"Npc","acceptorId":500,"idempotencyKey":"k"}""", "POST", "/api/actors/accept_quest", """{"bot":"McpBot01","questId":1001,"acceptorType":"Npc","acceptorId":500,"idempotencyKey":"k"}"""),
+            ("turn_in_quest", """{"bot":"McpBot01","questId":1001,"npcObjId":500,"selectedReward":2,"idempotencyKey":"k"}""", "POST", "/api/actors/turn_in_quest", """{"bot":"McpBot01","questId":1001,"npcObjId":500,"selectedReward":2,"idempotencyKey":"k"}"""),
+            ("loot", """{"bot":"McpBot01","lootOwnerObjId":77,"idempotencyKey":"k"}""", "POST", "/api/actors/loot", """{"bot":"McpBot01","lootOwnerObjId":77,"idempotencyKey":"k"}"""),
+            ("use_item", """{"bot":"McpBot01","itemTemplateId":5001,"targetObjId":88,"idempotencyKey":"k"}""", "POST", "/api/actors/use_item", """{"bot":"McpBot01","itemTemplateId":5001,"targetObjId":88,"idempotencyKey":"k"}"""),
+            ("mount", """{"bot":"McpBot01","mateObjId":99,"idempotencyKey":"k"}""", "POST", "/api/actors/mount", """{"bot":"McpBot01","mateObjId":99,"idempotencyKey":"k"}"""),
+            ("move_to_unit", """{"bot":"McpBot01","targetObjId":55,"speed":3,"timeoutSec":15,"idempotencyKey":"k"}""", "POST", "/api/actors/move_to_unit", """{"bot":"McpBot01","targetObjId":55,"speed":3,"timeoutSec":15,"idempotencyKey":"k"}"""),
+            ("stop", """{"bot":"McpBot01"}""", "POST", "/api/actors/stop", """{"bot":"McpBot01"}"""),
+            ("target", """{"bot":"McpBot01","targetObjId":66}""", "POST", "/api/actors/target", """{"bot":"McpBot01","targetObjId":66}"""),
+            ("cast", """{"bot":"McpBot01","skillId":101,"targetObjId":66,"idempotencyKey":"k"}""", "POST", "/api/actors/cast", """{"bot":"McpBot01","skillId":101,"targetObjId":66,"idempotencyKey":"k"}"""),
+            ("dismount", """{"bot":"McpBot01","mateObjId":99,"idempotencyKey":"k"}""", "POST", "/api/actors/dismount", """{"bot":"McpBot01","mateObjId":99,"idempotencyKey":"k"}"""),
+            ("advance_quest", """{"bot":"McpBot01","questId":1001,"idempotencyKey":"k"}""", "POST", "/api/actors/advance_quest", """{"bot":"McpBot01","questId":1001,"idempotencyKey":"k"}"""),
+            ("turn_in_doodad", """{"bot":"McpBot01","questId":1001,"doodadObjId":42,"selectedReward":2,"idempotencyKey":"k"}""", "POST", "/api/actors/turn_in_doodad", """{"bot":"McpBot01","questId":1001,"doodadObjId":42,"selectedReward":2,"idempotencyKey":"k"}"""),
+            ("auto_turn_in", """{"bot":"McpBot01","questId":1001,"selectedReward":2,"idempotencyKey":"k"}""", "POST", "/api/actors/auto_turn_in", """{"bot":"McpBot01","questId":1001,"selectedReward":2,"idempotencyKey":"k"}"""),
+            ("interrupt", """{"bot":"McpBot01","traceId":"11111111-2222-3333-4444-555555555555"}""", "POST", "/api/actors/interrupt", """{"bot":"McpBot01","traceId":"11111111-2222-3333-4444-555555555555"}"""),
+            ("action_status", """{"traceId":"11111111-2222-3333-4444-555555555555"}""", "GET", "/api/actors/actions/11111111-2222-3333-4444-555555555555", null),
+            ("trace", """{"bot":"Mcp Bot/01","limit":20}""", "GET", "/api/actors/trace?bot=Mcp%20Bot%2F01&limit=20", null),
+        };
+
+        foreach (var (name, arguments, method, path, expectedBody) in cases)
+        {
+            var client = new FakeClient();
+            var server = new ActionMcpServer(client);
+            var requestNode = new JsonObject
+            {
+                ["jsonrpc"] = "2.0",
+                ["id"] = 31,
+                ["method"] = "tools/call",
+                ["params"] = new JsonObject
+                {
+                    ["name"] = name,
+                    ["arguments"] = JsonNode.Parse(arguments),
+                },
+            };
+
+            var response = Parse(await server.HandleAsync(requestNode.ToJsonString()));
+
+            await Assert.That(response?["result"]?["isError"]?.GetValue<bool>()).IsFalse();
+            await Assert.That(client.Calls).HasCount().EqualTo(1);
+            await Assert.That(client.Calls[0].Method).IsEqualTo(method);
+            await Assert.That(client.Calls[0].Path).IsEqualTo(path);
+            if (expectedBody is null)
+                await Assert.That(client.Calls[0].Body).IsNull();
+            else
+                await Assert.That(client.Calls[0].Body).IsEqualTo(expectedBody);
+        }
     }
 
     // -------------------------------------------------------------- errors
