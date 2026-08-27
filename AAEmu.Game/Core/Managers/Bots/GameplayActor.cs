@@ -8,6 +8,7 @@ using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
+using AAEmu.Game.Models.Game.AI.AStar;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
@@ -68,6 +69,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// </summary>
 public class GameplayActor : IGameplayActor
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
     /// <summary>Arrival radius for Move legs (same checkpoint model as Simulation.RangeToCheckPoint).</summary>
     public const float ArrivalRadius = 0.5f;
 
@@ -211,6 +214,53 @@ public class GameplayActor : IGameplayActor
         return StartMove(request, destination, speed);
     }
 
+    public ActorRequest NavigateTo(Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+    {
+        ExecutionBoundary.AssertOnExecutionThread("NavigateTo");
+
+        var request = NewRequest(ActorActionType.Move, 0, destination, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "navigate"))
+            return request;
+
+        if (speed <= 0f)
+            return Reject(request, ActorFailureReason.RejectedAction, "speed must be positive");
+        if (!destination.IsFinite())
+            return Reject(request, ActorFailureReason.RejectedAction, "destination must be finite");
+
+        var currentPos = Character.Transform.World.Position;
+        if (MathUtil.CalculateDistance(currentPos, destination, false) <= ArrivalRadius
+            && Math.Abs(currentPos.Z - destination.Z) <= ArrivalRadius)
+        {
+            request.Start("walking");
+            return Complete(request, "already at destination");
+        }
+
+        var parentWorld = Character.ParentWorld;
+        if (parentWorld?.Template?.GeoData != null && AppConfiguration.Instance.World.GeoDataMode)
+        {
+            try
+            {
+                var pathNode = new PathNode();
+                var path = pathNode.FindPath(parentWorld, currentPos, destination);
+                if (path is { Count: > 1 })
+                {
+                    _moveWaypoints = new Queue<Vector3>(path);
+                    _moveSpeed = speed;
+                    ResetMoveProgressTracking();
+                    _moveTarget = _moveWaypoints.Dequeue();
+                    request.Start($"navigating route ({path.Count} waypoints)");
+                    return request;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"NavigateTo pathfinding fallback for bot {Character.Id}: {ex.Message}");
+            }
+        }
+
+        return StartMove(request, destination, speed);
+    }
+
     /// <summary>
     /// Sets up the movement leg for an already-accepted Move request and
     /// starts it Running (or completes immediately when already there).
@@ -228,6 +278,7 @@ public class GameplayActor : IGameplayActor
             return Complete(request, "already at destination");
         }
 
+        _moveWaypoints = null;
         _moveTarget = destination;
         _moveSpeed = speed;
         ResetMoveProgressTracking();
@@ -485,6 +536,18 @@ public class GameplayActor : IGameplayActor
         var accepted = QuestController.AcceptQuest(questId, acceptorType, acceptorId);
         if (accepted)
         {
+            // Drain early automatic steps (Start -> Supply -> Progress) so the quest
+            // is ready for objective pursuit.
+            if (Character.Quests?.ActiveQuests.TryGetValue(questId, out var activeQuest) == true)
+            {
+                var guard = 0;
+                while (activeQuest.Step is QuestComponentKind.Start or QuestComponentKind.Supply && guard++ < 4)
+                {
+                    if (!activeQuest.RunCurrentStep())
+                        break;
+                }
+            }
+
             // Record the accept credit AFTER the engine applied it, so a
             // fresh-key retry can prove the credit already landed.
             _ledger.RecordEffect(ActorIdempotency.EffectKey("questcredit", questId, "accept"), request.TraceId);
@@ -645,7 +708,8 @@ public class GameplayActor : IGameplayActor
                 .SelectMany(s => s.Components.Values)
                 .SelectMany(c => c.Template.ActTemplates.Select(a => (Component: c.Template, Act: a)))
                 .FirstOrDefault(pair => pair.Act is QuestActObjTalk or QuestActObjTalkNpcGroup
-                    && (pair.Act is not QuestActObjTalk talk || talk.NpcId == npc.TemplateId));
+                    && (pair.Act is not QuestActObjTalk talk || talk.NpcId == npc.TemplateId)
+                    && (pair.Act is not QuestActObjTalkNpcGroup groupTalk || QuestManager.Instance.CheckGroupNpc(groupTalk.NpcGroupId, npc.TemplateId)));
             if (match.Act == null)
                 continue;
             talkedQuests.Add(questId);
@@ -3135,6 +3199,7 @@ public class GameplayActor : IGameplayActor
     #region Tick / movement
 
     private Vector3? _moveTarget;
+    private Queue<Vector3>? _moveWaypoints;
     private float _moveSpeed;
 
     // M7 hardening #5 (movement stuck detection): progress tracking for the
@@ -3286,10 +3351,20 @@ public class GameplayActor : IGameplayActor
                     return;
                 }
 
+                if (_moveWaypoints is { Count: > 0 })
+                {
+                    // Waypoint reached in routed navigation — advance to next waypoint
+                    _moveTarget = _moveWaypoints.Dequeue();
+                    _lastProgressPosition = position;
+                    _noProgressElapsed = TimeSpan.Zero;
+                    _unstickWaypoint = null;
+                    return;
+                }
+
                 // Leg ended — observers must see the halt (dossier §1.6).
                 BroadcastStop();
                 Finish(request, request.Complete(detail: "arrived"));
-                _moveTarget = null;
+                ClearMovementState();
                 return;
             }
 
@@ -3523,6 +3598,7 @@ public class GameplayActor : IGameplayActor
     private void ClearMovementState()
     {
         _moveTarget = null;
+        _moveWaypoints = null;
         _unstickWaypoint = null;
         _noProgressElapsed = TimeSpan.Zero;
         _unstickAttempts = 0;

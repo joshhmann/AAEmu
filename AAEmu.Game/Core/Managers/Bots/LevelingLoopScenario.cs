@@ -2,6 +2,8 @@ using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests;
@@ -211,6 +213,26 @@ public static class LevelingLoopScenario
         }
     }
 
+    /// <summary>Runs the autonomous loop on an embodied character, adapted for the scenario runner.</summary>
+    public static BotScenarioRunner.ScenarioRunResult RunAsScenario(Character character, LoopOptions? options = null, IKillCreditSeam? killSeam = null)
+    {
+        var res = Run(character, options, killSeam);
+        return new BotScenarioRunner.ScenarioRunResult
+        {
+            Template = ScenarioName,
+            Passed = res.Passed,
+            FailStage = res.FailStage,
+            Failure = res.Failure,
+            FailReason = res.FailReason,
+            RigNotes = res.Notes,
+            Stages = res.Links.Select(l => new BotScenarioRunner.ScenarioStageVerdict(
+                $"Quest-{l.QuestId}", 1, "completed", l.Pursuit, $"Exp {l.ExperienceBefore}→{l.ExperienceAfter}")).ToList(),
+            Criteria = [new BotScenarioRunner.CriterionVerdict("leveling-chain-complete", res.Passed, res.FailReason)],
+            TraceRecords = res.TraceRecords,
+            ActorRequests = res.TraceRecords.Count
+        };
+    }
+
     /// <summary>Runs the autonomous loop on an embodied character.</summary>
     public static LoopRunResult Run(Character character, LoopOptions? options = null, IKillCreditSeam? killSeam = null)
     {
@@ -262,6 +284,9 @@ public static class LevelingLoopScenario
                 var turnInFailure = TurnIn(actor, chosen.QuestId, template, perception);
                 if (turnInFailure != null)
                     return turnInFailure;
+
+                // Auto-equip any reward upgrades
+                EquipUpgrades(actor);
 
                 links.Add(new LinkRecord(chosen.QuestId, chosen.Level, chosen.AcceptorId,
                     DescribePursuit(template), expBefore, character.Experience));
@@ -349,12 +374,6 @@ public static class LevelingLoopScenario
 
     private static readonly Dictionary<string, string> KnownPrimitiveGaps = new()
     {
-        [nameof(QuestActObjTalk)] =
-            "talk pursuit uncomposed (primitive LANDED: IGameplayActor.Talk fires OnTalkMade/" +
-            "OnTalkNpcGroupMade through the CSQuestTalkMadePacket path; loop wiring pending)",
-        [nameof(QuestActObjTalkNpcGroup)] =
-            "talk pursuit uncomposed (primitive LANDED: IGameplayActor.Talk fires OnTalkMade/" +
-            "OnTalkNpcGroupMade through the CSQuestTalkMadePacket path; loop wiring pending)",
         [nameof(QuestActObjItemUse)] =
             "missing item-use pursuit composition (UseItem primitive exists; objective wiring uncomposed)",
         [nameof(QuestActObjItemGroupUse)] =
@@ -442,6 +461,24 @@ public static class LevelingLoopScenario
                         break;
                     }
 
+                case QuestActObjTalk talk:
+                    {
+                        var talkFailure = TalkLeg(actor, opts, questId, talk.NpcId, 0, perception);
+                        if (talkFailure != null)
+                            return Fail($"OBJECTIVES:talk({talk.NpcId})", ActorFailureReason.Navigation,
+                                talkFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjTalkNpcGroup groupTalk:
+                    {
+                        var groupTalkFailure = TalkLeg(actor, opts, questId, 0, groupTalk.NpcGroupId, perception);
+                        if (groupTalkFailure != null)
+                            return Fail($"OBJECTIVES:group-talk({groupTalk.NpcGroupId})", ActorFailureReason.Navigation,
+                                groupTalkFailure, actor, null);
+                        break;
+                    }
+
 
                 default:
                     return Fail($"OBJECTIVES:{act.GetType().Name}", ActorFailureReason.WrongDecision,
@@ -456,12 +493,18 @@ public static class LevelingLoopScenario
         // state before any turn-in is attempted: Ready (report quests) or
         // Completed (auto-complete quests — the advance alone drove them
         // through their reward step).
+        if (actor.Character.Quests?.HasQuestCompleted(questId) == true)
+            return null; // auto-completed during objective events
+
         var advance = actor.AdvanceQuest(questId);
         if (advance.State != ActorLifecycleState.Completed)
         {
             return Fail("OBJECTIVES:advance", ActorFailureReason.StateTransition,
                 $"advance after objectives refused: {advance.Detail}", actor, null);
         }
+
+        if (actor.Character.Quests?.HasQuestCompleted(questId) == true)
+            return null; // auto-completed during advance
 
         var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
         if (quest is { Status: not QuestStatus.Ready and not QuestStatus.Completed })
@@ -518,6 +561,107 @@ public static class LevelingLoopScenario
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// The talk leg: target NPCs resolved DATA-DRIVEN from the act among
+    /// PERCEIVED NPCs (single template matches <paramref name="targetNpcTemplateId"/>,
+    /// group matches <paramref name="npcGroupId"/>). The actor approaches the NPC
+    /// and performs a real Talk contract action (<see cref="IGameplayActor.Talk"/>),
+    /// which emits CSQuestTalkMadePacket and triggers OnTalkMade / OnTalkNpcGroupMade
+    /// on the character's quest events.
+    /// </summary>
+    private static string? TalkLeg(GameplayActor actor, LoopOptions opts, uint questId,
+        uint targetNpcTemplateId, uint npcGroupId, PerceptionSnapshot perception)
+    {
+        uint targetObjId = 0;
+        if (targetNpcTemplateId > 0)
+        {
+            if (perception.NpcObjIdsByTemplate.TryGetValue(targetNpcTemplateId, out var npcs))
+            {
+                targetObjId = npcs;
+            }
+        }
+        else if (npcGroupId > 0)
+        {
+            var character = actor.Character;
+            var observation = actor.Observe();
+            foreach (var objId in observation.NearbyNpcObjIds)
+            {
+                if (character.ParentWorld?.GetNpc(objId) is { } npc &&
+                    QuestManager.Instance.CheckGroupNpc(npcGroupId, npc.TemplateId))
+                {
+                    targetObjId = objId;
+                    break;
+                }
+            }
+        }
+
+        if (targetObjId == 0)
+        {
+            var targetLabel = targetNpcTemplateId > 0
+                ? $"npc template {targetNpcTemplateId}"
+                : $"npc group {npcGroupId}";
+            return $"quest {questId} requires talk with {targetLabel}, but no matching NPC was perceived";
+        }
+
+        var targetNpc = actor.Character.ParentWorld?.GetNpc(targetObjId);
+        if (targetNpc == null)
+            return $"target NPC {targetObjId} not found in world";
+
+        var distance = Vector3.Distance(actor.Character.Transform.World.Position, targetNpc.Transform.World.Position);
+        if (distance > 5f)
+        {
+            var closeIn = DriveRequest(actor, opts,
+                actor.MoveToUnit(targetObjId, opts.TravelSpeed, opts.TravelTimeout));
+            if (closeIn.State != ActorLifecycleState.Completed)
+            {
+                return $"close-in move onto talk NPC {targetObjId} did not complete: {closeIn.State} ({closeIn.Detail ?? "n/a"})";
+            }
+        }
+
+        var talk = actor.Talk(targetObjId);
+        if (talk.State != ActorLifecycleState.Completed)
+        {
+            return $"Talk action with NPC {targetObjId} refused: {talk.Detail}";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Scans the actor's inventory bag for equippable items and attempts to
+    /// equip them via the real <see cref="IGameplayActor.Equip"/> engine path.
+    /// Non-equippable items or occupied slots with higher/equivalent gear are
+    /// handled fail-safe by the engine's CanAccept / Equip rules.
+    /// </summary>
+    private static void EquipUpgrades(GameplayActor actor)
+    {
+        var character = actor.Character;
+        var inventory = character.Inventory;
+        if (inventory?.Bag == null)
+            return;
+
+        foreach (var item in inventory.Bag.Items.ToList())
+        {
+            if (item?.Template == null)
+                continue;
+
+            var allowedSlots = EquipmentContainer.GetAllowedGearSlots(item.Template);
+            if (allowedSlots.Count == 0)
+                continue;
+            if (item.Template.LevelRequirement > character.Level)
+                continue;
+
+            var targetSlot = allowedSlots.FirstOrDefault(s => inventory.Equipment.GetItemBySlot((int)s) == null, allowedSlots[0]);
+            var occupant = inventory.Equipment.GetItemBySlot((int)targetSlot);
+            if (occupant != null && item.Template.Level <= occupant.Template.Level)
+                continue;
+            if (occupant?.TemplateId == item.TemplateId)
+                continue;
+
+            actor.Equip(item.TemplateId);
+        }
     }
 
     /// <summary>
@@ -582,6 +726,24 @@ public static class LevelingLoopScenario
                 continue;
             }
             noTargetRounds = 0;
+
+            // Sustain (vital recovery): if HP < 35%, recover before engaging
+            var maxHp = character.MaxHp > 0 ? character.MaxHp : 1;
+            if ((float)character.Hp / maxHp < 0.35f)
+            {
+                var potion = character.Inventory?.Bag.Items
+                    .FirstOrDefault(i => i?.Template != null && (ItemCategory)i.Template.CategoryId is ItemCategory.Healing_Potion or ItemCategory.Potion or ItemCategory.Food);
+                if (potion != null)
+                {
+                    actor.UseItem(potion.TemplateId);
+                }
+
+                var regenGuard = 0;
+                while ((float)character.Hp / maxHp < 0.8f && regenGuard++ < 10)
+                {
+                    actor.Tick(TimeSpan.FromSeconds(1));
+                }
+            }
 
             var targetRequest = actor.SetTarget(target.ObjId);
             if (targetRequest.State != ActorLifecycleState.Completed)
@@ -664,6 +826,9 @@ public static class LevelingLoopScenario
             var loot = actor.Loot(target.ObjId);
             if (loot.State == ActorLifecycleState.Rejected)
                 Logger.Debug("hunt leg: loot of corpse {ObjId} rejected ({Detail}) — tolerated", target.ObjId, loot.Detail);
+
+            // Auto-equip any upgrades looted from the mob
+            EquipUpgrades(actor);
         }
 
         return (null, ActorFailureReason.None);

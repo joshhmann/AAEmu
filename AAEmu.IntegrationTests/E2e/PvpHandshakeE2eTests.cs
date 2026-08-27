@@ -69,7 +69,7 @@ public class PvpHandshakeE2eTests
     /// group-14 bounding box (precomputed from Data/Worlds/main_world/
     /// npc_spawns.json first-occurrence order, matching the bridge's
     /// FirstOrDefault spawner resolution).</summary>
-    private static readonly uint[] SteppeTeleportNpcCandidates = [1058, 4175, 4181];
+    private static readonly uint[] SteppeTeleportNpcCandidates = [364, 990, 1034];
 
     private const byte ZoneConflictStatePeace = 7; // ZoneConflictType.Peace
 
@@ -161,7 +161,7 @@ public class PvpHandshakeE2eTests
                 SendSetForceAttack(linkA, true);
                 Thread.Sleep(3000); // let the ack + Bloodlust land; drained below
                 InjectUnitAttack(linkA, AttackSkillId, objIdA, objIdB);
-                var homelandLanded = (await AnyDamageFrameOnAsync([linkA, linkB], objIdB, 8000)).DamageSeen;
+                var homelandLanded = (await AwaitDamageAndBuffAsync([linkA, linkB], objIdB, 0, 8000)).DamageSeen;
                 Record("HOMELAND-SHIELD", !homelandLanded,
                     !homelandLanded
                         ? $"aggression attempt at spawn zone key {posA.ZoneId} produced NO combat frames on {BotBName} — " +
@@ -243,8 +243,9 @@ public class PvpHandshakeE2eTests
                     await Task.Delay((int)loginProtectionRemaining);
                 }
                 InjectUnitAttack(linkA, AttackSkillId, objIdA, objIdB);
-                var aggressOutcome = await AnyDamageFrameOnAsync([linkA, linkB], objIdB, 15000);
-                var purpleSeen = AwaitBuffCreatedContaining([linkA, linkB], RetributionBuffId, 12000, out var purpleSource);
+                var aggressOutcome = await AwaitDamageAndBuffAsync([linkA, linkB], objIdB, RetributionBuffId, 15000);
+                var purpleSeen = aggressOutcome.BuffSeen;
+                var purpleSource = aggressOutcome.BuffSource;
 
                 var bloodstainObjId = ProbeBloodstain(bridge);
                 var aggressPassed = aggressOutcome.DamageSeen && purpleSeen && bloodstainObjId != 0;
@@ -279,7 +280,7 @@ public class PvpHandshakeE2eTests
                 DrainAll(linkA);
                 DrainAll(linkB);
                 InjectUnitAttack(linkA, AttackSkillId, objIdA, objIdB);
-                var refusedDamage = !(await AnyDamageFrameOnAsync([linkA, linkB], objIdB, 12000)).DamageSeen;
+                var refusedDamage = !(await AwaitDamageAndBuffAsync([linkA, linkB], objIdB, 0, 12000)).DamageSeen;
                 var bloodstainAfter = ProbeBloodstain(bridge);
 
                 Record("PEACE-BLOCK", refusedDamage,
@@ -397,16 +398,20 @@ public class PvpHandshakeE2eTests
         return false;
     }
 
-    private sealed record DamageOutcome(bool DamageSeen, bool SkillStarted);
+    private sealed record DamageOutcome(bool DamageSeen, bool SkillStarted, bool BuffSeen, string BuffSource);
 
-    /// <summary>Waits for REAL damage evidence on any link:
-    /// SCCombatFirstHitPacket(huId at bc offset 3) matching victimObjId, or an
-    /// SCUnitDamagedPacket at all (variable-offset fields — matched by
-    /// presence). SCSkillFiredPacket is deliberately NOT a success signal: it
-    /// only proves the cast started, and is reported via SkillStarted.</summary>
-    private static async Task<DamageOutcome> AnyDamageFrameOnAsync(BotTcpLink[] links, uint victimObjId, int timeoutMs)
+    /// <summary>Waits for REAL damage and/or buff evidence across links:
+    /// SCCombatFirstHitPacket(vuId at bc offset 0) matching victimObjId,
+    /// SCUnitDamagedPacket(targetId at bc offset 5) matching victimObjId,
+    /// and SCBuffCreatedPacket containing buffTemplateId.</summary>
+    private static async Task<DamageOutcome> AwaitDamageAndBuffAsync(BotTcpLink[] links, uint victimObjId, uint buffTemplateId, int timeoutMs)
     {
         var skillStartedSeen = false;
+        var damageSeen = false;
+        var buffSeen = false;
+        string buffSource = null;
+        var buffPattern = buffTemplateId > 0 ? BitConverter.GetBytes(buffTemplateId) : null;
+
         var deadline = Environment.TickCount64 + timeoutMs;
         while (Environment.TickCount64 < deadline)
         {
@@ -417,19 +422,29 @@ public class PvpHandshakeE2eTests
                     if (frame.Type == SCOffsets.SCSkillFiredPacket)
                         skillStartedSeen = true;
 
+                    if (buffPattern != null && frame.Type == SCOffsets.SCBuffCreatedPacket && frame.Body.Length >= buffPattern.Length && IndexOf(frame.Body, buffPattern) >= 0)
+                    {
+                        buffSeen = true;
+                        buffSource = link.Name;
+                    }
+
                     switch (frame.Type)
                     {
-                        case SCOffsets.SCCombatFirstHitPacket when frame.Body.Length >= 6 && ReadBc(frame.Body, 3) == victimObjId:
-                        case SCOffsets.SCUnitDamagedPacket:
-                            return new DamageOutcome(true, true);
+                        case SCOffsets.SCCombatFirstHitPacket when frame.Body.Length >= 6 && ReadBc(frame.Body, 0) == victimObjId:
+                        case SCOffsets.SCUnitDamagedPacket when frame.Body.Length >= 17 && ReadBc(frame.Body, 14) == victimObjId:
+                            damageSeen = true;
+                            break;
                     }
                 }
             }
 
+            if (damageSeen && (buffPattern == null || buffSeen))
+                break;
+
             await Task.Delay(250);
         }
 
-        return new DamageOutcome(false, skillStartedSeen);
+        return new DamageOutcome(damageSeen, skillStartedSeen, buffSeen, buffSource);
     }
 
     private static int IndexOf(byte[] haystack, byte[] needle)

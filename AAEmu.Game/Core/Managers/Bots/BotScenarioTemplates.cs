@@ -401,6 +401,28 @@ public static class BotScenarioTemplates
         }
     };
 
+    /// <summary>
+    /// PB-002 Autonomous Leveling Loop: perception-driven autonomous quest progression chain
+    /// (accept → pursue → auto-equip → turn-in) with sustain recovery; H stays UNKNOWN.
+    /// </summary>
+    public static BotScenarioTemplate LevelingLoop { get; } = new()
+    {
+        Name = LevelingLoopScenario.ScenarioName,
+        Description = "PB-002 Autonomous Leveling Loop: perception-driven autonomous quest progression chain (accept → pursue → auto-equip → turn-in) with sustain recovery; H stays UNKNOWN.",
+        Race = Race.Nuian,
+        Gender = Gender.Male,
+        Level = 1,
+        AbilityTrees = [AbilityType.Fight],
+        ProvisionWithAppearance = true,
+        Drive = new QuestDriveSpec
+        {
+            QuestId = 0,
+            AcceptorType = nameof(QuestAcceptorType.Npc),
+            AcceptorId = 0,
+            Stages = []
+        }
+    };
+
     /// <summary>The library — templates by name.</summary>
     public static IReadOnlyDictionary<string, BotScenarioTemplate> Library { get; } =
         new Dictionary<string, BotScenarioTemplate>(StringComparer.Ordinal)
@@ -413,7 +435,8 @@ public static class BotScenarioTemplates
             [M1M2MinSlice.Name] = M1M2MinSlice,
             [DepositWithdrawCycle.Name] = DepositWithdrawCycle,
             [M3aM4Replay.Name] = M3aM4Replay,
-            [AdventurerSpikeFox.Name] = AdventurerSpikeFox
+            [AdventurerSpikeFox.Name] = AdventurerSpikeFox,
+            [LevelingLoop.Name] = LevelingLoop
         };
 
     public static BotScenarioTemplate? Get(string name)

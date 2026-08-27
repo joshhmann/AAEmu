@@ -165,6 +165,11 @@ public static class BotScenarioRunner
         if (template.Name == AdventurerSpikeScenario.ScenarioName)
             return AdventurerSpikeScenario.Run(character, world);
 
+        // PB-002 Autonomous Leveling Loop — perception-driven autonomous quest
+        // progression chain (accept → pursue → auto-equip → turn-in).
+        if (template.Name == LevelingLoopScenario.ScenarioName)
+            return LevelingLoopScenario.RunAsScenario(character);
+
         var rigNotes = new List<string>();
         var actor = new GameplayActor(character);
         var controller = new PlayerBotController(character);

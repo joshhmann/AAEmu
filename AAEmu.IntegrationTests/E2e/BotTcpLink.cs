@@ -204,11 +204,15 @@ public sealed class BotTcpLink : IDisposable
                 {
                     if (_isGame)
                     {
-                        var consumed = ParseGameFrame(buf, start, end, out var gType, out var gBody);
+                        var parsedList = new List<(ushort Type, byte[] Body)>();
+                        var consumed = ParseGameFrames(buf, start, end, parsedList);
                         if (consumed < 0)
                             break;
-                        _frames.Enqueue((gType, gBody));
-                        DumpWire("RX", $"{Name}[0x{gType:X3}]", gBody);
+                        foreach (var (gType, gBody) in parsedList)
+                        {
+                            _frames.Enqueue((gType, gBody));
+                            DumpWire("RX", $"{Name}[0x{gType:X3}]", gBody);
+                        }
                         start += consumed;
                     }
                     else
@@ -257,11 +261,10 @@ public sealed class BotTcpLink : IDisposable
         return 2 + len;
     }
 
-    /// <summary>Parses one game frame; returns bytes consumed or -1 when incomplete.</summary>
-    public static int ParseGameFrame(byte[] buf, int start, int end, out ushort type, out byte[] body)
+    /// <summary>Parses game frame(s); returns bytes consumed or -1 when incomplete.
+    /// Handles standard Level 1/2 frames and decompresses Level 4 (CompressedGamePackets) frames.</summary>
+    public static int ParseGameFrames(byte[] buf, int start, int end, List<(ushort Type, byte[] Body)> outputFrames)
     {
-        type = 0;
-        body = null;
         if (end - start < 4)
             return -1;
 
@@ -270,14 +273,66 @@ public sealed class BotTcpLink : IDisposable
             return -1;
 
         var level = buf[start + 3];
+        if (level == 4)
+        {
+            // CompressedGamePackets: [len u16][0xdd][level 4][packetCount u16][compressed deflate bytes]
+            if (len >= 4)
+            {
+                var compressedLen = len - 4;
+                if (compressedLen > 0)
+                {
+                    try
+                    {
+                        using var input = new MemoryStream(buf, start + 6, compressedLen);
+                        using var output = new MemoryStream();
+                        using (var deflate = new System.IO.Compression.DeflateStream(input, System.IO.Compression.CompressionMode.Decompress))
+                        {
+                            deflate.CopyTo(output);
+                        }
+                        var decompressed = output.ToArray();
+                        if (decompressed.Length >= 4)
+                        {
+                            // Decompressed stream contains: [ushort 0][ushort TypeId][packet payload]
+                            var innerType = BitConverter.ToUInt16(decompressed, 2);
+                            var innerBody = new byte[decompressed.Length - 4];
+                            Buffer.BlockCopy(decompressed, 4, innerBody, 0, innerBody.Length);
+                            outputFrames.Add((innerType, innerBody));
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore decompression failures
+                    }
+                }
+            }
+            return 2 + len;
+        }
+
         var header = level == 1 ? 6 : 4; // 0xdd + level + (hash+count for lvl1) + type
         if (len < header)
             return -1;
 
-        type = BitConverter.ToUInt16(buf, start + 2 + header - 2);
-        body = new byte[len - header];
+        var type = BitConverter.ToUInt16(buf, start + 2 + header - 2);
+        var body = new byte[len - header];
         Buffer.BlockCopy(buf, start + 2 + header, body, 0, len - header);
+        outputFrames.Add((type, body));
         return 2 + len;
+    }
+
+    /// <summary>Parses one game frame; returns bytes consumed or -1 when incomplete.</summary>
+    public static int ParseGameFrame(byte[] buf, int start, int end, out ushort type, out byte[] body)
+    {
+        var list = new List<(ushort, byte[])>();
+        var consumed = ParseGameFrames(buf, start, end, list);
+        if (consumed > 0 && list.Count > 0)
+        {
+            type = list[0].Item1;
+            body = list[0].Item2;
+            return consumed;
+        }
+        type = 0;
+        body = null;
+        return consumed;
     }
 
     public void Dispose() => Close();

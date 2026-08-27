@@ -347,6 +347,18 @@ public class BotScenarioRigTests
         await Assert.That(session.Character.Quests.HasQuestCompleted(168), "quest must not complete").IsFalse();
     }
 
+    /// <summary>
+    /// PB-002 Autonomous Leveling Loop template in the library is registered and can run.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_TemplateLibrary_Registered()
+    {
+        var template = BotScenarioTemplates.Get(LevelingLoopScenario.ScenarioName);
+        await Assert.That(template).IsNotNull();
+        await Assert.That(template!.Name).IsEqualTo(LevelingLoopScenario.ScenarioName);
+        await Assert.That(BotScenarioTemplates.Library.ContainsKey(LevelingLoopScenario.ScenarioName)).IsTrue();
+    }
+
     #endregion
 
     #region Actor quest actions (contract surface)

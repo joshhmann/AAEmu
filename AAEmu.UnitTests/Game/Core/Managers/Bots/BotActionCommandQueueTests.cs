@@ -470,4 +470,35 @@ public class BotActionCommandQueueTests
         await Assert.That(GameplayActorTestRig.BagCount(rig.Actor, GameplayActorTestRig.CraftProductTemplateId)).IsEqualTo(1);
         await Assert.That(GameplayActorTestRig.BagCount(rig.Actor, GameplayActorTestRig.CraftMaterialTemplateId)).IsEqualTo(0);
     }
+
+    [Test]
+    public async Task Navigate_EnqueueThenDrain_ExecutesThroughActorNavigateTo()
+    {
+        var rig = CreateRig();
+        var destination = new Vector3(4, 0, 0);
+
+        var result = rig.Queue.Enqueue("api-bot",
+            new BotActionSpec(BotActionKind.Navigate, Destination: destination, Payload: new MoveActionParams(2f)));
+        rig.Queue.DrainCommands();
+
+        await Assert.That(rig.Queue.TryGetSnapshot(result.TraceId, out var snap)).IsTrue();
+        await Assert.That(snap.State).IsEqualTo(nameof(ActorLifecycleState.Running));
+        await Assert.That(snap.Action).IsEqualTo(nameof(BotActionKind.Navigate));
+
+        // Step through scheduler executor
+        TimeSpan? next = TimeSpan.Zero;
+        var guard = 0;
+        while (next is not null && guard++ < 100)
+        {
+            rig.Clock.Advance(TimeSpan.FromMilliseconds(100));
+            next = await rig.Executor.StepAsync(rig.Runtime, CancellationToken.None);
+        }
+
+        rig.Queue.DrainCommands();
+
+        await Assert.That(rig.Queue.TryGetSnapshot(result.TraceId, out var done)).IsTrue();
+        await Assert.That(done.State).IsEqualTo(nameof(ActorLifecycleState.Completed));
+        await Assert.That(done.AuditJson).IsNotNull();
+        await Assert.That(Math.Abs(rig.Actor.Character.Transform.World.Position.X - 4f) <= 0.5f).IsTrue();
+    }
 }

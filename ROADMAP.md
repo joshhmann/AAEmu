@@ -16,9 +16,10 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
-**Current branch record (2026-08-26 recovery):** `develop @ 241d3e34d`
-(= `origin/develop`). Recovery status is tracked below; milestone shape and
-historical evidence are unchanged.
+**Current branch record (2026-08-27 MCP checkpoint):** `develop @ 7e109d550`
+(= `origin/develop`). MCP coverage merge `8a22dcb4` and the report-only
+live-smoke checkpoint are recorded below; milestone shape and historical
+evidence are unchanged.
 
 ## Three phases
 
@@ -1156,7 +1157,29 @@ query (no packet fabrication).
 - E11 — M5.3 exit scenario (observe → move → stop → target → cast) completes
   with a machine-readable trace → REQ-M5.3-11 (carries REQ-M5-14).
 
+### MCP workflow integration (2026-08-27)
+
+MCP sidecar tools and the management gateway are client-neutral. The coverage
+merge `8a22dcb4` records 33 `BotControlActionMcp` tests passing and a passing
+19-tool stdio protocol smoke. This is contract/stdio coverage, not actor
+lifecycle evidence.
+
+The real MCP live smoke is **BLOCKED**:
+`scorecard-explorations/generated/mcp-live-smoke-2026-08-27.md` (report-only
+commit `7e109d550`) records that isolated Game exited before WebApi because
+client-world/compact assets were missing. No actor lifecycle or trace evidence
+exists.
+
+Coverage verified no authenticated WebApi routes for `DiscoverQuests`, `Talk`,
+`InteractWith`, `Equip`, `Plant`, `Craft`, party, and related newer actions.
+They remain deferred; do not claim that newer actor actions are MCP-exposed.
+
+**Next step:** rerun real MCP smoke after a valid asset-complete Game stack is
+available, then use `observe → action → action_status → trace` for a real
+scenario.
+
 ---
+
 
 ## M6 — Deterministic playerbot framework
 
@@ -1887,7 +1910,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
     deleted: remove task + config stubs (clean cutover).
 
-**Recovery queue status (2026-08-26; develop @ `241d3e34d`):**
+**Recovery queue status (2026-08-27; develop @ `7e109d550`):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and
@@ -1896,6 +1919,13 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
   (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution
   present; first application and Refresh broadcasts); live non-immune
   damage-frame proof remains pending.
+- **MCP workflow integration:** client-neutral sidecar/gateway contract
+  coverage is recorded by merge `8a22dcb4` (33 `BotControlActionMcp` tests and
+  19-tool stdio smoke pass). Real live smoke is **BLOCKED** because isolated
+  Game exited before WebApi on missing client-world/compact assets; no actor
+  lifecycle/trace evidence exists. No authenticated WebApi routes were found
+  for newer actions such as `DiscoverQuests`, `Talk`, `InteractWith`, `Equip`,
+  `Plant`, `Craft`, or party; these remain deferred.
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker; the restart, instance-faithful

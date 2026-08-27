@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers.World;
@@ -271,6 +271,7 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
             LoadDetailQuestActTemplates(connection);
             LoadQuestItemGroups(connection);
             LoadQuestMonsterNpcs(connection);
+            LoadNpcGroupMembers(connection);
 
             BuildKillAcceptQuestIndex();
             UpdateQuestComponentActs();
@@ -376,6 +377,29 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
             else
                 npcs = npcIdList;
             npcs.Add(npcId);
+        }
+    }
+
+    /// <summary>
+    /// Load NPC group members from npc_group_members table
+    /// </summary>
+    private void LoadNpcGroupMembers(SqliteConnection connection)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT npc_group_id, npc_id FROM npc_group_members";
+        command.Prepare();
+        using var reader = new SQLiteWrapperReader(command.ExecuteReader());
+        while (reader.Read())
+        {
+            var groupId = reader.GetUInt32("npc_group_id");
+            var npcId = reader.GetUInt32("npc_id");
+            if (!_groupNpcs.TryGetValue(groupId, out var npcs))
+            {
+                npcs = [];
+                _groupNpcs.Add(groupId, npcs);
+            }
+            if (!npcs.Contains(npcId))
+                npcs.Add(npcId);
         }
     }
 

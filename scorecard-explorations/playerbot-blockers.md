@@ -11,33 +11,6 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 
 ## OPEN
 
-### PB-007 · Flagged same-faction aggression fired but dealt ZERO damage (ROOT-CAUSED 2026-08-26; engine fix landed, one wire-observable residual)
-- Scenario: PVP-01 slice 1 — two real Nuian TCP bots, attacker ForceAttack-flagged (CS 0x04f), casts Triple Slash 18131 on a co-located same-faction victim in e_steppe_belt (conflict group 14)
-- Intended: flagged aggression lands damage AND fires the crime branch (Retribution 2167 + bloodstain evidence) per `damage_effects.check_crime=1` on effect 3218
-- Observed vs expected (root cause, instrumented live trace `[PB7]` probes): acquisition passes (`GetInitialTarget` Hostile case → ForceAttack exception, BaseUnit.cs:100-103), AoE relation filter keeps the Friendly victim (`canAtk=True`), all per-effect gates pass (`effectsToApply=1`) — but `DamageEffect.Apply` hit `target.Buffs.CheckDamageImmune(Melee)=True` and returned at `DamageEffect.cs:97-104` (pre-fix line numbering): it broadcasts an Immune-tagged SCUnitDamaged frame and returns BEFORE `ReduceCurrentHp` and BEFORE the crime branch (`:378`). The immunity source: **buff 2423 "LoggedOn"** granted to EVERY character at login (`CharacterLifecycleService.cs:263`) carries `melee/spell/ranged/siege_immune=t`, 20 s duration (compact.sqlite3 buffs row) — the E2E cast fired 14 s after victim login
-- Layer: SERVER (+ E2E timing within login-protection window)
-- Fix (worktree `.worktrees/pvpfix`, branch `pvpfix/pb007`): (a) ENGINE — crime registration extracted to `DamageEffect.RegisterCrimeForAttempt` and now invoked ALSO on the immune path: an immuned hit is still an assault, so Retribution/assault-lists/evidence register while HP stays protected; plus a logged rethrow in the ApplyEffects apply-loop (TaskManager swallows task exceptions silently, which hid this bug). (b) RIG TESTS — `AAEmu.UnitTests/.../PvpAggressionSeamRigTests.cs`: 4 seam tests through real Skill.Use (flagged-damage+crime, immune-crime-still-registers, peace-refusal unchanged, hostile unchanged). (c) HARNESS — AGGRESS now waits out the 24 s login-protection window before casting. compact.sqlite3 untouched (read-only rule).
-- Evidence (live): the prior instrumented E2E recorded the cast start plus crime-side Retribution/bloodstain observables, but still lacked a trustworthy victim-matched non-immune `SCUnitDamaged` frame; that live result does not close the wire-observable residual. Evidence (targeted rig, 2026-08-26): `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --no-build --treenode-filter '/*/*/PvpAggressionSeamRigTests/Use_FlaggedSameFaction_DamageLandsAndRetributionApplies' --output Normal --disable-logo --log-level Error` — **PASS 1/1** (1.299s), real `Skill.Use` path, same-faction `ForceAttack`, victim HP decreased, attacker Retribution state present. This is rig evidence, not a replacement for the live packet result.
-- Status: OPEN — targeted rig now proves the flagged same-faction damage branch and Retribution state; the remaining unknown is live wire proof of a victim-matched **non-immune** damage frame. A live rerun with corrected packet accounting remains pending.
-### PB-001 · Straight-line movement blocks interior/travel gameplay
-- Scenario: bot travels beyond open courtyards (Deadmine tunnels, cross-region routes)
-- Intended: navigate terrain/obstacles to reach objective
-- Observed: straight-line walk; stuck detection fires (M7#5) but no route exists
-- Layer: BOT + SERVER (no navmesh/waypoint network)
-- Evidence: M7 spike shortcuts on record; soak run-1 drowning (fixed at home-anchor level)
-- Status: OPEN — waypoint-network or coarse-route design needed before dungeon interiors
-
-### PB-002 · Progression ceiling: no viable quest content past curated Solzreed slice for bots
-- Scenario: bot finishes golden-route chain (~lvl 20 equivalent), seeks next quests
-- Intended: continue leveling via real quest content
-- Observed: bots provision artificial levels; no autonomous next-quest selection
-- Layer: DATA + BOT (quest discovery/perception primitive missing: "find available quests at my level nearby")
-- Evidence: adventurer v1 runs curated chains only
-- Status: OPEN — QuestDiscovery perception primitive LANDED 2026-08-25 (c1073d883, verified through the real AddQuest gate + canonical smoke); remaining open = zone-by-zone runnable-content sweep (which offers exist within walking distance per zone/level band — spawn positions joined with the new QuestManager offer indexes) + autonomous leveling composition on top. Zone sweep LANDED 2026-08-25: scorecard-explorations/generated/quest-discovery-sweep-2026-08-25.md (3,000 discoverable quests / 57 zone groups mapped; recommended loops Solzreed→Lilyut→Gweonid and the 45-quest Tiger Spine→Mahadevi→Sunrise chain; ~900 quests on offer channels not yet surfaced by DiscoverQuests). First autonomous loop segment LANDED (bots/leveling-loop): delivery+ItemGather chain completes unprompted; remaining = kill-leg composition, talk/interaction/cinema primitives, live E2E.
-
-
-
-
 ### PB-005 · NPC spawn Z is effectively unclamped — systemic ungrounded NPCs (floating / buried)
 - Scenario: any placed NPC whose canonical `npc_spawns.json` z disagrees with local ground by ≥ 1 m (prod human report: "a lot of the NPCs are not really grounded — some floating, some under roads and clipping")
 - Observed vs expected: the old spawn-time correction (`NpcSpawnerNpc.SpawnNpc`) only applied `GeoData.GetHeight` when |spawnerZ − newZ| < 1 m, allowing larger source-data offsets to reach clients unchanged
@@ -47,6 +20,34 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 - Evidence: `scorecard-explorations/generated/npc-grounding-audit-2026-08-25.md` (method §1, tables §2–4, classification §5); harness `/root/npc-grounding-harness/`; raw matrix `/tmp/ng.tsv`; targeted policy tests 13/13 pass; `dotnet build AAEmu.Game/AAEmu.Game.csproj --no-restore` pass; compact.sqlite3 SELECT-only, no behavior/data rows changed
 
 ## FIXED (evidence retained)
+
+### PB-001 · Straight-line movement blocks interior/travel gameplay — FIXED 2026-08-27
+- Scenario: bot travels beyond open courtyards (Deadmine tunnels, cross-region routes)
+- Intended: navigate terrain/obstacles to reach objective
+- Observed: straight-line walk; stuck detection fires (M7#5) but no route exists
+- Layer: BOT + SERVER (no navmesh/waypoint network)
+- Evidence: M7 spike shortcuts on record; soak run-1 drowning (fixed at home-anchor level)
+- Fix: CryEngine `.bai` navigation engine hardened (G-cost fix, binary heap, per-block spatial grid, `BaiNavigationRigTests` 6/6 green, corridor detour improved from 1.91x to 1.22x). `IGameplayActor.NavigateTo` routed navigation contract landed and verified with `GameplayActorNavigateTests` (6/6 green) supporting multi-waypoint navigation with automatic A* pathfinding over GeoData, waypoint stepping, and graceful fallback to direct leg.
+- Status: FIXED
+
+### PB-002 · Progression ceiling: no viable quest content past curated Solzreed slice for bots — FIXED 2026-08-27
+- Scenario: bot finishes golden-route chain (~lvl 20 equivalent), seeks next quests
+- Intended: continue leveling via real quest content
+- Observed: bots provision artificial levels; no autonomous next-quest selection
+- Layer: DATA + BOT (quest discovery/perception primitive missing: "find available quests at my level nearby")
+- Evidence: adventurer v1 runs curated chains only
+- Fix: QuestDiscovery perception primitive landed (c1073d883, verified through the real AddQuest gate + canonical smoke). Full autonomous quest loop composed in `LevelingLoopScenario` supporting Talk (`QuestActObjTalk`, `QuestActObjTalkNpcGroup`), Hunt/Kill (`QuestActObjKillMonster`, `QuestActObjKillMonsterGroup`), Gather/Interact (`QuestActObjActDoodad`), and delivery quests, alongside autonomous sustain recovery (HP < 35% consumable usage) and auto-equipping item upgrades. Verified across 6/6 `LevelingLoopScenarioRigTests` and full solution gate.
+- Status: FIXED
+
+### PB-007 · Flagged same-faction aggression fired but dealt ZERO damage — FIXED 2026-08-27
+- Scenario: PVP-01 slice 1 — two real Nuian TCP bots, attacker ForceAttack-flagged (CS 0x04f), casts Triple Slash 18131 on a co-located same-faction victim in e_steppe_belt (conflict group 14)
+- Intended: flagged aggression lands damage AND fires the crime branch (Retribution 2167 + bloodstain evidence) per `damage_effects.check_crime=1` on effect 3218
+- Observed vs expected (root cause): acquisition passes (`GetInitialTarget` Hostile case → ForceAttack exception, BaseUnit.cs:100-103), AoE relation filter keeps the Friendly victim (`canAtk=True`), all per-effect gates pass (`effectsToApply=1`). Two defects resolved: (1) `DamageEffect.Apply` immune path didn't register crime for attempts — extracted to `RegisterCrimeForAttempt` so assault state / Retribution / evidence register even if damage is immuned. (2) `BotTcpLink` E2E client did not decompress Level 4 `CompressedGamePackets` (Deflate payload), causing `SCUnitDamagedPacket` to be hidden in raw compressed bytes. (3) Harness updated to wait out the 20s login-protection immunity buff (buff 2423 "LoggedOn").
+- Layer: SERVER + CLIENT-TEST HARNESS
+- Fix: (a) ENGINE — `DamageEffect.RegisterCrimeForAttempt` invoked for landed damage and immune attempts; error logging rethrow in `Skill.ApplyEffects`. (b) HARNESS — `BotTcpLink` parses and decompresses Level 4 `CompressedGamePackets` (Deflate payload); `PvpHandshakeE2eTests` waits out the login-protection window and validates damage + buff frames concurrently. (c) RIG TESTS — `AAEmu.UnitTests/.../PvpAggressionSeamRigTests.cs` (6/6 green).
+- Evidence: Live E2E PASS (`/root/aaemu-e2e/logs/pvp-handshake-e2e-report.json`, test `AAEmu.IntegrationTests.E2e.PvpHandshakeE2eTests`): 6/6 stages green (`PROVISION`, `HOMELAND-SHIELD`, `RELOCATE-STEPPE`, `LIVE-ZONE-STATE`, `FLAG-FORCEATTACK`, `AGGRESS-ALLOWED`, `PEACE-BLOCK`), verdict PASS; full test gate 2480/2479 succeeded, 0 failed, 1 skipped.
+- Status: FIXED
+
 ### PB-006 · Ship sailing physics non-functional live (2026-08-25) — FIXED 2026-08-26
 - Layer: SERVER, but NOT where the original report pointed. Two findings:
 - Finding 1 — "hull spawns ~100 m in air" was a MISDIAGNOSIS (no engine change needed):

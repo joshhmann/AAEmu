@@ -95,6 +95,7 @@ public class LevelingLoopScenarioRigTests
     /// </summary>
     private uint SpawnGatherSource(HeadlessSession session, Vector3 position)
     {
+        GameplayActorTestRig.SeedItemTemplate(LevelingLoopScenario.SeedGatherItemTemplateId);
         GameplayActorTestRig.SeedDoodadLootInteraction(DollLootGroupId, DollLootFuncId,
             LevelingLoopScenario.SeedGatherItemTemplateId);
 
@@ -256,15 +257,63 @@ public class LevelingLoopScenarioRigTests
     public async Task LevelingLoop_UnsupportedObjectiveType_FailsClosedNamingMissingPrimitive()
     {
         PlayerbotPilotRig.SeedPilotSingletons();
-        GameplayActorTestRig.SeedItemTemplate(Quest5650SupplyItemId); // 5650's accept-supply grant
+        const uint supplyItemId = 7738; // 252's accept-supply grant
+        GameplayActorTestRig.SeedItemTemplate(supplyItemId);
         var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-gap");
         var character = session.Character;
-        character.Level = 50; // quest 5650 start-component gate [50..∞]
+        character.Level = 3; // quest 252 start-component gate [3..∞]
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(251, true); // kind-31 prereq of 252
+
+        SpawnHubNpc(session, 7653, new Vector3(1, 0, 0)); // canonical offerer of 252
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 10,
+            MaxLinks = 1
+        });
+
+        // FAIL-CLOSED: the item-use objective is not honestly achievable
+        // with the current primitives, so the loop stops and NAMES the gap.
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage.StartsWith("OBJECTIVES")).IsTrue();
+        await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.WrongDecision);
+        await Assert.That(result.FailReason.Contains("QuestActObjItemUse")).IsTrue();
+        await Assert.That(result.FailReason.Contains("missing item-use pursuit composition")).IsTrue();
+
+        // No fake progress: the quest was accepted (real engine state) but
+        // never advanced, turned in, or dropped.
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(252)).IsTrue();
+        await Assert.That(result.TraceRecords.Count(r => r.Action == ActorActionType.AcceptQuest)).IsEqualTo(1);
+        await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
+            or ActorActionType.AutoTurnIn)).IsFalse();
+        await Assert.That(character.Quests.HasQuestCompleted(252)).IsFalse();
+    }
+
+    /// <summary>
+    /// E-TALK-1: composed GROUP TALK objective — canonical quest 5650
+    /// "밤의 이야기꾼" (offered by NPC 1313, Level ≥ 50 + prereq 5552;
+    /// Progress = QuestActObjTalkNpcGroup act 33756 → group 528 containing
+    /// NPCs [13041, 13064, ...]; auto-completes). The bot perceives the offer,
+    /// accepts, approaches perceived target NPC 13041, talks via IGameplayActor.Talk,
+    /// and auto-completes unprompted through the real engine path.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_SeededGroupTalk_AutoCompletesWithTalkPursuit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        GameplayActorTestRig.SeedItemTemplate(Quest5650SupplyItemId); // 5650's accept-supply grant
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-group-talk");
+        var character = session.Character;
+        character.Level = 50; // quest 5650 gate ≥ 50
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
         character.Quests!.SetCompletedQuestFlag(5552, true); // kind-31 prereq of 5650
 
-        SpawnHubNpc(session, 1313, new Vector3(1, 0, 0)); // canonical offerer of 5650
+        SpawnHubNpc(session, 1313, new Vector3(1, 0, 0));   // offerer
+        SpawnHubNpc(session, 13041, new Vector3(3, 0, 0));  // member of group 528
 
         var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
         {
@@ -273,21 +322,22 @@ public class LevelingLoopScenarioRigTests
             MaxLinks = 1
         });
 
-        // FAIL-CLOSED: the talk-group objective is not honestly achievable
-        // with the current primitives, so the loop stops and NAMES the gap.
-        await Assert.That(result.Passed).IsFalse();
-        await Assert.That(result.FailStage.StartsWith("OBJECTIVES")).IsTrue();
-        await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.WrongDecision);
-        await Assert.That(result.FailReason.Contains("QuestActObjTalkNpcGroup")).IsTrue();
-        await Assert.That(result.FailReason.Contains("talk pursuit uncomposed")).IsTrue();
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
 
-        // No fake progress: the quest was accepted (real engine state) but
-        // never advanced, turned in, or dropped.
-        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(5650)).IsTrue();
-        await Assert.That(result.TraceRecords.Count(r => r.Action == ActorActionType.AcceptQuest)).IsEqualTo(1);
-        await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
-            or ActorActionType.AutoTurnIn)).IsFalse();
-        await Assert.That(character.Quests.HasQuestCompleted(5650)).IsFalse();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(5650u);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjTalkNpcGroup));
+        await Assert.That(character.Quests!.HasQuestCompleted(5650u)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(5650u)).IsFalse();
+
+        // Audit subsequence: accept 5650 → Talk → AutoTurnIn/Advance
+        var trace = result.TraceRecords;
+        var accept5650 = IndexOfFirst(trace, ActorActionType.AcceptQuest, 5650u);
+        var talk = FirstAtLeast(trace, ActorActionType.Talk, accept5650 + 1);
+        await Assert.That(accept5650).IsGreaterThanOrEqualTo(0);
+        await Assert.That(talk).IsGreaterThan(accept5650);
     }
 
     /// <summary>

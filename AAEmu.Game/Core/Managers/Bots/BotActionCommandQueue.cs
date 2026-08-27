@@ -38,7 +38,10 @@ public enum BotActionKind : byte
     Interrupt = 16,
 
     /// <summary>One engine craft step (M5.1 economy surface — workbench in the payload).</summary>
-    Craft = 17
+    Craft = 17,
+
+    /// <summary>Routed navigation via navmesh A* with waypoint stepping (PB-001).</summary>
+    Navigate = 18
 }
 
 /// <summary>Move speed for Move/MoveToUnit commands.</summary>
@@ -447,6 +450,14 @@ public sealed class BotActionCommandQueue
                 return (actor.MoveTo(destination, speed, spec.Timeout, key), null);
             }
 
+            case BotActionKind.Navigate:
+            {
+                var speed = spec.Payload is MoveActionParams m ? m.Speed : 5f;
+                var destination = spec.Destination
+                    ?? throw new ArgumentException("navigate requires a destination (x/y/z)");
+                return (actor.NavigateTo(destination, speed, spec.Timeout, key), null);
+            }
+
             case BotActionKind.MoveToUnit:
             {
                 var speed = spec.Payload is MoveActionParams m ? m.Speed : 5f;
@@ -658,7 +669,7 @@ public sealed class BotActionCommandQueue
         => kind switch
         {
             BotActionKind.Observe => ActorActionType.Observe,
-            BotActionKind.Move or BotActionKind.MoveToUnit => ActorActionType.Move,
+            BotActionKind.Move or BotActionKind.MoveToUnit or BotActionKind.Navigate => ActorActionType.Move,
             BotActionKind.Stop => ActorActionType.Stop,
             BotActionKind.Target => ActorActionType.Target,
             BotActionKind.Cast => ActorActionType.Cast,
