@@ -516,6 +516,8 @@ public class BotActionCommandQueueTests
             (BotActionKind.WithdrawMoney, 0u, new MoneyActionParams(100)),
             (BotActionKind.DepositItem, 0xDEADu, null),
             (BotActionKind.WithdrawItem, 0xDEADu, null),
+            (BotActionKind.Plant, 0xDEADu, new PlantActionParams()),
+            (BotActionKind.Harvest, 0xDEADu, null),
         };
 
         foreach (var (kind, targetId, payload) in cases)

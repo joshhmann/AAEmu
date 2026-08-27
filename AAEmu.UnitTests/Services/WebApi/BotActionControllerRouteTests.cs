@@ -20,6 +20,8 @@ public sealed class BotActionControllerRouteTests
         ("/api/actors/withdraw_money", "WithdrawMoney", "{\"bot\":\"McpBot01\",\"amount\":100}", "amount"),
         ("/api/actors/deposit_item", "DepositItem", "{\"bot\":\"McpBot01\",\"itemTemplateId\":42}", "itemTemplateId"),
         ("/api/actors/withdraw_item", "WithdrawItem", "{\"bot\":\"McpBot01\",\"itemTemplateId\":42}", "itemTemplateId"),
+        ("/api/actors/plant", "Plant", "{\"bot\":\"McpBot01\",\"seedItemTemplateId\":42,\"x\":1,\"y\":2,\"z\":3}", "seedItemTemplateId"),
+        ("/api/actors/harvest", "Harvest", "{\"bot\":\"McpBot01\",\"doodadObjId\":42}", "doodadObjId"),
     ];
 
     private string? _oldEnabled;
@@ -74,6 +76,7 @@ public sealed class BotActionControllerRouteTests
                 "doodadObjId" => body.Replace("\"doodadObjId\":42", string.Empty),
                 "npcObjId" => body.Replace("\"npcObjId\":42", string.Empty),
                 "itemTemplateId" => body.Replace("\"itemTemplateId\":42", string.Empty),
+                "seedItemTemplateId" => body.Replace("\"seedItemTemplateId\":42", string.Empty),
                 "amount" => body.Replace("\"amount\":100", string.Empty),
                 _ => throw new InvalidOperationException(missingField),
             };

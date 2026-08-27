@@ -30,13 +30,13 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 | `Dismount` | `POST /api/actors/dismount` | `dismount` | `Call_dismount_PostsOptionalMate`; generic exact mapping |
 | `BoardVehicle` | — | — | Deferred: no actor WebApi route |
 | `UnboardVehicle` | — | — | Deferred: no actor WebApi route |
-| `Harvest` | — | — | Deferred: no actor WebApi route |
+| `Harvest` | `POST /api/actors/harvest` | `harvest` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `Craft` | — | — | Deferred: no actor WebApi route |
 | `DriveVehicle` | — | — | Deferred: no actor WebApi route |
 | `PackPickup` | — | — | Deferred: no actor WebApi route |
 | `PutDown` | — | — | Deferred: no actor WebApi route |
 | `LoadPackOntoVehicle` | — | — | Deferred: no actor WebApi route |
-| `Plant` | — | — | Deferred: no actor WebApi route |
+| `Plant` | `POST /api/actors/plant` | `plant` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `BuildHouse` | — | — | Deferred: no actor WebApi route |
 | `DepositMoney` | `POST /api/actors/deposit_money` | `deposit_money` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `WithdrawMoney` | `POST /api/actors/withdraw_money` | `withdraw_money` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |

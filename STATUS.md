@@ -46,13 +46,14 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   33-test contract coverage and 19-tool stdio smoke; the subsequent 24-tool
   expansion added quest/doodad/talk/equip actor routes.
 
-- **Deposit/Withdraw actor routes and MCP tools:** added four matching routes:
+- **Deposit/Withdraw & Plant/Harvest actor routes and MCP tools:** added six matching routes:
   `POST /api/actors/deposit_money`, `POST /api/actors/withdraw_money`,
-  `POST /api/actors/deposit_item`, and `POST /api/actors/withdraw_item`.
-- **MCP catalog:** now **28 tools**. Focused validation passed:
+  `POST /api/actors/deposit_item`, `POST /api/actors/withdraw_item`,
+  `POST /api/actors/plant`, and `POST /api/actors/harvest`.
+- **MCP catalog:** now **30 tools**. Focused validation passed:
   `BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
   `BotActionCommandQueueTests` 18/18; MCP projects Release build clean; stdio
-  smoke 28 tools; full gate **2490 total / 2489 succeeded / 0 failed /
+  smoke 30 tools; full gate **2490 total / 2489 succeeded / 0 failed /
   1 skipped**.
 - **Live benchmark:** `discover_self_quests` MCP benchmark passed with
   `action_status` and `trace`, plus an independent MySQL character-row
@@ -62,7 +63,7 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   historical evidence of an asset-missing Game exit before WebApi; it is not
   the current MCP benchmark verdict.
 - **Deferred action-surface boundary:** newer actor actions still lacking
-  authenticated routes — Plant, Harvest, Craft, party, trade, expeditions,
+  authenticated routes — Craft, Buy/Sell, party, trade, expeditions,
   and related actions — remain explicitly deferred and are not claimed as
   MCP-exposed.
 

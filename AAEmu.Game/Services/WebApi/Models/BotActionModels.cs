@@ -83,6 +83,12 @@ public sealed record DepositItemRequest(string? Bot, uint? ItemTemplateId, strin
 /// <summary>POST /api/actors/withdraw_item — withdraw an item stack from bank into bag.</summary>
 public sealed record WithdrawItemRequest(string? Bot, uint? ItemTemplateId, string? IdempotencyKey);
 
+/// <summary>POST /api/actors/plant — plant a seed or young tree at a world position.</summary>
+public sealed record PlantRequest(string? Bot, uint? SeedItemTemplateId, float? X, float? Y, float? Z, float? ZRot, float? Scale, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/harvest — harvest a mature crop doodad.</summary>
+public sealed record HarvestRequest(string? Bot, uint? DoodadObjId, string? IdempotencyKey);
+
 // ----------------------------------------------------------------- responses
 
 // Action responses are shaped in the controller as lowercase JSON (JObject):

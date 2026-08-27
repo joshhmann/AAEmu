@@ -1186,22 +1186,22 @@ are not claimed as MCP-exposed.
 
 ### MCP actor-route expansion and layered validation (2026-08-27)
 
-**Current state:** **28 MCP tools**; added four authenticated routes/tools for
-`deposit_money`, `withdraw_money`, `deposit_item`, and `withdraw_item`, joining
-`discover_quests`, `discover_self_quests`, `interact_with`, `talk`, and `equip`.
-Focused route/MCP/queue tests are **53/53** (`BotActionControllerRouteTests` 2/2,
-`BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18); protocol
-smoke covers 28 tools; full solution gate **2490 total / 2489 succeeded /
-0 failed / 1 skipped**. The real local MCP benchmark passed
-`observe`/`move`/`discover_self_quests` with `action_status`/`trace` and
-independent DB evidence.
+**Current state:** **30 MCP tools**; added authenticated routes/tools for
+`plant` and `harvest`, joining `deposit_money`, `withdraw_money`,
+`deposit_item`, `withdraw_item`, `discover_quests`, `discover_self_quests`,
+`interact_with`, `talk`, and `equip`. Focused route/MCP/queue tests are **53/53**
+(`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
+`BotActionCommandQueueTests` 18/18); protocol smoke covers 30 tools; full
+solution gate **2490 total / 2489 succeeded / 0 failed / 1 skipped**. The real
+local MCP benchmark passed `observe`/`move`/`discover_self_quests` with
+`action_status`/`trace` and independent DB evidence.
 
 **Goal:** expose only stable, player-like `IGameplayActor` actions through
 authenticated, enqueue-only `/api/actors/*` routes and matching MCP tools,
 then validate each through MCP + direct E2E + DB/wire/restart evidence as
 appropriate. Ordered families (each starts with archaeology and a reviewed
-contract): **Deposit/Withdraw (LANDED) → Plant/Harvest → Craft → Buy/Sell →
-Pack/vehicle → Party → Expedition → Trade → Auction**.
+contract): **Deposit/Withdraw (LANDED) → Plant/Harvest (LANDED) → Craft →
+Buy/Sell → Pack/vehicle → Party → Expedition → Trade → Auction**.
 
 **Acceptance per family:** route authentication/binding tests; MCP
 schema/mapping tests; negative, idempotency, and lifecycle tests; one real MCP

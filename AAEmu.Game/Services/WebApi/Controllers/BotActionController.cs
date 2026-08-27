@@ -489,6 +489,70 @@ internal class BotActionController : BaseController
         }
     }
 
+    [WebApiPost("^/api/actors/plant$")]
+    public HttpResponse Plant(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<PlantRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.SeedItemTemplateId.HasValue || body.SeedItemTemplateId.Value == 0)
+                return BadRequestJson(new ErrorModel("seedItemTemplateId is required"));
+            if (!body.X.HasValue || !body.Y.HasValue || !body.Z.HasValue)
+                return BadRequestJson(new ErrorModel("x, y and z are required"));
+            if (!float.IsFinite(body.X.Value) || !float.IsFinite(body.Y.Value) || !float.IsFinite(body.Z.Value))
+                return BadRequestJson(new ErrorModel("x, y and z must be finite"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.Plant,
+                    TargetId: body.SeedItemTemplateId.Value,
+                    Destination: new System.Numerics.Vector3(body.X.Value, body.Y.Value, body.Z.Value),
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new PlantActionParams(body.ZRot ?? 0f, body.Scale ?? 1f)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "plant failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/harvest$")]
+    public HttpResponse Harvest(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<HarvestRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.DoodadObjId.HasValue || body.DoodadObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("doodadObjId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.Harvest,
+                    TargetId: body.DoodadObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "harvest failed");
+        }
+    }
+
 
     [WebApiPost("^/api/actors/loot$")]
     public HttpResponse Loot(HttpRequest request)

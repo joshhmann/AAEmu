@@ -37,6 +37,8 @@ authenticated `/api/actors/*` route are explicitly deferred there.
 | `withdraw_money` | `POST /api/actors/withdraw_money` | Withdraw copper from bank into inventory |
 | `deposit_item` | `POST /api/actors/deposit_item` | Deposit an item stack from bag into bank |
 | `withdraw_item` | `POST /api/actors/withdraw_item` | Withdraw an item stack from bank into bag |
+| `plant` | `POST /api/actors/plant` | Plant a seed/young tree at a world position |
+| `harvest` | `POST /api/actors/harvest` | Harvest a mature crop doodad |
 | `accept_quest` | `POST /api/actors/accept_quest` | Accept a quest (real AddQuest gate) |
 | `turn_in_quest` | `POST /api/actors/turn_in_quest` | Turn in a quest at an NPC |
 | `loot` | `POST /api/actors/loot` | Loot a corpse/bag owner |

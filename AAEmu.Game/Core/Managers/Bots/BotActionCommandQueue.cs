@@ -59,11 +59,18 @@ public enum BotActionKind : byte
     /// <summary>Deposit an item stack from bag into bank.</summary>
     DepositItem = 26,
     /// <summary>Withdraw an item stack from bank into bag.</summary>
-    WithdrawItem = 27
+    WithdrawItem = 27,
+    /// <summary>Plant a seed or young tree at a world position.</summary>
+    Plant = 28,
+    /// <summary>Harvest a mature crop doodad.</summary>
+    Harvest = 29
 }
 
 /// <summary>Money amount parameter for DepositMoney/WithdrawMoney.</summary>
 public sealed record MoneyActionParams(long Amount);
+
+/// <summary>Plant rotation and scale parameters.</summary>
+public sealed record PlantActionParams(float ZRot = 0f, float Scale = 1f);
 
 /// <summary>Move speed for Move/MoveToUnit commands.</summary>
 public sealed record MoveActionParams(float Speed = 5f);
@@ -594,6 +601,22 @@ public sealed class BotActionCommandQueue
             case BotActionKind.WithdrawItem:
                 return (actor.WithdrawItem(spec.TargetId, key), null);
 
+            case BotActionKind.Plant:
+            {
+                var pos = spec.Destination ?? Vector3.Zero;
+                var zRot = 0f;
+                var scale = 1f;
+                if (spec.Payload is PlantActionParams p)
+                {
+                    zRot = p.ZRot;
+                    scale = p.Scale;
+                }
+                return (actor.Plant(spec.TargetId, pos, zRot, scale, key), null);
+            }
+
+            case BotActionKind.Harvest:
+                return (actor.Harvest(spec.TargetId, key), null);
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(spec), spec.Kind, "unknown bot action kind");
         }
@@ -746,6 +769,8 @@ public sealed class BotActionCommandQueue
             BotActionKind.WithdrawMoney => ActorActionType.WithdrawMoney,
             BotActionKind.DepositItem => ActorActionType.DepositItem,
             BotActionKind.WithdrawItem => ActorActionType.WithdrawItem,
+            BotActionKind.Plant => ActorActionType.Plant,
+            BotActionKind.Harvest => ActorActionType.Harvest,
             BotActionKind.Interrupt => ActorActionType.Stop, // control op; never constructed via a running request
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "unknown bot action kind")
         };
