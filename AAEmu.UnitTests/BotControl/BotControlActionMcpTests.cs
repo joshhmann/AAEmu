@@ -77,18 +77,18 @@ public class BotControlActionMcpTests
     }
 
     [Test]
-    public async Task ToolsList_ExposesThirtyContractActionTools()
+    public async Task ToolsList_ExposesThirtyOneContractActionTools()
     {
         var server = new ActionMcpServer(new FakeClient());
 
         var response = Parse(await server.HandleAsync("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""));
 
         var tools = response?["result"]?["tools"]?.AsArray();
-        await Assert.That(tools).HasCount().EqualTo(30);
+        await Assert.That(tools).HasCount().EqualTo(31);
         var names = tools!.Select(t => t?["name"]?.GetValue<string>()).OrderBy(n => n).ToArray();
         await Assert.That(names).IsEquivalentTo(new[]
         {
-            "accept_quest", "action_status", "advance_quest", "auto_turn_in", "cast",
+            "accept_quest", "action_status", "advance_quest", "auto_turn_in", "cast", "craft",
             "deposit_item", "deposit_money", "discover_quests", "discover_self_quests", "dismount", "equip", "harvest", "interact",
             "interact_with", "interrupt", "loot", "mount", "move", "move_to_unit",
             "observe", "plant", "stop", "talk", "target", "trace", "turn_in_doodad",
@@ -488,6 +488,7 @@ public class BotControlActionMcpTests
             ("withdraw_item", """{"bot":"McpBot01","itemTemplateId":42,"idempotencyKey":"k"}""", "POST", "/api/actors/withdraw_item", """{"bot":"McpBot01","itemTemplateId":42,"idempotencyKey":"k"}"""),
             ("plant", """{"bot":"McpBot01","seedItemTemplateId":42,"x":1,"y":2,"z":3,"zRot":4,"scale":1,"idempotencyKey":"k"}""", "POST", "/api/actors/plant", """{"bot":"McpBot01","seedItemTemplateId":42,"x":1,"y":2,"z":3,"zRot":4,"scale":1,"idempotencyKey":"k"}"""),
             ("harvest", """{"bot":"McpBot01","doodadObjId":42,"idempotencyKey":"k"}""", "POST", "/api/actors/harvest", """{"bot":"McpBot01","doodadObjId":42,"idempotencyKey":"k"}"""),
+            ("craft", """{"bot":"McpBot01","craftId":42,"doodadObjId":7,"idempotencyKey":"k"}""", "POST", "/api/actors/craft", """{"bot":"McpBot01","craftId":42,"doodadObjId":7,"idempotencyKey":"k"}"""),
             ("interact", """{"bot":"McpBot01","doodadObjId":42,"skillId":7,"idempotencyKey":"k"}""", "POST", "/api/actors/interact", """{"bot":"McpBot01","doodadObjId":42,"skillId":7,"idempotencyKey":"k"}"""),
             ("accept_quest", """{"bot":"McpBot01","questId":1001,"acceptorType":"Npc","acceptorId":500,"idempotencyKey":"k"}""", "POST", "/api/actors/accept_quest", """{"bot":"McpBot01","questId":1001,"acceptorType":"Npc","acceptorId":500,"idempotencyKey":"k"}"""),
             ("turn_in_quest", """{"bot":"McpBot01","questId":1001,"npcObjId":500,"selectedReward":2,"idempotencyKey":"k"}""", "POST", "/api/actors/turn_in_quest", """{"bot":"McpBot01","questId":1001,"npcObjId":500,"selectedReward":2,"idempotencyKey":"k"}"""),

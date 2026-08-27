@@ -33,14 +33,14 @@ not external-client actor lifecycle evidence. Historical coverage merge
 `8a22dcb4` and its 33-test / 19-tool smoke record remain retained historical
 evidence; current validation and the 28-tool catalog are recorded below.
 
-Authenticated actor routes and matching MCP tools: added `plant`, `harvest`,
-`deposit_money`, `withdraw_money`, `deposit_item`, and `withdraw_item`, joining
-`discover_quests`, `discover_self_quests`, `interact_with`, `talk`, and
-`equip`. The MCP catalog is now **30 tools**.
+Authenticated actor routes and matching MCP tools: added `craft`, `plant`,
+`harvest`, `deposit_money`, `withdraw_money`, `deposit_item`, and
+`withdraw_item`, joining `discover_quests`, `discover_self_quests`,
+`interact_with`, `talk`, and `equip`. The MCP catalog is now **31 tools**.
 
 Focused validation passed: `BotActionControllerRouteTests` 2/2,
 `BotControlActionMcpTests` 33/33, `BotActionCommandQueueTests` 18/18; MCP
-projects Release build clean; stdio smoke 30 tools; full gate **2490 total /
+projects Release build clean; stdio smoke 31 tools; full gate **2490 total /
 2489 succeeded / 0 failed / 1 skipped**.
 
 The live `discover_self_quests` MCP benchmark passed with `action_status`,
@@ -49,7 +49,7 @@ interaction was attempted. The earlier asset-missing
 `mcp-live-smoke-2026-08-27.md` run at `7e109d550` remains historical.
 
 The action cells above describe contract/engine paths, not MCP exposure.
-Craft, Buy/Sell, party, trade, expeditions, and related newer actor
+Buy/Sell, pack/vehicle, party, trade, expeditions, and related newer actor
 actions still lack authenticated routes; they remain explicitly deferred and
 are not claimed as MCP-exposed.
 

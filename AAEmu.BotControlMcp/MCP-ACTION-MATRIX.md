@@ -31,7 +31,7 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 | `BoardVehicle` | — | — | Deferred: no actor WebApi route |
 | `UnboardVehicle` | — | — | Deferred: no actor WebApi route |
 | `Harvest` | `POST /api/actors/harvest` | `harvest` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
-| `Craft` | — | — | Deferred: no actor WebApi route |
+| `Craft` | `POST /api/actors/craft` | `craft` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `DriveVehicle` | — | — | Deferred: no actor WebApi route |
 | `PackPickup` | — | — | Deferred: no actor WebApi route |
 | `PutDown` | — | — | Deferred: no actor WebApi route |

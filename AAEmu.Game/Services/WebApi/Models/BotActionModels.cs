@@ -89,6 +89,9 @@ public sealed record PlantRequest(string? Bot, uint? SeedItemTemplateId, float? 
 /// <summary>POST /api/actors/harvest — harvest a mature crop doodad.</summary>
 public sealed record HarvestRequest(string? Bot, uint? DoodadObjId, string? IdempotencyKey);
 
+/// <summary>POST /api/actors/craft — craft a recipe at a workbench doodad.</summary>
+public sealed record CraftRequest(string? Bot, uint? CraftId, uint? DoodadObjId, string? IdempotencyKey);
+
 // ----------------------------------------------------------------- responses
 
 // Action responses are shaped in the controller as lowercase JSON (JObject):
