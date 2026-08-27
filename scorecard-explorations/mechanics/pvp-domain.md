@@ -315,7 +315,5 @@ Instrumented live trace (`[PB7]` probes, worktree `.worktrees/pvpfix`):
    is now invoked on the immune path too — an immuned hit is still an assault; HP protection
    itself is unchanged. Mother-zone shield, Peace-state `BlocksPvpDamage`, hostile combat, and
    non-PvP paths are untouched (regression-rig-covered).
-4. Residual (PB-007 stays OPEN on this single point): Retribution 2167 SCBuffCreated is not
-   observed on either bot's wire even though the crime branch provably executes server-side
-   (bloodstain doodad spawns). Suspect `Buffs.AddBuff` silent early-returns
-   (`Buffs.cs:424-449`) for buff 2167's stack rule.
+4. Live residual (PB-007 stays OPEN on this single point): the prior E2E did not produce a trustworthy victim-matched **non-immune** `SCUnitDamaged` frame, even though crime-side observables were recorded. The live packet result therefore remains unclosed; no live `SCBuffCreated` conclusion is inferred from the rig below.
+5. Targeted rig evidence (2026-08-26): `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --no-build --treenode-filter '/*/*/PvpAggressionSeamRigTests/Use_FlaggedSameFaction_DamageLandsAndRetributionApplies' --output Normal --disable-logo --log-level Error` passed **1/1** (1.299s). The test drives real `Skill.Use` → `ApplyEffects` → `DamageEffect.Apply` with same-faction `ForceAttack`; the victim's HP decreases and attacker Retribution 2167 is present. This proves the flagged same-faction damage branch in the DB-backed seam rig, but is not live wire evidence and does not replace the pending non-immune damage-frame rerun.
