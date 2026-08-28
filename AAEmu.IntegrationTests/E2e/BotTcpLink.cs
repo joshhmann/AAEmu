@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using AAEmu.Commons.Network;
+using AAEmu.Game.Core.Packets.G2C;
+
 
 namespace AAEmu.IntegrationTests.E2e;
 
@@ -262,7 +264,11 @@ public sealed class BotTcpLink : IDisposable
     }
 
     /// <summary>Parses game frame(s); returns bytes consumed or -1 when incomplete.
-    /// Handles standard Level 1/2 frames and decompresses Level 4 (CompressedGamePackets) frames.</summary>
+    /// Handles standard Level 1/2 frames and decompresses Level 4
+    /// (CompressedGamePackets) frames. Compressed payloads contain a packet
+    /// count followed by repeated [ushort 0][ushort type][body] records; the
+    /// body end is decoded from known wire layouts where possible and otherwise
+    /// bounded by the next inner header.</summary>
     public static int ParseGameFrames(byte[] buf, int start, int end, List<(ushort Type, byte[] Body)> outputFrames)
     {
         if (end - start < 4)
@@ -275,36 +281,31 @@ public sealed class BotTcpLink : IDisposable
         var level = buf[start + 3];
         if (level == 4)
         {
-            // CompressedGamePackets: [len u16][0xdd][level 4][packetCount u16][compressed deflate bytes]
-            if (len >= 4)
+            if (len < 4)
+                return -1;
+
+            var packetCount = BitConverter.ToUInt16(buf, start + 4);
+            var compressedLen = len - 4;
+            if (compressedLen > 0)
             {
-                var compressedLen = len - 4;
-                if (compressedLen > 0)
+                try
                 {
-                    try
+                    using var input = new MemoryStream(buf, start + 6, compressedLen);
+                    using var output = new MemoryStream();
+                    using (var deflate = new System.IO.Compression.DeflateStream(
+                               input, System.IO.Compression.CompressionMode.Decompress))
                     {
-                        using var input = new MemoryStream(buf, start + 6, compressedLen);
-                        using var output = new MemoryStream();
-                        using (var deflate = new System.IO.Compression.DeflateStream(input, System.IO.Compression.CompressionMode.Decompress))
-                        {
-                            deflate.CopyTo(output);
-                        }
-                        var decompressed = output.ToArray();
-                        if (decompressed.Length >= 4)
-                        {
-                            // Decompressed stream contains: [ushort 0][ushort TypeId][packet payload]
-                            var innerType = BitConverter.ToUInt16(decompressed, 2);
-                            var innerBody = new byte[decompressed.Length - 4];
-                            Buffer.BlockCopy(decompressed, 4, innerBody, 0, innerBody.Length);
-                            outputFrames.Add((innerType, innerBody));
-                        }
+                        deflate.CopyTo(output);
                     }
-                    catch
-                    {
-                        // Ignore decompression failures
-                    }
+
+                    ParseCompressedFrames(output.ToArray(), packetCount, outputFrames);
+                }
+                catch
+                {
+                    // Ignore malformed compressed payloads and preserve framing.
                 }
             }
+
             return 2 + len;
         }
 
@@ -314,10 +315,190 @@ public sealed class BotTcpLink : IDisposable
 
         var type = BitConverter.ToUInt16(buf, start + 2 + header - 2);
         var body = new byte[len - header];
-        Buffer.BlockCopy(buf, start + 2 + header, body, 0, len - header);
+        Buffer.BlockCopy(buf, start + 2 + header, body, 0, body.Length);
         outputFrames.Add((type, body));
         return 2 + len;
     }
+
+    private static readonly HashSet<ushort> KnownInnerTypes = typeof(SCOffsets)
+        .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+        .Where(field => field.IsLiteral && field.FieldType == typeof(ushort))
+        .Select(field => (ushort)field.GetRawConstantValue()!)
+        .ToHashSet();
+
+    private static void ParseCompressedFrames(
+        byte[] data, int packetCount, List<(ushort Type, byte[] Body)> outputFrames)
+    {
+        var cursor = 0;
+        for (var index = 0; index < packetCount && cursor + 4 <= data.Length; index++)
+        {
+            if (!TryReadInnerHeader(data, cursor, out var type))
+            {
+                var next = FindInnerHeader(data, cursor + 1);
+                if (next < 0)
+                    break;
+                cursor = next;
+                if (!TryReadInnerHeader(data, cursor, out type))
+                    break;
+            }
+
+            var bodyStart = cursor + 4;
+            var bodyLength = TryGetKnownInnerBodyLength(type, data, bodyStart, out var knownLength)
+                ? knownLength
+                : FindInnerHeader(data, bodyStart) is var nextHeader && nextHeader >= 0
+                    ? nextHeader - bodyStart
+                    : data.Length - bodyStart;
+            if (bodyLength < 0 || bodyStart + bodyLength > data.Length)
+                break;
+
+            var body = new byte[bodyLength];
+            Buffer.BlockCopy(data, bodyStart, body, 0, bodyLength);
+            outputFrames.Add((type, body));
+            cursor = bodyStart + bodyLength;
+        }
+    }
+
+    private static bool TryReadInnerHeader(byte[] data, int offset, out ushort type)
+    {
+        type = 0;
+        if (offset < 0 || offset + 4 > data.Length ||
+            data[offset] != 0 || data[offset + 1] != 0 ||
+            !KnownInnerTypes.Contains(type = BitConverter.ToUInt16(data, offset + 2)))
+        {
+            type = 0;
+            return false;
+        }
+
+        return true;
+    }
+
+    private static int FindInnerHeader(byte[] data, int offset)
+    {
+        for (var i = Math.Max(0, offset); i + 4 <= data.Length; i++)
+            if (TryReadInnerHeader(data, i, out _))
+                return i;
+        return -1;
+    }
+
+    private static bool TryGetKnownInnerBodyLength(
+        ushort type, byte[] data, int bodyStart, out int bodyLength)
+    {
+        bodyLength = 0;
+        if (type == SCOffsets.SCCombatFirstHitPacket)
+        {
+            bodyLength = 10; // vuId bc, huId bc, htId u32
+            return bodyStart + bodyLength <= data.Length;
+        }
+
+        if (type == SCOffsets.SCUnitDamagedPacket &&
+            TryReadUnitDamagedBody(data, bodyStart, out bodyLength, out _))
+            return true;
+
+        if (type == SCOffsets.SCBuffCreatedPacket &&
+            TryReadBuffCreatedBody(data, bodyStart, out bodyLength))
+            return true;
+
+        return false;
+    }
+
+    private static bool TryReadBuffCreatedBody(byte[] data, int bodyStart, out int bodyLength)
+    {
+        bodyLength = 0;
+        var cursor = bodyStart;
+        if (!TrySkipSkillCaster(data, ref cursor) ||
+            !TryAdvance(data, ref cursor, sizeof(uint) + 3 + sizeof(uint) + sizeof(uint) + 1 + sizeof(short) + sizeof(uint)) ||
+            !TrySkipPisc(data, ref cursor, 4))
+            return false;
+
+        bodyLength = cursor - bodyStart;
+        return true;
+    }
+
+    private static bool TryReadUnitDamagedBody(
+        byte[] data, int bodyStart, out int bodyLength, out int hitTypeOffset)
+    {
+        bodyLength = 0;
+        hitTypeOffset = 0;
+        var cursor = bodyStart;
+        if (!TryAdvance(data, ref cursor, 7 + 4 + 3 + 3 + 1) ||
+            !TrySkipPisc(data, ref cursor, 3) ||
+            !TrySkipPisc(data, ref cursor, 3) ||
+            !TryAdvance(data, ref cursor, 1))
+            return false;
+
+        hitTypeOffset = cursor;
+        if (!TryAdvance(data, ref cursor, sizeof(ushort) + 1 + 1))
+            return false;
+
+        bodyLength = cursor - bodyStart;
+        return true;
+    }
+
+    private static bool TrySkipSkillCaster(byte[] data, ref int cursor)
+    {
+        var typeOffset = cursor;
+        if (!TryAdvance(data, ref cursor, 1 + 3))
+            return false;
+
+        var casterType = data[typeOffset];
+        return casterType switch
+        {
+            0 or 1 or 4 => true, // Unit, Doodad, or Gimmick
+            2 => TryAdvance(data, ref cursor, 8 + 4 + 1 + 4), // Item
+            3 => TryAdvance(data, ref cursor, 4), // Mount
+            _ => false
+        };
+    }
+
+    private static bool TrySkipPisc(byte[] data, ref int cursor, int count)
+    {
+        if (!TryAdvance(data, ref cursor, 1))
+            return false;
+
+        var flags = data[cursor - 1];
+        for (var index = 0; index < count; index++)
+        {
+            var kind = (flags >> (index * 2)) & 0x03;
+            var width = kind switch
+            {
+                0 => 1, // byte
+                1 => 2, // ushort
+                2 => 3, // bc
+                _ => 4 // uint
+            };
+            if (!TryAdvance(data, ref cursor, width))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryAdvance(byte[] data, ref int cursor, int count)
+    {
+        if (count < 0 || cursor < 0 || cursor > data.Length - count)
+            return false;
+        cursor += count;
+        return true;
+    }
+
+    /// <summary>Strictly matches SCUnitDamaged's target and excludes the
+    /// immune hit type. The target is fixed by the cast/caster wire prefix;
+    /// all later fields, including both PISC arrays, are variable-width.</summary>
+    public static bool TryReadVictimMatchedNonImmuneUnitDamaged(
+        byte[] body, uint victimObjId, out bool immune)
+    {
+        immune = false;
+        if (body == null || body.Length < 17 || ReadBc(body, 14) != victimObjId ||
+            !TryReadUnitDamagedBody(body, 0, out _, out var hitTypeOffset))
+            return false;
+
+        var hitType = (ushort)(body[hitTypeOffset] | (body[hitTypeOffset + 1] << 8));
+        immune = (hitType & 0x1f) == 0x12;
+        return !immune;
+    }
+
+    private static uint ReadBc(byte[] data, int offset)
+        => (uint)(data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16));
 
     /// <summary>Parses one game frame; returns bytes consumed or -1 when incomplete.</summary>
     public static int ParseGameFrame(byte[] buf, int start, int end, out ushort type, out byte[] body)

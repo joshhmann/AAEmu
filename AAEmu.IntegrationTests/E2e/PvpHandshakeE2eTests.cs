@@ -161,7 +161,7 @@ public class PvpHandshakeE2eTests
                 SendSetForceAttack(linkA, true);
                 Thread.Sleep(3000); // let the ack + Bloodlust land; drained below
                 InjectUnitAttack(linkA, AttackSkillId, objIdA, objIdB);
-                var homelandLanded = (await AwaitDamageAndBuffAsync([linkA, linkB], objIdB, 0, 8000)).DamageSeen;
+                var homelandLanded = (await AnyDamageFrameOnAsync([linkA, linkB], objIdB, 8000)).DamageSeen;
                 Record("HOMELAND-SHIELD", !homelandLanded,
                     !homelandLanded
                         ? $"aggression attempt at spawn zone key {posA.ZoneId} produced NO combat frames on {BotBName} — " +
@@ -243,15 +243,18 @@ public class PvpHandshakeE2eTests
                     await Task.Delay((int)loginProtectionRemaining);
                 }
                 InjectUnitAttack(linkA, AttackSkillId, objIdA, objIdB);
-                var aggressOutcome = await AwaitDamageAndBuffAsync([linkA, linkB], objIdB, RetributionBuffId, 15000);
-                var purpleSeen = aggressOutcome.BuffSeen;
-                var purpleSource = aggressOutcome.BuffSource;
+                var aggressOutcome = await AnyDamageFrameOnAsync([linkA, linkB], objIdB, 15000);
+                var purpleSeen = aggressOutcome.RetributionSeen;
+                var purpleSource = aggressOutcome.RetributionSource;
 
                 var bloodstainObjId = ProbeBloodstain(bridge);
                 var aggressPassed = aggressOutcome.DamageSeen && purpleSeen && bloodstainObjId != 0;
                 Record("AGGRESS-ALLOWED", aggressPassed,
-                    $"Triple Slash {AttackSkillId} from {BotAName} (ForceAttack ON) vs {BotBName}: REAL damage frames " +
-                    $"(CombatFirstHit/UnitDamaged)={aggressOutcome.DamageSeen}, cast-started (SkillFired seen)={aggressOutcome.SkillStarted}; " +
+                    $"Triple Slash {AttackSkillId} from {BotAName} (ForceAttack ON) vs {BotBName}: " +
+                    $"victim-matched non-immune SCUnitDamaged={aggressOutcome.DamageSeen}, " +
+                    $"Immune frames excluded={aggressOutcome.ImmuneSeen}, " +
+                    $"SCCombatFirstHit matched={aggressOutcome.CombatFirstHitSeen}, " +
+                    $"cast-started (SkillFired seen)={aggressOutcome.SkillStarted}; " +
                     $"Retribution {RetributionBuffId} observed={purpleSeen}{(purpleSeen ? $" (link {purpleSource})" : "")}; " +
                     $"bloodstain doodad {SmallBloodstainDoodadId} spawned=objId {bloodstainObjId}. " +
                     (aggressPassed
@@ -259,9 +262,8 @@ public class PvpHandshakeE2eTests
                           "(BaseUnit.CanAttack:100-103) precedes the ZONE-01 BlocksPvpDamage gate (:126-135). Bloodstain proves the " +
                           "DamageEffect crime branch (:389-400) executed — the same guarded branch that populates " +
                           "AssaultedBy/AssaultOn (server-memory lists, no direct wire observable)."
-                        : "MEASURED BLOCKER (layer attribution pending game.log Debug pass): the cast did NOT produce damage. " +
-                          "Candidate gates: skill target-relation validation (skills.target_relation_id=4=Hostile resolves via " +
-                          "CanAttack), UnitRequirements, or obstacle check — see report."));
+                        : "MEASURED BLOCKER: crime/retribution/bloodstain evidence was observed, but no victim-matched non-immune damage frame was observed; " +
+                          "the remaining gate is the post-SkillFired effect/broadcast path, not evidence generation."));
 
                 if (!aggressPassed)
                 {
@@ -280,16 +282,17 @@ public class PvpHandshakeE2eTests
                 DrainAll(linkA);
                 DrainAll(linkB);
                 InjectUnitAttack(linkA, AttackSkillId, objIdA, objIdB);
-                var refusedDamage = !(await AwaitDamageAndBuffAsync([linkA, linkB], objIdB, 0, 12000)).DamageSeen;
+                var peaceOutcome = await AnyDamageFrameOnAsync([linkA, linkB], objIdB, 12000);
+                var refusedDamage = !peaceOutcome.DamageSeen;
                 var bloodstainAfter = ProbeBloodstain(bridge);
 
                 Record("PEACE-BLOCK", refusedDamage,
                     refusedDamage
-                        ? $"with ForceAttack OFF, the same skill cast produced NO combat/damage frames on {BotBName}'s wire within 12 s " +
-                          $"(bloodstain probe after: objId {bloodstainAfter}) — refusal observed live while conflict group " +
-                          $"{SteppeConflictGroupId} was in Peace; attribution: ZONE-01 BlocksPvpDamage gate + Friendly-relation fallback " +
-                          "(the two refuse the same payload here; the discriminating flagged case is measured above)"
-                        : "damage STILL flowed with ForceAttack OFF — peace protection NOT enforced (SERVER finding)");
+                        ? $"with ForceAttack OFF, no victim-matched non-immune SCUnitDamaged frame on {BotBName}'s wire within 12 s " +
+                          $"(Immune frames excluded={peaceOutcome.ImmuneSeen}; bloodstain probe after: objId {bloodstainAfter}) — refusal observed live while conflict group " +
+                          $"{SteppeConflictGroupId} was in Peace; attribution: ZONE-01 BlocksPvpDamage gate + Friendly-relation fallback"
+                        : $"victim-matched non-immune damage flowed with ForceAttack OFF — peace protection NOT enforced (SERVER finding); " +
+                          $"bloodstain probe after: objId {bloodstainAfter}");
 
                 // ---------------------------------------------------- STAGE: WAR-HONOR
                 Record("WAR-HONOR", false,
@@ -398,23 +401,31 @@ public class PvpHandshakeE2eTests
         return false;
     }
 
-    private sealed record DamageOutcome(bool DamageSeen, bool SkillStarted, bool BuffSeen, string BuffSource);
+    private sealed record DamageOutcome(
+        bool DamageSeen,
+        bool SkillStarted,
+        bool RetributionSeen,
+        string RetributionSource,
+        bool ImmuneSeen,
+        bool CombatFirstHitSeen);
 
-    /// <summary>Waits for REAL damage and/or buff evidence across links:
-    /// SCCombatFirstHitPacket(vuId at bc offset 0) matching victimObjId,
-    /// SCUnitDamagedPacket(targetId at bc offset 5) matching victimObjId,
-    /// and SCBuffCreatedPacket containing buffTemplateId.</summary>
-    private static async Task<DamageOutcome> AwaitDamageAndBuffAsync(BotTcpLink[] links, uint victimObjId, uint buffTemplateId, int timeoutMs)
+    /// <summary>Waits for a victim-matched, non-immune SCUnitDamaged frame.
+    /// The complete drained batch is inspected before returning, so a
+    /// SCBuffCreated packet in the same batch is retained as evidence instead
+    /// of being discarded before the Retribution check. SCCombatFirstHit is
+    /// diagnostic only; it is not sufficient damage proof.</summary>
+    private static async Task<DamageOutcome> AnyDamageFrameOnAsync(
+        BotTcpLink[] links, uint victimObjId, int timeoutMs)
     {
         var skillStartedSeen = false;
-        var damageSeen = false;
-        var buffSeen = false;
-        string buffSource = null;
-        var buffPattern = buffTemplateId > 0 ? BitConverter.GetBytes(buffTemplateId) : null;
-
+        var retributionSeen = false;
+        var retributionSource = "";
+        var immuneSeen = false;
+        var combatFirstHitSeen = false;
         var deadline = Environment.TickCount64 + timeoutMs;
         while (Environment.TickCount64 < deadline)
         {
+            var damageSeen = false;
             foreach (var link in links)
             {
                 foreach (var frame in link.DrainAll())
@@ -422,29 +433,45 @@ public class PvpHandshakeE2eTests
                     if (frame.Type == SCOffsets.SCSkillFiredPacket)
                         skillStartedSeen = true;
 
-                    if (buffPattern != null && frame.Type == SCOffsets.SCBuffCreatedPacket && frame.Body.Length >= buffPattern.Length && IndexOf(frame.Body, buffPattern) >= 0)
+                    if (frame.Type == SCOffsets.SCBuffCreatedPacket &&
+                        frame.Body.Length >= sizeof(uint) &&
+                        IndexOf(frame.Body, BitConverter.GetBytes(RetributionBuffId)) >= 0)
                     {
-                        buffSeen = true;
-                        buffSource = link.Name;
+                        retributionSeen = true;
+                        retributionSource = link.Name;
                     }
 
-                    switch (frame.Type)
+                    if (frame.Type == SCOffsets.SCCombatFirstHitPacket &&
+                        frame.Body.Length >= 6 &&
+                        ReadBc(frame.Body, 3) == victimObjId)
                     {
-                        case SCOffsets.SCCombatFirstHitPacket when frame.Body.Length >= 6 && ReadBc(frame.Body, 0) == victimObjId:
-                        case SCOffsets.SCUnitDamagedPacket when frame.Body.Length >= 17 && ReadBc(frame.Body, 14) == victimObjId:
-                            damageSeen = true;
-                            break;
+                        combatFirstHitSeen = true;
+                    }
+
+                    if (frame.Type != SCOffsets.SCUnitDamagedPacket)
+                        continue;
+
+                    if (BotTcpLink.TryReadVictimMatchedNonImmuneUnitDamaged(
+                            frame.Body, victimObjId, out var frameImmune))
+                    {
+                        damageSeen = true;
+                    }
+                    else if (frameImmune)
+                    {
+                        immuneSeen = true;
                     }
                 }
             }
 
-            if (damageSeen && (buffPattern == null || buffSeen))
-                break;
+            if (damageSeen)
+                return new DamageOutcome(true, skillStartedSeen, retributionSeen,
+                    retributionSource, immuneSeen, combatFirstHitSeen);
 
             await Task.Delay(250);
         }
 
-        return new DamageOutcome(damageSeen, skillStartedSeen, buffSeen, buffSource);
+        return new DamageOutcome(false, skillStartedSeen, retributionSeen,
+            retributionSource, immuneSeen, combatFirstHitSeen);
     }
 
     private static int IndexOf(byte[] haystack, byte[] needle)
