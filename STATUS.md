@@ -1,15 +1,17 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-27 · MCP expansion checkpoint; prior: 2026-08-26
+Updated: 2026-08-27 · PB-007 live closure + PB-002 item-use evidence; prior:
+2026-08-26
 (Mail S3 acceptance and recovery reconciliation; G2-A5 + A4 near-term gates
-MET with live evidence; PB-002 quest-discovery primitive landed; PB-003 closed
-premise-refuted; PB-004 found-by-measurement + fixed same day; first-class
-InteractWith doodad contract action; SERVER-PERF wave — see
+MET with live evidence; PB-002 quest-discovery primitive and item-use slice
+landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
+day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; source/test evidence and the new normal-clone gate
-are pinned to `246803f6fa94c532f1d4a26265c051c5b1210b9f`. Before editing,
-`origin/develop` was verified at `d95836692eb3ef02e28aaca5279d11981a48b441`;
-this documentation reconciliation follows the source/test commits below.
+Branch of record: develop; local combined source/test HEAD is
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e`, two commits ahead of
+`origin/develop` at `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`. This docs wave
+follows source commits `063beb7cd` (PB-007 parser/live proof) and
+`b230bd8a2` (PB-002 item-use objective); docs follow those source commits.
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
@@ -26,11 +28,15 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   aerial/water/structure whitelist landed. The terrain-only replay corrects all
   593 non-whitelisted severe-positive rows and leaves 702 whitelisted rows
   unchanged; cave/deck/submerged behavior and duplicate-row decisions remain.
-- **PB-007:** The prior **FIXED** live E2E record (`PvpHandshakeE2eTests`
-  6/6 stages, `/root/aaemu-e2e/logs/pvp-handshake-e2e-report.json`) is retained
-  as historical evidence. The current blocker ledger remains **OPEN, narrowed**:
-  no current source-pinned artifact proves a victim-matched, non-immune
-  `SCUnitDamaged` frame. Do not promote the immune-tagged or historical frame.
+- **PB-007:** **FIXED / CLOSED for the narrow flagged-aggression handshake
+  requirement** at source/test HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`.
+  Current report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`.
+  The isolated real-login/Game E2E observed a victim-matched, non-immune
+  `SCUnitDamaged` frame, with immune frames excluded, `SkillFired=True`,
+  Retribution 2167, bloodstain doodad 877, and the crime branch observable;
+  PEACE-BLOCK also passed. The prior `/root/aaemu-e2e` report and failed/immune
+  context remain historical. WAR-HONOR remains separately deferred; this does
+  not close all PvP/honor scope.
 
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
@@ -51,20 +57,23 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   covers the first-class `Navigate` queue action.
 - **PB-002 autonomous leveling loop:** **SCOPED ACTOR/RIG SLICES LANDED;
   BROAD CLAIM OPEN** — `LevelingLoopScenario` and related actor/rig slices
-  cover selected perception-driven quest steps. Broad autonomous quest-loop
-  coverage, live-server breadth, and human/client breadth remain open; do not
-  call the broad claim complete.
-- **Final gate (new source SHA
-  `246803f6fa94c532f1d4a26265c051c5b1210b9f`, normal-clone evidence):**
-  command `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors),
-  compiler check 0/0, unit **2495 total / 2494 passed / 0 failed / 1 skipped**,
-  MCP stdio **39 tools**. Skip identity:
+  cover selected perception-driven quest steps. Current item-use coverage drives
+  `QuestActObjItemUse` through real `GameplayActor.UseItem` for canonical quest
+  252 (NPC 7653, item 7738, use skill 11596, act row 1600/detail 43), with
+  fail-closed canonical quest 64 control. Broad autonomous quest-loop coverage,
+  live-server breadth, and human/client breadth remain open; do not call the
+  broad claim complete.
+- **Final gate (combined source SHA
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, normal-clone evidence):**
+  Release build PASS (8 warnings, 0 errors), compiler check 0/0, unit
+  **2496 total / 2495 passed / 0 failed / 1 skipped**, and MCP stdio **39
+  tools**. Focused PB-002 results: `LevelingLoopScenarioRigTests` 7/7,
+  item-use 1/1, unsupported-objective 1/1, discovery 12/12, talk 5/5, and
+  template registration 1/1. Parser tests passed 2/2. Skip identity:
   `Provision_Activate_Persist_Deactivate_RoundTrip` requires
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
-  now accept both `.git` directories and `.git` files after `57b6e2960`;
-  the linked-worktree `QuestScenarioTierTests` regression passed 1/1 after
-  that helper compatibility fix. The normal clone remains canonical for
-  full-gate evidence.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The normal clone remains
+  canonical for full-gate evidence; docs follow source commits
+  `063beb7cd` and `b230bd8a2`.
 
 ## 2026-08-27 MCP expansion
 - **Client-neutral integration:** MCP sidecars and the management gateway remain
@@ -214,9 +223,15 @@ The engine fix extracts `RegisterCrimeForAttempt` and invokes it on the immune
 path; apply-loop exceptions are logged and rethrown; the E2E waits out the
 protection window. Post-fix real damage, bloodstain, and crime chain execute;
 ZONE-01 Peace enforcement + homeland mother-shield remain LIVE-verified.
-**PB-007 residual is narrowed:** targeted rig PASS 1/1 (real `Skill.Use`,
-same-faction `ForceAttack` HP decrease, Retribution present; first application
-and Refresh broadcasts); live non-immune damage-frame proof remains pending.
+**PB-007 narrow closure (2026-08-27, source/test HEAD
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e`):** the final isolated live E2E
+passed 1/1 in 2m09.910s. `AGGRESS-ALLOWED` observed
+victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False,
+`SkillFired=True`, Retribution 2167=True, and bloodstain doodad 877 objId
+44294; the crime branch was observed. `PEACE-BLOCK` passed with no
+victim-matched non-immune damage. The deterministic compressed-parser tests
+passed 2/2. `WAR-HONOR` remains intentionally deferred (>251 hostile kills
+plus the conflict timer); no all-PvP or honor-scope closure is claimed.
 **CRIME-01 vertical LIVE-PROVEN:** JusticeCrimeE2eTests
 8 stages incl. restart persistence + wanted seam PASS; engine fix MarkDirty()
 on CrimePoint/InfamyPoint setters (silent-persistence-vanish bug).
@@ -671,13 +686,15 @@ deploy is a separate Josh decision.
   PASS 1/1 in 2m39s on isolated MySQL/Docker; instance-faithful
   equipment+copper restart flow, ownership guards, unread recount lifecycle,
   sequential take, and delete persistence all passed. PB-005 remains
-  FIXED-PARTIAL; PB-007 remains OPEN/narrowed with corrected live rerun
-  pending; final gate **2480/0/1**.
+  FIXED-PARTIAL; the historical PB-007 status was OPEN/narrowed with corrected
+  live rerun pending; final gate **2480/0/1**. This predates the current
+  source-pinned closure above.
 - 2026-08-26 — prior recovery snapshot (superseded by the Mail S3
   acceptance above): develop @ `e5db6d390` carried grounding `38c4997d3`,
   recovered Retribution test branch `a4f7820ba`, and merchant merge
-  `e5db6d390`; PB-005 was FIXED-PARTIAL, PB-007 OPEN/narrowed, and Mail S3
-  was still recorded incomplete/uncommitted. Final gate **2480/0/1**.
+  `e5db6d390`; PB-005 was FIXED-PARTIAL, and the historical PB-007 status was
+  OPEN/narrowed. Mail S3 was still recorded incomplete/uncommitted. Final gate
+  **2480/0/1**.
 
 - 2026-08-24 — this commit: SCORECARD promotions from the post-f3bb787ce sweep —
   ZONE-01 W=2/A=1 (data-driven Peace boot state + CanAttack enforcement;

@@ -32,25 +32,23 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 ### PB-002 · Progression ceiling: no viable quest content past curated Solzreed slice for bots — SCOPED SLICES LANDED / BROAD CLAIM OPEN 2026-08-27
 - Scenario: bot finishes golden-route chain (~lvl 20 equivalent), seeks next quests
 - Intended: continue leveling via real quest content
-- Observed: bots provision artificial levels; no autonomous next-quest selection
-- Layer: DATA + BOT (quest discovery/perception primitive missing: "find available quests at my level nearby")
+- Observed: scoped actor/rig coverage now includes item-use; broad autonomous next-quest selection remains open
+- Layer: DATA + BOT (quest discovery/perception and objective execution)
 - Historical failure evidence (retained): adventurer v1 runs curated chains only.
-- Historical fix report (retained): QuestDiscovery perception primitive landed (c1073d883, verified through the real AddQuest gate + canonical smoke). Full autonomous quest loop was composed in `LevelingLoopScenario` supporting Talk (`QuestActObjTalk`, `QuestActObjTalkNpcGroup`), Hunt/Kill (`QuestActObjKillMonster`, `QuestActObjKillMonsterGroup`), Gather/Interact (`QuestActObjActDoodad`), and delivery quests, alongside autonomous sustain recovery (HP < 35% consumable usage) and auto-equipping item upgrades. The prior report recorded 6/6 `LevelingLoopScenarioRigTests` and the full solution gate.
-- Current evidence/scope: deterministic results are rig/headless proxy evidence for these landed slices only; they do not prove broad autonomous progression or live/human breadth.
+- Current evidence: combined source/test HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; source commit `b230bd8a2`; `QuestActObjItemUse` drives through real `GameplayActor.UseItem` for canonical quest 252 (NPC 7653, item 7738, use skill 11596, act row 1600/detail 43), with fail-closed canonical quest 64 control. Focused results: LevelingLoopScenarioRigTests 7/7; item-use 1/1; unsupported-objective 1/1; discovery 12/12; talk 5/5; template registration 1/1.
+- Evidence scope: deterministic actor/rig proxy evidence only; broad autonomous quest progression, live-server breadth, and human/client breadth remain open.
 - Status: SCOPED SLICES LANDED / BROAD CLAIM OPEN
 
-### PB-007 · Flagged same-faction aggression fired but dealt ZERO damage — OPEN, NARROWED 2026-08-27
-- Scenario: PVP-01 slice 1 — two real Nuian TCP bots, attacker ForceAttack-flagged (CS 0x04f), casts Triple Slash 18131 on a co-located same-faction victim in e_steppe_belt (conflict group 14)
-- Intended: flagged aggression lands damage AND fires the crime branch (Retribution 2167 + bloodstain evidence) per `damage_effects.check_crime=1` on effect 3218
-- Historical root-cause report (retained): acquisition passes (`GetInitialTarget` Hostile case → ForceAttack exception, BaseUnit.cs:100-103), AoE relation filter keeps the Friendly victim (`canAtk=True`), all per-effect gates pass (`effectsToApply=1`). Two defects were resolved: (1) `DamageEffect.Apply` immune path didn't register crime for attempts — extracted to `RegisterCrimeForAttempt` so assault state / Retribution / evidence register even if damage is immuned. (2) `BotTcpLink` E2E client did not decompress Level 4 `CompressedGamePackets` (Deflate payload), causing `SCUnitDamagedPacket` to be hidden in raw compressed bytes. (3) Harness updated to wait out the 20s login-protection immunity buff (buff 2423 "LoggedOn").
-- Layer: SERVER + CLIENT-TEST HARNESS
-- Historical resolved engine/harness work (retained): (a) ENGINE — `DamageEffect.RegisterCrimeForAttempt` invoked for landed damage and immune attempts; error logging rethrow in `Skill.ApplyEffects`. (b) HARNESS — `BotTcpLink` parses and decompresses Level 4 `CompressedGamePackets` (Deflate payload); `PvpHandshakeE2eTests` waits out the login-protection window and validates damage + buff frames concurrently. (c) RIG TESTS — `AAEmu.UnitTests/.../PvpAggressionSeamRigTests.cs` (6/6 green).
-- Historical live report (retained, not closure proof): Live E2E PASS (`/root/aaemu-e2e/logs/pvp-handshake-e2e-report.json`, test `AAEmu.IntegrationTests.E2e.PvpHandshakeE2eTests`): 6/6 stages green (`PROVISION`, `HOMELAND-SHIELD`, `RELOCATE-STEPPE`, `LIVE-ZONE-STATE`, `FLAG-FORCEATTACK`, `AGGRESS-ALLOWED`, `PEACE-BLOCK`), verdict PASS; full test gate 2480/2479 succeeded, 0 failed, 1 skipped. The recorded PASS remains historical and does not establish victim-matched, non-immune `SCUnitDamaged` proof.
-- Current closure requirement: a live PVP run must produce a victim-matched, non-immune `SCUnitDamaged` frame; the prior live result did not provide that proof.
-- Current rig evidence: rig tests pass, including the targeted same-faction damage case, but rig evidence is not live wire evidence and does not close the victim-matched, non-immune `SCUnitDamaged` requirement.
-- Status: OPEN, NARROWED
 
 ## FIXED (evidence retained)
+### PB-007 · Flagged same-faction aggression handshake — FIXED / CLOSED 2026-08-27
+- Scenario: PVP-01 slice 1 — two real Nuian TCP bots, attacker ForceAttack-flagged (CS 0x04f), casts Triple Slash 18131 on a co-located same-faction victim in e_steppe_belt (conflict group 14)
+- Closure evidence: combined source/test HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; source commits `063beb7cd` (parser/live proof) and `b230bd8a2` (separate PB-002 item-use objective). Final isolated real-login/Game E2E passed 1/1 in 2m09.910s.
+- AGGRESS-ALLOWED: victim-matched non-immune `SCUnitDamaged=True`; immune frames excluded=False; `SkillFired=True`; Retribution 2167=True; bloodstain doodad 877 objId 44294; crime branch observed.
+- PEACE-BLOCK: passed with no victim-matched non-immune damage. WAR-HONOR remains intentionally deferred; broader PvP/honor scope is not closed.
+- Historical failure context (retained): the prior immune-tagged/untrusted live result, login-protection window, and parser framing failure remain historical; the current report supersedes them without erasing that history.
+- Evidence: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`; deterministic parser tests 2/2.
+- Status: FIXED / CLOSED for the narrow handshake requirement; WAR-HONOR separately deferred.
 
 ### PB-006 · Ship sailing physics non-functional live (2026-08-25) — FIXED 2026-08-26
 - Layer: SERVER, but NOT where the original report pointed. Two findings:

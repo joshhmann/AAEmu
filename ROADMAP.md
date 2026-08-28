@@ -16,16 +16,16 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
-**Current source baseline (2026-08-27 MCP expansion checkpoint):**
+**Current source baseline (2026-08-27 combined source/test checkpoint):**
 `develop` source/test evidence and the new normal-clone gate are pinned to
-`246803f6fa94c532f1d4a26265c051c5b1210b9f`. Before editing,
-`origin/develop` was verified at `d95836692eb3ef02e28aaca5279d11981a48b441`.
-The source/test commits are `0c57ef0c9` (tracked PB-001 navigation contract
-tests) and `57b6e2960` (linked-worktree helper compatibility). Flash reports
-fifteen additional authenticated actor routes/tools beyond the earlier
-checkpoint; the current MCP catalog is 39 tools. Current validation, evidence
-boundaries, and deferred families are recorded below. Milestone shape and
-historical evidence are unchanged.
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e`. Local `develop` is two commits
+ahead of `origin/develop` at `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`.
+Docs follow source commits `063beb7cd` (PB-007 parser/live proof) and
+`b230bd8a2` (PB-002 item-use objective). The prior baseline
+`246803f6fa94c532f1d4a26265c051c5b1210b9f` and its gate are historical.
+The current MCP catalog is 39 tools. Current validation, evidence boundaries,
+and deferred families are recorded below. Milestone shape and historical
+evidence are unchanged.
 
 ## Three phases
 
@@ -1183,15 +1183,17 @@ authenticated routes/tools: `deposit_money`, `withdraw_money`, `deposit_item`,
 `drive_vehicle`.
 
 The clean-gate result is SHA-pinned to
-`246803f6fa94c532f1d4a26265c051c5b1210b9f` from a normal clone: command
-`./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
-compiler check **0/0**; unit suite **2495 total / 2494 passed / 0 failed /
-1 skipped**; MCP stdio smoke **39 tools**. The sole skip is
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone: command
+`./scripts/gate.sh`; Release build PASS (8 warnings, 0 errors);
+compiler check **0/0**; unit suite **2496 total / 2495 passed / 0 failed /
+1 skipped**; MCP stdio smoke **39 tools**. Focused PB-002 results:
+`LevelingLoopScenarioRigTests` 7/7, item-use 1/1, unsupported-objective 1/1,
+discovery 12/12, talk 5/5, and template registration 1/1. Parser tests
+passed 2/2. The sole skip is
 `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers now
-accept both `.git` directories and `.git` files after `57b6e2960`; the linked-
-worktree `QuestScenarioTierTests` regression passed 1/1 after that helper
-compatibility fix. The normal clone remains canonical for full-gate evidence.
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The normal clone remains
+canonical for full-gate evidence; docs follow source commits `063beb7cd` and
+`b230bd8a2`.
 Focused PB-001 result:
 `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
 → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
@@ -1776,6 +1778,15 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
   contract action (Talk = 46) fires the real DoTalkMadeEvents pipeline with
   fail-closed pre/post-checks. Hunt-leg leveling extension on branch
   `bots/kill-leg` (MonsterHunt/MonsterGroupHunt pursuit + cast-burst).
+  **UPDATE 2026-08-27 (combined source/test HEAD
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; source commit `b230bd8a2`):**
+  `QuestActObjItemUse` is covered through real `GameplayActor.UseItem` for
+  canonical quest 252 (NPC 7653, item 7738, use skill 11596, act row
+  1600/detail 43), with fail-closed canonical quest 64 control. Focused
+  `LevelingLoopScenarioRigTests` coverage is 7/7; item-use 1/1,
+  unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
+  registration 1/1. Broad autonomous progression and live/human breadth remain
+  open.
 
 1. **PB-003 Hadir Farm exit-portal SQL patch candidate** · Owner-role: data
    archivist · Area: DATA (read-only-reference overlay patch) · Priority:
@@ -1874,15 +1885,17 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    *Work/Acceptance:* bot A kills same-faction bot B unprovoked → assert
    large-bloodstain doodad spawns (Owner=A/Data=B); CSReportCrimePacket seam →
    CrimePoint/InfamyPoint rise + SCCrimeChanged emitted + MySQL `crime` row
-   survives restart; Wanted buff appears at the 50-point boundary (inject via
-   CrimeAddPointSubCommand). Client report-dialog rendering stays UNKNOWN.
 7. **PvP slice-1 — flagged-aggression handshake live E2E** · Area: PVP
-   (PVP-01) · Priority: HIGH · **STATUS 2026-08-26: OPEN, narrowed** after
-   recovery. Targeted rig PASS 1/1 (real `Skill.Use`, same-faction
-   `ForceAttack` HP decrease, Retribution present; first application and
-   Refresh broadcasts); live non-immune damage-frame proof remains pending.
-   *Next acceptance:* prove flag → aggress → peace-refusal → honor on the real
-   server; no grade promotion from rig-only evidence.
+   (PVP-01) · Priority: HIGH · **STATUS 2026-08-27: FIXED / CLOSED for the
+   narrow handshake requirement** at combined source/test HEAD
+   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`. The final isolated live E2E
+   passed 1/1 in 2m09.910s: `AGGRESS-ALLOWED` observed a victim-matched
+   non-immune `SCUnitDamaged`, immune frames excluded, `SkillFired=True`,
+   Retribution 2167, bloodstain doodad 877 objId 44294, and the crime branch;
+   `PEACE-BLOCK` passed with no victim-matched non-immune damage. Parser tests
+   passed 2/2. `WAR-HONOR` remains separately deferred; this is not closure of
+   all PvP or honor scope. Current report:
+   `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`.
 8. **Mail security + S3 persistence slice** · Area: MAIL (MAIL-01, SECURITY
    priority) · Depends on: none · **✅ LANDED 2026-08-26 in
    `31045d033`**. Ownership guards now protect the receive paths that accept a
@@ -1931,14 +1944,11 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     record:* TimedRewardsManager.Initialize has NO caller anywhere — online
     regen is dead-by-default; offline AddOfflineLabor IS called; shipped
     configs define no Labor section, so even scheduled default regen would be
-    0/min. *Work:* owner decision recorded; if scheduled: integration test
-    shows +TickAmount after TickMinutes with cap clamp at 2000/5000; if
-    deleted: remove task + config stubs (clean cutover).
-
 **Recovery queue status (2026-08-27; source/test evidence and the new
-normal-clone gate are pinned to
-`246803f6fa94c532f1d4a26265c051c5b1210b9f`; `origin/develop` was verified at
-`d95836692eb3ef02e28aaca5279d11981a48b441` before editing):**
+normal-clone gate are pinned to combined local HEAD
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e`, two commits ahead of
+`origin/develop` at `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`; docs follow
+source commits `063beb7cd` and `b230bd8a2`):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and
@@ -1947,30 +1957,24 @@ normal-clone gate are pinned to
   source/test commits `0c57ef0c9` and `57b6e2960`; focused
   `GameplayActorNavigateTests` result:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
-  → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
-  `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved
-  prototype waypoint test was invalid because it injected private state via
-  reflection; do not claim waypoint coverage from it.
-- **PB-007:** **OPEN, narrowed** after `a4f7820ba` — targeted rig PASS 1/1
-  (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution
-  present; first application and Refresh broadcasts); live non-immune
-  damage-frame proof remains pending.
-- **MCP expansion:** Flash reports fifteen authenticated routes/tools landed
-  beyond the earlier checkpoint, bringing the catalog to 39 tools:
-  Deposit/Withdraw money and items, Plant/Harvest, Craft, Buy/Sell,
-  PackPickup/PutDown/LoadPackOntoVehicle, Board/Unboard/DriveVehicle.
+- **PB-007:** **FIXED / CLOSED for the narrow flagged-aggression handshake**
+  at combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`. The final live
+  E2E observed the required victim-matched, non-immune `SCUnitDamaged` frame
+  with immune frames excluded, plus `SkillFired=True`, Retribution 2167,
+  bloodstain doodad 877 objId 44294, and crime-branch evidence; PEACE-BLOCK
+  passed with no victim-matched non-immune damage. Parser tests passed 2/2.
+  WAR-HONOR remains separately deferred; all PvP/honor scope is not closed.
   SHA-pinned normal-clone clean-gate evidence at
-  `246803f6fa94c532f1d4a26265c051c5b1210b9f` is Release build PASS (4 NU1903
-  warnings, 0 errors), compiler 0/0, unit **2495 total / 2494 passed / 0 failed /
-  1 skipped**, and MCP stdio smoke 39 tools. Skip:
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` is Release build PASS (8
+  warnings, 0 errors), compiler 0/0, unit **2496 total / 2495 passed / 0 failed /
+  1 skipped**, and MCP stdio smoke 39 tools. Focused PB-002 results:
+  `LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
+  unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
+  registration 1/1. Skip:
   `Provision_Activate_Persist_Deactivate_RoundTrip` requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
-  now accept both `.git` directories and `.git` files after `57b6e2960`; the
-  linked-worktree `QuestScenarioTierTests` regression passed 1/1 after that
-  helper compatibility fix. The normal clone remains canonical for full-gate
-  evidence. The earlier asset-missing `7e109d550` smoke remains historical.
-  Only Party, Expedition, Trade, Auction, and related actor expansion remains
-  deferred.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The normal clone remains
+  canonical for full-gate evidence. The earlier asset-missing `7e109d550` smoke
+  remains historical.
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker; the restart, instance-faithful

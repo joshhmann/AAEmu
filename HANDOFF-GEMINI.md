@@ -1,16 +1,12 @@
 # Gemini Handoff — AAEmu
 
-## Current checkpoint
-
-- The prior Mail S3/PB-007 reconciliation point `241d3e34d` is historical.
-  The source/test baseline and new normal-clone gate are pinned to
-  `246803f6fa94c532f1d4a26265c051c5b1210b9f`. Before editing,
-  `origin/develop` was verified at
-  `d95836692eb3ef02e28aaca5279d11981a48b441`. Source/test commits are
-  `0c57ef0c9` (tracked PB-001 navigation contract tests) and `57b6e2960`
-  (linked-worktree helper compatibility). Subsequent changes in this checkout
-  are documentation-only reconciliation; `1638b007c` remains the historical
-  first actor-route feature commit, not the source baseline.
+- The current combined source/test HEAD is
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; local `develop` is two commits
+  ahead of `origin/develop` at
+  `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`. This docs wave follows source
+  commits `063beb7cd` (PB-007 parser/live proof) and `b230bd8a2` (PB-002
+  item-use objective). The prior baseline `246803f6fa94c532f1d4a26265c051c5b1210b9f`
+  and earlier PB-007/Mail reconciliation remain historical.
 - Start from [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md) for
   the safe temporary-worktree workflow, current MCP evidence boundary, and
   ordered continuation gates.
@@ -19,23 +15,15 @@
   `deposit_item`, `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`,
   `pack_pickup`, `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current MCP catalog is 39 tools.
-- The clean-gate result is SHA-pinned to
-  `246803f6fa94c532f1d4a26265c051c5b1210b9f` from a normal clone:
-  `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
-  compiler check **0/0**; unit suite **2495 total / 2494 passed / 0 failed /
-  1 skipped**; MCP stdio smoke **39 tools**. The sole skip is
+- The combined normal-clone clean-gate result at
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` is `./scripts/gate.sh`;
+  Release build PASS (8 warnings, 0 errors); compiler **0/0**; unit **2496
+  total / 2495 passed / 0 failed / 1 skipped**; MCP stdio smoke **39 tools**.
+  Focused PB-002: LevelingLoopScenarioRigTests 7/7, item-use 1/1,
+  unsupported-objective 1/1, discovery 12/12, talk 5/5, template registration
+  1/1; parser tests 2/2. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
-  now accept both `.git` directories and `.git` files after `57b6e2960`; the
-  linked-worktree `QuestScenarioTierTests` regression passed 1/1 after that
-  helper compatibility fix. A normal clone remains canonical for full-gate
-  evidence.
-- Focused PB-001 result:
-  `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
-  → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
-  `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved
-  prototype waypoint test was invalid because it injected private state via
-  reflection; do not claim waypoint coverage from it.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
   Focused route/MCP/queue validation remains Flash-reported **53/53**
   (`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
   `BotActionCommandQueueTests` 18/18).
@@ -89,17 +77,18 @@ Use this loop for every slice:
   `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`, `pack_pickup`,
   `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current catalog is 39 tools.
-- The clean-gate result is SHA-pinned to
-  `246803f6fa94c532f1d4a26265c051c5b1210b9f` from a normal clone:
-  `./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
-  compiler check **0/0**; unit suite **2495 total / 2494 passed / 0 failed /
-  1 skipped**; MCP stdio smoke **39 tools**. The sole skip is
+- The combined normal-clone clean-gate result is SHA-pinned to
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; local `develop` is two commits
+  ahead of `origin/develop` at `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`.
+  `./scripts/gate.sh`; Release build PASS (8 warnings, 0 errors); compiler
+  **0/0**; unit **2496 total / 2495 passed / 0 failed / 1 skipped**; MCP
+  stdio smoke **39 tools**. Focused PB-002 results are
+  `LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
+  unsupported-objective 1/1, discovery 12/12, talk 5/5, template registration
+  1/1; parser tests 2/2. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers
-  now accept both `.git` directories and `.git` files after `57b6e2960`; the
-  linked-worktree `QuestScenarioTierTests` regression passed 1/1 after that
-  helper compatibility fix. A normal clone remains canonical for full-gate
-  evidence.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Docs follow source commits
+  `063beb7cd` and `b230bd8a2`.
 - Focused PB-001 evidence is tracked five-test contract coverage. Exact
   command:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`.
@@ -152,7 +141,7 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
 | Merchant/economy | Restart conservation of money, bank, and item counts | Live bot economy cycle across kill-9; not human shop feel. |
 | Grounding | 593 corrected / 702 whitelist preserved | Offline engine-identical terrain harness plus targeted policy tests; terrain-only, not cave/deck/submerged truth. |
 
-The requested checked-in `pvp-handshake-e2e-report.md` is not present in this checkout. Current PB-007 evidence is in `playerbot-blockers.md`, `pvp-domain.md`, `STATUS.md`, and the `PvpHandshakeE2eTests` source. Do not invent a missing report or treat the prior live run's immune-tagged frame as proof of a non-immune damage frame.
+| PB-007 live handshake | **1/1 in 2m09.910s**; AGGRESS-ALLOWED observed victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False, `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294, and crime branch; PEACE-BLOCK passed | Current source-pinned real-login/Game TCP E2E at combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; WAR-HONOR intentionally deferred; broader PvP/honor and H remain open. Report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`. |
 
 ## Active blockers and partials
 
@@ -165,12 +154,21 @@ The requested checked-in `pvp-handshake-e2e-report.md` is not present in this ch
   coverage. The preserved prototype waypoint test was invalid because it
   injected private state via reflection; do not claim waypoint coverage from it.
 - **PB-002 — autonomous leveling loop:** **SCOPED ACTOR/RIG SLICES LANDED;
-  BROAD CLAIM OPEN** — `LevelingLoopScenario` and its actor/rig slices cover
-  selected perception-driven quest steps, but broad autonomous quest-loop
-  coverage, live-server breadth, and human/client breadth remain open. Do not
-  promote the scoped implementation to broad completion.
+  BROAD CLAIM OPEN** — current item-use coverage drives `QuestActObjItemUse`
+  through real `GameplayActor.UseItem` for canonical quest 252 (NPC 7653,
+  item 7738, use skill 11596, act row 1600/detail 43), plus fail-closed
+  canonical quest 64 control. Focused results are recorded above. Broad
+  autonomous quest-loop coverage, live-server breadth, and human/client
+  breadth remain open.
 - **PB-005 — grounding FIXED-PARTIAL:** 593 non-whitelisted severe-positive rows were corrected and 702 intentional whitelist rows preserved. Cave/deck/submerged classification and the 733 duplicate-row ownership decision remain open. No negative-offset clamp and no duplicate deletion without canonical evidence/owner approval.
-- **PB-007 — open but narrowed:** rig proof passes through real `Skill.Use`; same-faction `ForceAttack` damage lowers victim HP, Retribution is present, and first application/Refresh wire evidence exists. The live non-immune, victim-matched `SCUnitDamaged` frame is still unproven. The login `LoggedOn` buff 2423 protects all damage for roughly 20 seconds; the engine now records the crime attempt even on that immune path. Do not call the live slice closed from the rig or from an immune-tagged frame.
+- **PB-007 — FIXED / CLOSED for the narrow flagged-aggression handshake** at
+  combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`: the current
+  real-login/Game E2E passed 1/1 in 2m09.910s with the victim-matched,
+  non-immune `SCUnitDamaged` frame, immune exclusion, `SkillFired=True`,
+  Retribution 2167, bloodstain 877 objId 44294, and crime branch observed;
+  PEACE-BLOCK passed with no victim-matched non-immune damage. WAR-HONOR is
+  separately deferred; broader PvP/honor scope and H remain open. Historical
+  immune-tagged/untrusted failure context is retained in dated reports.
 - **Justice:** the crime vertical is complete, but jury summon packet ordering/client capture remains unknown. Prison sentencing/teleport/buff exist; prison labor, escape tunnels, guards, and release-on-expiry are absent. Treat those as separate scope decisions.
 - **Dominion:** persistence/tax/phase slice is complete; combat/siege-battle and declare-trigger UI are not.
 - **Mail:** Mail S3 is merged and complete; no S3 partial remains. Open follow-ups are real-client confirmation of the return opcode (candidate `0x0a2`, still not a fact), COD enforcement, and expiry/bounce integration proof.
@@ -191,16 +189,16 @@ Do not add `.worktrees/` wholesale to a commit. Do not delete, reset, or overwri
 The compact SQLite database is SELECT-only. Never patch it in place; use reviewed code/config or an additive SQL/MySQL migration when mutable state is required.
 
 ## Immediate next instructions for Gemini
-
-1. From a clean normal clone, publish the full-gate output pinned to source
-   SHA `246803f6fa94c532f1d4a26265c051c5b1210b9f`, with the exact command,
+1. Preserve the full-gate output pinned to combined source SHA
+   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, with the exact command,
    environment/assets, build/compiler result, unit totals and skip identity,
    and downstream MCP-smoke result. Normal clone remains canonical for this
    full-gate evidence.
-2. Keep PB-002 scoped to the landed actor/rig slices; broad autonomous
+2. Keep PB-002 scoped to the landed actor/rig slices, including canonical
+   quest-252 item-use and fail-closed quest-64 control; broad autonomous
    quest-loop coverage and live/human breadth remain open.
-3. Pursue PB-007 proof using a victim-matched, non-immune live
-   `SCUnitDamaged` frame with the existing HP/Retribution/crime checks.
+3. PB-007's narrow live handshake is closed; preserve its current report and
+   historical failure context. WAR-HONOR remains intentionally deferred.
 4. Preserve the six-hour dormant-timer soak as open: retain sequential seeding,
    stage the no-bot baseline, one bot for 30 minutes, 10 bots for one hour,
    then 10 bots for six hours, and approve numeric p95/p99 tick, memory,
@@ -215,16 +213,16 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 
 1. **Establish the checkpoint before editing.** Follow
    [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md): inspect the
-   dirty main checkout read-only, fetch `origin/develop`, and create a clean
-   temporary worktree. Confirm the live `origin/develop` SHA there; do not run
-   the gate from the dirty main checkout. The prior `241d3e34d` relationship
-   and the 2479/0/1 Mail S3 checkpoint are historical.
-2. **Do not rerun PB-007 live blindly.** First use the targeted TUnit selector and/or add a narrowly scoped server branch trace. Preserve corrected packet framing and dump buff state/immune status. Close PB-007 only after a victim-matched, non-immune `SCUnitDamaged` frame is observed on the real server, alongside the existing HP/Retribution/crime checks. When the selector works, the known form is:
-   ```bash
-   dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --no-build \
-     --treenode-filter '/*/*/PvpAggressionSeamRigTests/<method>' \
-     --output Normal --log-level Error
-   ```
+   dirty main checkout read-only and create a clean temporary worktree from
+   combined source/test HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`.
+   Local `develop` is two commits ahead of `origin/develop` at
+   `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`; the prior `241d3e34d`
+   relationship and 2479/0/1 checkpoints are historical.
+2. **PB-007 narrow closure is already proven.** Preserve the current
+   source-pinned live report and historical failure context; do not rerun it
+   blindly. The required live victim-matched, non-immune `SCUnitDamaged` frame,
+   immune exclusion, Retribution/crime evidence, and PEACE-BLOCK are recorded
+   above. WAR-HONOR remains separately deferred.
 3. **Choose one high-leverage gameplay slice and state its evidence contract before code.** Preferred options are: (a) justice trial packet-order/client capture if a suitable client/capture is available; or (b) Mail return client confirmation. Keep canonical data and human-vs-bot boundaries explicit.
 4. **Handle PB-005 owner decisions separately.** Classify cave/deck/submerged rows only with canonical/client evidence. Do not add a negative-offset clamp, delete duplicate rows, or reclassify whitelist entries without a registered owner decision and evidence.
 5. **For every new slice, add/update both a rig proof and a live scenario where applicable, file a blocker for any failure, and update `SCORECARD.md`, `ROADMAP.md`, and `STATUS.md` in the same documentation wave.** Preserve old evidence and label rig/live/human types rather than rewriting history.

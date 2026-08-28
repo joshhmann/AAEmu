@@ -6,14 +6,17 @@ restart, scaling, or human gates.
 
 ## 1. Audit result and checkpoint
 
-The handoff documents were audited against a clean worktree created from the
-current source/test HEAD on 2026-08-27. The source/test baseline and new
-normal-clone gate are pinned to
-`246803f6fa94c532f1d4a26265c051c5b1210b9f`; before editing,
-`origin/develop` was verified at `d95836692eb3ef02e28aaca5279d11981a48b441`.
-The source/test commits are `0c57ef0c9` (tracked PB-001 navigation contract
-tests) and `57b6e2960` (linked-worktree helper compatibility). This checkout
-contains documentation-only reconciliation after that evidence.
+The handoff documents were audited against combined source/test HEAD
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e` on 2026-08-27. Local `develop` is
+two commits ahead of `origin/develop` at
+`bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`; docs follow source commits
+`063beb7cd` (PB-007 parser/live proof) and `b230bd8a2` (PB-002 item-use
+objective). This checkout contains documentation-only reconciliation after
+those source commits.
+
+The prior source/test baseline at `246803f6fa94c532f1d4a26265c051c5b1210b9f`
+and its `2495/2494/0/1` gate are historical. The older `241d3e34d` Mail/PB-007
+reconciliation point and `7e109d550` asset-missing MCP smoke are historical.
 
 `1638b007c` is the historical feature commit that added the first five actor
 routes; it is not the current branch head. `6d9ae9f50` recorded that expansion
@@ -28,20 +31,17 @@ The current recorded state is:
 - **39 MCP action tools** are exposed by `AAEmu.BotControlMcp`; management
   tools remain on the separate `AAEmu.BotControl` sidecar.
 - Flash reports fifteen additional authenticated actor routes/tools beyond the
-  earlier checkpoint: Deposit/Withdraw money and items, Plant/Harvest, Craft,
-  Buy/Sell, PackPickup/PutDown/LoadPackOntoVehicle, and
-  Board/Unboard/DriveVehicle.
-- SHA-pinned clean-gate evidence at the new source SHA
-  `246803f6fa94c532f1d4a26265c051c5b1210b9f` came from a normal clone with
-  command `./scripts/gate.sh`: Release build PASS (4 NU1903 warnings, 0
-  errors), compiler check **0/0**, unit **2495 total / 2494 passed / 0 failed /
-  1 skipped**, and MCP stdio smoke **39 tools**. The skip is
+  earlier checkpoint. Combined normal-clone gate evidence at
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` is: `./scripts/gate.sh`; Release
+  build PASS (8 warnings, 0 errors), compiler check **0/0**, unit **2496 total /
+  2495 passed / 0 failed / 1 skipped**, and MCP stdio smoke **39 tools**.
+  Focused PB-002 results: `LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
+  unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
+  registration 1/1. Parser tests passed 2/2. The skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
   `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
-- The known six root helpers now accept both `.git` directories and `.git`
-  files after `57b6e2960`; the linked-worktree `QuestScenarioTierTests`
-  regression passed 1/1 after that helper compatibility fix. A normal clone
-  remains canonical for full-gate evidence.
+- The normal clone remains canonical for full-gate evidence; local docs follow
+  source commits `063beb7cd` and `b230bd8a2`.
 - Focused PB-001 evidence is tracked five-test contract coverage. Exact command:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`.
   Exact result: `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
@@ -269,13 +269,18 @@ items, Plant/Harvest, Craft, Buy/Sell, and Pack/vehicle are landed. Only later
 Party, Expedition, Trade, Auction, and related actor expansion remains deferred.
 Continue in this order:
 
-1. Publish the new normal-clone full-gate evidence at source SHA
-   `246803f6fa94c532f1d4a26265c051c5b1210b9f`, retaining the exact
-   `2495/2494/0/1` totals, MCP stdio 39-tool result, and skip identity above.
-2. Narrow PB-002 to the landed actor/rig slices; keep broad autonomous
-   quest-loop coverage and live/human breadth open.
-3. Pursue PB-007 only to a victim-matched, non-immune live
-   `SCUnitDamaged` frame with the existing HP/Retribution/crime checks.
+1. Retain the normal-clone full-gate evidence at combined source SHA
+   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`: Release build 8 warnings/0
+   errors, compiler 0/0, unit 2496/2495/0/1, MCP stdio 39 tools, and the
+   skip identity above. Focused PB-002 coverage is LevelingLoopScenarioRigTests
+   7/7; item-use 1/1; unsupported-objective 1/1; discovery 12/12; talk 5/5;
+   template registration 1/1.
+2. Keep PB-002 scoped to the landed actor/rig slices: `QuestActObjItemUse`
+   through real `GameplayActor.UseItem` for quest 252 (NPC 7653, item 7738,
+   use skill 11596, act row 1600/detail 43) plus fail-closed quest 64 control.
+   Broad autonomous quest-loop coverage and live/human breadth remain open.
+3. PB-007's narrow live closure is current at this source SHA; preserve the
+   checked-in report and historical failure context. WAR-HONOR remains deferred.
 4. Preserve the six-hour dormancy soak as open: retain sequential seeding,
    stage the no-bot baseline, one bot for 30 minutes, 10 bots for one hour,
    then 10 bots for six hours, and approve numeric p95/p99 tick, memory,
@@ -283,16 +288,17 @@ Continue in this order:
 5. Keep Party, Expedition, Trade, Auction, and related actor expansion
    deferred until authenticated enqueue routes and reviewed observable
    contracts exist.
-6. Preserve the nested `.hermes`/`rig-repo` topology anomaly for owner
-   reconciliation; do not manipulate it.
-
-Parallel to that route work, the required gates are:
-
-- **PB-007 live wire proof:** keep the passing real `Skill.Use`/same-faction
-  `ForceAttack` rig and crime evidence. Close the blocker only with a real
-  victim-matched, non-immune `SCUnitDamaged` frame on a separately authenticated
-  ordinary TCP client, alongside HP/Retribution/crime checks. An immune-tagged
-  frame or managed headless actor is insufficient.
+- **PB-007 live wire proof:** **FIXED / CLOSED for the narrow handshake
+  requirement** at combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`.
+  The isolated real-login/Game E2E passed 1/1 in 2m09.910s and observed
+  victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False,
+  `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294,
+  and the crime branch; PEACE-BLOCK passed with no victim-matched non-immune
+  damage. WAR-HONOR remains intentionally deferred; broader PvP/honor scope
+  and H remain open.
+- **Historical PB-007 context:** prior rig-only and immune-tagged/untrusted live
+  results did not satisfy this narrow wire requirement; they remain historical
+  and are superseded by the current source-pinned report above.
 - **PB-005 owner decisions:** classify cave/deck/submerged grounding rows only
   with canonical/client evidence and decide ownership of the 733 duplicate
   rows. Do not add a negative-Z clamp, delete duplicates, or alter the

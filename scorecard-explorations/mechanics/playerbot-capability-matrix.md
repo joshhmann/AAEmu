@@ -1,19 +1,19 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality at the source/test baseline and new
-normal-clone gate
-`246803f6fa94c532f1d4a26265c051c5b1210b9f` (2026-08-27; `origin/develop`
-verified at `d95836692eb3ef02e28aaca5279d11981a48b441` before editing).
-Source/test commits: `0c57ef0c9` and `57b6e2960`. Subsequent local commits are
-documentation-only reconciliation.
+Populated from implementation reality at combined source/test HEAD
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e` (2026-08-27; local `develop` is
+two commits ahead of `origin/develop` at
+`bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`; docs follow source commits
+`063beb7cd` and `b230bd8a2`). The normal-clone gate is Release build PASS
+(8 warnings, 0 errors), compiler 0/0, unit 2496/2495/0/1, MCP stdio 39 tools.
 Legend: ✅ through real engine paths · 🟡 partial/rig-only · ❌ missing.
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |
 |---|---|---|---|---|---|
 | Movement | 🟡 positions via Observe; no terrain awareness | ✅ simple (straight-leg, standoff band, stuck detection) | ✅ MoveTo/MoveToUnit/DriveVehicle plus landed `NavigateTo` implementation (real CryEngine GeoData A* pathing, waypoint stepping, stuck detection, and straight-leg fallback) | ✅ tracked PB-001 five-test `GameplayActorNavigateTests` contract evidence: `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'` → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`; `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved prototype waypoint test was invalid because it injected private state via reflection; do not claim waypoint coverage from it. PB-005 positive-only grounding clamp + intentional-floater whitelist landed, cave/deck/submerged and duplicate-row decisions remain | 🟡 broad interior/region traversal open |
-| Combat | ✅ Observe (units, hp, targets) + causal traces (hp deltas) | ✅ rotation priority, sustain thresholds, no-progress skip | ✅ SetTarget/Cast (real skill pipeline) | ✅ kill credit + hp-delta traces; PB-007 OPEN, narrowed: targeted rig PASS 1/1 (real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution present; first application and Refresh broadcasts); live non-immune damage-frame proof remains pending | ✅ party spike live-proven |
-| Quests | ✅ DiscoverQuests through the real AddQuest gate (PB-002, c1073d883); titles are client-localized and zone-sweep coverage still open; **channels v2 (2026-08-25, branch bots/quest-surface):** ~801 previously-hidden quests now perceivable — Item 342+25 (ConAcceptItem/ItemGain), Sphere 431 (geometry via GetQuestStartingSpheres), Level 3 (+ DiscoverSelfQuests); ConAcceptComponent channel DEFERRED = stub (true-return, no player-perceivable precondition) | ✅ FIRST AUTONOMOUS LEVELING SLICE (2026-08-25): `LevelingLoopScenario` — discover → lowest-level offering in band → accept → data-driven objective pursuit → turn-in → re-discover; no scripted chain ids in decision logic | ✅ AcceptQuest/TurnInQuest/AdvanceQuest (real gates); gather objectives via InteractWith on HighlightDoodadId sources (real OnItemGather credit); Talk contract action (Talk = 46) fires DoTalkMadeEvents once per active talk-objective quest through the real pipeline, fail-closed pre-flight (range/unresolvable npcObjId) + observable-delta post-check | ✅ rig-proven: Solzreed 254→255 completed unprompted, +1300 exp through real quest_supplies turn-in path (`leveling-loop-2026-08-25.md`); fail-closed proofs: band starvation → Starvation; unsupported objective type (5650 QuestActObjTalkNpcGroup) stops naming the missing primitive | 🟡 one chain segment rig-level; hunt legs not composed (primitives exist), talk/sphere/cinema/craft objective gaps named in `KnownPrimitiveGaps`; live E2E open |
+| Combat | ✅ Observe (units, hp, targets) + causal traces (hp deltas) | ✅ rotation priority, sustain thresholds, no-progress skip | ✅ SetTarget/Cast (real skill pipeline) | ✅ kill credit + hp-delta traces; PB-007 narrow handshake live-proven at combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`: victim-matched non-immune `SCUnitDamaged`, immune exclusion, SkillFired, Retribution 2167, bloodstain 877, crime branch, and PEACE-BLOCK | ✅ party spike live-proven; broader PvP/honor and WAR-HONOR remain open |
+| Quests | ✅ DiscoverQuests through the real AddQuest gate (PB-002); titles are client-localized and zone-sweep coverage is open; channels include Item, Sphere, Level, and DiscoverSelfQuests | ✅ FIRST AUTONOMOUS LEVELING SLICE: discover → lowest-level offering in band → accept → data-driven objective pursuit → turn-in → re-discover; QuestActObjItemUse now covered through real GameplayActor.UseItem | ✅ AcceptQuest/TurnInQuest/AdvanceQuest/UseItem (real gates); canonical item-use quest 252: NPC 7653, item 7738, use skill 11596, act row 1600/detail 43; fail-closed quest 64 control | ✅ LevelingLoopScenarioRigTests 7/7; item-use 1/1; unsupported-objective 1/1; discovery 12/12; talk 5/5; template registration 1/1 | 🟡 scoped actor/rig coverage; broad autonomous progression and live/human breadth remain open |
 | Loot | ✅ corpse/inventory via contract | ✅ loot-after-kill step | ✅ Loot action | ✅ item-granted criteria | ✅ within hunt loops |
 | Vendors | ✅ money/inventory observable | ✅ trivial buy/sell rules | ✅ Buy/Sell actions (real shop paths); merchant trio fixes merged (`cb514c42e`, `beaf9b82e`, `3ba33b3af`, merge `e5db6d390`) | ✅ ledger conservation; live EconomyDayCycle conservation E2E passed across kill -9 restart | ✅ economy cycle live-proven |
 | Mail | ✅ inbox, unread count, and attachment state observable | ✅ S3 send → restart → receive/take/delete decision path | ✅ server Send/read/take/delete packet paths with receive-path ownership guards; real `CSSendMailPacket` send and mailbox proximity | ✅ authenticated `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets` PASS 1/1 in 2m39s on isolated MySQL/Docker; kill-9/restart, `SlotType.Mail=5`, receiver retargeting, unread recount after registration, exact item-instance detail/grade/durability/rune/temper fidelity, copper, read transition, and delete persistence all asserted | ✅ restart-proven S3 flow; return opcode `0x0a2` STRONGLY_INFERRED pending real-client capture, COD/expiry follow-ups |
@@ -45,17 +45,18 @@ Flash reports fifteen additional authenticated actor routes/tools:
 `discover_quests`, `discover_self_quests`, `interact_with`, `talk`, and
 `equip`. The MCP catalog is now **39 tools**.
 
-SHA-pinned clean-gate evidence at
-`246803f6fa94c532f1d4a26265c051c5b1210b9f` is from a normal clone:
-`./scripts/gate.sh`; Release build PASS (4 NU1903 warnings, 0 errors);
-compiler check **0/0**; unit **2495 total / 2494 passed / 0 failed / 1
-skipped**; MCP stdio smoke 39 tools. The skip is
+SHA-pinned clean-gate evidence at combined HEAD
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e` is from a normal clone:
+`./scripts/gate.sh`; Release build PASS (8 warnings, 0 errors);
+compiler check **0/0**; unit **2496 total / 2495 passed / 0 failed / 1
+skipped**; MCP stdio smoke 39 tools. Focused PB-002 results:
+`LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
+unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
+registration 1/1. Parser tests 2/2. Skip:
 `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The known six root helpers now
-accept both `.git` directories and `.git` files after `57b6e2960`; the linked-
-worktree `QuestScenarioTierTests` regression passed 1/1 after that helper
-compatibility fix. The normal clone remains canonical for full-gate evidence.
-Flash-reported focused route/MCP/queue validation remains **53/53**.
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Source commits are
+`063beb7cd` and `b230bd8a2`; local `develop` is two commits ahead of
+`origin/develop` at `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`.
 
 Flash reports a live `discover_self_quests` MCP benchmark passing with
 `action_status`, `trace`, and an independent MySQL character-row cross-check;
