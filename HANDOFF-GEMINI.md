@@ -1,14 +1,18 @@
 # Gemini Handoff — AAEmu
 
 - The current source/test HEAD is
-  `86c330d3aeb7e6566390b00ddf667da8576dc045` (`origin/develop`). Behavioral
-  gate evidence remains pinned to baseline
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone. Source
-  commit `8d66f48b9` is provenance-only and does not replace either pointer.
-  The IntegrationTests Release restore/build passed with 0 errors and 602
-  warnings (including 2 NU1903) in a normal clone. The prior baseline
-  `246803f6fa94c532f1d4a26265c051c5b1210b9f` and earlier PB-007/Mail
-  reconciliation remain historical.
+  `792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`). Per-run soak
+  ownership hardening `799b698ad` snapshots named account/character rows and
+  cleans only newly owned IDs in A5/A5Tier3 `finally` paths; sibling-
+  preservation tests pass 2/2. The full normal-clone gate at 792 is **2496
+  total / 2495 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP stdio
+  smoke **39 tools**. The sole skip is
+  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
+  restore/build passed with 0 errors; restore emitted 2 NU1903 and build
+  emitted 2 NU1903 in this exact verification. Runtime provenance uses
+  `E2eStack.SourceRevision` with an explicit `unknown` fallback. Earlier gate
+  and reconciliation pointers remain historical.
 - Start from [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md) for
   the safe temporary-worktree workflow, current MCP evidence boundary, and
   ordered continuation gates.
@@ -17,19 +21,17 @@
   `deposit_item`, `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`,
   `pack_pickup`, `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current MCP catalog is 39 tools.
-- The behavioral gate evidence at baseline
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` is `./scripts/gate.sh`;
-  Release build PASS (8 warnings, 0 errors); compiler **0/0**; unit **2496
-  total / 2495 passed / 0 failed / 1 skipped**; MCP stdio smoke **39 tools**.
-  Focused PB-002: LevelingLoopScenarioRigTests 7/7, item-use 1/1,
-  unsupported-objective 1/1, discovery 12/12, talk 5/5, template registration
-  1/1; parser tests 2/2. The sole skip is
+- The full normal-clone gate at source/test HEAD
+  `792774d7707b8b578b8d9975896e0a1ac719f361` is `./scripts/gate.sh`;
+  **2496 total / 2495 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP
+  stdio smoke **39 tools**. Focused PB-002: LevelingLoopScenarioRigTests 7/7,
+  item-use 1/1, unsupported-objective 1/1, discovery 12/12, talk 5/5,
+  template registration 1/1; parser tests 2/2. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. These counts are for the
-  behavioral baseline, not a new full-gate count at current source/test HEAD
-  `86c330d3aeb7e6566390b00ddf667da8576dc045`. `E2eStack.SourceRevision`
-  records runtime `git rev-parse HEAD` with an `unknown` fallback; A5/A5Tier3
-  stale hardcoded revisions are fixed.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
+  restore/build passed with 0 errors; restore emitted 2 NU1903 and build
+  emitted 2 NU1903 in this exact verification. Runtime provenance uses
+  `E2eStack.SourceRevision` with an `unknown` fallback.
   Focused route/MCP/queue validation remains Flash-reported **53/53**
   (`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
   `BotActionCommandQueueTests` 18/18).
@@ -83,20 +85,17 @@ Use this loop for every slice:
   `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`, `pack_pickup`,
   `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current catalog is 39 tools.
-- The behavioral gate evidence is SHA-pinned to baseline
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (not current source/test HEAD
-  `86c330d3aeb7e6566390b00ddf667da8576dc045`); local `develop` now points to
-  `origin/develop` at the current HEAD. `./scripts/gate.sh`; Release build PASS
-  (8 warnings, 0 errors); compiler **0/0**; unit **2496 total / 2495 passed /
-  0 failed / 1 skipped**; MCP stdio smoke **39 tools**. Focused PB-002 results
-  are LevelingLoopScenarioRigTests 7/7, item-use 1/1,
-  unsupported-objective 1/1, discovery 12/12, talk 5/5, template registration
-  1/1; parser tests 2/2. The sole skip is
-  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Separately, the
-  IntegrationTests Release restore/build passed with 0 errors and 602 warnings
-  (including 2 NU1903) in a normal clone; do not treat that as a new full-gate
-  count.
+- The full normal-clone gate at source/test HEAD
+  `792774d7707b8b578b8d9975896e0a1ac719f361` is `./scripts/gate.sh`;
+  **2496 total / 2495 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP
+  stdio smoke **39 tools**. Focused PB-002 results are
+  LevelingLoopScenarioRigTests 7/7, item-use 1/1, unsupported-objective 1/1,
+  discovery 12/12, talk 5/5, template registration 1/1; parser tests 2/2.
+  The sole skip is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
+  restore/build passed with 0 errors; restore emitted 2 NU1903 and build
+  emitted 2 NU1903 in this exact verification. Do not substitute another
+  full-gate count.
 - Focused PB-001 evidence is tracked five-test contract coverage. Exact
   command:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`.
@@ -113,7 +112,14 @@ Use this loop for every slice:
 
 - The existing CryEngine `.bai` navigation spine is real: loaders, forbidden polygons, nearest-node/height lookup, A*, and path reduction. The navigation slice fixed the PathNode G-cost defect, replaced the open set with a heap, and added a lazy per-block spatial grid. On the 81-route corridor rig, **81/81** still reached the goal; average detour improved **1.91x to 1.22x** and average planning time improved **6954 ms to 1187 ms** (total 563.3 s to 96.1 s). This is a measured engine rig, not proof that bots can yet traverse every interior or region.
 - G2-A3 wake-storm machinery and G2-A5 true dormancy are default-off. A3 full live-TCP storm exercised 1,000 dormant registrations through proximity sweep/materialization/wake and clean dematerialization. A5's accepted follow-up exercised about 100 dormant rows and 10 embodied bots using a real live human trigger; the earlier report header says BLOCKED because its first harness had no dormant seed/trigger, but report §8 closes that harness gap and supplies the measurement. PB-004 (materialized bots did not wake/step) is fixed.
-- Tier-3 shape is measured: 1,000 dormant seeded sequentially, 50 embodied, RSS **+0.13%** against the 50-active baseline, wake p95 **280.2 ms** at 1000/50, and steps/min parity **15003 vs 14995**. The 6-hour dormant-timer leg is still pending. Concurrent `seedDormant` corrupts state after about 100 bots; keep seeding sequential.
+- Tier-3 shape is measured: 1,000 dormant seeded sequentially, 50 embodied,
+  RSS **+0.13%** against the 50-active baseline, wake p95 **280.2 ms** at
+  1000/50, and steps/min parity **15003 vs 14995**. The 6-hour dormant-timer
+  leg is still pending. Per-run ownership hardening `799b698ad` snapshots
+  named account/character rows and cleans only newly owned IDs in A5/A5Tier3
+  `finally` paths; sibling-preservation tests pass 2/2 and no broad wildcard
+  cleanup remains in those probes. `SeedBox` still has synchronous bridge calls
+  and native `Thread.Join` without hard cancellation.
 
 ### Mail, economy, labor, and honor
 
@@ -149,7 +155,7 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
 | Merchant/economy | Restart conservation of money, bank, and item counts | Live bot economy cycle across kill-9; not human shop feel. |
 | Grounding | 593 corrected / 702 whitelist preserved | Offline engine-identical terrain harness plus targeted policy tests; terrain-only, not cave/deck/submerged truth. |
 
-| PB-007 live handshake | **1/1 in 2m09.910s**; AGGRESS-ALLOWED observed victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False, `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294, and crime branch; PEACE-BLOCK passed | Behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is `86c330d3aeb7e6566390b00ddf667da8576dc045`; WAR-HONOR intentionally deferred; broader PvP/honor and H remain open. Report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`. |
+| PB-007 live handshake | **1/1 in 2m09.910s**; AGGRESS-ALLOWED observed victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False, `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294, and crime branch; PEACE-BLOCK passed | Behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is `792774d7707b8b578b8d9975896e0a1ac719f361`; WAR-HONOR intentionally deferred; broader PvP/honor and H remain open. Report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md` |
 
 ## Active blockers and partials
 
@@ -174,7 +180,7 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
 - **PB-007 — FIXED / CLOSED for the narrow flagged-aggression handshake** at
   behavioral gate evidence baseline
   `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD
-  `86c330d3aeb7e6566390b00ddf667da8576dc045`): the current real-login/Game
+  `792774d7707b8b578b8d9975896e0a1ac719f361`): the current real-login/Game
   E2E passed 1/1 in 2m09.910s with the victim-matched, non-immune
   `SCUnitDamaged` frame, immune exclusion, `SkillFired=True`, Retribution
   2167, bloodstain 877 objId 44294, and crime branch observed; PEACE-BLOCK
@@ -186,10 +192,13 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
 - **Mail:** Mail S3 is merged and complete; no S3 partial remains. Open follow-ups are real-client confirmation of the return opcode (candidate `0x0a2`, still not a fact), COD enforcement, and expiry/bounce integration proof.
 - **Scaling:** no six-hour dormant-timer soak exists in current evidence, so
   no six-hour soak result is claimed. Keep dormant seeding sequential because
-  concurrent `seedDormant` corrupts server state at roughly 100 bots. Broad bot
-  cleanup risks sibling-state deletion. `SeedBox` has synchronous bridge calls
-  and native `Thread.Join` without hard cancellation; these remain blockers.
-  Historical M6 soak evidence and staged reports are preserved as historical.
+  concurrent `seedDormant` corrupts server state at roughly 100 bots. Per-run
+  ownership hardening `799b698ad` now snapshots named account/character rows
+  and cleans only newly owned IDs in A5/A5Tier3 `finally` paths; sibling-
+  preservation tests pass 2/2 and no broad wildcard cleanup remains in those
+  probes. `SeedBox` has synchronous bridge calls and native `Thread.Join`
+  without hard cancellation; this remains a blocker. Historical M6 soak
+  evidence and staged reports are preserved as historical.
 
 ## Surviving worktrees and safety
 
@@ -208,7 +217,7 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 1. Preserve the full-gate output pinned to behavioral baseline
    `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, not as current source/test
    HEAD. Current source/test HEAD is
-   `86c330d3aeb7e6566390b00ddf667da8576dc045`; retain the exact command,
+   `792774d7707b8b578b8d9975896e0a1ac719f361`; retain the exact command,
    environment/assets, build/compiler result, unit totals and skip identity,
    and downstream MCP-smoke result from that baseline. Normal clone remains
    canonical for this full-gate evidence.
@@ -223,9 +232,11 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
    remains intentionally deferred.
 4. Do not claim a six-hour dormant-timer soak result: no such current soak
    exists. Keep sequential seeding (`seedDormant` corrupts state after about
-   100 bots), treat broad cleanup as risky because it can delete sibling state,
-   and record `SeedBox` synchronous bridge calls/native `Thread.Join` without
-   hard cancellation as blockers.
+   100 bots). Per-run ownership hardening `799b698ad` scopes A5/A5Tier3 cleanup
+   to newly owned named account/character IDs; sibling-preservation tests pass
+   2/2 and no broad wildcard cleanup remains in those probes. Record `SeedBox`
+   synchronous bridge calls/native `Thread.Join` without hard cancellation as
+   a blocker.
 5. Keep Party, Expedition, Trade, Auction, and related actor expansion
    deferred until authenticated enqueue routes and reviewed observable
    contracts exist.
@@ -237,14 +248,14 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 1. **Establish the checkpoint before editing.** Follow
    [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md): inspect the
    dirty main checkout read-only and create a clean temporary worktree from
-   current source/test HEAD `86c330d3aeb7e6566390b00ddf667da8576dc045`
+   current source/test HEAD `792774d7707b8b578b8d9975896e0a1ac719f361`
    (`origin/develop`). The behavioral gate baseline
    `3871459d142fdd1767b9365a1de8d4cd3652ab0e` remains the normal-clone
    evidence pointer; the prior `241d3e34d` relationship and 2479/0/1
    checkpoints are historical.
 2. **PB-007 narrow closure is already proven at the behavioral gate baseline**
    `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is
-   `86c330d3aeb7e6566390b00ddf667da8576dc045`. Preserve the live report and
+   `792774d7707b8b578b8d9975896e0a1ac719f361`. Preserve the live report and
    historical failure context; do not rerun it blindly. The required live
    victim-matched, non-immune `SCUnitDamaged` frame, immune exclusion,
    Retribution/crime evidence, and PEACE-BLOCK are recorded above. WAR-HONOR

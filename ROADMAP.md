@@ -17,15 +17,18 @@
 > passes that test, the architecture stays right.
 
 **Current source/test checkpoint (2026-08-28):** `develop` / `origin/develop`
-is at `86c330d3aeb7e6566390b00ddf667da8576dc045`. Behavioral gate evidence
-remains pinned to baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a
-normal clone; that baseline is not the current source HEAD. Source commit
-`8d66f48b9` is provenance-only. IntegrationTests Release restore/build passed
-with 0 errors and 602 warnings (including 2 NU1903) in a normal clone.
-`E2eStack.SourceRevision` records runtime `git rev-parse HEAD` with an
-`unknown` fallback; A5/A5Tier3 stale hardcoded revisions are fixed. Historical
-reports and prior evidence remain unchanged. Do not invent a new full-gate
-count.
+is at `792774d7707b8b578b8d9975896e0a1ac719f361`. The per-run soak ownership
+hardening is `799b698ad`: A5/A5Tier3 snapshot exactly the named
+account/character rows they observe before and after a run, clean only newly
+owned IDs in `finally`, and preserve sibling rows; ownership tests pass 2/2.
+Full normal-clone gate at 792: **2496 total / 2495 passed / 0 failed /
+1 skipped**, compiler **0/0**, MCP stdio **39 tools**. The sole skip is
+`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
+restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
+2 NU1903 in this exact verification. Runtime evidence uses
+`E2eStack.SourceRevision` with an explicit `unknown` fallback. Historical
+reports and prior evidence remain unchanged.
 
 ## Three phases
 
@@ -1181,21 +1184,17 @@ authenticated routes/tools: `deposit_money`, `withdraw_money`, `deposit_item`,
 `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`, `pack_pickup`,
 `put_down`, `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
 `drive_vehicle`.
-
-The clean-gate result is retained as behavioral gate evidence at baseline
-`3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone, not as current
-source/test HEAD `86c330d3aeb7e6566390b00ddf667da8576dc045`: command
-`./scripts/gate.sh`; Release build PASS (8 warnings, 0 errors);
-compiler check **0/0**; unit suite **2496 total / 2495 passed / 0 failed /
-1 skipped**; MCP stdio smoke **39 tools**. Focused PB-002 results:
+The full normal-clone gate at source/test HEAD
+`792774d7707b8b578b8d9975896e0a1ac719f361` is **2496 total / 2495 passed /
+0 failed / 1 skipped**; compiler check **0/0**; MCP stdio smoke **39 tools**.
+Command: `./scripts/gate.sh`. The sole skip is
+`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
+restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
+2 NU1903 in this exact verification. Focused PB-002 results:
 `LevelingLoopScenarioRigTests` 7/7, item-use 1/1, unsupported-objective 1/1,
 discovery 12/12, talk 5/5, and template registration 1/1. Parser tests
-passed 2/2. The sole skip is
-`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. These retained counts are
-baseline evidence only; no new full-gate count is claimed. Separately,
-IntegrationTests Release restore/build passed with 0 errors and 602 warnings
-(including 2 NU1903) in a normal clone.
+passed 2/2. Do not substitute another full-gate count.
 Focused PB-001 result:
 `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
 → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
@@ -1486,11 +1485,13 @@ Principles:
   batching → allocation work. Measure before/after every wave.
 
 **Current scaling blockers (2026-08-28):** No six-hour dormant-timer soak
-exists in current evidence, so no soak result is claimed. Broad bot cleanup
-risks sibling-state deletion. `SeedBox` has synchronous bridge calls/native
-`Thread.Join` without hard cancellation. Keep all prior staged/historical
-reports and the human/H boundary: bot, rig, MCP, and live-stack results are
-functional/proxy evidence, while human-feel acceptance remains Josh-owned.
+exists in current evidence, so no soak result is claimed. A5/A5Tier3 now use
+per-run named account/character snapshots and ID-bound `finally` cleanup
+(`799b698ad`); sibling-preservation tests pass 2/2 and those probes contain no
+broad wildcard cleanup. `SeedBox` has synchronous bridge calls/native
+`Thread.Join` without hard cancellation. Keep prior staged/historical reports
+and the human/H boundary: bot, rig, MCP, and live-stack results are functional/
+proxy evidence, while human-feel acceptance remains Josh-owned.
 
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
@@ -1790,7 +1791,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
   `bots/kill-leg` (MonsterHunt/MonsterGroupHunt pursuit + cast-burst).
   **UPDATE 2026-08-27 (behavioral gate evidence baseline
   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD
-  `86c330d3aeb7e6566390b00ddf667da8576dc045`; source commit `b230bd8a2`):**
+  `792774d7707b8b578b8d9975896e0a1ac719f361`; source commit `b230bd8a2`):**
   `QuestActObjItemUse` is covered through real `GameplayActor.UseItem` for
   canonical quest 252 (NPC 7653, item 7738, use skill 11596, act row
   1600/detail 43), with fail-closed canonical quest 64 control. Focused
@@ -1902,7 +1903,7 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
    (PVP-01) · Priority: HIGH · **STATUS 2026-08-27: FIXED / CLOSED for the
    narrow handshake requirement** at behavioral gate evidence baseline
    `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD
-   `86c330d3aeb7e6566390b00ddf667da8576dc045`). The final isolated live E2E
+   `792774d7707b8b578b8d9975896e0a1ac719f361`). The final isolated live E2E
    passed 1/1 in 2m09.910s: `AGGRESS-ALLOWED` observed a victim-matched
    non-immune `SCUnitDamaged`, immune frames excluded, `SkillFired=True`,
    Retribution 2167, bloodstain doodad 877 objId 44294, and the crime branch;
@@ -1961,9 +1962,9 @@ quest-discovery, doodad-interact contract action, A5 acceptance run):**
     remain disabled without an explicit owner decision.
 
 **Recovery queue status (2026-08-28; current source/test HEAD
-`86c330d3aeb7e6566390b00ddf667da8576dc045`; behavioral gate evidence remains
+`792774d7707b8b578b8d9975896e0a1ac719f361`; behavioral gate evidence remains
 pinned to baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal
-clone; source commit `8d66f48b9` is provenance-only):**
+clone; per-run soak ownership hardening `799b698ad` is source/test evidence):**
 
 - **PB-005:** **FIXED-PARTIAL** after `38c4997d3` — positive clamp and
   intentional-floater whitelist landed; cave/deck/submerged classification and
@@ -1980,24 +1981,20 @@ clone; source commit `8d66f48b9` is provenance-only):**
   No implementation landed; broad PB-002 remains open.
 - **PB-007:** **FIXED / CLOSED for the narrow flagged-aggression handshake** at
   behavioral gate baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`;
-  current source/test HEAD is `86c330d3aeb7e6566390b00ddf667da8576dc045`.
+  current source/test HEAD is `792774d7707b8b578b8d9975896e0a1ac719f361`.
   The final live E2E observed the required victim-matched, non-immune
   `SCUnitDamaged` frame with immune frames excluded, plus `SkillFired=True`,
   Retribution 2167, bloodstain doodad 877 objId 44294, and crime-branch
   evidence; PEACE-BLOCK passed with no victim-matched non-immune damage.
   Parser tests passed 2/2. WAR-HONOR remains separately deferred; all
   PvP/honor scope is not closed.
-- **Behavioral gate evidence:** the baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`
-  is Release build PASS (8 warnings, 0 errors), compiler 0/0, unit **2496
-  total / 2495 passed / 0 failed / 1 skipped**, and MCP stdio smoke 39 tools.
-  Focused PB-002 results: `LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
-  unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
-  registration 1/1. Skip:
-  `Provision_Activate_Persist_Deactivate_RoundTrip` requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. These are retained
-  behavioral-baseline counts; no new full-gate count is claimed.
-- **IntegrationTests build:** Release restore/build passed with 0 errors and
-  602 warnings (including 2 NU1903) in a normal clone.
+- **Full normal-clone gate at source/test HEAD 792:** **2496 total / 2495
+  passed / 0 failed / 1 skipped**, compiler **0/0**, MCP stdio smoke **39
+  tools**. The sole skip is `Provision_Activate_Persist_Deactivate_RoundTrip`
+  requiring `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
+- **IntegrationTests build:** Release restore/build passed with 0 errors;
+  restore emitted 2 NU1903 and build emitted 2 NU1903 in this exact
+  verification.
 - **Scaling blockers:** no six-hour dormant-timer soak exists in current
   evidence, so no soak result is claimed. Broad bot cleanup risks
   sibling-state deletion. `SeedBox` has synchronous bridge calls/native
@@ -2561,9 +2558,11 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
     tick p95 parity 0.8 ms both arms. **PENDING:** no six-hour dormant-timer
     soak exists in current evidence; no soak result is claimed. Documented
     hazards: CONCURRENT seedDormant corrupts server state after ~100 bots
-    (non-concurrent collection) — seeding stays sequential; broad cleanup risks
-    sibling-state deletion and `SeedBox` lacks hard cancellation around
-    synchronous bridge calls/native `Thread.Join` (report §11.2).
+    (non-concurrent collection) — seeding stays sequential. Per-run ownership
+    hardening `799b698ad` scopes A5/A5Tier3 cleanup to newly observed
+    account/character IDs; sibling-preservation tests pass 2/2 and no broad
+    wildcard cleanup remains in those probes. `SeedBox` still lacks hard
+    cancellation around synchronous bridge calls/native `Thread.Join`.
   - FINAL Tier-3 acceptance: 1,000 registered / ≤50 embodied,
     RSS within 15% of the 50-only baseline; wake-to-visible p95 < 3s;
     dormant timers advance over 6h (Tier 3 = DB-driven scheduled simulation:
@@ -2581,9 +2580,11 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
     tick p95 parity 0.8 ms both arms. **PENDING:** no six-hour dormant-timer
     soak exists in current evidence; no soak result is claimed. Documented
     hazards: CONCURRENT seedDormant corrupts server state after ~100 bots;
-    seeding stays sequential. Broad cleanup risks sibling-state deletion, and
-    `SeedBox` has synchronous bridge calls/native `Thread.Join` without hard
-    cancellation.
+    seeding stays sequential. Per-run ownership hardening `799b698ad` scopes
+    A5/A5Tier3 cleanup to newly observed account/character IDs; sibling-
+    preservation tests pass 2/2 and no broad wildcard cleanup remains in those
+    probes. `SeedBox` still has synchronous bridge calls/native `Thread.Join`
+    without hard cancellation.
 - A6 (M) Manifest-driven mass provisioning (citizen manifest as data;
   replaces hardcoded CitizenNN + 10-bot clamp). Acceptance: cold boot →
   100 citizens on schedule < 60s. **Note 2026-08-24 (4e460305b):** soak

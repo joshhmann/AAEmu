@@ -1,21 +1,23 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
 Populated from implementation reality at current source/test HEAD
-`86c330d3aeb7e6566390b00ddf667da8576dc045` (`origin/develop`, 2026-08-28).
-Behavioral gate evidence remains pinned to baseline
-`3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone. Source commit
-`8d66f48b9` is provenance-only. IntegrationTests Release restore/build passed
-with 0 errors and 602 warnings (including 2 NU1903) in a normal clone.
-`E2eStack.SourceRevision` records runtime `git rev-parse HEAD` with unknown
-fallback; A5/A5Tier3 stale hardcoded revisions are fixed. The behavioral
-baseline gate is Release build PASS (8 warnings, 0 errors), compiler 0/0, unit
-2496/2495/0/1, MCP stdio 39 tools. No new full-gate count is claimed.
+`792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`, 2026-08-28).
+Per-run soak ownership hardening `799b698ad` snapshots named account/character
+rows, cleans only newly owned IDs in A5/A5Tier3 `finally` paths, and has
+sibling-preservation tests 2/2. The full normal-clone gate at 792 is **2496
+total / 2495 passed / 0 failed / 1 skipped**, compiler **0/0**, MCP stdio
+**39 tools**. The sole skip is
+`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
+restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
+2 NU1903 in this exact verification. Runtime evidence uses
+`E2eStack.SourceRevision` with unknown fallback.
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |
 |---|---|---|---|---|---|
 | Movement | 🟡 positions via Observe; no terrain awareness | ✅ simple (straight-leg, standoff band, stuck detection) | ✅ MoveTo/MoveToUnit/DriveVehicle plus landed `NavigateTo` implementation (real CryEngine GeoData A* pathing, waypoint stepping, stuck detection, and straight-leg fallback) | ✅ tracked PB-001 five-test `GameplayActorNavigateTests` contract evidence: `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'` → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`; `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved prototype waypoint test was invalid because it injected private state via reflection; do not claim waypoint coverage from it. PB-005 positive-only grounding clamp + intentional-floater whitelist landed, cave/deck/submerged and duplicate-row decisions remain | 🟡 broad interior/region traversal open |
-| Combat | ✅ Observe (units, hp, targets) + causal traces (hp deltas) | ✅ rotation priority, sustain thresholds, no-progress skip | ✅ SetTarget/Cast (real skill pipeline) | ✅ kill credit + hp-delta traces; PB-007 narrow handshake live-proven at behavioral gate baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD `86c330d3aeb7e6566390b00ddf667da8576dc045`): victim-matched non-immune `SCUnitDamaged`, immune exclusion, SkillFired, Retribution 2167, bloodstain 877, crime branch, and PEACE-BLOCK | ✅ party spike live-proven; broader PvP/honor and WAR-HONOR remain open |
+| Combat | ✅ Observe (units, hp, targets) + causal traces (hp deltas) | ✅ rotation priority, sustain thresholds, no-progress skip | ✅ SetTarget/Cast (real skill pipeline) | ✅ kill credit + hp-delta traces; PB-007 narrow handshake live-proven at behavioral gate baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD `792774d7707b8b578b8d9975896e0a1ac719f361`): victim-matched non-immune `SCUnitDamaged`, immune exclusion, SkillFired, Retribution 2167, bloodstain 877, crime branch, and PEACE-BLOCK | ✅ party spike live-proven; broader PvP/honor and WAR-HONOR remain open |
 | Quests | ✅ DiscoverQuests through the real AddQuest gate (PB-002); titles are client-localized and zone-sweep coverage is open; channels include Item, Sphere, Level, and DiscoverSelfQuests | ✅ FIRST AUTONOMOUS LEVELING SLICE: discover → lowest-level offering in band → accept → data-driven objective pursuit → turn-in → re-discover; QuestActObjItemUse now covered through real GameplayActor.UseItem | ✅ AcceptQuest/TurnInQuest/AdvanceQuest/UseItem (real gates); canonical item-use quest 252: NPC 7653, item 7738, use skill 11596, act row 1600/detail 43; fail-closed quest 64 control | ✅ LevelingLoopScenarioRigTests 7/7; item-use 1/1; unsupported-objective 1/1; discovery 12/12; talk 5/5; template registration 1/1 | 🟡 scoped actor/rig coverage; broad autonomous progression and live/human breadth remain open |
 | Loot | ✅ corpse/inventory via contract | ✅ loot-after-kill step | ✅ Loot action | ✅ item-granted criteria | ✅ within hunt loops |
 | Vendors | ✅ money/inventory observable | ✅ trivial buy/sell rules | ✅ Buy/Sell actions (real shop paths); merchant trio fixes merged (`cb514c42e`, `beaf9b82e`, `3ba33b3af`, merge `e5db6d390`) | ✅ ledger conservation; live EconomyDayCycle conservation E2E passed across kill -9 restart | ✅ economy cycle live-proven |
@@ -46,20 +48,17 @@ Flash reports fifteen additional authenticated actor routes/tools:
 `unboard_vehicle`, `drive_vehicle`, `buy`, `sell`, `craft`, `plant`, `harvest`,
 `deposit_money`, `withdraw_money`, `deposit_item`, and `withdraw_item`, joining
 `discover_quests`, `discover_self_quests`, `interact_with`, `talk`, and
-`equip`. The MCP catalog is now **39 tools**.
-
-SHA-pinned behavioral gate evidence at baseline
-`3871459d142fdd1767b9365a1de8d4cd3652ab0e` is from a normal clone, not current
-source/test HEAD `86c330d3aeb7e6566390b00ddf667da8576dc045`:
-`./scripts/gate.sh`; Release build PASS (8 warnings, 0 errors);
-compiler check **0/0**; unit **2496 total / 2495 passed / 0 failed / 1
-skipped**; MCP stdio smoke 39 tools. Focused PB-002 results:
-`LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
-unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
-registration 1/1. Parser tests 2/2. Skip:
+`equip`.
+The full normal-clone gate at source/test HEAD
+`792774d7707b8b578b8d9975896e0a1ac719f361` is `./scripts/gate.sh`: **2496
+total / 2495 passed / 0 failed / 1 skipped**, compiler **0/0**, MCP stdio
+smoke **39 tools**. Focused PB-002 results: `LevelingLoopScenarioRigTests`
+7/7, item-use 1/1, unsupported-objective 1/1, discovery 12/12, talk 5/5,
+template registration 1/1; parser tests 2/2. The sole skip is
 `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. These are retained
-behavioral-baseline counts; no new full-gate count is claimed.
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
+restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
+2 NU1903 in this exact verification. Do not substitute another full-gate count.
 
 Flash reports a live `discover_self_quests` MCP benchmark passing with
 `action_status`, `trace`, and an independent MySQL character-row cross-check;
@@ -73,12 +72,12 @@ claimed as MCP-exposed.
 canonical interaction candidate failed for quest 270, doodad 687, interaction
 skill 11229: the real path reaches `Doodad.Use`, but the spawned fixture exposes
 no phase functions. No implementation landed; broad PB-002 remains open.
-
 **Soak boundary:** No six-hour dormant-timer soak exists in current evidence,
-so no soak result is claimed. Broad bot cleanup risks sibling-state deletion;
-`SeedBox` has synchronous bridge calls/native `Thread.Join` without hard
-cancellation. H/human-feel remains human-only and UNKNOWN.
-
+so no soak result is claimed. A5/A5Tier3 now use per-run named
+account/character snapshots and ID-bound `finally` cleanup (`799b698ad`);
+sibling-preservation tests pass 2/2, with no broad wildcard cleanup in those
+probes. `SeedBox` has synchronous bridge calls/native `Thread.Join` without
+hard cancellation. H/human-feel remains human-only and UNKNOWN.
 
 What exists today for running more bots without scaling cost linearly — all
 of it default-OFF, so unset deployments behave byte-identically to before:

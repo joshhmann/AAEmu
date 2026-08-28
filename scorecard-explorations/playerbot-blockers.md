@@ -9,14 +9,18 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 
 
 ## Current source/evidence checkpoint (2026-08-28)
-- Current source/test HEAD: `86c330d3aeb7e6566390b00ddf667da8576dc045`
-  (`origin/develop`).
-- Behavioral gate evidence baseline: `3871459d142fdd1767b9365a1de8d4cd3652ab0e`
-  from a normal clone. Source commit `8d66f48b9` is provenance-only.
-- IntegrationTests Release restore/build passed with 0 errors and 602 warnings
-  (including 2 NU1903) in a normal clone. Runtime evidence uses
-  `E2eStack.SourceRevision` with an `unknown` fallback; A5/A5Tier3 stale
-  hardcoded revisions are fixed. No new full-gate count is claimed.
+- Current source/test HEAD: `792774d7707b8b578b8d9975896e0a1ac719f361`
+  (`origin/develop`). Per-run soak ownership hardening is `799b698ad`:
+  A5/A5Tier3 snapshot named account/character rows and clean only newly owned
+  IDs in `finally`; sibling-preservation tests pass 2/2. No broad wildcard
+  cleanup remains in those probes.
+- Full normal-clone gate at 792: **2496 total / 2495 passed / 0 failed /
+  1 skipped**, compiler **0/0**, MCP stdio smoke **39 tools**. The sole skip is
+  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
+- IntegrationTests Release restore/build passed with 0 errors; restore emitted
+  2 NU1903 and build emitted 2 NU1903 in this exact verification. Runtime
+  evidence uses `E2eStack.SourceRevision` with an `unknown` fallback.
 ---
 
 ## OPEN
@@ -46,8 +50,8 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   candidate failed; broad autonomous next-quest selection remains open
 - Layer: DATA + BOT (quest discovery/perception and objective execution)
 - Historical failure evidence (retained): adventurer v1 runs curated chains only.
-- Current evidence: behavioral gate baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`;
-  current source/test HEAD is `86c330d3aeb7e6566390b00ddf667da8576dc045`.
+- Current evidence: full normal-clone gate at source/test HEAD
+  `792774d7707b8b578b8d9975896e0a1ac719f361`: 2496 total/2495 passed/0 failed/1
   `QuestActObjItemUse` drives through real `GameplayActor.UseItem` for canonical
   quest 252 (NPC 7653, item 7738, use skill 11596, act row 1600/detail 43),
   with fail-closed canonical quest 64 control. The failed canonical interaction
@@ -61,23 +65,25 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   quest progression, live-server breadth, and human/client breadth remain open.
 - Status: SCOPED SLICES LANDED / BROAD CLAIM OPEN
 
-### PB-SOAK · Dormant-timer soak and cleanup cancellation blockers — OPEN
+### PB-SOAK · Dormant-timer soak and cancellation blocker — OPEN
 - Scenario: Tier-3 dormant bots and long-running scheduler validation.
 - Observed: no six-hour dormant-timer soak exists in current evidence; no soak
-  result is claimed. Broad bot cleanup risks deleting sibling state.
+  result is claimed. A5/A5Tier3 now use per-run owned account/character
+  snapshots and ID-bound `finally` cleanup (`799b698ad`); sibling-preservation
+  tests pass 2/2, with no broad wildcard cleanup in those probes.
 - Harness blocker: `SeedBox` has synchronous bridge calls/native `Thread.Join`
   without hard cancellation.
 - Layer: BOT + SERVER (harness lifecycle and cancellation).
-- Evidence: current source/test HEAD `86c330d3aeb7e6566390b00ddf667da8576dc045`;
-  prior staged and historical reports remain preserved and are not relabeled as
-  a current six-hour result.
+- Evidence: current source/test HEAD
+  `792774d7707b8b578b8d9975896e0a1ac719f361`; prior staged and historical
+  reports remain preserved and are not relabeled as a current six-hour result.
 - Status: OPEN
 
 
 ## FIXED (evidence retained)
 ### PB-007 · Flagged same-faction aggression handshake — FIXED / CLOSED 2026-08-27
 - Scenario: PVP-01 slice 1 — two real Nuian TCP bots, attacker ForceAttack-flagged (CS 0x04f), casts Triple Slash 18131 on a co-located same-faction victim in e_steppe_belt (conflict group 14)
-- Closure evidence: behavioral gate baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is `86c330d3aeb7e6566390b00ddf667da8576dc045`. Source commits `063beb7cd` (parser/live proof) and `b230bd8a2` (separate PB-002 item-use objective). Final isolated real-login/Game E2E passed 1/1 in 2m09.910s.
+- Closure evidence: behavioral gate baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is `792774d7707b8b578b8d9975896e0a1ac719f361`. Source commits `063beb7cd` (parser/live proof) and `b230bd8a2` (separate PB-002 item-use objective). Final isolated real-login/Game E2E passed 1/1 in 2m09.910s.
 - AGGRESS-ALLOWED: victim-matched non-immune `SCUnitDamaged=True`; immune frames excluded=False; `SkillFired=True`; Retribution 2167=True; bloodstain doodad 877 objId 44294; crime branch observed.
 - PEACE-BLOCK: passed with no victim-matched non-immune damage. WAR-HONOR remains intentionally deferred; broader PvP/honor scope is not closed.
 - Historical failure context (retained): the prior immune-tagged/untrusted live result, login-protection window, and parser framing failure remain historical; the current report supersedes them without erasing that history.
