@@ -3074,14 +3074,20 @@ public class DoodadManager(IObjectIdManager objectIdManager, IDoodadIdManager do
             return false;
         }
 
+        // Enforce the coffer's own permission model before mutating OpenedBy.
+        // This is the same domain check used by DoodadFuncUse and preserves
+        // private/family/guild/otherworldly authorization for the packet path.
+        if (!coffer.AllowedToInteract(character))
+        {
+            character.SendErrorMessage(ErrorMessageType.InteractionPermissionDeny);
+            return false;
+        }
+
         // Somebody already using this ?
         if (coffer.OpenedBy != null)
         {
             return false;
         }
-
-        // TODO: Check permissions
-
         coffer.OpenedBy = character;
 
         byte firstSlot = 0;

@@ -320,6 +320,7 @@ public class HousingStorageFurnitureTests
         var coffer = doodad as DoodadCoffer;
         await Assert.That(coffer).IsNotNull();
         _world.AddObject(coffer);
+        coffer.OwnerId = _character.Id; // private/otherworldly coffer owner
         coffer.InitializeCoffer(_character.Id); // same wiring as CreatePlayerDoodad
         return coffer;
     }
@@ -443,6 +444,23 @@ public class HousingStorageFurnitureTests
         await Assert.That(opened).IsTrue();
         await Assert.That(coffer.OpenedBy).IsEqualTo(_character);
         await Assert.That(_capturedPackets.Select(PacketOpcode)).Contains(SCOffsets.SCCofferContentsUpdatePacket);
+    }
+
+    [Test]
+    public async Task OpenCofferDoodad_UnauthorizedCharacter_RefusedBeforeOpenedBy()
+    {
+        // Arrange — the coffer is private/otherworldly and owned by the test character.
+        var coffer = await CreateCofferDoodad();
+        var guest = new CharacterMock { Id = 2, ObjId = 0xB001, Name = "Guest" };
+        guest.ParentWorld = _world;
+        guest.Connection = new GameConnection(new PacketCaptureSession());
+
+        // Act — a different character attempts the real packet-path open service.
+        var opened = DoodadManager.Instance.OpenCofferDoodad(guest, coffer.ObjId);
+
+        // Assert — permission refusal is side-effect free.
+        await Assert.That(opened).IsFalse();
+        await Assert.That(coffer.OpenedBy).IsNull();
     }
 
     [Test]
