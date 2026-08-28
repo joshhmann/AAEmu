@@ -43,6 +43,9 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     from HighlightDoodadId among PERCEIVED nearby doodads, InteractWith
 ///     until the bag holds Count items (real acquisition → engine's own
 ///     DoItemsAcquiredEvents → OnItemGather credit), AdvanceQuest.
+///   - QuestActObjItemUse          → consume the act's ItemId through the
+///     real UseItem contract until the objective Count is credited by the
+///     engine's OnItemUse event.
 ///   - QuestActObjMonsterHunt / MonsterGroupHunt → resolve the hunt
 ///     targets DATA-DRIVEN from the act (NpcId, or monster-group id via
 ///     QuestManager.CheckGroupNpc) among PERCEIVED hostiles (alive +
@@ -374,8 +377,6 @@ public static class LevelingLoopScenario
 
     private static readonly Dictionary<string, string> KnownPrimitiveGaps = new()
     {
-        [nameof(QuestActObjItemUse)] =
-            "missing item-use pursuit composition (UseItem primitive exists; objective wiring uncomposed)",
         [nameof(QuestActObjItemGroupUse)] =
             "missing item-use pursuit composition (UseItem primitive exists; group resolution uncomposed)",
         [nameof(QuestActObjItemGroupGather)] =
@@ -436,11 +437,22 @@ public static class LevelingLoopScenario
             switch (act)
             {
                 case QuestActObjItemGather gather:
-                    var failure = GatherLeg(actor, opts, questId, gather, perception);
-                    if (failure != null)
-                        return Fail($"OBJECTIVES:gather({gather.ItemId})", ActorFailureReason.Navigation,
-                            failure, actor, null);
-                    break;
+                    {
+                        var failure = GatherLeg(actor, opts, questId, gather, perception);
+                        if (failure != null)
+                            return Fail($"OBJECTIVES:gather({gather.ItemId})", ActorFailureReason.Navigation,
+                                failure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjItemUse itemUse:
+                    {
+                        var useFailure = UseItemLeg(actor, questId, itemUse);
+                        if (useFailure != null)
+                            return Fail($"OBJECTIVES:item-use({itemUse.ItemId})",
+                                ActorFailureReason.RejectedAction, useFailure, actor, null);
+                        break;
+                    }
 
                 case QuestActObjMonsterHunt hunt:
                     {
@@ -516,6 +528,41 @@ public static class LevelingLoopScenario
 
         return null;
     }
+    /// <summary>
+    /// The item-use leg: consume the exact item named by the objective through
+    /// the real UseItem contract. Objective credit is read from the live quest
+    /// state, which is updated by the engine's OnItemUse event; inventory
+    /// depletion or a rejected use fails closed rather than faking credit.
+    /// </summary>
+    private static string? UseItemLeg(GameplayActor actor, uint questId, QuestActObjItemUse use)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return $"quest {questId} left ActiveQuests before item-use pursuit started";
+
+        var usesRemaining = Math.Max(0, use.Count - use.GetObjective(quest));
+        for (var useIndex = 0; useIndex < usesRemaining; useIndex++)
+        {
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                break;
+
+            var available = actor.Character.Inventory?.GetItemsCount(use.ItemId) ?? 0;
+            if (available <= 0)
+            {
+                return $"quest {questId} requires item {use.ItemId} ×{use.Count}, " +
+                       $"but inventory has none while objective is {use.GetObjective(quest)}/{use.Count}";
+            }
+
+            var request = actor.UseItem(use.ItemId);
+            if (request.State != ActorLifecycleState.Completed)
+            {
+                return $"UseItem {use.ItemId} refused for quest {questId}: {request.Detail}";
+            }
+        }
+
+        return null;
+    }
+
 
     /// <summary>
     /// The gather leg: source doodads resolved DATA-DRIVEN from the act's

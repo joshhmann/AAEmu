@@ -224,6 +224,52 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(discoversBetween).IsGreaterThan(0);
     }
 
+    /// <summary>
+    /// E-ITEM-USE-1: canonical quest 252 "숲 되살리기" (accept NPC 7653,
+    /// Progress item-use act 1600/detail 43, ItemId 7738 ×1, auto-complete).
+    /// Acceptance supplies the canonical seed through the real quest path;
+    /// UseItem then consumes it and credits OnItemUse through the engine.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_SeededItemUse_AutoCompletesThroughUseItem()
+    {
+        M1M2ReplayScenarioRigTests.SeedReplaySurface();
+        // The replay rig supplies the canonical item-use skill 11596 and
+        // its real effect chain; this slice binds the canonical quest item
+        // to that loaded skill and still drives it via UseItem.
+        GameplayActorTestRig.SeedItemTemplate(7738, 11596);
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-item-use");
+        var character = session.Character;
+        character.Level = 3; // quest 252 gate ≥3
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(251, true);
+        SpawnHubNpc(session, 7653, new Vector3(1, 0, 0));
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 10,
+            MaxLinks = 1
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(252u);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjItemUse));
+        await Assert.That(character.Quests!.HasQuestCompleted(252u)).IsTrue();
+        await Assert.That(character.Inventory!.GetItemsCount(7738)).IsEqualTo(0);
+
+        var trace = result.TraceRecords;
+        var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, 252u);
+        var use = FirstAtLeast(trace, ActorActionType.UseItem, accept + 1);
+        await Assert.That(accept).IsGreaterThanOrEqualTo(0);
+        await Assert.That(use).IsGreaterThan(accept);
+    }
+
     [Test]
     public async Task LevelingLoop_NoDiscoverableOfferingsInBand_FailsStarvationWithReason()
     {
@@ -253,20 +299,22 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(result.TraceRecords.Any(r => r.Action == ActorActionType.AcceptQuest)).IsFalse();
     }
 
+    /// <summary>
+    /// Fail-closed control: canonical quest 64 (accept NPC 5931,
+    /// Progress interaction act 372) remains outside this slice because no
+    /// interaction-credit composition is wired.
+    /// </summary>
     [Test]
     public async Task LevelingLoop_UnsupportedObjectiveType_FailsClosedNamingMissingPrimitive()
     {
         PlayerbotPilotRig.SeedPilotSingletons();
-        const uint supplyItemId = 7738; // 252's accept-supply grant
-        GameplayActorTestRig.SeedItemTemplate(supplyItemId);
         var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-gap");
         var character = session.Character;
-        character.Level = 3; // quest 252 start-component gate [3..∞]
+        character.Level = 3;
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
-        character.Quests!.SetCompletedQuestFlag(251, true); // kind-31 prereq of 252
 
-        SpawnHubNpc(session, 7653, new Vector3(1, 0, 0)); // canonical offerer of 252
+        SpawnHubNpc(session, 5931, new Vector3(1, 0, 0)); // canonical offerer of 64
 
         var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
         {
@@ -275,21 +323,21 @@ public class LevelingLoopScenarioRigTests
             MaxLinks = 1
         });
 
-        // FAIL-CLOSED: the item-use objective is not honestly achievable
-        // with the current primitives, so the loop stops and NAMES the gap.
+        // FAIL-CLOSED: the interaction objective is not honestly achievable
+        // with the current primitives, so the loop stops and names the gap.
         await Assert.That(result.Passed).IsFalse();
         await Assert.That(result.FailStage.StartsWith("OBJECTIVES")).IsTrue();
         await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.WrongDecision);
-        await Assert.That(result.FailReason.Contains("QuestActObjItemUse")).IsTrue();
-        await Assert.That(result.FailReason.Contains("missing item-use pursuit composition")).IsTrue();
+        await Assert.That(result.FailReason.Contains("QuestActObjInteraction")).IsTrue();
+        await Assert.That(result.FailReason.Contains("missing world-interaction credit composition")).IsTrue();
 
         // No fake progress: the quest was accepted (real engine state) but
         // never advanced, turned in, or dropped.
-        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(252)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(64)).IsTrue();
         await Assert.That(result.TraceRecords.Count(r => r.Action == ActorActionType.AcceptQuest)).IsEqualTo(1);
         await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
             or ActorActionType.AutoTurnIn)).IsFalse();
-        await Assert.That(character.Quests.HasQuestCompleted(252)).IsFalse();
+        await Assert.That(character.Quests.HasQuestCompleted(64)).IsFalse();
     }
 
     /// <summary>
