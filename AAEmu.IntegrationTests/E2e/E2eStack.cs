@@ -674,6 +674,109 @@ public static class E2eStack
         return conn;
     }
 
+    /// <summary>One account/character row observed by an isolated soak.</summary>
+    public sealed record OwnedBotRow(uint AccountId, uint CharacterId, bool AccountCreated);
+
+    /// <summary>
+    /// Snapshots only the named accounts and their characters. This is a read
+    /// used to establish ownership before/after a probe; it never broadens to
+    /// the managed-account namespace.
+    /// </summary>
+    public static IReadOnlyList<OwnedBotRow> SnapshotOwnedRows(IReadOnlyList<string> accountNames)
+    {
+        if (accountNames.Count == 0)
+            return [];
+
+        using var conn = OpenDb("aaemu_game");
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT u.id, COALESCE(c.id, 0) FROM aaemu_login.users u " +
+                          "LEFT JOIN characters c ON c.account_id = u.id " +
+                          $"WHERE u.username IN ({BindInList(cmd, accountNames)})";
+        using var reader = cmd.ExecuteReader();
+        var rows = new List<OwnedBotRow>();
+        while (reader.Read())
+            rows.Add(new OwnedBotRow(reader.GetUInt32(0), reader.GetUInt32(1), false));
+        return rows;
+    }
+
+    /// <summary>
+    /// Returns rows present after a run that were not present in its initial
+    /// snapshot. AccountCreated is true only for accounts absent initially.
+    /// </summary>
+    public static IReadOnlyList<OwnedBotRow> FindNewOwnedRows(
+        IReadOnlyCollection<OwnedBotRow> before,
+        IReadOnlyCollection<OwnedBotRow> after)
+    {
+        var priorRows = before.Select(row => (row.AccountId, row.CharacterId)).ToHashSet();
+        var priorAccounts = before.Select(row => row.AccountId).ToHashSet();
+        return after
+            .Where(row => !priorRows.Contains((row.AccountId, row.CharacterId)))
+            .Select(row => row with { AccountCreated = !priorAccounts.Contains(row.AccountId) })
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Removes exactly the supplied account/character rows. No username or
+    /// character-name wildcard is used, and pre-existing accounts are kept.
+    /// </summary>
+    public static void CleanupOwnedRows(IReadOnlyCollection<OwnedBotRow> rows)
+    {
+        if (rows.Count == 0)
+            return;
+
+        using var conn = OpenDb("aaemu_game");
+        var characterIds = rows.Where(row => row.CharacterId > 0).Select(row => row.CharacterId).Distinct().ToArray();
+        if (characterIds.Length > 0)
+        {
+            using var metaCheck = conn.CreateCommand();
+            metaCheck.CommandText = "SELECT COUNT(*) FROM information_schema.TABLES " +
+                                    "WHERE TABLE_SCHEMA = 'aaemu_game' AND TABLE_NAME = 'playerbot_metadata'";
+            if (Convert.ToInt64(metaCheck.ExecuteScalar()) > 0)
+            {
+                using var meta = conn.CreateCommand();
+                meta.CommandText = $"DELETE FROM playerbot_metadata WHERE character_id IN ({BindIds(meta, characterIds)})";
+                meta.ExecuteNonQuery();
+            }
+
+            using var quests = conn.CreateCommand();
+            quests.CommandText = $"DELETE FROM quests WHERE owner IN ({BindIds(quests, characterIds)})";
+            try { quests.ExecuteNonQuery(); } catch { }
+
+            using var completed = conn.CreateCommand();
+            completed.CommandText = $"DELETE FROM completed_quests WHERE owner IN ({BindIds(completed, characterIds)})";
+            try { completed.ExecuteNonQuery(); } catch { }
+
+            using var chars = conn.CreateCommand();
+            chars.CommandText = $"DELETE FROM characters WHERE id IN ({BindIds(chars, characterIds)})";
+            chars.ExecuteNonQuery();
+        }
+
+        var createdAccounts = rows.Where(row => row.AccountCreated).Select(row => row.AccountId).Distinct().ToArray();
+        if (createdAccounts.Length == 0)
+            return;
+
+        using var accountRows = conn.CreateCommand();
+        accountRows.CommandText = $"DELETE FROM accounts WHERE account_id IN ({BindIds(accountRows, createdAccounts)})";
+        try { accountRows.ExecuteNonQuery(); } catch { }
+
+        using var users = conn.CreateCommand();
+        users.CommandText = $"DELETE FROM aaemu_login.users WHERE id IN ({BindIds(users, createdAccounts)}) " +
+                            "AND NOT EXISTS (SELECT 1 FROM aaemu_game.characters c WHERE c.account_id = aaemu_login.users.id)";
+        users.ExecuteNonQuery();
+    }
+
+    private static string BindIds(MySqlCommand cmd, IReadOnlyList<uint> ids)
+    {
+        var placeholders = new List<string>(ids.Count);
+        for (var i = 0; i < ids.Count; i++)
+        {
+            var placeholder = $"@id{i}";
+            cmd.Parameters.AddWithValue(placeholder, ids[i]);
+            placeholders.Add(placeholder);
+        }
+        return string.Join(", ", placeholders);
+    }
+
     /// <summary>Removes all bot rows (characters + quest state) for the given
     /// account names — cycle teardown, not quest-state manipulation.</summary>
     public static void CleanupBotRows(params string[] accountNames)

@@ -63,7 +63,10 @@ public class A5AcceptanceProbeTests
         var runAt = DateTime.UtcNow;
 
         E2eStack.EnsureUp();
-        WipeManagedBotRows();
+        var ownedNames = BuildOwnershipNames(dormantTarget, nearTarget);
+        var ownershipBefore = E2eStack.SnapshotOwnedRows(ownedNames);
+        try
+        {
 
         // ------------------------------------------------------ PHASE B: baseline
         Console.WriteLine("[a5] phase B: no-bot baseline (flags off, human online)");
@@ -146,6 +149,20 @@ public class A5AcceptanceProbeTests
         // path must have materialized SOMETHING for the numbers to mean anything.
         Assert.True(dormancy.MaterializeCount > 0,
             "no proximity materialization ever fired — trigger path broken");
+        }
+        finally
+        {
+            try
+            {
+                var ownershipAfter = E2eStack.SnapshotOwnedRows(ownedNames);
+                var ownedRows = E2eStack.FindNewOwnedRows(ownershipBefore, ownershipAfter);
+                E2eStack.CleanupOwnedRows(ownedRows);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[a5] ownership cleanup skipped: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
     }
 
     // ------------------------------------------------------------------ human
@@ -185,31 +202,16 @@ public class A5AcceptanceProbeTests
 
     // ------------------------------------------------------------------- seed
 
-    /// <summary>
-    /// Rig-side hygiene ONLY (not a gameplay path): removes stale managed bot
-    /// rows from earlier probe/gate runs so 'dormantSpecs' discovery counts
-    /// exactly what THIS run seeded. Mirrors EnsureFreshBotRow's scope
-    /// discipline (bot_managed_* accounts only — never human rows).
-    /// </summary>
-    private static void WipeManagedBotRows()
+    private static List<string> BuildOwnershipNames(int dormantTarget, int nearTarget)
     {
-        using var conn = E2eStack.OpenDb("aaemu_game");
-        foreach (var sql in new[]
-                 {
-                     "DELETE FROM aaemu_game.playerbot_metadata WHERE character_id IN " +
-                     "(SELECT id FROM aaemu_game.characters WHERE account_id IN " +
-                     "(SELECT id FROM aaemu_login.users WHERE username LIKE 'bot_managed_%'))",
-                     "DELETE FROM aaemu_game.characters WHERE account_id IN " +
-                     "(SELECT id FROM aaemu_login.users WHERE username LIKE 'bot_managed_%')",
-                     "DELETE FROM aaemu_login.users WHERE username LIKE 'bot_managed_%'"
-                 })
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.ExecuteNonQuery();
-        }
-        Console.WriteLine("[a5] stale managed bot rows wiped");
+        var names = new List<string>(dormantTarget + 1) { HumanAccount };
+        for (var i = 1; i <= nearTarget; i++)
+            names.Add($"bot_managed_dormnear{i:D3}");
+        for (var i = 1; i <= dormantTarget - nearTarget; i++)
+            names.Add($"bot_managed_dormfar{i:D3}");
+        return names;
     }
+
 
     private static int CountManagedCharacters()
     {

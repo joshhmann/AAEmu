@@ -73,6 +73,10 @@ public class A5Tier3AcceptanceProbeTests
         var runAt = DateTime.UtcNow;
 
         E2eStack.EnsureUp();
+        var ownedNames = BuildOwnershipNames(dormantTarget, embodiedTarget);
+        var ownershipBefore = E2eStack.SnapshotOwnedRows(ownedNames);
+        try
+        {
 
         // ------------------------------------------------ ARM B: baseline (50 active)
         Console.WriteLine($"[a5t3] arm B: baseline — {embodiedTarget} ACTIVE presence citizens, dormancy OFF");
@@ -102,17 +106,15 @@ public class A5Tier3AcceptanceProbeTests
                           $"steps/min={baseline.StepsPerMin}; human at ({hx:F0},{hy:F0},{hz:F0})");
 
         // ------------------------------------------- ARM T: tier-3 dormancy shape
-        Console.WriteLine("[a5t3] arm T: clean restart (provisioning state pristine)");
+        Console.WriteLine("[a5t3] arm T: clean restart before dormant seeding");
         ClearFeatureEnv();
 
-        // Clean slate: the baseline arm's presence citizens are gone and any
-        // prior provisioning state (including a poisoned one) is discarded
-        // before the seed touches the real provisioning path.
+        // Existing rows remain untouched. The ownership snapshot captured
+        // before the run limits final cleanup to rows created by this run.
         E2eStack.RestartGameServer();
         WaitBoot();
 
-        Console.WriteLine($"[a5t3] arm T: wiping stale managed rows, seeding {dormantTarget} dormant ({embodiedTarget} near)");
-        WipeManagedBotRows();
+        Console.WriteLine($"[a5t3] arm T: seeding {dormantTarget} dormant ({embodiedTarget} near)");
 
         var seedElapsed = SeedDormant(hx, hy, hz, embodiedTarget, dormantTarget - embodiedTarget);
         var seededCount = CountManagedCharacters();
@@ -177,6 +179,20 @@ public class A5Tier3AcceptanceProbeTests
         Assert.True(seededCount >= dormantTarget * 0.95,
             $"seed produced only {seededCount}/{dormantTarget} discoverable managed characters (partial-seed run)");
     }
+        finally
+        {
+            try
+            {
+                var ownershipAfter = E2eStack.SnapshotOwnedRows(ownedNames);
+                var ownedRows = E2eStack.FindNewOwnedRows(ownershipBefore, ownershipAfter);
+                E2eStack.CleanupOwnedRows(ownedRows);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[a5t3] ownership cleanup skipped: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+    }
     private static async Task<BotNetworkSession> ConnectHumanAsync()
     {
         // First connect after a fresh boot can flake (account/char provisioning
@@ -227,25 +243,17 @@ public class A5Tier3AcceptanceProbeTests
 
     // ------------------------------------------------------------------- seed
 
-    /// <summary>Rig-side hygiene ONLY (not a gameplay path) — mirrors EnsureFreshBotRow scope discipline.</summary>
-    private static void WipeManagedBotRows()
+
+    private static List<string> BuildOwnershipNames(int dormantTarget, int embodiedTarget)
     {
-        using var conn = E2eStack.OpenDb("aaemu_game");
-        foreach (var sql in new[]
-                 {
-                     "DELETE FROM aaemu_game.playerbot_metadata WHERE character_id IN " +
-                     "(SELECT id FROM aaemu_game.characters WHERE account_id IN " +
-                     "(SELECT id FROM aaemu_login.users WHERE username LIKE 'bot_managed_%'))",
-                     "DELETE FROM aaemu_game.characters WHERE account_id IN " +
-                     "(SELECT id FROM aaemu_login.users WHERE username LIKE 'bot_managed_%')",
-                     "DELETE FROM aaemu_login.users WHERE username LIKE 'bot_managed_%'"
-                 })
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.ExecuteNonQuery();
-        }
-        Console.WriteLine("[a5t3] stale managed bot rows wiped");
+        var names = new List<string>(dormantTarget + embodiedTarget + 1) { HumanAccount };
+        for (var i = 1; i <= embodiedTarget; i++)
+            names.Add($"bot_managed_presence_{i:D3}");
+        for (var i = 1; i <= embodiedTarget; i++)
+            names.Add($"bot_managed_dormnear{i:D3}");
+        for (var i = 1; i <= dormantTarget - embodiedTarget; i++)
+            names.Add($"bot_managed_dormfar{i:D4}");
+        return names;
     }
 
     private static int CountManagedCharacters()
