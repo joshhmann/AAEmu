@@ -17,18 +17,19 @@
 > passes that test, the architecture stays right.
 
 **Current source/test checkpoint (2026-08-28):** `develop` / `origin/develop`
-is at `792774d7707b8b578b8d9975896e0a1ac719f361`. The per-run soak ownership
-hardening is `799b698ad`: A5/A5Tier3 snapshot exactly the named
-account/character rows they observe before and after a run, clean only newly
-owned IDs in `finally`, and preserve sibling rows; ownership tests pass 2/2.
-Full normal-clone gate at 792: **2496 total / 2495 passed / 0 failed /
-1 skipped**, compiler **0/0**, MCP stdio **39 tools**. The sole skip is
+is at `ded008de8d67ece8718e9235fd02503b43ceb6a1` (verified exact). M6 movement
+guards are complete at `c4f2296c`; test-scoped singleton isolation is complete
+at `f6ff58e86` (same source tree as this checkpoint). The full normal-clone
+gate at this HEAD used read-only compact data: Release gate PASS, compiler
+**0/0**, unit **2499 total / 2498 passed / 0 failed / 1 skipped**, and MCP
+**39 tools**. The sole skip is
 `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
-2 NU1903 in this exact verification. Runtime evidence uses
-`E2eStack.SourceRevision` with an explicit `unknown` fallback. Historical
-reports and prior evidence remain unchanged.
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. M6 focused evidence is
+**105/105**; M7 focused evidence is **147/147** with no failures or skips.
+IntegrationTests Release restore/build passed with 0 errors; no six-hour soak
+exists and SeedBox cancellation remains unresolved. Historical reports and
+prior M5/M4 evidence remain unchanged. No H/UAT claim is inferred from A/R
+proxy evidence.
 
 ## Three phases
 
@@ -1328,6 +1329,37 @@ and related actor expansion remains deferred.
 
 ---
 
+
+### Current M6/M7 loop reconciliation (2026-08-28)
+
+**M6 player loop — current source/test HEAD
+`ded008de8d67ece8718e9235fd02503b43ceb6a1`:** a clean ordinary
+`Character`/bot becomes dormant → proximity wake/materialize → resumes its
+scheduled action → preserves identity, inventory, position, and metadata
+through restart → dematerializes safely. `c4f2296c` completes M6 movement
+guards; `f6ff58e86` provides test-scoped singleton isolation for the full
+suite. M6 focused evidence is **105/105**: BotPresenceCoordinator 13/13
+(including patrol and transfer-finalize regression), BotRoamStepExecutor 6/6,
+PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13,
+Manager 19/19, and Headless provisioning 8/8. This is A/R
+harness/proxy evidence, not autonomous decision closure or H/UAT. No
+six-hour soak exists; `SeedBox` cancellation remains unresolved.
+
+**M7 player loop — current source/test HEAD
+`ded008de8d67ece8718e9235fd02503b43ceb6a1`:** an ordinary
+`Character`/PlayerBot discovers and accepts a quest, navigates, chooses legal
+hostiles, casts, receives kill credit, loots, sustains/retreats, and
+completes/repeats; the group variant adds party invite/follow/assist/death
+recovery. Focused M7 evidence is **147/147** with no failures or skips:
+primary **36/36** (Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4,
+PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support
+**111/111**. Evidence is A/R rig/proxy: hunt kill uses real
+`DoOnMonsterHuntEvents` with fixture HP=0; Party spike is synthetic/fixture.
+No current live authenticated-client run or H/UAT result exists.
+`LevelingLoop` remains bounded autonomous 254→255 only. Broad autonomous
+decision closure, real damage/`Npc.DoDie`, scheduler-driven route, party
+roles/regroup/restart/disconnect, mount/travel, and H remain open. Historical
+live reports remain historical and are not relabeled current.
 
 ## M6 — Deterministic playerbot framework
 

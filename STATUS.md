@@ -9,19 +9,24 @@ MET with live evidence; PB-002 quest-discovery primitive and item-use slice
 landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; current docs/source/test audit baseline is
-`ba530bcebec12af2bc7dc0db7451a535665bbed3` (`origin/develop`). The full
-normal-clone behavioral gate cited below remains historical at source/test HEAD
-`792774d7707b8b578b8d9975896e0a1ac719f361`: 2496 total / 2495 passed / 0
-failed / 1 skipped, compiler 0/0, MCP stdio 39 tools. The sole skip is
+Branch of record: develop; current source/test HEAD is
+`ded008de8d67ece8718e9235fd02503b43ceb6a1` (`origin/develop`, verified exact).
+M6 movement guards are complete at `c4f2296c`; test-scoped singleton isolation
+is complete at `f6ff58e86` (same source tree as this checkpoint). The current
+normal-clone full gate used read-only compact data: Release gate PASS, compiler
+0/0, unit **2499 total / 2498 passed / 0 failed / 1 skipped**, and MCP **39
+tools**. The sole skip is
 `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
-2 NU1903 in that historical verification. Runtime provenance uses
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. M6 focused evidence is
+**105/105**: BotPresenceCoordinator 13/13 (including patrol and
+transfer-finalize regression), BotRoamStepExecutor 6/6, PlayerBotScheduler
+26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13, Manager 19/19, and
+Headless provisioning 8/8. M7 focused evidence is **147/147** with no
+failures/skips: primary 36/36 and actor support 111/111. IntegrationTests
+restore/build passed with 0 errors in this exact verification; no six-hour soak
+exists and SeedBox cancellation remains unresolved. Runtime provenance uses
 `E2eStack.SourceRevision` with an explicit `unknown` fallback. Historical
-reports and prior evidence below are preserved; the current M2 loop
-reconciliation is recorded at the requested source/test HEAD below.
-Project-control rollup: [PROJECT-CONTROL.md](PROJECT-CONTROL.md).
+reports and prior evidence below are preserved.
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
@@ -465,6 +470,35 @@ PlayerBot decision loop is **Unknown/Open**. Fixed Priority-first
 `CanActivate`/FSM scheduling exists, but no reusable candidate/score/blackboard/
 rationale/replan/personality policy is claimed. Existing M5.3 canonical
 movement caveat and formal regrade wording remain unchanged; H stays separate.
+
+**M6 player-loop reconciliation (2026-08-28; current source/test HEAD
+`ded008de8d67ece8718e9235fd02503b43ceb6a1`):** A clean ordinary
+`Character`/bot becomes dormant → proximity wake/materialize → resumes its
+scheduled action → preserves identity, inventory, position, and metadata
+through restart → dematerializes safely. `c4f2296c` completes M6 movement
+guards; `f6ff58e86` isolates test-scoped singletons for full-suite safety.
+Focused M6 evidence is **105/105** with no failures: BotPresenceCoordinator
+13/13 (including patrol and transfer-finalize regression), BotRoamStepExecutor
+6/6, PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest
+13/13, Manager 19/19, and Headless provisioning 8/8. This is A/R harness
+evidence: it proves the controlled lifecycle path, not autonomous bot
+decision-making or human feel. No six-hour soak exists; SeedBox cancellation
+remains unresolved.
+
+**M7 player-loop reconciliation (2026-08-28; current source/test HEAD
+`ded008de8d67ece8718e9235fd02503b43ceb6a1`):** An ordinary
+`Character`/PlayerBot discovers and accepts a quest, navigates, chooses legal
+hostiles, casts, receives kill credit, loots, sustains/retreats, and
+completes/repeats; the group variant adds party invite/follow/assist/death
+recovery. Focused M7 evidence is **147/147** with no failures or skips:
+primary **36/36** (Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4,
+PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support
+**111/111**. Evidence is A/R rig/proxy: hunt kill uses real
+`DoOnMonsterHuntEvents` with fixture HP=0; Party spike is synthetic/fixture.
+There is no current live authenticated-client run and no H/UAT result.
+`LevelingLoop` remains bounded autonomous 254→255 only. Broad autonomous
+decision closure, real damage/`Npc.DoDie`, scheduler-driven route, party
+roles/regroup/restart/disconnect, mount/travel, and H remain open.
 
 **M7 — Adventurer and party bots: 🔶 GATING SPIKE DONE (2026-08-20) + heal/retreat landed**
 One adventurer cleared quest 250 (Solzreed fox cull) end-to-end through the

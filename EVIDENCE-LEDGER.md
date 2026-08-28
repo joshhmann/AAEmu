@@ -48,6 +48,8 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 | **M5.3** Core-surface close — Observe · Move · Stop · Target · Cast (SPEC'D 2026-08-16, t_d837ee0b; IMPL AUTHORIZED 2026-08-17, t_5189977b) | 🔶 v1 impls on develop since 34cf33cb2 (t_4f11a519) — canonical fidelity UNVERIFIED; Move known non-conforming (silent Transform write, GameplayActor.cs:2253-2259: ApplyPosition — no broadcast, no UnitMoveType path); **canonical dossier COMMITTED 2026-08-17** (scorecard-explorations/mechanics/m5-core-actions-canonical.md, t_5189977b — movement/targeting/cast canon, every claim DV-code/DV-data/RD-wiki flagged); impl cards t_3cac48d4/t_c73d6293 follow | — | 📋 dossier (REQ-M5.3-1) committed + cited + flagged; per-action contract tests pending impl (REQ-M5.3-10) | — (pending impl) | — (N/A — no new persistence) | — (N/A — M6 soak lane) | ⚠️ UNKNOWN — H stays UNKNOWN |
 | **M6** Deterministic playerbot framework (exit soak GREEN 08-11; reconciliation open) | ✅ hotfix chain + BotAppearanceFactory (91b308d71) + parity seeding (45cd3f3a9, live-verified 34 actabilities/skills/bag) + GM cmds P0 (t_7b4f9423) + E2E harness + presence overlay in-repo | ✅ presence-demo overlay live (hotfix3) — 3 citizens at Josh's spawn, zone 179; sighting ACCEPTED 08-09. ⚠️ adopt-heal look-collapse (t_555ed207): fix pushed cdf6d4a62, awaiting Rei gate; prod re-provision pending | ✅ E2E harness (real Login+Game+MySQL) | ✅ 10-bot correctness PASS; 25-bot stability PASS (H2 1.00); M2bE2e 5/5 (t_2ee39438) | ⏳ DEFERRED — B4 restart persistence (playerbot_metadata + 2-checkpoint restart test) not yet executed; A1 boundary + observability + G0-1 merge-to-develop outstanding (per M6 EXIT RECORD) | ✅ 6h/10-bot soak GREEN 08-11 (t_35167e60): 360-min, ALL 9 budgets PASS, 0 failures — verdict preserved as "passed revised approved budgets" (physics budget recalibrated t_18fccd09; GC fix t_eecc5604 merged first per Josh's ruling) | ⏳ DEFERRED (informal partial) — Josh sighting ACCEPTED 08-09 (wire-confirmed t_509ef8c2); rendered screenshots pending Josh's client; batched feel/visual/fun verdicts deferred until bot functional + restart gates green (decision contract) |
 
+| **M6 current reconciliation** (source/test HEAD `ded008de8d67ece8718e9235fd02503b43ceb6a1`; movement guards `c4f2296c`; singleton isolation `f6ff58e86`) | ✅ M6 loop path and focused evidence recorded | — | ✅ | ✅ **105/105**: BotPresenceCoordinator 13/13, BotRoamStepExecutor 6/6, PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13, Manager 19/19, Headless provisioning 8/8 | ✅ B4 restart loop recorded through direct identity/inventory/position/metadata assertions | — current six-hour dormant-timer soak does not exist; SeedBox cancellation unresolved | ⚠️ UNKNOWN — A/R proxy only |
+| **M7 current reconciliation** (source/test HEAD `ded008de8d67ece8718e9235fd02503b43ceb6a1`) | ✅ adventurer/party loop slices | — | ✅ | ✅ **147/147**: primary 36/36 + actor support 111/111 | — no current restart-persistence closure for the broad loop | — | ⚠️ UNKNOWN — A/R rig/proxy only; no current live client or H |
 ## Evidence register (citations, append-only)
 
 - **M0:** ROADMAP §M0; STATUS M0 row; Josh signoff 2026-08-03 (workflow v4,
@@ -131,6 +133,39 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   universal PlayerBot decision closure is Unknown/Open. No ledger state is
   promoted; M5.3 canonical movement caveat/formal regrade and the H boundary
   remain unchanged.
+- **M6 current loop (2026-08-28; source/test HEAD
+  `ded008de8d67ece8718e9235fd02503b43ceb6a1`):** clean ordinary
+  Character/bot dormant → proximity wake/materialize → scheduled action →
+  identity/inventory/position/metadata restart preservation → safe
+  dematerialization. Focused M6 **105/105**: BotPresenceCoordinator 13/13
+  (patrol + transfer-finalize regression), BotRoamStepExecutor 6/6,
+  PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13,
+  Manager 19/19, Headless provisioning 8/8. `c4f2296c` completes movement
+  guards; `f6ff58e86` provides test-scoped singleton isolation. A/R proxy only;
+  no six-hour soak, no current H/UAT.
+  Full normal-clone gate at this HEAD: **2499 total / 2498 passed / 0 failed /
+  1 skipped**, compiler **0/0**, MCP **39 tools**; the sole skip is
+  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
+> The preceding legacy M6 row and its 08-11 soak verdict are retained as
+> historical evidence; the current M6 row above is the 2026-08-28 reconciliation
+> at `ded008de8d67ece8718e9235fd02503b43ceb6a1`.
+- **M7 current loop (2026-08-28; source/test HEAD
+  `ded008de8d67ece8718e9235fd02503b43ceb6a1`):** ordinary
+  Character/PlayerBot discovers/accepts, navigates, chooses legal hostiles,
+  casts, receives kill credit, loots, sustains/retreats, completes/repeats;
+  group variant adds party invite/follow/assist/death recovery. Focused M7
+  **147/147** no-fail/no-skip: primary **36/36** (Adventurer 12, PartySpike
+  4, PartyLifecycleFaultMatrix 4, PartyFollowAssist 4, DeathWatch 5,
+  LevelingLoop 7) plus actor support **111/111**. A/R rig/proxy only:
+  hunt kill uses real DoOnMonsterHuntEvents with fixture HP=0; Party spike is
+  synthetic/fixture. No current live authenticated-client run or H/UAT.
+  Bounded autonomous LevelingLoop is only 254→255 slice; broad autonomous
+  decision closure remains open.
+- 2026-08-28 — M6/M7 reconciliation at source/test HEAD
+  `ded008de8d67ece8718e9235fd02503b43ceb6a1`: recorded M6 **105/105**
+  lifecycle-focused evidence and M7 **147/147** A/R proxy evidence, with the
+  six-hour soak and H/UAT boundaries preserved. No ledger state was promoted.
 
 - 2026-08-28 — M5 actor decision/action loop reconciliation: recorded the
   clean ordinary-Character loop sentence, focused M5 **316/316** evidence,

@@ -1,15 +1,17 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality at source/test audit baseline
-`ba530bcebec12af2bc7dc0db7451a535665bbed3` (`origin/develop`, 2026-08-28).
-The full normal-clone gate cited in historical evidence remains at source/test
-HEAD `792774d7707b8b578b8d9975896e0a1ac719f361`: **2496 total / 2495 passed /
-0 failed / 1 skipped**, compiler **0/0**, MCP stdio **39 tools**. The sole skip
-is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+Populated from implementation reality at current source/test HEAD
+`ded008de8d67ece8718e9235fd02503b43ceb6a1` (`origin/develop`, verified exact).
+M6 movement guards are complete at `c4f2296c`; full-suite test-scoped
+singleton isolation is complete at `f6ff58e86` (same source tree). The full
+normal-clone gate is **2499 total / 2498 passed / 0 failed / 1 skipped**,
+compiler **0/0**, MCP stdio **39 tools**. The sole skip is
+`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
 `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
-2 NU1903 in that historical verification. Runtime evidence uses
-`E2eStack.SourceRevision` with unknown fallback.
+restore/build passed with 0 errors in this exact verification. M6 focused
+evidence is **105/105** and M7 focused evidence is **147/147** with no
+failures or skips. Runtime evidence uses `E2eStack.SourceRevision` with an
+explicit `unknown` fallback.
 
 ## M2 loop reconciliation (2026-08-28)
 
@@ -89,6 +91,30 @@ loop = **Unknown/Open**. Existing `BotGoalArbiter` fixed Priority-first
 `CanActivate` selection and schedule FSM are present, but no reusable
 candidate/score/blackboard/rationale/replan/personality policy is claimed.
 M5.3 canonical movement caveat and formal regrade wording remain authoritative.
+
+## M6/M7 loop reconciliation (2026-08-28)
+
+**M6:** clean ordinary `Character`/bot dormant → proximity wake/materialize →
+scheduled action resumes → identity/inventory/position/metadata survive restart
+→ safe dematerialization. Focused M6 **105/105**: BotPresenceCoordinator
+13/13 (patrol + transfer-finalize regression), BotRoamStepExecutor 6/6,
+PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13,
+Manager 19/19, Headless provisioning 8/8. `c4f2296c` completes movement guards;
+`f6ff58e86` isolates test-scoped singletons. A/R harness/proxy evidence only;
+no six-hour soak and SeedBox cancellation unresolved.
+
+**M7:** ordinary `Character`/PlayerBot discovers/accepts a quest, navigates,
+chooses legal hostiles, casts, receives kill credit, loots, sustains/retreats,
+and completes/repeats; group variant adds party invite/follow/assist/death
+recovery. Focused M7 **147/147** no-fail/no-skip: primary **36/36**
+(Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4,
+PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support
+**111/111**. A/R rig/proxy only: hunt kill uses real DoOnMonsterHuntEvents
+with fixture HP=0; Party spike is synthetic/fixture. No current live
+authenticated-client run or H/UAT. Only bounded autonomous decision slice is
+LevelingLoop 254→255; broad M7 decision, real damage/Npc.DoDie,
+scheduler-driven route, party roles/regroup/restart/disconnect, mount/travel,
+and H remain open.
 
 ---
 

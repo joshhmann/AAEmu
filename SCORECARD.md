@@ -59,17 +59,19 @@ feel.)
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
 - Current source/test HEAD is
-  `792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`). Per-run soak
-  ownership hardening is `799b698ad`: A5/A5Tier3 snapshot named account and
-  character rows, clean only newly owned IDs in `finally`, and preserve sibling
-  state; ownership tests pass 2/2. The full normal-clone gate at 792 is
-  **2496 total / 2495 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP
-  stdio **39 tools**. The sole skip is
+  `ded008de8d67ece8718e9235fd02503b43ceb6a1` (`origin/develop`, verified
+  exact). M6 movement guards are complete at `c4f2296c`; test-scoped singleton
+  isolation is complete at `f6ff58e86` (same source tree). The current
+  normal-clone full gate used read-only compact data: Release gate PASS,
+  compiler **0/0**, unit **2499 total / 2498 passed / 0 failed / 1 skipped**,
+  and MCP **39 tools**. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-  restore/build passed with 0 errors; restore emitted 2 NU1903 and build
-  emitted 2 NU1903 in this exact verification. Runtime evidence uses
-  `E2eStack.SourceRevision` with an `unknown` fallback.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. M6 focused evidence is
+  **105/105** and M7 focused evidence is **147/147**, no failures/skips.
+  IntegrationTests Release restore/build passed with 0 errors in this exact
+  verification. No six-hour soak exists; SeedBox cancellation remains
+  unresolved. Runtime evidence uses `E2eStack.SourceRevision` with an
+  explicit `unknown` fallback.
 - PB-001 is **IMPLEMENTATION + TRACKED FIVE-TEST CONTRACT EVIDENCE**:
   source/test commits `0c57ef0c9` and `57b6e2960`; focused command/result:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
@@ -197,6 +199,36 @@ PlayerBot decision closure is **Unknown/Open**. The existing fixed
 Priority-first `CanActivate`/FSM scheduling is not a reusable
 candidate/score/blackboard/rationale/replan/personality policy. Preserve the
 M5.3 canonical movement caveat and formal regrade wording; H remains separate.
+
+## M6/M7 loop reconciliation (2026-08-28)
+
+**M6 player loop — source/test HEAD
+`ded008de8d67ece8718e9235fd02503b43ceb6a1`:** clean ordinary
+`Character`/bot dormant → proximity wake/materialize → scheduled action resumes
+→ identity/inventory/position/metadata survive restart → safe dematerialization.
+Focused M6 evidence is **105/105**: BotPresenceCoordinator 13/13 (patrol and
+transfer-finalize regression), BotRoamStepExecutor 6/6, PlayerBotScheduler
+26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13, Manager 19/19, and
+Headless provisioning 8/8. `c4f2296c` completes movement guards;
+`f6ff58e86` provides test-scoped singleton isolation. A/R harness/proxy
+evidence only; no six-hour soak exists and SeedBox cancellation remains
+unresolved. No H/UAT claim is implied.
+
+**M7 player loop — source/test HEAD
+`ded008de8d67ece8718e9235fd02503b43ceb6a1`:** ordinary
+`Character`/PlayerBot discovers/accepts a quest, navigates, chooses legal
+hostiles, casts, receives kill credit, loots, sustains/retreats, and
+completes/repeats; group variant adds party invite/follow/assist/death recovery.
+Focused M7 evidence is **147/147** no-fail/no-skip: primary **36/36**
+(Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4,
+PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support
+**111/111**. Evidence is A/R rig/proxy: hunt kill uses real
+`DoOnMonsterHuntEvents` with fixture HP=0; Party spike is synthetic/fixture.
+No current live authenticated-client run or H/UAT exists. `LevelingLoop`
+remains bounded autonomous 254→255 only; broad autonomous decision closure,
+real damage/`Npc.DoDie`, scheduler-driven route, party
+roles/regroup/restart/disconnect, mount/travel, and H remain open. Historical
+live reports are not relabeled current.
 
 ### Global mechanic ledger
 
