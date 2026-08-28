@@ -148,16 +148,48 @@ Every Tier 1, Tier 2, and Tier 3 report MUST record the exact `git rev-parse
 HEAD` SHA, command, environment/assets, build/compiler result, unit
 total/pass/fail/skip counts with the skip identity, and whether downstream MCP
 stdio smoke ran. An infrastructure or repository-root-resolution failure is
-not a green gate. `./scripts/gate.sh` currently fails from linked worktrees
-because `RepoRoot` sees a `.git` file; run it from a normal clone or fix the
-script in a separate code task, and do not classify that failure as a code
-failure.
+not a green gate. The six known root-sensitive helpers now accept both `.git`
+directories and linked-worktree `.git` files, and the filtered linked-worktree
+regression passes. A normal clone remains canonical for the full
+`./scripts/gate.sh` unless every root-sensitive test is covered by a compatible
+linked-worktree path; do not classify an unverified root-resolution failure as a
+code failure.
 
 Evidence labels are mandatory: distinguish contract/reflection/fake mapping,
 deterministic rig, live authenticated server/client, and human/client
 evidence. Contract/reflection/fake mapping and rig evidence are not live proof;
 live bot/client evidence is not human proof. `H` remains UNKNOWN without an
 actual human completing the named scenario.
+
+### Loop-closure evidence for Tier 2/3 feature work
+
+For every new or updated loop-shaped feature, the Tier 2/3 report MUST state:
+
+- the one-sentence player loop, explicit preconditions, and clean/reset state;
+- the ordinary player-facing action path;
+- the expected observable world/client result and the persistent or terminal
+  consequence;
+- whether a PlayerBot selected and completed that same loop autonomously, with
+  no human/GM/admin/direct-DB/`Transform`/`ZoneId`/manual state intervention;
+- the decision-path evidence: perception → legal candidate set →
+  goal/utility/state choice → `GameplayActor` action → observed result.
+  An actor method call alone is not loop evidence;
+- negative, refusal, idempotency, restart/persistence, ownership, or economy
+  checks when the feature contract requires them, and why omitted checks are
+  not applicable.
+
+Fixtures or normal setup MAY seed preconditions, but the acceptance path MUST
+not inject quest events, mutate DB/runtime state, use GM/admin repair, or
+bypass ordinary engine services. For non-loop features (read-only UI, passive
+systems, and continuous services), report the explicit observable outcome
+instead. Keep A/R/L evidence distinct from H: human/client feel remains a
+separate QAT/UAT gate and is never inferred from a PlayerBot.
+
+Use the repository-wide [Loop-Closure Definition of
+Done](../PROJECT-CONTROL.md#loop-closure-definition-of-done) and its objective
+matrix when recording this evidence. This is the acceptance method for new or
+updated features; it does not assert that all current features satisfy it.
+
 
 ______________________________________________________________________
 
