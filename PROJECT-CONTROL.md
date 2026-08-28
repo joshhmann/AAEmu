@@ -10,14 +10,16 @@ wiki status page. For human-facing wiki navigation, start at
 - **Project:** AAEmu fork (`joshhmann/AAEmu`), ArcheAge server emulator
 - **Target:** ArcheAge 1.2 client and reference data `compact.sqlite3` r208022
   (read-only)
-- **Source:** `develop` / `origin/develop` at
+- **Current source/docs head:** `develop` / `origin/develop` at
+  `31c3bf68c983df55e58fb98f649f570a9406ca41` (this page is docs-only).
+- **Evidence baseline:** source parent
   `f8db90cc4ac6f5d3434c18e067335f2647bc484a`
 - **Evidence date:** 2026-08-28
 
-The source head above is newer than several cited reports. Each report retains
-its own run date and SHA; an older report is not a rerun at `f8db90cc4`. No
-claim below promotes a human (`H`) result from bot, rig, or server-only
-activity.
+The evidence baseline above is the source parent of this docs-only page and is
+newer than several cited reports. Each report retains its own run date and SHA;
+an older report is not a rerun at `f8db90cc4`. No claim below promotes a human
+(`H`) result from bot, rig, or server-only activity.
 
 ## Authoritative records
 
