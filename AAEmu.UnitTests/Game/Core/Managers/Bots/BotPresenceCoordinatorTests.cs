@@ -493,7 +493,23 @@ public class BotPresenceCoordinatorTests
         transfer.AttachedDoodads.Add(new Doodad { ObjId = 0x4003 });
         transfer.Transform.Local.SetPosition(new Vector3(1f, 2f, 3f));
 
-        transfer.Transform.FinalizeTransform();
+        // Other fixture suites legitimately seed WorldManager, but this
+        // unregistered transfer intentionally exercises the no-world path.
+        // Keep that process-wide singleton isolated to this assertion and
+        // restore it for the following fixtures.
+        var worldManagerField = typeof(Singleton<WorldManager>).GetField(
+            "s_instance", BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new InvalidOperationException("Cannot locate WorldManager singleton field");
+        var previousWorldManager = worldManagerField.GetValue(null);
+        worldManagerField.SetValue(null, null);
+        try
+        {
+            transfer.Transform.FinalizeTransform();
+        }
+        finally
+        {
+            worldManagerField.SetValue(null, previousWorldManager);
+        }
 
         await Assert.That(transfer.Transform.World.Position).IsEqualTo(new Vector3(1f, 2f, 3f));
     }
