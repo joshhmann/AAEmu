@@ -58,20 +58,23 @@ feel.)
   `harvest`, `craft`, `buy`, `sell`, `pack_pickup`, `put_down`,
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
-- SHA-pinned clean-gate evidence at combined local source/test HEAD
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone; local
-  `develop` is two commits ahead of `origin/develop` at
-  `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`. Docs follow source commits
-  `063beb7cd` (PB-007 parser/live proof) and `b230bd8a2` (PB-002 item-use).
-  Command `./scripts/gate.sh`; Release build PASS (8 warnings, 0 errors);
-  compiler check **0/0**; unit suite **2496 total / 2495 passed / 0 failed /
-  1 skipped**; MCP stdio smoke **39 tools**. Focused PB-002 results:
-  `LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
+- Current source/test HEAD is `86c330d3aeb7e6566390b00ddf667da8576dc045`
+  (`origin/develop`). SHA-pinned behavioral gate evidence remains at baseline
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone; it is not
+  the current source HEAD. Source commit `8d66f48b9` is provenance-only.
+  IntegrationTests Release restore/build passed with 0 errors and 602 warnings
+  (including 2 NU1903) in a normal clone. `E2eStack.SourceRevision` records
+  runtime `git rev-parse HEAD` with an `unknown` fallback; A5/A5Tier3 stale
+  hardcoded revisions are fixed.
+- The retained behavioral baseline command is `./scripts/gate.sh`; Release
+  build PASS (8 warnings, 0 errors); compiler check **0/0**; unit suite **2496
+  total / 2495 passed / 0 failed / 1 skipped**; MCP stdio smoke **39 tools**.
+  Focused PB-002 results: `LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
   unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
   registration 1/1. Parser tests passed 2/2. The skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The normal clone remains
-  canonical for full-gate evidence.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. These are behavioral-baseline
+  counts; no new full-gate count is claimed for current source/test HEAD.
 - PB-001 is **IMPLEMENTATION + TRACKED FIVE-TEST CONTRACT EVIDENCE**:
   source/test commits `0c57ef0c9` and `57b6e2960`; focused command/result:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
@@ -88,6 +91,21 @@ feel.)
 - Only later Party, Trade, Expedition, Auction, and related actor expansion
   remains explicitly deferred and is not claimed as MCP-exposed. Grades in the
   ledger are unchanged; **H remains U (UNKNOWN)**.
+
+**PB-002 interaction candidate (current status):** Retain the landed
+`QuestActObjItemUse`/`GameplayActor.UseItem` evidence for quest 252 (NPC 7653,
+item 7738, use skill 11596, act row 1600/detail 43) and fail-closed quest 64
+control unchanged. The canonical interaction candidate failed: quest 270,
+doodad 687, interaction skill 11229; the real path reaches `Doodad.Use`, but
+the spawned fixture exposes no phase functions. No implementation landed, and
+the broad PB-002 claim remains open.
+
+**Current soak boundary:** No six-hour dormant-timer soak exists in current
+evidence, so no soak result is claimed. Broad bot cleanup risks sibling-state
+deletion. `SeedBox` has synchronous bridge calls/native `Thread.Join` without
+hard cancellation. Prior reports and staged/historical evidence are retained;
+H remains human-only and UNKNOWN until Josh's human gate.
+
 
 **Proxy vs authentic replay (2026-08-13, canonical sync t_c9f0d7f6):** the
 M3a/M4 `A`-dimension grades above rest on scripted-actor PROXY evidence
@@ -134,7 +152,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | ECON-01 | Currency/item/labor conservation across economy | M4/M8 | U | U | U | U | U | U | Cross-mechanic invariant audit |
 | MAIL-01 | Send, receive, attach, return, expire, persist | Later | U | 2 | U | 2 | 2 | U | `MailManager`; mail audit. **2026-08-26 Mail S3 acceptance (commit `31045d033`):** `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets` PASS 1/1 in 2m39s on isolated MySQL/Docker with authenticated actors. Real `CSSendMailPacket` send near a mailbox, process kill-9/restart, persisted `SlotType.Mail=5`, receiver ownership retargeting, post-registration unread recount (1), `CSListMail`/`CSReadMail`, sequential attachment take, exact equipment instance detail/grade/durability/rune/temper fidelity, copper transfer, read transition (1→0), and `CSDeleteMail` persistence deletion all passed. Ownership guards landed for receive paths. **Scope:** W=2/A=2/R=2 for this restart-and-attachment flow; C=U (full canonical mail contract not audited), H=U (no human client run), S=U (not a soak/security-grade score). Return opcode `0x0a2` remains **STRONGLY_INFERRED** pending real-client capture; COD enforcement and expiry/bounce E2E remain follow-ups. Prior 2026-08-23 return/expiry rig evidence and 2026-08-25 ownership/instance-faithfulness findings remain in the dated history below.
 | TRANSFER-01 | Fixed-route transport board/ride/disembark/recover | M4 | U | 2 | U | 1 | U | U | `TransferManager`; route audit. **2026-08-24 (3a534b539): transfer FUNCTIONAL + LIVE PROVEN** — CSBoardingTransferPacket TlId shadowing FIXED (multi-part transfers share the master's TlId but seats exist only on child parts; FirstOrDefault always resolved the seatless master, so boarding could never bond); read-only `transfers` bridge dump command; TransferRideE2eTests LIVE PASS (board Marianople Gondola tlId=1 ap=2 BondChairDouble → ride route samples → disembark at current position). W=2 (real engine path end-to-end); A=1 live board/ride/disembark E2E — recover/restart legs still open; H=UNKNOWN |
-| PVP-01 | Flagging, factions, damage, honor, death/recovery | Later | 2 | 2 | U | 2 | U | U | **Narrow handshake FIXED/CLOSED 2026-08-27** at combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; live isolated E2E 1/1 in 2m09.910s observed victim-matched non-immune `SCUnitDamaged`, immune frames excluded, `SkillFired=True`, Retribution 2167, bloodstain 877 objId 44294, and crime branch; PEACE-BLOCK passed. Parser tests 2/2. WAR-HONOR deferred; broader PvP/honor scope remains open. |
+| PVP-01 | Flagging, factions, damage, honor, death/recovery | Later | 2 | 2 | U | 2 | U | U | **Narrow handshake FIXED/CLOSED 2026-08-27** at behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is `86c330d3aeb7e6566390b00ddf667da8576dc045`. Live isolated E2E 1/1 in 2m09.910s observed victim-matched non-immune `SCUnitDamaged`, immune frames excluded, `SkillFired=True`, Retribution 2167, bloodstain 877 objId 44294, and crime branch; PEACE-BLOCK passed. Parser tests 2/2. WAR-HONOR deferred; broader PvP/honor scope remains open. |
 | DOMINION-01 | Dominion/castle-siege: zones, settings, plans, phase schedule, tax rate | M9+ | 2 | 2 | U | 2 | 2 | U | NEW + promoted 2026-08-26 (`mechanics/dominion-domain.md` dossier): first real reconstruction of the dominion system — DominionManager loads siege_zones(6)/siege_settings(11)/siege_plans(158) from canonical compact data; additive MySQL `aaemu_game.dominions` (SQL/updates/2026-08-26_aaemu_game_dominions.sql + base file); CSUpdateDominionTaxRatePacket wired (policy validation → persist → echo); phase cron Peace→Declare→Warmup→Siege→Payoff announcing via SCSiegeAlertPacket (0xed, documented placeholder payload); DeclareDominion special-effect now persists instead of hardcoded broadcast; enter-world rebroadcast of stored dominions; persistence E2E across kill -9 PASS (branch d42e708f5→66f124533). Combat/siege-battle explicitly NOT implemented (later slices); declare-trigger UI path still UNKNOWN (pack-planting hypothesis from client data); S=U/H=UNKNOWN |
 | FISH-01 | Fishing interaction, loot, labor, contest integration | M9.5 | U | 2 | U | 1 | U | U | Fishing audit. **2026-08-24 (cd5eedf11 / 33b4df563):** dossier `mechanics/fishing-domain.md` — basic 1.2 fishing is canonically encoded in plot 809 and the plot engine/reagents/labor/zone-loot-packs/radar/FishingLoot are all implemented + wired; `CastAt(position)` contract action added; **FishingVerificationE2eTests LIVE PASS** — labor −5, worm consumed via plot reagents, Fishing actability XP, loot item landed on bite (cast 2 of 2). W=2 (real engine path end-to-end); A=1 single-scenario live proof — sports-fishing stratum still orphaned (SpawnFishEffect unreachable, catch/convert/buy funcs stubbed); H=UNKNOWN |
 | PVP-01 | Flagging, factions, damage, honor, death/recovery | Later | 2 | 2 | U | 2 | U | U | **2026-08-25 (mechanics/pvp-domain.md): C=2.** CanAttack resolution order reconstructed (null fail-open → zone/mother-faction shield → Retribution-flag target → ForceAttack attacker → ZONE-01 peace block → Hostile fallback); honor formulas verified (Conflict solo 10 / War solo 20 + 4/assist, 30 s assist windows, War victim −10 clamp ≥0, PvpHonorRate config); faction storage verified (system_factions/_relations + MySQL characters.faction_id); pirate punishment conversion engine-wired. **2026-08-27 (wave 8): W=2, A=2.** Historical live E2E PASS (`PvpHandshakeE2eTests`, 6/6 stages green: PROVISION, HOMELAND-SHIELD, RELOCATE-STEPPE, LIVE-ZONE-STATE, FLAG-FORCEATTACK, AGGRESS-ALLOWED, PEACE-BLOCK). Historical real damage frames (`SCUnitDamagedPacket` unpacked via Level 4 Deflate decompression in `BotTcpLink`), Retribution 2167, and bloodstain doodad 877 observed live on wire; targeted rig 6/6 green. PB-007 remains **OPEN, narrowed**: targeted rig evidence exercises real `Skill.Use`, same-faction `ForceAttack` HP decrease, Retribution, and first application/Refresh broadcasts; the historical live E2E record is retained, but no current source-pinned artifact proves a victim-matched, non-immune `SCUnitDamaged` frame. H=UNKNOWN |
@@ -146,9 +164,9 @@ Graphify and must be promoted by an end-to-end exploration.
 | EXPEDITION-01 | Expedition membership, roles, persistence | M9/M10 | U | 2 | U | 1 | U | U | `ExpeditionManager`; organization audit. **2026-08-24 (f8252a37b):** headless verification rig — full lifecycle through the real manager with capture-backed connections: create (party auto-join) → reply-accept outsider → leave → disband; create-without-party refused before mutation. W=2 (real engine path end-to-end); A=1 rig-level — persistence (terminal Save) is integration-env scope, no bot contract actions yet; H=UNKNOWN |
 | CHAT-01 | Local/zone/party/expedition chat, moderation, bot identity | M7/M8 | U | 1 | U | U | N/A | U | `ChatManager`; social audit |
 | ZONE-01 | Peace/conflict/war state transitions and PvP rules | Later | U | 2 | U | 1 | U | U | `ZoneManager`; conflict-state audit. **2026-08-24 (0482ba3f0): zone state machine data-wired + enforced** — hard-coded Conflict boot state removed → data-driven Peace default (legacy World.ConflictZonesStartAtConflict flag kept for tests); Peace-state PvP protection at the BaseUnit.CanAttack chokepoint (fail-open when no conflict entry; Hostile stays attackable). W=2 (real engine path end-to-end); A=1 rig-level state machine + enforcement tests — no live PvP scenario yet (kept honest); **2026-08-25 (mechanics/pvp-domain.md):** enforcement confirmed as exactly ONE hook inside CanAttack; missing for a real war cycle: war-declaration input (CSFactionDeclareHostile stub), runtime conflict seeding, war towers. H=UNKNOWN |
-| ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, local develop two commits ahead of origin/develop `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`; Flash reports 39 MCP tools. Normal-clone gate: Release build PASS (8 warnings, 0 errors), compiler 0/0, unit 2496 total/2495 passed/0 failed/1 skipped; PB-002 focused item-use 1/1 and related scoped results above. H remains U. |
+| ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; current source/test HEAD `86c330d3aeb7e6566390b00ddf667da8576dc045` (`origin/develop`); behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` retains the normal-clone Release build 8 warnings/0 errors, compiler 0/0, unit 2496 total/2495 passed/0 failed/1 skipped, and MCP stdio 39 tools. PB-002 focused item-use 1/1 and related scoped results above. H remains U. |
 | BOT-01 | Headless account/session/Character lifecycle | M6 | U | 0 | U | 0 | 0 | U | New fork capability |
-| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Staged 30m/1h/6h soak. **2026-08-24 (4e460305b):** scheduler soak STAGE 1 executed — SchedulerSoakStage1Tests, 10 manifest citizens × 30min through real IPlayerBotScheduler wakes; two valid runs ~90k steps, 0 failed/timed-out, wake avg ~99ms, DB writes 14–19/min/citizen, tick+region budgets PASS; staged ladder continues (1h/6h rungs + physics-recalibration decision open). Adjacent G3-B3 arbitration landed same sweep (0482ba3f0): IBotActivityModule + BotGoalArbiter — priority-based single-active activity per bot per wake. Notes only — grades unchanged (kept honest) |
+| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Stage 1 scheduler evidence and older soak reports remain historical; no six-hour dormant-timer soak exists in current evidence. Broad cleanup risks sibling-state deletion; `SeedBox` has synchronous bridge calls/native `Thread.Join` without hard cancellation. No current soak result is claimed. |
 | REGRADE-01 | Gear regrading: spend regrade charms/scrolls to raise equipment tier with success/downgrade odds | Later | U | U | U | U | U | U | NEW 2026-08-25 (generated/mechanic-inventory-2026-08-25.md §3#1): item_grades/_grade_buffs/_enchanting_supports/_distributions + equip_slot_enchanting_costs tables; SCGradeEnchantResult/Broadcast G2C confirmations; GradeEnchant refs in ItemManager. Own dossier pending |
 | SOCKET-01 | Gem socketing: insert lunastones/lunagems into gear sockets with per-grade chance/level limits | Later | U | U | U | U | U | U | NEW 2026-08-25 (census §3#2): item_sockets/_chances/_level_limits/_num_limits + item_enchanting_gems; SCItemSocketingLunastone/LunagemResult packets. Own dossier pending |
 | GLIDER-01 | Glider flight: deploy/hang/unhang gliders (incl. costume wings-as-glider) for controlled aerial traversal | M7+ | U | U | U | U | U | U | NEW 2026-08-25 (census §3#3): CSHang/UnhangPacket, flying_state_change_effects; glider traces in ItemDetailType/BackpackType/UnitRequirementsGameData; no dedicated manager. Own dossier pending |
@@ -184,32 +202,39 @@ Graphify and must be promoted by an end-to-end exploration.
 | MOULD-01 | Mould/stamp crafting: craft stamp kits to imprint designs onto furniture/paper (UCC-adjacent) | M9 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#33): mould_packs/_pack_items/moulds ZERO-wired (zero-data-wired list); doodad_func_stamp_makers/mould_items/moulds. Own dossier pending |
 
 Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
-> **2026-08-27 combined-source checkpoint (local docs follow source
-> commits):** source/test HEAD is
-> `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; local `develop` is two commits
-> ahead of `origin/develop` at `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`.
-> PB-007 parser/live source commit is `063beb7cd`; PB-002 item-use source
-> commit is `b230bd8a2`. The normal-clone gate command is `./scripts/gate.sh`:
-> Release build PASS (8 warnings, 0 errors), compiler 0/0, unit **2496 total /
-> 2495 passed / 0 failed / 1 skipped**, MCP stdio smoke **39 tools**. Focused
-> PB-002 results: `LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
-> unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
-> registration 1/1; parser tests 2/2. Skip:
-> `Provision_Activate_Persist_Deactivate_RoundTrip` requiring
-> `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. H remains U (UNKNOWN).
-> Only the named scoped results are promoted; broad autonomous progression and
-> live/human breadth remain open.
+> **2026-08-28 source/evidence checkpoint:** current source/test HEAD is
+> `86c330d3aeb7e6566390b00ddf667da8576dc045` (`origin/develop`).
+> Behavioral gate evidence remains pinned to baseline
+> `3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone; source
+> commit `8d66f48b9` is provenance-only. IntegrationTests Release restore/build
+> passed with 0 errors and 602 warnings (including 2 NU1903) in a normal clone.
+> Runtime evidence uses `E2eStack.SourceRevision` with unknown fallback; stale
+> A5/A5Tier3 hardcoded revisions are fixed. No new full-gate count is claimed.
+> The retained behavioral gate result is Release build PASS (8 warnings, 0
+> errors), compiler 0/0, unit **2496 total / 2495 passed / 0 failed / 1
+> skipped**, MCP stdio smoke **39 tools**. Focused PB-002 results:
+> `LevelingLoopScenarioRigTests` 7/7, item-use 1/1, unsupported-objective 1/1,
+> discovery 12/12, talk 5/5, template registration 1/1; parser tests 2/2.
+> Skip: `Provision_Activate_Persist_Deactivate_RoundTrip` requiring
+> `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
 >
-> **PB-007 narrow closure (current source-pinned live proof):** the isolated
-> real-login/Game E2E passed 1/1 in 2m09.910s. `AGGRESS-ALLOWED` observed
-> victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False,
-> `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294,
-> and the crime branch; `PEACE-BLOCK` passed with no victim-matched non-immune
-> damage. `WAR-HONOR` is intentionally deferred. Current report:
-> `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`.
+> **PB-002 interaction candidate:** landed item-use facts remain unchanged:
+> `QuestActObjItemUse` through real `GameplayActor.UseItem` for quest 252 (NPC
+> 7653, item 7738, use skill 11596, act row 1600/detail 43) and fail-closed
+> quest 64 control. The canonical interaction candidate failed for quest 270,
+> doodad 687, interaction skill 11229: the real path reaches `Doodad.Use`, but
+> the spawned fixture exposes no phase functions. No implementation landed;
+> the broad PB-002 claim remains open.
 >
-> **Historical context retained:** prior route-count/gate entries and prior
-> PB-007 immune-tagged or untrusted live results remain historical only.
+> **PB-007 narrow closure:** the live handshake result is behavioral evidence
+> at baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test
+> HEAD is `86c330d3aeb7e6566390b00ddf667da8576dc045`. The checked-in report and
+> historical failure context remain preserved; WAR-HONOR remains deferred.
+>
+> **Soak boundary:** no six-hour dormant-timer soak exists in current evidence,
+> so no soak result is claimed. Broad bot cleanup risks sibling-state deletion;
+> `SeedBox` has synchronous bridge calls/native `Thread.Join` without hard
+> cancellation. H remains human-only and UNKNOWN.
 > **2026-08-26 recovery scorecard update (develop @ e5db6d390):** recovery
 > contents are confirmed on develop: grounding `38c4997d3`, recovered
 > Retribution wire-test merge `a4f7820ba`, and merchant merge `e5db6d390`;

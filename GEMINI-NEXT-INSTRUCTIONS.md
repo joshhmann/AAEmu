@@ -6,13 +6,15 @@ restart, scaling, or human gates.
 
 ## 1. Audit result and checkpoint
 
-The handoff documents were audited against combined source/test HEAD
-`3871459d142fdd1767b9365a1de8d4cd3652ab0e` on 2026-08-27. Local `develop` is
-two commits ahead of `origin/develop` at
-`bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`; docs follow source commits
-`063beb7cd` (PB-007 parser/live proof) and `b230bd8a2` (PB-002 item-use
-objective). This checkout contains documentation-only reconciliation after
-those source commits.
+The handoff documents were audited against current source/test HEAD
+`86c330d3aeb7e6566390b00ddf667da8576dc045` (`origin/develop`) on 2026-08-28.
+Behavioral gate evidence remains pinned to baseline
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone. Source commit
+`8d66f48b9` is provenance-only; it does not replace the current source pointer
+or the behavioral gate baseline. The IntegrationTests Release restore/build
+passed with 0 errors and 602 warnings (including 2 NU1903) in a normal clone.
+This checkout contains documentation-only reconciliation after the source
+provenance changes.
 
 The prior source/test baseline at `246803f6fa94c532f1d4a26265c051c5b1210b9f`
 and its `2495/2494/0/1` gate are historical. The older `241d3e34d` Mail/PB-007
@@ -31,7 +33,7 @@ The current recorded state is:
 - **39 MCP action tools** are exposed by `AAEmu.BotControlMcp`; management
   tools remain on the separate `AAEmu.BotControl` sidecar.
 - Flash reports fifteen additional authenticated actor routes/tools beyond the
-  earlier checkpoint. Combined normal-clone gate evidence at
+  earlier checkpoint. Behavioral gate evidence at baseline
   `3871459d142fdd1767b9365a1de8d4cd3652ab0e` is: `./scripts/gate.sh`; Release
   build PASS (8 warnings, 0 errors), compiler check **0/0**, unit **2496 total /
   2495 passed / 0 failed / 1 skipped**, and MCP stdio smoke **39 tools**.
@@ -39,9 +41,11 @@ The current recorded state is:
   unsupported-objective 1/1, discovery 12/12, talk 5/5, and template
   registration 1/1. Parser tests passed 2/2. The skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
-- The normal clone remains canonical for full-gate evidence; local docs follow
-  source commits `063beb7cd` and `b230bd8a2`.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. These counts describe the
+  behavioral baseline only; no new full-gate count is claimed for current
+  source/test HEAD `86c330d3aeb7e6566390b00ddf667da8576dc045`.
+  `E2eStack.SourceRevision` records runtime `git rev-parse HEAD` provenance
+  with an `unknown` fallback; A5/A5Tier3 no longer hardcode stale revisions.
 - Focused PB-001 evidence is tracked five-test contract coverage. Exact command:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`.
   Exact result: `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`.
@@ -269,46 +273,43 @@ items, Plant/Harvest, Craft, Buy/Sell, and Pack/vehicle are landed. Only later
 Party, Expedition, Trade, Auction, and related actor expansion remains deferred.
 Continue in this order:
 
-1. Retain the normal-clone full-gate evidence at combined source SHA
-   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`: Release build 8 warnings/0
-   errors, compiler 0/0, unit 2496/2495/0/1, MCP stdio 39 tools, and the
-   skip identity above. Focused PB-002 coverage is LevelingLoopScenarioRigTests
-   7/7; item-use 1/1; unsupported-objective 1/1; discovery 12/12; talk 5/5;
-   template registration 1/1.
+1. Retain the normal-clone full-gate evidence at behavioral baseline
+   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, not as the current source/test
+   HEAD. Current source/test HEAD is
+   `86c330d3aeb7e6566390b00ddf667da8576dc045`; preserve the baseline's Release
+   build 8 warnings/0 errors, compiler 0/0, unit 2496/2495/0/1, MCP stdio 39
+   tools, and skip identity above. Focused PB-002 coverage is
+   `LevelingLoopScenarioRigTests` 7/7; item-use 1/1; unsupported-objective 1/1;
+   discovery 12/12; talk 5/5; template registration 1/1.
 2. Keep PB-002 scoped to the landed actor/rig slices: `QuestActObjItemUse`
    through real `GameplayActor.UseItem` for quest 252 (NPC 7653, item 7738,
-   use skill 11596, act row 1600/detail 43) plus fail-closed quest 64 control.
-   Broad autonomous quest-loop coverage and live/human breadth remain open.
-3. PB-007's narrow live closure is current at this source SHA; preserve the
-   checked-in report and historical failure context. WAR-HONOR remains deferred.
-4. Preserve the six-hour dormancy soak as open: retain sequential seeding,
-   stage the no-bot baseline, one bot for 30 minutes, 10 bots for one hour,
-   then 10 bots for six hours, and approve numeric p95/p99 tick, memory,
-   DB-write, queue, and recovery budgets before calling it a pass.
+   use skill 11596, act row 1600/detail 43) plus fail-closed quest-64 control.
+   The failed canonical interaction candidate is quest 270, doodad 687,
+   interaction skill 11229: the real path reaches `Doodad.Use`, but the spawned
+   fixture exposes no phase functions; no implementation landed. Broad
+   autonomous quest-loop coverage and live/human breadth remain open.
+3. PB-007's narrow live closure is behavioral evidence at baseline
+   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is
+   `86c330d3aeb7e6566390b00ddf667da8576dc045`. Preserve the checked-in report
+   and historical failure context. WAR-HONOR remains deferred.
+4. Preserve the six-hour dormant-timer soak as unmeasured: no six-hour timer
+   soak exists in the current evidence, so do not claim a soak result. Keep
+   dormant seeding sequential because concurrent `seedDormant` corrupts server
+   state after about 100 bots. Broad bot cleanup can delete sibling state.
+   `SeedBox` still has synchronous bridge calls/native `Thread.Join` without
+   hard cancellation. Retain prior staged and historical reports without
+   relabeling them as this current soak.
 5. Keep Party, Expedition, Trade, Auction, and related actor expansion
    deferred until authenticated enqueue routes and reviewed observable
    contracts exist.
-- **PB-007 live wire proof:** **FIXED / CLOSED for the narrow handshake
-  requirement** at combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`.
-  The isolated real-login/Game E2E passed 1/1 in 2m09.910s and observed
-  victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False,
-  `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294,
-  and the crime branch; PEACE-BLOCK passed with no victim-matched non-immune
-  damage. WAR-HONOR remains intentionally deferred; broader PvP/honor scope
-  and H remain open.
 - **Historical PB-007 context:** prior rig-only and immune-tagged/untrusted live
   results did not satisfy this narrow wire requirement; they remain historical
-  and are superseded by the current source-pinned report above.
+  and are superseded by the behavioral-baseline report above.
 - **PB-005 owner decisions:** classify cave/deck/submerged grounding rows only
   with canonical/client evidence and decide ownership of the 733 duplicate
   rows. Do not add a negative-Z clamp, delete duplicates, or alter the
   intentional aerial/water/structure whitelist without an explicit owner
   decision and cited evidence.
-- **Six-hour dormancy soak:** retain the sequential-seeding rule and stage a
-  no-bot baseline, one bot for 30 minutes, 10 bots for one hour, then 10 bots for
-  six hours. Approve numeric p95/p99 tick, memory, DB-write, queue, and recovery
-  budgets before calling the soak a pass; a qualitative "no overrun" is not
-  evidence.
 - **Next gameplay reconstruction slices:** choose one evidence-rich slice such
   as justice trial packet ordering/client capture, mail return client-opcode
   capture, or the navigation route-planner/coarse-travel leg. Use neighboring

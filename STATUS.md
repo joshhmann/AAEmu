@@ -1,17 +1,26 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-27 · PB-007 live closure + PB-002 item-use evidence; prior:
+Updated: 2026-08-28 · source/test checkpoint and runtime-provenance reconciliation; prior:
+2026-08-27
+(PB-007 live closure + PB-002 item-use evidence; prior:
 2026-08-26
 (Mail S3 acceptance and recovery reconciliation; G2-A5 + A4 near-term gates
 MET with live evidence; PB-002 quest-discovery primitive and item-use slice
 landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; local combined source/test HEAD is
-`3871459d142fdd1767b9365a1de8d4cd3652ab0e`, two commits ahead of
-`origin/develop` at `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`. This docs wave
-follows source commits `063beb7cd` (PB-007 parser/live proof) and
-`b230bd8a2` (PB-002 item-use objective); docs follow those source commits.
+Branch of record: develop; current source/test HEAD is
+`86c330d3aeb7e6566390b00ddf667da8576dc045` (`origin/develop`). Behavioral gate
+evidence is pinned to baseline
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone; its gate
+counts below describe that behavioral baseline, not a new full-gate count for
+the current source HEAD. Source commit `8d66f48b9` is provenance-only (the
+runtime-provenance source tree); it does not replace either pointer. The
+IntegrationTests Release restore/build passed with 0 errors and 602 warnings
+(including 2 NU1903) in a normal clone. `E2eStack.SourceRevision` now records
+runtime `git rev-parse HEAD` provenance with an explicit `unknown` fallback;
+A5/A5Tier3 no longer hardcode stale revisions. This docs wave preserves the
+historical reports and prior evidence below.
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
@@ -29,8 +38,10 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   593 non-whitelisted severe-positive rows and leaves 702 whitelisted rows
   unchanged; cave/deck/submerged behavior and duplicate-row decisions remain.
 - **PB-007:** **FIXED / CLOSED for the narrow flagged-aggression handshake
-  requirement** at source/test HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`.
-  Current report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`.
+  requirement** at behavioral gate evidence baseline
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD is
+  `86c330d3aeb7e6566390b00ddf667da8576dc045`). Current report:
+  `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`.
   The isolated real-login/Game E2E observed a victim-matched, non-immune
   `SCUnitDamaged` frame, with immune frames excluded, `SkillFired=True`,
   Retribution 2167, bloodstain doodad 877, and the crime branch observable;
@@ -60,20 +71,39 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   cover selected perception-driven quest steps. Current item-use coverage drives
   `QuestActObjItemUse` through real `GameplayActor.UseItem` for canonical quest
   252 (NPC 7653, item 7738, use skill 11596, act row 1600/detail 43), with
-  fail-closed canonical quest 64 control. Broad autonomous quest-loop coverage,
-  live-server breadth, and human/client breadth remain open; do not call the
-  broad claim complete.
-- **Final gate (combined source SHA
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, normal-clone evidence):**
-  Release build PASS (8 warnings, 0 errors), compiler check 0/0, unit
-  **2496 total / 2495 passed / 0 failed / 1 skipped**, and MCP stdio **39
-  tools**. Focused PB-002 results: `LevelingLoopScenarioRigTests` 7/7,
-  item-use 1/1, unsupported-objective 1/1, discovery 12/12, talk 5/5, and
-  template registration 1/1. Parser tests passed 2/2. Skip identity:
+  fail-closed canonical quest 64 control. The failed canonical interaction
+  candidate remains open: quest 270, doodad 687, interaction skill 11229; the
+  real path reaches `Doodad.Use`, but the spawned fixture exposes no phase
+  functions. No implementation landed for this candidate. Broad autonomous
+  quest-loop coverage, live-server breadth, and human/client breadth remain open;
+  do not call the broad claim complete.
+- **Behavioral gate evidence (normal-clone baseline
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, not current source/test HEAD
+  `86c330d3aeb7e6566390b00ddf667da8576dc045`):** Release build PASS (8
+  warnings, 0 errors), compiler check 0/0, unit **2496 total / 2495 passed /
+  0 failed / 1 skipped**, and MCP stdio **39 tools**. Focused PB-002 results:
+  `LevelingLoopScenarioRigTests` 7/7, item-use 1/1, unsupported-objective 1/1,
+  discovery 12/12, talk 5/5, and template registration 1/1. Parser tests
+  passed 2/2. Skip identity:
   `Provision_Activate_Persist_Deactivate_RoundTrip` requires
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The normal clone remains
-  canonical for full-gate evidence; docs follow source commits
-  `063beb7cd` and `b230bd8a2`.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. These are retained
+  behavioral-gate counts; no new full-gate count is claimed here. Separately,
+  the IntegrationTests Release restore/build passed with 0 errors and 602
+  warnings (including 2 NU1903) in a normal clone.
+
+## Current provenance and soak boundaries (2026-08-28)
+
+- Runtime evidence records `E2eStack.SourceRevision` from `git rev-parse HEAD`
+  and reports `unknown` when the checkout/archive cannot resolve a revision.
+  A5 and A5Tier3 now use that value rather than stale hardcoded revisions.
+- No six-hour dormant-timer soak exists in the current evidence. The staged
+  30-minute scheduler run and older six-hour reports remain historical
+  evidence; neither is a current six-hour dormant-timer soak result.
+- Broad bot cleanup is not safe to claim: cleanup can delete sibling state.
+  `SeedBox` still contains synchronous bridge calls/native `Thread.Join` without
+  hard cancellation. These are blockers, not soak results.
+- Human/H boundaries remain intact: bot, rig, MCP, and live-stack evidence is
+  functional/proxy evidence; H/human-feel acceptance remains Josh-owned.
 
 ## 2026-08-27 MCP expansion
 - **Client-neutral integration:** MCP sidecars and the management gateway remain
@@ -209,9 +239,9 @@ Indun addendum refuted PB-003's data premise before its E2E closed it.
   1,000 dormant seeded through real provisioning (~4.1 min sequential) /
   exactly 50 embodied; RSS +0.13% vs the 50-active baseline (3832.1 →
   3837.0 MB median); wake-to-visible p95 280.2 ms (10.7× under the 3 s bar);
-  steps/min parity 15003 vs 14995. OPEN: 6h dormant-timers soak leg;
-  concurrent seedDormant corrupts server state after ~100 bots (documented;
-  seeding stays sequential).
+  steps/min parity 15003 vs 14995. No six-hour dormant-timer soak exists in
+  the current evidence; this leg remains unmeasured. Concurrent seedDormant
+  corrupts server state after ~100 bots (documented; seeding stays sequential).
 
 **2026-08-26 wave 7 (validation infrastructure + dominion/pvp/crime
 verticals):** **G3-B5 DONE** — behavioral scenario library promoted
@@ -223,8 +253,9 @@ The engine fix extracts `RegisterCrimeForAttempt` and invokes it on the immune
 path; apply-loop exceptions are logged and rethrown; the E2E waits out the
 protection window. Post-fix real damage, bloodstain, and crime chain execute;
 ZONE-01 Peace enforcement + homeland mother-shield remain LIVE-verified.
-**PB-007 narrow closure (2026-08-27, source/test HEAD
-`3871459d142fdd1767b9365a1de8d4cd3652ab0e`):** the final isolated live E2E
+**PB-007 narrow closure (2026-08-27, behavioral gate evidence baseline
+`3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD
+`86c330d3aeb7e6566390b00ddf667da8576dc045`):** the final isolated live E2E
 passed 1/1 in 2m09.910s. `AGGRESS-ALLOWED` observed
 victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False,
 `SkillFired=True`, Retribution 2167=True, and bloodstain doodad 877 objId

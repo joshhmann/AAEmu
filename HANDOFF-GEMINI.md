@@ -1,12 +1,14 @@
 # Gemini Handoff — AAEmu
 
-- The current combined source/test HEAD is
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; local `develop` is two commits
-  ahead of `origin/develop` at
-  `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`. This docs wave follows source
-  commits `063beb7cd` (PB-007 parser/live proof) and `b230bd8a2` (PB-002
-  item-use objective). The prior baseline `246803f6fa94c532f1d4a26265c051c5b1210b9f`
-  and earlier PB-007/Mail reconciliation remain historical.
+- The current source/test HEAD is
+  `86c330d3aeb7e6566390b00ddf667da8576dc045` (`origin/develop`). Behavioral
+  gate evidence remains pinned to baseline
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` from a normal clone. Source
+  commit `8d66f48b9` is provenance-only and does not replace either pointer.
+  The IntegrationTests Release restore/build passed with 0 errors and 602
+  warnings (including 2 NU1903) in a normal clone. The prior baseline
+  `246803f6fa94c532f1d4a26265c051c5b1210b9f` and earlier PB-007/Mail
+  reconciliation remain historical.
 - Start from [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md) for
   the safe temporary-worktree workflow, current MCP evidence boundary, and
   ordered continuation gates.
@@ -15,7 +17,7 @@
   `deposit_item`, `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`,
   `pack_pickup`, `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current MCP catalog is 39 tools.
-- The combined normal-clone clean-gate result at
+- The behavioral gate evidence at baseline
   `3871459d142fdd1767b9365a1de8d4cd3652ab0e` is `./scripts/gate.sh`;
   Release build PASS (8 warnings, 0 errors); compiler **0/0**; unit **2496
   total / 2495 passed / 0 failed / 1 skipped**; MCP stdio smoke **39 tools**.
@@ -23,7 +25,11 @@
   unsupported-objective 1/1, discovery 12/12, talk 5/5, template registration
   1/1; parser tests 2/2. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. These counts are for the
+  behavioral baseline, not a new full-gate count at current source/test HEAD
+  `86c330d3aeb7e6566390b00ddf667da8576dc045`. `E2eStack.SourceRevision`
+  records runtime `git rev-parse HEAD` with an `unknown` fallback; A5/A5Tier3
+  stale hardcoded revisions are fixed.
   Focused route/MCP/queue validation remains Flash-reported **53/53**
   (`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
   `BotActionCommandQueueTests` 18/18).
@@ -77,18 +83,20 @@ Use this loop for every slice:
   `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`, `pack_pickup`,
   `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current catalog is 39 tools.
-- The combined normal-clone clean-gate result is SHA-pinned to
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; local `develop` is two commits
-  ahead of `origin/develop` at `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`.
-  `./scripts/gate.sh`; Release build PASS (8 warnings, 0 errors); compiler
-  **0/0**; unit **2496 total / 2495 passed / 0 failed / 1 skipped**; MCP
-  stdio smoke **39 tools**. Focused PB-002 results are
-  `LevelingLoopScenarioRigTests` 7/7, item-use 1/1,
+- The behavioral gate evidence is SHA-pinned to baseline
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (not current source/test HEAD
+  `86c330d3aeb7e6566390b00ddf667da8576dc045`); local `develop` now points to
+  `origin/develop` at the current HEAD. `./scripts/gate.sh`; Release build PASS
+  (8 warnings, 0 errors); compiler **0/0**; unit **2496 total / 2495 passed /
+  0 failed / 1 skipped**; MCP stdio smoke **39 tools**. Focused PB-002 results
+  are LevelingLoopScenarioRigTests 7/7, item-use 1/1,
   unsupported-objective 1/1, discovery 12/12, talk 5/5, template registration
   1/1; parser tests 2/2. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Docs follow source commits
-  `063beb7cd` and `b230bd8a2`.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. Separately, the
+  IntegrationTests Release restore/build passed with 0 errors and 602 warnings
+  (including 2 NU1903) in a normal clone; do not treat that as a new full-gate
+  count.
 - Focused PB-001 evidence is tracked five-test contract coverage. Exact
   command:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`.
@@ -141,7 +149,7 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
 | Merchant/economy | Restart conservation of money, bank, and item counts | Live bot economy cycle across kill-9; not human shop feel. |
 | Grounding | 593 corrected / 702 whitelist preserved | Offline engine-identical terrain harness plus targeted policy tests; terrain-only, not cave/deck/submerged truth. |
 
-| PB-007 live handshake | **1/1 in 2m09.910s**; AGGRESS-ALLOWED observed victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False, `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294, and crime branch; PEACE-BLOCK passed | Current source-pinned real-login/Game TCP E2E at combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; WAR-HONOR intentionally deferred; broader PvP/honor and H remain open. Report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`. |
+| PB-007 live handshake | **1/1 in 2m09.910s**; AGGRESS-ALLOWED observed victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False, `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294, and crime branch; PEACE-BLOCK passed | Behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is `86c330d3aeb7e6566390b00ddf667da8576dc045`; WAR-HONOR intentionally deferred; broader PvP/honor and H remain open. Report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`. |
 
 ## Active blockers and partials
 
@@ -157,23 +165,31 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
   BROAD CLAIM OPEN** — current item-use coverage drives `QuestActObjItemUse`
   through real `GameplayActor.UseItem` for canonical quest 252 (NPC 7653,
   item 7738, use skill 11596, act row 1600/detail 43), plus fail-closed
-  canonical quest 64 control. Focused results are recorded above. Broad
-  autonomous quest-loop coverage, live-server breadth, and human/client
-  breadth remain open.
+  canonical quest 64 control. The failed canonical interaction candidate is
+  quest 270, doodad 687, interaction skill 11229: the real path reaches
+  `Doodad.Use`, but the spawned fixture exposes no phase functions; no
+  implementation landed. Broad autonomous quest-loop coverage, live-server
+  breadth, and human/client breadth remain open.
 - **PB-005 — grounding FIXED-PARTIAL:** 593 non-whitelisted severe-positive rows were corrected and 702 intentional whitelist rows preserved. Cave/deck/submerged classification and the 733 duplicate-row ownership decision remain open. No negative-offset clamp and no duplicate deletion without canonical evidence/owner approval.
 - **PB-007 — FIXED / CLOSED for the narrow flagged-aggression handshake** at
-  combined HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`: the current
-  real-login/Game E2E passed 1/1 in 2m09.910s with the victim-matched,
-  non-immune `SCUnitDamaged` frame, immune exclusion, `SkillFired=True`,
-  Retribution 2167, bloodstain 877 objId 44294, and crime branch observed;
-  PEACE-BLOCK passed with no victim-matched non-immune damage. WAR-HONOR is
-  separately deferred; broader PvP/honor scope and H remain open. Historical
+  behavioral gate evidence baseline
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD
+  `86c330d3aeb7e6566390b00ddf667da8576dc045`): the current real-login/Game
+  E2E passed 1/1 in 2m09.910s with the victim-matched, non-immune
+  `SCUnitDamaged` frame, immune exclusion, `SkillFired=True`, Retribution
+  2167, bloodstain 877 objId 44294, and crime branch observed; PEACE-BLOCK
+  passed with no victim-matched non-immune damage. WAR-HONOR is separately
+  deferred; broader PvP/honor scope and H remain open. Historical
   immune-tagged/untrusted failure context is retained in dated reports.
 - **Justice:** the crime vertical is complete, but jury summon packet ordering/client capture remains unknown. Prison sentencing/teleport/buff exist; prison labor, escape tunnels, guards, and release-on-expiry are absent. Treat those as separate scope decisions.
 - **Dominion:** persistence/tax/phase slice is complete; combat/siege-battle and declare-trigger UI are not.
 - **Mail:** Mail S3 is merged and complete; no S3 partial remains. Open follow-ups are real-client confirmation of the return opcode (candidate `0x0a2`, still not a fact), COD enforcement, and expiry/bounce integration proof.
-- **Scaling:** Tier-3 six-hour dormant-timer soak remains pending. Keep dormant seeding sequential because concurrent `seedDormant` corrupts server state at roughly 100 bots. Historical M6 soak evidence passed revised approved budgets, but that does not erase the remaining exit-label/deferred-gate decisions.
-- **Human H gates:** M1 Solzreed route, original M2 two-player baseline, M3a contract replay, M4 economic/navigation replay, and the human-feel dimensions generally remain Josh-owned UNKNOWN. Bot completion is not permission to promote H.
+- **Scaling:** no six-hour dormant-timer soak exists in current evidence, so
+  no six-hour soak result is claimed. Keep dormant seeding sequential because
+  concurrent `seedDormant` corrupts server state at roughly 100 bots. Broad bot
+  cleanup risks sibling-state deletion. `SeedBox` has synchronous bridge calls
+  and native `Thread.Join` without hard cancellation; these remain blockers.
+  Historical M6 soak evidence and staged reports are preserved as historical.
 
 ## Surviving worktrees and safety
 
@@ -189,20 +205,27 @@ Do not add `.worktrees/` wholesale to a commit. Do not delete, reset, or overwri
 The compact SQLite database is SELECT-only. Never patch it in place; use reviewed code/config or an additive SQL/MySQL migration when mutable state is required.
 
 ## Immediate next instructions for Gemini
-1. Preserve the full-gate output pinned to combined source SHA
-   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, with the exact command,
+1. Preserve the full-gate output pinned to behavioral baseline
+   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, not as current source/test
+   HEAD. Current source/test HEAD is
+   `86c330d3aeb7e6566390b00ddf667da8576dc045`; retain the exact command,
    environment/assets, build/compiler result, unit totals and skip identity,
-   and downstream MCP-smoke result. Normal clone remains canonical for this
-   full-gate evidence.
+   and downstream MCP-smoke result from that baseline. Normal clone remains
+   canonical for this full-gate evidence.
 2. Keep PB-002 scoped to the landed actor/rig slices, including canonical
-   quest-252 item-use and fail-closed quest-64 control; broad autonomous
-   quest-loop coverage and live/human breadth remain open.
-3. PB-007's narrow live handshake is closed; preserve its current report and
-   historical failure context. WAR-HONOR remains intentionally deferred.
-4. Preserve the six-hour dormant-timer soak as open: retain sequential seeding,
-   stage the no-bot baseline, one bot for 30 minutes, 10 bots for one hour,
-   then 10 bots for six hours, and approve numeric p95/p99 tick, memory,
-   DB-write, queue, and recovery budgets before calling it a pass.
+   quest-252 item-use and fail-closed quest-64 control. The failed canonical
+   interaction candidate is quest 270, doodad 687, interaction skill 11229:
+   real path reaches `Doodad.Use`, but the spawned fixture exposes no phase
+   functions; no implementation landed. Broad autonomous quest-loop coverage
+   and live/human breadth remain open.
+3. PB-007's narrow live closure is behavioral evidence at the baseline above;
+   preserve the checked-in report and historical failure context. WAR-HONOR
+   remains intentionally deferred.
+4. Do not claim a six-hour dormant-timer soak result: no such current soak
+   exists. Keep sequential seeding (`seedDormant` corrupts state after about
+   100 bots), treat broad cleanup as risky because it can delete sibling state,
+   and record `SeedBox` synchronous bridge calls/native `Thread.Join` without
+   hard cancellation as blockers.
 5. Keep Party, Expedition, Trade, Auction, and related actor expansion
    deferred until authenticated enqueue routes and reviewed observable
    contracts exist.
@@ -214,15 +237,18 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 1. **Establish the checkpoint before editing.** Follow
    [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md): inspect the
    dirty main checkout read-only and create a clean temporary worktree from
-   combined source/test HEAD `3871459d142fdd1767b9365a1de8d4cd3652ab0e`.
-   Local `develop` is two commits ahead of `origin/develop` at
-   `bc879e328cd3ee99d0bfad89b9c9c5b79e49779a`; the prior `241d3e34d`
-   relationship and 2479/0/1 checkpoints are historical.
-2. **PB-007 narrow closure is already proven.** Preserve the current
-   source-pinned live report and historical failure context; do not rerun it
-   blindly. The required live victim-matched, non-immune `SCUnitDamaged` frame,
-   immune exclusion, Retribution/crime evidence, and PEACE-BLOCK are recorded
-   above. WAR-HONOR remains separately deferred.
+   current source/test HEAD `86c330d3aeb7e6566390b00ddf667da8576dc045`
+   (`origin/develop`). The behavioral gate baseline
+   `3871459d142fdd1767b9365a1de8d4cd3652ab0e` remains the normal-clone
+   evidence pointer; the prior `241d3e34d` relationship and 2479/0/1
+   checkpoints are historical.
+2. **PB-007 narrow closure is already proven at the behavioral gate baseline**
+   `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is
+   `86c330d3aeb7e6566390b00ddf667da8576dc045`. Preserve the live report and
+   historical failure context; do not rerun it blindly. The required live
+   victim-matched, non-immune `SCUnitDamaged` frame, immune exclusion,
+   Retribution/crime evidence, and PEACE-BLOCK are recorded above. WAR-HONOR
+   remains separately deferred.
 3. **Choose one high-leverage gameplay slice and state its evidence contract before code.** Preferred options are: (a) justice trial packet-order/client capture if a suitable client/capture is available; or (b) Mail return client confirmation. Keep canonical data and human-vs-bot boundaries explicit.
 4. **Handle PB-005 owner decisions separately.** Classify cave/deck/submerged rows only with canonical/client evidence. Do not add a negative-offset clamp, delete duplicate rows, or reclassify whitelist entries without a registered owner decision and evidence.
 5. **For every new slice, add/update both a rig proof and a live scenario where applicable, file a blocker for any failure, and update `SCORECARD.md`, `ROADMAP.md`, and `STATUS.md` in the same documentation wave.** Preserve old evidence and label rig/live/human types rather than rewriting history.
