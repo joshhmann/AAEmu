@@ -72,6 +72,18 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   (PropertyRepairScanner/Service + /house_repair GM command @ 5981246ea/
   99edc67a, 13/13 scanner tests, Rei gate PASS run 1892) cited in the exit
   record + ROADMAP (t_c2dd474b, 2026-08-14).
+- **M3 loop reconciliation (2026-08-28):** M3a is the ordinary
+  `Character` loop **place/build → plant/harvest → storage/coffer/furniture
+  state → observable ownership/contents result**; M3b restart persistence is
+  separate. The prior exact source/test baseline `b9a72825f` recorded the M3
+  focused aggregate **178/178**: M3a exit 1/1, M3b furniture 4/4, phase
+  restart 10/10, property policy 11/11, and repair scanner 13/13. Current
+  source/test HEAD `a77ef878d8fcba297c32c0228e712e0695cc4887` includes source
+  commit `1a3f13dc1`; `HousingStorageFurnitureTests` is 13/13, including
+  authorized-owner opening and unauthorized refusal before `OpenedBy`
+  mutation. Bot/property replay remains ordered scripted/fixture proxy;
+  fixture `SetPosition`/service preparation is not acceptance, and Player/H
+  UAT plus live-client evidence remain open.
 - **M4:** ROADMAP §M4 EXIT RECORD (2026-08-12, t_97e59ffc); merged-tree
   provenance t_abe87eaf (E2E_REBUILD=1, re-published from exact merge commit);
   A2 convoy gate t_921a7be5 (Rei ACCEPT, merged f9572e1a8); unit gate 1778/0/1;

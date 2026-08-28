@@ -369,6 +369,21 @@ f5b00c686 PASS 7m08s — N=3 crash cycles incl. kill -9 mid-save (INNODB_TRX-
 observed) + container kill, 16 rows/boot, no loss/dup; autosave p95 1301ms
 < 2000ms at 25 bots + 2 homesteads. PROPERTY-01 R = 2 (U→2 in f5b00c686).
 
+**M3 loop reconciliation (2026-08-28; current source/test HEAD
+`a77ef878d8fcba297c32c0228e712e0695cc4887`):** M3a's clean ordinary
+Character loop is **place/build → plant/harvest → storage/coffer/furniture
+state → observable ownership/contents result**; M3b restart persistence is a
+separate loop. The prior exact source/test baseline `b9a72825f` recorded the
+M3 focused aggregate **178/178**, with named slices M3a exit 1/1, M3b furniture
+4/4, phase restart 10/10, property policy 11/11, and repair scanner 13/13.
+Source commit `1a3f13dc1` is included at the current HEAD; the focused
+`HousingStorageFurnitureTests` run is **13/13**, including unauthorized
+coffer refusal before `OpenedBy` mutation and authorized-owner opening.
+These are scripted/fixture proxy stages: property replay follows an ordered
+sequence and fixture setup includes direct `SetPosition`/service preparation,
+which is not an acceptance path. Player/H UAT remains open; no live-client
+claim is made.
+
 **M4 — Trade, crafting and transport integrity: ✅ MERGED + DEPLOYED (2026-08-12; H reconciled 2026-08-12)**
 Pinned audited SHA **95bb1c78e** (merge: M4 EXIT integrated playable release,
 t_97e59ffc, **Rei gate PASS** t_abe87eaf ACCEPT) — crafting integrity

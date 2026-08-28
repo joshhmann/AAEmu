@@ -145,6 +145,20 @@ merged 3396d9ef1) → farm/storage → craft → pack → load/drive vehicle →
 unload → sell → reward**, all prerequisites merged (LoadPackOntoVehicle
 6c2429ae0, DriveVehicle 6edbf0cbb, full M5.1 surface on develop).
 
+**M3 loop reconciliation (2026-08-28):** M3a's player loop is the clean
+ordinary `Character` path **place/build → plant/harvest →
+storage/coffer/furniture state → observable ownership/contents result**;
+M3b restart persistence is a separate loop. The prior exact source/test
+baseline `b9a72825f` recorded the M3 focused aggregate **178/178** (M3a exit
+1/1, M3b furniture 4/4, phase restart 10/10, property policy 11/11, repair
+scanner 13/13). Current source/test HEAD is
+`a77ef878d8fcba297c32c0228e712e0695cc4887`, including source commit
+`1a3f13dc1`; `HousingStorageFurnitureTests` passes 13/13 with authorized
+owner open and unauthorized refusal before `OpenedBy` mutation. The bot
+property replay remains ordered scripted/fixture proxy; direct fixture
+`SetPosition`/service preparation is not acceptance. Player/H UAT and any
+live-client claim remain open.
+
 ### Global mechanic ledger
 
 This is the prioritized inventory, not a claim that manager presence means the

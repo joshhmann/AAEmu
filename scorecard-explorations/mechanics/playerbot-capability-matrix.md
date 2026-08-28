@@ -31,6 +31,21 @@ autonomously = Unknown/Open**: no `Observe → Discover → legal-choice`
 decision closure is recorded. No live/client/H evidence is implied. The
 original two-player/no-GM baseline remains Josh-owned and deferred.
 
+## M3 loop reconciliation (2026-08-28)
+
+M3a's player loop is the clean ordinary `Character` path **place/build →
+plant/harvest → storage/coffer/furniture state → observable ownership/contents
+result**. M3b restart persistence is a separate loop. The prior exact
+source/test baseline `b9a72825f` recorded the M3 focused aggregate **178/178**:
+M3a exit 1/1, M3b furniture 4/4, phase restart 10/10, property policy 11/11,
+and repair scanner 13/13. Current source/test HEAD is
+`a77ef878d8fcba297c32c0228e712e0695cc4887`, including source commit
+`1a3f13dc1`; `HousingStorageFurnitureTests` passes 13/13 with authorized-owner
+open and unauthorized refusal before `OpenedBy` mutation. The property replay
+is an ordered scripted/fixture proxy; fixture `SetPosition`/service
+preparation is not an acceptance path. Player/H UAT and live-client evidence
+remain open.
+
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |
@@ -42,7 +57,7 @@ Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 | Vendors | ✅ money/inventory observable | ✅ trivial buy/sell rules | ✅ Buy/Sell actions (real shop paths); merchant trio fixes merged (`cb514c42e`, `beaf9b82e`, `3ba33b3af`, merge `e5db6d390`) | ✅ ledger conservation; live EconomyDayCycle conservation E2E passed across kill -9 restart | ✅ economy cycle live-proven |
 | Mail | ✅ inbox, unread count, and attachment state observable | ✅ S3 send → restart → receive/take/delete decision path | ✅ server Send/read/take/delete packet paths with receive-path ownership guards; real `CSSendMailPacket` send and mailbox proximity | ✅ authenticated `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets` PASS 1/1 in 2m39s on isolated MySQL/Docker; kill-9/restart, `SlotType.Mail=5`, receiver retargeting, unread recount after registration, exact item-instance detail/grade/durability/rune/temper fidelity, copper, read transition, and delete persistence all asserted | ✅ restart-proven S3 flow; return opcode `0x0a2` STRONGLY_INFERRED pending real-client capture, COD/expiry follow-ups |
 | Crafting | ✅ inventory/materials observable | ✅ recipe steps scripted | ✅ Craft action (real CharacterCraft) | ✅ products granted + materials consumed asserts | ✅ in economy cycle |
-| Farming | ✅ crop growth observable (doodad phases) | ✅ mature→harvest rule | ✅ Plant/Harvest actions (real Doodad.Use) | ✅ doodad state + items | ✅ in economy cycle (+ restart persistence) |
+| Farming | ✅ crop growth observable (doodad phases) | 🟡 mature→harvest stage is scripted; no autonomous plot/target selection recorded | ✅ Plant/Harvest actions (real Doodad.Use) | ✅ doodad state + items | 🟡 ordered property replay; M3b restart persistence is separate |
 | Housing | ✅ ownership/placeable observable | 🟡 build step scripted | ✅ BuildHouse action (real HousingManager.Build) | ✅ persisted rows across restarts | 🟡 M5.2 slice; decoration interior loops open |
 | Trade packs | ✅ pack slot/bundle observable | 🟡 route steps scripted | ✅ PackPickup/PutDown/LoadPackOntoVehicle/DriveVehicle | ✅ payout conservation (mail + labor) | 🟡 M4 exit rig-proven; live replay = deferred gate #4 |
 | Fishing | ✅ bite/labor observable | ✅ cast-retry loop | ✅ CastAt(position) (real plot 809) | ✅ labor/worm/loot deltas | ✅ FishingVerificationE2eTests live |

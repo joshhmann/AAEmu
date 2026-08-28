@@ -677,6 +677,21 @@ PropertyRepairScanner/Service + /house_repair GM command merged @ 5981246ea
 (99edc67a, t_7c71be66), 13/13 scanner tests, Rei gate PASS run 1892 —
 citation added 2026-08-14 (t_c2dd474b).
 
+**M3 loop reconciliation (2026-08-28; current source/test HEAD
+`a77ef878d8fcba297c32c0228e712e0695cc4887`):** The M3a player loop is the
+clean ordinary `Character` path **place/build → plant/harvest →
+storage/coffer/furniture state → observable ownership/contents result**.
+M3b's restart/crash persistence loop remains separate. The M3 focused
+aggregate was **178/178** at prior exact source/test baseline `b9a72825f`;
+named slices were M3a exit 1/1, M3b furniture 4/4, phase restart 10/10,
+property policy 11/11, and repair scanner 13/13. Source commit `1a3f13dc1`
+is included at current HEAD, and `HousingStorageFurnitureTests` is **13/13**
+with authorized-owner open plus unauthorized refusal before `OpenedBy`
+mutation. M3a/M3b bot evidence remains scripted/fixture proxy: the property
+replay follows ordered stages and fixture setup includes direct `SetPosition`
+and service preparation, not an acceptance path. Player/H UAT remains open;
+no live-client claim is made.
+
 ---
 
 ## M4 — Trade, crafting and transport integrity
