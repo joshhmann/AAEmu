@@ -80,7 +80,7 @@ public static class VehicleMovementModel
 
             foreach (var (_, passengerInfo) in mate.Passengers)
             {
-                var passenger = WorldManager.Instance.GetCharacterByObjId(passengerInfo._objId);
+                var passenger = WorldManager.PeekInstance?.GetCharacterByObjId(passengerInfo._objId);
                 if (passenger != null)
                 {
                     // passenger.Transform = mate.Transform.CloneDetached(passenger);

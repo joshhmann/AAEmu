@@ -8,6 +8,8 @@ using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Utils;
@@ -476,6 +478,24 @@ public class BotPresenceCoordinatorTests
         var pos = actor.Character.Transform.World.Position;
         await Assert.That(pos.Z).IsEqualTo(terrainZ);
         await Assert.That(MathUtil.CalculateDistance(home, pos, false)).IsLessThanOrEqualTo(30f);
+    }
+
+    [Test]
+    public async Task FinalizeTransform_HeadlessTransferWithAttachedDoodad_DoesNotRequireWorldManager()
+    {
+        // Transfer.FinalizeTransform walks attached doodads through the same
+        // visibility path as a live carriage. A fixture-only headless world
+        // has no DI WorldManager, so this must still advance the ordinary
+        // transform without attempting to construct that service.
+        SeedFixtureSingletons();
+        var session = HeadlessSession.Create(902, "transfer-finalize", 1);
+        var transfer = new Transfer { ObjId = 0x4002 };
+        transfer.AttachedDoodads.Add(new Doodad { ObjId = 0x4003 });
+        transfer.Transform.Local.SetPosition(new Vector3(1f, 2f, 3f));
+
+        transfer.Transform.FinalizeTransform();
+
+        await Assert.That(transfer.Transform.World.Position).IsEqualTo(new Vector3(1f, 2f, 3f));
     }
 
     // ---------------------------------------------------------------- singleton seeding

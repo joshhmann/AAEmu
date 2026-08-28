@@ -41,9 +41,9 @@ public class GameObject : IGameObject
             if (value)
             {
                 if (this is Character character)
-                    SusManager.Instance.ResetAnalyzePlayerDeltaMovement(character.Id);
+                    SusManager.PeekInstance?.ResetAnalyzePlayerDeltaMovement(character.Id);
                 if (this is Units.Mate pet)
-                    SusManager.Instance.ResetAnalyzeMountDeltaMovement(pet.Id);
+                    SusManager.PeekInstance?.ResetAnalyzeMountDeltaMovement(pet.Id);
             }
         }
     }

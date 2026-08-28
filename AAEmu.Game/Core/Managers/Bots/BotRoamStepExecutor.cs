@@ -234,8 +234,8 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         var position = bot.Character.Transform.World.Position;
         var clampedZ = GroundHeightProvider != null
             ? GroundHeightProvider(position, bot.Character.Transform.ZoneId)
-            : WorldManager.Instance.GetReferenceHeight(
-                null, position.X, position.Y, position.Z, bot.Character.Transform.ZoneId);
+            : WorldManager.PeekInstance?.GetReferenceHeight(
+                null, position.X, position.Y, position.Z, bot.Character.Transform.ZoneId) ?? 0f;
         if (clampedZ != 0f && Math.Abs(clampedZ - position.Z) > 0.05f)
         {
             bot.Character.Transform.Local.SetPosition(position.X, position.Y, clampedZ);

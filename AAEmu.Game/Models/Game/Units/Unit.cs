@@ -338,7 +338,7 @@ public class Unit : BaseUnit, IUnit
         if (this is Character)
             return;
 
-        var worldDrownThreshold = WorldManager.Instance.GetWorld(Transform.InstanceId)?.Template.OceanLevel - 2f ?? 98f;
+        var worldDrownThreshold = WorldManager.PeekInstance?.GetWorld(Transform.InstanceId)?.Template.OceanLevel - 2f ?? 98f;
         if (!IsUnderWater && Transform.World.Position.Z < worldDrownThreshold)
             IsUnderWater = true;
         else if (IsUnderWater && Transform.World.Position.Z > worldDrownThreshold)
@@ -355,7 +355,7 @@ public class Unit : BaseUnit, IUnit
         if (DisabledSetPosition)
             return moved;
 
-        WorldManager.Instance.AddVisibleObject(this);
+        WorldManager.PeekInstance?.AddVisibleObject(this);
         // base.SetPosition(x, y, z, rotationX, rotationY, rotationZ);
         return moved;
     }

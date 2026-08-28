@@ -72,7 +72,7 @@ public class Transform : IDisposable
                 _instanceId = value;
                 if (GameObject != null)
                 {
-                    GameObject.ParentWorld = WorldManager.Instance.GetWorld(value);
+                    GameObject.ParentWorld = WorldManager.PeekInstance?.GetWorld(value);
                     WorldId = GameObject.ParentWorld?.Template?.Id ?? WorldManager.DefaultWorldTemplateId;
                 }
             }
@@ -556,17 +556,17 @@ public class Transform : IDisposable
         if (_owningObject is Transfer transfer)
         {
             foreach (var doodad in transfer.AttachedDoodads)
-                WorldManager.Instance.AddVisibleObject(doodad);
+                WorldManager.PeekInstance?.AddVisibleObject(doodad);
             foreach (var attachedCharacter in transfer.AttachedCharacters)
             {
                 if (attachedCharacter != null)
                 {
                     attachedCharacter.Transform.StickyParent = transfer.Transform;
-                    WorldManager.Instance.AddVisibleObject(attachedCharacter);
+                    WorldManager.PeekInstance?.AddVisibleObject(attachedCharacter);
 
                     var mateList = attachedCharacter.ParentWorld.MateManager.GetActiveMates(attachedCharacter.Id);
                     foreach(var mate in mateList)
-                        WorldManager.Instance.AddVisibleObject(mate);
+                        WorldManager.PeekInstance?.AddVisibleObject(mate);
                 }
             }
         }
