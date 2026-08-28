@@ -106,7 +106,7 @@ public class GameObject : IGameObject
 
         Transform.Local.SetPosition(x, y, z, rotationX, rotationY, rotationZ);
         //Transform.Local.SetPosition(x, y, z, (float)rX, (float)rY , (float)rZ);
-        WorldManager.Instance.AddVisibleObject(this);
+        WorldManager.PeekInstance?.AddVisibleObject(this);
     }
 
     public virtual void Spawn()

@@ -1731,7 +1731,7 @@ public partial class Character : Unit, ICharacter
         if (moved)
             MarkDirty();
 
-        var world = WorldManager.Instance.GetWorld(Transform.InstanceId);
+        var world = WorldManager.PeekInstance?.GetWorld(Transform.InstanceId);
 
         // Probe slightly above the character "feet" position to avoid false drowning
         // when standing on a ship deck (server-side Z for attached characters can be lower).

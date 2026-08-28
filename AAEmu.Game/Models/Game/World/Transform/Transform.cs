@@ -504,7 +504,7 @@ public class Transform : IDisposable
 
                 stickyChild.Local.Translate(worldPosDelta);
                 stickyChild.FinalizeTransform(includeChildren);
-                WorldManager.Instance.AddVisibleObject(stickyChild._owningObject);
+                WorldManager.PeekInstance?.AddVisibleObject(stickyChild._owningObject);
 
                 //if (!(stickyChild.GameObject is Unit))
                 //    continue;
@@ -543,14 +543,14 @@ public class Transform : IDisposable
             return;
 
         if (!_owningObject.DisabledSetPosition)
-            WorldManager.Instance.AddVisibleObject(_owningObject);
+            WorldManager.PeekInstance?.AddVisibleObject(_owningObject);
 
         if (_owningObject is Slave slave)
         {
             foreach (var doodad in slave.AttachedDoodads)
-                WorldManager.Instance.AddVisibleObject(doodad);
+                WorldManager.PeekInstance?.AddVisibleObject(doodad);
             foreach (var child in slave.AttachedSlaves)
-                WorldManager.Instance.AddVisibleObject(child);
+                WorldManager.PeekInstance?.AddVisibleObject(child);
         }
 
         if (_owningObject is Transfer transfer)
@@ -572,8 +572,8 @@ public class Transform : IDisposable
         }
         if (_owningObject is Units.Mate { OwnerObjId: > 0 } pet)
         {
-            var chr = WorldManager.Instance.GetCharacterByObjId(pet.OwnerObjId);
-            WorldManager.Instance.AddVisibleObject(chr);
+            var chr = WorldManager.PeekInstance?.GetCharacterByObjId(pet.OwnerObjId);
+            WorldManager.PeekInstance?.AddVisibleObject(chr);
         }
 
         if (includeChildren)
@@ -585,7 +585,7 @@ public class Transform : IDisposable
                 {
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     child.FinalizeTransform(includeChildren);
-                    WorldManager.Instance.AddVisibleObject(child._owningObject);
+                    WorldManager.PeekInstance?.AddVisibleObject(child._owningObject);
                 }
             }
         }
@@ -597,12 +597,12 @@ public class Transform : IDisposable
 
             if (_owningObject is Character player)
             {
-                SusManager.Instance.AnalyzePlayerDeltaMovement(player, 5f);
+                SusManager.PeekInstance?.AnalyzePlayerDeltaMovement(player, 5f);
             }
             
             if (_owningObject is Units.Mate mount)
             {
-                SusManager.Instance.AnalyzeMountDeltaMovement(mount, 5f);
+                SusManager.PeekInstance?.AnalyzeMountDeltaMovement(mount, 5f);
             }
         }
 

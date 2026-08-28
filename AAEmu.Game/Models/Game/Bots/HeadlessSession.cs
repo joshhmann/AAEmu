@@ -436,6 +436,13 @@ public class HeadlessSession
     public static HeadlessSession Create(uint characterId, string name, byte level,
         Race race = Race.Nuian, uint worldTemplateId = 0)
     {
+        // Headless sessions execute the ordinary Character movement path
+        // (VehicleMovementModel → SetPlayerMoved), which requires the same
+        // world configuration that the game host normally injects. The
+        // fixture-only Create path has no DI host, so provide the normal
+        // defaults instead of leaving Character.SetPlayerMoved with a null
+        // World dependency.
+        AppConfiguration.Instance.World ??= new WorldConfig();
         var character = new Character(new UnitCustomModelParams())
         {
             Id = characterId,
