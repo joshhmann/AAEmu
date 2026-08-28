@@ -23,6 +23,7 @@ restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
 2 NU1903 in this exact verification. Runtime provenance uses
 `E2eStack.SourceRevision` with an explicit `unknown` fallback. Historical
 reports and prior evidence below are preserved.
+Project-control rollup: [PROJECT-CONTROL.md](PROJECT-CONTROL.md).
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated

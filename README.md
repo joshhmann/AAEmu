@@ -8,6 +8,8 @@ __Open source server software for ArcheAge written in .NET C#__
 
 ### Setup, help & support, FAQs
 Head over to the [wiki](https://github.com/AAEmu/AAEmu/wiki).
+For the fork's project status and evidence rollup, see
+[PROJECT-CONTROL.md](PROJECT-CONTROL.md).
 If you don't find what you're looking for there, [talk to a human](#discussion). Please do not use our issue tracker for support requests.
 
 ### Discussion
