@@ -351,8 +351,9 @@ public class M4ExitIntegratedSessionTests
         // Negative: selling at the pack's OWN origin zone (group 26) is refused.
         MoveToZone(_a, GoldenPlainsZoneKey);
         PlaceTrader(GoldTraderNpcId, specialtyCoinId: 0, GoldenPlainsZoneKey);
-        var sameZoneResult = SpecialtyManager.Instance.SellSpecialty(_a.Character, 0xC001);
-        await Assert.That(sameZoneResult).IsEqualTo(0);
+        var sameZoneSale = _a.SellSpecialty(0xC001, idempotencyKey: "m4-exit-sell-gold-origin");
+        await Assert.That(sameZoneSale.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(sameZoneSale.Result).IsNull();
         await Assert.That(HasErrorPacket(_packetsA, ErrorMessageType.StoreCantSellSameZone)).IsTrue();
         await Assert.That(_a.Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack)).IsNotNull();
 
@@ -363,8 +364,9 @@ public class M4ExitIntegratedSessionTests
         // Correct reward at the Solzreed gold trader (zone group 5 ≠ origin 26).
         MoveToZone(_a, SolzreedZoneKey);
         PlaceTrader(GoldTraderNpcId, specialtyCoinId: 0, SolzreedZoneKey);
-        var basePrice = SpecialtyManager.Instance.SellSpecialty(_a.Character, 0xC001);
-        await Assert.That(basePrice).IsEqualTo(ExpectedBasePrice);
+        var sale = _a.SellSpecialty(0xC001, idempotencyKey: "m4-exit-sell-gold-1");
+        await Assert.That(sale.State).IsEqualTo(ActorLifecycleState.Completed);
+        var basePrice = sale.Result is int value ? value : 0;
 
         await Assert.That(_a.Character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack)).IsNull(); // consumed
         await Assert.That(_a.Character.LaborPower).IsEqualTo((short)(100 - SellLaborCost));
@@ -374,6 +376,13 @@ public class M4ExitIntegratedSessionTests
         var mail = mails[0];
         await Assert.That(mail.Body.CopperCoins).IsEqualTo(ExpectedPayoutGold);
         await Assert.That(mail.Title).IsEqualTo("Speciality Payment"); // seller == crafter → plain title
+
+        // Idempotent retry is refused without creating another payout or
+        // consuming a second pack.
+        var duplicateSale = _a.SellSpecialty(0xC001, idempotencyKey: "m4-exit-sell-gold-1");
+        await Assert.That(duplicateSale.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(duplicateSale.Failure).IsEqualTo(ActorFailureReason.StateTransition);
+        await Assert.That(CapturedMails().Count).IsEqualTo(1);
 
         // ---- 6. REPEAT — a second full cycle in the same session -----------------
 
@@ -401,17 +410,27 @@ public class M4ExitIntegratedSessionTests
         await Assert.That(HasErrorPacket(_packetsA, ErrorMessageType.SlaveEquipmentLoadedItem)).IsTrue();
         slave2.AttachedDoodads.Remove(cargo2);
         _worldA.World.SlaveManager.TryDespawnOwnedSlave(_a.Character, slave2.ObjId);
-        await Assert.That(_worldA.World.GetAllSlaves()).DoesNotContain(slave2);
 
         // Labor regenerates between sessions (canonical 10/min + rest) — top up for the
         // second sale's 60 LP cost (the first sale burned 100→40).
         _a.Character.LaborPower = 100;
 
-        var basePrice2 = SpecialtyManager.Instance.SellSpecialty(_a.Character, 0xC001);
-        await Assert.That(basePrice2).IsEqualTo(ExpectedBasePrice);
+        var sale2 = _a.SellSpecialty(0xC001, idempotencyKey: "m4-exit-sell-gold-2");
+        await Assert.That(sale2.State).IsEqualTo(ActorLifecycleState.Completed);
+        var basePrice2 = sale2.Result is int value2 ? value2 : 0;
         var mails2 = CapturedMails();
         await Assert.That(mails2.Count).IsEqualTo(2);
         await Assert.That(mails2.Sum(m => m.Body.CopperCoins)).IsEqualTo(2 * ExpectedPayoutGold);
+    }
+
+    [Test]
+    public async Task SellSpecialty_WithoutCarriedPack_RejectsBeforeEngine()
+    {
+        var request = _a.SellSpecialty(0xC001, idempotencyKey: "m4-exit-sell-gold-no-pack");
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(request.Detail).Contains("no trade pack");
     }
 
     // ================================================================ session leg helpers

@@ -2249,6 +2249,61 @@ public class GameplayActor : IGameplayActor
         return Complete(request, refund, $"sold item {itemId} for {refund}");
     }
 
+    public ActorRequest SellSpecialty(uint merchantNpcObjId, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.SellSpecialty, merchantNpcObjId,
+            idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "sell specialty pack"))
+            return request;
+
+        var inventory = Character.Inventory;
+        if (inventory == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "character has no inventory");
+
+        var backpack = inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+        if (backpack == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                "no trade pack carried in the backpack slot");
+
+        var npc = Character.ParentWorld?.GetNpc(merchantNpcObjId);
+        if (npc?.Template == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"specialty trader {merchantNpcObjId} not found or has no template");
+
+        var packItemId = backpack.Id;
+        var packTemplateId = backpack.TemplateId;
+        request.Start($"selling specialty pack {packTemplateId} (instance {packItemId}) to trader {merchantNpcObjId}");
+
+        int basePrice;
+        try
+        {
+            // The exact CSSellBackpackGoodsPacket service path. All merchant,
+            // range, origin-zone, level, labor, reward-mail, and currency
+            // rules remain in SpecialtyManager.SellSpecialty.
+            basePrice = SpecialtyManager.Instance.SellSpecialty(Character, merchantNpcObjId);
+        }
+        catch (Exception ex)
+        {
+            return Interrupt(request, $"specialty sale outcome ambiguous: {ex.Message}");
+        }
+
+        if (basePrice <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"specialty sale refused by engine at trader {merchantNpcObjId}");
+
+        // SellSpecialty can return a price when reward mail fails before the
+        // pack is consumed. Completion requires the engine's pack-consumption
+        // postcondition, preventing a false success and retry duplication.
+        if (inventory.Equipment.GetItemByItemId(packItemId) != null)
+            return Reject(request, ActorFailureReason.Persistence,
+                $"specialty sale did not consume pack instance {packItemId}");
+
+        _ledger.RecordEffect(ActorIdempotency.EffectKey(
+            "tradesellspecialty", packTemplateId, packItemId.ToString()), request.TraceId);
+        return Complete(request, basePrice,
+            $"sold specialty pack {packTemplateId} (instance {packItemId}) at trader {merchantNpcObjId}");
+    }
+
     public ActorRequest PostAuction(ulong itemId, int startPrice, int buyoutPrice, AuctionDuration duration, string? idempotencyKey = null)
     {
         var request = NewRequest(ActorActionType.AuctionPost, 0,

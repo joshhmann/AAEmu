@@ -766,6 +766,15 @@ public interface IGameplayActor
     ActorRequest Sell(uint merchantNpcObjId, ulong itemId, string? idempotencyKey = null);
 
     /// <summary>
+    /// Sells the carried trade pack at a specialty trader through the REAL
+    /// CSSellBackpackGoodsPacket path (SpecialtyManager.SellSpecialty).
+    /// Validation and reward mutation remain in the ordinary Character and
+    /// specialty services; completion additionally requires the backpack
+    /// pack to be consumed. A fresh-key retry therefore cannot sell twice.
+    /// </summary>
+    ActorRequest SellSpecialty(uint merchantNpcObjId, string? idempotencyKey = null);
+
+    /// <summary>
     /// Lists an item on the auction house through the REAL engine path —
     /// the same CSAuctionPostPacket call (AuctionManager.PostLotOnAuction):
     /// validates the item is in the actor's inventory, computes the listing
@@ -959,7 +968,10 @@ public enum ActorActionType : byte
     /// Self-perceivable quest discovery (item-held / sphere-standing /
     /// level-reached offer channels — Observe-family query, no mutation).
     /// </summary>
-    DiscoverSelfQuests = 47
+    DiscoverSelfQuests = 47,
+
+    /// <summary>Specialty trade-pack sale through CSSellBackpackGoodsPacket / SpecialtyManager.</summary>
+    SellSpecialty = 48
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

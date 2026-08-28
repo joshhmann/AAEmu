@@ -186,6 +186,8 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public ActorRequest Sell(uint merchantNpcObjId, ulong itemId, string? idempotencyKey = null)
         => Actor.Sell(merchantNpcObjId, itemId, idempotencyKey);
+    public ActorRequest SellSpecialty(uint merchantNpcObjId, string? idempotencyKey = null)
+        => Actor.SellSpecialty(merchantNpcObjId, idempotencyKey);
 
     public ActorRequest PostAuction(ulong itemId, int startPrice, int buyoutPrice, Models.Game.Auction.AuctionDuration duration, string? idempotencyKey = null)
         => Actor.PostAuction(itemId, startPrice, buyoutPrice, duration, idempotencyKey);

@@ -1055,15 +1055,10 @@ public static class EconomyDayCycleScenario
                 return Fail($"WALK-TO-GOLD-TRADER-{cycle}", walkToTrader, "reposition to gold trader",
                     rigNotes, stages, criteria, ledger, traceRecords);
 
-            // ---- SELL-GOLD at the specialty trader — the REAL engine sale path
-            // (CSSellBackpackGoodsPacket → SpecialtyManager.SellSpecialty). The
-            // contract vocabulary has no specialty-sale action yet, so the
-            // scenario calls the manager DIRECTLY — the exact call the packet
-            // handler makes (M4ExitIntegratedSessionTests precedent). The sale
-            // consumes the pack, charges labor −60 (Commerce), and pays via a
-            // DELAYED MAIL (canonical 22 h): the payout is asserted by formula
-            // against the created mail and recorded as IN TRANSIT — never added
-            // to Money, so the run currency law stays EXACT.
+            // ---- SELL-GOLD at the specialty trader through the actor contract.
+            // SellSpecialty delegates to the exact CSSellBackpackGoodsPacket
+            // service path (SpecialtyManager.SellSpecialty), while preserving
+            // lifecycle, idempotency, and pack-consumption postconditions.
             //
             // Fidelity repair (M4Exit rig precedent): ChangeLabor(-60, Commerce)
             // indexes the Commerce actability directly; live characters always
@@ -1075,17 +1070,17 @@ public static class EconomyDayCycleScenario
             var priceRatio = SpecialtyManager.Instance.GetRatioForSpecialty(character);
 
             var beforeSellGold = EconomySnapshot.Capture(character);
-            var basePrice = SpecialtyManager.Instance.SellSpecialty(character, goldTraderObjId);
-            stages.Add(new BotScenarioRunner.ScenarioStageVerdict(
-                $"SELL-GOLD-{cycle}", 1,
-                basePrice > 0 ? "Sold" : "Refused", basePrice.ToString(),
-                $"pack {options.PackItemTemplateId} @ trader {goldTraderObjId} (base {basePrice}, ratio {priceRatio}%)" +
-                SpecialitySaleRefusalHint(basePrice)));
-            if (basePrice == 0)
-                return Fail($"SELL-GOLD-{cycle}", null,
+            var sellGold = actor.SellSpecialty(goldTraderObjId, idempotencyKey: $"{key}-sell-gold");
+            traceRecords.Add(actor.AuditTrace.Last());
+            stages.Add(Stage($"SELL-GOLD-{cycle}", sellGold,
+                $"pack {options.PackItemTemplateId} @ trader {goldTraderObjId}"));
+            if (sellGold.State != ActorLifecycleState.Completed)
+                return Fail($"SELL-GOLD-{cycle}", sellGold,
                     $"specialty sale refused by engine (pack {options.PackItemTemplateId} @ trader {goldTraderObjId}; " +
                     "gates: level ≥ MinLevelToCraftSell, ≤ 2.5m range, bundle membership, origin-zone exclusion)",
                     rigNotes, stages, criteria, ledger, traceRecords);
+
+            var basePrice = sellGold.Result is int salePrice ? salePrice : 0;
 
             // The documented payout law (SellSpecialty, gold trader — coin id 0,
             // no ÷10000 conversion): payout == round(base × ratio% × 1.05 interest).
