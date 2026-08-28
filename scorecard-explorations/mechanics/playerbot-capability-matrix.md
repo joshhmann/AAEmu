@@ -1,16 +1,14 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality at current source/test HEAD
-`792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`, 2026-08-28).
-Per-run soak ownership hardening `799b698ad` snapshots named account/character
-rows, cleans only newly owned IDs in A5/A5Tier3 `finally` paths, and has
-sibling-preservation tests 2/2. The full normal-clone gate at 792 is **2496
-total / 2495 passed / 0 failed / 1 skipped**, compiler **0/0**, MCP stdio
-**39 tools**. The sole skip is
-`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+Populated from implementation reality at source/test audit baseline
+`7a572c08a32162988dedbf400bd9f8b608fb1974` (`origin/develop`, 2026-08-28).
+The full normal-clone gate cited in historical evidence remains at source/test
+HEAD `792774d7707b8b578b8d9975896e0a1ac719f361`: **2496 total / 2495 passed /
+0 failed / 1 skipped**, compiler **0/0**, MCP stdio **39 tools**. The sole skip
+is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
 `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
 restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
-2 NU1903 in this exact verification. Runtime evidence uses
+2 NU1903 in that historical verification. Runtime evidence uses
 `E2eStack.SourceRevision` with unknown fallback.
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
@@ -18,7 +16,7 @@ Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 |---|---|---|---|---|---|
 | Movement | 🟡 positions via Observe; no terrain awareness | ✅ simple (straight-leg, standoff band, stuck detection) | ✅ MoveTo/MoveToUnit/DriveVehicle plus landed `NavigateTo` implementation (real CryEngine GeoData A* pathing, waypoint stepping, stuck detection, and straight-leg fallback) | ✅ tracked PB-001 five-test `GameplayActorNavigateTests` contract evidence: `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'` → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`; `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved prototype waypoint test was invalid because it injected private state via reflection; do not claim waypoint coverage from it. PB-005 positive-only grounding clamp + intentional-floater whitelist landed, cave/deck/submerged and duplicate-row decisions remain | 🟡 broad interior/region traversal open |
 | Combat | ✅ Observe (units, hp, targets) + causal traces (hp deltas) | ✅ rotation priority, sustain thresholds, no-progress skip | ✅ SetTarget/Cast (real skill pipeline) | ✅ kill credit + hp-delta traces; PB-007 narrow handshake live-proven at behavioral gate baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD `792774d7707b8b578b8d9975896e0a1ac719f361`): victim-matched non-immune `SCUnitDamaged`, immune exclusion, SkillFired, Retribution 2167, bloodstain 877, crime branch, and PEACE-BLOCK | ✅ party spike live-proven; broader PvP/honor and WAR-HONOR remain open |
-| Quests | ✅ DiscoverQuests through the real AddQuest gate (PB-002); titles are client-localized and zone-sweep coverage is open; channels include Item, Sphere, Level, and DiscoverSelfQuests | ✅ FIRST AUTONOMOUS LEVELING SLICE: discover → lowest-level offering in band → accept → data-driven objective pursuit → turn-in → re-discover; QuestActObjItemUse now covered through real GameplayActor.UseItem | ✅ AcceptQuest/TurnInQuest/AdvanceQuest/UseItem (real gates); canonical item-use quest 252: NPC 7653, item 7738, use skill 11596, act row 1600/detail 43; fail-closed quest 64 control | ✅ LevelingLoopScenarioRigTests 7/7; item-use 1/1; unsupported-objective 1/1; discovery 12/12; talk 5/5; template registration 1/1 | 🟡 scoped actor/rig coverage; broad autonomous progression and live/human breadth remain open |
+| Quests | ✅ `Observe`/`DiscoverQuests` through the real AddQuest gate; titles are client-localized and zone-sweep coverage is open; channels include Item, Sphere, Level, and DiscoverSelfQuests | ✅ **Bounded autonomous loop (254→255):** legal lowest-level offering choice → data-driven objective pursuit → turn-in → re-discover; focused test 1/1 at source/test baseline `7a572c08a32162988dedbf400bd9f8b608fb1974` | ✅ AcceptQuest/TurnInQuest/AdvanceQuest/UseItem (real gates); canonical item-use quest 252: NPC 7653, item 7738, use skill 11596, act row 1600/detail 43; fail-closed quest 64 control | ✅ `LevelingLoopScenarioRigTests` 7/7; existing `leveling-loop-2026-08-25.md` report + JSONL trace | ✅ bounded 254→255 PlayerBot loop; **full M1 route remains Unknown/Open** — `M1M2ReplayScenario` is an ordered scripted 16-quest/55-record proxy with fixture `Level=6` setup and no real-mount criterion; first-mount, restart, Bloody Hand, bounty-board, and client-feel checks remain separate H/UAT |
 | Loot | ✅ corpse/inventory via contract | ✅ loot-after-kill step | ✅ Loot action | ✅ item-granted criteria | ✅ within hunt loops |
 | Vendors | ✅ money/inventory observable | ✅ trivial buy/sell rules | ✅ Buy/Sell actions (real shop paths); merchant trio fixes merged (`cb514c42e`, `beaf9b82e`, `3ba33b3af`, merge `e5db6d390`) | ✅ ledger conservation; live EconomyDayCycle conservation E2E passed across kill -9 restart | ✅ economy cycle live-proven |
 | Mail | ✅ inbox, unread count, and attachment state observable | ✅ S3 send → restart → receive/take/delete decision path | ✅ server Send/read/take/delete packet paths with receive-path ownership guards; real `CSSendMailPacket` send and mailbox proximity | ✅ authenticated `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets` PASS 1/1 in 2m39s on isolated MySQL/Docker; kill-9/restart, `SlotType.Mail=5`, receiver retargeting, unread recount after registration, exact item-instance detail/grade/durability/rune/temper fidelity, copper, read transition, and delete persistence all asserted | ✅ restart-proven S3 flow; return opcode `0x0a2` STRONGLY_INFERRED pending real-client capture, COD/expiry follow-ups |

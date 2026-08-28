@@ -275,7 +275,7 @@ route. Individual peripheral quest bugs → Lane B (maintenance).
 | Class | Required | M1 evidence |
 |---|---|---|
 | engine-path implementation (1) | REQUIRED | ✅ merged @ 94f498fc (BUG-006..012) + widened fixes (t_d8a8c798, t_60a559ab, registered drops) |
-| bot-replay (3+4) | REQUIRED | ✅ 153/153 census → G1 4,573/4,573; control-plane contract replay 16/16 + full-route live PASS (t_15787275, proxy) |
+| bot-replay (3+4) | REQUIRED | ✅ 153/153 census → G1 4,573/4,573. **Bounded autonomous PlayerBot loop:** `LevelingLoopScenario` closes 254→255 via `Observe → Discover → legal lowest-level choice → objective pursuit → turn-in → re-discover`; focused test 1/1 and `LevelingLoopScenarioRigTests` 7/7 at source/test baseline `7a572c08a32162988dedbf400bd9f8b608fb1974`, using the existing `scorecard-explorations/generated/leveling-loop-2026-08-25.md` report. **Full M1 remains proxy only:** `M1M2ReplayScenario` is an ordered scripted 16-quest replay with 55 fixture actor records, fixture `Level=6` setup, and no real-mount criterion; historical full-route live PASS `t_15787275` remains proxy evidence, not autonomous decision closure. |
 | restart-persistence (5) | REQUIRED | ✅ retroactive via M2 baseline t_cca63225 + live probe t_92a41fe6 (2/2) |
 | soak (6) | N/A | quest-spine milestone; no load-sensitive path claimed |
 | human-feel (7) | DEFERRED-RECORDED | ⏳ deferred gate #1 / Open Decision #1 (Josh-owned); H UNKNOWN |

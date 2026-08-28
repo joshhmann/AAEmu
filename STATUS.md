@@ -9,18 +9,15 @@ MET with live evidence; PB-002 quest-discovery primitive and item-use slice
 landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; current source/test HEAD is
-`792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`). The per-run
-soak ownership hardening is `799b698ad`: A5/A5Tier3 snapshot exactly the
-named account/character rows they observe before and after a run, clean only
-newly owned IDs in `finally`, and preserve sibling rows; ownership tests pass
-2/2. Behavioral gate evidence at this HEAD is the normal-clone full gate:
-2496 total / 2495 passed / 0 failed / 1 skipped, compiler 0/0, MCP stdio 39
-tools. The sole skip is
+Branch of record: develop; current docs/source/test audit baseline is
+`7a572c08a32162988dedbf400bd9f8b608fb1974` (`origin/develop`). The full
+normal-clone behavioral gate cited below remains historical at source/test HEAD
+`792774d7707b8b578b8d9975896e0a1ac719f361`: 2496 total / 2495 passed / 0
+failed / 1 skipped, compiler 0/0, MCP stdio 39 tools. The sole skip is
 `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
 `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
 restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
-2 NU1903 in this exact verification. Runtime provenance uses
+2 NU1903 in that historical verification. Runtime provenance uses
 `E2eStack.SourceRevision` with an explicit `unknown` fallback. Historical
 reports and prior evidence below are preserved.
 Project-control rollup: [PROJECT-CONTROL.md](PROJECT-CONTROL.md).
@@ -302,6 +299,21 @@ container json.log) resolved; rotation fix shipped (t_264e1984 ✅).
 M1 closed on automated evidence (M1-M3 audit t_5b1f5494); human playtest
 verdict open (Open Decision #1, pending Josh — C5) — **explicit deferred
 gate: M1 human route (bot-backtrack program)**.
+**M1 loop-closure reconciliation (source/test baseline
+`7a572c08a32162988dedbf400bd9f8b608fb1974`):** the player loop is a clean
+Nuian Solzreed progression from quest discovery through ordinary objectives
+and turn-ins to the first-mount unlock, with restart persistence checked
+separately. `LevelingLoopScenario` provides a bounded autonomous PlayerBot
+loop for quests 254→255: `Observe → Discover → legal lowest-level choice →
+objective pursuit → turn-in → re-discover`. The focused 254→255 test is 1/1;
+`LevelingLoopScenarioRigTests` is 7/7. Evidence is the existing
+`scorecard-explorations/generated/leveling-loop-2026-08-25.md` report and its
+JSONL trace; this reconciliation does not regenerate either report.
+`M1M2ReplayScenario` remains a 16-quest ordered scripted proxy with 55 fixture
+actor records, fixture `Level=6` setup, and no real-mount criterion. It does
+not establish autonomous decision closure for the full M1 route. Josh's
+fresh-character Solzreed route, first-mount summon, restart, Bloody Hand, and
+bounty-board checks remain separate H/UAT gates.
 
 **M2 — Golden-path baseline: ✅ DONE — G1 census gate PASSED (2026-08-10)**
 M2 redefined (2026-08-10 audit, in ROADMAP) into the M2a–M2d census sweep.

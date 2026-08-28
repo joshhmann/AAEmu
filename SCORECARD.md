@@ -199,17 +199,29 @@ Graphify and must be promoted by an end-to-end exploration.
 | MOULD-01 | Mould/stamp crafting: craft stamp kits to imprint designs onto furniture/paper (UCC-adjacent) | M9 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#33): mould_packs/_pack_items/moulds ZERO-wired (zero-data-wired list); doodad_func_stamp_makers/mould_items/moulds. Own dossier pending |
 
 Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
-> **2026-08-28 source/evidence checkpoint:** current source/test HEAD is
-> `792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`).
-> Per-run soak ownership hardening `799b698ad` snapshots named account/character
-> rows and cleans only newly owned IDs in `finally`; sibling-preservation tests
-> pass 2/2. Full normal-clone gate at 792: **2496 total / 2495 passed / 0
+> **2026-08-28 source/evidence checkpoint:** current source/test audit baseline is
+> `7a572c08a32162988dedbf400bd9f8b608fb1974` (`origin/develop`). The full
+> normal-clone gate cited in historical evidence remains at source/test HEAD
+> `792774d7707b8b578b8d9975896e0a1ac719f361`: **2496 total / 2495 passed / 0
 > failed / 1 skipped**, compiler **0/0**, MCP stdio **39 tools**. The sole skip
 > is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-> `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-> restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
-> 2 NU1903 in this exact verification. Runtime evidence uses
-> `E2eStack.SourceRevision` with unknown fallback.
+> `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`; no different full-gate count
+> is claimed for the 7a572 audit. Runtime evidence uses `E2eStack.SourceRevision`
+> with unknown fallback.
+>
+> **M1 loop closure:** the player loop is clean Nuian Solzreed quest discovery,
+> ordinary objective pursuit and turn-ins, first-mount unlock, and restart
+> persistence. `LevelingLoopScenario` closes only the bounded autonomous
+> 254→255 PlayerBot loop (`Observe → Discover → legal lowest-level choice →
+> objective pursuit → turn-in → re-discover`): focused test **1/1** and
+> `LevelingLoopScenarioRigTests` **7/7** at source/test baseline
+> `7a572c08a32162988dedbf400bd9f8b608fb1974`, using the existing
+> `scorecard-explorations/generated/leveling-loop-2026-08-25.md` report and
+> JSONL trace. `M1M2ReplayScenario` remains an ordered scripted proxy
+> (16 quests, 55 fixture actor records, fixture `Level=6` setup, no real-mount
+> criterion); it does not close full-route autonomous decision parity.
+> Josh's first-mount, restart, Bloody Hand, bounty-board, and client-feel
+> checks remain separate H/UAT.
 >
 > **PB-002 interaction candidate:** landed item-use facts remain unchanged:
 > `QuestActObjItemUse` through real `GameplayActor.UseItem` for quest 252 (NPC
