@@ -1237,6 +1237,34 @@ query (no packet fabrication).
   on the merged tree → REQ-M5.3-10 (carries REQ-M5-15).
 - E11 — M5.3 exit scenario (observe → move → stop → target → cast) completes
   with a machine-readable trace → REQ-M5.3-11 (carries REQ-M5-14).
+### M5 actor decision/action loop reconciliation (2026-08-28)
+
+**Loop sentence:** a clean ordinary `Character` observes current state, chooses
+one legal objective/action, executes via `IGameplayActor`/normal `Character`
+services, observes terminal state/audit, and retries safely without duplicate
+effects.
+
+The current M5 contract evidence covers the action lifecycle, single-writer
+boundary, failure taxonomy, timeout/stuck handling, idempotency, and audit:
+focused results are **316/316** (`BotGoalArbiterTests` 14/14,
+`GameplayActorM53CoreSurfaceTests` 13/13, `PlayerBotControllerAdapterTests`
+5/5, `GameplayActorB1ContractLayerTests` 17/17, and `GameplayActorTests`
+30/30). `LevelingLoopScenario` is a narrow autonomous 254→255
+perception/choice/pursuit slice. `BotScenarioRunner`, `M1M2ReplayScenario`,
+and `M3aM4ReplayScenario` are ordered proxy replays, not universal decision
+closure.
+
+For this checkpoint, **Player closes loop = Unknown/H or client-gated where
+applicable** and **Bot closes universal decision loop = Unknown/Open**. The
+existing `BotGoalArbiter` fixed Priority-first `CanActivate` selection and
+`BotScheduleResolver`/`BotScheduleService` FSM scheduling are retained; no
+reusable candidate/score/blackboard/rationale/replan/personality policy is
+claimed. This reconciliation adds no speculative policy implementation. The
+M5.3 canonical movement caveat and formal regrade wording remain in force; H
+remains separate from actor-contract and proxy evidence.
+
+---
+
 ### Historical MCP checkpoint (2026-08-27)
 MCP sidecars and the management gateway remain client-neutral; availability is
 not external-client actor lifecycle evidence. Historical coverage merge

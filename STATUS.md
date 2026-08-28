@@ -447,6 +447,25 @@ Phase 2 (t_b4f455b0) both DONE.
 **H = UNKNOWN** — proxy/bot-functional evidence only; the five deferred human
 gates below remain Josh-owned.
 
+**M5 actor decision/action loop reconciliation (2026-08-28; source/test
+checkpoint `9ddc322feee4f06c55df9f429e8da3ed573c1b85`):** The loop sentence is
+“a clean ordinary `Character` observes current state, chooses one legal
+objective/action, executes via `IGameplayActor`/normal `Character` services,
+observes terminal state/audit, and retries safely without duplicate effects.”
+`GameplayActor`/the M5 contract proves the request lifecycle, single-writer
+gate, failure taxonomy, timeout/stuck handling, idempotency, and audit; focused
+tests are **316/316**: `BotGoalArbiterTests` 14/14,
+`GameplayActorM53CoreSurfaceTests` 13/13, `PlayerBotControllerAdapterTests`
+5/5, `GameplayActorB1ContractLayerTests` 17/17, and `GameplayActorTests`
+30/30. This is actor-contract evidence, not universal bot decision closure:
+`LevelingLoopScenario` closes only the narrow autonomous 254→255 choice/pursuit
+slice, while `BotScenarioRunner`/`M1M2`/`M3aM4` remain ordered proxy replays.
+Player closure is **Unknown/H or client-gated where applicable**; the universal
+PlayerBot decision loop is **Unknown/Open**. Fixed Priority-first
+`CanActivate`/FSM scheduling exists, but no reusable candidate/score/blackboard/
+rationale/replan/personality policy is claimed. Existing M5.3 canonical
+movement caveat and formal regrade wording remain unchanged; H stays separate.
+
 **M7 — Adventurer and party bots: 🔶 GATING SPIKE DONE (2026-08-20) + heal/retreat landed**
 One adventurer cleared quest 250 (Solzreed fox cull) end-to-end through the
 M5 contract — accept at the real board → travel → hostile select (CanAttack)

@@ -68,6 +68,30 @@ acceptance. No live M4 restart/vehicle proof was run because the shared E2E
 reset is unsafe. Human/client QAT remains open; historical evidence is
 preserved.
 
+## M5 actor decision/action loop reconciliation (2026-08-28)
+
+The clean ordinary `Character` loop is **observe current state → choose one
+legal objective/action → execute via `IGameplayActor`/normal `Character`
+services → observe terminal state/audit → retry safely without duplicate
+effects**. `GameplayActor`/the M5 contract provide the action lifecycle,
+single-writer gate, failure taxonomy, timeout/stuck handling, idempotency, and
+audit. Focused evidence is **316/316**: `BotGoalArbiterTests` 14/14,
+`GameplayActorM53CoreSurfaceTests` 13/13, `PlayerBotControllerAdapterTests`
+5/5, `GameplayActorB1ContractLayerTests` 17/17, and `GameplayActorTests`
+30/30.
+
+This proves actor contracts and retry-safe terminal actions, not a universal
+decision loop. `LevelingLoopScenario` is the narrow autonomous 254→255
+perception/choice/pursuit slice; `BotScenarioRunner`, `M1M2ReplayScenario`, and
+`M3aM4ReplayScenario` remain ordered proxy replays. Player closes loop =
+**Unknown/H or client-gated where applicable**; Bot closes universal decision
+loop = **Unknown/Open**. Existing `BotGoalArbiter` fixed Priority-first
+`CanActivate` selection and schedule FSM are present, but no reusable
+candidate/score/blackboard/rationale/replan/personality policy is claimed.
+M5.3 canonical movement caveat and formal regrade wording remain authoritative.
+
+---
+
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |

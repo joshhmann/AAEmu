@@ -114,6 +114,30 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   53/53, REAL mount chain, 34/34 criteria); forward gates t_446228b5 (MCP
   sidecar) + t_52b2b084 (first consumer Lane D, JOSH GO 08-11); 08-12 snapshot
   superseded — preserved in change log 2026-08-14.
+- **M5 actor decision/action loop (2026-08-28; source/test checkpoint
+  `9ddc322feee4f06c55df9f429e8da3ed573c1b85`):** loop sentence = clean
+  ordinary `Character` observes current state, chooses one legal
+  objective/action, executes via `IGameplayActor`/normal `Character` services,
+  observes terminal state/audit, and retries safely without duplicate effects.
+  `GameplayActor`/M5 contract evidence covers lifecycle, single-writer,
+  failure taxonomy, timeout/stuck, idempotency, and audit. Focused M5 tests
+  aggregate **316/316**: `BotGoalArbiterTests` 14/14,
+  `GameplayActorM53CoreSurfaceTests` 13/13,
+  `PlayerBotControllerAdapterTests` 5/5,
+  `GameplayActorB1ContractLayerTests` 17/17, and `GameplayActorTests` 30/30.
+  `LevelingLoopScenario` remains narrow autonomous 254→255 evidence;
+  `BotScenarioRunner`/`M1M2ReplayScenario`/`M3aM4ReplayScenario` remain ordered
+  proxy replays. Player closure is Unknown/H or client-gated where applicable;
+  universal PlayerBot decision closure is Unknown/Open. No ledger state is
+  promoted; M5.3 canonical movement caveat/formal regrade and the H boundary
+  remain unchanged.
+
+- 2026-08-28 — M5 actor decision/action loop reconciliation: recorded the
+  clean ordinary-Character loop sentence, focused M5 **316/316** evidence,
+  narrow `LevelingLoopScenario` autonomy versus ordered proxy replays, and
+  Unknown/Open player/bot closure. No source, test, generated-output, or
+  ledger-state change; M5.3 canonical movement caveat/formal regrade and H
+  boundary preserved. Source/test checkpoint `9ddc322feee4f06c55df9f429e8da3ed573c1b85`.
 - **M5.1:** ROADMAP §M5.1; salvage merges f760256a0 / ebff582a8 / e7e7ef0fe /
   7a01ff57c / dab91ecb0 / 6c2429ae0 / 6edbf0cbb (all Rei-gated); real engine
   paths verified t_ec7f0c19; per-action tests on merged tree (D/W 21 ·
@@ -211,5 +235,11 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   deferred; M6 = soak-passed with B4 restart deferred. Earned evidence from
   M0-M6 EXIT records carried in full — nothing erased.
 
+- 2026-08-28 — M5 actor decision/action loop reconciliation: recorded the
+  clean ordinary-Character loop sentence, focused M5 **316/316** evidence,
+  narrow `LevelingLoopScenario` autonomy versus ordered proxy replays, and
+  Unknown/Open player/bot closure. No source, test, generated-output, or
+  ledger-state change; M5.3 canonical movement caveat/formal regrade and H
+  boundary preserved. Source/test checkpoint `9ddc322feee4f06c55df9f429e8da3ed573c1b85`.
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*

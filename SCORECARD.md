@@ -180,6 +180,24 @@ authentic acceptance. No live M4 restart/vehicle proof was run because the
 shared E2E reset is unsafe; human/client QAT remains open. Historical
 evidence remains preserved.
 
+**M5 actor decision/action loop reconciliation (2026-08-28; source/test
+checkpoint `9ddc322feee4f06c55df9f429e8da3ed573c1b85`):** The clean ordinary
+`Character` loop is **observe current state → choose one legal objective/action
+→ execute via `IGameplayActor`/normal `Character` services → observe terminal
+state/audit → retry safely without duplicate effects**. `GameplayActor` and the
+M5 contract cover lifecycle, single-writer, failure taxonomy, timeout/stuck,
+idempotency, and audit. Focused M5 evidence is **316/316**:
+`BotGoalArbiterTests` 14/14, `GameplayActorM53CoreSurfaceTests` 13/13,
+`PlayerBotControllerAdapterTests` 5/5, `GameplayActorB1ContractLayerTests`
+17/17, and `GameplayActorTests` 30/30. `LevelingLoopScenario` is only the
+narrow autonomous 254→255 decision/pursuit slice; `BotScenarioRunner`,
+`M1M2ReplayScenario`, and `M3aM4ReplayScenario` are ordered proxy replays.
+Player loop closure is **Unknown/H or client-gated where applicable**; universal
+PlayerBot decision closure is **Unknown/Open**. The existing fixed
+Priority-first `CanActivate`/FSM scheduling is not a reusable
+candidate/score/blackboard/rationale/replan/personality policy. Preserve the
+M5.3 canonical movement caveat and formal regrade wording; H remains separate.
+
 ### Global mechanic ledger
 
 This is the prioritized inventory, not a claim that manager presence means the
