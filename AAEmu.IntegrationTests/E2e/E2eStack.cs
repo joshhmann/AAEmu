@@ -23,6 +23,27 @@ public static class E2eStack
     public static string E2eRoot { get; } = Environment.GetEnvironmentVariable("E2E_ROOT") ?? "/root/aaemu-e2e";
     public static string DbPassword { get; private set; } = "e2e_" + Guid.NewGuid().ToString("N")[..16];
     public static string CanonicalSqliteMd5 { get; private set; } = "";
+    /// <summary>
+    /// Source revision used for runtime evidence. A probe may run from a
+    /// detached worktree or a source archive, so unresolved provenance is
+    /// explicitly reported as "unknown" rather than a stale historical claim.
+    /// </summary>
+    public static string SourceRevision
+    {
+        get
+        {
+            try
+            {
+                var result = RunCapture("git", "rev-parse HEAD", RepoRoot, timeoutMs: 10_000, check: false);
+                var revision = result.Stdout.Trim();
+                return result.ExitCode == 0 && revision.Length > 0 ? revision : "unknown";
+            }
+            catch
+            {
+                return "unknown";
+            }
+        }
+    }
 
     // Ports are env-overridable so an isolated soak stack can run beside the
     // shared one on the same host (M6 soak pattern, t_1ed9881f): point

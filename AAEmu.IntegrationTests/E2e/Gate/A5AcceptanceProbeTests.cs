@@ -450,7 +450,7 @@ public class A5AcceptanceProbeTests
         {
             probe = "G2-A5 true-dormancy acceptance (pure measurement — verdicts recorded, not asserted)",
             runAtUtc = runAt.ToString("O"),
-            commit = "worktree .worktrees/a5-acceptance @ e672b9579 (+ harness instrumentation, uncommitted)",
+            commit = E2eStack.SourceRevision,
             config = new
             {
                 dormantTarget,

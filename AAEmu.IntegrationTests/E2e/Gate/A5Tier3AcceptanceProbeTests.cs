@@ -583,7 +583,7 @@ public class A5Tier3AcceptanceProbeTests
         {
             probe = "G2-A5 FINAL Tier-3 shape acceptance (pure measurement — verdicts recorded, not asserted)",
             runAtUtc = runAt.ToString("O"),
-            commit = "worktree .worktrees/tier3 @ 214bed834 (no source modifications)",
+            commit = E2eStack.SourceRevision,
             config = new
             {
                 dormantTarget,
