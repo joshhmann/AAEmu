@@ -10,8 +10,8 @@ wiki status page. For human-facing wiki navigation, start at
 - **Project:** AAEmu fork (`joshhmann/AAEmu`), ArcheAge server emulator
 - **Target:** ArcheAge 1.2 client and reference data `compact.sqlite3` r208022
   (read-only)
-- **Current source/docs head:** `develop` / `origin/develop` at
-  `31c3bf68c983df55e58fb98f649f570a9406ca41` (this page is docs-only).
+- **Current source/docs branch:** `develop` / `origin/develop` (this page is
+  docs-only).
 - **Evidence baseline:** source parent
   `f8db90cc4ac6f5d3434c18e067335f2647bc484a`
 - **Evidence date:** 2026-08-28
