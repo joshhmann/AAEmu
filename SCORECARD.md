@@ -159,6 +159,27 @@ property replay remains ordered scripted/fixture proxy; direct fixture
 `SetPosition`/service preparation is not acceptance. Player/H UAT and any
 live-client claim remain open.
 
+**M4 loop reconciliation (2026-08-28; current source/test HEAD
+`6ff68e1bb4a6afe08441308acb9a485b5133c42e`):** M4's clean ordinary
+`Character` loop is **gather/harvest → craft pack → carry/place → load owned
+vehicle → drive normal route → unload → sell specialty pack for reward →
+repeat**, with per-object restart/persistence as applicable.
+`SellSpecialty` composes the canonical
+`CSSellBackpackGoodsPacket → SpecialtyManager.SellSpecialty` path with
+ordinary merchant/pack checks, pack-consumption postcondition,
+same-zone/no-pack refusal, repeat-cycle, and idempotency coverage. Focused
+results: `M4ExitIntegratedSessionTests` 2/2,
+`EconomyDayCycleScenarioRigTests` 4/4, and
+`M3aM4ReplayScenarioRigTests` 2/2. The full normal-clone gate is
+2498 total / 2497 passed / 0 failed / 1 skipped; compiler 0/0; MCP 39 tools.
+The skipped `Provision_Activate_Persist_Deactivate_RoundTrip` requires
+`AAEMU_LIVE_RIG` and `AAEMU_E2E_DB_PASSWORD`; the forced rebuild report was
+1067 warnings / 0 errors. Player/Bot loop closure remains Unknown/Open:
+replay is ordered scripted/fixture proxy and direct setup shortcuts are not
+authentic acceptance. No live M4 restart/vehicle proof was run because the
+shared E2E reset is unsafe; human/client QAT remains open. Historical
+evidence remains preserved.
+
 ### Global mechanic ledger
 
 This is the prioritized inventory, not a claim that manager presence means the

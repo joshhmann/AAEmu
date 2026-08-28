@@ -401,6 +401,28 @@ slave cargo → 3-leg route → sell, 2× 124540 mails); restart E2E kill -9 PAS
 M4 economic/navigation replay = explicit deferred gate)**. Human playtest of
 the integrated release remains the deployment-lane follow-up pending Josh GO.
 
+**M4 loop reconciliation (2026-08-28; current source/test HEAD
+`6ff68e1bb4a6afe08441308acb9a485b5133c42e`):** The clean ordinary
+`Character` loop is **gather/harvest → craft pack → carry/place → load owned
+vehicle → drive normal route → unload → sell specialty pack for reward →
+repeat**, with per-object restart/persistence as applicable.
+`SellSpecialty` now uses the canonical
+`CSSellBackpackGoodsPacket → SpecialtyManager.SellSpecialty` path, with
+ordinary merchant/pack checks, pack-consumption postcondition, same-zone and
+no-pack refusal, repeat-cycle, and idempotency coverage. Focused results:
+`M4ExitIntegratedSessionTests` 2/2,
+`EconomyDayCycleScenarioRigTests` 4/4, and
+`M3aM4ReplayScenarioRigTests` 2/2. The full normal-clone gate at this
+source/test HEAD is **2498 total / 2497 passed / 0 failed / 1 skipped**;
+compiler **0/0**; MCP **39 tools**. The skipped
+`Provision_Activate_Persist_Deactivate_RoundTrip` requires
+`AAEMU_LIVE_RIG` and `AAEMU_E2E_DB_PASSWORD`. A forced rebuild reported
+1067 warnings / 0 errors. M4 Player/Bot loop closure remains
+**Unknown/Open**: replay is ordered scripted/fixture proxy and direct setup
+shortcuts are outside authentic acceptance. No live M4 restart/vehicle proof
+was run because the shared E2E reset is unsafe. Human/client QAT remains open;
+historical evidence is preserved.
+
 **M5 — Gameplay Actor Contract: ✅ COMPLETE (2026-08-17 sync 2026-08-20)**
 A1 (marshal bot steps onto the game loop — the M6-exit-blocking retroactive
 fix) + B1 core action surface (Interact · Loot · UseItem · Mount/Dismount ·

@@ -824,6 +824,28 @@ except the CharacterCraft conflict resolution + docs:
   an explicit deferred gate (M2 original human baseline + M4 human route;
   bot-backtrack program, see deferred gates below).**
 
+**M4 loop reconciliation (2026-08-28; current source/test HEAD
+`6ff68e1bb4a6afe08441308acb9a485b5133c42e`):** The M4 loop is the clean
+ordinary `Character` path **gather/harvest → craft pack → carry/place → load
+owned vehicle → drive normal route → unload → sell specialty pack for reward →
+repeat**, with per-object restart/persistence as applicable.
+`SellSpecialty` now composes the canonical
+`CSSellBackpackGoodsPacket → SpecialtyManager.SellSpecialty` path, preserving
+ordinary merchant/pack checks and requiring pack consumption for completion;
+same-zone/no-pack refusal, repeat-cycle, and idempotency are covered.
+Focused results are `M4ExitIntegratedSessionTests` 2/2,
+`EconomyDayCycleScenarioRigTests` 4/4, and
+`M3aM4ReplayScenarioRigTests` 2/2. At this source/test HEAD the full
+normal-clone gate is **2498 total / 2497 passed / 0 failed / 1 skipped**,
+compiler **0/0**, MCP **39 tools**; the skipped
+`Provision_Activate_Persist_Deactivate_RoundTrip` requires
+`AAEMU_LIVE_RIG` and `AAEMU_E2E_DB_PASSWORD`. The forced rebuild report is
+1067 warnings / 0 errors. M4 Player/Bot closure remains **Unknown/Open**:
+existing replay is ordered scripted/fixture proxy and direct setup shortcuts
+are outside authentic acceptance. No live M4 restart/vehicle proof was run
+because the shared E2E reset is unsafe. Human/client QAT remains open;
+historical evidence is preserved.
+
 ---
 
 ## M5 — Gameplay Actor Contract

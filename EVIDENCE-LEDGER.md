@@ -88,6 +88,24 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   provenance t_abe87eaf (E2E_REBUILD=1, re-published from exact merge commit);
   A2 convoy gate t_921a7be5 (Rei ACCEPT, merged f9572e1a8); unit gate 1778/0/1;
   restart E2Es M4_2TradePackRestart / M4Vehicles / M3bExitPersistence.
+- **M4 loop reconciliation (2026-08-28):** Current source/test HEAD
+  `6ff68e1bb4a6afe08441308acb9a485b5133c42e` records the clean ordinary
+  `Character` loop **gather/harvest → craft pack → carry/place → load owned
+  vehicle → drive normal route → unload → sell specialty pack for reward →
+  repeat**, with per-object restart/persistence as applicable.
+  `SellSpecialty` uses the canonical
+  `CSSellBackpackGoodsPacket → SpecialtyManager.SellSpecialty` path, with
+  ordinary merchant/pack checks, pack-consumption postcondition,
+  same-zone/no-pack refusal, repeat-cycle, and idempotency coverage.
+  Focused results: `M4ExitIntegratedSessionTests` 2/2,
+  `EconomyDayCycleScenarioRigTests` 4/4, and
+  `M3aM4ReplayScenarioRigTests` 2/2. Full normal-clone gate: 2498 total /
+  2497 passed / 0 failed / 1 skipped; compiler 0/0; MCP 39 tools. The skip
+  `Provision_Activate_Persist_Deactivate_RoundTrip` requires `AAEMU_LIVE_RIG`
+  and `AAEMU_E2E_DB_PASSWORD`; forced rebuild report 1067 warnings / 0
+  errors. Replay remains ordered scripted/fixture proxy, direct setup
+  shortcuts are not authentic acceptance, shared E2E reset is unsafe, and
+  Player/Bot plus human/client QAT closure remains open.
 - **M5:** ROADMAP §M5 (+ 08-09 audit: B1/B2 split, threading-boundary A1);
   full 11-action surface merged — v1 34cf33cb + A1 c6d8f93a0 (ExecutionBoundary
   thread-affinity, compiled in ALL configs) + B1 761d1e81a; verified on

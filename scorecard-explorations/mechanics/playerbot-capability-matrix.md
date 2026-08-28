@@ -46,6 +46,28 @@ is an ordered scripted/fixture proxy; fixture `SetPosition`/service
 preparation is not an acceptance path. Player/H UAT and live-client evidence
 remain open.
 
+## M4 loop reconciliation (2026-08-28)
+
+M4's clean ordinary `Character` loop is **gather/harvest → craft pack →
+carry/place → load owned vehicle → drive normal route → unload → sell
+specialty pack for reward → repeat**, with per-object restart/persistence as
+applicable. `SellSpecialty` now composes the canonical
+`CSSellBackpackGoodsPacket → SpecialtyManager.SellSpecialty` path with
+ordinary merchant/pack checks, pack-consumption postcondition,
+same-zone/no-pack refusal, repeat-cycle, and idempotency coverage. Current
+source/test HEAD is `6ff68e1bb4a6afe08441308acb9a485b5133c42e`; focused results
+are `M4ExitIntegratedSessionTests` 2/2,
+`EconomyDayCycleScenarioRigTests` 4/4, and
+`M3aM4ReplayScenarioRigTests` 2/2. Full normal-clone gate: 2498 total /
+2497 passed / 0 failed / 1 skipped; compiler 0/0; MCP 39 tools. The skip
+`Provision_Activate_Persist_Deactivate_RoundTrip` requires `AAEMU_LIVE_RIG`
+and `AAEMU_E2E_DB_PASSWORD`; forced rebuild report 1067 warnings / 0 errors.
+Player/Bot loop closure is **Unknown/Open**: replay is ordered
+scripted/fixture proxy and direct setup shortcuts are outside authentic
+acceptance. No live M4 restart/vehicle proof was run because the shared E2E
+reset is unsafe. Human/client QAT remains open; historical evidence is
+preserved.
+
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |
