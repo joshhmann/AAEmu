@@ -373,6 +373,13 @@ corruption → peripheral quests.
 
 ## M2 — Golden-path specification and baseline gate
 
+M2 is historically complete on the G1 census/baseline record, but current
+loop-closure status is governed by the reconciliation below: the player loop
+remains a clean reset → ordinary golden-path baseline quest/progression →
+required first-mount/baseline state → restart/clean-state persistence
+verification, with Player = Unknown/H open and Bot autonomous = Unknown/Open
+for the original baseline.
+
 Define the repeatable playable journey and establish an evidence-backed
 baseline before repairing its housing and trade segments. **M2 is a planning
 and discovery gate, not a claim that the entire loop already works.** M3
@@ -442,6 +449,12 @@ M3/M4); no content implementation beyond the census/harness track.
 baseline → REQ-M2-6 · Restart baseline → REQ-M2-7 · Third-party reset check
 → REQ-M2-4 · Census/G1 → REQ-M2-8, REQ-M2a–d · Harness expansion → REQ-M2-9.
 
+**M2 loop definition (current reconciliation):** clean reset → ordinary
+golden-path baseline quest/progression → required first-mount/baseline state →
+restart/clean-state persistence verification. The original two-player/no-GM
+human baseline remains a Josh-owned deferred gate; bot evidence may cover only
+the automated baseline and never H=2.
+
 **Golden path:** create character → starter progression → unlock mount →
 acquire farm → plant & harvest → build house → craft trade pack → transport
 pack → sell → return home.
@@ -499,6 +512,28 @@ bots may stand in once M5 lands (human-capacity rule, G0) — **for the
 AUTOMATED baseline only: a bot-driven baseline is proxy/bot-functional
 evidence, never H=2. The ORIGINAL human baseline (two players, no GM repair)
 remains an explicit deferred gate (bot-backtrack program; Josh-owned).**
+
+**Current deterministic loop reconciliation (A/R, source/test HEAD
+`ba530bcebec12af2bc7dc0db7451a535665bbed3`, 2026-08-28):** the focused
+normal-clone command was
+`dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/<Class>/*'`,
+with `<Class>` set to `HeadlessSessionProvisioningTests`,
+`M1M2ReplayScenarioRigTests`, `M1M2ReplayCastWindowRigTests`,
+`PlayerbotPilotTests`, `QuestScenarioTests`, `QuestScenarioTierTests`, and
+`QuestDataCensusTests`. Aggregate: **32/32 passed, 0 failed, 0 skipped**;
+per-class totals are 8/8, 3/3, 1/1, 6/6, 12/12, 1/1, and 1/1.
+`PlayerbotPilotTests` 30/30 cycles and restart 2/2 are ordered
+manifest/contract proxy evidence. `M1M2ReplayScenario` is a fixed 16-quest
+ordering and its mount criterion reports **no real mount** in the headless
+fixture; these results do not establish an autonomous M2 decision loop.
+
+`QuestScenarioTierTests` passed as a test method (1/1), but its observed
+per-quest census was **4463 PASS / 110 FAIL / 14 SKIP over 4587** (4463/4573
+runnable), including T1 failure quest 6280. These are historical evidence
+findings from the current deterministic run, not an M2 full-closure claim.
+The matrix remains **Player closes loop = Unknown/H open** and **Bot closes
+loop autonomously = Unknown/Open** for M2. No live/client/H evidence is
+claimed.
 
 ---
 

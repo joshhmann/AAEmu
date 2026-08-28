@@ -10,7 +10,7 @@ landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
 Branch of record: develop; current docs/source/test audit baseline is
-`7a572c08a32162988dedbf400bd9f8b608fb1974` (`origin/develop`). The full
+`ba530bcebec12af2bc7dc0db7451a535665bbed3` (`origin/develop`). The full
 normal-clone behavioral gate cited below remains historical at source/test HEAD
 `792774d7707b8b578b8d9975896e0a1ac719f361`: 2496 total / 2495 passed / 0
 failed / 1 skipped, compiler 0/0, MCP stdio 39 tools. The sole skip is
@@ -19,7 +19,8 @@ failed / 1 skipped, compiler 0/0, MCP stdio 39 tools. The sole skip is
 restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
 2 NU1903 in that historical verification. Runtime provenance uses
 `E2eStack.SourceRevision` with an explicit `unknown` fallback. Historical
-reports and prior evidence below are preserved.
+reports and prior evidence below are preserved; the current M2 loop
+reconciliation is recorded at the requested source/test HEAD below.
 Project-control rollup: [PROJECT-CONTROL.md](PROJECT-CONTROL.md).
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
@@ -314,8 +315,8 @@ actor records, fixture `Level=6` setup, and no real-mount criterion. It does
 not establish autonomous decision closure for the full M1 route. Josh's
 fresh-character Solzreed route, first-mount summon, restart, Bloody Hand, and
 bounty-board checks remain separate H/UAT gates.
-
-**M2 — Golden-path baseline: ✅ DONE — G1 census gate PASSED (2026-08-10)**
+**M2 — Golden-path baseline: ✅ DONE on historical G1 evidence; current loop
+reconciliation remains proxy/open (2026-08-28)**
 M2 redefined (2026-08-10 audit, in ROADMAP) into the M2a–M2d census sweep.
 G1 GATE @ 7f5c179f7: 4,579 live = 4,573 PASS + 6 doc-SKIP, 0 unexplained;
 full gate 1495/0/1 (t_971d275b / gate card t_4221f85c). Baseline legs
@@ -325,6 +326,35 @@ t_819930ef PASS-WITH-FIXES). Human leg DEFERRED to M4 close (t_46bf9b84) —
 **explicit deferred gate: original M2 human baseline, Josh-owned
 (bot-backtrack program; bots may stand in for the AUTOMATED baseline only,
 never H=2)**.
+
+**M2 loop-closure reconciliation (A/R, source/test HEAD
+`ba530bcebec12af2bc7dc0db7451a535665bbed3`, 2026-08-28):** M2's player loop
+is defined as **clean reset → ordinary golden-path baseline
+quest/progression → required first-mount/baseline state →
+restart/clean-state persistence verification**. The focused deterministic
+normal-clone command was
+`dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/<Class>/*'`,
+run with `<Class>` replaced by `HeadlessSessionProvisioningTests`,
+`M1M2ReplayScenarioRigTests`, `M1M2ReplayCastWindowRigTests`,
+`PlayerbotPilotTests`, `QuestScenarioTests`, `QuestScenarioTierTests`, and
+`QuestDataCensusTests`. The aggregate was **32/32 passed, 0 failed, 0
+skipped**: 8/8, 3/3, 1/1, 6/6, 12/12, 1/1, and 1/1 respectively.
+
+This is A/R deterministic fixture/proxy evidence only: `PlayerbotPilotTests`
+completed 30/30 cycles and its restart check passed 2/2, but both are ordered
+manifest/contract replay. `M1M2ReplayScenario` is a fixed 16-quest ordering;
+its declared mount criterion reports **no real mount** in the headless fixture.
+`QuestScenarioTierTests` itself passed 1/1 because every manifest ran and the
+report was written; its observed per-quest census is **4463 PASS / 110 FAIL /
+14 SKIP over 4587** (4463/4573 runnable), including T1 failure quest 6280.
+The remaining census results are historical evidence findings, not an M2 full
+closure claim. No live server, client, or human/H evidence is implied.
+
+The loop matrix therefore remains **Player closes loop = Unknown (H open)** and
+**Bot closes loop autonomously = Unknown/Open** for M2: the current evidence is
+ordered-manifest/contract replay and contains no `Observe → Discover →
+legal-choice` decision closure for the M2 baseline. The original two-player,
+no-GM human baseline remains an explicit Josh-owned deferred gate.
 
 **M3a — Homestead shell: ✅ CLOSED on scripted-actor (proxy) evidence (2026-08-10, Rei gate t_449875bd ACCEPT; H reconciled 2026-08-12)**
 Merged @ 4d0427b96; two-player exit via M3aExitScenarioTests (M5-stand-in:

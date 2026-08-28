@@ -1,7 +1,7 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
 Populated from implementation reality at source/test audit baseline
-`7a572c08a32162988dedbf400bd9f8b608fb1974` (`origin/develop`, 2026-08-28).
+`ba530bcebec12af2bc7dc0db7451a535665bbed3` (`origin/develop`, 2026-08-28).
 The full normal-clone gate cited in historical evidence remains at source/test
 HEAD `792774d7707b8b578b8d9975896e0a1ac719f361`: **2496 total / 2495 passed /
 0 failed / 1 skipped**, compiler **0/0**, MCP stdio **39 tools**. The sole skip
@@ -10,6 +10,27 @@ is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
 restore/build passed with 0 errors; restore emitted 2 NU1903 and build emitted
 2 NU1903 in that historical verification. Runtime evidence uses
 `E2eStack.SourceRevision` with unknown fallback.
+
+## M2 loop reconciliation (2026-08-28)
+
+M2's player loop is **clean reset → ordinary golden-path baseline
+quest/progression → required first-mount/baseline state → restart/clean-state
+persistence verification**. At source/test HEAD
+`ba530bcebec12af2bc7dc0db7451a535665bbed3`, the focused deterministic A/R
+normal-clone aggregate is **32/32 passed, 0 failed, 0 skipped** across
+`HeadlessSessionProvisioningTests` 8/8, `M1M2ReplayScenarioRigTests` 3/3,
+`M1M2ReplayCastWindowRigTests` 1/1, `PlayerbotPilotTests` 6/6,
+`QuestScenarioTests` 12/12, `QuestScenarioTierTests` 1/1, and
+`QuestDataCensusTests` 1/1. `PlayerbotPilotTests` 30/30 cycles and restart
+2/2, and `M1M2ReplayScenario`'s fixed 16-quest order, are
+ordered-manifest/contract proxy evidence; the replay mount criterion reports
+no real mount. The tier test method pass does not promote its observed
+4463 PASS / 110 FAIL / 14 SKIP over 4587 census to an M2 closure claim.
+For M2, **Player closes loop = Unknown/H open** and **Bot closes loop
+autonomously = Unknown/Open**: no `Observe → Discover → legal-choice`
+decision closure is recorded. No live/client/H evidence is implied. The
+original two-player/no-GM baseline remains Josh-owned and deferred.
+
 Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |

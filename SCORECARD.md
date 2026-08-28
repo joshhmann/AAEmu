@@ -103,6 +103,30 @@ wildcard cleanup remains in those probes. `SeedBox` has synchronous bridge
 calls/native `Thread.Join` without hard cancellation. Prior reports and
 staged/historical evidence are retained; H remains human-only and UNKNOWN.
 
+## M2 loop reconciliation (2026-08-28)
+
+The M2 player loop is **clean reset → ordinary golden-path baseline
+quest/progression → required first-mount/baseline state → restart/clean-state
+persistence verification**. At source/test HEAD
+`ba530bcebec12af2bc7dc0db7451a535665bbed3`, the focused deterministic
+normal-clone A/R aggregate is **32/32 passed, 0 failed, 0 skipped**:
+`HeadlessSessionProvisioningTests` 8/8, `M1M2ReplayScenarioRigTests` 3/3,
+`M1M2ReplayCastWindowRigTests` 1/1, `PlayerbotPilotTests` 6/6,
+`QuestScenarioTests` 12/12, `QuestScenarioTierTests` 1/1, and
+`QuestDataCensusTests` 1/1. The exact per-class command form was
+`dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/<Class>/*'`.
+
+`PlayerbotPilotTests` 30/30 cycles and restart 2/2, and
+`M1M2ReplayScenario`'s fixed 16-quest ordering, are ordered-manifest/contract
+proxy evidence only. Its mount criterion reports **no real mount** in the
+headless fixture. `QuestScenarioTierTests` passed as a test method, but its
+observed census was **4463 PASS / 110 FAIL / 14 SKIP over 4587** (T1 failure
+quest 6280); these are historical evidence findings, not an M2 full-closure
+claim. The matrix remains **Player closes loop = Unknown/H open** and **Bot
+closes loop autonomously = Unknown/Open** for M2. No live/client/H evidence
+is claimed; the original two-player/no-GM baseline remains Josh-owned and
+deferred.
+
 
 **Proxy vs authentic replay (2026-08-13, canonical sync t_c9f0d7f6):** the
 M3a/M4 `A`-dimension grades above rest on scripted-actor PROXY evidence
@@ -129,7 +153,7 @@ Graphify and must be promoted by an end-to-end exploration.
 
 | ID | Mechanic / scoped scenario | First gate | C | W | H | A | R | S | Evidence / next audit |
 |---|---|---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
-| PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline legs executed: automated t_c6eb12ec (Rei gate t_1998cfd8 PASS) + restart t_cca63225 (Rei gate t_c069bacd PASS) + live probe t_92a41fe6 2/2 — grades stay U: no human evidence yet (human baseline deferred to M4, t_46bf9b84); save path: SaveManager dirty-tracking merged 5ed5d6493 (fork fix, SaveManagerTests 10/10) |
+| PROG-01 | Character creation, login, logout, re-entry | M2 | U | U | U | U | U | N/A | M2 baseline legs remain historical A/R/L proxy evidence: automated t_c6eb12ec (Rei gate t_1998cfd8 PASS) + restart t_cca63225 (Rei gate t_c069bacd PASS) + live probe t_92a41fe6 2/2; current deterministic A/R reconciliation at source/test HEAD `ba530bcebec12af2bc7dc0db7451a535665bbed3` is 32/32 pass across the focused provisioning/replay/census classes, with `PlayerbotPilotTests` 30/30 cycles and restart 2/2 ordered-manifest proxy evidence only; grades stay U because the original two-player/no-GM human baseline remains Josh-owned/open (t_46bf9b84). Save path: SaveManager dirty-tracking merged 5ed5d6493 (fork fix, SaveManagerTests 10/10) |
 | QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 2 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; `next-missing-776-777.md` (330/776/777 COMPONENT_NEXT_MISSING → 0 via QuestDataOverlay, Rei gate PASS t_d8a8c798); `act-ref-2145-rig.md` (2145→2146 + sibling 1960→1961 ACT_REF_MISSING_QUEST → 0 via `2026-08-05-prune-act-ref-missing-2145.sql`, Rei gate PASS t_53baa876); `no-start-cluster-1533-1548-evidence.md` (QUEST_NO_START cluster 1533–1548 → 0 via `2026-08-05-drop-no-start-cluster.sql` — 23 contexts/25 components/42 acts dropped, Rei gate PASS t_f884383f); `no-components-1391-rig.md` (QUEST_NO_COMPONENTS 1391 empty template → dropped via `2026-08-05-drop-1391.sql` — 1 context dropped, drift −1, Rei gate PASS t_a56e8e2d); real restart verified 2026-08-10 (t_cca63225/t_92a41fe6): M2 restart baseline control run A `E2e_RestartPersistence_TwoCheckpoints_FullStateMatch` PASS 4m01s — real process-level SIGKILL + cold boot, quests 254/266 active after restart, Step/Status/Objectives byte-equal, resume-through-turn-in completes; live probe 2/2 PASS (`restart-baseline-probe-20260810-195332.md`, q266 retained across real restart, still Ready after re-entry, completed_quests 3==3==3==3); M3b exit E2E restart cycles (f5b00c686); 2026-08-23 (6dbd41b64): QuestActEtcItemObtain credit path implemented — the long-standing census watch-item family closes, ~51 live quests fixed (QUEST-01 grades unchanged — the Solzreed curated scope was already graded) |
 | CTRL-01 | Movement, targeting, interaction, control-state recovery | M2/M5 | U | U | U | U | U | U | Actor-contract spike |
 | COMBAT-01 | PvE combat, death, resurrection, loot | M2/M5 | U | 1 | U | U | U | U | `SkillManager`; combat audit |
