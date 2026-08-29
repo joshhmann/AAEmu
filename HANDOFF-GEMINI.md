@@ -1,10 +1,10 @@
 # Gemini Handoff — AAEmu
 
 - The current source/test HEAD is
-  `13b8bedb8f60f64c185a49b25f82855feefdf586` (`develop`). The full normal-clone gate
+  `14388b7021091d7796ff6f2ed63f62b0309820a1` (`develop`). The full normal-clone gate
   is `./scripts/gate.sh`: **2531 total / 2530 passed / 0 failed / 1 skipped**;
   compiler **0 errors / 0 warnings**; MCP stdio smoke **39 tools**.
-  The sole skip is `Subscriber_RecordsPerSubscriberDuration_WithName` (known timer-skew skip in unit test suite).
+  The sole skip is `Provision_Activate_Persist_Deactivate_RoundTrip` (live-rig gate: requires `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`). `Subscriber_RecordsPerSubscriberDuration_WithName` passes regularly since dae7fb05e and is not skipped.
   IntegrationTests Release restore/build passed with 0 errors; restore emitted 2 NU1903 and build
   emitted 2 NU1903 in this exact verification. Runtime provenance uses
   `E2eStack.SourceRevision` with an explicit `unknown` fallback. Earlier gate
@@ -21,12 +21,12 @@
   MonsterHunt, ItemUse (quest 252), Canonical Interaction (quest 269→270),
   Sphere (quest 1372), Craft (quest 6024), Cinema (quest 6041), and
   Self-Discovery channel (item in inventory bag).
-- Focused PB-007: `PvpFlaggingRigTests` **7/7 passed** and `ZoneConflictTests` **13/13 passed**,
+- Focused PB-007: `PvpFlaggingRigTests` **11/11 passed** and `ZoneConflictTests` **13/13 passed**,
   covering kill-counter escalation (Tension→Danger→Dispute→Unrest→Crisis→Conflict→War),
   multi-role assists (damage, heal, CC debuff 30s window), offline assist fallback,
   War-zone honor award (32 killer + 4 assist) & victim loss (−10), Peace-zone protection,
   and escalating respawn timers.
-- Focused Mail: `MailCodLifecycleTests` **4/4 passed** (26/26 across all `Mail*` suites),
+- Focused Mail: `MailCodLifecycleTests` **6/6 passed** (28/28 across all `Mail*` suites),
   covering COD payment deduction/dispatch, sent-tab mail deletion, and name resolution fallback.
 - Focused route/MCP/queue validation remains Flash-reported **53/53**
   (`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
@@ -81,17 +81,20 @@ Use this loop for every slice:
   `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`, `pack_pickup`,
   `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current catalog is 39 tools.
-- The full normal-clone gate at source/test HEAD
-  `792774d7707b8b578b8d9975896e0a1ac719f361` is `./scripts/gate.sh`;
-  **2496 total / 2495 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP
-  stdio smoke **39 tools**. Focused PB-002 results are
+- **Current full normal-clone gate** at source/test HEAD
+  `14388b7021091d7796ff6f2ed63f62b0309820a1` is `./scripts/gate.sh`;
+  **2531 total / 2530 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP
+  stdio smoke **39 tools**. The sole skip is
+  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD` (this is the current skip
+  identity, matching the header above). IntegrationTests Release
+  restore/build passed with 0 errors; restore emitted 2 NU1903 and build
+  emitted 2 NU1903 in this exact verification. The earlier normal-clone gate
+  at `792774d7707b8b578b8d9975896e0a1ac719f361` — **2496 total / 2495 passed /
+  0 failed / 1 skipped** — is historical and must not be substituted for the
+  current count. Focused PB-002 results at that older pointer were
   LevelingLoopScenarioRigTests 7/7, item-use 1/1, unsupported-objective 1/1,
   discovery 12/12, talk 5/5, template registration 1/1; parser tests 2/2.
-  The sole skip is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-  restore/build passed with 0 errors; restore emitted 2 NU1903 and build
-  emitted 2 NU1903 in this exact verification. Do not substitute another
-  full-gate count.
 - Focused PB-001 evidence is tracked five-test contract coverage. Exact
   command:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`.
@@ -151,7 +154,7 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
 | Merchant/economy | Restart conservation of money, bank, and item counts | Live bot economy cycle across kill-9; not human shop feel. |
 | Grounding | 593 corrected / 702 whitelist preserved | Offline engine-identical terrain harness plus targeted policy tests; terrain-only, not cave/deck/submerged truth. |
 
-| PB-007 live handshake | **1/1 in 2m09.910s**; AGGRESS-ALLOWED observed victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False, `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294, and crime branch; PEACE-BLOCK passed | Behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is `792774d7707b8b578b8d9975896e0a1ac719f361`; WAR-HONOR intentionally deferred; broader PvP/honor and H remain open. Report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md` |
+| PB-007 live handshake | **1/1 in 2m09.910s**; AGGRESS-ALLOWED observed victim-matched non-immune `SCUnitDamaged=True`, immune frames excluded=False, `SkillFired=True`, Retribution 2167=True, bloodstain doodad 877 objId 44294, and crime branch; PEACE-BLOCK passed | Behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD is `14388b7021091d7796ff6f2ed63f62b0309820a1`; live WAR-HONOR remains pending — the WAR-HONOR *rig* suite is landed 11/11 `PvpFlaggingRigTests` / 13/13 `ZoneConflictTests`); broader PvP/honor and H remain open. Report: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md` |
 
 ## Active blockers and partials
 
@@ -173,11 +176,11 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
   escalation through all stages (Tension→Danger→Dispute→Unrest→Crisis→Conflict→War),
   multi-participant assists (damage, heal, CC debuff 30s window), offline assist
   fallback, War-zone honor award (32 killer + 4 assist) & victim loss (−10),
-  and escalating respawn timers are verified with 7/7 `PvpFlaggingRigTests` and
+  and escalating respawn timers are verified with 11/11 `PvpFlaggingRigTests` and
   13/13 `ZoneConflictTests` passing. Broader live/client feel and H remain open.
 - **Justice:** the crime vertical is complete, but jury summon packet ordering/client capture remains unknown. Prison sentencing/teleport/buff exist; prison labor, escape tunnels, guards, and release-on-expiry are absent. Treat those as separate scope decisions.
 - **Dominion:** persistence/tax/phase slice is complete; combat/siege-battle and declare-trigger UI are not.
-- **Mail:** Mail S3 is merged and complete; COD payment charge enforcement, item looting payment deduction, payment mail dispatch, sent-tab mail deletion, and name resolution fallback landed in `69861b73c` with 4/4 `MailCodLifecycleTests` passing. Open follow-ups are real-client confirmation of the return opcode (candidate `0x0a2`, still not a fact) and live expiry integration proof.
+- **Mail:** Mail S3 is merged and complete; COD payment charge enforcement, item looting payment deduction, payment mail dispatch, sent-tab mail deletion, and name resolution fallback landed in `69861b73c`, with 6/6 `MailCodLifecycleTests` passing at HEAD (the suite grew to 5 tests in `ac8953813`, plus the post-review wire-flags test `GetAttached_WireFlags_MoneyAndAaPointBitsMatchTakePath`). Open follow-ups are real-client confirmation of the return opcode (candidate `0x0a2`, still not a fact) and live expiry integration proof.
 - **Scaling:** Timer cancellation safety landed in `950cfd279`. No six-hour dormant-timer soak exists in current evidence, so no six-hour soak result is claimed yet. Keep dormant seeding sequential because concurrent `seedDormant` corrupts server state at roughly 100 bots. Per-run ownership hardening `799b698ad` snapshots named account/character rows and cleans only newly owned IDs in A5/A5Tier3 `finally` paths; sibling-preservation tests pass 2/2. Historical M6 soak evidence and staged reports are preserved as historical.
 
 ## Surviving worktrees and safety
@@ -197,7 +200,7 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 1. Preserve the full-gate output pinned to behavioral baseline
    `3871459d142fdd1767b9365a1de8d4cd3652ab0e`, not as current source/test
    HEAD. Current source/test HEAD is
-   `792774d7707b8b578b8d9975896e0a1ac719f361`; retain the exact command,
+   `14388b7021091d7796ff6f2ed63f62b0309820a1`; retain the exact command,
    environment/assets, build/compiler result, unit totals and skip identity,
    and downstream MCP-smoke result from that baseline. Normal clone remains
    canonical for this full-gate evidence.
@@ -209,7 +212,7 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
    and live/human breadth remain open.
 3. PB-007's narrow live closure is behavioral evidence at the baseline above;
    preserve the checked-in report and historical failure context. WAR-HONOR
-   remains intentionally deferred.
+   is CLOSED at the rig level: the full mechanical suite landed in `0492b7199` (11/11 `PvpFlaggingRigTests` / 13/13 `ZoneConflictTests`); only a live WAR-HONOR war-cycle remains pending.
 4. Do not claim a six-hour dormant-timer soak result: no such current soak
    exists. Keep sequential seeding (`seedDormant` corrupts state after about
    100 bots). Per-run ownership hardening `799b698ad` scopes A5/A5Tier3 cleanup
@@ -228,18 +231,18 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 1. **Establish the checkpoint before editing.** Follow
    [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md): inspect the
    dirty main checkout read-only and create a clean temporary worktree from
-   current source/test HEAD `792774d7707b8b578b8d9975896e0a1ac719f361`
+   current source/test HEAD `14388b7021091d7796ff6f2ed63f62b0309820a1`
    (`origin/develop`). The behavioral gate baseline
    `3871459d142fdd1767b9365a1de8d4cd3652ab0e` remains the normal-clone
    evidence pointer; the prior `241d3e34d` relationship and 2479/0/1
    checkpoints are historical.
 2. **PB-007 narrow closure is already proven at the behavioral gate baseline**
    `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is
-   `792774d7707b8b578b8d9975896e0a1ac719f361`. Preserve the live report and
+   `14388b7021091d7796ff6f2ed63f62b0309820a1`. Preserve the live report and
    historical failure context; do not rerun it blindly. The required live
    victim-matched, non-immune `SCUnitDamaged` frame, immune exclusion,
    Retribution/crime evidence, and PEACE-BLOCK are recorded above. WAR-HONOR
-   remains separately deferred.
+   rig coverage is complete (11/11 `PvpFlaggingRigTests` / 13/13 `ZoneConflictTests`); only a live war-cycle remains pending.
 3. **Choose one high-leverage gameplay slice and state its evidence contract before code.** Preferred options are: (a) justice trial packet-order/client capture if a suitable client/capture is available; or (b) Mail return client confirmation. Keep canonical data and human-vs-bot boundaries explicit.
 4. **Handle PB-005 owner decisions separately.** Classify cave/deck/submerged rows only with canonical/client evidence. Do not add a negative-offset clamp, delete duplicate rows, or reclassify whitelist entries without a registered owner decision and evidence.
 5. **For every new slice, add/update both a rig proof and a live scenario where applicable, file a blocker for any failure, and update `SCORECARD.md`, `ROADMAP.md`, and `STATUS.md` in the same documentation wave.** Preserve old evidence and label rig/live/human types rather than rewriting history.
