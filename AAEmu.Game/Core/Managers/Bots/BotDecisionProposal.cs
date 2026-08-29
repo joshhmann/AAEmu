@@ -5,6 +5,13 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// <summary>
 /// Immutable copy of one actor observation. Decision code must consume this
 /// snapshot rather than reading Character/world state while selecting.
+///
+/// v2 ADDITIVE fields (M5 policy-extension consumers): economy state
+/// (Money/BankMoney/LaborPower/BagItemCounts/BankItemCounts/
+/// CarriedPackTemplateId) and party state (InParty/PartyOwnerId/
+/// PendingInvitationOwnerId/PartyLeaderObjId/PartyLeaderTargetObjId), all
+/// copied from the observation snapshot. Existing field names never change;
+/// old consumers ignore the new keys.
 /// </summary>
 public sealed record BotObservedContext
 {
@@ -19,6 +26,42 @@ public sealed record BotObservedContext
     public IReadOnlyList<uint> NearbyNpcObjIds { get; init; } = [];
     public IReadOnlyList<uint> NearbyDoodadObjIds { get; init; } = [];
     public IReadOnlyList<uint> ActiveQuestIds { get; init; } = [];
+
+    /// <summary>Inventory copper balance (Character.Money, direct query).</summary>
+    public long Money { get; init; }
+
+    /// <summary>Bank copper balance (Character.Money2, direct query).</summary>
+    public long BankMoney { get; init; }
+
+    /// <summary>Current labor power (Character.LaborPower, direct query).</summary>
+    public int LaborPower { get; init; }
+
+    /// <summary>Bag item counts by template id (Inventory.Bag snapshot, direct query).</summary>
+    public IReadOnlyDictionary<uint, int> BagItemCounts { get; init; } = new Dictionary<uint, int>();
+
+    /// <summary>Bank warehouse item counts by template id (Inventory.Warehouse snapshot, direct query).</summary>
+    public IReadOnlyDictionary<uint, int> BankItemCounts { get; init; } = new Dictionary<uint, int>();
+
+    /// <summary>Template id of the pack carried in the Backpack slot (0 = none).</summary>
+    public uint CarriedPackTemplateId { get; init; }
+
+    /// <summary>True when the character is a member of an active team (Character.InParty).</summary>
+    public bool InParty { get; init; }
+
+    /// <summary>Id of the active team's owner (0 = not in a team).</summary>
+    public uint PartyOwnerId { get; init; }
+
+    /// <summary>ObjId of the owner of the character's pending party invitation (0 = none).</summary>
+    public uint PendingInvitationOwnerId { get; init; }
+
+    /// <summary>ObjId of the active team's leader character (0 = not in a team).</summary>
+    public uint PartyLeaderObjId { get; init; }
+
+    /// <summary>World position of the active team's leader (Vector3.Zero when not in a team).</summary>
+    public Vector3 PartyLeaderPosition { get; init; }
+
+    /// <summary>ObjId of the team leader's current target (0 = none).</summary>
+    public uint PartyLeaderTargetObjId { get; init; }
 
     /// <summary>Copies the mutable observation lists before policy evaluation.</summary>
     public static BotObservedContext From(ActorObservation observation)
@@ -36,7 +79,19 @@ public sealed record BotObservedContext
             NearbyCharacterObjIds = Copy(observation.NearbyCharacterObjIds),
             NearbyNpcObjIds = Copy(observation.NearbyNpcObjIds),
             NearbyDoodadObjIds = Copy(observation.NearbyDoodadObjIds),
-            ActiveQuestIds = Copy(observation.ActiveQuestIds)
+            ActiveQuestIds = Copy(observation.ActiveQuestIds),
+            Money = observation.Money,
+            BankMoney = observation.BankMoney,
+            LaborPower = observation.LaborPower,
+            BagItemCounts = Copy(observation.BagItemCounts),
+            BankItemCounts = Copy(observation.BankItemCounts),
+            CarriedPackTemplateId = observation.CarriedPackTemplateId,
+            InParty = observation.InParty,
+            PartyOwnerId = observation.PartyOwnerId,
+            PendingInvitationOwnerId = observation.PendingInvitationOwnerId,
+            PartyLeaderObjId = observation.PartyLeaderObjId,
+            PartyLeaderPosition = observation.PartyLeaderPosition,
+            PartyLeaderTargetObjId = observation.PartyLeaderTargetObjId
         };
     }
 
@@ -49,6 +104,9 @@ public sealed record BotObservedContext
 
     private static IReadOnlyList<uint> Copy(IReadOnlyList<uint> values)
         => Array.AsReadOnly(values.ToArray());
+
+    private static IReadOnlyDictionary<uint, int> Copy(IReadOnlyDictionary<uint, int> values)
+        => new Dictionary<uint, int>(values);
 }
 
 /// <summary>A named hard legality check for one proposed action.</summary>

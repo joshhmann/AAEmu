@@ -166,6 +166,29 @@ public class GameplayActor : IGameplayActor
         // assertion family as MoveTo/Stop.
         ExecutionBoundary.AssertOnExecutionThread("Observe");
 
+        // Party leader resolution: the team owner is the leader; the leader's
+        // current target is the assist candidate. Both are ordinary service
+        // reads at Observe() time (the same TeamManager query the party
+        // engine paths use). The team's OwnerId is the leader's Character.Id
+        // (not ObjId), so the leader is resolved through the team's own
+        // member list — the same registry the engine's team paths use.
+        var team = TeamManager.Instance.GetActiveTeamByUnit(Character.Id);
+        var partyLeaderObjId = 0u;
+        var partyLeaderPosition = Vector3.Zero;
+        var partyLeaderTargetObjId = 0u;
+        if (team != null)
+        {
+            var leader = team.OwnerId == Character.Id
+                ? Character
+                : team.Members.FirstOrDefault(m => m?.Character != null && m.Character.Id == team.OwnerId)?.Character;
+            if (leader != null)
+            {
+                partyLeaderObjId = leader.ObjId;
+                partyLeaderPosition = leader.Transform.World.Position;
+                partyLeaderTargetObjId = leader.CurrentTarget?.ObjId ?? 0;
+            }
+        }
+
         var observation = new ActorObservation
         {
             ActorId = ActorId,
@@ -178,7 +201,20 @@ public class GameplayActor : IGameplayActor
             NearbyCharacterObjIds = WorldManager.GetAround<Character>(Character, 25f).Select(c => c.ObjId).ToList(),
             NearbyNpcObjIds = WorldManager.GetAround<Npc>(Character, 25f).Select(n => n.ObjId).ToList(),
             NearbyDoodadObjIds = WorldManager.GetAround<Doodad>(Character, 25f).Select(d => d.ObjId).ToList(),
-            ActiveQuestIds = Character.Quests?.ActiveQuests.Keys.ToList() ?? []
+            ActiveQuestIds = Character.Quests?.ActiveQuests.Keys.ToList() ?? [],
+            Money = Character.Money,
+            BankMoney = Character.Money2,
+            LaborPower = Character.LaborPower,
+            BagItemCounts = CountByTemplate(Character.Inventory?.Bag),
+            BankItemCounts = CountByTemplate(Character.Inventory?.Warehouse),
+            CarriedPackTemplateId = Character.Inventory?.Equipment
+                .GetItemBySlot((int)EquipmentItemSlot.Backpack)?.TemplateId ?? 0,
+            InParty = Character.InParty,
+            PartyOwnerId = team?.OwnerId ?? 0,
+            PendingInvitationOwnerId = TeamManager.Instance.GetActiveInvitation(Character.Id)?.Owner?.ObjId ?? 0,
+            PartyLeaderObjId = partyLeaderObjId,
+            PartyLeaderPosition = partyLeaderPosition,
+            PartyLeaderTargetObjId = partyLeaderTargetObjId
         };
 
         // Observe is a query, not a mutation: it completes immediately and
@@ -191,6 +227,24 @@ public class GameplayActor : IGameplayActor
     }
 
     #endregion
+
+    /// <summary>
+    /// Groups a container's items by template id, summing counts — the
+    /// economy observation surface (bag/warehouse contents at Observe()
+    /// time). Null container (no inventory) yields an empty map.
+    /// </summary>
+    private static IReadOnlyDictionary<uint, int> CountByTemplate(ItemContainer? container)
+    {
+        if (container == null)
+            return new Dictionary<uint, int>();
+        var counts = new Dictionary<uint, int>();
+        foreach (var item in container.GetItemsSnapshot())
+        {
+            counts.TryGetValue(item.TemplateId, out var existing);
+            counts[item.TemplateId] = existing + item.Count;
+        }
+        return counts;
+    }
 
     #region Actions
 
