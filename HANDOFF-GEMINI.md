@@ -1,8 +1,8 @@
 # Gemini Handoff — AAEmu
 
 - The current source/test HEAD is
-  `0492b719992eb2954a20689b7d346ff1c305c483` (`develop`). The full normal-clone gate
-  is `./scripts/gate.sh`: **2530 total / 2529 passed / 0 failed / 1 skipped**;
+  `13b8bedb8f60f64c185a49b25f82855feefdf586` (`develop`). The full normal-clone gate
+  is `./scripts/gate.sh`: **2531 total / 2530 passed / 0 failed / 1 skipped**;
   compiler **0 errors / 0 warnings**; MCP stdio smoke **39 tools**.
   The sole skip is `Subscriber_RecordsPerSubscriberDuration_WithName` (known timer-skew skip in unit test suite).
   IntegrationTests Release restore/build passed with 0 errors; restore emitted 2 NU1903 and build
