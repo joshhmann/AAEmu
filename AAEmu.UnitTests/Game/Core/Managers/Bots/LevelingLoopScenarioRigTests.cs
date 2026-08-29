@@ -75,6 +75,16 @@ public class LevelingLoopScenarioRigTests
     /// AcceptNpcKill / AcceptDoodad rows) — the fail-closed control target.</summary>
     private const uint NoOfferNpcTemplateId = 7669;
 
+    /// <summary>Canonical component-only quest (census 2026-08-29): 6109
+    /// "입관심사원 윈 처치" — engage NPC 14364 (level 52) auto-starts it on
+    /// first aggro (EngageCombatGiveQuestId); Start = QuestActConAcceptComponent
+    /// only (no AcceptNpc / AcceptNpcKill acts); Progress = MonsterHunt
+    /// npc 14364 ×1; Reward = SupplyExp 125400 + AutoComplete. Start gate:
+    /// unit_reqs Level ≥ 50.</summary>
+    private const uint Quest6109Id = 6109;
+    private const uint Quest6109EngageNpcTemplateId = 14364;
+    private const int Quest6109Exp = 125_400;
+
     /// <summary>
     /// Temporarily installs canonical SkillManager/DoodadManager data while
     /// preserving the suite's process-wide singleton surface for other rigs.
@@ -129,7 +139,8 @@ public class LevelingLoopScenarioRigTests
     }
 
     /// <summary>Region-joined fixture NPC so Observe's GetAround sees it.</summary>
-    private uint SpawnHubNpc(HeadlessSession session, uint templateId, Vector3 position)
+    private uint SpawnHubNpc(HeadlessSession session, uint templateId, Vector3 position,
+        uint engageCombatGiveQuestId = 0)
     {
         var npc = new Npc
         {
@@ -137,7 +148,7 @@ public class LevelingLoopScenarioRigTests
             TemplateId = templateId,
             Hp = 100,
             MaxHp = 100,
-            Template = new NpcTemplate { Id = templateId, Scale = 1f }
+            Template = new NpcTemplate { Id = templateId, Scale = 1f, EngageCombatGiveQuestId = engageCombatGiveQuestId }
         };
         session.World.AddObject(npc);
         npc.Transform.Local.SetPosition(position);
@@ -1132,6 +1143,130 @@ public class LevelingLoopScenarioRigTests
         // Nothing was faked: no quest accepted, nothing turned in.
         await Assert.That(character.Quests!.ActiveQuests.Count).IsEqualTo(0);
         await Assert.That(result.TraceRecords.Any(r => r.Action == ActorActionType.AcceptQuest)).IsFalse();
+    }
+
+    /// <summary>
+    /// COMPONENT channel (census 2026-08-29): the engine's engage-combat
+    /// auto-start path (Unit.AddUnitAggro first-aggro block →
+    /// CharacterQuests.AddQuestFromNpc → AddQuest with QuestAcceptorType.Npc
+    /// + template id) starts a component-only quest with NO discoverable
+    /// accept acts. The loop's fourth perception channel surfaces the
+    /// auto-started quest from ActiveQuests and pursues + turns it in
+    /// WITHOUT an explicit accept dispatch. Canonical quest 6109 (engage
+    /// NPC 14364, MonsterHunt 14364 ×1, auto-complete).
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_EngageCombatAutoStart_CompletesComponentOnlyQuest6109()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-engage-auto");
+        var character = session.Character;
+        character.Level = 50; // 6109 start gate ≥50 (real unit_reqs row)
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // The level-50 level-up quest 6375 (gate: ExceptCompleteQuestContext
+        // 6215) is discoverable at this level and would win the DECIDE step
+        // over the auto-started 6109 — complete 6215 so 6375's gate closes
+        // and the loop's only in-band quest is the auto-started 6109.
+        character.Quests!.SetCompletedQuestFlag(6215, true);
+
+        // World seed: the engage NPC itself (14364) — first aggro auto-starts
+        // quest 6109 through the REAL engine path, then the loop hunts it.
+        var npcObjId = SpawnHubNpc(session, Quest6109EngageNpcTemplateId, new Vector3(2, 0, 0),
+            engageCombatGiveQuestId: Quest6109Id);
+        SeedCorpseLoot(session, npcObjId);
+        var npc = session.World.GetNpc(npcObjId)!;
+        npc.AddUnitAggro(AggroKind.Damage, character, 1); // the real engage
+        await Assert.That(character.Quests!.HasQuest(Quest6109Id)).IsTrue();
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            MaxLinks = 1,
+            BandMin = 51,
+            BandMax = 51,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxHuntRounds = 64
+        }, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(Quest6109Id);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjMonsterHunt));
+        await Assert.That(character.Quests!.HasQuestCompleted(Quest6109Id)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(Quest6109Id)).IsFalse();
+
+        // XP signal — the REAL SupplyExp act (125400) through the reward step.
+        await Assert.That(result.Links[0].ExperienceAfter - result.Links[0].ExperienceBefore)
+            .IsGreaterThanOrEqualTo(Quest6109Exp);
+
+        // No explicit accept was dispatched — the quest was already active
+        // (auto-started by the engine), so no AcceptQuest record exists.
+        await Assert.That(result.TraceRecords.Any(r =>
+            r.Action == ActorActionType.AcceptQuest && r.TargetId == Quest6109Id)).IsFalse();
+        await Assert.That(result.Notes.Any(n => n.Contains("auto-started"))).IsTrue();
+    }
+
+    /// <summary>
+    /// Direct engine-path proof of the component channel: first aggro on an
+    /// EngageCombatGiveQuestId NPC auto-starts the quest with the Npc
+    /// acceptor triple (QuestAcceptorType.Npc + template id), then the
+    /// ordinary hunt credit + step machine completes it.
+    /// </summary>
+    [Test]
+    public async Task EngageCombat_AutoStart_StartsComponentOnlyQuestWithNpcAcceptor()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-engage-direct");
+        var character = session.Character;
+        character.Level = 50;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        var npcObjId = SpawnHubNpc(session, Quest6109EngageNpcTemplateId, new Vector3(2, 0, 0),
+            engageCombatGiveQuestId: Quest6109Id);
+        var npc = session.World.GetNpc(npcObjId)!;
+        npc.AddUnitAggro(AggroKind.Damage, character, 1);
+
+        // Auto-started with the Npc acceptor triple (not a discoverable offer).
+        await Assert.That(character.Quests!.HasQuest(Quest6109Id)).IsTrue();
+        var quest = character.Quests.ActiveQuests[Quest6109Id];
+        await Assert.That(quest.QuestAcceptorType).IsEqualTo(QuestAcceptorType.Npc);
+        await Assert.That(quest.AcceptorId).IsEqualTo(Quest6109EngageNpcTemplateId);
+
+        // Hunt credit through the REAL event path, then the step machine:
+        // first advance Progress→Reward, second runs the Reward step
+        // (SupplyExp + AutoComplete → completed + dropped).
+        QuestManager.Instance.DoOnMonsterHuntEvents(character, npc);
+        _ = quest.RunCurrentStep();
+        _ = quest.RunCurrentStep();
+        await Assert.That(character.Quests.HasQuestCompleted(Quest6109Id)).IsTrue();
+    }
+
+    /// <summary>
+    /// Fail-closed control (COMPONENT channel): an NPC with NO
+    /// EngageCombatGiveQuestId (7669) must start NOTHING on first aggro —
+    /// the auto-start gate is the template field, and the loop must not
+    /// invent a quest where the engine starts none.
+    /// </summary>
+    [Test]
+    public async Task EngageCombat_NoEngageQuestId_FailsClosedStartsNothing()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-engage-control");
+        var character = session.Character;
+        character.Level = 50;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        var npcObjId = SpawnHubNpc(session, NoOfferNpcTemplateId, new Vector3(1, 0, 0));
+        var npc = session.World.GetNpc(npcObjId)!;
+        npc.AddUnitAggro(AggroKind.Damage, character, 1);
+
+        await Assert.That(character.Quests!.ActiveQuests.Count).IsEqualTo(0);
     }
 
 

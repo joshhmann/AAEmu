@@ -251,6 +251,7 @@ public static class LevelingLoopScenario
         var opts = options ?? new LoopOptions();
         var actor = new GameplayActor(character);
         var links = new List<LinkRecord>();
+        var notes = new List<string>();
 
         try
         {
@@ -262,7 +263,17 @@ public static class LevelingLoopScenario
                     .Where(o => o.Level >= opts.BandMin && o.Level <= opts.BandMax)
                     .ToList();
 
-                if (bandOfferings.Count == 0)
+                // Engine auto-started quests (engage-combat channel) are
+                // already active — pursue and turn them in without an
+                // explicit accept dispatch. Lowest level first, then id.
+                var autoStartedInBand = perception.AutoStartedQuestIds
+                    .Select(id => (Id: id, Level: QuestManager.Instance.GetTemplate(id)?.Level ?? 0))
+                    .Where(q => q.Level >= opts.BandMin && q.Level <= opts.BandMax)
+                    .OrderBy(q => q.Level)
+                    .ThenBy(q => q.Id)
+                    .ToList();
+
+                if (bandOfferings.Count == 0 && autoStartedInBand.Count == 0)
                 {
                     return Fail("PERCEIVE", ActorFailureReason.Starvation,
                         $"no discoverable quest offerings within band [{opts.BandMin}..{opts.BandMax}] " +
@@ -276,54 +287,68 @@ public static class LevelingLoopScenario
                 // a legal, explainable decision over the immutable perception
                 // snapshot; personality has no weight in this compatibility
                 // path.
-                var proposals = bandOfferings.Select(offering => new BotDecisionProposal(
-                    goal: "leveling.accept-quest",
-                    action: ActorActionType.AcceptQuest,
-                    targetId: offering.QuestId,
-                    expectedPostcondition: new BotProposalPostcondition(
-                        $"quest {offering.QuestId} is active",
-                        observed => observed.ActiveQuestIds.Contains(offering.QuestId)),
-                    idempotencyKey: $"leveling:{character.Id}:{linkIndex}:{offering.QuestId}",
-                    timeout: TimeSpan.FromSeconds(30),
-                    rationale: $"lowest offered level in [{opts.BandMin}..{opts.BandMax}]",
-                    policyVersion: "leveling-v1",
-                    priority: opts.BandMax - offering.Level,
-                    tieBreakKey: offering.QuestId.ToString("D10"),
-                    payload: offering,
-                    hardPreconditions:
-                    [
-                        new BotProposalPrecondition(
-                            "quest-not-active",
-                            observed => !observed.ActiveQuestIds.Contains(offering.QuestId))
-                    ])).ToList();
-                var decision = BotDecisionSelector.Select(perception.Context, proposals);
-                if (!decision.HasProposal)
+                var chosen = (QuestOffering?)null;
+                if (bandOfferings.Count > 0)
                 {
-                    return Fail("DECIDE", ActorFailureReason.WrongDecision,
-                        $"no legal discovered quest proposal: {decision.Explanation}", actor, links);
-                }
-
-                var chosen = (QuestOffering)decision.Proposal!.Payload!;
-
-                // ---------------------------------------------------- 3. ACCEPT
-                // Dispatch remains the existing GameplayActor path. The cycle
-                // observes the terminal state before the next loop iteration
-                // replans from a fresh perception sweep.
-                var execution = BotDecisionCycle.Execute(actor, perception.Context,
-                    decision.Proposal,
-                    static (gameplayActor, proposal) =>
+                    var proposals = bandOfferings.Select(offering => new BotDecisionProposal(
+                        goal: "leveling.accept-quest",
+                        action: ActorActionType.AcceptQuest,
+                        targetId: offering.QuestId,
+                        expectedPostcondition: new BotProposalPostcondition(
+                            $"quest {offering.QuestId} is active",
+                            observed => observed.ActiveQuestIds.Contains(offering.QuestId)),
+                        idempotencyKey: $"leveling:{character.Id}:{linkIndex}:{offering.QuestId}",
+                        timeout: TimeSpan.FromSeconds(30),
+                        rationale: $"lowest offered level in [{opts.BandMin}..{opts.BandMax}]",
+                        policyVersion: "leveling-v1",
+                        priority: opts.BandMax - offering.Level,
+                        tieBreakKey: offering.QuestId.ToString("D10"),
+                        payload: offering,
+                        hardPreconditions:
+                        [
+                            new BotProposalPrecondition(
+                                "quest-not-active",
+                                observed => !observed.ActiveQuestIds.Contains(offering.QuestId))
+                        ])).ToList();
+                    var decision = BotDecisionSelector.Select(perception.Context, proposals);
+                    if (!decision.HasProposal)
                     {
-                        var offering = (QuestOffering)proposal.Payload!;
-                        return gameplayActor.AcceptQuest(
-                            offering.QuestId, offering.AcceptorType, offering.AcceptorId,
-                            proposal.IdempotencyKey);
-                    });
-                var accept = execution.Request;
-                if (accept.State != ActorLifecycleState.Completed || !execution.ExpectedPostconditionSatisfied)
+                        return Fail("DECIDE", ActorFailureReason.WrongDecision,
+                            $"no legal discovered quest proposal: {decision.Explanation}", actor, links);
+                    }
+
+                    chosen = (QuestOffering)decision.Proposal!.Payload!;
+
+                    // ---------------------------------------------------- 3. ACCEPT
+                    // Dispatch remains the existing GameplayActor path. The
+                    // cycle observes the terminal state before the next loop
+                    // iteration replans from a fresh perception sweep.
+                    var execution = BotDecisionCycle.Execute(actor, perception.Context,
+                        decision.Proposal,
+                        static (gameplayActor, proposal) =>
+                        {
+                            var offering = (QuestOffering)proposal.Payload!;
+                            return gameplayActor.AcceptQuest(
+                                offering.QuestId, offering.AcceptorType, offering.AcceptorId,
+                                proposal.IdempotencyKey);
+                        });
+                    var accept = execution.Request;
+                    if (accept.State != ActorLifecycleState.Completed || !execution.ExpectedPostconditionSatisfied)
+                    {
+                        return Fail("ACCEPT", ActorFailureReason.RejectedAction,
+                            $"accept of discovered quest {chosen.QuestId} refused or did not reach expected state: " +
+                            $"{accept.Detail ?? execution.Proposal.ExpectedPostcondition.Description}", actor, links);
+                    }
+                }
+                else
                 {
-                    return Fail("ACCEPT", ActorFailureReason.RejectedAction,
-                        $"accept of discovered quest {chosen.QuestId} refused or did not reach expected state: " +
-                        $"{accept.Detail ?? execution.Proposal.ExpectedPostcondition.Description}", actor, links);
+                    // Engine auto-started quests (engage-combat channel) are
+                    // already active — no accept dispatch is legal or needed.
+                    // The audit trace records the pursuit note instead of a
+                    // synthetic AcceptQuest record.
+                    var auto = autoStartedInBand[0];
+                    chosen = new QuestOffering(auto.Id, (byte)auto.Level, QuestAcceptorType.Unknown, 0);
+                    notes.Add($"quest {auto.Id} auto-started (no explicit accept) — pursuing");
                 }
 
                 var expBefore = character.Experience;
@@ -357,8 +382,11 @@ public static class LevelingLoopScenario
                 Scenario = ScenarioName,
                 Passed = true,
                 Links = links,
-                Notes = [$"completed {links.Count} chained quest(s) unprompted; " +
-                         $"total exp gained {links.Sum(l => l.ExperienceAfter - l.ExperienceBefore)}"],
+                Notes = notes.Count > 0
+                    ? [.. notes, $"completed {links.Count} chained quest(s) unprompted; " +
+                                 $"total exp gained {links.Sum(l => l.ExperienceAfter - l.ExperienceBefore)}"]
+                    : [$"completed {links.Count} chained quest(s) unprompted; " +
+                       $"total exp gained {links.Sum(l => l.ExperienceAfter - l.ExperienceBefore)}"],
                 TraceRecords = [.. actor.AuditTrace]
             };
         }
@@ -377,7 +405,8 @@ public static class LevelingLoopScenario
         Dictionary<uint, uint> NpcObjIdsByTemplate,
         Dictionary<uint, List<uint>> DoodadObjIdsByTemplate,
         int PerceivedNpcCount, int PerceivedDoodadCount,
-        BotObservedContext Context)
+        BotObservedContext Context,
+        List<uint> AutoStartedQuestIds)
     {
         public int TotalOfferingsSeen => Offerings.Count;
     }
@@ -427,8 +456,25 @@ public static class LevelingLoopScenario
             offerings.AddRange(selfFound.Offerings);
         }
 
+        // Engine auto-started quests (e.g. EngageCombatGiveQuestId on first
+        // aggro — Unit.AddUnitAggro → CharacterQuests.AddQuestFromNpc). These
+        // are already ACTIVE, so they are not discoverable offerings; surface
+        // them as a fourth perception channel so the loop can pursue and
+        // turn them in without an explicit accept dispatch.
+        var autoStarted = new List<uint>();
+        if (actor.Character.Quests?.ActiveQuests is { } activeQuests)
+        {
+            foreach (var questId in activeQuests.Keys)
+            {
+                if (offerings.Any(o => o.QuestId == questId))
+                    continue;
+                autoStarted.Add(questId);
+            }
+        }
+
         return new PerceptionSnapshot(offerings, npcByTemplate, doodadsByTemplate,
-            observation.NearbyNpcObjIds.Count, doodadCount, BotObservedContext.From(observation));
+            observation.NearbyNpcObjIds.Count, doodadCount, BotObservedContext.From(observation),
+            autoStarted);
     }
 
     // ------------------------------------------------------------------ pursue
