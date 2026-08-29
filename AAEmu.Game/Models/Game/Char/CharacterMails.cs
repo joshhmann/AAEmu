@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Exceptions;
+using AAEmu.Commons.Exceptions;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Items;
@@ -183,6 +183,17 @@ public class CharacterMails
             // Check if items need to be taken, and add them to a list
             if (takeItems)
             {
+                // COD payment check (MailType.Charged): receiver must have enough money to pay the COD charge
+                if (thisMail.MailType == MailType.Charged && thisMail.Header.Extra > 0)
+                {
+                    var codCost = (int)thisMail.Header.Extra;
+                    if (Self.Money < codCost)
+                    {
+                        Self.SendErrorMessage(ErrorMessageType.MailNotEnoughMoney);
+                        return false;
+                    }
+                }
+
                 var toRemove = new List<Item>();
                 foreach (var itemAttachment in thisMail.Body.Attachments)
                 {
@@ -245,6 +256,39 @@ public class CharacterMails
                     thisMail.IsDirty = true;
                 }
 
+                // If COD mail items were looted, deduct the payment from receiver and send payment mail to original sender
+                if (thisMail.MailType == MailType.Charged && thisMail.Header.Extra > 0 && itemSlotList.Count > 0)
+                {
+                    var codCost = (int)thisMail.Header.Extra;
+                    Self.SubtractMoney(SlotType.Inventory, codCost);
+                    thisMail.Header.Extra = 0;
+
+                    if (thisMail.Header.SenderId > 0 && !string.IsNullOrWhiteSpace(thisMail.Header.SenderName))
+                    {
+                        var paymentMail = new BaseMail
+                        {
+                            Title = $"[COD] {thisMail.Title}",
+                            ReceiverName = thisMail.Header.SenderName,
+                            MailType = MailType.Normal,
+                            Header =
+                            {
+                                Status = MailStatus.Unread,
+                                SenderId = 0,
+                                SenderName = ".system",
+                                ReceiverId = thisMail.Header.SenderId,
+                                Attachments = 1
+                            },
+                            Body =
+                            {
+                                Text = $"COD payment from {Self.Name}",
+                                CopperCoins = codCost,
+                                SendDate = DateTime.UtcNow,
+                                RecvDate = DateTime.UtcNow
+                            }
+                        };
+                        MailManager.Instance.Send(paymentMail);
+                    }
+                }
             }
             // Mark taken items
 
@@ -259,22 +303,8 @@ public class CharacterMails
             // Items
             if (itemSlotList.Count > 0)
             {
-                // Self.SendPacket(new SCAttachmentTakenPacket(mailId, takeMoney, false, takeAllSelected, itemSlotList));
-                /* 
-                 * ZeromusXYZ:
-                 * Splitting this packet up to be sent one by one fixes delivery issue in cases where not everything is delivered at once,
-                 * like full bag, manual item grabbing.
-                 * It's kind of silly, but I don't have a better solution for it 
-                */
-                foreach (var iSlot in itemSlotList)
-                {
-                    var dummyItemSlotList = new List<ItemIdAndLocation>
-                    {
-                        iSlot
-                    };
-                    Self.SendPacket(new SCAttachmentTakenPacket(mailId, takeMoney, false, takeAllSelected, dummyItemSlotList));
-                    thisMail.IsDirty = true;
-                }
+                Self.SendPacket(new SCAttachmentTakenPacket(mailId, false, true, takeAllSelected, itemSlotList));
+                thisMail.IsDirty = true;
             }
 
             // Mark mail as read in case we took at least one item from it
@@ -299,29 +329,37 @@ public class CharacterMails
     public void DeleteMail(long id, bool isSent)
     {
         // Ownership guard (C2S entry point CSDeleteMailPacket): only the current
-        // receiver may delete an entry from the received tab. Mirrors the
-        // CSTakeAttachmentSequentially "check for hackers" refusal. Sent-tab
-        // deletion remains a deliberate no-op (pre-existing behavior).
-        if (MailManager.Instance._allPlayerMails.TryGetValue(id, out var mail) &&
-            mail.Header.ReceiverId != Self.Id)
+        // receiver may delete an entry from the received tab, and sender from sent tab.
+        // Mirrors the CSTakeAttachmentSequentially "check for hackers" refusal.
+        if (MailManager.Instance._allPlayerMails.TryGetValue(id, out var mail))
         {
-            Self.SendErrorMessage(ErrorMessageType.MailInvalid);
-            return;
-        }
+            var ownsEntry = isSent
+                ? mail.Header.SenderId == Self.Id
+                : mail.Header.ReceiverId == Self.Id;
 
-        if (MailManager.Instance._allPlayerMails.ContainsKey(id) && !isSent)
-        {
-            if (MailManager.Instance._allPlayerMails[id].Header.Attachments <= 0)
+            if (!ownsEntry)
+            {
+                Self.SendErrorMessage(ErrorMessageType.MailInvalid);
+                return;
+            }
+
+            if (isSent)
+            {
+                Self.SendPacket(new SCMailDeletedPacket(true, id, false, UnreadMailCount));
+                return;
+            }
+
+            if (mail.Header.Attachments <= 0)
             {
                 // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                if (MailManager.Instance._allPlayerMails[id].Header.Status != MailStatus.Read)
+                if (mail.Header.Status != MailStatus.Read)
                 {
-                    UnreadMailCount.UpdateReceived(MailManager.Instance._allPlayerMails[id].MailType, -1);
-                    Self.SendPacket(new SCMailDeletedPacket(isSent, id, true, UnreadMailCount));
+                    UnreadMailCount.UpdateReceived(mail.MailType, -1);
+                    Self.SendPacket(new SCMailDeletedPacket(false, id, true, UnreadMailCount));
                 }
                 else
                 {
-                    Self.SendPacket(new SCMailDeletedPacket(isSent, id, false, UnreadMailCount));
+                    Self.SendPacket(new SCMailDeletedPacket(false, id, false, UnreadMailCount));
                 }
                 // ReSharper enable ConditionIsAlwaysTrueOrFalse
                 MailManager.Instance.DeleteMail(id);

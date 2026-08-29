@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers.UnitManagers;
@@ -41,11 +41,22 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
 
     public uint GetCharacterId(string normalizedCharacterName)
     {
+        if (string.IsNullOrEmpty(normalizedCharacterName))
+            return 0u;
+
         lock (_registryLock)
         {
-            return _characterNames.TryGetValue(normalizedCharacterName, out var characterId)
-                ? characterId
-                : 0u;
+            if (_characterNames.TryGetValue(normalizedCharacterName, out var characterId))
+                return characterId;
+            var normalized = normalizedCharacterName.NormalizeName();
+            if (_characterNames.TryGetValue(normalized, out characterId))
+                return characterId;
+            foreach (var (key, id) in _characterNames)
+            {
+                if (string.Equals(key, normalizedCharacterName, StringComparison.OrdinalIgnoreCase))
+                    return id;
+            }
+            return 0u;
         }
     }
 
