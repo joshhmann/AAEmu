@@ -1,17 +1,28 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality at current source/test HEAD
-`ded008de8d67ece8718e9235fd02503b43ceb6a1` (`origin/develop`, verified exact).
-M6 movement guards are complete at `c4f2296c`; full-suite test-scoped
-singleton isolation is complete at `f6ff58e86` (same source tree). The full
-normal-clone gate is **2499 total / 2498 passed / 0 failed / 1 skipped**,
-compiler **0/0**, MCP stdio **39 tools**. The sole skip is
-`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-restore/build passed with 0 errors in this exact verification. M6 focused
-evidence is **105/105** and M7 focused evidence is **147/147** with no
-failures or skips. Runtime evidence uses `E2eStack.SourceRevision` with an
-explicit `unknown` fallback.
+Populated from implementation reality at local source/test HEAD
+`0ce518ac03a18de00fff1516aa9e794e8566bee6`. M5 proposal
+`263ecc66c474ca1c5f4b085e86ef3e47f49fd1` adds the bounded
+`BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` primitive,
+integrated into `LevelingLoop`'s quest-accept choice. It preserves immutable
+observed context, enforces hard legality before preference, bounds candidates,
+selects deterministically by fixed priority/personality/tie-break, requires a
+terminal postcondition, and dispatches through existing `GameplayActor`;
+focused `BotDecisionProposalTests` pass **5/5**. This is a decision primitive
+plus scoped quest consumer, not universal bot autonomy; broad M5 policy remains
+open.
+
+M6 cancellation `950cfd279` adds token/timeout-aware `BotDriveClient.CallAsync`
+while sync `Call` remains compatible; A5 and A5Tier3 seed bridge calls are
+async, and Tier3 workers share cancellation/deadline propagation with
+cooperative stop and no `Thread.Abort`.
+BotDriveClientCancellationTests pass **3/3**; SoakOwnershipTests **2/2**;
+BotPresenceCoordinator **13/13**. Full normal-clone gate: **2504 total / 2503
+passed / 0 failed / 1 skipped**, compiler **0/0**, MCP stdio **39 tools**. The
+sole skip is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. No six-hour soak or M6
+full-exit result exists; no H/UAT claim is made. Historical reports and
+source/test SHA boundaries remain preserved.
 
 ## M2 loop reconciliation (2026-08-28)
 
@@ -72,36 +83,32 @@ preserved.
 
 ## M5 actor decision/action loop reconciliation (2026-08-28)
 
-The clean ordinary `Character` loop is **observe current state → choose one
-legal objective/action → execute via `IGameplayActor`/normal `Character`
-services → observe terminal state/audit → retry safely without duplicate
-effects**. `GameplayActor`/the M5 contract provide the action lifecycle,
-single-writer gate, failure taxonomy, timeout/stuck handling, idempotency, and
-audit. Focused evidence is **316/316**: `BotGoalArbiterTests` 14/14,
-`GameplayActorM53CoreSurfaceTests` 13/13, `PlayerBotControllerAdapterTests`
-5/5, `GameplayActorB1ContractLayerTests` 17/17, and `GameplayActorTests`
-30/30.
+The bounded `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle`
+primitive (`263ecc66c474ca1c5f4b085e86ef3e47f49fd1`) is integrated into
+`LevelingLoop`'s quest-accept choice. It preserves immutable observed context,
+enforces hard legality before preference, bounds candidates, selects
+deterministically by fixed priority/personality/tie-break, requires a terminal
+postcondition, and dispatches via existing `GameplayActor`.
+`BotDecisionProposalTests` pass **5/5**.
 
-This proves actor contracts and retry-safe terminal actions, not a universal
-decision loop. `LevelingLoopScenario` is the narrow autonomous 254→255
-perception/choice/pursuit slice; `BotScenarioRunner`, `M1M2ReplayScenario`, and
-`M3aM4ReplayScenario` remain ordered proxy replays. Player closes loop =
-**Unknown/H or client-gated where applicable**; Bot closes universal decision
-loop = **Unknown/Open**. Existing `BotGoalArbiter` fixed Priority-first
-`CanActivate` selection and schedule FSM are present, but no reusable
-candidate/score/blackboard/rationale/replan/personality policy is claimed.
-M5.3 canonical movement caveat and formal regrade wording remain authoritative.
+This is a decision primitive plus a scoped quest consumer, not universal bot
+autonomy. The bounded 254→255 `LevelingLoop` slice is the only current
+autonomous consumer; broad M5 policy remains open. Existing actor-contract
+evidence, M5.3 movement caveat, and H/client boundary remain unchanged.
 
 ## M6/M7 loop reconciliation (2026-08-28)
 
 **M6:** clean ordinary `Character`/bot dormant → proximity wake/materialize →
 scheduled action resumes → identity/inventory/position/metadata survive restart
-→ safe dematerialization. Focused M6 **105/105**: BotPresenceCoordinator
-13/13 (patrol + transfer-finalize regression), BotRoamStepExecutor 6/6,
+→ safe dematerialization. Focused M6 **105/105**: BotPresenceCoordinator 13/13
+(patrol + transfer-finalize regression), BotRoamStepExecutor 6/6,
 PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13,
-Manager 19/19, Headless provisioning 8/8. `c4f2296c` completes movement guards;
-`f6ff58e86` isolates test-scoped singletons. A/R harness/proxy evidence only;
-no six-hour soak and SeedBox cancellation unresolved.
+Manager 19/19, Headless provisioning 8/8. Cancellation commit `950cfd279` adds
+token/timeout-aware `BotDriveClient.CallAsync` while sync `Call` remains
+compatible; Tier3 workers share cancellation/deadline propagation and stop
+cooperatively, with no `Thread.Abort`. BotDriveClientCancellationTests 3/3 and
+SoakOwnershipTests 2/2 pass. No six-hour soak or M6 full-exit result exists;
+this is A/R harness/proxy evidence and no H/UAT claim is implied.
 
 **M7:** ordinary `Character`/PlayerBot discovers/accepts a quest, navigates,
 chooses legal hostiles, casts, receives kill credit, loots, sustains/retreats,
@@ -112,7 +119,7 @@ PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support
 **111/111**. A/R rig/proxy only: hunt kill uses real DoOnMonsterHuntEvents
 with fixture HP=0; Party spike is synthetic/fixture. No current live
 authenticated-client run or H/UAT. Only bounded autonomous decision slice is
-LevelingLoop 254→255; broad M7 decision, real damage/Npc.DoDie,
+`LevelingLoop` 254→255; broad M7 decision, real damage/`Npc.DoDie`,
 scheduler-driven route, party roles/regroup/restart/disconnect, mount/travel,
 and H remain open.
 
@@ -124,7 +131,7 @@ Autonomous Loop = can a bot run this system's loop unattended end-to-end.
 |---|---|---|---|---|---|
 | Movement | 🟡 positions via Observe; no terrain awareness | ✅ simple (straight-leg, standoff band, stuck detection) | ✅ MoveTo/MoveToUnit/DriveVehicle plus landed `NavigateTo` implementation (real CryEngine GeoData A* pathing, waypoint stepping, stuck detection, and straight-leg fallback) | ✅ tracked PB-001 five-test `GameplayActorNavigateTests` contract evidence: `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'` → `Test run summary: Passed! total: 5 failed: 0 succeeded: 5 skipped: 0 duration: 1s 362ms`; `BaiNavigationRigTests` supplies GeoData/navmesh coverage. The preserved prototype waypoint test was invalid because it injected private state via reflection; do not claim waypoint coverage from it. PB-005 positive-only grounding clamp + intentional-floater whitelist landed, cave/deck/submerged and duplicate-row decisions remain | 🟡 broad interior/region traversal open |
 | Combat | ✅ Observe (units, hp, targets) + causal traces (hp deltas) | ✅ rotation priority, sustain thresholds, no-progress skip | ✅ SetTarget/Cast (real skill pipeline) | ✅ kill credit + hp-delta traces; PB-007 narrow handshake live-proven at behavioral gate baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD `792774d7707b8b578b8d9975896e0a1ac719f361`): victim-matched non-immune `SCUnitDamaged`, immune exclusion, SkillFired, Retribution 2167, bloodstain 877, crime branch, and PEACE-BLOCK | ✅ party spike live-proven; broader PvP/honor and WAR-HONOR remain open |
-| Quests | ✅ `Observe`/`DiscoverQuests` through the real AddQuest gate; titles are client-localized and zone-sweep coverage is open; channels include Item, Sphere, Level, and DiscoverSelfQuests | ✅ **Bounded autonomous loop (254→255):** legal lowest-level offering choice → data-driven objective pursuit → turn-in → re-discover; focused test 1/1 at source/test baseline `7a572c08a32162988dedbf400bd9f8b608fb1974` | ✅ AcceptQuest/TurnInQuest/AdvanceQuest/UseItem (real gates); canonical item-use quest 252: NPC 7653, item 7738, use skill 11596, act row 1600/detail 43; fail-closed quest 64 control | ✅ `LevelingLoopScenarioRigTests` 7/7; existing `leveling-loop-2026-08-25.md` report + JSONL trace | ✅ bounded 254→255 PlayerBot loop; **full M1 route remains Unknown/Open** — `M1M2ReplayScenario` is an ordered scripted 16-quest/55-record proxy with fixture `Level=6` setup and no real-mount criterion; first-mount, restart, Bloody Hand, bounty-board, and client-feel checks remain separate H/UAT |
+| Quests | ✅ `Observe`/`DiscoverQuests` through the real AddQuest gate; titles are client-localized and zone-sweep coverage is open; channels include Item, Sphere, Level, and DiscoverSelfQuests | ✅ **Bounded decision primitive + scoped consumer:** `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` selects the legal quest offering in `LevelingLoop` 254→255; immutable observed context, hard legality before preference, bounded candidates, deterministic fixed-priority/personality/tie-break, and terminal postcondition; `BotDecisionProposalTests` 5/5. Broad M5 policy remains open | ✅ AcceptQuest/TurnInQuest/AdvanceQuest/UseItem (real gates); canonical item-use quest 252: NPC 7653, item 7738, use skill 11596, act row 1600/detail 43; fail-closed quest 64 control | ✅ `LevelingLoopScenarioRigTests` 7/7; existing `leveling-loop-2026-08-25.md` report + JSONL trace | ✅ bounded 254→255 PlayerBot loop; this is not universal bot autonomy; **full M1 route remains Unknown/Open** |
 | Loot | ✅ corpse/inventory via contract | ✅ loot-after-kill step | ✅ Loot action | ✅ item-granted criteria | ✅ within hunt loops |
 | Vendors | ✅ money/inventory observable | ✅ trivial buy/sell rules | ✅ Buy/Sell actions (real shop paths); merchant trio fixes merged (`cb514c42e`, `beaf9b82e`, `3ba33b3af`, merge `e5db6d390`) | ✅ ledger conservation; live EconomyDayCycle conservation E2E passed across kill -9 restart | ✅ economy cycle live-proven |
 | Mail | ✅ inbox, unread count, and attachment state observable | ✅ S3 send → restart → receive/take/delete decision path | ✅ server Send/read/take/delete packet paths with receive-path ownership guards; real `CSSendMailPacket` send and mailbox proximity | ✅ authenticated `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets` PASS 1/1 in 2m39s on isolated MySQL/Docker; kill-9/restart, `SlotType.Mail=5`, receiver retargeting, unread recount after registration, exact item-instance detail/grade/durability/rune/temper fidelity, copper, read transition, and delete persistence all asserted | ✅ restart-proven S3 flow; return opcode `0x0a2` STRONGLY_INFERRED pending real-client capture, COD/expiry follow-ups |
@@ -179,11 +186,14 @@ canonical interaction candidate failed for quest 270, doodad 687, interaction
 skill 11229: the real path reaches `Doodad.Use`, but the spawned fixture exposes
 no phase functions. No implementation landed; broad PB-002 remains open.
 **Soak boundary:** No six-hour dormant-timer soak exists in current evidence,
-so no soak result is claimed. A5/A5Tier3 now use per-run named
-account/character snapshots and ID-bound `finally` cleanup (`799b698ad`);
-sibling-preservation tests pass 2/2, with no broad wildcard cleanup in those
-probes. `SeedBox` has synchronous bridge calls/native `Thread.Join` without
-hard cancellation. H/human-feel remains human-only and UNKNOWN.
+so no soak result is claimed. A5/A5Tier3 use per-run named account/character
+snapshots and ID-bound `finally` cleanup (`799b698ad`); sibling-preservation
+tests pass 2/2, with no broad wildcard cleanup in those probes. Setup
+cancellation is implemented by `950cfd279`: token/timeout-aware
+`BotDriveClient.CallAsync` with compatible sync `Call`, plus cooperative
+A5Tier3 worker cancellation/deadline propagation without `Thread.Abort`.
+BotDriveClientCancellationTests pass 3/3. H/human-feel remains human-only and
+UNKNOWN.
 
 What exists today for running more bots without scaling cost linearly — all
 of it default-OFF, so unset deployments behave byte-identically to before:

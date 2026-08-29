@@ -58,20 +58,28 @@ feel.)
   `harvest`, `craft`, `buy`, `sell`, `pack_pickup`, `put_down`,
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
-- Current source/test HEAD is
-  `ded008de8d67ece8718e9235fd02503b43ceb6a1` (`origin/develop`, verified
-  exact). M6 movement guards are complete at `c4f2296c`; test-scoped singleton
-  isolation is complete at `f6ff58e86` (same source tree). The current
-  normal-clone full gate used read-only compact data: Release gate PASS,
-  compiler **0/0**, unit **2499 total / 2498 passed / 0 failed / 1 skipped**,
-  and MCP **39 tools**. The sole skip is
+- Current source/test HEAD is local `develop`
+  `0ce518ac03a18de00fff1516aa9e794e8566bee6`; M5 proposal
+  `263ecc66c474ca1c5f4b085e86ef3e47f49fd1` and M6 cancellation `950cfd279`
+  are in its ancestry. M5's `BotDecisionProposal`/`BotDecisionSelector`/
+  `BotDecisionCycle` primitive is integrated into the `LevelingLoop` accept
+  choice: immutable observed context, hard legality before preference, bounded
+  candidates, deterministic fixed-priority/personality/tie-break selection,
+  terminal postcondition, and existing `GameplayActor` dispatch. Focused
+  `BotDecisionProposalTests` pass **5/5**. This is a decision primitive plus a
+  scoped quest consumer, not universal bot autonomy; broad M5 policy remains
+  open.
+- M6 `950cfd279` adds token/timeout-aware `BotDriveClient.CallAsync` while sync
+  `Call` remains compatible, and A5Tier3 async workers share cancellation/
+  deadline propagation with cooperative stop and no `Thread.Abort`.
+  BotDriveClientCancellationTests pass **3/3**; SoakOwnershipTests pass **2/2**;
+  BotPresenceCoordinator remains **13/13**. Full gate at this checkpoint is
+  **2504 total / 2503 passed / 0 failed / 1 skipped**, compiler **0/0**, MCP
+  stdio **39 tools**. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. M6 focused evidence is
-  **105/105** and M7 focused evidence is **147/147**, no failures/skips.
-  IntegrationTests Release restore/build passed with 0 errors in this exact
-  verification. No six-hour soak exists; SeedBox cancellation remains
-  unresolved. Runtime evidence uses `E2eStack.SourceRevision` with an
-  explicit `unknown` fallback.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. No six-hour soak or M6
+  full-exit result exists; no H/UAT claim is made. Historical reports and
+  source/test SHA boundaries remain preserved.
 - PB-001 is **IMPLEMENTATION + TRACKED FIVE-TEST CONTRACT EVIDENCE**:
   source/test commits `0c57ef0c9` and `57b6e2960`; focused command/result:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
@@ -98,12 +106,15 @@ the spawned fixture exposes no phase functions. No implementation landed, and
 the broad PB-002 claim remains open.
 
 **Current soak boundary:** No six-hour dormant-timer soak exists in current
-evidence, so no soak result is claimed. A5/A5Tier3 per-run ownership
-hardening `799b698ad` snapshots named account/character rows and cleans only
-newly owned IDs in `finally`; sibling-preservation tests pass 2/2 and no broad
-wildcard cleanup remains in those probes. `SeedBox` has synchronous bridge
-calls/native `Thread.Join` without hard cancellation. Prior reports and
-staged/historical evidence are retained; H remains human-only and UNKNOWN.
+evidence, so no soak result is claimed. A5/A5Tier3 per-run ownership hardening
+`799b698ad` snapshots named account/character rows and cleans only newly owned
+IDs in `finally`; sibling-preservation tests pass 2/2 and no broad wildcard
+cleanup remains in those probes. M6 cancellation safety is now implemented by
+`950cfd279`: `BotDriveClient.CallAsync` carries token/timeout support while sync
+`Call` remains compatible, and Tier3 workers propagate cancellation/deadline
+cooperatively without `Thread.Abort`. Focused cancellation tests pass 3/3.
+Prior reports and staged/historical evidence are retained; H remains
+human-only and UNKNOWN.
 
 ## M2 loop reconciliation (2026-08-28)
 
@@ -182,43 +193,33 @@ authentic acceptance. No live M4 restart/vehicle proof was run because the
 shared E2E reset is unsafe; human/client QAT remains open. Historical
 evidence remains preserved.
 
-**M5 actor decision/action loop reconciliation (2026-08-28; source/test
-checkpoint `9ddc322feee4f06c55df9f429e8da3ed573c1b85`):** The clean ordinary
-`Character` loop is **observe current state → choose one legal objective/action
-→ execute via `IGameplayActor`/normal `Character` services → observe terminal
-state/audit → retry safely without duplicate effects**. `GameplayActor` and the
-M5 contract cover lifecycle, single-writer, failure taxonomy, timeout/stuck,
-idempotency, and audit. Focused M5 evidence is **316/316**:
-`BotGoalArbiterTests` 14/14, `GameplayActorM53CoreSurfaceTests` 13/13,
-`PlayerBotControllerAdapterTests` 5/5, `GameplayActorB1ContractLayerTests`
-17/17, and `GameplayActorTests` 30/30. `LevelingLoopScenario` is only the
-narrow autonomous 254→255 decision/pursuit slice; `BotScenarioRunner`,
-`M1M2ReplayScenario`, and `M3aM4ReplayScenario` are ordered proxy replays.
-Player loop closure is **Unknown/H or client-gated where applicable**; universal
-PlayerBot decision closure is **Unknown/Open**. The existing fixed
-Priority-first `CanActivate`/FSM scheduling is not a reusable
-candidate/score/blackboard/rationale/replan/personality policy. Preserve the
-M5.3 canonical movement caveat and formal regrade wording; H remains separate.
+**M5 actor decision/action loop reconciliation (2026-08-28; local source/test
+HEAD `0ce518ac03a18de00fff1516aa9e794e8566bee6`):** The bounded
+`BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` primitive
+(`263ecc66c474ca1c5f4b085e86ef3e47f49fd1`) is integrated into `LevelingLoop`'s
+quest-accept choice. It keeps observed context immutable, checks hard legality
+before preference, bounds candidates, selects by deterministic fixed priority/
+personality/tie-break, requires a terminal postcondition, and dispatches via
+existing `GameplayActor`. `BotDecisionProposalTests` pass **5/5**. This is a
+decision primitive plus scoped quest consumer, not universal bot autonomy;
+broad M5 policy remains open. Existing actor-contract evidence, M5.3 movement
+caveat, and H/client boundary remain unchanged.
 
 ## M6/M7 loop reconciliation (2026-08-28)
 
 **M6 player loop — source/test HEAD
-`ded008de8d67ece8718e9235fd02503b43ceb6a1`:** clean ordinary
+`0ce518ac03a18de00fff1516aa9e794e8566bee6`:** clean ordinary
 `Character`/bot dormant → proximity wake/materialize → scheduled action resumes
 → identity/inventory/position/metadata survive restart → safe dematerialization.
-Focused M6 evidence is **105/105**: BotPresenceCoordinator 13/13 (patrol and
-transfer-finalize regression), BotRoamStepExecutor 6/6, PlayerBotScheduler
+Focused M6 evidence remains **105/105**: BotPresenceCoordinator 13/13 (patrol
+and transfer-finalize regression), BotRoamStepExecutor 6/6, PlayerBotScheduler
 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13, Manager 19/19, and
-Headless provisioning 8/8. `c4f2296c` completes movement guards;
-`f6ff58e86` provides test-scoped singleton isolation. A/R harness/proxy
-evidence only; no six-hour soak exists and SeedBox cancellation remains
-unresolved. No H/UAT claim is implied.
-
-**M7 player loop — source/test HEAD
-`ded008de8d67ece8718e9235fd02503b43ceb6a1`:** ordinary
-`Character`/PlayerBot discovers/accepts a quest, navigates, chooses legal
-hostiles, casts, receives kill credit, loots, sustains/retreats, and
-completes/repeats; group variant adds party invite/follow/assist/death recovery.
+Headless provisioning 8/8. Cancellation commit `950cfd279` adds
+token/timeout-aware `BotDriveClient.CallAsync` while sync `Call` remains
+compatible; Tier3 workers share cancellation/deadline propagation and stop
+cooperatively, with no `Thread.Abort`. BotDriveClientCancellationTests 3/3 and
+SoakOwnershipTests 2/2 pass. A/R harness/proxy evidence only; no six-hour soak
+or M6 full-exit result exists, and no H/UAT claim is implied.
 Focused M7 evidence is **147/147** no-fail/no-skip: primary **36/36**
 (Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4,
 PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support
@@ -272,7 +273,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | ZONE-01 | Peace/conflict/war state transitions and PvP rules | Later | U | 2 | U | 1 | U | U | `ZoneManager`; conflict-state audit. **2026-08-24 (0482ba3f0): zone state machine data-wired + enforced** — hard-coded Conflict boot state removed → data-driven Peace default (legacy World.ConflictZonesStartAtConflict flag kept for tests); Peace-state PvP protection at the BaseUnit.CanAttack chokepoint (fail-open when no conflict entry; Hostile stays attackable). W=2 (real engine path end-to-end); A=1 rig-level state machine + enforcement tests — no live PvP scenario yet (kept honest); **2026-08-25 (mechanics/pvp-domain.md):** enforcement confirmed as exactly ONE hook inside CanAttack; missing for a real war cycle: war-declaration input (CSFactionDeclareHostile stub), runtime conflict seeding, war towers. H=UNKNOWN |
 | ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; current source/test HEAD `792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`); behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` retains the normal-clone Release gate 2496 total/2495 passed/0 failed/1 skipped, compiler 0/0, MCP stdio 39 tools, with the sole live-rig skip identified above. PB-002 focused item-use 1/1 and related scoped results above. H remains U. |
 | BOT-01 | Headless account/session/Character lifecycle | M6 | U | 0 | U | 0 | 0 | U | New fork capability |
-| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | A5/A5Tier3 per-run ownership hardening `799b698ad` scopes cleanup to named account/character IDs; sibling-preservation tests pass 2/2 with no broad wildcard cleanup in those probes. No six-hour dormant-timer soak exists in current evidence. `SeedBox` has synchronous bridge calls/native `Thread.Join` without hard cancellation. No current soak result is claimed. |
+| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | A5/A5Tier3 per-run ownership hardening `799b698ad` scopes cleanup to named account/character IDs; sibling-preservation tests pass 2/2 with no broad wildcard cleanup. No six-hour dormant-timer soak exists in current evidence. Setup cancellation is implemented by `950cfd279`: token/timeout-aware `BotDriveClient.CallAsync`, compatible sync `Call`, and cooperative A5Tier3 worker cancellation/deadline propagation without `Thread.Abort`. No current soak result is claimed. |
 | REGRADE-01 | Gear regrading: spend regrade charms/scrolls to raise equipment tier with success/downgrade odds | Later | U | U | U | U | U | U | NEW 2026-08-25 (generated/mechanic-inventory-2026-08-25.md §3#1): item_grades/_grade_buffs/_enchanting_supports/_distributions + equip_slot_enchanting_costs tables; SCGradeEnchantResult/Broadcast G2C confirmations; GradeEnchant refs in ItemManager. Own dossier pending |
 | SOCKET-01 | Gem socketing: insert lunastones/lunagems into gear sockets with per-grade chance/level limits | Later | U | U | U | U | U | U | NEW 2026-08-25 (census §3#2): item_sockets/_chances/_level_limits/_num_limits + item_enchanting_gems; SCItemSocketingLunastone/LunagemResult packets. Own dossier pending |
 | GLIDER-01 | Glider flight: deploy/hang/unhang gliders (incl. costume wings-as-glider) for controlled aerial traversal | M7+ | U | U | U | U | U | U | NEW 2026-08-25 (census §3#3): CSHang/UnhangPacket, flying_state_change_effects; glider traces in ItemDetailType/BackpackType/UnitRequirementsGameData; no dedicated manager. Own dossier pending |

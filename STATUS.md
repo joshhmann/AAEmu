@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-28 · source/test checkpoint and runtime-provenance reconciliation; prior:
+Updated: 2026-08-28 · local source/test checkpoint reconciliation; prior:
 2026-08-27
 (PB-007 live closure + PB-002 item-use evidence; prior:
 2026-08-26
@@ -9,24 +9,26 @@ MET with live evidence; PB-002 quest-discovery primitive and item-use slice
 landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; current source/test HEAD is
-`ded008de8d67ece8718e9235fd02503b43ceb6a1` (`origin/develop`, verified exact).
-M6 movement guards are complete at `c4f2296c`; test-scoped singleton isolation
-is complete at `f6ff58e86` (same source tree as this checkpoint). The current
-normal-clone full gate used read-only compact data: Release gate PASS, compiler
-0/0, unit **2499 total / 2498 passed / 0 failed / 1 skipped**, and MCP **39
-tools**. The sole skip is
+Branch of record: develop; current local source/test HEAD is
+`0ce518ac03a18de00fff1516aa9e794e8566bee6`. M5's
+`BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
+primitive is integrated into the `LevelingLoop` accept choice at
+`263ecc66c474ca1c5f4b085e86ef3e47f49fd1`; its focused contract is 5/5 and it
+enforces immutable observed context, hard legality before preference, bounded
+candidates, deterministic fixed-priority/personality/tie-break selection, and a
+terminal postcondition before existing `GameplayActor` dispatch. This is a
+scoped quest consumer, not universal bot autonomy; broad M5 policy remains open.
+M6 cancellation commit `950cfd279` adds `BotDriveClient.CallAsync` token/timeout
+support while preserving sync `Call`; A5 and A5Tier3 seed bridge calls are
+async, and Tier3 workers share cooperative cancellation/deadline propagation
+with no `Thread.Abort`. BotDriveClientCancellationTests 3/3, SoakOwnershipTests 2/2,
+BotPresenceCoordinator 13/13 pass. Full gate: **2504 total / 2503 passed /
+0 failed / 1 skipped**, compiler **0/0**, MCP **39 tools**; the skip is
 `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. M6 focused evidence is
-**105/105**: BotPresenceCoordinator 13/13 (including patrol and
-transfer-finalize regression), BotRoamStepExecutor 6/6, PlayerBotScheduler
-26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13, Manager 19/19, and
-Headless provisioning 8/8. M7 focused evidence is **147/147** with no
-failures/skips: primary 36/36 and actor support 111/111. IntegrationTests
-restore/build passed with 0 errors in this exact verification; no six-hour soak
-exists and SeedBox cancellation remains unresolved. Runtime provenance uses
-`E2eStack.SourceRevision` with an explicit `unknown` fallback. Historical
-reports and prior evidence below are preserved.
+`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The full-gate verification
+carried 8 known NU1903 warnings; no forced-rebuild warning total is inferred.
+No six-hour soak or M6 full exit exists; no H/UAT claim is made. Historical
+reports and prior evidence below remain preserved.
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
@@ -94,19 +96,21 @@ discovery 12/12, talk 5/5, and template registration 1/1. Parser tests
 passed 2/2. These are the current 792 gate counts; no different full-gate
 result is claimed.
 ## Current provenance and soak boundaries (2026-08-28)
-
 - Runtime evidence records `E2eStack.SourceRevision` from `git rev-parse HEAD`
   and reports `unknown` when the checkout/archive cannot resolve a revision.
-  A5 and A5Tier3 now use that value rather than stale hardcoded revisions.
-- No six-hour dormant-timer soak exists in the current evidence. The staged
+  A5 and A5Tier3 use that value rather than stale hardcoded revisions.
+- No six-hour dormant-timer soak exists in current evidence. The staged
   30-minute scheduler run and older six-hour reports remain historical
   evidence; neither is a current six-hour dormant-timer soak result.
-- A5/A5Tier3 now use per-run named account/character snapshots and ID-bound
-  cleanup in `finally` (`799b698ad`); sibling-preservation tests pass 2/2 and
-  those probes contain no broad wildcard cleanup. Other broad bot cleanup
-  patterns remain unsafe to generalize.
-- `SeedBox` still contains synchronous bridge calls/native `Thread.Join`
-  without hard cancellation. This remains a blocker, not a soak result.
+- A5/A5Tier3 use per-run named account/character snapshots and ID-bound cleanup
+  in `finally` (`799b698ad`); sibling-preservation tests pass 2/2 and those
+  probes contain no broad wildcard cleanup.
+- M6 cancellation commit `950cfd279` changes `BotDriveClient` to expose a
+  token/timeout-aware `CallAsync` while sync `Call` remains compatible. Tier3
+  seeding uses async workers with shared cancellation/deadline propagation and
+  cooperative stop; no `Thread.Abort` is used. Focused
+  `BotDriveClientCancellationTests` pass 3/3, and `BotPresenceCoordinator`
+  remains 13/13. This changes setup cancellation safety, not soak status.
 - Human/H boundaries remain intact: bot, rig, MCP, and live-stack evidence is
   functional/proxy evidence; H/human-feel acceptance remains Josh-owned.
 
