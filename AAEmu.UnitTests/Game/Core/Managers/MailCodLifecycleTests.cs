@@ -229,6 +229,45 @@ public sealed class MailCodLifecycleTests
     }
 
     [Test]
+    public async Task GetAttached_MultiItem_EmitsOneAttachmentTakenPacketPerItem()
+    {
+        var item1 = CreateItem(AttachedItemId1, AttachedItemTemplateId1, _receiver.Id, 1);
+        var item2 = CreateItem(AttachedItemId2, AttachedItemTemplateId2, _receiver.Id, 1);
+
+        var mail = new BaseMail
+        {
+            Id = MultiItemMailId,
+            Title = "multi-item",
+            ReceiverName = _receiver.Name,
+            MailType = MailType.Normal,
+            Header =
+            {
+                Status = MailStatus.Read,
+                SenderId = _sender.Id,
+                SenderName = _sender.Name,
+                ReceiverId = _receiver.Id,
+                Attachments = 2
+            },
+            Body =
+            {
+                Text = "body",
+                Attachments = [item1, item2],
+                RecvDate = DateTime.UtcNow
+            }
+        };
+        _mailManager._allPlayerMails[MultiItemMailId] = mail;
+
+        var success = _receiver.Mails.GetAttached(MultiItemMailId, takeMoney: true, takeItems: true, takeAllSelected: true);
+
+        await Assert.That(success).IsTrue();
+        await Assert.That(mail.Body.Attachments).HasCount().EqualTo(0);
+        // ZeromusXYZ split: one SCAttachmentTakenPacket per delivered item —
+        // a single batched packet silently caps at 10 items on the wire and
+        // breaks full-bag/manual-grab delivery.
+        await Assert.That(CountOpcode(ReceiverFrames, SCOffsets.SCAttachmentTakenPacket)).IsEqualTo(2);
+    }
+
+    [Test]
     public async Task DeleteMail_SentTab_SenderOwns_EmitsDeletedPacket()
     {
         var sentMail = new BaseMail
@@ -352,6 +391,19 @@ public sealed class MailCodLifecycleTests
                 return true;
         }
         return false;
+    }
+
+    private static int CountOpcode(List<byte[]> frames, ushort expectedOpcode)
+    {
+        var count = 0;
+        foreach (var frame in frames)
+        {
+            var level = frame[3];
+            var opcodeOffset = level == 1 ? 6 : 4;
+            if (BitConverter.ToUInt16(frame, opcodeOffset) == expectedOpcode)
+                count++;
+        }
+        return count;
     }
 
     private sealed class CountingMailIdManager : IMailIdManager

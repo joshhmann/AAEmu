@@ -303,8 +303,21 @@ public class CharacterMails
             // Items
             if (itemSlotList.Count > 0)
             {
-                Self.SendPacket(new SCAttachmentTakenPacket(mailId, false, false, takeAllSelected, itemSlotList));
-                thisMail.IsDirty = true;
+                /*
+                 * ZeromusXYZ:
+                 * Splitting this packet up to be sent one by one fixes delivery issue in cases where not everything is delivered at once,
+                 * like full bag, manual item grabbing.
+                 * It's kind of silly, but I don't have a better solution for it
+                */
+                foreach (var iSlot in itemSlotList)
+                {
+                    var dummyItemSlotList = new List<ItemIdAndLocation>
+                    {
+                        iSlot
+                    };
+                    Self.SendPacket(new SCAttachmentTakenPacket(mailId, false, false, takeAllSelected, dummyItemSlotList));
+                    thisMail.IsDirty = true;
+                }
             }
 
             // Mark mail as read in case we took at least one item from it

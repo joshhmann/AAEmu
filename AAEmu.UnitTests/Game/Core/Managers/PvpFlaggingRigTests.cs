@@ -342,10 +342,10 @@ public class PvpFlaggingRigTests
         AppConfiguration.Instance.World ??= new WorldConfig();
         AppConfiguration.Instance.World.PvpHonorRate = 1.0;
 
-        // Custom 2-kills-per-stage threshold
+        // Cumulative 1-kill-per-stage escalation thresholds: [1, 2, 3, 4, 5]
         var conflict = new TestableZoneConflict();
         for (var i = 0; i < 5; i++)
-            conflict.NumKills[i] = 2;
+            conflict.NumKills[i] = i + 1;
         conflict.ForceState(ZoneConflictType.Tension);
 
         using var zoneSwap = SeedConflictZone(conflict);
@@ -357,49 +357,32 @@ public class PvpFlaggingRigTests
         SetZone(victim, TestZoneKey);
         victim.Character.HonorPoint = 50;
 
-        // Stage 1: 2 kills escalate Tension -> Danger
+        // Stage 1: Kill 1 -> KillCount=1 <= 1 (Tension), Kill 2 -> KillCount=2 > 1 (Danger)
         Kill(victim, killer);
         await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Tension);
         await Assert.That(killer.Character.HonorPoint).IsEqualTo(0);
 
-        victim.Character.IsDead = false;
         victim.Character.Hp = victim.Character.MaxHp;
         Kill(victim, killer);
         await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Danger);
         await Assert.That(killer.Character.HonorPoint).IsEqualTo(0);
 
-        // Stage 2: 2 kills escalate Danger -> Dispute
-        victim.Character.IsDead = false;
-        victim.Character.Hp = victim.Character.MaxHp;
-        Kill(victim, killer);
-        victim.Character.IsDead = false;
+        // Stage 2: Kill 3 -> KillCount=3 > 2 (Dispute)
         victim.Character.Hp = victim.Character.MaxHp;
         Kill(victim, killer);
         await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Dispute);
 
-        // Stage 3: 2 kills escalate Dispute -> Unrest
-        victim.Character.IsDead = false;
-        victim.Character.Hp = victim.Character.MaxHp;
-        Kill(victim, killer);
-        victim.Character.IsDead = false;
+        // Stage 3: Kill 4 -> KillCount=4 > 3 (Unrest)
         victim.Character.Hp = victim.Character.MaxHp;
         Kill(victim, killer);
         await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Unrest);
 
-        // Stage 4: 2 kills escalate Unrest -> Crisis
-        victim.Character.IsDead = false;
-        victim.Character.Hp = victim.Character.MaxHp;
-        Kill(victim, killer);
-        victim.Character.IsDead = false;
+        // Stage 4: Kill 5 -> KillCount=5 > 4 (Crisis)
         victim.Character.Hp = victim.Character.MaxHp;
         Kill(victim, killer);
         await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Crisis);
 
-        // Stage 5: 2 kills escalate Crisis -> Conflict
-        victim.Character.IsDead = false;
-        victim.Character.Hp = victim.Character.MaxHp;
-        Kill(victim, killer);
-        victim.Character.IsDead = false;
+        // Stage 5: Kill 6 -> KillCount=6 > 5 (Conflict)
         victim.Character.Hp = victim.Character.MaxHp;
         Kill(victim, killer);
         await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Conflict);
@@ -408,7 +391,6 @@ public class PvpFlaggingRigTests
 
         // Advance to War
         conflict.ForceState(ZoneConflictType.War);
-        victim.Character.IsDead = false;
         victim.Character.Hp = victim.Character.MaxHp;
         Kill(victim, killer);
 
@@ -419,7 +401,7 @@ public class PvpFlaggingRigTests
 
         // Advance to Peace
         conflict.ForceState(ZoneConflictType.Peace);
-        victim.Character.IsDead = false;
+        victim.Character.DiedInPvpWarZone = false;
         victim.Character.Hp = victim.Character.MaxHp;
         Kill(victim, killer);
 
@@ -433,6 +415,16 @@ public class PvpFlaggingRigTests
     {
         AppConfiguration.Instance.World ??= new WorldConfig();
         AppConfiguration.Instance.World.PvpHonorRate = 1.0;
+
+        GameplayActorTestRig.SeedBuffTemplate(9801);
+        GameplayActorTestRig.SeedBuffTemplate(9802);
+        var ccTemplate = new BuffTemplate { Id = 9801, Kind = BuffKind.Bad, Stun = true };
+        var nonCcTemplate = new BuffTemplate { Id = 9802, Kind = BuffKind.Bad };
+        var buffDict = (Dictionary<uint, BuffTemplate>)typeof(SkillManager)
+            .GetField("_buffs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(SkillManager.Instance)!;
+        buffDict[9801] = ccTemplate;
+        buffDict[9802] = nonCcTemplate;
 
         using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.War));
         var (killer, victim, session) = CreatePair("pvp-multi-assist");
@@ -487,12 +479,10 @@ public class PvpFlaggingRigTests
         });
 
         // Set up CC debuff on victim
-        var ccTemplate = new BuffTemplate { Id = 9801, Kind = BuffKind.Bad, Stun = true };
         var ccBuff = new Buff(victim.Character, ccAssist.Character, new SkillCasterUnit(ccAssist.Character.ObjId), ccTemplate, null, DateTime.UtcNow);
         victim.Character.Buffs.AddBuff(ccBuff);
 
         // Set up non-CC debuff on victim
-        var nonCcTemplate = new BuffTemplate { Id = 9802, Kind = BuffKind.Bad };
         var nonCcBuff = new Buff(victim.Character, nonCcAssist.Character, new SkillCasterUnit(nonCcAssist.Character.ObjId), nonCcTemplate, null, DateTime.UtcNow);
         victim.Character.Buffs.AddBuff(nonCcBuff);
 
@@ -555,6 +545,7 @@ public class PvpFlaggingRigTests
     [Test]
     public async Task DoDie_ConsecutiveDeaths_EscalatesRespawnWaitTimeAndResetsAfterInterval()
     {
+        using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.Peace));
         var (killer, victim, session) = CreatePair("pvp-respawn");
         _ = session;
         _ = killer;
@@ -564,28 +555,24 @@ public class PvpFlaggingRigTests
         await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(15000);
 
         // 2nd death: 30s (30000 ms)
-        victim.Character.IsDead = false;
         victim.Character.Hp = victim.Character.MaxHp;
         victim.Character.DoDie(null, KillReason.Damage);
         await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(30000);
 
-        // 3rd death: 45s (45000 ms)
-        victim.Character.IsDead = false;
-        victim.Character.Hp = victim.Character.MaxHp;
-        victim.Character.DoDie(null, KillReason.Damage);
-        await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(45000);
-
-        // 4th death: 60s (60000 ms)
-        victim.Character.IsDead = false;
+        // 3rd death: 60s (60000 ms)
         victim.Character.Hp = victim.Character.MaxHp;
         victim.Character.DoDie(null, KillReason.Damage);
         await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(60000);
+
+        // 4th death: 90s (90000 ms)
+        victim.Character.Hp = victim.Character.MaxHp;
+        victim.Character.DoDie(null, KillReason.Damage);
+        await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(90000);
 
         // Simulate 6 minutes passing without dying
         SetField(victim.Character, "_lastDeathTime", DateTime.UtcNow.AddMinutes(-6));
 
         // 5th death: counter reset -> back to 15s (15000 ms)
-        victim.Character.IsDead = false;
         victim.Character.Hp = victim.Character.MaxHp;
         victim.Character.DoDie(null, KillReason.Damage);
         await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(15000);
