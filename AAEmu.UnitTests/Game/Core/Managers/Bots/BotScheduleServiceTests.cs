@@ -8,6 +8,7 @@ using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items.Containers;
+using AAEmu.Game.Models.Game.Units;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -241,6 +242,49 @@ public class BotScheduleServiceTests
 
         await Assert.That(rig.Service.TransitionCount).IsEqualTo(1); // logged/applied ONCE
         await Assert.That(rig.Behavior.Moves.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task SchedulePhaseModule_DefersToAuthoritativeService()
+    {
+        var rig = CreateRig(hour: 23f);
+        const uint botId = 3009;
+        var character = new Character(new UnitCustomModelParams())
+        {
+            Id = botId,
+            Name = "schedule-owner",
+            MaxHp = 100,
+            Hp = 100
+        };
+        var runtime = new PlayerBotRuntime(character, "schedule-rig")
+        {
+            State = PlayerBotState.Active
+        };
+        rig.Manager.Active.Add(runtime);
+        rig.Metadata[botId] = PlayerBotMetadata.Empty(botId) with
+        {
+            HasHome = true,
+            HomeX = 10f,
+            HomeY = 20f,
+            HomeZ = 30f
+        };
+
+        var module = new SchedulePhaseActivityModule(
+            rig.Service.Options,
+            rig.Behavior,
+            gameHourProvider: () => rig.Hour,
+            metadataProvider: id => rig.Metadata[id],
+            scheduleWriter: (id, json) => rig.Metadata[id] = rig.Metadata[id] with { Schedule = json },
+            authoritativeScheduleService: rig.Service);
+
+        var decision = module.CanActivate(new BotActivityContext { Bot = runtime, GameHour = rig.Hour });
+        await Assert.That(decision.CanActivate).IsFalse();
+        await Assert.That(decision.WhyNot).Contains("BotScheduleService owns");
+
+        rig.Service.RunTick();
+
+        await Assert.That(rig.Behavior.Moves.Count).IsEqualTo(1);
+        await Assert.That(rig.Service.TransitionCount).IsEqualTo(1);
     }
 
     [Test]

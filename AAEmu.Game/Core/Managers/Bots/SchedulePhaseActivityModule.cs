@@ -51,6 +51,7 @@ public sealed class SchedulePhaseActivityModule : IBotActivityModule
     private readonly Func<float> _gameHourProvider;
     private readonly Func<uint, PlayerBotMetadata> _metadataProvider;
     private readonly Action<uint, string> _scheduleWriter;
+    private readonly BotScheduleService? _authoritativeScheduleService;
 
     public string Name => "Schedules";
     public int Priority { get; } = 100;
@@ -60,13 +61,15 @@ public sealed class SchedulePhaseActivityModule : IBotActivityModule
         IBotScheduleBehavior behavior,
         Func<float>? gameHourProvider = null,
         Func<uint, PlayerBotMetadata>? metadataProvider = null,
-        Action<uint, string>? scheduleWriter = null)
+        Action<uint, string>? scheduleWriter = null,
+        BotScheduleService? authoritativeScheduleService = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _behavior = behavior ?? throw new ArgumentNullException(nameof(behavior));
         _gameHourProvider = gameHourProvider ?? BotActivityGameClock.Hour;
         _metadataProvider = metadataProvider ?? DefaultMetadataProvider;
         _scheduleWriter = scheduleWriter ?? DefaultScheduleWriter;
+        _authoritativeScheduleService = authoritativeScheduleService;
     }
 
     /// <inheritdoc />
@@ -76,6 +79,13 @@ public sealed class SchedulePhaseActivityModule : IBotActivityModule
 
         if (!_options.Enabled)
             return BotActivityDecision.Deny("schedules disabled (Bots.EnableSchedules off)");
+
+        // BotScheduleService is the authoritative production owner of
+        // phase resolution/persistence when schedules are enabled. The
+        // arbiter module remains available to isolated rigs, but must not
+        // apply the same phase on a second path in production.
+        if (_authoritativeScheduleService?.Options.Enabled == true)
+            return BotActivityDecision.Deny("BotScheduleService owns schedule phases");
 
         if (context.Bot.Character.IsInBattle)
             return BotActivityDecision.Deny("bot in battle");

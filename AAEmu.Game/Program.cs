@@ -276,7 +276,11 @@ public static class Program
                 services.AddSingleton(_ => BotScheduleOptions.FromEnvironment());
                 services.AddSingleton<RoamRouteScheduleBehavior>();
                 services.AddSingleton<IBotScheduleBehavior>(sp => sp.GetRequiredService<RoamRouteScheduleBehavior>());
-                services.AddSingleton<IBotActivityModule, SchedulePhaseActivityModule>();
+                services.AddSingleton<IBotActivityModule>(sp =>
+                    new SchedulePhaseActivityModule(
+                        sp.GetRequiredService<BotScheduleOptions>(),
+                        sp.GetRequiredService<IBotScheduleBehavior>(),
+                        authoritativeScheduleService: sp.GetRequiredService<BotScheduleService>()));
                 services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
                 services.AddSingleton<IBotActivityModule, IdleActivityModule>();
                 services.AddSingleton<BotGoalArbiter>();
