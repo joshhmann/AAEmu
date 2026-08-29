@@ -445,13 +445,16 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
         foreach (var attachment in mail.Body.Attachments)
             attachment.OwnerId = originalSenderId;
 
-        // Reuse the normal send path to re-register and notify the original sender if online
-        mail.Header.Attachments = mail.GetTotalAttachmentCount();
-        mail.IsDirty = true;
-        if (!Send(mail))
+        // COD settlement (G3): a returned Charged mail must not re-levy the
+        // COD charge on the original sender — clear the charge and refund it
+        // through the established [COD] payment-mail pattern
+        // (CharacterMails.GetAttached).
+        if (mail.MailType == MailType.Charged && mail.Header.Extra > 0)
         {
-            Logger.Error("BounceMailToOriginalSender() - Failed to re-send mailId {0} back to {1} ({2})", mail.Id, resolvedSenderName, originalSenderId);
-            return false;
+            var codCharge = mail.Header.Extra;
+            mail.Header.Extra = 0;
+            mail.IsDirty = true;
+            SendCodRefundMail(originalSenderId, resolvedSenderName, mail.Title, codCharge);
         }
 
         Logger.Info("MailId {0} returned from {1} ({2}) back to original sender {3} ({4}) with {5} attachment(s) intact",
@@ -480,10 +483,15 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
             return;
         }
 
-        if (unclaimedAttachments > 0)
-            Logger.Warn(
-                "Expiry: mailId {0} ({1}) expired without being claimed, destroying {2} unclaimed attachment(s) (item(s): {3}, copper coins: {4}, billing: {5})",
-                mail.Id, receiverName, unclaimedAttachments, mail.Body.Attachments.Count, mail.Body.CopperCoins, mail.Body.BillingAmount);
+        // COD settlement (G3): a Charged mail that cannot bounce (system mail
+        // or already-returned) destroys its attachments — refund the COD
+        // charge to the sender before destruction.
+        if (mail.MailType == MailType.Charged && mail.Header.Extra > 0 && mail.Header.SenderId > 0)
+        {
+            SendCodRefundMail(mail.Header.SenderId, mail.Header.SenderName, mail.Title, mail.Header.Extra);
+            mail.Header.Extra = 0;
+            mail.IsDirty = true;
+        }
 
         NotifyDeleteMailByNameIfOnline(mail, receiverName);
         DeleteMail(mail, trashItems: true);
@@ -713,5 +721,42 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
         }
 
         return resultList;
+    }
+
+    /// <summary>
+    /// COD settlement (G3): refunds a Charged mail's COD charge (Header.Extra)
+    /// to the original sender through the established [COD] payment-mail
+    /// pattern (CharacterMails.GetAttached) — the sender may be offline, and
+    /// the mail carries the audit trail. The refund is a Normal mail from
+    /// ".system" with the charge as CopperCoins.
+    /// </summary>
+    private void SendCodRefundMail(uint receiverId, string receiverName, string sourceTitle, long charge)
+    {
+        if (charge <= 0 || receiverId == 0)
+            return;
+
+        var refundMail = new BaseMail
+        {
+            Title = $"[COD] {sourceTitle}",
+            ReceiverName = receiverName,
+            MailType = MailType.Normal,
+            Header =
+            {
+                Status = MailStatus.Unread,
+                SenderId = 0,
+                SenderName = ".system",
+                ReceiverId = receiverId,
+                Attachments = 1
+            },
+            Body =
+            {
+                Text = "COD refund",
+                CopperCoins = (int)charge,
+                SendDate = DateTime.UtcNow,
+                RecvDate = DateTime.UtcNow
+            }
+        };
+
+        Send(refundMail);
     }
 }
