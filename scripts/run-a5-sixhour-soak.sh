@@ -133,7 +133,30 @@ on_interrupt() {
     exit 130
 }
 trap on_interrupt INT TERM
-trap 'rc=$?; if [ "$interrupted" -eq 0 ]; then echo; echo "== soak finished (exit $rc)"; echo "   report: $REPORT_PATH"; if [ -f "$REPORT_PATH" ]; then if command -v python3 >/dev/null 2>&1; then python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print('   passed:', d.get('passed')); print('   sixHourDormantTimersLeg:', d.get('sixHourDormantTimersLeg'))" "$REPORT_PATH" 2>/dev/null || echo "   (could not parse report)"; elif command -v jq >/dev/null 2>&1; then echo "   passed: $(jq -r '.passed' "$REPORT_PATH" 2>/dev/null)"; echo "   sixHourDormantTimersLeg: $(jq -r '.sixHourDormantTimersLeg' "$REPORT_PATH" 2>/dev/null)"; else echo "   passed: $(grep -o '"passed"[^,]*' "$REPORT_PATH" | head -1)"; echo "   sixHourDormantTimersLeg: $(grep -o '"sixHourDormantTimersLeg"[^,]*' "$REPORT_PATH" | head -1)"; fi; else echo "   (no report written)"; fi; echo "   log: $LOG_PATH"; fi; exit "$rc"' EXIT
+on_exit() {
+    local rc=$?
+    if [ "$interrupted" -eq 0 ]; then
+        echo
+        echo "== soak finished (exit $rc)"
+        echo "   report: $REPORT_PATH"
+        if [ -f "$REPORT_PATH" ]; then
+            if command -v python3 >/dev/null 2>&1; then
+                python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print('   passed:', d.get('passed')); print('   sixHourDormantTimersLeg:', d.get('sixHourDormantTimersLeg'))" "$REPORT_PATH" 2>/dev/null || echo "   (could not parse report)"
+            elif command -v jq >/dev/null 2>&1; then
+                echo "   passed: $(jq -r '.passed' "$REPORT_PATH" 2>/dev/null)"
+                echo "   sixHourDormantTimersLeg: $(jq -r '.sixHourDormantTimersLeg' "$REPORT_PATH" 2>/dev/null)"
+            else
+                echo "   passed: $(grep -o '"passed"[^,]*' "$REPORT_PATH" | head -1)"
+                echo "   sixHourDormantTimersLeg: $(grep -o '"sixHourDormantTimersLeg"[^,]*' "$REPORT_PATH" | head -1)"
+            fi
+        else
+            echo "   (no report written)"
+        fi
+        echo "   log: $LOG_PATH"
+    fi
+    exit "$rc"
+}
+trap on_exit EXIT
 
 # --- Run --------------------------------------------------------------------
 echo "== starting soak (this runs ~6 hours)"
