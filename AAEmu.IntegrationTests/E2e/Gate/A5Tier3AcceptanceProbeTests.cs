@@ -211,6 +211,296 @@ public class A5Tier3AcceptanceProbeTests
             }
         }
     }
+    private sealed record DormantTimerSample(
+        DateTime At, long UptimeMs, double RssMb, int Embodied, long DormantSpecs,
+        long Materializations, long Dematerializations,
+        double TickP95Ms, double TickMaxMs, double RegionMs,
+        long DueQueueDepth, long EventQueueDepth, long InFlight,
+        long SchedulerFailures, long SaveSampleCount, double SaveP95Ms,
+        double SaveMaxMs, long SaveSkips, long DbWrites);
+
+    private sealed record DormantTimerResult(
+        TimeSpan Window, long InitialDbWrites, long FinalDbWrites,
+        IReadOnlyList<DormantTimerSample> Samples, IReadOnlyList<string> Failures);
+
+    private const double DormantTickP95BudgetMs = 100;
+    private const double DormantTickMaxBudgetMs = 250;
+    private const double DormantRegionBudgetMs = 200;
+    private const double DormantSaveP95BudgetMs = 4000;
+    private const double DormantSaveMaxBudgetMs = 10000;
+    private const double DormantRssGrowthBudgetMb = 512;
+    private const double DormantDbWritesBudgetPerMin = 500;
+
+    /// <summary>
+    /// Optional natural-home dormant timer soak. This is deliberately skipped
+    /// unless the operator opts in and supplies the duration; ordinary gate
+    /// runs never wait for this six-hour stage.
+    /// </summary>
+    [Fact]
+    public async Task Probe_A5Tier3DormantTimers_SixHour()
+    {
+        if (Environment.GetEnvironmentVariable("A5_TIER3_SIX_HOUR") != "1")
+        {
+            Assert.Skip("A5_TIER3_SIX_HOUR=1 is required for the six-hour dormant timer stage.");
+            return;
+        }
+
+        var windowMinutes = ReadRequiredPositiveInt("A5_TIER3_SIX_HOUR_MINUTES");
+        if (windowMinutes < 360)
+            throw new ArgumentOutOfRangeException(nameof(windowMinutes),
+                "A5_TIER3_SIX_HOUR_MINUTES must be at least 360 for the six-hour stage.");
+        var sampleSeconds = ReadRequiredPositiveInt("A5_TIER3_SIX_HOUR_SAMPLE_SECONDS");
+        if (sampleSeconds > 300)
+            throw new ArgumentOutOfRangeException(nameof(sampleSeconds),
+                "A5_TIER3_SIX_HOUR_SAMPLE_SECONDS must be at most 300.");
+        var dormantTarget = ReadRequiredPositiveInt("A5_DORMANT_COUNT");
+        var ownedNames = BuildOwnershipNames(dormantTarget, 0);
+        E2eStack.EnsureUp();
+        var ownershipBefore = E2eStack.SnapshotOwnedRows(ownedNames);
+        const float homeX = 15578.042f, homeY = 15382.122f, homeZ = 126.484f;
+
+        try
+        {
+            ClearFeatureEnv();
+            using (var seedDeadline = CancellationTokenSource.CreateLinkedTokenSource(
+                       TestContext.Current.CancellationToken))
+            {
+                seedDeadline.CancelAfter(SeedBox);
+                await SeedDormant(homeX, homeY, homeZ, 0, dormantTarget, seedDeadline.Token);
+            }
+
+            var seededCount = CountManagedCharacters();
+            Assert.True(seededCount >= dormantTarget * 0.95,
+                $"seed produced only {seededCount}/{dormantTarget} discoverable managed characters");
+
+            Environment.SetEnvironmentVariable("AAEMU_BOT_TRUE_DORMANCY", "1");
+            Environment.SetEnvironmentVariable("AAEMU_BOT_PROXIMITY_FIDELITY", "1");
+            E2eStack.RestartGameServer();
+            WaitBoot();
+            WaitDormantDiscovered(seededCount);
+
+            var result = await RunDormantTimerSoakAsync(
+                seededCount, TimeSpan.FromMinutes(windowMinutes),
+                TimeSpan.FromSeconds(sampleSeconds), TestContext.Current.CancellationToken);
+            WriteDormantTimerReport(windowMinutes, sampleSeconds, dormantTarget, seededCount, result);
+            Assert.Empty(result.Failures);
+        }
+        finally
+        {
+            try
+            {
+                var ownershipAfter = E2eStack.SnapshotOwnedRows(ownedNames);
+                var ownedRows = E2eStack.FindNewOwnedRows(ownershipBefore, ownershipAfter);
+                E2eStack.CleanupOwnedRows(ownedRows);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[a5t3-sixhour] ownership cleanup skipped: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+    }
+
+    private static int ReadRequiredPositiveInt(string variable)
+    {
+        var raw = Environment.GetEnvironmentVariable(variable);
+        if (!int.TryParse(raw, out var value) || value <= 0)
+            throw new InvalidOperationException($"{variable} must be set to a positive integer.");
+        return value;
+    }
+
+    private static async Task<DormantTimerResult> RunDormantTimerSoakAsync(
+        int seededCount, TimeSpan window, TimeSpan sampleInterval, CancellationToken cancellationToken)
+    {
+        var samples = new List<DormantTimerSample>();
+        var failures = new List<string>();
+        var started = Stopwatch.StartNew();
+        var initialDbWrites = ReadDbWriteCounters();
+        if (initialDbWrites < 0)
+            AddFailure(failures, "initial DB write counters unavailable");
+        var baselineRss = ReadRssMb();
+        long? previousUptime = null;
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(window + TimeSpan.FromMinutes(5));
+
+        while (started.Elapsed < window)
+        {
+            deadline.Token.ThrowIfCancellationRequested();
+            try
+            {
+                var metrics = await MetricsAsync(deadline.Token);
+                var sample = ReadDormantTimerSample(metrics, ReadDbWriteCounters());
+                samples.Add(sample);
+                ValidateDormantTimerSample(sample, seededCount, baselineRss, previousUptime, failures);
+                previousUptime = sample.UptimeMs;
+            }
+            catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                AddFailure(failures, $"metrics/recovery sample failed: {ex.GetType().Name}: {ex.Message}");
+            }
+
+            var remaining = window - started.Elapsed;
+            if (remaining <= TimeSpan.Zero)
+                break;
+            await Task.Delay(remaining < sampleInterval ? remaining : sampleInterval, deadline.Token);
+        }
+
+        if (samples.Count == 0)
+            AddFailure(failures, "no six-hour metrics samples collected");
+
+        started.Stop();
+        var finalDbWrites = ReadDbWriteCounters();
+        if (finalDbWrites < 0)
+            AddFailure(failures, "final DB write counters unavailable");
+        var dbWritesPerMinute = started.Elapsed.TotalMinutes > 0
+            ? Math.Max(0, finalDbWrites - initialDbWrites) / started.Elapsed.TotalMinutes
+            : double.PositiveInfinity;
+        if (dbWritesPerMinute > DormantDbWritesBudgetPerMin)
+            AddFailure(failures, $"DB writes exceeded dormant budget: {dbWritesPerMinute:F1}/min > {DormantDbWritesBudgetPerMin:F0}/min");
+        return new DormantTimerResult(started.Elapsed, initialDbWrites, finalDbWrites, samples, failures);
+    }
+
+    private static async Task<JsonElement> MetricsAsync(CancellationToken cancellationToken)
+    {
+        using var bridge = new BotDriveClient(E2eStack.BridgePort);
+        return await bridge.CallAsync("{\"cmd\":\"metrics\"}", 15000, cancellationToken);
+    }
+
+    private static DormantTimerSample ReadDormantTimerSample(JsonElement metrics, long dbWrites)
+    {
+        var population = metrics.GetProperty("population");
+        var dormancy = population.GetProperty("dormancy");
+        var tick = metrics.GetProperty("tick");
+        var region = metrics.GetProperty("regionTick");
+        var scheduler = metrics.GetProperty("scheduler");
+        var save = metrics.GetProperty("save");
+        return new DormantTimerSample(
+            DateTime.UtcNow,
+            metrics.GetProperty("uptimeMs").GetInt64(),
+            ReadRssMb(),
+            population.GetProperty("embodied").GetInt32(),
+            dormancy.GetProperty("dormantSpecs").GetInt64(),
+            dormancy.GetProperty("totalMaterializations").GetInt64(),
+            dormancy.GetProperty("totalDematerializations").GetInt64(),
+            tick.GetProperty("invokeP95Ms").GetDouble(),
+            tick.GetProperty("invokeMaxMs").GetDouble(),
+            region.GetProperty("elapsedMs").GetDouble(),
+            scheduler.GetProperty("dueQueueDepth").GetInt64(),
+            scheduler.GetProperty("eventQueueDepth").GetInt64(),
+            scheduler.GetProperty("inFlight").GetInt64(),
+            scheduler.GetProperty("totalStepsFailed").GetInt64(),
+            save.GetProperty("sampleCount").GetInt64(),
+            save.GetProperty("p95Ms").GetDouble(),
+            save.GetProperty("maxMs").GetDouble(),
+            save.GetProperty("skipCount").GetInt64(),
+            dbWrites);
+    }
+
+    private static void ValidateDormantTimerSample(
+        DormantTimerSample sample, int seededCount, double baselineRss,
+        long? previousUptime, List<string> failures)
+    {
+        if (sample.DbWrites < 0)
+            AddFailure(failures, "DB write counters unavailable");
+        if (sample.Embodied != 0)
+            AddFailure(failures, $"embodied population is {sample.Embodied}, expected 0 without a human");
+        if (sample.DormantSpecs < seededCount)
+            AddFailure(failures, $"dormant specs fell to {sample.DormantSpecs}/{seededCount}");
+        if (sample.Materializations != 0 || sample.Dematerializations != 0)
+            AddFailure(failures, $"unexpected materialization counters {sample.Materializations}/{sample.Dematerializations}");
+        if (sample.UptimeMs <= 0 || previousUptime is { } previous && sample.UptimeMs < previous)
+            AddFailure(failures, $"server uptime regressed: previous/current={previousUptime}/{sample.UptimeMs}ms");
+        if (sample.TickP95Ms > DormantTickP95BudgetMs || sample.TickMaxMs > DormantTickMaxBudgetMs)
+            AddFailure(failures, $"tick budget exceeded p95/max={sample.TickP95Ms:F1}/{sample.TickMaxMs:F1}ms");
+        if (sample.RegionMs > DormantRegionBudgetMs)
+            AddFailure(failures, $"region tick budget exceeded: {sample.RegionMs:F1}ms > {DormantRegionBudgetMs:F0}ms");
+        if (sample.DueQueueDepth != 0 || sample.EventQueueDepth != 0 || sample.InFlight != 0)
+            AddFailure(failures, $"scheduler queues not empty: due/event/inflight={sample.DueQueueDepth}/{sample.EventQueueDepth}/{sample.InFlight}");
+        if (sample.SchedulerFailures != 0 || sample.SaveSkips != 0)
+            AddFailure(failures, $"scheduler/save recovery counters nonzero: failures/skips={sample.SchedulerFailures}/{sample.SaveSkips}");
+        if (sample.SaveP95Ms > DormantSaveP95BudgetMs || sample.SaveMaxMs > DormantSaveMaxBudgetMs)
+            AddFailure(failures, $"save budget exceeded p95/max={sample.SaveP95Ms:F1}/{sample.SaveMaxMs:F1}ms");
+        if (baselineRss > 0 && sample.RssMb > baselineRss + DormantRssGrowthBudgetMb)
+            AddFailure(failures, $"RSS growth exceeded {DormantRssGrowthBudgetMb:F0}MB: baseline/sample={baselineRss:F1}/{sample.RssMb:F1}MB");
+    }
+
+    private static void AddFailure(List<string> failures, string failure)
+    {
+        if (!failures.Contains(failure, StringComparer.Ordinal))
+            failures.Add(failure);
+    }
+
+    private static long ReadDbWriteCounters()
+    {
+        try
+        {
+            using var conn = E2eStack.OpenDb("aaemu_game");
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SHOW GLOBAL STATUS WHERE Variable_name IN ('Com_insert','Com_update','Com_delete','Com_replace')";
+            using var reader = cmd.ExecuteReader();
+            long total = 0;
+            while (reader.Read())
+                total += reader.GetInt64(1);
+            return total;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[a5t3-sixhour] DB counter read failed: {ex.GetType().Name}: {ex.Message}");
+            return -1;
+        }
+    }
+
+    private static void WriteDormantTimerReport(
+        int windowMinutes, int sampleSeconds, int dormantTarget, int seededCount,
+        DormantTimerResult result)
+    {
+        Directory.CreateDirectory(EvidenceDir);
+        var dbWrites = Math.Max(0, result.FinalDbWrites - result.InitialDbWrites);
+        var dbWritesPerMinute = result.Window.TotalMinutes > 0
+            ? dbWrites / result.Window.TotalMinutes
+            : double.PositiveInfinity;
+        var report = new
+        {
+            probe = "G2-A5 Tier-3 natural dormant-timer soak (operator opt-in)",
+            runAtUtc = DateTime.UtcNow.ToString("O"),
+            commit = E2eStack.SourceRevision,
+            config = new { dormantTarget, seededCount, windowMinutes, sampleSeconds },
+            budgets = new
+            {
+                embodied = 0,
+                dormantSpecsMinimum = seededCount,
+                materializations = 0,
+                dematerializations = 0,
+                tickP95Ms = DormantTickP95BudgetMs,
+                tickMaxMs = DormantTickMaxBudgetMs,
+                regionMs = DormantRegionBudgetMs,
+                queueDepth = 0,
+                schedulerFailures = 0,
+                saveP95Ms = DormantSaveP95BudgetMs,
+                saveMaxMs = DormantSaveMaxBudgetMs,
+                saveSkips = 0,
+                rssGrowthMb = DormantRssGrowthBudgetMb,
+                dbWritesPerMinute = DormantDbWritesBudgetPerMin
+            },
+            window = result.Window.TotalMinutes,
+            initialDbWrites = result.InitialDbWrites,
+            finalDbWrites = result.FinalDbWrites,
+            dbWrites,
+            dbWritesPerMinute,
+            sampleCount = result.Samples.Count,
+            samples = result.Samples,
+            failures = result.Failures,
+            passed = result.Failures.Count == 0,
+            sixHourDormantTimersLeg = windowMinutes >= 360 ? "RUN" : "NOT_RUN"
+        };
+        File.WriteAllText(
+            Path.Combine(EvidenceDir, "g2-a5-tier3-sixhour-report.json"),
+            JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
     private static async Task<BotNetworkSession> ConnectHumanAsync()
     {
         // First connect after a fresh boot can flake (account/char provisioning
@@ -698,27 +988,35 @@ public class A5Tier3AcceptanceProbeTests
 
     private static int? FindGamePid()
     {
-        if (_gamePid.HasValue)
-        {
-            try { using var _ = Process.GetProcessById(_gamePid.Value); return _gamePid; }
-            catch { _gamePid = null; }
-        }
+        var root = Path.GetFullPath(E2eStack.E2eRoot);
+        if (_gamePid.HasValue && IsGameProcess(_gamePid.Value, root))
+            return _gamePid;
+        _gamePid = null;
 
         foreach (var proc in Process.GetProcessesByName("dotnet"))
         {
             try
             {
                 using var p = proc;
-                if (!p.MainModule!.FileName!.Contains("dotnet"))
-                    continue;
-                var cmdline = File.ReadAllText($"/proc/{p.Id}/cmdline");
-                if (!cmdline.Contains("AAEmu.Game.dll"))
-                    continue;
-                _gamePid = p.Id;
-                return _gamePid;
+                if (IsGameProcess(p.Id, root))
+                {
+                    _gamePid = p.Id;
+                    return _gamePid;
+                }
             }
             catch { }
         }
         return null;
+    }
+
+    private static bool IsGameProcess(int pid, string root)
+    {
+        var cmdline = File.ReadAllText($"/proc/{pid}/cmdline");
+        if (!cmdline.Contains("AAEmu.Game.dll", StringComparison.Ordinal))
+            return false;
+        var cwd = new FileInfo($"/proc/{pid}/cwd").LinkTarget;
+        return cwd != null &&
+               (Path.GetFullPath(cwd).StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+                || Path.GetFullPath(cwd).Equals(root, StringComparison.Ordinal));
     }
 }
