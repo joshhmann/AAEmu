@@ -257,6 +257,7 @@ public sealed class MailCodLifecycleTests
 
         await Assert.That(HasOpcode(SenderFrames, SCOffsets.SCMailDeletedPacket)).IsTrue();
         await Assert.That(HasError(SenderFrames, ErrorMessageType.MailInvalid)).IsFalse();
+        await Assert.That(_mailManager._allPlayerMails.ContainsKey(300)).IsFalse();
     }
 
     private static BaseMail CreateCodMail(long id, uint senderId, string senderName, uint receiverId, string receiverName,

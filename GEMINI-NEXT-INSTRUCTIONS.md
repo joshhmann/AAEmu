@@ -372,5 +372,12 @@ Stop and preserve evidence when any of the following occurs:
 - a human-only/H decision, client capture, owner ruling, or production deploy is
   required and Josh has not supplied it.
 
+Before committing any slice, run the self-check in
+`HANDOFF-GEMINI.md` → "Review gates" (packet constructor argument order,
+packet-vs-state mutation pairing, existing-shape comments, loop bounds, seam
+documentation, hot-path scans, evidence churn). These gates encode defects
+found in review of `49f0aee07`/`69861b73c`; a slice that trips one is not
+ready to commit.
+
 Record the exact blocker and escalation owner, retain all historical evidence,
 and do not guess or retry until the evidence contract is repaired.

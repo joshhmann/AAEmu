@@ -785,6 +785,8 @@ public static class LevelingLoopScenario
 
         if (sphere.GetObjective(quest) < 1)
         {
+            // Rig simulation seam: headless worlds lack continuous zone-tick sphere sweeps;
+            // trigger the engine's real DoOnEnterSphereEvents entry with updated character position.
             var sphereComponentId = sphere.ParentComponent?.Id ?? 0;
             var sphereQuests = actor.Character.ParentWorld?.SphereQuestManager?.GetQuestSpheres(sphereComponentId);
             if (sphereQuests is { Count: > 0 })
@@ -846,8 +848,11 @@ public static class LevelingLoopScenario
             }
         }
 
-        while (craftAct.GetObjective(quest) < craftAct.Count)
+        var maxAttempts = Math.Max(10, craftAct.Count * 3);
+        var attempts = 0;
+        while (craftAct.GetObjective(quest) < craftAct.Count && attempts < maxAttempts)
         {
+            attempts++;
             var req = actor.Craft(craftAct.CraftId, workbenchObjId);
             DriveRequest(actor, opts, req);
             if (req.State != ActorLifecycleState.Completed)
@@ -862,6 +867,12 @@ public static class LevelingLoopScenario
             quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
             if (quest == null)
                 return (null, ActorFailureReason.None);
+        }
+
+        if (craftAct.GetObjective(quest) < craftAct.Count)
+        {
+            return ($"Craft for quest {questId} craftId {craftAct.CraftId} exceeded max attempts ({maxAttempts}) without satisfying objective",
+                ActorFailureReason.RejectedAction);
         }
 
         return (null, ActorFailureReason.None);

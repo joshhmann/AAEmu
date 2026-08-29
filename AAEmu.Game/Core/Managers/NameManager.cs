@@ -26,7 +26,7 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
     private readonly object _registryLock = new();
 
     private Dictionary<uint, string> _characterIds = [];
-    private Dictionary<string, uint> _characterNames = [];
+    private Dictionary<string, uint> _characterNames = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<uint, uint> _characterAccounts = [];
 
     public string GetCharacterName(uint characterId)
@@ -51,11 +51,6 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
             var normalized = normalizedCharacterName.NormalizeName();
             if (_characterNames.TryGetValue(normalized, out characterId))
                 return characterId;
-            foreach (var (key, id) in _characterNames)
-            {
-                if (string.Equals(key, normalizedCharacterName, StringComparison.OrdinalIgnoreCase))
-                    return id;
-            }
             return 0u;
         }
     }
@@ -134,7 +129,7 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
         lock (_registryLock)
         {
             _characterIds = characterIds;
-            _characterNames = characterNames;
+            _characterNames = new Dictionary<string, uint>(characterNames, StringComparer.OrdinalIgnoreCase);
             _characterAccounts = characterAccounts;
         }
     }

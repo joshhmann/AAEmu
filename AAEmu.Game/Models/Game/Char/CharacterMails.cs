@@ -303,7 +303,7 @@ public class CharacterMails
             // Items
             if (itemSlotList.Count > 0)
             {
-                Self.SendPacket(new SCAttachmentTakenPacket(mailId, false, true, takeAllSelected, itemSlotList));
+                Self.SendPacket(new SCAttachmentTakenPacket(mailId, false, false, takeAllSelected, itemSlotList));
                 thisMail.IsDirty = true;
             }
 
@@ -346,6 +346,7 @@ public class CharacterMails
             if (isSent)
             {
                 Self.SendPacket(new SCMailDeletedPacket(true, id, false, UnreadMailCount));
+                MailManager.Instance.DeleteMail(id);
                 return;
             }
 

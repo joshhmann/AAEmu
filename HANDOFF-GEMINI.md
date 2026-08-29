@@ -253,6 +253,44 @@ The compact SQLite database is SELECT-only. Never patch it in place; use reviewe
 - Obtain real client packet captures for jury summon ordering, Dominion declare/UI behavior, and the mail return opcode. A server/rig trace cannot substitute for those client contracts.
 - Josh must provide all H/human-feel verdicts, including the golden route and deferred M2–M4 replay gates.
 
+## Review gates (added 2026-08-29 after review of 49f0aee07 / 69861b73c)
+
+Before committing any slice, self-check these failure modes observed in review.
+Each one was a real defect or regression risk that passed the author's own
+tests:
+
+1. **Packet constructor argument order.** Every G2C packet constructor is
+   positional. Verify each flag against the constructor signature AND the
+   `Write()` order before calling. (Observed: `SCAttachmentTakenPacket(mailId,
+   money, aaPoint, takeSequentially, items)` called with money/aaPoint swapped.)
+2. **Packet emission is not state mutation.** Sending a success packet without
+   mutating server state — or mutating state without the packet — is a bug.
+   Tests must assert BOTH the wire packet AND the registry/DB outcome.
+   (Observed: sent-tab delete emitted `SCMailDeletedPacket` but never removed
+   the mail from `_allPlayerMails`/DB; the test only checked the packet.)
+3. **Respect existing comments that explain shape.** Comments like
+   ZeromusXYZ's per-item attachment split exist because a simpler version
+   failed in production. Read them; if you change the shape, explain why the
+   original failure no longer applies and keep a test for it. (Observed:
+   reverted per-item `SCAttachmentTakenPacket` loop → full-bag/manual-grab
+   delivery regression risk + silent 10-item wire cap.)
+4. **Bound every loop.** Any while-loop driven by objective/state progress
+   needs an attempt cap and a fail-closed reason. (Observed: `CraftLeg`
+   unbounded loop.)
+5. **Document every seam.** Direct engine-entry calls in rigs
+   (`DoOnEnterSphereEvents`, `DoOnMonsterHuntEvents`) must carry the same
+   "rig seam" comment convention as `RigKillSeam`.
+6. **No O(n) scans on hot paths.** Linear scans over registries
+   (`NameManager`-style) need a second index or a documented cold-path
+   justification.
+7. **Do not commit regenerated evidence churn.** Generated `*.jsonl`/`*.md`
+   evidence files carry wall-clock timestamps and rewrite on every run. Skip
+   writes when content is unchanged, or leave them uncommitted.
+
+Also: run the focused test class AND read the full diff of every file you
+touch before committing — the review above caught all of these in a single
+diff pass.
+
 ## Stop conditions
 
 Do not guess packet IDs, formulas, canonical coordinates, or timers. Do not claim that a bot's success feels like a human's success. Stop when evidence conflicts; preserve both claims with provenance and isolate flaky infrastructure from gameplay conclusions. Never turn a missing capture into a plausible opcode, and never turn a rig-only result into live proof. Never reset/delete a survivor worktree without inspection. Never push upstream.
