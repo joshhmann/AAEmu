@@ -251,7 +251,6 @@ public static class LevelingLoopScenario
                 var perception = Perceive(actor);
                 var bandOfferings = perception.Offerings
                     .Where(o => o.Level >= opts.BandMin && o.Level <= opts.BandMax)
-                    .OrderBy(o => o.Level).ThenBy(o => o.QuestId)
                     .ToList();
 
                 if (bandOfferings.Count == 0)
@@ -263,16 +262,59 @@ public static class LevelingLoopScenario
                 }
 
                 // ---------------------------------------------------- 2. DECIDE
-                // Lowest-level offering in band; ties break to the lowest
-                // quest id for determinism. NO id is injected here.
-                var chosen = bandOfferings[0];
+                // The proposal contract preserves the existing policy:
+                // lowest-level offering wins, then lowest quest id. This is
+                // a legal, explainable decision over the immutable perception
+                // snapshot; personality has no weight in this compatibility
+                // path.
+                var proposals = bandOfferings.Select(offering => new BotDecisionProposal(
+                    goal: "leveling.accept-quest",
+                    action: ActorActionType.AcceptQuest,
+                    targetId: offering.QuestId,
+                    expectedPostcondition: new BotProposalPostcondition(
+                        $"quest {offering.QuestId} is active",
+                        observed => observed.ActiveQuestIds.Contains(offering.QuestId)),
+                    idempotencyKey: $"leveling:{character.Id}:{linkIndex}:{offering.QuestId}",
+                    timeout: TimeSpan.FromSeconds(30),
+                    rationale: $"lowest offered level in [{opts.BandMin}..{opts.BandMax}]",
+                    policyVersion: "leveling-v1",
+                    priority: opts.BandMax - offering.Level,
+                    tieBreakKey: offering.QuestId.ToString("D10"),
+                    payload: offering,
+                    hardPreconditions:
+                    [
+                        new BotProposalPrecondition(
+                            "quest-not-active",
+                            observed => !observed.ActiveQuestIds.Contains(offering.QuestId))
+                    ])).ToList();
+                var decision = BotDecisionSelector.Select(perception.Context, proposals);
+                if (!decision.HasProposal)
+                {
+                    return Fail("DECIDE", ActorFailureReason.WrongDecision,
+                        $"no legal discovered quest proposal: {decision.Explanation}", actor, links);
+                }
+
+                var chosen = (QuestOffering)decision.Proposal!.Payload!;
 
                 // ---------------------------------------------------- 3. ACCEPT
-                var accept = actor.AcceptQuest(chosen.QuestId, chosen.AcceptorType, chosen.AcceptorId);
-                if (accept.State != ActorLifecycleState.Completed)
+                // Dispatch remains the existing GameplayActor path. The cycle
+                // observes the terminal state before the next loop iteration
+                // replans from a fresh perception sweep.
+                var execution = BotDecisionCycle.Execute(actor, perception.Context,
+                    decision.Proposal,
+                    static (gameplayActor, proposal) =>
+                    {
+                        var offering = (QuestOffering)proposal.Payload!;
+                        return gameplayActor.AcceptQuest(
+                            offering.QuestId, offering.AcceptorType, offering.AcceptorId,
+                            proposal.IdempotencyKey);
+                    });
+                var accept = execution.Request;
+                if (accept.State != ActorLifecycleState.Completed || !execution.ExpectedPostconditionSatisfied)
                 {
                     return Fail("ACCEPT", ActorFailureReason.RejectedAction,
-                        $"accept of discovered quest {chosen.QuestId} refused: {accept.Detail}", actor, links);
+                        $"accept of discovered quest {chosen.QuestId} refused or did not reach expected state: " +
+                        $"{accept.Detail ?? execution.Proposal.ExpectedPostcondition.Description}", actor, links);
                 }
 
                 var expBefore = character.Experience;
@@ -287,7 +329,6 @@ public static class LevelingLoopScenario
                 var turnInFailure = TurnIn(actor, chosen.QuestId, template, perception);
                 if (turnInFailure != null)
                     return turnInFailure;
-
                 // Auto-equip any reward upgrades
                 EquipUpgrades(actor);
 
@@ -326,7 +367,8 @@ public static class LevelingLoopScenario
         List<QuestOffering> Offerings,
         Dictionary<uint, uint> NpcObjIdsByTemplate,
         Dictionary<uint, List<uint>> DoodadObjIdsByTemplate,
-        int PerceivedNpcCount, int PerceivedDoodadCount)
+        int PerceivedNpcCount, int PerceivedDoodadCount,
+        BotObservedContext Context)
     {
         public int TotalOfferingsSeen => Offerings.Count;
     }
@@ -370,7 +412,7 @@ public static class LevelingLoopScenario
         }
 
         return new PerceptionSnapshot(offerings, npcByTemplate, doodadsByTemplate,
-            observation.NearbyNpcObjIds.Count, doodadCount);
+            observation.NearbyNpcObjIds.Count, doodadCount, BotObservedContext.From(observation));
     }
 
     // ------------------------------------------------------------------ pursue
