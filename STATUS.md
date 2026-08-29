@@ -10,25 +10,27 @@ landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
 Branch of record: develop; current local source/test HEAD is
-`0ce518ac03a18de00fff1516aa9e794e8566bee6`. M5's
+`da0fdc61a72a15111fddc8ac627a164a5f050558`. M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
-primitive is integrated into the `LevelingLoop` accept choice at
-`263ecc66c474ca1c5f4b085e86ef3e47f49fd1`; its focused contract is 5/5 and it
-enforces immutable observed context, hard legality before preference, bounded
-candidates, deterministic fixed-priority/personality/tie-break selection, and a
-terminal postcondition before existing `GameplayActor` dispatch. This is a
-scoped quest consumer, not universal bot autonomy; broad M5 policy remains open.
-M6 cancellation commit `950cfd279` adds `BotDriveClient.CallAsync` token/timeout
-support while preserving sync `Call`; A5 and A5Tier3 seed bridge calls are
-async, and Tier3 workers share cooperative cancellation/deadline propagation
-with no `Thread.Abort`. BotDriveClientCancellationTests 3/3, SoakOwnershipTests 2/2,
-BotPresenceCoordinator 13/13 pass. Full gate: **2504 total / 2503 passed /
-0 failed / 1 skipped**, compiler **0/0**, MCP **39 tools**; the skip is
-`Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. The full-gate verification
-carried 8 known NU1903 warnings; no forced-rebuild warning total is inferred.
-No six-hour soak or M6 full exit exists; no H/UAT claim is made. Historical
-reports and prior evidence below remain preserved.
+primitive remains integrated in `LevelingLoop`'s accept choice at
+`263ecc66c474ca1c5f4b085e86ef3e47f49fd1`; focused contract 5/5, scoped quest
+consumer only, and broad M5 policy/universal autonomy remain open. M6 includes
+`950cfd279` cancellation, `c97909f4f` population isolation, and opt-in
+six-hour leg `155c82c66` integrated here.
+
+The six-hour test is default skipped and requires
+`A5_TIER3_SIX_HOUR=1`, `A5_TIER3_SIX_HOUR_MINUTES>=360`, and
+`A5_TIER3_SIX_HOUR_SAMPLE_SECONDS` from 1 through 300. It uses cooperative
+deadline propagation and ID-bound `finally` cleanup. Corrected Tier3 readiness
+at source/test `4721cbd306cbf346bfe38b7373d5adf479b6231f` passed 1/1 in
+15m20.984s: seeded 1000, embodied 50, dormant 950, materialize p95 259.2ms,
+RSS +2.56%, 50 dematerialized, owned cleanup zero. Cancellation 3/3 and
+ownership 2/2 also pass. No six-hour execution or metrics are claimed.
+
+The prior full gate at `0ce518ac03a18de00fff1516aa9e794e8566bee6` remains
+2504 total / 2503 passed / 0 failed / 1 skipped, compiler 0/0, MCP 39; no new
+full gate was run for `da0fdc61`. The six-hour timer leg remains PENDING. No
+M6 full-exit or H/UAT claim is made; historical reports remain preserved.
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
@@ -98,19 +100,19 @@ result is claimed.
 ## Current provenance and soak boundaries (2026-08-28)
 - Runtime evidence records `E2eStack.SourceRevision` from `git rev-parse HEAD`
   and reports `unknown` when the checkout/archive cannot resolve a revision.
-  A5 and A5Tier3 use that value rather than stale hardcoded revisions.
-- No six-hour dormant-timer soak exists in current evidence. The staged
-  30-minute scheduler run and older six-hour reports remain historical
-  evidence; neither is a current six-hour dormant-timer soak result.
-- A5/A5Tier3 use per-run named account/character snapshots and ID-bound cleanup
-  in `finally` (`799b698ad`); sibling-preservation tests pass 2/2 and those
-  probes contain no broad wildcard cleanup.
-- M6 cancellation commit `950cfd279` changes `BotDriveClient` to expose a
-  token/timeout-aware `CallAsync` while sync `Call` remains compatible. Tier3
-  seeding uses async workers with shared cancellation/deadline propagation and
-  cooperative stop; no `Thread.Abort` is used. Focused
-  `BotDriveClientCancellationTests` pass 3/3, and `BotPresenceCoordinator`
-  remains 13/13. This changes setup cancellation safety, not soak status.
+  The current local source/test pointer is `da0fdc61a72a15111fddc8ac627a164a5f050558`.
+- The corrected bounded Tier3 rehearsal at `4721cbd306cbf346bfe38b7373d5adf479b6231f`
+  passed 1/1 in 15m20.984s: 1000 seeded, 50 embodied, 950 dormant,
+  materialize p95 259.2ms, RSS +2.56%, 50 dematerialized, owned cleanup zero.
+  This is readiness evidence only.
+- `155c82c66` adds the opt-in six-hour natural dormant-timer test. It is
+  default skipped and requires `A5_TIER3_SIX_HOUR=1`, minutes >=360, and sample
+  seconds 1..300. The leg has cooperative deadline propagation and ID-bound
+  `finally` cleanup. No six-hour execution or metrics are claimed; the timer
+  leg remains PENDING.
+- Cancellation focused tests pass 3/3; ownership focused tests pass 2/2.
+  The prior full gate at 0ce remains historical: 2504 total / 2503 passed /
+  0 failed / 1 skipped, compiler 0/0, MCP 39. No new full gate was run at da0.
 - Human/H boundaries remain intact: bot, rig, MCP, and live-stack evidence is
   functional/proxy evidence; H/human-feel acceptance remains Josh-owned.
 
@@ -476,18 +478,18 @@ rationale/replan/personality policy is claimed. Existing M5.3 canonical
 movement caveat and formal regrade wording remain unchanged; H stays separate.
 
 **M6 player-loop reconciliation (2026-08-28; current source/test HEAD
-`ded008de8d67ece8718e9235fd02503b43ceb6a1`):** A clean ordinary
+`da0fdc61a72a15111fddc8ac627a164a5f050558`):** A clean ordinary
 `Character`/bot becomes dormant → proximity wake/materialize → resumes its
 scheduled action → preserves identity, inventory, position, and metadata
-through restart → dematerializes safely. `c4f2296c` completes M6 movement
-guards; `f6ff58e86` isolates test-scoped singletons for full-suite safety.
-Focused M6 evidence is **105/105** with no failures: BotPresenceCoordinator
-13/13 (including patrol and transfer-finalize regression), BotRoamStepExecutor
-6/6, PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest
-13/13, Manager 19/19, and Headless provisioning 8/8. This is A/R harness
-evidence: it proves the controlled lifecycle path, not autonomous bot
-decision-making or human feel. No six-hour soak exists; SeedBox cancellation
-remains unresolved.
+through restart → dematerializes safely. `c97909f4f` isolates the baseline
+presence roster before dormant seeding; `950cfd279` provides cooperative
+bridge cancellation; `155c82c66` adds the default-skipped natural six-hour
+dormant-timer stage with explicit controls, cooperative deadline, and ID-bound
+cleanup. Focused M6 evidence remains **105/105**. Corrected Tier3 readiness at
+`4721cbd306cbf346bfe38b7373d5adf479b6231f` is 1/1: 1000 seeded, embodied 50,
+dormant 950, materialized 50, p95 259.2ms, RSS +2.56%, 50 dematerialized,
+owned cleanup zero. No six-hour execution or metrics, M6 full-exit, or H/UAT
+claim is made.
 
 **M7 player-loop reconciliation (2026-08-28; current source/test HEAD
 `ded008de8d67ece8718e9235fd02503b43ceb6a1`):** An ordinary

@@ -43,14 +43,14 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 | **M3b** Property persistence (CLOSED 08-11, EXIT t_accb1c63 PASS) | ✅ M3b-1..4 merged (5dc7c2fbd…) | — | ✅ M3bExitPersistenceE2eTests | ✅ EXIT E2E f5b00c686 PASS 7m08s | ✅ N=3 crash cycles incl. kill -9 mid-save + container kill, 16 rows/boot, no loss/dup; autosave p95 1301ms < 2000ms @ 25 bots + 2 homesteads; PROPERTY-01 R=2 | — | ⚠️ UNKNOWN |
 | **M4** Trade/craft/transport (EXIT RECORD 08-12, Rei gate t_97e59ffc) | ✅ on release/m4-exit (f28b93fc1/e4af04a49/2907f46ff); unit gate 1778/0/1 | ⏳ release merge + deploy pending Josh GO (deployment-lane follow-up) | ✅ M4ExitIntegratedSessionTests + per-object restart E2E rigs | ✅ 4 scripted actors, real engine paths: harvest→craft→pack→load→travel→sell→repeat; negatives incl. LevelLowToUse, 801 despawn, StoreCantSellSameZone; CRAFT-01/PACK-01/SLAVE-01 R=2 (proxy) | ✅ M4_2TradePackRestart PASS 2m12s (kill -9); M4Vehicles PASS 3m09s (2× kill -9); M3bExit E2E PASS 7m03s; merged-tree re-run 1/1+1/1+M2b 5/5 (t_abe87eaf) | — (convoy-volume = M6 soak lane) | ⚠️ UNKNOWN — H unknown; playtest of integrated release deferred to deployment-lane follow-up after Josh GO |
 | **M5** Gameplay Actor Contract (merged tree @ 75ac8df12 — Rei gate t_ec7f0c19: CLOSED-WITH-CAVEATS ceiling, formal close pending in gate lane) | ✅ full 11-action surface on fork develop — v1 34cf33cb + A1 c6d8f93a0 (ExecutionBoundary thread-affinity, compiled in ALL configs) + B1 761d1e81a: Observe/Move/Stop/Target/Cast/AcceptQuest/TurnInQuest/Interact/Loot/UseItem/Mount/Dismount all in GameplayActor.cs; ActorIdempotency + effect ledger (retry), ActorAuditRecord (trace) | — (contract surface; deploy story follows consumers) | ✅ per-action rigs on merged tree (GameplayActorTestRig + per-action classes) | ✅ full-route live replay t_15787275 @ 106d0a7e9 — 16/16 quests, lifecycle 53/53, REAL mount chain, 34/34 criteria, machine-readable traces; gates 1850/0/1 → 2054/0/1 → 2074/0/1 | — (no restart scenario owned by the contract exit; restart legs live in M2/M3b/M4) | — | ⚠️ UNKNOWN — H stays UNKNOWN (proxy/bot evidence only; feel gates belong to later phases — STOP LINE, cap M5.2) |
-| **M5 current decision primitive** (source/test HEAD `0ce518ac03a18de00fff1516aa9e794e8566bee6`; proposal `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`) | ✅ `BotDecisionProposal` / `BotDecisionSelector` / `BotDecisionCycle` | — | ✅ scoped `LevelingLoop` quest-accept consumer | ✅ `BotDecisionProposalTests` 5/5; immutable observed context, legality before preference, bounded candidates, deterministic fixed-priority/personality/tie-break, terminal postcondition, existing `GameplayActor` dispatch | — decision primitive only; broad M5 policy remains open | — | ⚠️ UNKNOWN — not universal bot autonomy or H/UAT |
+| **M5 current decision primitive** (source/test HEAD `da0fdc61a72a15111fddc8ac627a164a5f050558`; proposal `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`) | ✅ `BotDecisionProposal` / `BotDecisionSelector` / `BotDecisionCycle` | — | ✅ scoped `LevelingLoop` quest-accept consumer | ✅ `BotDecisionProposalTests` 5/5; immutable observed context, legality before preference, bounded candidates, deterministic fixed-priority/personality/tie-break, terminal postcondition, existing `GameplayActor` dispatch | — decision primitive only; broad M5 policy remains open | — | ⚠️ UNKNOWN — not universal bot autonomy or H/UAT |
 | **M5.1** Economic extension (MERGED — all Rei-gated) | ✅ Plant (t_b1d7c430) · PackPickup/PutDown (t_64ecf525) · Buy/Sell (t_8741b03d) · Deposit/Withdraw (f760256a0) · Harvest (ebff582a8) · BoardVehicle (e7e7ef0fe) · Craft (dab91ecb0) · LoadPackOntoVehicle (6c2429ae0) · DriveVehicle (6edbf0cbb) — real engine paths (doodad.Use, CharacterCraft.Craft, BindSlave/Seat.LoadPassenger, PackVehicleService→AttachDoodadAtPoint, VehicleMovementModel CSMoveUnitPacket); control-plane API/MCP sidecar/Lane D consumer (t_7b6d7a4a, t_446228b5, t_52b2b084) | — | ✅ per-action rigs on merged tree | ✅ per-action tests on merged tree (count @ 75ac8df12, t_c2dd474b): Deposit/Withdraw 21 · BoardVehicle 21 · Buy/Sell 30 · Pack 17 · Plant 14 · LoadPackOntoVehicle 14 · Harvest 8; Rei re-audit gate-time baseline 13/14/7/21/240 (t_ec7f0c19); post-merge gate 2074/0/1 | — (N/A for contract actions; gap flag: attached-pack-on-slave restart assertion MISSING — t_1b82b33f, tai) | — | ⚠️ UNKNOWN — H stays UNKNOWN (REQ-M5.1-5 live E2E leg parked t_eaee04ee @ STOP LINE) |
 | **M5.2** Housing.Build (MERGED 08-14 — Rei-gated) | ✅ @ 3396d9ef1 (t_94761d55, Rei t_ebf36737 ACCEPT 3/3) — BuildHouse over the REAL HousingManager.Build engine path (exact CSCreateHousePacket handler call); scope t_2625be99 Housing.Build-FIRST locked | — | ✅ 13 canonical-rig tests | ✅ HouseBuild 14/14 post rig-fix (447c78ffe, t_18bbe650); post-merge gate 2074/0/1 | — (N/A) | — | ⚠️ UNKNOWN — H stays UNKNOWN |
 | **M5.3** Core-surface close — Observe · Move · Stop · Target · Cast (SPEC'D 2026-08-16, t_d837ee0b; IMPL AUTHORIZED 2026-08-17, t_5189977b) | 🔶 v1 impls on develop since 34cf33cb2 (t_4f11a519) — canonical fidelity UNVERIFIED; Move known non-conforming (silent Transform write, GameplayActor.cs:2253-2259: ApplyPosition — no broadcast, no UnitMoveType path); **canonical dossier COMMITTED 2026-08-17** (scorecard-explorations/mechanics/m5-core-actions-canonical.md, t_5189977b — movement/targeting/cast canon, every claim DV-code/DV-data/RD-wiki flagged); impl cards t_3cac48d4/t_c73d6293 follow | — | 📋 dossier (REQ-M5.3-1) committed + cited + flagged; per-action contract tests pending impl (REQ-M5.3-10) | — (pending impl) | — (N/A — no new persistence) | — (N/A — M6 soak lane) | ⚠️ UNKNOWN — H stays UNKNOWN |
 | **M6** Deterministic playerbot framework (exit soak GREEN 08-11; reconciliation open) | ✅ hotfix chain + BotAppearanceFactory (91b308d71) + parity seeding (45cd3f3a9, live-verified 34 actabilities/skills/bag) + GM cmds P0 (t_7b4f9423) + E2E harness + presence overlay in-repo | ✅ presence-demo overlay live (hotfix3) — 3 citizens at Josh's spawn, zone 179; sighting ACCEPTED 08-09. ⚠️ adopt-heal look-collapse (t_555ed207): fix pushed cdf6d4a62, awaiting Rei gate; prod re-provision pending | ✅ E2E harness (real Login+Game+MySQL) | ✅ 10-bot correctness PASS; 25-bot stability PASS (H2 1.00); M2bE2e 5/5 (t_2ee39438) | ⏳ DEFERRED — B4 restart persistence (playerbot_metadata + 2-checkpoint restart test) not yet executed; A1 boundary + observability + G0-1 merge-to-develop outstanding (per M6 EXIT RECORD) | ✅ 6h/10-bot soak GREEN 08-11 (t_35167e60): 360-min, ALL 9 budgets PASS, 0 failures — verdict preserved as "passed revised approved budgets" (physics budget recalibrated t_18fccd09; GC fix t_eecc5604 merged first per Josh's ruling) | ⏳ DEFERRED (informal partial) — Josh sighting ACCEPTED 08-09 (wire-confirmed t_509ef8c2); rendered screenshots pending Josh's client; batched feel/visual/fun verdicts deferred until bot functional + restart gates green (decision contract) |
 
-| **M6 current reconciliation** (source/test HEAD `0ce518ac03a18de00fff1516aa9e794e8566bee6`) | ✅ M6 loop path and focused evidence recorded | — | ✅ | ✅ **105/105**: BotPresenceCoordinator 13/13, BotRoamStepExecutor 6/6, PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13, Manager 19/19, Headless provisioning 8/8 | ✅ B4 restart loop recorded through direct identity/inventory/position/metadata assertions | — no six-hour dormant-timer soak exists; cancellation setup safety implemented by `950cfd279` | ⚠️ UNKNOWN — A/R proxy only; no M6 full exit or H/UAT |
-| **M7 current reconciliation** (source/test HEAD `0ce518ac03a18de00fff1516aa9e794e8566bee6`) | ✅ adventurer/party loop slices | — | ✅ | ✅ **147/147**: primary 36/36 + actor support 111/111 | — no current restart-persistence closure for the broad loop | — | ⚠️ UNKNOWN — A/R rig/proxy only; no current live client or H |
+| **M6 current reconciliation** (source/test HEAD `da0fdc61a72a15111fddc8ac627a164a5f050558`) | ✅ M6 loop/cancellation/isolation/stage recorded | — | ✅ | ✅ focused lifecycle evidence 105/105; corrected Tier3 readiness 1/1 at `4721cbd306cbf346bfe38b7373d5adf479b6231f` (1000 seeded, 50 embodied, 950 dormant, materialized 50) | ✅ B4 restart loop recorded; owned cleanup zero in corrected rehearsal | ⏳ six-hour natural dormant-timer stage exists but has not run; no soak result | ⚠️ UNKNOWN — A/R readiness only; no M6 full exit or H/UAT |
+| **M7 current reconciliation** (source/test HEAD `da0fdc61a72a15111fddc8ac627a164a5f050558`) | ✅ adventurer/party loop slices | — | ✅ | ✅ **147/147**: primary 36/36 + actor support 111/111 | — no current restart-persistence closure for the broad loop | — | ⚠️ UNKNOWN — A/R rig/proxy only; no current live client or H |
 ## Evidence register (citations, append-only)
 
 - **M0:** ROADMAP §M0; STATUS M0 row; Josh signoff 2026-08-03 (workflow v4,
@@ -134,35 +134,31 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   universal PlayerBot decision closure is Unknown/Open. No ledger state is
   promoted; M5.3 canonical movement caveat/formal regrade and the H boundary
   remain unchanged.
-- **M6 current loop (2026-08-28; source/test HEAD
-  `0ce518ac03a18de00fff1516aa9e794e8566bee6`):** clean ordinary
+- **M6 current loop and readiness (2026-08-28; source/test HEAD
+  `da0fdc61a72a15111fddc8ac627a164a5f050558`):** clean ordinary
   Character/bot dormant → proximity wake/materialize → scheduled action →
-  identity/inventory/position/metadata restart preservation → safe
-  dematerialization. Focused M6 **105/105**: BotPresenceCoordinator 13/13
-  (patrol + transfer-finalize regression), BotRoamStepExecutor 6/6,
-  PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13,
-  Manager 19/19, Headless provisioning 8/8. `c4f2296c` completes movement
-  guards; `f6ff58e86` provides test-scoped singleton isolation. A/R proxy only;
-  no six-hour soak, no current H/UAT.
-- **M6 cancellation setup boundary (2026-08-28; commit `950cfd279`):**
-  `BotDriveClient.CallAsync` carries cancellation/timeout while sync `Call`
-  remains compatible; A5Tier3 workers propagate a shared cancellation/deadline
-  and stop cooperatively without `Thread.Abort`. `BotDriveClientCancellationTests`
-  3/3 and `SoakOwnershipTests` 2/2 pass; `BotPresenceCoordinator` remains
-  13/13. The full gate at source/test HEAD `0ce518ac03a18de00fff1516aa9e794e8566bee6`
-  is **2504 total / 2503 passed / 0 failed / 1 skipped**, compiler **0/0**,
-  MCP **39 tools**; the sole skip is
+  restart identity/inventory/position/metadata preservation → safe
+  dematerialization. Focused M6 evidence remains **105/105**. Cancellation
+  `950cfd279`, population isolation `c97909f4f`, and opt-in six-hour leg
+  `155c82c66` are integrated. The corrected bounded rehearsal at
+  `4721cbd306cbf346bfe38b7373d5adf479b6231f` passed 1/1 in 15m20.984s:
+  seeded 1000, embodied 50, dormant 950, materialized 50, p95 259.2ms,
+  RSS +2.56%, 50 dematerialized, owned cleanup zero. No six-hour execution or
+  metrics are claimed; the stage remains pending operator validation.
+- **M6 full-gate provenance:** the prior full gate at source/test
+  `0ce518ac03a18de00fff1516aa9e794e8566bee6` remains **2504 total / 2503
+  passed / 0 failed / 1 skipped**, compiler **0/0**, MCP **39 tools**; no new
+  full gate was run at `da0fdc61`. The sole skip is
   `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. This records setup safety
-  only; no six-hour soak or M6 full-exit result.
+  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`.
 - **M7 current loop (2026-08-28; source/test HEAD
-  `0ce518ac03a18de00fff1516aa9e794e8566bee6`):** ordinary
-  Character/PlayerBot discovers/accepts, navigates, chooses legal hostiles,
-  casts, receives kill credit, loots, sustains/retreats, completes/repeats;
-  group variant adds party invite/follow/assist/death recovery. Focused M7
-  **147/147** no-fail/no-skip: primary **36/36** plus actor support **111/111**.
-  A/R rig/proxy only; no current live client or H/UAT. Bounded autonomous
-  LevelingLoop is only 254→255; broad decision closure remains open.
+  `da0fdc61a72a15111fddc8ac627a164a5f050558`):** ordinary Character/PlayerBot
+  discovers/accepts, navigates, chooses legal hostiles, casts, receives kill
+  credit, loots, sustains/retreats, completes/repeats; group variant adds party
+  invite/follow/assist/death recovery. Focused M7 **147/147** no-fail/no-skip:
+  primary **36/36** plus actor support **111/111**. A/R rig/proxy only; no
+  current live client or H/UAT. Bounded autonomous LevelingLoop is only
+  254→255; broad decision closure remains open.
 - 2026-08-28 — M6/M7 reconciliation at source/test HEAD
   `ded008de8d67ece8718e9235fd02503b43ceb6a1`: recorded M6 **105/105**
   lifecycle-focused evidence and M7 **147/147** A/R proxy evidence, with the
@@ -175,7 +171,7 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   ledger-state change; M5.3 canonical movement caveat/formal regrade and H
   boundary preserved. Source/test checkpoint `9ddc322feee4f06c55df9f429e8da3ed573c1b85`.
 - **M5 bounded decision primitive (2026-08-28; source/test HEAD
-  `0ce518ac03a18de00fff1516aa9e794e8566bee6`; proposal
+  `da0fdc61a72a15111fddc8ac627a164a5f050558`; proposal
   `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`):** `BotDecisionProposal`,
   `BotDecisionSelector`, and `BotDecisionCycle` are integrated into the
   `LevelingLoop` quest-accept choice. The contract preserves immutable observed

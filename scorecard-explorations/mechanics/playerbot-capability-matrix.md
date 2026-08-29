@@ -1,28 +1,26 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
 Populated from implementation reality at local source/test HEAD
-`0ce518ac03a18de00fff1516aa9e794e8566bee6`. M5 proposal
-`263ecc66c474ca1c5f4b085e86ef3e47f49fd1` adds the bounded
-`BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` primitive,
-integrated into `LevelingLoop`'s quest-accept choice. It preserves immutable
-observed context, enforces hard legality before preference, bounds candidates,
-selects deterministically by fixed priority/personality/tie-break, requires a
-terminal postcondition, and dispatches through existing `GameplayActor`;
-focused `BotDecisionProposalTests` pass **5/5**. This is a decision primitive
-plus scoped quest consumer, not universal bot autonomy; broad M5 policy remains
-open.
+`da0fdc61a72a15111fddc8ac627a164a5f050558`. M5 bounded decision proposal
+`263ecc66c474ca1c5f4b085e86ef3e47f49fd1` and M6 cancellation
+`950cfd279`, population isolation `c97909f4f`, and opt-in six-hour leg
+`155c82c66` are integrated. The six-hour test is default skipped and requires
+`A5_TIER3_SIX_HOUR=1`, minutes >=360, sample seconds 1..300, cooperative
+deadline propagation, and ID-bound `finally` cleanup.
 
-M6 cancellation `950cfd279` adds token/timeout-aware `BotDriveClient.CallAsync`
-while sync `Call` remains compatible; A5 and A5Tier3 seed bridge calls are
-async, and Tier3 workers share cancellation/deadline propagation with
-cooperative stop and no `Thread.Abort`.
-BotDriveClientCancellationTests pass **3/3**; SoakOwnershipTests **2/2**;
-BotPresenceCoordinator **13/13**. Full normal-clone gate: **2504 total / 2503
-passed / 0 failed / 1 skipped**, compiler **0/0**, MCP stdio **39 tools**. The
-sole skip is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. No six-hour soak or M6
-full-exit result exists; no H/UAT claim is made. Historical reports and
-source/test SHA boundaries remain preserved.
+Corrected bounded Tier3 readiness at source/test `4721cbd306cbf346bfe38b7373d5adf479b6231f`
+passed 1/1 in 15m20.984s: seeded 1000, embodied 50, dormant 950,
+materialization p95 259.2ms (p50 246.4/p99 272.2/max 272.2), RSS delta
++2.56%, tick p95 median/max 0.6/0.8ms, region worst 17ms, steps/min 15002,
+50 dematerialized, and owned cleanup zero. Cancellation focused tests 3/3 and
+ownership tests 2/2 pass. This is readiness only; no six-hour execution or
+metrics are claimed. Prior full gate at `0ce518ac03a18de00fff1516aa9e794e8566bee6`
+remains historical: **2504 total / 2503 passed / 0 failed / 1 skipped**, compiler
+**0/0**, MCP **39**; no new full gate was run for `da0fdc61`.
+
+Operator command (requires Docker, read-only `/root/hl-cp-test` assets, and
+`ensure-log-caps.sh` in the isolated E2E root):
+`A5_TIER3_SIX_HOUR=1 A5_TIER3_SIX_HOUR_MINUTES=360 A5_TIER3_SIX_HOUR_SAMPLE_SECONDS=60 A5_DORMANT_COUNT=1000 E2E_ROOT=/root/aaemu-e2e-a5-tier3-sixhour E2E_LOGIN_PORT=4237 E2E_GAME_PORT=4239 E2E_STREAM_PORT=4250 E2E_BRIDGE_PORT=4260 E2E_INTERNAL_PORT=4234 E2E_WEBAPI_PORT=4280 E2E_DB_PORT=43306 DB_HOST_PORT=43306 COMPOSE_PROJECT_NAME=aaemu_a5_t3_sixhour E2E_REBUILD=1 dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --filter-method AAEmu.IntegrationTests.E2e.G2.A5Tier3AcceptanceProbeTests.Probe_A5Tier3DormantTimers_SixHour`
 
 ## M2 loop reconciliation (2026-08-28)
 
@@ -100,32 +98,24 @@ evidence, M5.3 movement caveat, and H/client boundary remain unchanged.
 
 **M6:** clean ordinary `Character`/bot dormant → proximity wake/materialize →
 scheduled action resumes → identity/inventory/position/metadata survive restart
-→ safe dematerialization. Focused M6 **105/105**: BotPresenceCoordinator 13/13
-(patrol + transfer-finalize regression), BotRoamStepExecutor 6/6,
-PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata 15/15, Manifest 13/13,
-Manager 19/19, Headless provisioning 8/8. Cancellation commit `950cfd279` adds
-token/timeout-aware `BotDriveClient.CallAsync` while sync `Call` remains
-compatible; Tier3 workers share cancellation/deadline propagation and stop
-cooperatively, with no `Thread.Abort`. BotDriveClientCancellationTests 3/3 and
-SoakOwnershipTests 2/2 pass. No six-hour soak or M6 full-exit result exists;
-this is A/R harness/proxy evidence and no H/UAT claim is implied.
+→ safe dematerialization. Focused M6 **105/105** remains. Cancellation
+`950cfd279`, population isolation `c97909f4f`, and opt-in six-hour leg
+`155c82c66` are integrated at source/test HEAD
+`da0fdc61a72a15111fddc8ac627a164a5f050558`. The stage is default skipped,
+requires explicit `A5_TIER3_SIX_HOUR=1`, minutes >=360, sample seconds 1..300,
+cooperative deadline propagation, and ID-bound cleanup. Corrected 4721
+readiness is 1/1 with embodied 50, dormant 950, materialized 50, p95 259.2ms,
+RSS +2.56%, 50 dematerialized, and owned cleanup zero. No six-hour execution or
+metrics, M6 full-exit, or H/UAT claim is made.
 
 **M7:** ordinary `Character`/PlayerBot discovers/accepts a quest, navigates,
 chooses legal hostiles, casts, receives kill credit, loots, sustains/retreats,
 and completes/repeats; group variant adds party invite/follow/assist/death
-recovery. Focused M7 **147/147** no-fail/no-skip: primary **36/36**
-(Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4,
-PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support
-**111/111**. A/R rig/proxy only: hunt kill uses real DoOnMonsterHuntEvents
-with fixture HP=0; Party spike is synthetic/fixture. No current live
-authenticated-client run or H/UAT. Only bounded autonomous decision slice is
-`LevelingLoop` 254→255; broad M7 decision, real damage/`Npc.DoDie`,
-scheduler-driven route, party roles/regroup/restart/disconnect, mount/travel,
-and H remain open.
-
----
-
-Autonomous Loop = can a bot run this system's loop unattended end-to-end.
+recovery. Focused M7 **147/147** no-fail/no-skip: primary **36/36** plus actor
+support **111/111**. A/R rig/proxy only; no current live authenticated-client
+run or H/UAT. Only bounded autonomous decision slice is `LevelingLoop` 254→255;
+broad M7 decision, real damage/`Npc.DoDie`, scheduler-driven route, party
+roles/regroup/restart/disconnect, mount/travel, and H remain open.
 
 | System | Perceive | Decide | Act | Verify | Autonomous Loop |
 |---|---|---|---|---|---|
@@ -185,15 +175,15 @@ claimed as MCP-exposed.
 canonical interaction candidate failed for quest 270, doodad 687, interaction
 skill 11229: the real path reaches `Doodad.Use`, but the spawned fixture exposes
 no phase functions. No implementation landed; broad PB-002 remains open.
-**Soak boundary:** No six-hour dormant-timer soak exists in current evidence,
-so no soak result is claimed. A5/A5Tier3 use per-run named account/character
-snapshots and ID-bound `finally` cleanup (`799b698ad`); sibling-preservation
-tests pass 2/2, with no broad wildcard cleanup in those probes. Setup
-cancellation is implemented by `950cfd279`: token/timeout-aware
-`BotDriveClient.CallAsync` with compatible sync `Call`, plus cooperative
-A5Tier3 worker cancellation/deadline propagation without `Thread.Abort`.
-BotDriveClientCancellationTests pass 3/3. H/human-feel remains human-only and
-UNKNOWN.
+**Soak boundary:** Corrected bounded Tier3 readiness at source/test
+`4721cbd306cbf346bfe38b7373d5adf479b6231f` passed 1/1 with 1000 seeded, 50
+embodied, 950 dormant, materialize p95 259.2ms, RSS +2.56%, and 50
+dematerialized; owned cleanup was zero. Population isolation `c97909f4f` fixes
+the prior baseline carry-over. Opt-in six-hour stage `155c82c66` now exists,
+default skipped and requiring explicit opt-in/duration/sample controls; it uses
+cooperative deadline propagation and ID-bound `finally` cleanup. No six-hour
+execution or metrics are claimed; the timer leg remains PENDING. Cancellation
+focused tests pass 3/3. H/human-feel remains human-only and UNKNOWN.
 
 What exists today for running more bots without scaling cost linearly — all
 of it default-OFF, so unset deployments behave byte-identically to before:

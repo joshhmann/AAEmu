@@ -17,27 +17,25 @@
 > passes that test, the architecture stays right.
 
 **Current source/test checkpoint (2026-08-28):** local `develop` source/test
-HEAD is `0ce518ac03a18de00fff1516aa9e794e8566bee6`; M5 proposal
-`263ecc66c474ca1c5f4b085e86ef3e47f49fd1` and M6 cancellation `950cfd279` are
-in its ancestry. The M5 bounded `BotDecisionProposal` /
-`BotDecisionSelector` / `BotDecisionCycle` primitive is consumed by
-`LevelingLoop`'s quest-accept choice, with immutable observed context, legality
-before preference, bounded candidates, deterministic fixed-priority/personality/
-tie-break selection, terminal postcondition, and existing `GameplayActor`
-dispatch. Focused proposal tests are **5/5**. It is a scoped quest consumer,
-not universal bot autonomy; broad M5 policy remains open.
+HEAD is `da0fdc61a72a15111fddc8ac627a164a5f050558`; M5 proposal
+`263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6 cancellation `950cfd279`,
+population isolation `c97909f4f`, and opt-in six-hour leg `155c82c66` are
+integrated.
 
-M6 `BotDriveClient.CallAsync` now carries cancellation/timeout while sync `Call`
-remains compatible; A5 and A5Tier3 seed bridge calls are async, and Tier3
-workers share cancellation/deadline propagation and cooperative stop, with no
-`Thread.Abort`. Focused results:
-BotDriveClientCancellationTests **3/3**, SoakOwnershipTests **2/2**, and
-BotPresenceCoordinator **13/13**. The full normal-clone gate is **2504 total /
-2503 passed / 0 failed / 1 skipped**, compiler **0/0**, MCP **39 tools**. The
-sole skip is `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-`AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. No six-hour soak or M6 full-exit
-result exists; no H/UAT claim is inferred. Historical reports and prior SHA
-boundaries remain unchanged.
+The six-hour stage is default skipped unless `A5_TIER3_SIX_HOUR=1`; it requires
+`A5_TIER3_SIX_HOUR_MINUTES>=360` and sample seconds 1..300, with cooperative
+deadline and ID-bound `finally` cleanup. Operator command (isolated E2E root,
+shifted ports, unique compose project, read-only `/root/hl-cp-test` assets, and
+`ensure-log-caps.sh` helper):
+`A5_TIER3_SIX_HOUR=1 A5_TIER3_SIX_HOUR_MINUTES=360 A5_TIER3_SIX_HOUR_SAMPLE_SECONDS=60 A5_DORMANT_COUNT=1000 E2E_ROOT=/root/aaemu-e2e-a5-tier3-sixhour E2E_LOGIN_PORT=4237 E2E_GAME_PORT=4239 E2E_STREAM_PORT=4250 E2E_BRIDGE_PORT=4260 E2E_INTERNAL_PORT=4234 E2E_WEBAPI_PORT=4280 E2E_DB_PORT=43306 DB_HOST_PORT=43306 COMPOSE_PROJECT_NAME=aaemu_a5_t3_sixhour E2E_REBUILD=1 dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --filter-method AAEmu.IntegrationTests.E2e.G2.A5Tier3AcceptanceProbeTests.Probe_A5Tier3DormantTimers_SixHour`.
+
+Readiness only: corrected rehearsal at source/test `4721cbd306cbf346bfe38b7373d5adf479b6231f`
+passed 1/1 in 15m20.984s with 1000 seeded, 50 embodied, 950 dormant,
+materialize p95 259.2ms, RSS +2.56%, 50 dematerialized, and owned cleanup zero.
+Cancellation focused tests pass 3/3 and ownership 2/2. No six-hour execution or
+metrics are claimed; no new full gate was run at da0. Prior 0ce full gate
+2504/2503/0/1, compiler 0/0, MCP 39 remains historical. No M6 full-exit or
+H/UAT claim is inferred.
 
 ## Three phases
 
@@ -1333,19 +1331,17 @@ and related actor expansion remains deferred.
 ### Current M6/M7 loop reconciliation (2026-08-28)
 
 **M6 player loop — current source/test HEAD
-`0ce518ac03a18de00fff1516aa9e794e8566bee6`:** a clean ordinary
+`da0fdc61a72a15111fddc8ac627a164a5f050558`:** a clean ordinary
 `Character`/bot becomes dormant → proximity wake/materialize → resumes its
 scheduled action → preserves identity, inventory, position, and metadata
-through restart → dematerializes safely. Focused M6 evidence remains **105/105**:
-BotPresenceCoordinator 13/13 (patrol + transfer-finalize regression),
-BotRoamStepExecutor 6/6, PlayerBotScheduler 26/26, DeathWatch 5/5, Metadata
-15/15, Manifest 13/13, Manager 19/19, and Headless provisioning 8/8.
-Cancellation commit `950cfd279` adds `BotDriveClient.CallAsync` token/timeout
-support while sync `Call` remains compatible; A5Tier3 workers share
-cancellation/deadline propagation and stop cooperatively, with no
-`Thread.Abort`. BotDriveClientCancellationTests 3/3 and SoakOwnershipTests 2/2
-pass. This is A/R harness/proxy evidence; no six-hour soak or M6 full-exit
-result exists, and no H/UAT claim is implied.
+through restart → dematerializes safely. Focused M6 evidence remains **105/105**.
+`950cfd279` provides cooperative bridge cancellation; `c97909f4f` isolates the
+baseline roster before dormant seeding; `155c82c66` adds the default-skipped
+six-hour natural dormant-timer stage with explicit duration/sample controls,
+cooperative deadline, and ID-bound cleanup. Corrected rehearsal readiness at
+4721 is 1/1 with embodied 50, dormant 950, materialized 50, p95 259.2ms, RSS
++2.56%, 50 dematerialized, and owned cleanup zero. No six-hour execution,
+metrics, M6 full-exit, or H/UAT claim exists.
 
 **M7 player loop — current source/test HEAD
 `ded008de8d67ece8718e9235fd02503b43ceb6a1`:** an ordinary
@@ -1618,16 +1614,16 @@ Principles:
   management → pathfinding → shared immutable knowledge → persistence
   batching → allocation work. Measure before/after every wave.
 
-**Current scaling blockers (2026-08-28):** No six-hour dormant-timer soak
-exists in current evidence, so no soak result is claimed. A5/A5Tier3 use
-per-run named account/character snapshots and ID-bound `finally` cleanup
-(`799b698ad`); sibling-preservation tests pass 2/2 and those probes contain no
-broad wildcard cleanup. Cancellation safety for setup is now implemented by
-`950cfd279`: `BotDriveClient.CallAsync` is token/timeout-aware while sync
-`Call` remains compatible, and Tier3 workers share cooperative cancellation and
-deadline propagation without `Thread.Abort`. Focused cancellation tests pass
-3/3. The remaining load-gate work is the six-hour soak itself; preserve prior
-staged/historical reports and the human/H boundary.
+**Current scaling blockers (2026-08-28):** The corrected bounded Tier3
+readiness rehearsal at source/test `4721cbd306cbf346bfe38b7373d5adf479b6231f`
+passed 1/1 with 1000 seeded, 50 embodied, 950 dormant, materialize p95
+259.2ms, RSS +2.56%, and 50 dematerialized; owned cleanup was zero.
+`c97909f4f` prevents baseline roster carry-over, and `155c82c66` adds the
+default-skipped natural six-hour stage. The operator must opt in with
+`A5_TIER3_SIX_HOUR=1`, duration >=360 minutes, and sample seconds 1..300;
+the stage carries cooperative deadline and ID-bound cleanup. No six-hour
+execution or metrics exist yet; the timer leg remains the only current load
+gate. Preserve prior staged/historical reports and the human/H boundary.
 
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
