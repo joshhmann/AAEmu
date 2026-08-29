@@ -415,7 +415,7 @@ public static class GameplayActorTestRig
         field.SetValue(target, value);
     }
 
-    private static object GetField(object target, string fieldName)
+    public static object GetField(object target, string fieldName)
     {
         var field = target.GetType().GetField(fieldName,
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -2973,6 +2973,25 @@ public static class GameplayActorTestRig
                 field!.SetValue(sphereGame, Activator.CreateInstance(field.FieldType));
             }
         }
+    }
+
+    /// <summary>
+    /// Seeds an objective sphere geometry into SphereQuestManager._sphereQuests for componentId.
+    /// </summary>
+    public static void SeedQuestSphere(uint questId, uint componentId, Vector3 xyz, float radius = 5f)
+    {
+        EnsureSphereGameData();
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+        var field = typeof(SphereQuestManager).GetField("_sphereQuests", flags);
+        var sphereQuests = (Dictionary<uint, List<SphereQuest>>?)field!.GetValue(null);
+        if (sphereQuests == null)
+        {
+            sphereQuests = [];
+            field.SetValue(null, sphereQuests);
+        }
+        sphereQuests[componentId] = [
+            new SphereQuest { QuestId = questId, ComponentId = componentId, Xyz = xyz, Radius = radius }
+        ];
     }
 
     /// <summary>

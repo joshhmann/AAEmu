@@ -991,6 +991,23 @@ public class GameplayActor : IGameplayActor
             $"discovered {offerings.Count} self-perceivable quest offer(s)");
     }
 
+    public ActorRequest PlayCinema(uint cinemaId, string? idempotencyKey = null)
+    {
+        ExecutionBoundary.AssertOnExecutionThread("PlayCinema");
+
+        var request = NewRequest(ActorActionType.PlayCinema, cinemaId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "play cinema"))
+            return request;
+
+        request.Start($"playing cinema {cinemaId}");
+
+        // The REAL packet path — CSStartedCinemaPacket (0x0cf) followed by CSCompletedCinemaPacket (0x0ce)
+        Character.Events.OnCinemaStarted(Character, new OnCinemaStartedArgs { CinemaId = cinemaId });
+        Character.Events.OnCinemaEnded(Character, new OnCinemaEndedArgs { CinemaId = cinemaId });
+
+        return Complete(request, $"cinema {cinemaId} played");
+    }
+
     /// <summary>
     /// True when AddQuest would accept this quest RIGHT NOW (pre-conditions
     /// only — no mutation): known template, no active duplicate, supply-item

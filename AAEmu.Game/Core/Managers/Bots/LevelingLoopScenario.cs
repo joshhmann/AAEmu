@@ -7,8 +7,12 @@ using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests;
-using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Templates;
+using AAEmu.Game.Models.Game.World;
 using NLog;
 
 namespace AAEmu.Game.Core.Managers.Bots;
@@ -427,12 +431,6 @@ public static class LevelingLoopScenario
             "missing item-use pursuit composition (UseItem primitive exists; group resolution uncomposed)",
         [nameof(QuestActObjItemGroupGather)] =
             "missing item-group source resolution (HighlightDoodadId is single-template; group sources unmapped)",
-        [nameof(QuestActObjSphere)] =
-            "missing sphere-entry movement primitive",
-        [nameof(QuestActObjCinema)] =
-            "missing cinema-trigger primitive",
-        [nameof(QuestActObjCraft)] =
-            "missing craft-objective composition (Craft action exists; workbench resolution + recipe mapping uncomposed)",
         [nameof(QuestActObjAggro)] =
             "missing aggro-attribution primitive",
         [nameof(QuestActObjZoneKill)] =
@@ -542,6 +540,33 @@ public static class LevelingLoopScenario
                         if (groupTalkFailure != null)
                             return Fail($"OBJECTIVES:group-talk({groupTalk.NpcGroupId})", ActorFailureReason.Navigation,
                                 groupTalkFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjSphere sphere:
+                    {
+                        var sphereFailure = SphereLeg(actor, opts, questId, sphere, perception);
+                        if (sphereFailure != null)
+                            return Fail($"OBJECTIVES:sphere({sphere.SphereId})", ActorFailureReason.Navigation,
+                                sphereFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjCraft craft:
+                    {
+                        var (craftFailure, craftReason) = CraftLeg(actor, opts, questId, craft, perception);
+                        if (craftFailure != null)
+                            return Fail($"OBJECTIVES:craft({craft.CraftId})", craftReason,
+                                craftFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjCinema cinema:
+                    {
+                        var cinemaFailure = CinemaLeg(actor, questId, cinema);
+                        if (cinemaFailure != null)
+                            return Fail($"OBJECTIVES:cinema({cinema.CinemaId})", ActorFailureReason.RejectedAction,
+                                cinemaFailure, actor, null);
                         break;
                     }
 
@@ -688,6 +713,178 @@ public static class LevelingLoopScenario
         }
 
         return (null, ActorFailureReason.None);
+    }
+
+    /// <summary>
+    /// Resolves a sphere objective's boundary and drives movement into the
+    /// sphere trigger volume, ticking the world to trigger OnEnterSphere.
+    /// </summary>
+    private static string? SphereLeg(
+        GameplayActor actor, LoopOptions opts, uint questId, QuestActObjSphere sphere,
+        PerceptionSnapshot perception)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return $"quest {questId} left ActiveQuests before sphere pursuit started";
+
+        if (sphere.GetObjective(quest) >= 1)
+            return null;
+
+        Vector3? targetPos = null;
+
+        if (sphere.NpcId > 0)
+        {
+            if (perception.NpcObjIdsByTemplate.TryGetValue(sphere.NpcId, out var npcObjId))
+            {
+                var npc = actor.Character.ParentWorld?.GetNpc(npcObjId);
+                if (npc != null)
+                    targetPos = npc.Transform.World.Position;
+            }
+            else
+            {
+                var npc = actor.Character.ParentWorld?.GetNpcByTemplateId(sphere.NpcId);
+                if (npc != null)
+                    targetPos = npc.Transform.World.Position;
+            }
+        }
+
+        if (!targetPos.HasValue)
+        {
+            var sphereComponentId = sphere.ParentComponent?.Id ?? 0;
+            var sphereQuests = actor.Character.ParentWorld?.SphereQuestManager?.GetQuestSpheres(sphereComponentId);
+            if (sphereQuests is { Count: > 0 })
+            {
+                targetPos = sphereQuests[0].Xyz;
+            }
+        }
+
+        if (!targetPos.HasValue)
+        {
+            return $"quest {questId} sphere objective {sphere.DetailId} (sphere {sphere.SphereId}) has no resolvable location";
+        }
+
+        var destination = targetPos.Value;
+        var currentPos = actor.Character.Transform.World.Position;
+        if (Vector3.Distance(currentPos, destination) > 2.0f)
+        {
+            var moveReq = actor.NavigateTo(destination, opts.TravelSpeed, opts.TravelTimeout);
+            DriveRequest(actor, opts, moveReq);
+            if (moveReq.State != ActorLifecycleState.Completed)
+                return $"NavigateTo sphere location for quest {questId} failed: {moveReq.Detail}";
+        }
+
+        // Inside sphere volume: tick simulation and trigger sphere entry event
+        actor.Tick(TimeSpan.FromMilliseconds(500));
+
+        if (sphere.GetObjective(quest) < 1)
+        {
+            var sphereComponentId = sphere.ParentComponent?.Id ?? 0;
+            var sphereQuests = actor.Character.ParentWorld?.SphereQuestManager?.GetQuestSpheres(sphereComponentId);
+            if (sphereQuests is { Count: > 0 })
+            {
+                QuestManager.Instance.DoOnEnterSphereEvents(actor.Character, sphereQuests[0], currentPos);
+            }
+        }
+
+        if (sphere.GetObjective(quest) < 1)
+        {
+            return $"quest {questId} entered sphere location {destination} but objective remains 0";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves recipe requirements, navigates to a required workbench if needed,
+    /// and executes the craft action until the craft objective count is met.
+    /// </summary>
+    private static (string? Failure, ActorFailureReason Reason) CraftLeg(
+        GameplayActor actor, LoopOptions opts, uint questId, QuestActObjCraft craftAct,
+        PerceptionSnapshot perception)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return ($"quest {questId} left ActiveQuests before craft pursuit started",
+                ActorFailureReason.StateTransition);
+
+        var craft = CraftManager.Instance.GetCraftById(craftAct.CraftId);
+        if (craft == null)
+            return ($"quest {questId} craft objective {craftAct.DetailId} names unknown craft {craftAct.CraftId}",
+                ActorFailureReason.RejectedAction);
+
+        uint workbenchObjId = 0;
+        var requiredWorkbenchTemplateId = craft.ReqDoodadId > 0
+            ? craft.ReqDoodadId
+            : craftAct.HighlightDoodadId;
+
+        if (requiredWorkbenchTemplateId > 0)
+        {
+            if (perception.DoodadObjIdsByTemplate.TryGetValue(requiredWorkbenchTemplateId, out var doodads) && doodads.Count > 0)
+            {
+                workbenchObjId = doodads[0];
+            }
+            else
+            {
+                return ($"quest {questId} needs craft {craftAct.CraftId} on workbench {requiredWorkbenchTemplateId}, but no workbench was PERCEIVED nearby",
+                    ActorFailureReason.Navigation);
+            }
+
+            var workbench = actor.Character.ParentWorld?.GetDoodad(workbenchObjId);
+            if (workbench != null && Vector3.Distance(actor.Character.Transform.World.Position, workbench.Transform.World.Position) > 5.0f)
+            {
+                var moveReq = actor.NavigateTo(workbench.Transform.World.Position, opts.TravelSpeed, opts.TravelTimeout);
+                DriveRequest(actor, opts, moveReq);
+                if (moveReq.State != ActorLifecycleState.Completed)
+                    return ($"NavigateTo workbench for quest {questId} failed: {moveReq.Detail}", ActorFailureReason.Navigation);
+            }
+        }
+
+        while (craftAct.GetObjective(quest) < craftAct.Count)
+        {
+            var req = actor.Craft(craftAct.CraftId, workbenchObjId);
+            DriveRequest(actor, opts, req);
+            if (req.State != ActorLifecycleState.Completed)
+            {
+                return ($"Craft for quest {questId} craftId {craftAct.CraftId} failed: {req.Detail}",
+                    req.Failure ?? ActorFailureReason.RejectedAction);
+            }
+
+            if (actor.Character.Quests?.HasQuestCompleted(questId) == true)
+                return (null, ActorFailureReason.None);
+
+            quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+            if (quest == null)
+                return (null, ActorFailureReason.None);
+        }
+
+        return (null, ActorFailureReason.None);
+    }
+
+    /// <summary>
+    /// Executes cinema/cutscene playback through GameplayActor.PlayCinema.
+    /// </summary>
+    private static string? CinemaLeg(
+        GameplayActor actor, uint questId, QuestActObjCinema cinema)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return $"quest {questId} left ActiveQuests before cinema pursuit started";
+
+        if (cinema.GetObjective(quest) >= 1)
+            return null;
+
+        var request = actor.PlayCinema(cinema.CinemaId);
+        if (request.State != ActorLifecycleState.Completed)
+        {
+            return $"PlayCinema {cinema.CinemaId} for quest {questId} refused: {request.Detail}";
+        }
+
+        if (cinema.GetObjective(quest) < 1)
+        {
+            return $"quest {questId} cinema {cinema.CinemaId} played but objective remains 0";
+        }
+
+        return null;
     }
 
 
@@ -1061,7 +1258,18 @@ public static class LevelingLoopScenario
 
         var deadline = Environment.TickCount64 + (long)opts.TravelTimeout.TotalMilliseconds;
         while (!request.IsTerminal && Environment.TickCount64 < deadline)
+        {
+            if (request.Action == ActorActionType.Craft && actor.Character.Craft.IsCrafting)
+            {
+                var craft = CraftManager.Instance.GetCraftById(request.TargetId);
+                var benchObjId = (request.Payload as CraftParams)?.DoodadObjId ?? 0;
+                var bench = actor.Character.ParentWorld?.GetDoodad(benchObjId);
+                var effect = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart };
+                effect.Apply(actor.Character, null, bench, null,
+                    new CastSkill(craft?.SkillId ?? 0, 0), new EffectSource(), null, DateTime.UtcNow);
+            }
             actor.Tick(TimeSpan.FromMilliseconds(20));
+        }
         return request;
     }
 

@@ -216,6 +216,26 @@ public class LevelingLoopScenarioRigTests
         return objId;
     }
 
+    private static uint SpawnWorkbenchDoodad(HeadlessSession session, uint templateId, Vector3 position)
+    {
+        var objId = session.SpawnDoodad(templateId);
+        var doodad = session.World.GetDoodad(objId)!;
+        doodad.Template = new DoodadTemplate
+        {
+            Id = templateId,
+            FuncGroups = []
+        };
+        doodad.Transform.Local.SetPosition(position);
+        var region = session.World.GetRegionByPos(position);
+        if (region != null)
+        {
+            region.AddObject(doodad);
+            doodad.Region = region;
+        }
+
+        return objId;
+    }
+
     /// <summary>
     /// Deterministic evidence writer (m7-adventurer-spike convention): the
     /// PASSING main run emits its machine-readable audit trace + human
@@ -524,9 +544,9 @@ public class LevelingLoopScenarioRigTests
     }
 
     /// <summary>
-    /// Fail-closed control: canonical quest 1372 (accept NPC 2279, level 10,
-    /// Progress QuestActObjSphere) remains outside this slice because no
-    /// sphere-entry movement primitive is composed.
+    /// Fail-closed control: canonical quest 5490 (accept NPC 13472, level 1,
+    /// Progress QuestActObjItemGroupGather) remains outside this slice because no
+    /// item-group source resolution primitive is composed.
     /// </summary>
     [Test]
     public async Task LevelingLoop_UnsupportedObjectiveType_FailsClosedNamingMissingPrimitive()
@@ -535,16 +555,16 @@ public class LevelingLoopScenarioRigTests
         GameplayActorTestRig.EnsureSphereGameData();
         var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-gap");
         var character = session.Character;
-        character.Level = 10;
+        character.Level = 1;
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
 
-        SpawnHubNpc(session, 2279, new Vector3(1, 0, 0));
+        SpawnHubNpc(session, 13472, new Vector3(1, 0, 0));
 
         var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
         {
-            BandMin = 10,
-            BandMax = 10,
+            BandMin = 1,
+            BandMax = 1,
             MaxLinks = 1
         });
 
@@ -555,16 +575,165 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(result.Passed).IsFalse();
         await Assert.That(result.FailStage.StartsWith("OBJECTIVES")).IsTrue();
         await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.WrongDecision);
-        await Assert.That(result.FailReason.Contains(nameof(QuestActObjSphere))).IsTrue();
-        await Assert.That(result.FailReason.Contains("missing sphere-entry movement primitive")).IsTrue();
+        await Assert.That(result.FailReason.Contains(nameof(QuestActObjItemGroupGather))).IsTrue();
+        await Assert.That(result.FailReason.Contains("missing item-group source resolution")).IsTrue();
 
         // No fake progress: the quest was accepted but never advanced,
         // turned in, or dropped.
-        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(1372)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(5490)).IsTrue();
         await Assert.That(result.TraceRecords.Count(r => r.Action == ActorActionType.AcceptQuest)).IsEqualTo(1);
         await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
             or ActorActionType.AutoTurnIn)).IsFalse();
-        await Assert.That(character.Quests.HasQuestCompleted(1372)).IsFalse();
+        await Assert.That(character.Quests.HasQuestCompleted(5490)).IsFalse();
+    }
+
+    /// <summary>
+    /// E-SPHERE-1: composed SPHERE objective — canonical quest 1372
+    /// (offered by NPC 2279 at Level 10, Progress = QuestActObjSphere act 9225 → sphere 457 / component 6499;
+    /// report NPC 5789). The bot perceives the offer, accepts, approaches the sphere location,
+    /// triggers OnEnterSphere, and turns in at NPC 5789 through the real engine path.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_Quest1372_CompletesSphereObjective()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        using var canonicalData = new CanonicalInteractionDataScope();
+        GameplayActorTestRig.Seed();
+        GameplayActorTestRig.EnsureSphereGameData();
+
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-sphere");
+        var character = session.Character;
+        character.Level = 10;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Seed sphere location at (2, 0, 0) for component 6499 (quest 1372)
+        GameplayActorTestRig.SeedQuestSphere(1372, 6499, new Vector3(2, 0, 0), 10f);
+
+        SpawnHubNpc(session, 2279, new Vector3(1, 0, 0));  // Offerer NPC
+        SpawnHubNpc(session, 5789, new Vector3(2, 0, 0));  // Report NPC
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 10,
+            BandMax = 10,
+            MaxLinks = 1
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException($"LevelingLoop failed at {result.FailStage}: {result.FailReason}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(character.Quests!.HasQuestCompleted(1372)).IsTrue();
+    }
+
+    /// <summary>
+    /// E-CINEMA-1: composed CINEMA objective — canonical quest 6041
+    /// (offered by NPC 14317 at Level 1, Progress = QuestActObjCinema act 35557 → cinema 154;
+    /// auto-completes). The bot perceives the offer, accepts, plays the cinema, and auto-completes.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_Quest6041_CompletesCinemaObjective()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        using var canonicalData = new CanonicalInteractionDataScope();
+        GameplayActorTestRig.Seed();
+
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-cinema");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Mark completed flags on prerequisite and sibling quests offered by NPC 14317 so quest 6041 is chosen
+        character.Quests!.SetCompletedQuestFlag(6040, true); // kind-31 prerequisite for 6041
+        foreach (var siblingQuestId in new uint[] { 6039, 6043, 6044, 6046, 6054, 6055, 6056 })
+            character.Quests!.SetCompletedQuestFlag(siblingQuestId, true);
+
+        SpawnHubNpc(session, 14317, new Vector3(1, 0, 0)); // Offerer NPC
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException($"LevelingLoop failed at {result.FailStage}: {result.FailReason}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(character.Quests!.HasQuestCompleted(6041)).IsTrue();
+    }
+
+    /// <summary>
+    /// E-CRAFT-1: composed CRAFT objective — canonical quest 6024
+    /// (offered by NPC 1884 at Level 10, Progress = QuestActObjCraft act 35540 → craft 5462, workbench 559;
+    /// auto-completes). The bot perceives the offer, accepts, crafts at the workbench, and auto-completes.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_Quest6024_CompletesCraftObjective()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        using var canonicalData = new CanonicalInteractionDataScope();
+        GameplayActorTestRig.Seed();
+        GameplayActorTestRig.SeedCraftSurface();
+
+        // Seed materials and product for craft 5462: item 8343 x 3, item 8327 x 1 -> product 4052 x 3
+        GameplayActorTestRig.SeedItemTemplate(8343);
+        GameplayActorTestRig.SeedItemTemplate(8327);
+        GameplayActorTestRig.SeedItemTemplate(4052);
+
+        // Populate craft 5462 in CraftManager
+        var crafts = (Dictionary<uint, AAEmu.Game.Models.Game.Crafts.Craft>)GameplayActorTestRig.GetField(CraftManager.Instance, "_crafts");
+        crafts[5462] = new AAEmu.Game.Models.Game.Crafts.Craft
+        {
+            Id = 5462,
+            SkillId = GameplayActorTestRig.CraftTestSkillId,
+            ReqDoodadId = 559,
+            ActabilityLimit = 0,
+            CraftMaterials = [
+                new AAEmu.Game.Models.Game.Crafts.CraftMaterial { ItemId = 8343, Amount = 3 },
+                new AAEmu.Game.Models.Game.Crafts.CraftMaterial { ItemId = 8327, Amount = 1 }
+            ],
+            CraftProducts = [
+                new AAEmu.Game.Models.Game.Crafts.CraftProduct { ItemId = 4052, Amount = 3, Rate = 100 }
+            ]
+        };
+
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-craft");
+        var character = session.Character;
+        character.Level = 10;
+        character.Hp = character.MaxHp;
+        character.LaborPower = 100;
+        JoinActorRegion(session);
+
+        // Mark completed flags on prerequisite and sibling quests offered by NPC 1884 so quest 6024 is chosen
+        character.Quests!.SetCompletedQuestFlag(1582, true); // kind-31 prerequisite for 6024
+        character.Quests!.SetCompletedQuestFlag(1588, true);
+        character.Quests!.SetCompletedQuestFlag(1638, true);
+
+        // Grant required craft materials to inventory
+        character.Inventory.Bag.AcquireDefaultItem(AAEmu.Game.Models.Game.Items.Actions.ItemTaskType.QuestSupplyItems, 8343, 3);
+        character.Inventory.Bag.AcquireDefaultItem(AAEmu.Game.Models.Game.Items.Actions.ItemTaskType.QuestSupplyItems, 8327, 1);
+
+        SpawnHubNpc(session, 1884, new Vector3(1, 0, 0)); // Offerer NPC
+
+        // Spawn Masonry workbench doodad 559 in region
+        SpawnWorkbenchDoodad(session, 559, new Vector3(2, 0, 0));
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 10,
+            BandMax = 10,
+            MaxLinks = 1
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException($"LevelingLoop failed at {result.FailStage}: {result.FailReason}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(character.Quests!.HasQuestCompleted(6024)).IsTrue();
     }
 
     /// <summary>

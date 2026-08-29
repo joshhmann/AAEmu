@@ -736,6 +736,14 @@ public interface IGameplayActor
     ActorRequest DiscoverSelfQuests(string? idempotencyKey = null);
 
     /// <summary>
+    /// Cutscene/cinema playback through the REAL engine path — the
+    /// CSStartedCinemaPacket (0x0cf) and CSCompletedCinemaPacket (0x0ce)
+    /// handlers: dispatches Character.Events.OnCinemaStarted then OnCinemaEnded.
+    /// Drives QuestActObjCinema progress.
+    /// </summary>
+    ActorRequest PlayCinema(uint cinemaId, string? idempotencyKey = null);
+
+    /// <summary>
     /// Buys goods from a merchant NPC through the REAL engine path — the
     /// same CSBuyItemsPacket branch: validates the NPC merchant + its goods
     /// pack (NpcManager.GetGoods), grants the item through
@@ -971,7 +979,10 @@ public enum ActorActionType : byte
     DiscoverSelfQuests = 47,
 
     /// <summary>Specialty trade-pack sale through CSSellBackpackGoodsPacket / SpecialtyManager.</summary>
-    SellSpecialty = 48
+    SellSpecialty = 48,
+
+    /// <summary>Cutscene/cinema playback through Character.Events.OnCinemaStarted / OnCinemaEnded (CSStartedCinemaPacket / CSCompletedCinemaPacket path).</summary>
+    PlayCinema = 49
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

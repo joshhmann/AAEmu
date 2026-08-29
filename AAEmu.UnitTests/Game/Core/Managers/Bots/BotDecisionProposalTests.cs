@@ -87,6 +87,7 @@ public class BotDecisionProposalTests
         public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Talk(uint npcObjId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest DiscoverSelfQuests(string? idempotencyKey = null) => Unsupported();
+        public ActorRequest PlayCinema(uint cinemaId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Buy(uint merchantNpcObjId, uint itemTemplateId, int count, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Sell(uint merchantNpcObjId, ulong itemId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest SellSpecialty(uint merchantNpcObjId, string? idempotencyKey = null) => Unsupported();
