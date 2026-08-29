@@ -976,6 +976,50 @@ public class LevelingLoopScenarioRigTests
             .IsGreaterThanOrEqualTo(3);
     }
 
+    /// <summary>
+    /// Self-discovery channel: quest offered through an item in the actor's inventory
+    /// bag is perceived via DiscoverSelfQuests, accepted with QuestAcceptorType.Item,
+    /// and completed through the leveling loop.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_SelfDiscoveryChannel_AcceptsAndCompletesQuestOfferedByItem()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        using var canonicalData = new CanonicalInteractionDataScope();
+        GameplayActorTestRig.Seed();
+
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb-leveling-item-discovery");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        character.Quests!.SetCompletedQuestFlag(6040, true);
+        GameplayActorTestRig.SeedQuestItemOffer(6041, 26005, GameplayActorTestRig.DiscoverySelfItemTemplateId, level: 1);
+        GameplayActorTestRig.GiveBagItem(actor, GameplayActorTestRig.DiscoverySelfItemTemplateId, 1);
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            MaxLinks = 1,
+            BandMin = 1,
+            BandMax = 1
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(6041u);
+        await Assert.That(character.Quests!.HasQuestCompleted(6041)).IsTrue();
+
+        var trace = result.TraceRecords;
+        var discoverSelf = IndexOfFirst(trace, ActorActionType.DiscoverSelfQuests, 0);
+        var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, 6041);
+        await Assert.That(discoverSelf).IsGreaterThanOrEqualTo(0);
+        await Assert.That(accept).IsGreaterThan(discoverSelf);
+    }
+
 
     /// <summary>Index of the first record of the action type at or after start.</summary>
     private static int FirstAtLeast(IReadOnlyList<ActorAuditRecord> trace, ActorActionType action, int start)

@@ -1002,6 +1002,7 @@ public class GameplayActor : IGameplayActor
         request.Start($"playing cinema {cinemaId}");
 
         // The REAL packet path — CSStartedCinemaPacket (0x0cf) followed by CSCompletedCinemaPacket (0x0ce)
+        Character.CurrentlyPlayingCinemaId = cinemaId;
         Character.Events.OnCinemaStarted(Character, new OnCinemaStartedArgs { CinemaId = cinemaId });
         Character.Events.OnCinemaEnded(Character, new OnCinemaEndedArgs { CinemaId = cinemaId });
 

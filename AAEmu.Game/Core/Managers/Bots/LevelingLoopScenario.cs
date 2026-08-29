@@ -419,6 +419,13 @@ public static class LevelingLoopScenario
                 offerings.AddRange(found.Offerings);
         }
 
+        // Self-perceived quest offers (Item in bag, Sphere, Level channels).
+        var selfRequest = actor.DiscoverSelfQuests();
+        if (selfRequest.State == ActorLifecycleState.Completed && selfRequest.Result is QuestSelfDiscoveryResult selfFound)
+        {
+            offerings.AddRange(selfFound.Offerings);
+        }
+
         return new PerceptionSnapshot(offerings, npcByTemplate, doodadsByTemplate,
             observation.NearbyNpcObjIds.Count, doodadCount, BotObservedContext.From(observation));
     }
@@ -782,7 +789,7 @@ public static class LevelingLoopScenario
             var sphereQuests = actor.Character.ParentWorld?.SphereQuestManager?.GetQuestSpheres(sphereComponentId);
             if (sphereQuests is { Count: > 0 })
             {
-                QuestManager.Instance.DoOnEnterSphereEvents(actor.Character, sphereQuests[0], currentPos);
+                QuestManager.Instance.DoOnEnterSphereEvents(actor.Character, sphereQuests[0], actor.Character.Transform.World.Position);
             }
         }
 
@@ -878,6 +885,9 @@ public static class LevelingLoopScenario
         {
             return $"PlayCinema {cinema.CinemaId} for quest {questId} refused: {request.Detail}";
         }
+
+        if (actor.Character.Quests?.HasQuestCompleted(questId) == true)
+            return null;
 
         if (cinema.GetObjective(quest) < 1)
         {
