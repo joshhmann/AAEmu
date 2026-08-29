@@ -268,6 +268,89 @@ public sealed class MailCodLifecycleTests
     }
 
     [Test]
+    public async Task GetAttached_WireFlags_MoneyAndAaPointBitsMatchTakePath()
+    {
+        // Money-only mail: the money take must emit money=true, aaPoint=false, zero items.
+        var moneyMail = new BaseMail
+        {
+            Id = 202,
+            Title = "money-mail",
+            ReceiverName = _receiver.Name,
+            MailType = MailType.Normal,
+            Header =
+            {
+                Status = MailStatus.Read,
+                SenderId = _sender.Id,
+                SenderName = _sender.Name,
+                ReceiverId = _receiver.Id
+            },
+            Body =
+            {
+                Text = "body",
+                CopperCoins = 50,
+                RecvDate = DateTime.UtcNow
+            }
+        };
+        moneyMail.Header.Attachments = moneyMail.GetTotalAttachmentCount();
+        _mailManager._allPlayerMails[moneyMail.Id] = moneyMail;
+
+        var moneyStart = ReceiverFrames.Count;
+        var moneySuccess = _receiver.Mails.GetAttached(moneyMail.Id, takeMoney: true, takeItems: true, takeAllSelected: true);
+        await Assert.That(moneySuccess).IsTrue();
+
+        var moneyFrames = ReceiverFrames.Skip(moneyStart)
+            .Select(DecodeAttachmentTaken)
+            .Where(f => f.HasValue)
+            .Select(f => f!.Value)
+            .ToList();
+        await Assert.That(moneyFrames).HasCount().EqualTo(1);
+        await Assert.That(moneyFrames[0].MailId).IsEqualTo(moneyMail.Id);
+        await Assert.That(moneyFrames[0].Money).IsTrue().Because("the money take packet must set the money bit");
+        await Assert.That(moneyFrames[0].AaPoint).IsFalse().Because("item attachment takes must never set the aaPoint bit");
+        await Assert.That(moneyFrames[0].ItemCount).IsEqualTo((byte)0);
+
+        // Item-only mail: the per-item take must emit money=false, aaPoint=false, one item.
+        var item = CreateItem(AttachedItemId1, AttachedItemTemplateId1, _receiver.Id, 1);
+        var itemMail = new BaseMail
+        {
+            Id = 203,
+            Title = "item-mail",
+            ReceiverName = _receiver.Name,
+            MailType = MailType.Normal,
+            Header =
+            {
+                Status = MailStatus.Read,
+                SenderId = _sender.Id,
+                SenderName = _sender.Name,
+                ReceiverId = _receiver.Id
+            },
+            Body =
+            {
+                Text = "body",
+                Attachments = [item],
+                RecvDate = DateTime.UtcNow
+            }
+        };
+        itemMail.Header.Attachments = itemMail.GetTotalAttachmentCount();
+        _mailManager._allPlayerMails[itemMail.Id] = itemMail;
+
+        var itemStart = ReceiverFrames.Count;
+        var itemSuccess = _receiver.Mails.GetAttached(itemMail.Id, takeMoney: true, takeItems: true, takeAllSelected: true);
+        await Assert.That(itemSuccess).IsTrue();
+
+        var itemFrames = ReceiverFrames.Skip(itemStart)
+            .Select(DecodeAttachmentTaken)
+            .Where(f => f.HasValue)
+            .Select(f => f!.Value)
+            .ToList();
+        await Assert.That(itemFrames).HasCount().EqualTo(1);
+        await Assert.That(itemFrames[0].MailId).IsEqualTo(itemMail.Id);
+        await Assert.That(itemFrames[0].Money).IsFalse().Because("an item take without money must not set the money bit");
+        await Assert.That(itemFrames[0].AaPoint).IsFalse().Because("item attachment takes must never set the aaPoint bit");
+        await Assert.That(itemFrames[0].ItemCount).IsEqualTo((byte)1);
+    }
+
+    [Test]
     public async Task DeleteMail_SentTab_SenderOwns_EmitsDeletedPacket()
     {
         var sentMail = new BaseMail
@@ -404,6 +487,24 @@ public sealed class MailCodLifecycleTests
                 count++;
         }
         return count;
+    }
+
+    /// <summary>
+    /// Decodes the wire flags of an SCAttachmentTakenPacket frame, matching
+    /// SCAttachmentTakenPacket.Write: mailId(long) money(bool) aaPoint(bool)
+    /// takeSequentially(bool) count(byte) then 10 fixed item slots.
+    /// </summary>
+    private static (long MailId, bool Money, bool AaPoint, byte ItemCount)? DecodeAttachmentTaken(byte[] frame)
+    {
+        var level = frame[3];
+        var opcodeOffset = level == 1 ? 6 : 4;
+        if (BitConverter.ToUInt16(frame, opcodeOffset) != SCOffsets.SCAttachmentTakenPacket)
+            return null;
+        var body = opcodeOffset + 2;
+        return (BitConverter.ToInt64(frame, body),
+            frame[body + 8] != 0,
+            frame[body + 9] != 0,
+            frame[body + 11]);
     }
 
     private sealed class CountingMailIdManager : IMailIdManager
