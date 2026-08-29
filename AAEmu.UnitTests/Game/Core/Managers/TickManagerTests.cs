@@ -67,11 +67,13 @@ public class TickManagerTests
     public async Task Subscriber_RecordsPerSubscriberDuration_WithName()
     {
         var tm = new TickManager();
-        tm.OnTick.Subscribe(_ => Thread.Sleep(10), TimeSpan.FromMilliseconds(1), useAsync: false, name: "slow-sync");
-        tm.OnTick.Subscribe(_ => { }, TimeSpan.FromMilliseconds(1), useAsync: true, name: "fast-async");
+        var asyncDone = new TaskCompletionSource();
+        tm.OnTick.Subscribe(_ => Thread.Sleep(10), TimeSpan.Zero, useAsync: false, name: "slow-sync");
+        tm.OnTick.Subscribe(_ => asyncDone.TrySetResult(), TimeSpan.Zero, useAsync: true, name: "fast-async");
 
         tm.OnTick.Invoke();
-        await Task.Delay(100); // let the async dispatch land
+        await Task.WhenAny(asyncDone.Task, Task.Delay(2000));
+        await Task.Delay(50); // let finally block in async wrapper record metrics
 
         var snapshot = tm.GetTickMetrics();
 
