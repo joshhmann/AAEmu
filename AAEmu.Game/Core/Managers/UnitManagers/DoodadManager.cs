@@ -2779,7 +2779,20 @@ public class DoodadManager(IObjectIdManager objectIdManager, IDoodadIdManager do
         return -1;
     }
 
-    public Doodad Create(WorldInstance parentWorld, uint bcId, uint templateId, GameObject ownerObject = null, bool skipPhaseInitialization = false)
+    public Doodad Create(WorldInstance parentWorld, uint bcId, uint templateId, GameObject ownerObject = null,
+        bool skipPhaseInitialization = false)
+    {
+        return CreateCore(parentWorld, bcId, templateId, ownerObject, skipPhaseInitialization, attachToWorld: true);
+    }
+
+    internal Doodad CreateDetached(WorldInstance parentWorld, uint bcId, uint templateId,
+        GameObject ownerObject = null, bool skipPhaseInitialization = false)
+    {
+        return CreateCore(parentWorld, bcId, templateId, ownerObject, skipPhaseInitialization, attachToWorld: false);
+    }
+
+    private Doodad CreateCore(WorldInstance parentWorld, uint bcId, uint templateId, GameObject ownerObject,
+        bool skipPhaseInitialization, bool attachToWorld)
     {
         if (!_templates.TryGetValue(templateId, out var template))
         {
@@ -2800,7 +2813,8 @@ public class DoodadManager(IObjectIdManager objectIdManager, IDoodadIdManager do
             Logger.Fatal($"Tried to create a doodad without a world");
             return null;
         }
-        doodad.ParentWorld = parentWorld;
+        if (attachToWorld)
+            doodad.ParentWorld = parentWorld;
 
         doodad.ObjId = bcId > 0 ? bcId : objectIdManager.GetNextId();
         doodad.TemplateId = template.Id; // copy the templateId

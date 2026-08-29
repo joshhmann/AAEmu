@@ -14,6 +14,7 @@ Verdict: PASS
 - trace: DiscoverQuests(1000)→Completed
 - trace: DiscoverQuests(1001)→Completed
 - trace: AcceptQuest(254)→Completed
+- trace: Observe(0)→Completed
 - trace: TurnInQuest(254)→Completed
 - trace: Observe(0)→Completed
 - trace: DiscoverQuests(462848)→Completed
@@ -21,6 +22,7 @@ Verdict: PASS
 - trace: DiscoverQuests(1000)→Completed
 - trace: DiscoverQuests(1001)→Completed
 - trace: AcceptQuest(255)→Completed
+- trace: Observe(0)→Completed
 - trace: InteractWith(1000)→Completed
 - trace: AdvanceQuest(255)→Completed
 - trace: TurnInQuest(255)→Completed

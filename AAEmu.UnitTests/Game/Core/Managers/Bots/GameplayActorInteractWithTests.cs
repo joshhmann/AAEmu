@@ -60,7 +60,6 @@ public class GameplayActorInteractWithTests
         var (actor, session) = GameplayActorTestRig.CreateActor("gap3-interact-2");
         GameplayActorTestRig.SeedSkillBoundDoodad();
         var doodadObjId = GameplayActorTestRig.SpawnGroupedDoodad(session, GameplayActorTestRig.InteractWithPortalGroupId);
-
         var request = actor.InteractWith(doodadObjId);
 
         await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);

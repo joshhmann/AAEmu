@@ -1,14 +1,19 @@
 using System.Numerics;
 
+using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Id;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
+using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units.Static;
+using AAEmu.UnitTests.Utils.Mocks;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -49,6 +54,70 @@ public class LevelingLoopScenarioRigTests
     /// <summary>quest_act_supply_items 3847 — quest 5650 grants item 29054 on accept.</summary>
     private const uint Quest5650SupplyItemId = 29_054;
 
+    private const uint Quest269Id = 269;
+    private const uint Quest270Id = 270;
+    private const uint Quest269NpcTemplateId = 5436;
+    private const uint Quest270NpcTemplateId = 3526;
+    private const uint Quest270DoodadTemplateId = 687;
+    private const uint Quest270StartPhase = 161;
+    private const uint Quest270UsedPhase = 304;
+    private const uint Quest270TorchItemId = 3899;
+    private const uint Quest270HayItemId = 3900;
+    private static readonly uint[] Quest269TargetNpcTemplateIds = [3466, 3467, 3468, 3465, 3462];
+
+    /// <summary>
+    /// Temporarily installs canonical SkillManager/DoodadManager data while
+    /// preserving the suite's process-wide singleton surface for other rigs.
+    /// </summary>
+    private sealed class CanonicalInteractionDataScope : IDisposable
+    {
+        private readonly SkillManager? _previousSkillManager = SkillManager.PeekInstance;
+        private readonly DoodadManager? _previousDoodadManager = DoodadManager.PeekInstance;
+
+        public CanonicalInteractionDataScope()
+        {
+            try
+            {
+                var skillManager = new SkillManager(
+                    Mock.Of<IAnimationManager>().Object,
+                    Mock.Of<IPlotManager>().Object);
+                SetSingleton(typeof(Singleton<SkillManager>), skillManager);
+                skillManager.Load();
+
+                var objectIdManager = Mock.Of<IObjectIdManager>();
+                objectIdManager.GetNextId().Returns(0x72000u);
+                var housingManager = Mock.Of<IHousingManager>();
+                var doodadManager = new DoodadManager(
+                    objectIdManager.Object,
+                    Mock.Of<IDoodadIdManager>().Object,
+                    ItemManager.Instance,
+                    new Lazy<IHousingManager>(() => housingManager.Object),
+                    Mock.Of<ISusManager>().Object);
+                SetSingleton(typeof(Singleton<DoodadManager>), doodadManager);
+                doodadManager.Load();
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
+        }
+
+        public void Dispose()
+        {
+            SetSingleton(typeof(Singleton<DoodadManager>), _previousDoodadManager);
+            SetSingleton(typeof(Singleton<SkillManager>), _previousSkillManager);
+        }
+    }
+
+    private static void SetSingleton(Type singletonBase, object? instance)
+    {
+        var field = singletonBase.GetField("s_instance",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+                    ?? throw new InvalidOperationException($"Cannot locate singleton field on {singletonBase.Name}");
+        field.SetValue(null, instance);
+    }
+
     /// <summary>Region-joined fixture NPC so Observe's GetAround sees it.</summary>
     private uint SpawnHubNpc(HeadlessSession session, uint templateId, Vector3 position)
     {
@@ -84,6 +153,33 @@ public class LevelingLoopScenarioRigTests
         var region = session.World.GetRegionByPos(character.Transform.World.Position);
         region?.AddObject(character); // InstanceId pre-set by CreateActor → registry no-op
         character.Region = region;
+    }
+
+    private static void SeedQuest269To270Items()
+    {
+        GameplayActorTestRig.SeedItemTemplate(18_791); // quest 269 completion reward
+        GameplayActorTestRig.SeedItemTemplate(Quest270TorchItemId);
+        GameplayActorTestRig.SeedItemTemplate(Quest270HayItemId);
+    }
+
+    private static uint SpawnQuest270Doodad(HeadlessSession session, Vector3 position)
+    {
+        var objId = session.SpawnDoodadFromTemplate(Quest270DoodadTemplateId);
+        if (objId == 0)
+            throw new InvalidOperationException(
+                $"canonical doodad template {Quest270DoodadTemplateId} was not loaded");
+
+        session.World.GetDoodad(objId)!.Transform.Local.SetPosition(position);
+        return objId;
+    }
+
+    private static QuestActObjInteraction GetQuest270Interaction()
+    {
+        return QuestManager.Instance.GetTemplate(Quest270Id)!
+            .GetComponents(QuestComponentKind.Progress)
+            .SelectMany(component => component.ActTemplates)
+            .OfType<QuestActObjInteraction>()
+            .Single();
     }
 
     /// <summary>
@@ -270,6 +366,134 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(use).IsGreaterThan(accept);
     }
 
+    /// <summary>
+    /// Canonical PB-002 interaction chain: quest 269 unlocks quest 270, whose
+    /// supplied torch/hay drive skill 11229 against rabbit-burrow doodad 687.
+    /// The real skill effects consume both items, move phase 161 → 304, emit
+    /// OnInteraction credit, and permit the ordinary report turn-in.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_Quest269To270_CompletesCanonicalInteraction()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        using var canonicalData = new CanonicalInteractionDataScope();
+        GameplayActorTestRig.Seed();
+        SeedQuest269To270Items();
+
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-interaction");
+        var character = session.Character;
+        character.Level = 8;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        SpawnHubNpc(session, Quest269NpcTemplateId, new Vector3(-2f, 0f, 0f));
+        SpawnHubNpc(session, Quest270NpcTemplateId, new Vector3(2f, 0f, 0f));
+        for (var i = 0; i < Quest269TargetNpcTemplateIds.Length; i++)
+        {
+            SpawnHubNpc(session, Quest269TargetNpcTemplateIds[i],
+                new Vector3(1f + i * 0.2f, -1f, 0f));
+        }
+
+        var doodadObjId = SpawnQuest270Doodad(session, new Vector3(1f, 1f, 0f));
+        var doodad = session.World.GetDoodad(doodadObjId)!;
+        await Assert.That(doodad.FuncGroupId).IsEqualTo(Quest270StartPhase);
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 8,
+            BandMax = 8,
+            MaxLinks = 2,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        }, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Select(link => link.QuestId))
+            .IsEquivalentTo([Quest269Id, Quest270Id]);
+        await Assert.That(result.Links[1].Pursuit).Contains(nameof(QuestActObjInteraction));
+        await Assert.That(character.Quests!.HasQuestCompleted(Quest269Id)).IsTrue();
+        await Assert.That(character.Quests.HasQuestCompleted(Quest270Id)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(Quest270Id)).IsFalse();
+        await Assert.That(doodad.FuncGroupId).IsEqualTo(Quest270UsedPhase);
+        await Assert.That(character.Inventory.GetItemsCount(Quest270TorchItemId)).IsEqualTo(0);
+        await Assert.That(character.Inventory.GetItemsCount(Quest270HayItemId)).IsEqualTo(0);
+
+        var trace = result.TraceRecords;
+        var accept269 = IndexOfFirst(trace, ActorActionType.AcceptQuest, Quest269Id);
+        var turnIn269 = IndexOfFirst(trace, ActorActionType.TurnInQuest, Quest269Id);
+        var accept270 = IndexOfFirst(trace, ActorActionType.AcceptQuest, Quest270Id);
+        var interact = IndexOfFirst(trace, ActorActionType.InteractWith, doodadObjId);
+        var advance270 = IndexOfFirst(trace, ActorActionType.AdvanceQuest, Quest270Id);
+        var turnIn270 = IndexOfFirst(trace, ActorActionType.TurnInQuest, Quest270Id);
+        await Assert.That(turnIn269).IsGreaterThan(accept269);
+        await Assert.That(accept270).IsGreaterThan(turnIn269);
+        await Assert.That(interact).IsGreaterThan(accept270);
+        await Assert.That(advance270).IsGreaterThan(interact);
+        await Assert.That(turnIn270).IsGreaterThan(advance270);
+    }
+
+    [Test]
+    public async Task InteractWith_Quest270WithoutSuppliedItems_FailsWithoutCredit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        using var canonicalData = new CanonicalInteractionDataScope();
+        GameplayActorTestRig.Seed();
+        SeedQuest269To270Items();
+
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb-interaction-no-items");
+        actor.Character.Level = 8;
+        actor.Character.Quests!.SetCompletedQuestFlag(Quest269Id, true);
+        var accept = actor.AcceptQuest(Quest270Id, QuestAcceptorType.Npc, Quest270NpcTemplateId);
+        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+        actor.Character.Inventory.ConsumeItem(
+            null, ItemTaskType.QuestRemoveSupplies, Quest270TorchItemId, 1, null);
+        actor.Character.Inventory.ConsumeItem(
+            null, ItemTaskType.QuestRemoveSupplies, Quest270HayItemId, 1, null);
+
+        var doodadObjId = SpawnQuest270Doodad(session, Vector3.Zero);
+        var interaction = GetQuest270Interaction();
+        var quest = actor.Character.Quests.ActiveQuests[Quest270Id];
+
+        var request = actor.InteractWith(doodadObjId);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(interaction.GetObjective(quest)).IsEqualTo(0);
+        await Assert.That(session.World.GetDoodad(doodadObjId)!.FuncGroupId)
+            .IsEqualTo(Quest270StartPhase);
+    }
+
+    [Test]
+    public async Task InteractWith_Quest270WrongPhase_FailsWithoutCredit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        using var canonicalData = new CanonicalInteractionDataScope();
+        GameplayActorTestRig.Seed();
+        SeedQuest269To270Items();
+
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb-interaction-wrong-phase");
+        actor.Character.Level = 8;
+        actor.Character.Quests!.SetCompletedQuestFlag(Quest269Id, true);
+        var accept = actor.AcceptQuest(Quest270Id, QuestAcceptorType.Npc, Quest270NpcTemplateId);
+        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        var doodadObjId = SpawnQuest270Doodad(session, Vector3.Zero);
+        var doodad = session.World.GetDoodad(doodadObjId)!;
+        doodad.FuncGroupId = Quest270UsedPhase;
+        var interaction = GetQuest270Interaction();
+        var quest = actor.Character.Quests.ActiveQuests[Quest270Id];
+
+        var request = actor.InteractWith(doodadObjId);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(interaction.GetObjective(quest)).IsEqualTo(0);
+        await Assert.That(actor.Character.Inventory.GetItemsCount(Quest270TorchItemId)).IsEqualTo(1);
+        await Assert.That(actor.Character.Inventory.GetItemsCount(Quest270HayItemId)).IsEqualTo(1);
+    }
+
     [Test]
     public async Task LevelingLoop_NoDiscoverableOfferingsInBand_FailsStarvationWithReason()
     {
@@ -300,44 +524,47 @@ public class LevelingLoopScenarioRigTests
     }
 
     /// <summary>
-    /// Fail-closed control: canonical quest 64 (accept NPC 5931,
-    /// Progress interaction act 372) remains outside this slice because no
-    /// interaction-credit composition is wired.
+    /// Fail-closed control: canonical quest 1372 (accept NPC 2279, level 10,
+    /// Progress QuestActObjSphere) remains outside this slice because no
+    /// sphere-entry movement primitive is composed.
     /// </summary>
     [Test]
     public async Task LevelingLoop_UnsupportedObjectiveType_FailsClosedNamingMissingPrimitive()
     {
         PlayerbotPilotRig.SeedPilotSingletons();
+        GameplayActorTestRig.EnsureSphereGameData();
         var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-gap");
         var character = session.Character;
-        character.Level = 3;
+        character.Level = 10;
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
 
-        SpawnHubNpc(session, 5931, new Vector3(1, 0, 0)); // canonical offerer of 64
+        SpawnHubNpc(session, 2279, new Vector3(1, 0, 0));
 
         var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
         {
-            BandMin = 1,
+            BandMin = 10,
             BandMax = 10,
             MaxLinks = 1
         });
 
-        // FAIL-CLOSED: the interaction objective is not honestly achievable
-        // with the current primitives, so the loop stops and names the gap.
+        if (!result.FailStage.StartsWith("OBJECTIVES", StringComparison.Ordinal))
+            throw new InvalidOperationException(
+                $"unexpected fail stage {result.FailStage} ({result.Failure}): {result.FailReason}");
+
         await Assert.That(result.Passed).IsFalse();
         await Assert.That(result.FailStage.StartsWith("OBJECTIVES")).IsTrue();
         await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.WrongDecision);
-        await Assert.That(result.FailReason.Contains("QuestActObjInteraction")).IsTrue();
-        await Assert.That(result.FailReason.Contains("missing world-interaction credit composition")).IsTrue();
+        await Assert.That(result.FailReason.Contains(nameof(QuestActObjSphere))).IsTrue();
+        await Assert.That(result.FailReason.Contains("missing sphere-entry movement primitive")).IsTrue();
 
-        // No fake progress: the quest was accepted (real engine state) but
-        // never advanced, turned in, or dropped.
-        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(64)).IsTrue();
+        // No fake progress: the quest was accepted but never advanced,
+        // turned in, or dropped.
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(1372)).IsTrue();
         await Assert.That(result.TraceRecords.Count(r => r.Action == ActorActionType.AcceptQuest)).IsEqualTo(1);
         await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
             or ActorActionType.AutoTurnIn)).IsFalse();
-        await Assert.That(character.Quests.HasQuestCompleted(64)).IsFalse();
+        await Assert.That(character.Quests.HasQuestCompleted(1372)).IsFalse();
     }
 
     /// <summary>

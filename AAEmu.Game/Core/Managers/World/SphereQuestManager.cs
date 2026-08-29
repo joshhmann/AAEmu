@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Numerics;
 using AAEmu.Game.GameData;
 using AAEmu.Game.IO;
@@ -232,7 +232,7 @@ public class SphereQuestManager(WorldInstance parent) : ISphereQuestManager
 
     public List<SphereQuest> GetQuestSpheres(uint componentId)
     {
-        return _sphereQuests.GetValueOrDefault(componentId);
+        return _sphereQuests?.GetValueOrDefault(componentId);
     }
 
     public List<SphereQuestTrigger> GetSphereQuestTriggers()
@@ -345,6 +345,8 @@ public class SphereQuestManager(WorldInstance parent) : ISphereQuestManager
     public static List<SphereQuest> GetSpheresForQuest(uint questSphereQuestId)
     {
         var res = new List<SphereQuest>();
+        if (_sphereQuests == null)
+            return res;
 
         foreach (var questSpheres in _sphereQuests.Values)
             res.AddRange(questSpheres.Where(x => x.QuestId == questSphereQuestId).ToList());

@@ -1,4 +1,4 @@
-﻿using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Packets;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
@@ -21,7 +21,8 @@ public class InteractionEffect : EffectTemplate
     {
         Logger.Debug("InteractionEffect, {0}", WorldInteraction);
 
-        var classType = Type.GetType("AAEmu.Game.Models.Game.World.Interactions." + WorldInteraction);
+        var classType = Type.GetType("AAEmu.Game.Models.Game.World.Interactions." + WorldInteraction)
+            ?? typeof(InteractionEffect).Assembly.GetType("AAEmu.Game.Models.Game.World.Interactions." + WorldInteraction);
         if (classType == null)
         {
             Logger.Error("InteractionEffect, Unknown world interaction: {0}", WorldInteraction);

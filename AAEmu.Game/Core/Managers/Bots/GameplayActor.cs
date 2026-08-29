@@ -1078,6 +1078,13 @@ public class GameplayActor : IGameplayActor
         // phase group — derived from the doodad's OWN func table via the
         // same matching rules DoodadManager.GetFunc applies.
         var useSkillId = ResolveInteractionSkill(doodad);
+        var interactionSkillTemplate = useSkillId > 0
+            ? SkillManager.Instance.GetSkillTemplate(useSkillId)
+            : null;
+        if (useSkillId > 0 && interactionSkillTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"doodad {doodadObjId} interaction skill {useSkillId} not found");
+
 
         request.Start($"interacting with doodad {doodadObjId} (template {doodad.TemplateId}, derived skill {useSkillId})");
 
@@ -1091,10 +1098,37 @@ public class GameplayActor : IGameplayActor
         var beforeBagCount = Character.Inventory?.Bag.Items.Count ?? -1;
         var beforeBuffCount = CountActiveBuffs();
 
-        // The REAL engine path — Doodad.Use, the exact call the client's
-        // skill-driven world-interaction chain (InteractionEffect → Use.Execute)
-        // and the CSLootOpenBagPacket func branch make.
-        doodad.Use(Character, useSkillId);
+        // Skill-bound interactions must enter through the same outer skill
+        // pipeline as CSStartSkillPacket. InteractionEffect then dispatches
+        // Use.Execute → Doodad.Use and emits the quest interaction event.
+        // Skill-less loot functions retain their direct Doodad.Use path.
+        if (interactionSkillTemplate != null)
+        {
+            var skill = new Skill(interactionSkillTemplate);
+            var caster = SkillCaster.GetByType(SkillCasterType.Unit);
+            caster.ObjId = Character.ObjId;
+            var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
+            target.ObjId = doodad.ObjId;
+            var skillResult = skill.Use(Character, caster, target, null, false, out _);
+            if (skillResult != SkillResult.Success)
+                return Reject(request, ActorFailureReason.RejectedAction,
+                    $"doodad {doodadObjId} interaction skill {useSkillId} refused: {skillResult}");
+
+            // Headless actors have no game-loop ticker. Mirror UseItem's
+            // deterministic completion seam for this exact scheduled cast;
+            // the cancelled queued task subsequently exits without replay.
+            if (Character.SkillTask is { Skill: var scheduledSkill } &&
+                ReferenceEquals(scheduledSkill, skill))
+            {
+                Character.SkillTask = null;
+                skill.Cast(Character, caster, doodad, target, null);
+                skill.Cancelled = true;
+            }
+        }
+        else
+        {
+            doodad.Use(Character);
+        }
 
         var changes = new List<string>();
         var afterInstanceId = Character.Transform.InstanceId;

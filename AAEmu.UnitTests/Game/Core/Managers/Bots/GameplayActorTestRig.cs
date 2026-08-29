@@ -2953,6 +2953,29 @@ public static class GameplayActorTestRig
     }
 
     /// <summary>
+    /// Missing-only game-data heal for SphereGameData dictionaries so queries
+    /// resolve safely against unloaded tables instead of throwing NRE/ArgumentNullException.
+    /// </summary>
+    public static void EnsureSphereGameData()
+    {
+        var sphereGame = SphereGameData.Instance;
+        foreach (var fieldName in new[]
+        {
+            "_spheres", "_sphereQuests", "_sphereSkills", "_sphereSounds",
+            "_sphereDoodadInteracts", "_sphereChatBubbles", "_sphereBuffs",
+            "_sphereBubbles", "_sphereAcceptQuests", "_sphereAcceptQuestQuests"
+        })
+        {
+            var field = typeof(SphereGameData).GetField(fieldName,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field?.GetValue(sphereGame) == null)
+            {
+                field!.SetValue(sphereGame, Activator.CreateInstance(field.FieldType));
+            }
+        }
+    }
+
+    /// <summary>
     /// Seeds a quest-STARTER sphere into the session world's
     /// SphereQuestManager (created missing-only): standing inside its volume
     /// is exactly what SphereQuestManager.Tick checks before firing
@@ -2963,18 +2986,7 @@ public static class GameplayActorTestRig
     public static void SeedQuestStarterSphere(HeadlessSession session, uint questId,
         System.Numerics.Vector3 position, float radius, uint sphereId = DiscoverySphereStarterId)
     {
-        // Missing-only game-data heal: empty dicts make SphereQuest.DbSphere
-        // resolve to null instead of NREing on unloaded tables.
-        var sphereGame = SphereGameData.Instance;
-        foreach (var fieldName in new[] { "_spheres", "_sphereQuests" })
-        {
-            var field = typeof(SphereGameData).GetField(fieldName,
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (field?.GetValue(sphereGame) == null)
-            {
-                field!.SetValue(sphereGame, Activator.CreateInstance(field.FieldType));
-            }
-        }
+        EnsureSphereGameData();
 
         if (session.World.SphereQuestManager == null)
             session.World.SphereQuestManager = new SphereQuestManager(session.World);
@@ -3024,6 +3036,41 @@ public static class GameplayActorTestRig
     {
         SeedDoodadManager();
         SeedBuffTemplate(buffId ?? InteractWithBuffId);
+        var skillId = useSkillId ?? InteractWithUseSkillId;
+        var skills = (Dictionary<uint, SkillTemplate>)GetField(SkillManager.Instance, "_skills");
+        if (!skills.ContainsKey(skillId))
+        {
+            var skillTemplate = new SkillTemplate
+            {
+                Id = skillId,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 100,
+                TargetType = SkillTargetType.Doodad,
+                TargetSelection = SkillTargetSelection.Target
+            };
+            var interactionEffect = new InteractionEffect
+            {
+                Id = 1,
+                WorldInteraction = WorldInteractionType.Use,
+                DoodadId = 0
+            };
+            skillTemplate.Effects.Add(new SkillEffect
+            {
+                EffectId = 1,
+                Template = interactionEffect,
+                Friendly = true,
+                NonFriendly = true,
+                StartLevel = 0,
+                EndLevel = byte.MaxValue,
+                Chance = 100,
+                ApplicationMethod = SkillEffectApplicationMethod.Target
+            });
+            skills[skillId] = skillTemplate;
+        }
+
         var manager = DoodadManager.Instance;
         var funcsByGroups = (Dictionary<uint, List<DoodadFunc>>)GetField(manager, "_funcsByGroups");
         var funcTemplates = (Dictionary<string, Dictionary<uint, DoodadFuncTemplate>>)GetField(manager, "_funcTemplates");
@@ -3042,7 +3089,7 @@ public static class GameplayActorTestRig
                 FuncKey = funcId,
                 FuncType = "DoodadFuncBuff",
                 NextPhase = -1,
-                SkillId = useSkillId ?? InteractWithUseSkillId
+                SkillId = skillId
             });
         }
 

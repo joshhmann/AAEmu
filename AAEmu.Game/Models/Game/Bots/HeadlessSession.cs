@@ -528,6 +528,51 @@ public class HeadlessSession
         return doodad.ObjId;
     }
 
+    /// <summary>
+    /// Spawns a doodad through the loaded canonical template factory. Unlike
+    /// <see cref="SpawnDoodad"/>, this fails closed when the template data is
+    /// unavailable instead of constructing a bare fixture object.
+    /// </summary>
+    public uint SpawnDoodadFromTemplate(uint doodadTemplateId)
+    {
+        if (doodadTemplateId == 0)
+            return 0;
+
+        var doodadManager = DoodadManager.PeekInstance;
+        if (doodadManager?.Exist(doodadTemplateId) != true)
+            return 0;
+
+        var doodad = doodadManager.CreateDetached(
+            World, _nextObjId++, doodadTemplateId, null, skipPhaseInitialization: true);
+        if (doodad == null)
+            return 0;
+
+        // The detached factory applies canonical template/function state
+        // without entering the global WorldManager registry. Pin the local
+        // world fields before joining this session's region graph.
+        typeof(GameObject).GetField("_parentWorld",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(doodad, World);
+        typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
+            .GetField("_instanceId",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(doodad.Transform, World.Id);
+        doodad.Transform.Local.SetPosition(0f, 0f, 0f);
+
+        if (World.Regions != null)
+        {
+            var region = World.GetRegionByPos(doodad.Transform.World.Position);
+            if (region != null)
+            {
+                region.AddObject(doodad);
+                doodad.Region = region;
+            }
+        }
+
+        World.AddObject(doodad);
+        return doodad.ObjId;
+    }
+
     private uint _nextObjId = 1000;
 
     private static WorldInstance CreateWorld(uint worldTemplateId)

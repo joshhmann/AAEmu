@@ -46,6 +46,10 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///   - QuestActObjItemUse          → consume the act's ItemId through the
 ///     real UseItem contract until the objective Count is credited by the
 ///     engine's OnItemUse event.
+///   - QuestActObjInteraction      → resolve HighlightDoodadId (or DoodadId)
+///     among PERCEIVED doodads and execute InteractWith. Skill-bound funcs
+///     enter through CSStartSkillPacket's Skill.Use path, so the engine's
+///     InteractionEffect emits OnInteraction credit; no quest event is faked.
 ///   - QuestActObjMonsterHunt / MonsterGroupHunt → resolve the hunt
 ///     targets DATA-DRIVEN from the act (NpcId, or monster-group id via
 ///     QuestManager.CheckGroupNpc) among PERCEIVED hostiles (alive +
@@ -427,8 +431,6 @@ public static class LevelingLoopScenario
             "missing sphere-entry movement primitive",
         [nameof(QuestActObjCinema)] =
             "missing cinema-trigger primitive",
-        [nameof(QuestActObjInteraction)] =
-            "missing world-interaction credit composition (OnInteraction firing path for objectives unproven headless)",
         [nameof(QuestActObjCraft)] =
             "missing craft-objective composition (Craft action exists; workbench resolution + recipe mapping uncomposed)",
         [nameof(QuestActObjAggro)] =
@@ -493,6 +495,16 @@ public static class LevelingLoopScenario
                         if (useFailure != null)
                             return Fail($"OBJECTIVES:item-use({itemUse.ItemId})",
                                 ActorFailureReason.RejectedAction, useFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjInteraction interaction:
+                    {
+                        var (interactionFailure, interactionReason) =
+                            InteractionLeg(actor, questId, interaction, perception);
+                        if (interactionFailure != null)
+                            return Fail($"OBJECTIVES:interaction({interaction.DoodadId})",
+                                interactionReason, interactionFailure, actor, null);
                         break;
                     }
 
@@ -603,6 +615,79 @@ public static class LevelingLoopScenario
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Resolves an interaction objective's source from perceived doodads and
+    /// drives the ordinary interaction skill pipeline. Progress must increase
+    /// in the live quest state after every successful action.
+    /// </summary>
+    private static (string? Failure, ActorFailureReason Reason) InteractionLeg(
+        GameplayActor actor, uint questId, QuestActObjInteraction interaction,
+        PerceptionSnapshot perception)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return ($"quest {questId} left ActiveQuests before interaction pursuit started",
+                ActorFailureReason.StateTransition);
+
+        var sourceTemplateId = interaction.HighlightDoodadId > 0
+            ? interaction.HighlightDoodadId
+            : interaction.DoodadId;
+        if (sourceTemplateId == 0)
+        {
+            return ($"quest {questId} interaction objective {interaction.DetailId} names no doodad source",
+                ActorFailureReason.Navigation);
+        }
+
+        if (!perception.DoodadObjIdsByTemplate.TryGetValue(sourceTemplateId, out var sources) ||
+            sources.Count == 0)
+        {
+            return ($"quest {questId} needs interaction {interaction.WorldInteractionId} on doodad template " +
+                    $"{sourceTemplateId}, but no such source was PERCEIVED nearby",
+                ActorFailureReason.Navigation);
+        }
+
+        var sourceIndex = 0;
+        while (interaction.GetObjective(quest) < interaction.Count)
+        {
+            if (sourceIndex >= sources.Count)
+            {
+                return ($"interaction exhausted {sources.Count} perceived source(s) of doodad template " +
+                        $"{sourceTemplateId} with objective at " +
+                        $"{interaction.GetObjective(quest)}/{interaction.Count}",
+                    ActorFailureReason.Starvation);
+            }
+
+            var objectiveBefore = interaction.GetObjective(quest);
+            var sourceObjId = sources[sourceIndex++];
+            var request = actor.InteractWith(sourceObjId);
+            if (request.State != ActorLifecycleState.Completed)
+            {
+                return ($"InteractWith source {sourceObjId} for quest {questId} refused: {request.Detail}",
+                    request.Failure ?? ActorFailureReason.RejectedAction);
+            }
+
+            if (actor.Character.Quests?.HasQuestCompleted(questId) == true)
+                return (null, ActorFailureReason.None);
+
+            quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+            if (quest == null)
+            {
+                return ($"quest {questId} left ActiveQuests without a completion flag after interaction",
+                    ActorFailureReason.StateTransition);
+            }
+
+            var objectiveAfter = interaction.GetObjective(quest);
+            if (objectiveAfter <= objectiveBefore)
+            {
+                return ($"InteractWith source {sourceObjId} completed but objective " +
+                        $"{interaction.DetailId} stayed at {objectiveAfter}/{interaction.Count}",
+                    ActorFailureReason.WrongDecision);
+            }
+        }
+
+        return (null, ActorFailureReason.None);
     }
 
 

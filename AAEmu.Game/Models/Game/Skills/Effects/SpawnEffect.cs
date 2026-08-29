@@ -34,7 +34,7 @@ public class SpawnEffect : EffectTemplate
         {
             case BaseUnitType.Npc:
                 {
-                    var spawner = caster?.ParentWorld.SpawnManager.GetNpcSpawner(SubType, target);
+                    var spawner = caster?.ParentWorld?.SpawnManager?.GetNpcSpawner(SubType, target);
                     if (spawner == null)
                     {
                         Logger.Info($"SpawnEffect: SubType={SubType} not found in spawners.");
