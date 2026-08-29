@@ -1,6 +1,7 @@
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Containers;
@@ -787,11 +788,20 @@ public static class LevelingLoopScenario
         {
             // Rig simulation seam: headless worlds lack continuous zone-tick sphere sweeps;
             // trigger the engine's real DoOnEnterSphereEvents entry with updated character position.
+            // Unit-req gating mirrors SphereQuestTrigger.Tick (SphereQuest.cs): the engine only
+            // fires OnEnterSphere when CanTriggerSphere passes, so honor the gate here as well.
             var sphereComponentId = sphere.ParentComponent?.Id ?? 0;
             var sphereQuests = actor.Character.ParentWorld?.SphereQuestManager?.GetQuestSpheres(sphereComponentId);
             if (sphereQuests is { Count: > 0 })
             {
-                QuestManager.Instance.DoOnEnterSphereEvents(actor.Character, sphereQuests[0], actor.Character.Transform.World.Position);
+                var sphereQuest = sphereQuests[0];
+                if (sphereQuest.DbSphere != null &&
+                    !UnitRequirementsGameData.Instance.CanTriggerSphere(sphereQuest.DbSphere, actor.Character))
+                {
+                    return $"quest {questId} entered sphere {destination} but unit_reqs gate denies " +
+                           $"sphere {sphere.SphereId} for this character (objective remains 0)";
+                }
+                QuestManager.Instance.DoOnEnterSphereEvents(actor.Character, sphereQuest, actor.Character.Transform.World.Position);
             }
         }
 
