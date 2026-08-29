@@ -110,9 +110,11 @@ public class A5Tier3AcceptanceProbeTests
         ClearFeatureEnv();
 
         // Existing rows remain untouched. The ownership snapshot captured
-        // before the run limits final cleanup to rows created by this run.
+        // before the run limits both this arm's baseline cleanup and final
+        // cleanup to rows created by this run.
         E2eStack.RestartGameServer();
         WaitBoot();
+        CleanupBaselinePresenceBots(ownershipBefore, embodiedTarget);
 
         TimeSpan seedElapsed;
         using (var seedBoxCts = new CancellationTokenSource(SeedBox))
@@ -271,6 +273,18 @@ public class A5Tier3AcceptanceProbeTests
             names.Add($"bot_managed_dormfar{i:D4}");
         return names;
     }
+    private static void CleanupBaselinePresenceBots(
+        IReadOnlyCollection<E2eStack.OwnedBotRow> ownershipBefore, int embodiedTarget)
+    {
+        var names = Enumerable.Range(1, embodiedTarget)
+            .Select(i => $"bot_managed_presence_{i:D3}")
+            .ToArray();
+        var after = E2eStack.SnapshotOwnedRows(names);
+        var ownedRows = E2eStack.FindNewOwnedRows(ownershipBefore, after);
+        E2eStack.CleanupOwnedRows(ownedRows);
+        Console.WriteLine($"[a5t3] removed {ownedRows.Count} baseline presence rows before dormant seeding");
+    }
+
 
     private static int CountManagedCharacters()
     {
