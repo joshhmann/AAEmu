@@ -595,7 +595,7 @@ public class PvpFlaggingRigTests
         SetZone(victim, TestZoneKey);
 
         Exception? ex;
-        using (RegisterWorldForDoodadCreation(session))
+        using (RegisterWorldForDoodadCreation(session, killer.Character, victim.Character))
         {
             ex = Kill(victim, killer);
         }
@@ -635,7 +635,7 @@ public class PvpFlaggingRigTests
         killer.Character.AssaultOn.Add(victim.Character.Id);
 
         Exception? ex;
-        using (RegisterWorldForDoodadCreation(session))
+        using (RegisterWorldForDoodadCreation(session, killer.Character, victim.Character))
         {
             ex = Kill(victim, killer);
         }
@@ -697,16 +697,33 @@ public class PvpFlaggingRigTests
     /// <summary>
     /// Registers a headless world in the shared WorldManager instance registry
     /// so engine paths that round-trip Transform.InstanceId resolve it.
-    /// Removal is conditional (only when the slot still holds OUR world) to
+    /// <summary>
+    /// Temporarily registers a test world and actors in <see cref="WorldManager._worlds"/>
+    /// and <see cref="WorldManager._characters"/> for the duration of the doodad creation / assault resolution.
+    /// Removal is conditional (only when the slot still holds OUR entity) to
     /// stay safe under full-suite parallelism.
     /// </summary>
-    private static IDisposable RegisterWorldForDoodadCreation(HeadlessSession session)
+    private static IDisposable RegisterWorldForDoodadCreation(HeadlessSession session, params Character[] characters)
     {
         var worlds = (ConcurrentDictionary<uint, AAEmu.Game.Models.Game.World.WorldInstance>)typeof(WorldManager)
             .GetField("_worlds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .GetValue(WorldManager.Instance)!;
         worlds[session.World.Id] = session.World;
-        return new CompositeSwap(new RemoveWorldOnDispose(worlds, session.World));
+
+        var charDict = (ConcurrentDictionary<uint, Character>)typeof(WorldManager)
+            .GetField("_characters", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .GetValue(WorldManager.Instance)!;
+        foreach (var c in characters)
+            charDict[(uint)c.ObjId] = c;
+
+        var disposables = new List<IDisposable>
+        {
+            new RemoveWorldOnDispose(worlds, session.World)
+        };
+        foreach (var c in characters)
+            disposables.Add(new RemoveCharacterOnDispose(charDict, c));
+
+        return new CompositeSwap(disposables.ToArray());
     }
 
     private sealed class RemoveWorldOnDispose(
@@ -717,6 +734,17 @@ public class PvpFlaggingRigTests
         {
             if (worlds.TryGetValue(world.Id, out var current) && ReferenceEquals(current, world))
                 worlds.TryRemove(world.Id, out _);
+        }
+    }
+
+    private sealed class RemoveCharacterOnDispose(
+        ConcurrentDictionary<uint, Character> characters,
+        Character character) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (characters.TryGetValue((uint)character.ObjId, out var current) && ReferenceEquals(current, character))
+                characters.TryRemove((uint)character.ObjId, out _);
         }
     }
 
