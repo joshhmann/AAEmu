@@ -90,7 +90,7 @@ public class A5AcceptanceProbeTests
 
         // ------------------------------------------------------------ PHASE S: seed
         Console.WriteLine($"[a5] phase S: seeding {dormantTarget} dormant specs ({nearTarget} near / {dormantTarget - nearTarget} far)");
-        SeedDormant(hx, hy, hz, nearTarget, dormantTarget - nearTarget);
+        await SeedDormant(hx, hy, hz, nearTarget, dormantTarget - nearTarget);
         var seededCount = CountManagedCharacters();
         Assert.True(seededCount >= dormantTarget,
             $"seed produced only {seededCount}/{dormantTarget} discoverable managed characters");
@@ -223,7 +223,8 @@ public class A5AcceptanceProbeTests
         return Convert.ToInt32(cmd.ExecuteScalar());
     }
 
-    private static void SeedDormant(float hx, float hy, float hz, int nearCount, int farCount)
+    private static async Task SeedDormant(float hx, float hy, float hz, int nearCount, int farCount,
+        CancellationToken cancellationToken = default)
     {
         var bots = new List<object>();
         for (var i = 0; i < nearCount; i++)
@@ -249,8 +250,11 @@ public class A5AcceptanceProbeTests
         const int batch = 25;
         for (var offset = 0; offset < bots.Count; offset += batch)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var chunk = bots.Skip(offset).Take(batch).ToList();
-            var reply = bridge.Call(JsonSerializer.Serialize(new { cmd = "seedDormant", level = 5, bots = chunk }), 300_000);
+            var reply = await bridge.CallAsync(
+                JsonSerializer.Serialize(new { cmd = "seedDormant", level = 5, bots = chunk }),
+                300_000, cancellationToken);
             Console.WriteLine($"[a5] seed batch @{offset}: seeded={reply.GetProperty("seeded").GetInt32()}");
         }
     }

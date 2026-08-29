@@ -31,15 +31,41 @@ public sealed class BotDriveClient : IDisposable
     }
 
     public JsonElement Call(JsonElement request, int timeoutMs = 30000)
+        => CallAsync(request, timeoutMs, CancellationToken.None).GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Sends one bridge request and waits for its response without blocking a
+    /// worker thread. Cancellation closes the read operation at the socket
+    /// boundary; callers own the client and can dispose it after cancellation.
+    /// </summary>
+    public async Task<JsonElement> CallAsync(
+        JsonElement request,
+        int timeoutMs = 30000,
+        CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         _writer.WriteLine(request.GetRawText());
         _writer.Flush();
 
-        var readTask = Task.Run(() => _reader.ReadLine());
-        if (!readTask.Wait(timeoutMs))
-            throw new TimeoutException("bridge call timed out: " + request.GetRawText());
+        using var timeoutCts = timeoutMs == Timeout.Infinite
+            ? null
+            : new CancellationTokenSource(TimeSpan.FromMilliseconds(timeoutMs));
+        using var waitCts = timeoutCts == null
+            ? null
+            : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+        var waitToken = waitCts?.Token ?? cancellationToken;
 
-        var line = readTask.Result;
+        string? line;
+        try
+        {
+            line = await _reader.ReadLineAsync(waitToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (
+            timeoutCts?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException("bridge call timed out: " + request.GetRawText());
+        }
+
         if (line == null)
             throw new IOException("bridge connection closed");
 
@@ -56,6 +82,16 @@ public sealed class BotDriveClient : IDisposable
         using var doc = JsonDocument.Parse(json);
         return Call(doc.RootElement.Clone(), timeoutMs);
     }
+
+    public Task<JsonElement> CallAsync(
+        string json,
+        int timeoutMs = 30000,
+        CancellationToken cancellationToken = default)
+    {
+        using var doc = JsonDocument.Parse(json);
+        return CallAsync(doc.RootElement.Clone(), timeoutMs, cancellationToken);
+    }
+
 
     /// <summary>
     /// Writes a command without waiting for a response (fire-and-forget

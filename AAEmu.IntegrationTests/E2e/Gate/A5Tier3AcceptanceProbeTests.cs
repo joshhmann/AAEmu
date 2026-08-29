@@ -114,9 +114,25 @@ public class A5Tier3AcceptanceProbeTests
         E2eStack.RestartGameServer();
         WaitBoot();
 
-        Console.WriteLine($"[a5t3] arm T: seeding {dormantTarget} dormant ({embodiedTarget} near)");
-
-        var seedElapsed = SeedDormant(hx, hy, hz, embodiedTarget, dormantTarget - embodiedTarget);
+        TimeSpan seedElapsed;
+        using (var seedBoxCts = new CancellationTokenSource(SeedBox))
+        {
+            var seedStart = Stopwatch.StartNew();
+            try
+            {
+                seedElapsed = await SeedDormant(hx, hy, hz, embodiedTarget, dormantTarget - embodiedTarget,
+                    seedBoxCts.Token);
+            }
+            catch (OperationCanceledException) when (seedBoxCts.IsCancellationRequested)
+            {
+                seedStart.Stop();
+                var partial = 0;
+                try { partial = CountManagedCharacters(); } catch { /* cleanup/report follows */ }
+                Console.WriteLine($"[a5t3] seed canceled after {seedStart.Elapsed.TotalMinutes:F1} min; " +
+                                  $"partial discoverable managed characters: {partial}/{dormantTarget}");
+                throw;
+            }
+        }
         var seededCount = CountManagedCharacters();
         Console.WriteLine($"[a5t3] seed done in {seedElapsed.TotalMinutes:F1} min — discoverable managed characters: {seededCount}/{dormantTarget}");
 
@@ -276,7 +292,9 @@ public class A5Tier3AcceptanceProbeTests
     /// recorded.
     /// </summary>
 
-    private static TimeSpan SeedDormant(float hx, float hy, float hz, int nearCount, int farCount)
+    private static async Task<TimeSpan> SeedDormant(
+        float hx, float hy, float hz, int nearCount, int farCount,
+        CancellationToken cancellationToken = default)
     {
         var bots = new List<object>(nearCount + farCount);
         for (var i = 0; i < nearCount; i++)
@@ -306,43 +324,58 @@ public class A5Tier3AcceptanceProbeTests
 
         var workers = Math.Max(1, ParseSeedConcurrency());
         var next = 0;
-        var aborted = false;
-        void RunWorker()
+        var aborted = 0;
+        using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        async Task RunWorkerAsync()
         {
             while (true)
             {
-                var idx = Interlocked.Increment(ref next) - 1;
-                if (aborted || idx >= chunks.Count)
+                if (stopCts.IsCancellationRequested)
                     return;
+                var idx = Interlocked.Increment(ref next) - 1;
+                if (Volatile.Read(ref aborted) != 0 || idx >= chunks.Count)
+                    return;
+
                 var chunk = chunks[idx];
                 var batchStart = Stopwatch.StartNew();
                 try
                 {
                     using var bridge = new BotDriveClient(E2eStack.BridgePort);
-                    var reply = bridge.Call(JsonSerializer.Serialize(new { cmd = "seedDormant", level = 5, bots = chunk }), 600_000);
+                    var reply = await bridge.CallAsync(
+                        JsonSerializer.Serialize(new { cmd = "seedDormant", level = 5, bots = chunk }),
+                        600_000, stopCts.Token);
                     batchStart.Stop();
                     Console.WriteLine($"[a5t3] seed batch {idx + 1}/{chunks.Count}: seeded={reply.GetProperty("seeded").GetInt32()} " +
                                       $"in {batchStart.Elapsed.TotalSeconds:F1}s (total {sw.Elapsed.TotalMinutes:F1}min)");
                 }
+                catch (OperationCanceledException) when (stopCts.IsCancellationRequested)
+                {
+                    return;
+                }
                 catch (Exception ex)
                 {
-                    aborted = true;
-                    Console.WriteLine($"[a5t3] SEED BATCH FAILED @{idx}: {ex.Message} — aborting further batches (partials kept)");
+                    if (Interlocked.Exchange(ref aborted, 1) == 0)
+                        Console.WriteLine($"[a5t3] SEED BATCH FAILED @{idx}: {ex.Message} — aborting further batches (partials kept)");
+                    stopCts.Cancel();
                     return;
                 }
             }
         }
 
-        var threads = new Thread[workers];
-        for (var w = 0; w < workers; w++)
-        {
-            threads[w] = new Thread(RunWorker) { IsBackground = true };
-            threads[w].Start();
-        }
-        foreach (var t in threads)
-            t.Join();
+        var workerTasks = Enumerable.Range(0, workers)
+            .Select(_ => Task.Run(RunWorkerAsync, CancellationToken.None))
+            .ToArray();
+        await Task.WhenAll(workerTasks);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        // Hard timebox guard (belt-and-braces on top of the projection above).
+        // A failed batch keeps the legacy partial-seed behavior. A caller
+        // cancellation/deadline, however, is propagated after all in-flight
+        // bridge reads have cooperatively stopped.
+        if (Volatile.Read(ref aborted) != 0)
+            Console.WriteLine("[a5t3] seed stopped after a failed batch (partials kept)");
+
+        sw.Stop();
         if (sw.Elapsed > SeedBox)
             Console.WriteLine($"[a5t3] WARNING: seed exceeded the {SeedBox.TotalMinutes:F0}-min box ({sw.Elapsed.TotalMinutes:F1} min)");
 
