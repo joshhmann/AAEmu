@@ -1,8 +1,8 @@
 # Gemini Handoff — AAEmu
 
 - The current source/test HEAD is
-  `970d6a557c7b49d8953341ffddb468d902de50b6` (`develop`). The full normal-clone gate
-  is `./scripts/gate.sh`: **2526 total / 2525 passed / 0 failed / 1 skipped**;
+  `0492b719992eb2954a20689b7d346ff1c305c483` (`develop`). The full normal-clone gate
+  is `./scripts/gate.sh`: **2530 total / 2529 passed / 0 failed / 1 skipped**;
   compiler **0 errors / 0 warnings**; MCP stdio smoke **39 tools**.
   The sole skip is `Subscriber_RecordsPerSubscriberDuration_WithName` (known timer-skew skip in unit test suite).
   IntegrationTests Release restore/build passed with 0 errors; restore emitted 2 NU1903 and build
@@ -21,6 +21,11 @@
   MonsterHunt, ItemUse (quest 252), Canonical Interaction (quest 269→270),
   Sphere (quest 1372), Craft (quest 6024), Cinema (quest 6041), and
   Self-Discovery channel (item in inventory bag).
+- Focused PB-007: `PvpFlaggingRigTests` **7/7 passed** and `ZoneConflictTests` **13/13 passed**,
+  covering kill-counter escalation (Tension→Danger→Dispute→Unrest→Crisis→Conflict→War),
+  multi-role assists (damage, heal, CC debuff 30s window), offline assist fallback,
+  War-zone honor award (32 killer + 4 assist) & victim loss (−10), Peace-zone protection,
+  and escalating respawn timers.
 - Focused Mail: `MailCodLifecycleTests` **4/4 passed** (26/26 across all `Mail*` suites),
   covering COD payment deduction/dispatch, sent-tab mail deletion, and name resolution fallback.
 - Focused route/MCP/queue validation remains Flash-reported **53/53**
@@ -161,15 +166,15 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
 - **PB-002 — autonomous leveling loop:** **INTERACTION, SPHERE, CRAFT, CINEMA & SELF-QUEST SLICES LANDED;
   BROAD CLAIM OPEN** — canonical interaction slice (quest 269→270 with Doodad 687 torch/hay skill 11229) landed in `e9ace7f22`; objective types expanded with `QuestActObjSphere` (quest 1372), `QuestActObjCraft` (quest 6024), and `QuestActObjCinema` (quest 6041) in `49f0aee07`; self-quest discovery channel (items in bag, level-ups, starter spheres) wired into `LevelingLoopScenario.Perceive` in `970d6a557`. `LevelingLoopScenarioRigTests` is **14/14 passed**. Broad autonomous quest-loop coverage, live-server breadth, and human/client breadth (`H=UNKNOWN`) remain open.
 - **PB-005 — grounding FIXED-PARTIAL:** 593 non-whitelisted severe-positive rows were corrected and 702 intentional whitelist rows preserved. Cave/deck/submerged classification and the 733 duplicate-row ownership decision remain open awaiting Josh's W4-5 grounding tour data. No negative-offset clamp and no duplicate deletion without canonical evidence/owner approval.
-- **PB-007 — FIXED / CLOSED for the narrow flagged-aggression handshake** at
-  behavioral gate evidence baseline
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`: the real-login/Game
-  E2E passed 1/1 in 2m09.910s with the victim-matched, non-immune
-  `SCUnitDamaged` frame, immune exclusion, `SkillFired=True`, Retribution
-  2167, bloodstain 877 objId 44294, and crime branch observed; PEACE-BLOCK
-  passed with no victim-matched non-immune damage. WAR-HONOR is separately
-  deferred; broader PvP/honor scope and H remain open. Historical
-  immune-tagged/untrusted failure context is retained in dated reports.
+- **PB-007 — NARROW HANDSHAKE CLOSED; WAR-HONOR TEST SUITE COMPLETE**:
+  Behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`
+  closed the 1v1 same-faction flagged aggression and Peace block live E2E.
+  WAR-HONOR full mechanical coverage landed in `0492b7199`: kill-counter
+  escalation through all stages (Tension→Danger→Dispute→Unrest→Crisis→Conflict→War),
+  multi-participant assists (damage, heal, CC debuff 30s window), offline assist
+  fallback, War-zone honor award (32 killer + 4 assist) & victim loss (−10),
+  and escalating respawn timers are verified with 7/7 `PvpFlaggingRigTests` and
+  13/13 `ZoneConflictTests` passing. Broader live/client feel and H remain open.
 - **Justice:** the crime vertical is complete, but jury summon packet ordering/client capture remains unknown. Prison sentencing/teleport/buff exist; prison labor, escape tunnels, guards, and release-on-expiry are absent. Treat those as separate scope decisions.
 - **Dominion:** persistence/tax/phase slice is complete; combat/siege-battle and declare-trigger UI are not.
 - **Mail:** Mail S3 is merged and complete; COD payment charge enforcement, item looting payment deduction, payment mail dispatch, sent-tab mail deletion, and name resolution fallback landed in `69861b73c` with 4/4 `MailCodLifecycleTests` passing. Open follow-ups are real-client confirmation of the return opcode (candidate `0x0a2`, still not a fact) and live expiry integration proof.

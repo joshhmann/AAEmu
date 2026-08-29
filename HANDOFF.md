@@ -7,12 +7,12 @@ current recovery delta after the ox-alpha loss; preserve the evidence trail.
 
 ## Current state
 
-- **Branch of record:** fork `joshhmann/AAEmu` `develop @ 970d6a557`
-  (= `origin/develop`). Full gate (`./scripts/gate.sh`): **2526 total / 2525 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP stdio smoke **39 tools**.
-- **On develop:** PB-002 interaction slice `e9ace7f22` (quest 269→270 with Doodad 687 torch/hay skill 11229); next objective types `49f0aee07` (`QuestActObjSphere` 1372, `QuestActObjCraft` 6024, `QuestActObjCinema` 6041); self-quest discovery channel `970d6a557` (`LevelingLoopScenarioRigTests` 14/14); Mail COD payment deduction/dispatch, sent-tab deletion, and name normalization `69861b73c` (`MailCodLifecycleTests` 4/4); timer cancellation safety `950cfd279`; and earlier grounding `38c4997d3`, Retribution `a4f7820ba`, merchant `e5db6d390`, Mail S3 `31045d033`.
+- **Branch of record:** fork `joshhmann/AAEmu` `develop @ 0492b7199`
+  (= `origin/develop`). Full gate (`./scripts/gate.sh`): **2530 total / 2529 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP stdio smoke **39 tools**.
+- **On develop:** PB-007 WAR-HONOR test suite `0492b7199` (`PvpFlaggingRigTests` 7/7, `ZoneConflictTests` 13/13); review gate bug fixes `fa56915e6` (sent-tab deletion state removal, `SCAttachmentTakenPacket` item `aaPoint` fix, `NameManager` $O(1)$ dictionary lookup, bounded `CraftLeg` loop); PB-002 interaction slice `e9ace7f22` (quest 269→270 with Doodad 687 torch/hay skill 11229); next objective types `49f0aee07` (`QuestActObjSphere` 1372, `QuestActObjCraft` 6024, `QuestActObjCinema` 6041); self-quest discovery channel `970d6a557` (`LevelingLoopScenarioRigTests` 14/14); Mail COD payment deduction/dispatch `69861b73c` (`MailCodLifecycleTests` 4/4); timer cancellation safety `950cfd279`.
 - **PB-002:** **SCOPED ACTOR/RIG SLICES LANDED; BROAD CLAIM OPEN**. Interaction (quest 270), ItemUse (quest 252), Sphere (quest 1372), Craft (quest 6024), Cinema (quest 6041), and Self-Discovery channel pass headlessly 14/14. Live stack progression and human feel (`H=UNKNOWN`) remain open.
 - **PB-005:** **FIXED-PARTIAL**. Positive-only terrain clamp plus intentional whitelist landed (593 severe-positive rows corrected). Cave/deck/submerged classification awaits Josh's W4-5 grounding tour data.
-- **PB-007:** **NARROW HANDSHAKE FIXED / CLOSED; WAR-HONOR DEFERRED**. 1v1 same-faction flagged aggression and Peace block verified live. WAR-HONOR (>251 kills + conflict timer state cycle) and broader PvP remain open.
+- **PB-007:** **NARROW HANDSHAKE CLOSED; WAR-HONOR TEST SUITE COMPLETE**. 1v1 same-faction flagged aggression and Peace block verified live (`3871459d142fdd1767b9365a1de8d4cd3652ab0e`); full kill-counter escalation (Tension...Conflict->War), multi-role assists (damage, heal, CC), offline assist fallback, War honor distribution (32/4) & penalty (−10), and respawn escalation verified (`0492b7199`).
 - **Mail:** **PASS / LANDED**. Mail S3 + COD payment charge enforcement, item looting payment deduction, payment mail dispatch to sender, sent-tab deletion, and name resolution fallback are landed and tested (26/26 `Mail*` unit tests pass).
 
 ## Surviving worktrees — do not delete
