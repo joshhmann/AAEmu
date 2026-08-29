@@ -16,8 +16,13 @@ using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Faction;
+using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Buffs;
+using AAEmu.Game.Models.Game.Skills.Effects.Enums;
+using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units.Static;
-using AAEmu.Game.Models.Game.World.Zones;using AAEmu.Game.Models.StaticValues;
+using AAEmu.Game.Models.Game.World.Zones;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.UnitTests.Game.Core.Managers.Bots;
 using AAEmu.UnitTests.Game.Models.Game.World.Zones;
 
@@ -329,6 +334,261 @@ public class PvpFlaggingRigTests
         await Assert.That(killer.Character.HonorPoint).IsEqualTo(32);
         await Assert.That(assistActor.Character.HonorGainedInCombat).IsEqualTo(4u);
         await Assert.That(assistActor.Character.HonorPoint).IsEqualTo(4);
+    }
+
+    [Test]
+    public async Task DoDie_KillEscalation_DrivesZoneFromTensionThroughStagesToConflictAndWar()
+    {
+        AppConfiguration.Instance.World ??= new WorldConfig();
+        AppConfiguration.Instance.World.PvpHonorRate = 1.0;
+
+        // Custom 2-kills-per-stage threshold
+        var conflict = new TestableZoneConflict();
+        for (var i = 0; i < 5; i++)
+            conflict.NumKills[i] = 2;
+        conflict.ForceState(ZoneConflictType.Tension);
+
+        using var zoneSwap = SeedConflictZone(conflict);
+        var (killer, victim, session) = CreatePair("pvp-escalate");
+        _ = session;
+
+        killer.Character.Faction = new SystemFaction { Id = FactionsEnum.Hostile };
+        victim.Character.Faction = new SystemFaction { Id = (FactionsEnum)9120 };
+        SetZone(victim, TestZoneKey);
+        victim.Character.HonorPoint = 50;
+
+        // Stage 1: 2 kills escalate Tension -> Danger
+        Kill(victim, killer);
+        await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Tension);
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(0);
+
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Danger);
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(0);
+
+        // Stage 2: 2 kills escalate Danger -> Dispute
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Dispute);
+
+        // Stage 3: 2 kills escalate Dispute -> Unrest
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Unrest);
+
+        // Stage 4: 2 kills escalate Unrest -> Crisis
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Crisis);
+
+        // Stage 5: 2 kills escalate Crisis -> Conflict
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+        await Assert.That(conflict.CurrentZoneState).IsEqualTo(ZoneConflictType.Conflict);
+        await Assert.That(conflict.KillCount).IsEqualTo(0u);
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(0);
+
+        // Advance to War
+        conflict.ForceState(ZoneConflictType.War);
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+
+        // In War: kill awards 40 honor to killer, victim loses 10 honor
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(40);
+        await Assert.That(victim.Character.DiedInPvpWarZone).IsTrue();
+        await Assert.That(victim.Character.HonorPoint).IsEqualTo(40);
+
+        // Advance to Peace
+        conflict.ForceState(ZoneConflictType.Peace);
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        Kill(victim, killer);
+
+        // In Peace: no honor awarded, DiedInPvpWarZone false
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(40);
+        await Assert.That(victim.Character.DiedInPvpWarZone).IsFalse();
+    }
+
+    [Test]
+    public async Task DoDie_MultiParticipantAssists_ComprehensiveDamageHealAndCc()
+    {
+        AppConfiguration.Instance.World ??= new WorldConfig();
+        AppConfiguration.Instance.World.PvpHonorRate = 1.0;
+
+        using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.War));
+        var (killer, victim, session) = CreatePair("pvp-multi-assist");
+
+        // Assistant 1: Damage within 30s
+        var (dmgAssist, _) = GameplayActorTestRig.CreateActor("pvp-assist-dmg");
+        GameplayActorTestRig.JoinActorWorld(session, dmgAssist);
+        Conn(dmgAssist.Character);
+        dmgAssist.Character.IsOnline = true;
+
+        // Assistant 2: Heal killer within 30s
+        var (healAssist, _) = GameplayActorTestRig.CreateActor("pvp-assist-heal");
+        GameplayActorTestRig.JoinActorWorld(session, healAssist);
+        Conn(healAssist.Character);
+        healAssist.Character.IsOnline = true;
+
+        // Assistant 3: Active CC debuff (Stun) on victim
+        var (ccAssist, _) = GameplayActorTestRig.CreateActor("pvp-assist-cc");
+        GameplayActorTestRig.JoinActorWorld(session, ccAssist);
+        Conn(ccAssist.Character);
+        ccAssist.Character.IsOnline = true;
+
+        // Non-assistant 4: Stale damage (>30s ago)
+        var (staleAssist, _) = GameplayActorTestRig.CreateActor("pvp-assist-stale");
+        GameplayActorTestRig.JoinActorWorld(session, staleAssist);
+        Conn(staleAssist.Character);
+        staleAssist.Character.IsOnline = true;
+
+        // Non-assistant 5: Non-CC debuff (no stun/root/sleep/silence/crippled)
+        var (nonCcAssist, _) = GameplayActorTestRig.CreateActor("pvp-assist-noncc");
+        GameplayActorTestRig.JoinActorWorld(session, nonCcAssist);
+        Conn(nonCcAssist.Character);
+        nonCcAssist.Character.IsOnline = true;
+
+        killer.Character.Faction = new SystemFaction { Id = FactionsEnum.Hostile };
+        victim.Character.Faction = new SystemFaction { Id = (FactionsEnum)9121 };
+        SetZone(victim, TestZoneKey);
+        victim.Character.HonorPoint = 50;
+
+        // Set up damage history
+        SetField(victim.Character, "_pvpDamageHistory", new ConcurrentDictionary<uint, DateTime>
+        {
+            [dmgAssist.Character.Id] = DateTime.UtcNow.AddSeconds(-5),
+            [staleAssist.Character.Id] = DateTime.UtcNow.AddSeconds(-35)
+        });
+
+        // Set up heal history on killer
+        SetField(killer.Character, "_pvpHealHistory", new ConcurrentDictionary<uint, DateTime>
+        {
+            [healAssist.Character.Id] = DateTime.UtcNow.AddSeconds(-10),
+            [killer.Character.Id] = DateTime.UtcNow.AddSeconds(-2) // killer himself excluded
+        });
+
+        // Set up CC debuff on victim
+        var ccTemplate = new BuffTemplate { Id = 9801, Kind = BuffKind.Bad, Stun = true };
+        var ccBuff = new Buff(victim.Character, ccAssist.Character, new SkillCasterUnit(ccAssist.Character.ObjId), ccTemplate, null, DateTime.UtcNow);
+        victim.Character.Buffs.AddBuff(ccBuff);
+
+        // Set up non-CC debuff on victim
+        var nonCcTemplate = new BuffTemplate { Id = 9802, Kind = BuffKind.Bad };
+        var nonCcBuff = new Buff(victim.Character, nonCcAssist.Character, new SkillCasterUnit(nonCcAssist.Character.ObjId), nonCcTemplate, null, DateTime.UtcNow);
+        victim.Character.Buffs.AddBuff(nonCcBuff);
+
+        var ex = Kill(victim, killer);
+        await Assert.That(ex).IsNull();
+
+        // 3 qualifying online assistants (dmg, heal, cc):
+        // Killer gets 32, each assistant gets 4
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(32);
+        await Assert.That(killer.Character.HonorGainedInCombat).IsEqualTo(32u);
+
+        await Assert.That(dmgAssist.Character.HonorPoint).IsEqualTo(4);
+        await Assert.That(dmgAssist.Character.HonorGainedInCombat).IsEqualTo(4u);
+
+        await Assert.That(healAssist.Character.HonorPoint).IsEqualTo(4);
+        await Assert.That(healAssist.Character.HonorGainedInCombat).IsEqualTo(4u);
+
+        await Assert.That(ccAssist.Character.HonorPoint).IsEqualTo(4);
+        await Assert.That(ccAssist.Character.HonorGainedInCombat).IsEqualTo(4u);
+
+        await Assert.That(staleAssist.Character.HonorPoint).IsEqualTo(0);
+        await Assert.That(nonCcAssist.Character.HonorPoint).IsEqualTo(0);
+
+        // Victim War-zone penalty
+        await Assert.That(victim.Character.HonorPoint).IsEqualTo(40);
+    }
+
+    [Test]
+    public async Task DoDie_AllAssistsOffline_RevertsToSoloHonorAward()
+    {
+        AppConfiguration.Instance.World ??= new WorldConfig();
+        AppConfiguration.Instance.World.PvpHonorRate = 1.0;
+
+        using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.War));
+        var (killer, victim, session) = CreatePair("pvp-offline-assist");
+
+        var (offlineAssist, _) = GameplayActorTestRig.CreateActor("pvp-assist-offline");
+        GameplayActorTestRig.JoinActorWorld(session, offlineAssist);
+        Conn(offlineAssist.Character);
+        offlineAssist.Character.IsOnline = false; // Offline!
+
+        killer.Character.Faction = new SystemFaction { Id = FactionsEnum.Hostile };
+        victim.Character.Faction = new SystemFaction { Id = (FactionsEnum)9122 };
+        SetZone(victim, TestZoneKey);
+
+        SetField(victim.Character, "_pvpDamageHistory", new ConcurrentDictionary<uint, DateTime>
+        {
+            [offlineAssist.Character.Id] = DateTime.UtcNow.AddSeconds(-5)
+        });
+
+        var ex = Kill(victim, killer);
+        await Assert.That(ex).IsNull();
+
+        // When all assistants are offline, killer receives full solo 40 honor
+        await Assert.That(killer.Character.HonorPoint).IsEqualTo(40);
+        await Assert.That(killer.Character.HonorGainedInCombat).IsEqualTo(40u);
+        await Assert.That(offlineAssist.Character.HonorPoint).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task DoDie_ConsecutiveDeaths_EscalatesRespawnWaitTimeAndResetsAfterInterval()
+    {
+        var (killer, victim, session) = CreatePair("pvp-respawn");
+        _ = session;
+        _ = killer;
+
+        // 1st death: 15s (15000 ms)
+        victim.Character.DoDie(null, KillReason.Damage);
+        await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(15000);
+
+        // 2nd death: 30s (30000 ms)
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        victim.Character.DoDie(null, KillReason.Damage);
+        await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(30000);
+
+        // 3rd death: 45s (45000 ms)
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        victim.Character.DoDie(null, KillReason.Damage);
+        await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(45000);
+
+        // 4th death: 60s (60000 ms)
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        victim.Character.DoDie(null, KillReason.Damage);
+        await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(60000);
+
+        // Simulate 6 minutes passing without dying
+        SetField(victim.Character, "_lastDeathTime", DateTime.UtcNow.AddMinutes(-6));
+
+        // 5th death: counter reset -> back to 15s (15000 ms)
+        victim.Character.IsDead = false;
+        victim.Character.Hp = victim.Character.MaxHp;
+        victim.Character.DoDie(null, KillReason.Damage);
+        await Assert.That(victim.Character.RezWaitDuration).IsEqualTo(15000);
     }
 
     // ------------------------------------------------------------------ b. friendly-fire crime evidence
