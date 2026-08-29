@@ -7,27 +7,13 @@ current recovery delta after the ox-alpha loss; preserve the evidence trail.
 
 ## Current state
 
-- **Branch of record:** fork `joshhmann/AAEmu` `develop @ 241d3e34d`
-  (= `origin/develop`). Final gate: **2480/0/1**.
-- **On develop:** grounding fix `38c4997d3`; recovered Retribution wire-test
-  merge `a4f7820ba`; merchant merge `e5db6d390` (funds gate, buyback refund,
-  and grant-failure rollback); Mail S3 acceptance `31045d033`; and the earlier
-  committed M0–M7, G3-B5, Dominion slice-1, PvP/Crime, and economy features.
-- **PB-005:** **FIXED-PARTIAL**. Positive-only terrain clamp plus the
-  intentional aerial/water/structure whitelist are landed. The bounded replay
-  corrects 593 non-whitelisted severe-positive rows; cave/deck/submerged
-  behavior and duplicate-row decisions remain open.
-- **PB-007:** **OPEN, narrowed**. Targeted rig PASS 1/1 (real `Skill.Use`,
-  same-faction `ForceAttack` HP decrease, Retribution present; first
-  application and Refresh broadcasts); live non-immune damage-frame proof
-  remains pending.
-- **Mail S3:** **PASS / LANDED** in `31045d033`. The authenticated
-  `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
-  E2E passed 1/1 in 2m39s on isolated MySQL/Docker, covering restart,
-  instance-faithful equipment+copper attachment, ownership guards, unread
-  recount, sequential take, and delete persistence. Return opcode `0x0a2`
-  remains STRONGLY_INFERRED pending real-client capture; no live-client
-  confirmation is implied.
+- **Branch of record:** fork `joshhmann/AAEmu` `develop @ 970d6a557`
+  (= `origin/develop`). Full gate (`./scripts/gate.sh`): **2526 total / 2525 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP stdio smoke **39 tools**.
+- **On develop:** PB-002 interaction slice `e9ace7f22` (quest 269→270 with Doodad 687 torch/hay skill 11229); next objective types `49f0aee07` (`QuestActObjSphere` 1372, `QuestActObjCraft` 6024, `QuestActObjCinema` 6041); self-quest discovery channel `970d6a557` (`LevelingLoopScenarioRigTests` 14/14); Mail COD payment deduction/dispatch, sent-tab deletion, and name normalization `69861b73c` (`MailCodLifecycleTests` 4/4); timer cancellation safety `950cfd279`; and earlier grounding `38c4997d3`, Retribution `a4f7820ba`, merchant `e5db6d390`, Mail S3 `31045d033`.
+- **PB-002:** **SCOPED ACTOR/RIG SLICES LANDED; BROAD CLAIM OPEN**. Interaction (quest 270), ItemUse (quest 252), Sphere (quest 1372), Craft (quest 6024), Cinema (quest 6041), and Self-Discovery channel pass headlessly 14/14. Live stack progression and human feel (`H=UNKNOWN`) remain open.
+- **PB-005:** **FIXED-PARTIAL**. Positive-only terrain clamp plus intentional whitelist landed (593 severe-positive rows corrected). Cave/deck/submerged classification awaits Josh's W4-5 grounding tour data.
+- **PB-007:** **NARROW HANDSHAKE FIXED / CLOSED; WAR-HONOR DEFERRED**. 1v1 same-faction flagged aggression and Peace block verified live. WAR-HONOR (>251 kills + conflict timer state cycle) and broader PvP remain open.
+- **Mail:** **PASS / LANDED**. Mail S3 + COD payment charge enforcement, item looting payment deduction, payment mail dispatch to sender, sent-tab deletion, and name resolution fallback are landed and tested (26/26 `Mail*` unit tests pass).
 
 ## Surviving worktrees — do not delete
 
@@ -50,12 +36,9 @@ not evidence that their unmerged work landed on `develop`.
 
 ## Next resume order
 
-1. Run the corrected PB-007 live rerun with buff-state dump and corrected
-   packet accounting; update the blocker only from observed evidence.
-2. Review PB-005's terrain-only limits and make the registered owner decisions
-   for cave/deck/submerged classifications and duplicate rows.
-3. Continue the existing ROADMAP queue without deleting survivor worktrees or
-   changing the H=UNKNOWN rule.
+1. **PB-007 WAR-HONOR scope**: Implement deterministic conflict zone kill escalation rig (0→251 kills $\rightarrow$ Tension...Conflict$\rightarrow$War) and multi-bot assist / honor division test fixtures.
+2. **PB-002 live progression slice**: Run quest-270 / leveling loop on live Game stack (`AAEMU_LIVE_RIG`) with real client/bot to capture live packet evidence.
+3. **PB-005 grounding review**: Await Josh's W4-5 grounding tour coordinates/screenshots to classify cave/deck/submerged findings.
 
 ## Hard rules
 

@@ -1,15 +1,11 @@
 # Gemini Handoff — AAEmu
 
 - The current source/test HEAD is
-  `792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`). Per-run soak
-  ownership hardening `799b698ad` snapshots named account/character rows and
-  cleans only newly owned IDs in A5/A5Tier3 `finally` paths; sibling-
-  preservation tests pass 2/2. The full normal-clone gate at 792 is **2496
-  total / 2495 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP stdio
-  smoke **39 tools**. The sole skip is
-  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-  restore/build passed with 0 errors; restore emitted 2 NU1903 and build
+  `970d6a557c7b49d8953341ffddb468d902de50b6` (`develop`). The full normal-clone gate
+  is `./scripts/gate.sh`: **2526 total / 2525 passed / 0 failed / 1 skipped**;
+  compiler **0 errors / 0 warnings**; MCP stdio smoke **39 tools**.
+  The sole skip is `Subscriber_RecordsPerSubscriberDuration_WithName` (known timer-skew skip in unit test suite).
+  IntegrationTests Release restore/build passed with 0 errors; restore emitted 2 NU1903 and build
   emitted 2 NU1903 in this exact verification. Runtime provenance uses
   `E2eStack.SourceRevision` with an explicit `unknown` fallback. Earlier gate
   and reconciliation pointers remain historical.
@@ -21,18 +17,13 @@
   `deposit_item`, `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`,
   `pack_pickup`, `put_down`, `load_pack_onto_vehicle`, `board_vehicle`,
   `unboard_vehicle`, and `drive_vehicle`. The current MCP catalog is 39 tools.
-- The full normal-clone gate at source/test HEAD
-  `792774d7707b8b578b8d9975896e0a1ac719f361` is `./scripts/gate.sh`;
-  **2496 total / 2495 passed / 0 failed / 1 skipped**; compiler **0/0**; MCP
-  stdio smoke **39 tools**. Focused PB-002: LevelingLoopScenarioRigTests 7/7,
-  item-use 1/1, unsupported-objective 1/1, discovery 12/12, talk 5/5,
-  template registration 1/1; parser tests 2/2. The sole skip is
-  `Provision_Activate_Persist_Deactivate_RoundTrip`, requiring
-  `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`. IntegrationTests Release
-  restore/build passed with 0 errors; restore emitted 2 NU1903 and build
-  emitted 2 NU1903 in this exact verification. Runtime provenance uses
-  `E2eStack.SourceRevision` with an `unknown` fallback.
-  Focused route/MCP/queue validation remains Flash-reported **53/53**
+- Focused PB-002: `LevelingLoopScenarioRigTests` **14/14 passed**, covering
+  MonsterHunt, ItemUse (quest 252), Canonical Interaction (quest 269→270),
+  Sphere (quest 1372), Craft (quest 6024), Cinema (quest 6041), and
+  Self-Discovery channel (item in inventory bag).
+- Focused Mail: `MailCodLifecycleTests` **4/4 passed** (26/26 across all `Mail*` suites),
+  covering COD payment deduction/dispatch, sent-tab mail deletion, and name resolution fallback.
+- Focused route/MCP/queue validation remains Flash-reported **53/53**
   (`BotActionControllerRouteTests` 2/2, `BotControlActionMcpTests` 33/33,
   `BotActionCommandQueueTests` 18/18).
 - The earlier asset-missing `mcp-live-smoke-2026-08-27.md` run at
@@ -167,20 +158,12 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
   recorded above (5/5); `BaiNavigationRigTests` supplies GeoData/navmesh
   coverage. The preserved prototype waypoint test was invalid because it
   injected private state via reflection; do not claim waypoint coverage from it.
-- **PB-002 — autonomous leveling loop:** **SCOPED ACTOR/RIG SLICES LANDED;
-  BROAD CLAIM OPEN** — current item-use coverage drives `QuestActObjItemUse`
-  through real `GameplayActor.UseItem` for canonical quest 252 (NPC 7653,
-  item 7738, use skill 11596, act row 1600/detail 43), plus fail-closed
-  canonical quest 64 control. The failed canonical interaction candidate is
-  quest 270, doodad 687, interaction skill 11229: the real path reaches
-  `Doodad.Use`, but the spawned fixture exposes no phase functions; no
-  implementation landed. Broad autonomous quest-loop coverage, live-server
-  breadth, and human/client breadth remain open.
-- **PB-005 — grounding FIXED-PARTIAL:** 593 non-whitelisted severe-positive rows were corrected and 702 intentional whitelist rows preserved. Cave/deck/submerged classification and the 733 duplicate-row ownership decision remain open. No negative-offset clamp and no duplicate deletion without canonical evidence/owner approval.
+- **PB-002 — autonomous leveling loop:** **INTERACTION, SPHERE, CRAFT, CINEMA & SELF-QUEST SLICES LANDED;
+  BROAD CLAIM OPEN** — canonical interaction slice (quest 269→270 with Doodad 687 torch/hay skill 11229) landed in `e9ace7f22`; objective types expanded with `QuestActObjSphere` (quest 1372), `QuestActObjCraft` (quest 6024), and `QuestActObjCinema` (quest 6041) in `49f0aee07`; self-quest discovery channel (items in bag, level-ups, starter spheres) wired into `LevelingLoopScenario.Perceive` in `970d6a557`. `LevelingLoopScenarioRigTests` is **14/14 passed**. Broad autonomous quest-loop coverage, live-server breadth, and human/client breadth (`H=UNKNOWN`) remain open.
+- **PB-005 — grounding FIXED-PARTIAL:** 593 non-whitelisted severe-positive rows were corrected and 702 intentional whitelist rows preserved. Cave/deck/submerged classification and the 733 duplicate-row ownership decision remain open awaiting Josh's W4-5 grounding tour data. No negative-offset clamp and no duplicate deletion without canonical evidence/owner approval.
 - **PB-007 — FIXED / CLOSED for the narrow flagged-aggression handshake** at
   behavioral gate evidence baseline
-  `3871459d142fdd1767b9365a1de8d4cd3652ab0e` (current source/test HEAD
-  `792774d7707b8b578b8d9975896e0a1ac719f361`): the current real-login/Game
+  `3871459d142fdd1767b9365a1de8d4cd3652ab0e`: the real-login/Game
   E2E passed 1/1 in 2m09.910s with the victim-matched, non-immune
   `SCUnitDamaged` frame, immune exclusion, `SkillFired=True`, Retribution
   2167, bloodstain 877 objId 44294, and crime branch observed; PEACE-BLOCK
@@ -189,16 +172,8 @@ Label evidence correctly; do not turn a rig or a bot into a human claim.
   immune-tagged/untrusted failure context is retained in dated reports.
 - **Justice:** the crime vertical is complete, but jury summon packet ordering/client capture remains unknown. Prison sentencing/teleport/buff exist; prison labor, escape tunnels, guards, and release-on-expiry are absent. Treat those as separate scope decisions.
 - **Dominion:** persistence/tax/phase slice is complete; combat/siege-battle and declare-trigger UI are not.
-- **Mail:** Mail S3 is merged and complete; no S3 partial remains. Open follow-ups are real-client confirmation of the return opcode (candidate `0x0a2`, still not a fact), COD enforcement, and expiry/bounce integration proof.
-- **Scaling:** no six-hour dormant-timer soak exists in current evidence, so
-  no six-hour soak result is claimed. Keep dormant seeding sequential because
-  concurrent `seedDormant` corrupts server state at roughly 100 bots. Per-run
-  ownership hardening `799b698ad` now snapshots named account/character rows
-  and cleans only newly owned IDs in A5/A5Tier3 `finally` paths; sibling-
-  preservation tests pass 2/2 and no broad wildcard cleanup remains in those
-  probes. `SeedBox` has synchronous bridge calls and native `Thread.Join`
-  without hard cancellation; this remains a blocker. Historical M6 soak
-  evidence and staged reports are preserved as historical.
+- **Mail:** Mail S3 is merged and complete; COD payment charge enforcement, item looting payment deduction, payment mail dispatch, sent-tab mail deletion, and name resolution fallback landed in `69861b73c` with 4/4 `MailCodLifecycleTests` passing. Open follow-ups are real-client confirmation of the return opcode (candidate `0x0a2`, still not a fact) and live expiry integration proof.
+- **Scaling:** Timer cancellation safety landed in `950cfd279`. No six-hour dormant-timer soak exists in current evidence, so no six-hour soak result is claimed yet. Keep dormant seeding sequential because concurrent `seedDormant` corrupts server state at roughly 100 bots. Per-run ownership hardening `799b698ad` snapshots named account/character rows and cleans only newly owned IDs in A5/A5Tier3 `finally` paths; sibling-preservation tests pass 2/2. Historical M6 soak evidence and staged reports are preserved as historical.
 
 ## Surviving worktrees and safety
 
