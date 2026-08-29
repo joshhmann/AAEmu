@@ -623,14 +623,18 @@ public interface IGameplayActor
     /// live NPC or doodad (quest board) in the owning world — the two
     /// branches CSStartQuestContextPacket dispatches on — and enumerates the
     /// quest templates whose Start component carries a ConAcceptNpc /
-    /// ConAcceptDoodad act for that target's template id. Every offering is
-    /// then filtered through the REAL AddQuest pre-conditions, so discovery
-    /// is fail-closed equal to the accept path: an active duplicate, a
-    /// supply-item-blocked quest, a Start component whose unit_reqs
-    /// (level/race/chain …) the character fails, and a completed
+    /// ConAcceptDoodad act for that target's template id. NPC targets ADD
+    /// the KILL channel: Start components carrying a QuestActConAcceptNpcKill
+    /// act for the template — the quests the engine auto-starts on the
+    /// NPC's death (DoOnMonsterHuntEvents) — surfaced with acceptor
+    /// QuestAcceptorType.Kill, the exact triple AcceptQuest consumes. Every
+    /// offering is then filtered through the REAL AddQuest pre-conditions,
+    /// so discovery is fail-closed equal to the accept path: an active
+    /// duplicate, a supply-item-blocked quest, a Start component whose
+    /// unit_reqs (level/race/chain …) the character fails, and a completed
     /// non-repeatable quest are all invisible. PLAYER_MODE: only what a
-    /// client standing in interaction range could see; no other-player state,
-    /// no GM shortcuts.
+    /// client standing in interaction range could see; no other-player
+    /// state, no GM shortcuts.
     ///
     /// Guarantees: every returned quest id passes CharacterQuests.AddQuest's
     /// pre-flight gate set at query time (accept may still fail later on

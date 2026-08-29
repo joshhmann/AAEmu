@@ -865,15 +865,29 @@ public class GameplayActor : IGameplayActor
             ? QuestManager.Instance.GetQuestsOfferedByNpc(acceptorTemplateId)
             : QuestManager.Instance.GetQuestsOfferedByDoodad(acceptorTemplateId);
 
+        // KILL channel — quests this NPC template auto-starts when slain
+        // (Start components carrying a QuestActConAcceptNpcKill act). The
+        // engine's DoOnMonsterHuntEvents adds them with
+        // QuestAcceptorType.Kill and the NPC's template id as acceptor, so
+        // that is exactly the acceptor triple surfaced here per quest.
+        var killCandidates = npc != null
+            ? QuestManager.Instance.GetQuestIdsFromKillAcceptNpc(acceptorTemplateId)
+            : [];
+
         // 4. Fail-closed filter through the REAL AddQuest pre-conditions —
         //    everything AcceptQuest would refuse is not discoverable.
         var offerings = new List<QuestOffering>();
-        foreach (var questId in candidates.Order())
+        var questIds = new HashSet<uint>(candidates);
+        foreach (var questId in killCandidates)
+            questIds.Add(questId);
+        foreach (var questId in questIds.Order())
         {
             if (!IsDiscoverable(questId))
                 continue;
             var template = QuestManager.Instance.GetTemplate(questId)!;
-            offerings.Add(new QuestOffering(questId, template.Level, acceptorType, acceptorTemplateId));
+            var isKillOffer = killCandidates.Contains(questId);
+            offerings.Add(new QuestOffering(questId, template.Level,
+                isKillOffer ? QuestAcceptorType.Kill : acceptorType, acceptorTemplateId));
         }
 
         var result = new QuestDiscoveryResult(targetObjId, acceptorType, acceptorTemplateId, offerings);

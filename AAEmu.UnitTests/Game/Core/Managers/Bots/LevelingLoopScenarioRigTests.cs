@@ -64,6 +64,16 @@ public class LevelingLoopScenarioRigTests
     private const uint Quest270TorchItemId = 3899;
     private const uint Quest270HayItemId = 3900;
     private static readonly uint[] Quest269TargetNpcTemplateIds = [3466, 3467, 3468, 3465, 3462];
+    /// <summary>Canonical kill-accept quest: Start QuestActConAcceptNpcKill (NPC 4843),
+    /// Progress MonsterHunt 4843 ×8, Reward AutoComplete+Copper — no Ready step,
+    /// auto-completes (quest 329/1652 shape). Level 12 → 1110 exp quest supply.</summary>
+    private const uint Quest1947Id = 1947;
+    private const uint Quest1947KillNpcTemplateId = 4843;
+    private const int Quest1947HuntCount = 8;
+    private const uint Quest1947Exp = 1_110;
+    /// <summary>Canonical NPC template with ZERO accept acts of any kind (no AcceptNpc /
+    /// AcceptNpcKill / AcceptDoodad rows) — the fail-closed control target.</summary>
+    private const uint NoOfferNpcTemplateId = 7669;
 
     /// <summary>
     /// Temporarily installs canonical SkillManager/DoodadManager data while
@@ -1018,6 +1028,110 @@ public class LevelingLoopScenarioRigTests
         var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, 6041);
         await Assert.That(discoverSelf).IsGreaterThanOrEqualTo(0);
         await Assert.That(accept).IsGreaterThan(discoverSelf);
+    }
+
+    /// <summary>
+    /// KILL channel (census 2026-08-29): a perceived hostile NPC whose death
+    /// auto-starts a quest (Start QuestActConAcceptNpcKill) is discovered
+    /// with acceptor QuestAcceptorType.Kill, accepted, the hunt target
+    /// pursued (SetTarget → cast rotation → kill credit through the REAL
+    /// DoOnMonsterHuntEvents via the rig seam → Loot), and the quest
+    /// auto-completes — the ordinary engine terminal. Canonical quest 1947
+    /// (kill-accept + hunt NPC 4843 ×8, no Ready step → auto-complete);
+    /// NPC 4843 carries NO other accept acts, so the offering is pure.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_KillDiscoveryChannel_AcceptsHuntsAndCompletesQuest1947()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-kill-discovery");
+        var character = session.Character;
+        character.Level = 12; // 1947 start gate ≥8 (real unit_reqs row)
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // World seed: the kill-acceptor NPC template itself (4843) — the
+        // bot perceives the target AND hunts its own kind; every kill credit
+        // lands on a DISTINCT alive npc (no respawner scaffolding headless).
+        for (var i = 0; i < Quest1947HuntCount; i++)
+        {
+            var position = new Vector3(2 + (i % 3) * 1.0f, -1 - (i / 3) * 1.0f, 0); // 2–4 m out
+            var objId = SpawnHubNpc(session, Quest1947KillNpcTemplateId, position);
+            SeedCorpseLoot(session, objId);
+        }
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            MaxLinks = 1,
+            BandMin = 12,
+            BandMax = 12,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxHuntRounds = 64
+        }, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(Quest1947Id);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjMonsterHunt));
+        await Assert.That(character.Quests!.HasQuestCompleted(Quest1947Id)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(Quest1947Id)).IsFalse();
+
+        // XP progression signal — LEVEL-12 quest supply = 1110 exp through the real completion path.
+        await Assert.That(result.Links[0].ExperienceAfter - result.Links[0].ExperienceBefore).IsEqualTo(Quest1947Exp);
+
+        // Audit-trace subsequence: perceive → accept with the KILL acceptor →
+        // SetTarget → Cast → Loot, in execution order. Auto-completion drops
+        // the quest on the objective advance — no TurnIn record exists.
+        var trace = result.TraceRecords;
+        var accept1947 = IndexOfFirst(trace, ActorActionType.AcceptQuest, Quest1947Id);
+        var firstTarget = FirstAtLeast(trace, ActorActionType.Target, accept1947 + 1);
+        var firstCast = FirstAtLeast(trace, ActorActionType.Cast, firstTarget + 1);
+        var firstLoot = FirstAtLeast(trace, ActorActionType.Loot, firstCast + 1);
+        await Assert.That(accept1947).IsGreaterThanOrEqualTo(0);
+        await Assert.That(firstTarget).IsGreaterThan(accept1947); // discovered BEFORE target selection
+        await Assert.That(firstCast).IsGreaterThan(firstTarget);   // SetTarget precedes the rotation
+        await Assert.That(firstLoot).IsGreaterThan(firstCast);     // corpse looted after the kill
+        // Accepted through the KILL acceptor triple (not an NPC talk offer):
+        // the audit detail renders the acceptor enum short name — "Kill/4843".
+        await Assert.That(trace[accept1947].Detail).Contains("Kill/4843");
+    }
+
+    /// <summary>
+    /// Fail-closed control (KILL channel): an NPC template with ZERO accept
+    /// acts of any kind (7669 — no AcceptNpc / AcceptNpcKill / AcceptDoodad
+    /// rows in compact.sqlite3) must be PERCEIVED but yield NO offering, so
+    /// the honest loop starves instead of inventing a kill-gated quest —
+    /// killing it must never start anything.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_KillChannel_NoOfferNpc_FailsStarvationWithoutFakeAccept()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-kill-control");
+        var character = session.Character;
+        character.Level = 12;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        SpawnHubNpc(session, NoOfferNpcTemplateId, new Vector3(1, 0, 0));
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            MaxLinks = 1,
+            BandMin = 12,
+            BandMax = 12
+        }, new RigKillSeam());
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo("PERCEIVE");
+        await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.Starvation);
+
+        // Nothing was faked: no quest accepted, nothing turned in.
+        await Assert.That(character.Quests!.ActiveQuests.Count).IsEqualTo(0);
+        await Assert.That(result.TraceRecords.Any(r => r.Action == ActorActionType.AcceptQuest)).IsFalse();
     }
 
 
