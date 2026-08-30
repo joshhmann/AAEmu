@@ -9,8 +9,9 @@ MET with live evidence; PB-002 quest-discovery primitive and item-use slice
 landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; current local source/test HEAD is `9b8ba63175b459c2073cb7c742637f07bbb3b9e1`
-(re-census checkpoint 2026-08-30; prior census checkpoint `da0fdc61a72a15111fddc8ac627a164a5f050558`). M5's
+Branch of record: develop; current local source/test HEAD is `f5e7a1980`
+(CompleteQuest/non-objective classification and Level objective pursuit; prior
+re-census checkpoint `9b8ba6317`). M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
 primitive remains integrated in `LevelingLoop`'s accept choice at
 `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`; focused contract 5/5, scoped quest
@@ -25,36 +26,63 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
-## 2026-08-29 — Post-M7 readiness and closure: PB-002 aggro slice
+## 2026-08-29 — Post-M7 readiness and closure: PB-002 aggro slice (historical/pre-fix context)
 
-- **PB-002 result: PARTIAL capability closure, broad autonomy OPEN.** The
-  `LevelingLoopScenario` now has an `AggroLeg` for canonical
-  `QuestActObjAggro` forms whose live quest instance has a non-zero NPC
-  acceptor template. It selects only normal perceived, attackable NPCs of
-  that template, requires the owner to be present in the victim's real aggro
-  ranking at a configured Rank1/Rank2/Rank3 threshold, then reuses the shared
-  SetTarget → Cast → kill → Loot path. Completion is read back from live quest
-  state after the real OnKill event boundary; no objective counter is written
-  by the scenario.
-- Canonical aggro census remains **37 rows, 30 attached progress acts, and
-  30 distinct quests**; all 30 use `QuestActConAcceptComponent` and none use
-  NPC/NPC-kill acceptance. This slice does not change acceptance-channel
-  counts. The supported component/NPC-acceptor boundary is exercised by
-  canonical quest **2432** (aggro act id **4**, NPC template **9**, Level 6).
-  Component forms without an NPC acceptor or without a kill path that emits
-  `OnKillArgs.Target = dead NPC` remain open and are explicitly fail-closed.
-- Evidence layer is **A / rig (proxy/bot-functional)**, not H, restart, or soak:
-  `LevelingLoopScenarioRigTests` **21/21** (including positive aggro and
-  no-owner-attribution control), `QuestActObjAggroTests` **2/2**. No live
-  client or human gameplay evidence is claimed; the separate A5 canary result
-  is diagnostic only and is recorded below.
-- Remaining broad PB-002 gaps include unsupported objective families
-  (item-group resolution, cross-quest, level/ability/mount training,
-  zone-scoped kills, and other named `KnownPrimitiveGaps`) plus the canonical
-  interaction fixture's missing phase functions. **Next action:** keep the
-  aggro boundary in the focused gate and extend only with another canonical
-  target whose live ranking and kill event are observable; do not claim
-  universal autonomous leveling or PB-002 closure.
+- **Historical result:** the `AggroLeg` supports canonical `QuestActObjAggro`
+  forms whose live quest instance has a non-zero NPC acceptor template. It
+  selects perceived, attackable NPCs, requires the owner's real aggro ranking,
+  and reuses SetTarget → Cast → kill → Loot; completion is read from live
+  quest state after the real OnKill boundary.
+- The 2026-08-29 gap wording below is superseded by the 2026-08-30 re-census
+  and later objective-family landings. Preserve it as historical evidence, not
+  as the current PB-002 gap list.
+
+## 2026-08-30 — Post-M7 readiness: PB-002 current objective frontier
+
+- **Scope:** Post-M7 readiness and closure → PB-002 quest progression.
+  **PB-002 remains PARTIAL with broad autonomous progression OPEN.** Current
+  evidence is deterministic rig/proxy (A/R), not live authenticated progression
+  and not human/client evidence.
+- **Landed objective families:** interaction, item-use, item-group use/gather,
+  Sphere, Craft, Cinema, MonsterHunt/MonsterGroupHunt, Aggro (partial),
+  ZoneKill, EtcItemObtain, CompleteQuest, and Level. CheckTimer and
+  SupplyRemoveItem are non-objective gate/cleanup acts, not gaps.
+- **Remaining actual objective gaps:** `QuestActObjAbilityLevel` (11 quests)
+  and `QuestActObjMateLevel` (7 live quests; 1 orphaned data row). Aggro
+  remains partial for forms without a resolvable NPC acceptor, ranking, or kill
+  event. Separately, 70 component-only quests with no engage tie remain
+  genuinely unreachable as an acceptance channel; acceptance reachability is
+  distinct from objective support.
+- **Focused current evidence:** `LevelingLoopScenarioRigTests` **32/32**,
+  `QuestActObjAggroTests` **2/2**, `QuestEtcItemObtainRigTests` **3/3**,
+  `QuestZoneKillVictimRigTests` **2/2**, `PvpFlaggingRigTests` **11/11**;
+  Game/UnitTests Release builds report 0 errors. These results do not close
+  broad PB-002 autonomy.
+- **Remaining next actions:** implement Ability/Mate action-scope; make and
+  record rulings for the 70 unreachable acceptance forms/data; run live
+  authenticated progression; obtain human/client evidence.
+
+### Current PB-002 implementation notes
+
+- `QuestActObjCompleteQuest` is pursued through bounded prerequisite
+  composition; the engine, not the scenario, sets the completed-quest flag.
+- `QuestActObjLevel` is pursued through LevelLeg and real kill/XP boundaries;
+  the scenario never writes XP or level. `KnownPrimitiveGaps` therefore contains
+  only the Ability/Mate gaps for objective levels.
+- The current branch is `develop` at landed commits; do not describe these
+  slices as uncommitted or local-only.
+
+## 2026-08-30 — Post-M7 readiness: PB-002 complete-quest composition + classifier reclassification (landed current state)
+
+- The CompleteQuest composition and non-objective classifier changes are landed
+  in the current `develop` tree. The detailed behavior and evidence are
+  summarized above; this heading is retained to preserve the dated record.
+
+## 2026-08-30 — Post-M7 readiness: PB-002 level-objective pursuit (landed current state)
+
+- The Level objective pursuit is landed in the current `develop` tree. The
+  detailed behavior and evidence are summarized above; this heading is
+  retained to preserve the dated record.
 
 ## 2026-08-30 — Post-M7 readiness: discovery-channel re-census at 9b8ba6317 (PB-002 evidence refresh)
 
@@ -77,7 +105,15 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
   `QuestActObjAggroTests` **2/2**, `LevelingLoopScenarioRigTests` **21/21** (includes the 6109 auto-start
   end-to-end). Evidence class is unchanged — deterministic rig / A, no live/human claim.
 
-## 2026-08-30 — Post-M7 readiness: PB-002 complete-quest composition + classifier reclassification (uncommitted, local develop)
+## 2026-08-30 — Post-M7 readiness: PB-002 complete-quest composition + classifier reclassification (landed current state; historical snapshot wording below)
+
+- **Historical snapshot correction:** the former `QuestActObjLevel` gap wording
+  is superseded by the landed `LevelLeg`. Current remaining objective gaps are
+  only `QuestActObjAbilityLevel` (11 quests) and `QuestActObjMateLevel` (7 live
+  quests; 1 orphaned data row); aggro remains partial at its resolvability
+  boundary. CompleteQuest is landed, and CheckTimer/SupplyRemoveItem are
+  non-objective gate/cleanup acts.
+
 
 - **PB-002 result: PARTIAL capability closure; broad autonomy OPEN; aggro boundary UNCHANGED.** The
   `LevelingLoopScenario` gained a `CompleteQuestLeg` for `QuestActObjCompleteQuest` (canonical 11 carrier
@@ -99,21 +135,43 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
   gate that the engine arms via `QuestTimeoutTask` → `FailQuest` on expiry with no quest-side clock
   seam; supply-remove is inventory cleanup executed by the act itself). Both are passed through in
   `PursueObjectives`; neither is a `KnownPrimitiveGaps` entry anymore.
-- **Remaining named gaps with exact reasons (no player-like action exposed):** `QuestActObjLevel`
-  (canonical 1 quest, 6250) credits from the real `OnLevelUp` event and has no honest headless grind
-  action; `QuestActObjAbilityLevel` (11 quests) has no `OnAbilityLevelUp` handler and ability exp only
-  rises via the character-XP share (`CharacterAbilities.AddActiveExp`); `QuestActObjMateLevel`
-  (7 quests) demands a Level-50 breed mate and mate level only rises via `Mate.AddExp` kill share /
-  `MateXpUpdateTask`. Granting XP/levels from the scenario would be fake progression — these stay
-  gap entries with fail-closed rejection. `QuestActObjAggro` remains the same PARTIAL boundary
-  (NPC-acceptor + real OnKill credit only); no broad PB-002 closure is claimed.
+- **Historical snapshot correction:** the former `QuestActObjLevel` gap wording
+  is superseded by the landed `LevelLeg`. Current remaining objective gaps are
+  only `QuestActObjAbilityLevel` (11 quests) and `QuestActObjMateLevel` (7 live
+  quests; 1 orphaned data row); aggro remains partial at its resolvability
+  boundary. CompleteQuest is landed, and CheckTimer/SupplyRemoveItem are
+  non-objective gate/cleanup acts.
+  Broad PB-002 autonomy remains OPEN; evidence is rig/proxy only.
+## 2026-08-30 — Post-M7 readiness: PB-002 level-objective pursuit (historical pre-landing snapshot)
+
+- **PB-002 result: PARTIAL capability closure; broad autonomy OPEN; aggro boundary UNCHANGED.** The
+  `LevelingLoopScenario` gained a `LevelLeg` for `QuestActObjLevel` — the canonical **1 quest, 6250**
+  "새로운 당신을 위한 선물" (Start `QuestActConAcceptItem` 442 → item 33027, Progress
+  `QuestActObjLevel` 14 → **Level 30**, Reward `QuestActSupplyItem` 4158/4161 + `QuestActConAutoComplete`
+  1712; no Ready step → auto-completes). The act credits from **LIVE `Owner.Level` at step evaluation**
+  (`QuestActObjLevel.RunAct` reads `quest.Owner.Level >= Level` and `SetObjective(1)`); the headless
+  `OnLevelUp` event is unavailable (`Character.AddExp` fires `DoOnLevelUpEvents` only when
+  `Connection != null`) and is never faked. The leg grinds perceived hostiles through the **real kill
+  path** — LIVE: real cast damage → `Npc.DoDie` → `Character.AddExp(KillExp, true)`; RIG: the
+  documented test-only `ILevelXpSeam` at the REAL `Character.AddExp` boundary (mirroring DoDie's
+  character-XP grant, `Npc.cs:879`). The scenario NEVER writes XP or level; a bounded kill budget
+  (`LoopOptions.MaxLevelGrindKills`, default 64) fails closed (`Starvation`) when the level cannot
+  rise. Item 33027 has ZERO canonical grant sources (GM-granted starter) — rigs fixture-grant it as
+  setup only.
+- **Gap reclassification:** `QuestActObjLevel` is REMOVED from `KnownPrimitiveGaps` (pursued now).
+  `QuestActObjAbilityLevel` (11 quests) and `QuestActObjMateLevel` (7 quests) remain named gaps with
+  no-player-action reasons (ability exp only rises via the character-XP share `AddActiveExp` with no
+  `OnAbilityLevelUp` handler; mate level only via `Mate.AddExp` kill share / `MateXpUpdateTask`
+  demanding a Level-50 breed mate). `QuestActObjAggro` remains the same PARTIAL boundary; no broad
+  PB-002 closure is claimed.
 - Evidence layer is **A / rig (proxy/bot-functional)**, not H, restart, or soak:
-  `LevelingLoopScenarioRigTests` **30/30** (28 existing + 2 new: complete-quest positive
-  prerequisite-then-parent, and missing-prerequisite fail-closed control), `QuestActObjAggroTests`
+  `LevelingLoopScenarioRigTests` **32/32** (30 existing + 2 new: level-objective positive
+  completing through live level state, and no-XP-source fail-closed control), `QuestActObjAggroTests`
   **2/2**, `QuestEtcItemObtainRigTests` **3/3**, `QuestZoneKillVictimRigTests` **2/2**,
-  `PvpFlaggingRigTests` **11/11**. Release builds of `AAEmu.Game` and `AAEmu.UnitTests` are
-  0 errors; `git diff --check` clean. Uncommitted on local develop; no commit, no E2E/soak/`.worktrees`
-  touched.
+  `PvpFlaggingRigTests` **11/11**, full `AAEmu.UnitTests` suite green. Release builds of `AAEmu.Game`
+  and `AAEmu.UnitTests` are 0 errors; `git diff --check` clean. The
+  uncommitted/local wording in this retained snapshot is historical; current
+  branch state is landed. No E2E/soak/`.worktrees`/generated-JSONL was touched.
 
 
 The six-hour stage is opt-in and requires `A5_TIER3_SIX_HOUR=1`,

@@ -58,11 +58,11 @@ feel.)
   `harvest`, `craft`, `buy`, `sell`, `pack_pickup`, `put_down`,
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
-- Current source/test HEAD is local `develop`
-  `da0fdc61a72a15111fddc8ac627a164a5f050558`; M5 proposal
-  `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6 cancellation `950cfd279`,
-  population isolation `c97909f4f`, and opt-in six-hour leg `155c82c66` are
-  integrated. The six-hour stage is opt-in and requires
+- Current source/test HEAD is local `develop` at `f5e7a1980`; CompleteQuest
+  composition, non-objective act classification, and Level objective pursuit
+  are landed. M5 proposal `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6
+  cancellation `950cfd279`, population isolation `c97909f4f`, and opt-in
+  six-hour leg `155c82c66` remain integrated.
   `A5_TIER3_SIX_HOUR=1`, minutes >=360, and sample seconds 1..300; it
   propagates a cooperative deadline and uses ID-bound `finally` cleanup.
 - The bounded Tier3 rehearsal at source/test
@@ -101,7 +101,31 @@ feel.)
 - Only later Party, Trade, Expedition, Auction, and related actor expansion
   remains explicitly deferred and is not claimed as MCP-exposed. Grades in the
   ledger are unchanged; **H remains U (UNKNOWN)**.
-## Post-M7 readiness and closure — PB-002 aggro result (2026-08-29)
+## Post-M7 readiness and closure — PB-002 current objective frontier (2026-08-30)
+
+- **PB-002 remains PARTIAL; broad autonomous progression is OPEN.** This is
+  current deterministic rig/proxy evidence (A/R), not live authenticated
+  progression and not human/client evidence.
+- **Landed objective families:** interaction, item-use, item-group use/gather,
+  Sphere, Craft, Cinema, MonsterHunt/MonsterGroupHunt, Aggro (partial),
+  ZoneKill, EtcItemObtain, CompleteQuest, and Level. CheckTimer and
+  SupplyRemoveItem are non-objective gate/cleanup acts, not gaps.
+- **Remaining objective gaps:** `QuestActObjAbilityLevel` (11 quests) and
+  `QuestActObjMateLevel` (7 live quests; 1 orphaned data row). Aggro remains
+  partial for forms without a resolvable NPC acceptor, ranking, or kill event.
+  Separately, 70 component-only quests with no engage tie remain genuinely
+  unreachable as an acceptance channel; acceptance reachability is distinct
+  from objective support.
+- **Focused evidence:** `LevelingLoopScenarioRigTests` **32/32**,
+  `QuestActObjAggroTests` **2/2**, `QuestEtcItemObtainRigTests` **3/3**,
+  `QuestZoneKillVictimRigTests` **2/2**, and `PvpFlaggingRigTests` **11/11**;
+  Game/UnitTests Release builds report 0 errors. These results do not close
+  broad PB-002 autonomy.
+- **Remaining next actions:** Ability/Mate action-scope; rulings for the 70
+  unreachable acceptance forms/data; live authenticated progression; and
+  human/client evidence.
+
+## Post-M7 readiness and closure — PB-002 aggro result (historical/pre-fix record, 2026-08-29)
 
 - **PB-002: PARTIAL, broad claim OPEN.** `QuestActObjAggro` is supported only
   for NPC-acceptor forms with a nonzero acceptor template and real victim aggro
@@ -136,24 +160,27 @@ The kill-event boundary "component forms without a real victim event remain fail
 aggressive forms whose acceptor template fails to resolve to a perceivable kill — no longer for the 30
 canonical aggro quests, which resolve through `AddQuestFromNpc` at first aggro.
 
-**2026-08-30 — PB-002 complete-quest composition + classifier reclassification (uncommitted, local
-develop):** `LevelingLoopScenario` now pursues `QuestActObjCompleteQuest` (canonical **11** carrier
-quests / **53** Progress acts) through `CompleteQuestLeg`: the act has NO event subscription, so the
-leg re-perceives and completes the prerequisite through the real accept → pursue → turn-in machinery
-and lets the parent's REAL step evaluation credit the objective from
-`HasQuestCompleted(prereq)` (the flag is produced by the engine's own `SetCompletedQuestFlag` at the
-prerequisite's drop-time, never by the scenario). Recursion is bounded by
-`LoopOptions.MaxCompleteQuestDepth` (default 3) and an ancestor-stack cycle guard. `QuestActCheckTimer`
-(canonical 68 rows / 2 Progress) and `QuestActSupplyRemoveItem` (61 rows / 1 Progress) are reclassified
-as non-objectives (`CountsAsAnObjective=false`, `RunAct` always true) and passed through without pursuit
-legs; `QuestActObjLevel` (1 quest), `QuestActObjAbilityLevel` (11), and `QuestActObjMateLevel` (7) stay
-as named `KnownPrimitiveGaps` with exact no-player-action reasons (real `OnLevelUp` event only;
-`AddActiveExp` character-XP share only; `Mate.AddExp` kill share only). `QuestActObjAggro` stays at the
-same PARTIAL boundary — no broad PB-002 closure claim. Evidence is deterministic rig / A only:
-`LevelingLoopScenarioRigTests` **30/30** (28 existing + complete-quest positive and missing-prerequisite
-fail-closed control), `QuestActObjAggroTests` **2/2**, `QuestEtcItemObtainRigTests` **3/3**,
-`QuestZoneKillVictimRigTests` **2/2**, `PvpFlaggingRigTests` **11/11**; Release builds 0 errors;
-uncommitted, no commit / E2E / soak / `.worktrees` touched.
+**2026-08-30 — PB-002 landed current state:** `CompleteQuestLeg` now composes
+`QuestActObjCompleteQuest` through real prerequisite accept → pursue → turn-in
+machinery; the engine sets the completed flag. CheckTimer and SupplyRemoveItem
+are non-objective gate/cleanup acts and are passed through. `LevelLeg` now
+pursues `QuestActObjLevel`; it is no longer a gap. Current remaining objective
+gaps are `QuestActObjAbilityLevel` (11 quests) and `QuestActObjMateLevel`
+(7 live quests; 1 orphaned data row). Aggro remains partial where NPC
+acceptor/ranking/kill evidence cannot be resolved.
+
+Evidence remains deterministic rig/proxy only: `LevelingLoopScenarioRigTests`
+32/32, `QuestActObjAggroTests` 2/2, `QuestEtcItemObtainRigTests` 3/3,
+`QuestZoneKillVictimRigTests` 2/2, `PvpFlaggingRigTests` 11/11, and Game/
+UnitTests Release builds 0 errors. Broad PB-002 autonomy remains OPEN.
+The 70 component-only quests without an engage tie remain genuinely
+unreachable as an acceptance channel; acceptance reachability is distinct
+from objective support.
+
+**Historical/pre-fix context:** earlier dated wording that called
+CompleteQuest/Level uncommitted or listed item-group, ZoneKill, or
+EtcItemObtain as gaps is retained only as historical status and is superseded
+by the landed current state above.
 
 
 **PB-002 interaction candidate — historical/pre-fix context:** The earlier
