@@ -74,6 +74,18 @@ public class LevelingLoopScenarioRigTests
     private const uint GroupUseReadyComponentId = 90_903;
     private const uint GroupUseItemGroupId = 90_910;
     private const uint GroupUseOfferNpcTemplateId = 90_950;
+    // Synthetic item-obtain quest ids (fixture range — never collide with
+    // canonical quest_contexts): a Progress QuestActEtcItemObtain over the
+    // rig's loot doodad, accepted from a fixture offerer NPC.
+    private const uint EtcObtainQuestId = 90_980;
+    private const uint EtcObtainStartComponentId = 90_981;
+    private const uint EtcObtainProgressComponentId = 90_982;
+    private const uint EtcObtainReadyComponentId = 90_983;
+    private const uint EtcObtainOfferNpcTemplateId = 90_952;
+    private const uint EtcObtainItemId = 90_984;
+    private const uint EtcObtainLootGroupId = 90_985;
+    private const uint EtcObtainLootFuncId = 90_986;
+    private const uint EtcObtainSourceDoodadTemplateId = 90_987;
 
     private const uint Quest269Id = 269;
     private const uint Quest270Id = 270;
@@ -845,6 +857,167 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(accept).IsGreaterThanOrEqualTo(0);
         await Assert.That(use).IsGreaterThan(accept);
         await Assert.That(turnIn).IsGreaterThan(use);
+    }
+
+    /// <summary>
+    /// E-ETC-OBTAIN-1: synthetic quest with a Progress QuestActEtcItemObtain
+    /// (item ×1) sourced from a fixture loot doodad whose func chain grants
+    /// the act's item. The composed item-obtain leg resolves the source
+    /// DATA-DRIVEN from HighlightDoodadId among PERCEIVED doodads,
+    /// InteractWith grants the item through the real acquisition path
+    /// (engine's own DoItemsAcquiredEvents → OnItemGather credit — the exact
+    /// channel QuestActEtcItemObtain subscribes to), and the quest completes
+    /// through the real report turn-in.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_EtcItemObtain_CompletesThroughRealAcquisition()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-etc-obtain");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        SeedEtcObtainQuest();
+
+        // Source doodad: TEMPLATE id = the act's highlight so the
+        // data-driven resolution matches; phase group carries the loot func.
+        GameplayActorTestRig.SeedItemTemplate(EtcObtainItemId);
+        GameplayActorTestRig.SeedDoodadLootInteraction(EtcObtainLootGroupId, EtcObtainLootFuncId,
+            EtcObtainItemId);
+        var objId = session.SpawnDoodad(EtcObtainSourceDoodadTemplateId);
+        var doodad = session.World.GetDoodad(objId)!;
+        doodad.FuncGroupId = EtcObtainLootGroupId;
+        doodad.Template = new DoodadTemplate { Id = EtcObtainSourceDoodadTemplateId, FuncGroups = [] };
+        doodad.Transform.Local.SetPosition(new Vector3(2, 0, 0));
+        var region = session.World.GetRegionByPos(new Vector3(2, 0, 0));
+        if (region != null)
+        {
+            region.AddObject(doodad);
+            doodad.Region = region;
+        }
+
+        SpawnHubNpc(session, EtcObtainOfferNpcTemplateId, new Vector3(1, 0, 0)); // offerer + reporter
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1,
+            MaxAttemptsPerGatherSource = 4
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(EtcObtainQuestId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActEtcItemObtain));
+        await Assert.That(character.Quests!.HasQuestCompleted(EtcObtainQuestId)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(EtcObtainQuestId)).IsFalse();
+
+        // Audit subsequence: accept → InteractWith → TurnInQuest. The
+        // objective credit flowed through the engine's acquisition event,
+        // never a manually written objective.
+        var trace = result.TraceRecords;
+        var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, EtcObtainQuestId);
+        var interact = FirstAtLeast(trace, ActorActionType.InteractWith, accept + 1);
+        var turnIn = IndexOfFirst(trace, ActorActionType.TurnInQuest, EtcObtainQuestId);
+        await Assert.That(accept).IsGreaterThanOrEqualTo(0);
+        await Assert.That(interact).IsGreaterThan(accept);
+        await Assert.That(turnIn).IsGreaterThan(interact);
+    }
+
+    /// <summary>
+    /// E-ETC-OBTAIN-2 (fail-closed control): the same synthetic quest with
+    /// NO source doodad perceived — the item-obtain leg must stop the loop
+    /// naming the missing source instead of faking progress. The quest stays
+    /// active, never advanced, turned in, or dropped.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_EtcItemObtain_NoSource_FailsClosedWithoutCredit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-etc-obtain-control");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        SeedEtcObtainQuest();
+        GameplayActorTestRig.SeedItemTemplate(EtcObtainItemId);
+        SpawnHubNpc(session, EtcObtainOfferNpcTemplateId, new Vector3(1, 0, 0));
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1
+        });
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo($"OBJECTIVES:etc-item-obtain({EtcObtainItemId})");
+        await Assert.That(result.FailReason).Contains("no such source was PERCEIVED nearby");
+
+        // No fake progress: the quest was accepted but never advanced,
+        // turned in, or dropped.
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(EtcObtainQuestId)).IsTrue();
+        await Assert.That(result.TraceRecords.Count(r => r.Action == ActorActionType.AcceptQuest)).IsEqualTo(1);
+        await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
+            or ActorActionType.AutoTurnIn)).IsFalse();
+        await Assert.That(character.Quests.HasQuestCompleted(EtcObtainQuestId)).IsFalse();
+    }
+
+    /// <summary>
+    /// Seeds the synthetic item-obtain quest: Start (ConAcceptNpc) →
+    /// Progress (QuestActEtcItemObtain ×1, highlight doodad) → Ready
+    /// (ConReportNpc at the offerer).
+    /// </summary>
+    private static void SeedEtcObtainQuest()
+    {
+        GameplayActorTestRig.SeedQuestOffer(EtcObtainQuestId, EtcObtainStartComponentId,
+            EtcObtainOfferNpcTemplateId, level: 1);
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GameplayActorTestRig.GetField(
+            manager, "_questTemplates");
+        var questTemplate = questTemplates[EtcObtainQuestId];
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GameplayActorTestRig.GetField(
+            manager, "_componentTemplates");
+
+        var progress = new QuestComponentTemplate(questTemplate)
+        {
+            Id = EtcObtainProgressComponentId,
+            KindId = QuestComponentKind.Progress
+        };
+        componentTemplates[EtcObtainProgressComponentId] = progress;
+        questTemplate.Components[EtcObtainProgressComponentId] = progress;
+        var obtainAct = new QuestActEtcItemObtain(progress)
+        {
+            DetailId = EtcObtainProgressComponentId,
+            ActId = EtcObtainProgressComponentId,
+            ItemId = EtcObtainItemId,
+            Count = 1,
+            HighlightDoodadId = EtcObtainSourceDoodadTemplateId,
+            ThisComponentObjectiveIndex = 0
+        };
+        progress.ActTemplates.Add(obtainAct);
+
+        var ready = new QuestComponentTemplate(questTemplate)
+        {
+            Id = EtcObtainReadyComponentId,
+            KindId = QuestComponentKind.Ready
+        };
+        componentTemplates[EtcObtainReadyComponentId] = ready;
+        questTemplate.Components[EtcObtainReadyComponentId] = ready;
+        var reportAct = new QuestActConReportNpc(ready)
+        {
+            DetailId = EtcObtainReadyComponentId,
+            ActId = EtcObtainReadyComponentId,
+            NpcId = EtcObtainOfferNpcTemplateId
+        };
+        ready.ActTemplates.Add(reportAct);
     }
 
     /// <summary>

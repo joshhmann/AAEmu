@@ -52,6 +52,12 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     from HighlightDoodadId among PERCEIVED nearby doodads, InteractWith
 ///     until the bag holds Count items (real acquisition → engine's own
 ///     DoItemsAcquiredEvents → OnItemGather credit), AdvanceQuest.
+///   - QuestActEtcItemObtain       → generic item-obtain: resolve the
+///     source doodad template from HighlightDoodadId when set, else scan
+///     perceived doodads' func chains for DoodadFuncLootItem /
+///     DoodadFuncLootPack entries granting the act's ItemId; InteractWith
+///     until the LIVE objective reaches Count (real acquisition → engine's
+///     own DoItemsAcquiredEvents → OnItemGather credit), AdvanceQuest.
 ///   - QuestActObjItemGroupUse     → resolve the group's members via
 ///     QuestManager.GetGroupItems, pick a member present in inventory (or
 ///     the quest's Supply component grant), and consume it through the real
@@ -533,8 +539,6 @@ public static class LevelingLoopScenario
             "missing mount-training composition",
         [nameof(QuestActObjLevel)] =
             "missing level-grind composition",
-        [nameof(QuestActEtcItemObtain)] =
-            "missing generic item-obtain source resolution",
         [nameof(QuestActCheckTimer)] =
             "missing timed-objective budget policy (quest fails hard on timer expiry)",
         [nameof(QuestActSupplyRemoveItem)] =
@@ -574,6 +578,15 @@ public static class LevelingLoopScenario
                         if (failure != null)
                             return Fail($"OBJECTIVES:gather({gather.ItemId})", ActorFailureReason.Navigation,
                                 failure, actor, null);
+                        break;
+                    }
+
+                case QuestActEtcItemObtain obtain:
+                    {
+                        var obtainFailure = EtcItemObtainLeg(actor, opts, questId, obtain, perception);
+                        if (obtainFailure != null)
+                            return Fail($"OBJECTIVES:etc-item-obtain({obtain.ItemId})",
+                                ActorFailureReason.Navigation, obtainFailure, actor, null);
                         break;
                     }
 
@@ -1286,6 +1299,123 @@ public static class LevelingLoopScenario
             if (interact.State != ActorLifecycleState.Completed)
             {
                 return $"InteractWith gather source {sourceObjId} refused: {interact.Detail}";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The generic item-obtain leg (QuestActEtcItemObtain): the act is a
+    /// plain "obtain ItemId" objective credited by the engine's OWN
+    /// acquisition event (Inventory.OnAcquiredItem →
+    /// DoItemsAcquiredEvents → OnItemGather — the same channel the act
+    /// subscribes to in InitializeAction). Sources are resolved DATA-DRIVEN:
+    /// HighlightDoodadId when set, else a scan of perceived doodads' func
+    /// chains for DoodadFuncLootItem / DoodadFuncLootPack entries granting
+    /// the act's ItemId (the GroupGatherLeg convention). Each interaction
+    /// is a real InteractWith; the loop never fires quest events by hand.
+    /// An interaction that completes without crediting the objective fails
+    /// closed — progress is never faked.
+    /// </summary>
+    private static string? EtcItemObtainLeg(GameplayActor actor, LoopOptions opts, uint questId,
+        QuestActEtcItemObtain obtain, PerceptionSnapshot perception)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return $"quest {questId} left ActiveQuests before item-obtain pursuit started";
+
+        var sources = new List<uint>();
+        if (obtain.HighlightDoodadId > 0)
+        {
+            if (perception.DoodadObjIdsByTemplate.TryGetValue(obtain.HighlightDoodadId, out var highlighted) &&
+                highlighted.Count > 0)
+            {
+                sources.AddRange(highlighted);
+            }
+            else
+            {
+                return $"quest {questId} needs item {obtain.ItemId} ×{obtain.Count} from doodad " +
+                       $"template {obtain.HighlightDoodadId}, but no such source was PERCEIVED nearby";
+            }
+        }
+        else
+        {
+            // No highlight — scan every perceived doodad's func chain for a
+            // loot entry granting the act's item (GroupGatherLeg convention).
+            foreach (var (_, objIds) in perception.DoodadObjIdsByTemplate)
+            {
+                foreach (var objId in objIds)
+                {
+                    var doodad = actor.Character.ParentWorld?.GetDoodad(objId);
+                    if (doodad == null)
+                        continue;
+                    foreach (var func in DoodadManager.Instance.GetFuncsForGroup(doodad.FuncGroupId))
+                    {
+                        var funcTemplate = DoodadManager.Instance.GetFuncTemplate(func.FuncId, func.FuncType);
+                        switch (funcTemplate)
+                        {
+                            case DoodadFuncLootItem lootItem when lootItem.ItemId == obtain.ItemId:
+                                sources.Add(objId);
+                                break;
+                            case DoodadFuncLootPack lootPack:
+                                var pack = LootGameData.Instance.GetPack(lootPack.LootPackId);
+                                if (pack != null && pack.Loots.Any(loot => loot.ItemId == obtain.ItemId))
+                                    sources.Add(objId);
+                                break;
+                        }
+                    }
+                }
+            }
+
+            if (sources.Count == 0)
+            {
+                return $"quest {questId} needs item {obtain.ItemId} ×{obtain.Count} but NO perceived " +
+                       "doodad func chain grants it (no DoodadFuncLootItem/DoodadFuncLootPack source) — " +
+                       "missing generic item-obtain source resolution";
+            }
+        }
+
+        var attemptsLeft = opts.MaxAttemptsPerGatherSource * sources.Count;
+        var sourceIndex = 0;
+        while (obtain.GetObjective(quest) < obtain.Count)
+        {
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                break;
+
+            if (attemptsLeft-- <= 0)
+            {
+                return $"item-obtain exhausted {opts.MaxAttemptsPerGatherSource} attempt(s) per source " +
+                       $"across {sources.Count} source(s) of item {obtain.ItemId} with objective at " +
+                       $"{obtain.GetObjective(quest)}/{obtain.Count} — " +
+                       $"{obtain.Count - obtain.GetObjective(quest)} item(s) still needed";
+            }
+
+            var objectiveBefore = obtain.GetObjective(quest);
+            var sourceObjId = sources[sourceIndex % sources.Count];
+            sourceIndex++;
+            var interact = actor.InteractWith(sourceObjId);
+            if (interact.State != ActorLifecycleState.Completed)
+            {
+                return $"InteractWith item-obtain source {sourceObjId} refused: {interact.Detail}";
+            }
+
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                break;
+
+            quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+            if (quest == null)
+            {
+                return $"quest {questId} left ActiveQuests without a completion flag after item obtain";
+            }
+
+            var objectiveAfter = obtain.GetObjective(quest);
+            if (objectiveAfter <= objectiveBefore)
+            {
+                return $"InteractWith source {sourceObjId} completed but item {obtain.ItemId} " +
+                       $"objective stayed at {objectiveAfter}/{obtain.Count} across {sources.Count} " +
+                       $"perceived source(s) — {obtain.Count - objectiveAfter} item(s) still needed " +
+                       "(no fake progress)";
             }
         }
 
