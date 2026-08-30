@@ -65,6 +65,18 @@ historical; no A5 pass or H/UAT claim is inferred.
   Other broad PB-002 objective gaps remain open. Next action is another
   canonical ranking-observable objective; do not claim PB-002 closure.
 
+**2026-08-30 re-census at `9b8ba6317` — post-`a1653d67d`/`3827b5170`/`7d0b80041` correction (census facts
+above preserved as the 2026-08-29 record):** the aggro-objective "boundary" line is superseded — `DoDie`
+now emits `OnKillArgs.Target = victim`, so the 30 canonical aggro quests (all component-accepted) are no
+longer engine-broken; 15 more component-only quests are auto-startable with plain MonsterHunt/no-progress;
+70 remain genuinely unreachable (no `engage_combat_give_quest_id` tie, stub `RunAct`). The 380 kill-only
+quests are now surfaced as offers through `DiscoverQuests` (`QuestAcceptorType.Kill`), closing the
+kill-acceptor perception gap BUG-006 left on the perception side. Bot-pursuable perceivable total at HEAD:
+**4,226** (4,181 8-channel + 45 engine auto-start). Counts and SQL in
+`scorecard-explorations/generated/discovery-channel-census-2026-08-29.md` §"2026-08-30 re-census".
+Next action for broad PB-002 remains unchanged: run the live/client progression slice; do not claim PB-002
+closure from the rig-only evidence.
+
 
 ## Three phases
 

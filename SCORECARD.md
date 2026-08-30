@@ -123,6 +123,19 @@ feel.)
   only with another canonical objective whose ranking and kill event are
   observable.
 
+**2026-08-30 re-census at `9b8ba6317` — PB-002 perimeter update (supersedes the aggro "broken" verdict,
+preserves the census facts above):** after `3827b5170` (kill-accept perception), `7d0b80041`
+(`AutoStartedQuestIds` pursuit), `a1653d67d` (`DoDie` now emits `OnKillArgs.Target = victim`), and
+`f5331ced7` (`AggroLeg`), the component-only bucket splits 30 auto-start+aggro (no longer engine-broken,
+pursuable through the real kill-credit path) / 15 auto-start+MonsterHunt / 70 truly unreachable
+(no `engage_combat_give_quest_id` on any NPC template, stub `RunAct`); the 380 kill-only quests are
+perceived through the `DiscoverQuests` kill-accept channel. Perceivable-to-bot total at HEAD is
+4,181 + 45 = 4,226. Full counts, commit citations, and reproducible SQL in
+`scorecard-explorations/generated/discovery-channel-census-2026-08-29.md` §"2026-08-30 re-census".
+The kill-event boundary "component forms without a real victim event remain fail-closed" holds only for
+aggressive forms whose acceptor template fails to resolve to a perceivable kill — no longer for the 30
+canonical aggro quests, which resolve through `AddQuestFromNpc` at first aggro.
+
 
 **PB-002 interaction candidate — historical/pre-fix context:** The earlier
 canonical quest-270 attempt (doodad 687, interaction skill 11229) reached

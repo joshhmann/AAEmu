@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-28 · local source/test checkpoint reconciliation; prior:
-2026-08-27
+Updated: 2026-08-30 · discovery-channel re-census at `9b8ba6317` (PB-002 evidence refresh; prior:
+2026-08-28 · local source/test checkpoint reconciliation; prior:
 (PB-007 live closure + PB-002 item-use evidence; prior:
 2026-08-26
 (Mail S3 acceptance and recovery reconciliation; G2-A5 + A4 near-term gates
@@ -9,8 +9,8 @@ MET with live evidence; PB-002 quest-discovery primitive and item-use slice
 landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; current local source/test HEAD is
-`da0fdc61a72a15111fddc8ac627a164a5f050558`. M5's
+Branch of record: develop; current local source/test HEAD is `9b8ba63175b459c2073cb7c742637f07bbb3b9e1`
+(re-census checkpoint 2026-08-30; prior census checkpoint `da0fdc61a72a15111fddc8ac627a164a5f050558`). M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
 primitive remains integrated in `LevelingLoop`'s accept choice at
 `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`; focused contract 5/5, scoped quest
@@ -55,6 +55,27 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
   aggro boundary in the focused gate and extend only with another canonical
   target whose live ranking and kill event are observable; do not claim
   universal autonomous leveling or PB-002 closure.
+
+## 2026-08-30 — Post-M7 readiness: discovery-channel re-census at 9b8ba6317 (PB-002 evidence refresh)
+
+- **What changed:** three code commits (`3827b5170` kill-accept perception in `DiscoverQuests`,
+  `7d0b80041` `AutoStartedQuestIds` pursuit, `a1653d67d` `OnKillArgs.Target = victim` in `DoDie`) plus
+  `f5331ced7` (AggroLeg) landed after the 2026-08-29 census. Re-ran the same read-only SQL against
+  canonical `compact.sqlite3` (md5 `78b3bdbf038db3b927056106efdf91af`, unchanged) — **data counts are
+  identical**; only the code deltas move the reachable frontier.
+- **Corrected census:** perceivable 8-channel union still **4,181**; the loop now additionally pursues the
+  **380 kill-only** quests (through the kill-accept channel) and **45 of the 115 component-only** quests
+  (**30** auto-start + aggro — previously misclassified as "engine-broken", now unblocked by `a1653d67d`;
+  **15** auto-start + MonsterHunt/plain) — **4,226 total pursuable at HEAD**. Remainder is **70** component-only
+  quests with no engage-NPC tie and no aggro act (stub `RunAct` true-return, no perception primitive
+  exists) — genuinely unreachable, correctly fail-closed. See
+  `scorecard-explorations/generated/discovery-channel-census-2026-08-29.md` §"2026-08-30 re-census".
+- **PB-002 impact:** the 2026-08-29 line "component forms without an NPC acceptor … remain open and are
+  explicitly fail-closed" is **superseded for the 45 auto-startable forms** (they DO get an Npc acceptor
+  triple via `AddQuestFromNpc` on first aggro); the boundary still holds for the **70** with no engage tie
+  and for aggro forms whose live acceptor template resolves to 0. Full test coverage at this HEAD:
+  `QuestActObjAggroTests` **2/2**, `LevelingLoopScenarioRigTests` **21/21** (includes the 6109 auto-start
+  end-to-end). Evidence class is unchanged — deterministic rig / A, no live/human claim.
 
 
 The six-hour stage is opt-in and requires `A5_TIER3_SIX_HOUR=1`,
