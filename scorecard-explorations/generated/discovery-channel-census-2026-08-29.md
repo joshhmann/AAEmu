@@ -116,3 +116,122 @@ The majority of the 115 (1408, 1443, 2432, 2979, 3349, 3400, 3477, 3564, 3583, 3
 ### Fail-closed control
 
 `LevelingLoopScenarioRigTests.EngageCombat_NoEngageQuestId_FailsClosedStartsNothing` proves an NPC with no `EngageCombatGiveQuestId` (7669) starts NOTHING on first aggro — the auto-start gate is the template field, and the loop never invents a quest the engine starts none.
+
+## 2026-08-30 re-census at 9b8ba6317
+
+- **Date:** 2026-08-30
+- **HEAD:** `9b8ba63175b459c2073cb7c742637f07bbb3b9e1` (branch `develop`)
+- **Data source:** `AAEmu.Game/Data/compact.sqlite3` — READ-ONLY (`mode=ro` URI, SELECT-only; md5
+  `78b3bdbf038db3b927056106efdf91af`, same canonical DB as 2026-08-29 — the data did not move, only the code)
+- **Method:** re-ran the §2 channel SQL (per-channel shape in `spawn-reachability-census-2026-08-29.md` §1);
+  all counts are byte-identical to 2026-08-29 (data unchanged): Npc 2,797 · Doodad 203 · Item 342 ·
+  ItemGain 25 · Sphere 431 · LevelUp 3 · NpcKill 381 · Component 191; wired 8-channel union **4,181**.
+  The deltas below are **code deltas only** — three commits landed after this census was written.
+
+### Code commits since the 2026-08-29 census
+
+1. **`3827b5170` — kill-accept perception wired into `DiscoverQuests`.** The §3 "uncommitted, working tree"
+   caveat is resolved: `GameplayActor.DiscoverQuests` now merges
+   `QuestManager.GetQuestIdsFromKillAcceptNpc(acceptorTemplateId)` into the offering set with acceptor
+   `QuestAcceptorType.Kill` (enum value 7). Prior claim "the bot never surfaces them as offers" is **stale at HEAD**.
+2. **`7d0b80041` — `LevelingLoopScenario` pursues `PerceptionSnapshot.AutoStartedQuestIds`.** Engine
+   auto-started quests (already ACTIVE, no discoverable offer) are surfaced as a fourth perception channel and
+   pursued + turned in without an accept dispatch (rig test
+   `LevelingLoop_EngageCombatAutoStart_CompletesComponentOnlyQuest6109` — canonical quest 6109 end-to-end).
+3. **`a1653d67d` — `Unit.DoDie` kill event now carries the victim as `OnKillArgs.Target`**
+   (Unit.cs:491). The §5 "engine-broken" verdict for aggro objectives is **obsolete at HEAD**:
+   `QuestActObjAggro.OnKill`'s `e.Target is Npc npc && npc.TemplateId == q.AcceptorId` gate can now fire.
+   Regression coverage: `QuestActObjAggroTests.NpcDoDie_EmitsVictimTarget_AndCreditsAggroObjective` /
+   `OnKill_WithAttackerOrWrongNpcTarget_DoesNotCreditAggroObjective` (2/2).
+4. (companion, not in the original task list) **`f5331ced7` — `AggroLeg`** pursues NPC-acceptor aggro forms
+   through real kill credit; component forms with `AcceptorId == 0` remain fail-closed.
+
+### Component-only 115 — re-bucketed at HEAD (auto-start engagement + aggro fix)
+
+The 115 component-only quests (unchanged set: `QuestActConAcceptComponent` Start, no wired channel) split by
+(a) their engage NPC carries `EngageCombatGiveQuestId` = the quest, and (b) Progress carries
+`QuestActObjAggro`:
+
+| Bucket | Quests | Defect? |
+|---|---|---|
+| **(c) both** — auto-startable AND aggro-progress | **30** | none at HEAD — `a1653d67d` unblocked the aggro objective |
+| **(a) engage-only** — auto-startable, MonsterHunt/plain progress | **15** | none — 9 MonsterHunt, 6 no-progress (reward-only) |
+| **(b) aggro-only** — aggro progress, no engage NPC | **0** | n/a (empty) |
+| **(d) neither** — no engage-NPC tie, no aggro act | **70** | **genuinely unreachable by perception** — see below |
+
+Reproduce (exact SQL):
+
+```sql
+WITH comp_only AS (  -- 115 component-only quests (same shape as the 2026-08-29 census)
+  SELECT DISTINCT qc.quest_context_id AS qid
+  FROM quest_components qc
+  JOIN quest_acts qa ON qa.quest_component_id = qc.id
+  JOIN quest_act_con_accept_components d ON d.id = qa.act_detail_id
+  WHERE qc.component_kind_id = 2 AND qa.act_detail_type = 'QuestActConAcceptComponent'
+    AND qc.quest_context_id NOT IN ( ... the 7 wired-channel SELECTs of §2 ... )
+),
+engaged AS (SELECT n.engage_combat_give_quest_id AS qid FROM npcs n
+             WHERE n.engage_combat_give_quest_id > 0),
+aggros AS (SELECT DISTINCT qc.quest_context_id AS qid
+           FROM quest_components qc JOIN quest_acts qa ON qa.quest_component_id = qc.id
+           JOIN quest_act_obj_aggros d ON d.id = qa.act_detail_id
+           WHERE qc.component_kind_id = 4 AND qa.act_detail_type = 'QuestActObjAggro')
+SELECT CASE WHEN e.qid IS NOT NULL AND a.qid IS NOT NULL THEN 'both'
+            WHEN e.qid IS NOT NULL THEN 'engage'
+            WHEN a.qid IS NOT NULL THEN 'aggro'
+            ELSE 'neither' END AS bucket, COUNT(*) FROM comp_only co
+LEFT JOIN engaged e ON e.qid = co.qid LEFT JOIN aggros a ON a.qid = co.qid GROUP BY bucket;
+-- both=30 | engage=15 | aggro=0 | neither=70
+```
+
+The 30 "both" quests are the exact list the 2026-08-29 doc named as engine-broken (1408, 1443, 2432, 2979, 3349, 3400,
+3477, 3564, 3583, 3694, 3927, 3930, 4321, 4325, 4326, 4385, 4863, 4944, 5033, 5277, 5876, 5879, 5883,
+5884, 5885, 5886, 5887, 5969, 5970, 5971). The prior "engine-broken" claim attributed the blockage to the
+kill event never carrying the victim — `a1653d67d` fixed that; the quests' aggro acts (all 30) now credit
+through the real `Unit.DoDie` path.
+
+```sql
+SELECT co.qid, e.npc_ids FROM comp_only co
+JOIN (SELECT n.engage_combat_give_quest_id AS qid, GROUP_CONCAT(n.id) AS npc_ids FROM npcs n
+      WHERE n.engage_combat_give_quest_id > 0 GROUP BY n.engage_combat_give_quest_id) e ON e.qid = co.qid
+ORDER BY co.qid;
+```
+
+### Auto-start path re-verification (compact.sqlite3 schema + `Unit.AddUnitAggro`)
+
+- **Field name:** `npcs.engage_combat_give_quest_id` (type `INT`; present in the `CREATE TABLE npcs` DDL).
+  Code: `NpcManager.cs:570` loads it into `NpcTemplate.EngageCombatGiveQuestId` (`NpcTemplate.cs:71`);
+  **48** NPC templates carry a non-zero value.
+- **Trigger semantics:** `Unit.AddUnitAggro` (Unit.cs:1646) first-aggro block — on the FIRST entry added to
+  the victim NPC's `AggroTable` (`AggroTable.TryAdd` new-key branch, Unit.cs:1688-1694), if the unit is a
+  `Character` and `npc.Template.EngageCombatGiveQuestId > 0`, the engine calls
+  `player.Quests.AddQuestFromNpc(id, npc.ObjId)` (Unit.cs:1699-1707) which starts the quest with the
+  **Npc acceptor triple** (`QuestAcceptorType.Npc` + NPC template id, `CharacterQuests.cs:190-197`).
+  Confirmation: nearby monster entering the NPC's aggro list = the exact trigger; no other precondition.
+- **Fail-closed control:** NPC 7669 (no engage field) starts nothing on first aggro — unchanged.
+
+### Bucket (d) — 70 genuinely unreachable (stub `RunAct` true-return, no actionable precondition)
+
+5063, 5064, 5143, 5144, 5451, 5452, 6004, 6005, 6008, 6020, 6021, 6022, 6040, 6045–6053, 6213, 6214, 6216,
+6224, 6255, 6257, 6259, 6261, 6263–6349 (all odd 6255–6349 plus 6284/6286/6288/6290/6292/6294/6296/6298/
+6300/6302/6304/6306/6308/6310/6312/6314/6316/6318/6320/6322/6324/6326/6329/6331/6333/6335/6337/6339/6341/
+6343/6345/6347/6349). Progress shapes: 31 MonsterHunt, 23 MonsterGroupHunt, 6 Cinema, 3 Sphere,
+3 Interaction, 4 no-progress — but **no NPC template in the DB carries `engage_combat_give_quest_id`
+matching these quest ids**, and the Start component's `QuestActConAcceptComponent.RunAct` is a stub
+returning true with no player-perceivable precondition. The bot has no primitive to even learn these quests
+exist. They are NOT blocked by the aggro fix; they are blocked by the component channel's stub semantics
+itself (deferred by design since the 2026-08-29 census).
+
+### Recommendation — what the loop can now pursue
+
+| Set | Count | Status at HEAD |
+|---|---|---|
+| Kill-only (380) | 380 | **Pursued via `DiscoverQuests` kill-accept channel** (`3827b5170`); 263 fully spawn-reachable |
+| Component 30 "both" (auto-start + aggro) | 30 | **Pursued via `AutoStartedQuestIds` + `AggroLeg`** (`7d0b80041` + `a1653d67d` + `f5331ced7`) |
+| Component 15 engage-only (auto-start + MonsterHunt/plain) | 15 | **Pursued via `AutoStartedQuestIds`** + ordinary hunt/reward legs |
+| Component 70 "neither" | 70 | **Unreachable** — no perception primitive stubs these in; correctly out of reach |
+
+**Total perceivable at HEAD:** 4,181 (8-channel wired union) + **45 auto-started component quests**
+(30 both + 15 engage-only) = **4,226** quests the loop can pursue end-to-end. This is a strict +45 over the
+2026-08-29 figure of 4,181, and a strict −70 on the "unreachable" remainder (495 → 70; the 380 kill-only
+subset is now perceived, and 45 of the 115 component-only are now engine-startable).

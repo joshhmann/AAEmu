@@ -102,6 +102,12 @@ The main_world-only view badly understates instance quests: 96 of 206 look unrea
 ## Caveats
 
 - Spawn presence ≠ spawn reachability: a template may be spawned only in a far corner, behind a gate, or in a zone the bot never visits. This census is template-set membership only.
-- `QuestActObjAggro` progress (37 acts) is engine-broken regardless of spawns (see discovery census §5: `OnKill` never sets `Target` to the victim) — those quests are unreachable by code, not data.
+- **UPDATE 2026-08-30 (HEAD `9b8ba6317`):** the aggro-objective caveat in the following line is **stale** —
+  `a1653d67d` fixed `Unit.DoDie` to emit `OnKillArgs.Target = victim NPC`, and `f5331ced7` added the
+  `AggroLeg` pursuit path. The aggro acts in this census are no longer code-unreachable; the code-level
+  caveat below is preserved verbatim as the 2026-08-29 historical record. See the 2026-08-30 re-census
+  section at the end of `discovery-channel-census-2026-08-29.md` for the corrected component-only split
+  (30 both / 15 engage / 70 neither at HEAD).
+- Historical (2026-08-29): `QuestActObjAggro` progress (37 acts) is engine-broken regardless of spawns (see discovery census §5: `OnKill` never sets `Target` to the victim) — those quests are unreachable by code, not data.
 - Doodad refs use `highlight_doodad_id`/`doodad_id` from the act tables; `QuestActObjItemGather` without a highlight doodad (gather-from-node) is not spawn-checkable here.
 - No data files were modified; analysis was query-only against `compact.sqlite3` and read-only parses of the spawn JSONs.
