@@ -5,6 +5,7 @@ using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.Core.Managers.World;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
@@ -16,6 +17,7 @@ using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Units.Static;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.World.Zones;
 using AAEmu.UnitTests.Utils.Mocks;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
@@ -104,6 +106,23 @@ public class LevelingLoopScenarioRigTests
     private const uint Quest6109EngageNpcTemplateId = 14364;
     private const int Quest6109Exp = 125_400;
 
+    // Synthetic zone-kill quest ids (fixture range — never collide with
+    // canonical quest_contexts): a Progress QuestActObjZoneKill over the
+    // rig's attackable NPC template, accepted from a fixture offerer NPC.
+    private const uint ZoneKillQuestId = 90_960;
+    private const uint ZoneKillStartComponentId = 90_961;
+    private const uint ZoneKillProgressComponentId = 90_962;
+    private const uint ZoneKillReadyComponentId = 90_963;
+    private const uint ZoneKillOfferNpcTemplateId = 90_951;
+    private const uint ZoneKillTargetNpcTemplateId = 90_952;
+    private const int ZoneKillCount = 2;
+    /// <summary>Rig zone key (fixture range) whose zone row maps to the act's zone group.</summary>
+    private const uint ZoneKillRigZoneKey = 90_970;
+    private const uint ZoneKillRigZoneGroupId = 90_971;
+    /// <summary>Rig zone key OUTSIDE the act's zone group — the fail-closed control.</summary>
+    private const uint ZoneKillWrongZoneKey = 90_972;
+    private const uint ZoneKillWrongZoneGroupId = 90_973;
+
     /// <summary>
     /// Temporarily installs canonical SkillManager/DoodadManager data while
     /// preserving the suite's process-wide singleton surface for other rigs.
@@ -159,7 +178,7 @@ public class LevelingLoopScenarioRigTests
 
     /// <summary>Region-joined fixture NPC so Observe's GetAround sees it.</summary>
     private uint SpawnHubNpc(HeadlessSession session, uint templateId, Vector3 position,
-        uint engageCombatGiveQuestId = 0)
+        uint engageCombatGiveQuestId = 0, uint zoneKey = 0)
     {
         var npc = new Npc
         {
@@ -171,6 +190,14 @@ public class LevelingLoopScenarioRigTests
         };
         session.World.AddObject(npc);
         npc.Transform.Local.SetPosition(position);
+        if (zoneKey != 0)
+        {
+            // Zone-scoped rigs (zone-kill tests): the fixture world's
+            // region grid carries no zone data, so the victim's zone key
+            // is set directly — the engine's OnZoneKill fanout resolves it
+            // through the rigged ZoneManager (GetZoneByKey → GroupId).
+            npc.Transform.ZoneId = zoneKey;
+        }
         var region = session.World.GetRegionByPos(position);
         if (region != null)
         {
@@ -1162,6 +1189,292 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(character.Quests.HasQuestCompleted(2432u)).IsFalse();
         await Assert.That(character.Quests.ActiveQuests.ContainsKey(2432u)).IsTrue();
         await Assert.That(result.TraceRecords.Any(r => r.Action == ActorActionType.Cast)).IsFalse();
+    }
+
+    /// <summary>
+    /// E-ZONEKILL-1: composed ZONE-KILL objective through the REAL engine
+    /// credit path. Synthetic quest (fixture ids): Start ConAcceptNpc →
+    /// Progress QuestActObjZoneKill (zone group 90_971, count_npc 2, no
+    /// faction/level filters) → Ready ConReportNpc. The rig ZoneManager
+    /// maps the fixture zone key 90_970 → zone group 90_971 (the act's
+    /// zone), and the perceived hostile NPCs carry that zone key, so the
+    /// hunt leg's zone gate admits them. Each kill flows through the REAL
+    /// QuestManager.DoOnMonsterHuntEvents (the exact call Npc.DoDie makes
+    /// for a character killer) via the rig seam — the engine's OnZoneKill
+    /// fanout credits the act's objective — and the quest completes through
+    /// the real report turn-in.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_ZoneKill_InTargetZone_CompletesThroughRealEngineCredit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-zone-kill");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        using var zoneSwap = SeedZoneKillZones();
+        SeedZoneKillQuest(ZoneKillRigZoneGroupId);
+
+        // World seed: the offerer NPC and 2 attackable prey inside the
+        // act's zone group (fixture zone key 90_970).
+        SpawnHubNpc(session, ZoneKillOfferNpcTemplateId, new Vector3(1, 0, 0));
+        for (var i = 0; i < ZoneKillCount; i++)
+        {
+            var objId = SpawnHubNpc(session, ZoneKillTargetNpcTemplateId,
+                new Vector3(2 + i * 1.0f, -1, 0), zoneKey: ZoneKillRigZoneKey);
+            SeedCorpseLoot(session, objId);
+        }
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxHuntRounds = 64
+        }, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(ZoneKillQuestId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjZoneKill));
+        await Assert.That(character.Quests!.HasQuestCompleted(ZoneKillQuestId)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(ZoneKillQuestId)).IsFalse();
+
+        // Audit subsequence: accept → SetTarget → Cast → Loot per kill,
+        // then the real report turn-in. Kill credit flowed through the
+        // engine's OnZoneKill fanout (DoOnMonsterHuntEvents), never a
+        // manually written objective.
+        var trace = result.TraceRecords;
+        var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, ZoneKillQuestId);
+        var firstTarget = FirstAtLeast(trace, ActorActionType.Target, accept + 1);
+        var firstCast = FirstAtLeast(trace, ActorActionType.Cast, firstTarget + 1);
+        var firstLoot = FirstAtLeast(trace, ActorActionType.Loot, firstCast + 1);
+        var turnIn = IndexOfFirst(trace, ActorActionType.TurnInQuest, ZoneKillQuestId);
+        await Assert.That(accept).IsGreaterThanOrEqualTo(0);
+        await Assert.That(firstTarget).IsGreaterThan(accept);
+        await Assert.That(firstCast).IsGreaterThan(firstTarget);
+        await Assert.That(firstLoot).IsGreaterThan(firstCast);
+        await Assert.That(turnIn).IsGreaterThan(firstLoot);
+        await Assert.That(trace.Count(r => r.Action == ActorActionType.Loot && r.Result == ActorLifecycleState.Completed))
+            .IsGreaterThanOrEqualTo(ZoneKillCount);
+    }
+
+    /// <summary>
+    /// E-ZONEKILL-3: the act's ZoneId is a zones.id that DIFFERS from the
+    /// victim's zone GROUP (the canonical quest_act_obj_zone_kills shape —
+    /// e.g. act 100: zone_id 23 → group 24; 13 of 27 distinct act zone_ids
+    /// are not even zone keys). The act stores zones.id 90_970; the rig
+    /// zone row maps that id to group 90_971, and the perceived prey
+    /// carries zone key 90_970 (→ group 90_971). The loop must resolve the
+    /// act's zone id to its GROUP before hunting — comparing the raw
+    /// zone_id 90_970 against the victim's group 90_971 would find zero
+    /// candidates and fail with "no attackable zone group 90970
+    /// perceived". The quest must complete through the real engine credit.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_ZoneKill_ActZoneIdDiffersFromGroup_ResolvesGroupAndCompletes()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-zone-kill-divergent");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        using var zoneSwap = SeedZoneKillZones();
+        // Act ZoneId = zones.id 90_970 (≠ group 90_971) — the divergent
+        // canonical shape the fix resolves to the victim's zone group.
+        SeedZoneKillQuest(ZoneKillRigZoneKey);
+
+        SpawnHubNpc(session, ZoneKillOfferNpcTemplateId, new Vector3(1, 0, 0));
+        for (var i = 0; i < ZoneKillCount; i++)
+        {
+            var objId = SpawnHubNpc(session, ZoneKillTargetNpcTemplateId,
+                new Vector3(2 + i * 1.0f, -1, 0), zoneKey: ZoneKillRigZoneKey);
+            SeedCorpseLoot(session, objId);
+        }
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxHuntRounds = 64
+        }, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(ZoneKillQuestId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjZoneKill));
+        await Assert.That(character.Quests!.HasQuestCompleted(ZoneKillQuestId)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(ZoneKillQuestId)).IsFalse();
+        await Assert.That(result.TraceRecords.Count(r => r.Action == ActorActionType.Cast))
+            .IsGreaterThanOrEqualTo(ZoneKillCount);
+    }
+
+    /// <summary>
+    /// E-ZONEKILL-2: fail-closed zone attribution control. The perceived
+    /// prey carries a zone key OUTSIDE the act's zone group (90_972 →
+    /// group 90_973), so the hunt leg's zone gate excludes it. The loop
+    /// must NOT cast, must NOT credit the objective, and must fail closed
+    /// naming the zone-gated starvation — a kill outside the act's zone
+    /// can never be engaged, so it can never credit.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_ZoneKill_OutsideTargetZone_FailsClosedWithoutCredit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-zone-kill-control");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        using var zoneSwap = SeedZoneKillZones();
+        SeedZoneKillQuest(ZoneKillRigZoneGroupId);
+
+        SpawnHubNpc(session, ZoneKillOfferNpcTemplateId, new Vector3(1, 0, 0));
+        SpawnHubNpc(session, ZoneKillTargetNpcTemplateId, new Vector3(2, -1, 0),
+            zoneKey: ZoneKillWrongZoneKey);
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            NoTargetRetries = 1
+        }, new RigKillSeam());
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo("OBJECTIVES:zone-kill(90962)");
+        await Assert.That(result.FailReason).Contains("zone group 90971");
+        await Assert.That(character.Quests.HasQuestCompleted(ZoneKillQuestId)).IsFalse();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(ZoneKillQuestId)).IsTrue();
+        await Assert.That(result.TraceRecords.Any(r => r.Action == ActorActionType.Cast)).IsFalse();
+    }
+
+    /// <summary>
+    /// Seeds the rig ZoneManager with the fixture zones (in-group,
+    /// out-of-group, and the identity zone whose id equals the act's
+    /// group) and restores the previous singleton on dispose.
+    /// </summary>
+    private static SingletonSwap SeedZoneKillZones()
+    {
+        var zoneManager = new ZoneManager(Mock.Of<AAEmu.Game.Core.Managers.World.IWorldManager>().Object);
+        SetField(zoneManager, "_zoneIdToKey", new Dictionary<uint, uint>
+        {
+            [ZoneKillRigZoneKey] = ZoneKillRigZoneKey,
+            [ZoneKillRigZoneGroupId] = ZoneKillRigZoneGroupId,
+            [ZoneKillWrongZoneKey] = ZoneKillWrongZoneKey
+        });
+        SetField(zoneManager, "_zones", new Dictionary<uint, Zone>
+        {
+            [ZoneKillRigZoneKey] = new() { Id = ZoneKillRigZoneKey, ZoneKey = ZoneKillRigZoneKey, GroupId = ZoneKillRigZoneGroupId },
+            [ZoneKillRigZoneGroupId] = new() { Id = ZoneKillRigZoneGroupId, ZoneKey = ZoneKillRigZoneGroupId, GroupId = ZoneKillRigZoneGroupId },
+            [ZoneKillWrongZoneKey] = new() { Id = ZoneKillWrongZoneKey, ZoneKey = ZoneKillWrongZoneKey, GroupId = ZoneKillWrongZoneGroupId }
+        });
+        SetField(zoneManager, "_groups", new Dictionary<uint, ZoneGroup>());
+        SetField(zoneManager, "_conflicts", new Dictionary<ushort, ZoneConflict>());
+        SetField(zoneManager, "_groupBannedTags", new Dictionary<uint, ZoneGroupBannedTag>());
+        SetField(zoneManager, "_climateElem", new Dictionary<uint, ZoneClimateElem>());
+        return SingletonSwap.Install(typeof(Singleton<ZoneManager>), zoneManager);
+    }
+
+    /// Progress QuestActObjZoneKill (count_npc 2) → Ready ConReportNpc.
+    /// The act's ZoneId is a zones.id (like the canonical quest_act_obj_
+    /// zone_kills rows) that the loop resolves to its zone GROUP before
+    /// hunting; the rig zone rows above map it to the group the engine's
+    /// OnZoneKill event carries (QuestManagerEvents resolves the victim's
+    /// zone key → group).
+    /// </summary>
+    private static void SeedZoneKillQuest(uint actZoneId)
+    {
+        GameplayActorTestRig.SeedQuestOffer(ZoneKillQuestId, ZoneKillStartComponentId,
+            ZoneKillOfferNpcTemplateId, level: 1);
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GameplayActorTestRig.GetField(
+            manager, "_questTemplates");
+        var questTemplate = questTemplates[ZoneKillQuestId];
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GameplayActorTestRig.GetField(
+            manager, "_componentTemplates");
+
+        var progress = new QuestComponentTemplate(questTemplate)
+        {
+            Id = ZoneKillProgressComponentId,
+            KindId = QuestComponentKind.Progress
+        };
+        componentTemplates[ZoneKillProgressComponentId] = progress;
+        questTemplate.Components[ZoneKillProgressComponentId] = progress;
+        var zoneKillAct = new QuestActObjZoneKill(progress)
+        {
+            DetailId = ZoneKillProgressComponentId,
+            ActId = ZoneKillProgressComponentId,
+            ZoneId = actZoneId,
+            CountNpc = ZoneKillCount,
+            CountPlayerKill = 0,
+            Count = ZoneKillCount,
+            ThisComponentObjectiveIndex = 0
+        };
+        progress.ActTemplates.Add(zoneKillAct);
+
+        var ready = new QuestComponentTemplate(questTemplate)
+        {
+            Id = ZoneKillReadyComponentId,
+            KindId = QuestComponentKind.Ready
+        };
+        componentTemplates[ZoneKillReadyComponentId] = ready;
+        questTemplate.Components[ZoneKillReadyComponentId] = ready;
+        var reportAct = new QuestActConReportNpc(ready)
+        {
+            DetailId = ZoneKillReadyComponentId,
+            ActId = ZoneKillReadyComponentId,
+            NpcId = ZoneKillOfferNpcTemplateId
+        };
+        ready.ActTemplates.Add(reportAct);
+    }
+
+    /// <summary>Capture-and-force singleton swap; dispose restores the previous instance.</summary>
+    private sealed class SingletonSwap : IDisposable
+    {
+        private readonly Type _singletonBase;
+        private readonly object? _previous;
+
+        private SingletonSwap(Type singletonBase)
+        {
+            _singletonBase = singletonBase;
+            _previous = GetSingletonInstance(singletonBase);
+        }
+
+        public static SingletonSwap Install(Type singletonBase, object replacement)
+        {
+            var swap = new SingletonSwap(singletonBase);
+            SetSingleton(singletonBase, replacement);
+            return swap;
+        }
+
+        public void Dispose() => SetSingleton(_singletonBase, _previous!);
+    }
+
+    private static object? GetSingletonInstance(Type singletonBase)
+        => singletonBase.GetField("s_instance",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null);
+
+    private static void SetField(object target, string fieldName, object value)
+    {
+        target.GetType()
+            .GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(target, value);
     }
 
     /// <summary>

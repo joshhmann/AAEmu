@@ -1,6 +1,7 @@
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
@@ -84,6 +85,14 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     the same SetTarget → cast → kill path. Aggro credit is read from the
 ///     live objective after the REAL OnKill event (or the explicit
 ///     <see cref="IAggroKillCreditSeam"/> rig seam); no counter is written.
+///   - QuestActObjZoneKill           → the hunt leg with ZONE attribution:
+///     the act's ZoneId (a zones.id) is resolved to its zone GROUP, and
+///     only perceived hostiles whose own zone group matches are engaged.
+///     The engine's OnZoneKill event carries the VICTIM's zone group
+///     (QuestManagerEvents.DoOnMonsterHuntEvents) but QuestActObjZoneKill
+///     does not gate on it (engine watch item §2.4), so the loop performs
+///     the zone gate itself at target-selection time — a kill outside the
+///     act's zone can never be credited because it is never engaged.
 ///   - everything else             → fail closed (see GapReason).
 ///
 /// World access discipline: perception rides Observe() (region graph) +
@@ -516,8 +525,6 @@ public static class LevelingLoopScenario
         [nameof(QuestActObjAggro)] =
             "partial: NPC-acceptor aggro rank is pursued; component forms without a non-zero " +
             "acceptor template or a kill path that emits OnKillArgs.Target remain unsupported",
-        [nameof(QuestActObjZoneKill)] =
-            "missing zone-scoped kill attribution (zone-gated victim/killer composition — the plain hunt leg does not cover it)",
         [nameof(QuestActObjCompleteQuest)] =
             "missing cross-quest objective composition",
         [nameof(QuestActObjAbilityLevel)] =
@@ -632,6 +639,26 @@ public static class LevelingLoopScenario
                         if (groupFailure != null)
                             return Fail($"OBJECTIVES:group-hunt({groupHunt.QuestMonsterGroupId})",
                                 groupReason, groupFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjZoneKill zoneKill:
+                    {
+                        // Zone-scoped hunt: the act's ZoneId (a zones.id) is
+                        // resolved to its zone GROUP and only perceived
+                        // hostiles inside that group are engaged. The engine
+                        // fires OnZoneKill with the VICTIM's zone group
+                        // (QuestManagerEvents.DoOnMonsterHuntEvents) but the
+                        // act does not gate on it (engine watch item §2.4) —
+                        // the loop performs the zone gate itself, so a kill
+                        // outside the act's zone is never engaged and can
+                        // never credit.
+                        var zoneGroup = ZoneManager.Instance.GetZoneById(zoneKill.ZoneId)?.GroupId ?? 0;
+                        var (zoneFailure, zoneReason) = HuntLeg(actor, opts, killSeam, questId,
+                            zoneKill, null, 0, perception, zoneGroupId: zoneGroup);
+                        if (zoneFailure != null)
+                            return Fail($"OBJECTIVES:zone-kill({zoneKill.DetailId})", zoneReason,
+                                zoneFailure, actor, null);
                         break;
                     }
 
@@ -1406,12 +1433,18 @@ public static class LevelingLoopScenario
     /// The hunt/aggro combat leg: targets resolved DATA-DRIVEN from the act
     /// among PERCEIVED hostiles. Aggro mode reuses this exact engagement path
     /// but stops after the first rank credit (Aggro RunAct is satisfied by any
-    /// positive rank), rather than hunting to QuestActTemplate.Count.
+    /// positive rank), rather than hunting to QuestActTemplate.Count. When
+    /// <paramref name="zoneGroupId"/> is non-zero (QuestActObjZoneKill), the
+    /// leg additionally gates target selection on the victim's zone GROUP —
+    /// the engine's OnZoneKill event carries the victim's zone group
+    /// (QuestManagerEvents.DoOnMonsterHuntEvents) but the act does not gate
+    /// on it (engine watch item §2.4), so the loop performs the zone gate
+    /// itself at selection time.
     /// </summary>
     private static (string? Failure, ActorFailureReason Reason) HuntLeg(GameplayActor actor, LoopOptions opts,
         IKillCreditSeam? killSeam, uint questId, QuestActTemplate act,
         uint? targetNpcTemplateId, uint monsterGroupId, PerceptionSnapshot perception,
-        bool aggroObjective = false)
+        bool aggroObjective = false, uint zoneGroupId = 0)
     {
         var character = actor.Character;
         var quest = character.Quests?.ActiveQuests.GetValueOrDefault(questId);
@@ -1424,7 +1457,9 @@ public static class LevelingLoopScenario
 
         var targetLabel = targetNpcTemplateId is { } template
             ? $"{(aggroObjective ? "aggro target" : "npc template")} {template}"
-            : $"monster group {monsterGroupId}";
+            : monsterGroupId != 0
+                ? $"monster group {monsterGroupId}"
+                : $"zone group {zoneGroupId}";
         var excluded = new HashSet<uint>();
         var noProgress = new Dictionary<uint, int>();
         var noTargetRounds = 0;
@@ -1442,7 +1477,7 @@ public static class LevelingLoopScenario
             }
 
             var observation = actor.Observe();
-            var target = SelectHuntTarget(character, observation, targetNpcTemplateId, monsterGroupId, excluded);
+            var target = SelectHuntTarget(character, observation, targetNpcTemplateId, monsterGroupId, excluded, zoneGroupId);
             if (target == null)
             {
                 noTargetRounds++;
@@ -1613,16 +1648,22 @@ public static class LevelingLoopScenario
 
     /// <summary>
     /// Hostile-selection primitive (adventurer-spike SelectHostile
-
     /// convention): the nearest ALIVE NPC the actor can attack
     /// (BaseUnit.CanAttack — faction-based; bare rig NPCs read attackable)
     /// whose template matches the hunt act — directly (single-template
     /// hunt) or through QuestManager.CheckGroupNpc (monster-group hunt).
     /// Observe-driven ONLY: candidates come from the observation's
-    /// nearby-NPC list, never a world scan.
+    /// nearby-NPC list, never a world scan. When
+    /// <paramref name="zoneGroupId"/> is non-zero (QuestActObjZoneKill),
+    /// the candidate's zone GROUP must match — the engine's OnZoneKill
+    /// event carries the victim's zone group
+    /// (QuestManagerEvents.DoOnMonsterHuntEvents) but the act does not
+    /// gate on it (engine watch item §2.4), so the loop performs the zone
+    /// gate itself at selection time.
     /// </summary>
     private static Npc? SelectHuntTarget(Character character, ActorObservation observation,
-        uint? targetNpcTemplateId, uint monsterGroupId, IReadOnlySet<uint> excluded)
+        uint? targetNpcTemplateId, uint monsterGroupId, IReadOnlySet<uint> excluded,
+        uint zoneGroupId = 0)
     {
         Npc? best = null;
         var bestDistance = float.MaxValue;
@@ -1638,8 +1679,25 @@ public static class LevelingLoopScenario
 
             var matchesTemplate = targetNpcTemplateId is { } template && npc.TemplateId == template;
             var matchesGroup = monsterGroupId != 0 && QuestManager.Instance.CheckGroupNpc(monsterGroupId, npc.TemplateId);
-            if ((!matchesTemplate && !matchesGroup) || !character.CanAttack(npc))
+            // Zone-scoped hunt (QuestActObjZoneKill) has no template/group
+            // filter — ANY attackable NPC inside the act's zone group is a
+            // candidate (the zone gate below is the only filter).
+            var matchesZoneKill = zoneGroupId != 0;
+            if ((!matchesTemplate && !matchesGroup && !matchesZoneKill) || !character.CanAttack(npc))
                 continue;
+
+            // Zone-scoped hunt (QuestActObjZoneKill): the victim's zone
+            // GROUP must match the act's zone. The engine's OnZoneKill
+            // event carries the victim's zone group but the act does not
+            // gate on it (engine watch item §2.4) — the loop performs the
+            // zone gate here, so a kill outside the act's zone is never
+            // engaged and can never credit.
+            if (zoneGroupId != 0)
+            {
+                var npcZoneGroupId = ZoneManager.Instance.GetZoneByKey(npc.Transform.ZoneId)?.GroupId ?? 0;
+                if (npcZoneGroupId != zoneGroupId)
+                    continue;
+            }
 
             var distance = Vector3.DistanceSquared(position, npc.Transform.World.Position);
             if (distance < bestDistance)
