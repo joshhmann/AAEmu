@@ -77,6 +77,44 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
   `QuestActObjAggroTests` **2/2**, `LevelingLoopScenarioRigTests` **21/21** (includes the 6109 auto-start
   end-to-end). Evidence class is unchanged — deterministic rig / A, no live/human claim.
 
+## 2026-08-30 — Post-M7 readiness: PB-002 complete-quest composition + classifier reclassification (uncommitted, local develop)
+
+- **PB-002 result: PARTIAL capability closure; broad autonomy OPEN; aggro boundary UNCHANGED.** The
+  `LevelingLoopScenario` gained a `CompleteQuestLeg` for `QuestActObjCompleteQuest` (canonical 11 carrier
+  quests / 53 Progress acts; prerequisite chains verified against compact.sqlite3 md5
+  `78b3bdbf038db3b927056106efdf91af`, unchanged). The act has NO event subscription: its `RunAct`
+  credits the objective from LIVE `HasQuestCompleted(prereq)` at step evaluation. The leg re-perceives
+  the prerequisite through normal `Perceive`/`DiscoverQuests` channels, accepts it through the real
+  accept path, pursues its own objectives through the existing legs, turns it in through the real report
+  path, and lets the parent's REAL step evaluation credit the objective — the completed flag is produced
+  by the engine's own `SetCompletedQuestFlag` at the prerequisite's drop-time, NEVER written by the
+  scenario. Recursion is bounded by `LoopOptions.MaxCompleteQuestDepth` (default 3) plus an ancestor
+  stack cycle guard; sibling prerequisites of one step share neither (each act gets its own child
+  ancestor set). An already-completed prerequisite is a no-op; an undiscoverable prerequisite, an
+  unknown prerequisite template, or a prerequisite that completes without its flag set fails closed
+  naming the exact quest id.
+- **Classifier reclassification (no pursuit legs added):** `QuestActCheckTimer` (canonical 68 rows,
+  Progress 2) and `QuestActSupplyRemoveItem` (canonical 61 rows, Progress 1) are NOT objectives —
+  both are `CountsAsAnObjective=false` with `RunAct` returning true unconditionally (timer is a
+  gate that the engine arms via `QuestTimeoutTask` → `FailQuest` on expiry with no quest-side clock
+  seam; supply-remove is inventory cleanup executed by the act itself). Both are passed through in
+  `PursueObjectives`; neither is a `KnownPrimitiveGaps` entry anymore.
+- **Remaining named gaps with exact reasons (no player-like action exposed):** `QuestActObjLevel`
+  (canonical 1 quest, 6250) credits from the real `OnLevelUp` event and has no honest headless grind
+  action; `QuestActObjAbilityLevel` (11 quests) has no `OnAbilityLevelUp` handler and ability exp only
+  rises via the character-XP share (`CharacterAbilities.AddActiveExp`); `QuestActObjMateLevel`
+  (7 quests) demands a Level-50 breed mate and mate level only rises via `Mate.AddExp` kill share /
+  `MateXpUpdateTask`. Granting XP/levels from the scenario would be fake progression — these stay
+  gap entries with fail-closed rejection. `QuestActObjAggro` remains the same PARTIAL boundary
+  (NPC-acceptor + real OnKill credit only); no broad PB-002 closure is claimed.
+- Evidence layer is **A / rig (proxy/bot-functional)**, not H, restart, or soak:
+  `LevelingLoopScenarioRigTests` **30/30** (28 existing + 2 new: complete-quest positive
+  prerequisite-then-parent, and missing-prerequisite fail-closed control), `QuestActObjAggroTests`
+  **2/2**, `QuestEtcItemObtainRigTests` **3/3**, `QuestZoneKillVictimRigTests` **2/2**,
+  `PvpFlaggingRigTests` **11/11**. Release builds of `AAEmu.Game` and `AAEmu.UnitTests` are
+  0 errors; `git diff --check` clean. Uncommitted on local develop; no commit, no E2E/soak/`.worktrees`
+  touched.
+
 
 The six-hour stage is opt-in and requires `A5_TIER3_SIX_HOUR=1`,
 `A5_TIER3_SIX_HOUR_MINUTES>=360`, and sample seconds 1 through 300. The

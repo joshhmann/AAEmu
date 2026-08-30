@@ -135,6 +135,21 @@ public class LevelingLoopScenarioRigTests
     private const uint ZoneKillWrongZoneKey = 90_972;
     private const uint ZoneKillWrongZoneGroupId = 90_973;
 
+    // Synthetic complete-quest ids (fixture range — never collide with
+    // canonical quest_contexts): a parent whose Progress act is a
+    // QuestActObjCompleteQuest referencing a fixture delivery prereq.
+    private const uint CompleteQuestParentQuestId = 90_990;
+    private const uint CompleteQuestParentStartComponentId = 90_991;
+    private const uint CompleteQuestParentProgressComponentId = 90_992;
+    private const uint CompleteQuestParentReadyComponentId = 90_993;
+    private const uint CompleteQuestParentNpcTemplateId = 90_953;
+    private const uint CompleteQuestPrereqQuestId = 90_996;
+    private const uint CompleteQuestPrereqStartComponentId = 90_997;
+    private const uint CompleteQuestPrereqReadyComponentId = 90_998;
+    private const uint CompleteQuestPrereqNpcTemplateId = 90_954;
+    /// <summary>Fixture prereq id that is NEVER registered — the fail-closed control.</summary>
+    private const uint CompleteQuestMissingPrereqQuestId = 90_999;
+
     /// <summary>
     /// Temporarily installs canonical SkillManager/DoodadManager data while
     /// preserving the suite's process-wide singleton surface for other rigs.
@@ -968,6 +983,207 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
             or ActorActionType.AutoTurnIn)).IsFalse();
         await Assert.That(character.Quests.HasQuestCompleted(EtcObtainQuestId)).IsFalse();
+    }
+
+    /// <summary>
+    /// E-COMPLETE-QUEST-1: QuestActObjCompleteQuest cross-quest composition.
+    /// The synthetic parent (90990, offer/report NPC 90_953) carries a
+    /// Progress QuestActObjCompleteQuest referencing prereq 90996 (a fixture
+    /// DELIVERY quest — no Progress acts — accept/report NPC 90_954). The
+    /// loop discovers the parent, accepts it, and the complete-quest leg
+    /// RE-PERCEIVES the prereq, accepts it through the normal discover →
+    /// accept path, turns it in through the real report path (the engine's
+    /// own SetCompletedQuestFlag at drop-time), and the parent's REAL step
+    /// evaluation credits the objective from HasQuestCompleted(90996). No
+    /// completed flag is ever written by the scenario.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_CompleteQuestObjective_CompletesPrerequisiteThenParent()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-complete-quest");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        SeedCompleteQuestSurface(CompleteQuestPrereqQuestId);
+
+        SpawnHubNpc(session, CompleteQuestParentNpcTemplateId, new Vector3(1, 0, 0));   // offers + accepts report for 90990
+        SpawnHubNpc(session, CompleteQuestPrereqNpcTemplateId, new Vector3(3, 0, 0));   // offers + accepts report for 90996
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(CompleteQuestParentQuestId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjCompleteQuest));
+        await Assert.That(character.Quests!.HasQuestCompleted(CompleteQuestParentQuestId)).IsTrue();
+        // The prerequisite was completed through the real quest path by the leg.
+        await Assert.That(character.Quests.HasQuestCompleted(CompleteQuestPrereqQuestId)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(CompleteQuestParentQuestId)).IsFalse();
+
+        // Audit subsequence: accept parent → accept+turn-in prereq (the leg's
+        // normal path) → advance parent (real evaluation credits the
+        // objective) → turn-in parent.
+        var trace = result.TraceRecords;
+        var acceptParent = IndexOfFirst(trace, ActorActionType.AcceptQuest, CompleteQuestParentQuestId);
+        var acceptPrereq = IndexOfFirst(trace, ActorActionType.AcceptQuest, CompleteQuestPrereqQuestId);
+        var turnInPrereq = IndexOfFirst(trace, ActorActionType.TurnInQuest, CompleteQuestPrereqQuestId);
+        var advanceParent = IndexOfFirst(trace, ActorActionType.AdvanceQuest, CompleteQuestParentQuestId);
+        var turnInParent = IndexOfFirst(trace, ActorActionType.TurnInQuest, CompleteQuestParentQuestId);
+        await Assert.That(acceptParent).IsGreaterThanOrEqualTo(0);
+        await Assert.That(acceptPrereq).IsGreaterThan(acceptParent);   // re-perceived INSIDE the leg
+        await Assert.That(turnInPrereq).IsGreaterThan(acceptPrereq);
+        await Assert.That(advanceParent).IsGreaterThan(turnInPrereq);  // objective credits only AFTER the prereq completes
+        await Assert.That(turnInParent).IsGreaterThan(advanceParent);
+    }
+
+    /// <summary>
+    /// E-COMPLETE-QUEST-2 (fail-closed control): the parent references
+    /// prerequisite 90999 which is NEVER registered as a quest template.
+    /// The complete-quest leg must fail closed naming the exact missing
+    /// prerequisite — no completed flag is set, the parent is not advanced,
+    /// turned in, or dropped, and nothing is faked.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_CompleteQuest_MissingPrerequisite_FailsClosedWithoutCredit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-complete-quest-control");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Prereq 90_999 is deliberately never seeded (no quest template).
+        SeedCompleteQuestSurface(CompleteQuestMissingPrereqQuestId);
+
+        SpawnHubNpc(session, CompleteQuestParentNpcTemplateId, new Vector3(1, 0, 0));
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1
+        });
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo(
+            $"OBJECTIVES:complete-quest({CompleteQuestMissingPrereqQuestId})");
+        await Assert.That(result.FailReason).Contains(CompleteQuestMissingPrereqQuestId.ToString());
+        await Assert.That(result.FailReason).Contains("quest template");
+
+        // No fake progress: the parent was accepted but never advanced,
+        // turned in, or dropped; the missing prereq was never started.
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(CompleteQuestParentQuestId)).IsTrue();
+        await Assert.That(character.Quests.HasQuestCompleted(CompleteQuestParentQuestId)).IsFalse();
+        await Assert.That(character.Quests.HasQuestCompleted(CompleteQuestMissingPrereqQuestId)).IsFalse();
+        await Assert.That(result.TraceRecords.Count(r => r.Action == ActorActionType.AcceptQuest &&
+            r.TargetId == CompleteQuestMissingPrereqQuestId)).IsEqualTo(0);
+        await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
+            or ActorActionType.AutoTurnIn)).IsFalse();
+    }
+
+    /// <summary>
+    /// Seeds the synthetic complete-quest surface: a parent (90990) whose
+    /// Progress act is QuestActObjCompleteQuest referencing
+    /// <paramref name="prereqQuestId"/>, plus (when the prereq is the
+    /// registered fixture 90996) a fixture DELIVERY prereq quest with no
+    /// Progress acts — accept + report at the same NPC template. When a
+    /// non-registered prereq id is passed (the fail-closed control), only
+    /// the parent is seeded and the prereq template stays absent.
+    /// </summary>
+    private static void SeedCompleteQuestSurface(uint prereqQuestId)
+    {
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GameplayActorTestRig.GetField(
+            manager, "_questTemplates");
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GameplayActorTestRig.GetField(
+            manager, "_componentTemplates");
+
+        if (prereqQuestId == CompleteQuestPrereqQuestId &&
+            !questTemplates.ContainsKey(CompleteQuestPrereqQuestId))
+        {
+            // Fixture delivery prereq: accept + report at the same NPC.
+            GameplayActorTestRig.SeedQuestOffer(CompleteQuestPrereqQuestId,
+                CompleteQuestPrereqStartComponentId, CompleteQuestPrereqNpcTemplateId, level: 1);
+            var prereqTemplate = questTemplates[CompleteQuestPrereqQuestId];
+            var prereqReady = new QuestComponentTemplate(prereqTemplate)
+            {
+                Id = CompleteQuestPrereqReadyComponentId,
+                KindId = QuestComponentKind.Ready
+            };
+            componentTemplates[CompleteQuestPrereqReadyComponentId] = prereqReady;
+            prereqTemplate.Components[CompleteQuestPrereqReadyComponentId] = prereqReady;
+            var prereqReport = new QuestActConReportNpc(prereqReady)
+            {
+                DetailId = CompleteQuestPrereqReadyComponentId,
+                ActId = CompleteQuestPrereqReadyComponentId,
+                NpcId = CompleteQuestPrereqNpcTemplateId
+            };
+            prereqReady.ActTemplates.Add(prereqReport);
+        }
+
+        if (questTemplates.ContainsKey(CompleteQuestParentQuestId))
+        {
+            // The suite shares one QuestManager instance process-wide, so the
+            // parent template may already exist from another test. Refresh the
+            // complete-quest act's prerequisite pointer to the one this test
+            // demands (the Progress component id is fixed per suite).
+            var existingProgress = componentTemplates[CompleteQuestParentProgressComponentId];
+            var existingAct = existingProgress.ActTemplates
+                .OfType<QuestActObjCompleteQuest>()
+                .Single();
+            existingAct.QuestId = prereqQuestId;
+            return;
+        }
+
+        // Parent: Start (ConAcceptNpc) → Progress (complete-quest ×1) →
+        // Ready (ConReportNpc at the same NPC).
+        GameplayActorTestRig.SeedQuestOffer(CompleteQuestParentQuestId,
+            CompleteQuestParentStartComponentId, CompleteQuestParentNpcTemplateId, level: 1);
+        var parentTemplate = questTemplates[CompleteQuestParentQuestId];
+
+        var progress = new QuestComponentTemplate(parentTemplate)
+        {
+            Id = CompleteQuestParentProgressComponentId,
+            KindId = QuestComponentKind.Progress
+        };
+        componentTemplates[CompleteQuestParentProgressComponentId] = progress;
+        parentTemplate.Components[CompleteQuestParentProgressComponentId] = progress;
+        var completeAct = new QuestActObjCompleteQuest(progress)
+        {
+            DetailId = CompleteQuestParentProgressComponentId,
+            ActId = CompleteQuestParentProgressComponentId,
+            QuestId = prereqQuestId,
+            CountsAsAnObjective = true,
+            ThisComponentObjectiveIndex = 0
+        };
+        progress.ActTemplates.Add(completeAct);
+
+        var ready = new QuestComponentTemplate(parentTemplate)
+        {
+            Id = CompleteQuestParentReadyComponentId,
+            KindId = QuestComponentKind.Ready
+        };
+        componentTemplates[CompleteQuestParentReadyComponentId] = ready;
+        parentTemplate.Components[CompleteQuestParentReadyComponentId] = ready;
+        var reportAct = new QuestActConReportNpc(ready)
+        {
+            DetailId = CompleteQuestParentReadyComponentId,
+            ActId = CompleteQuestParentReadyComponentId,
+            NpcId = CompleteQuestParentNpcTemplateId
+        };
+        ready.ActTemplates.Add(reportAct);
     }
 
     /// <summary>

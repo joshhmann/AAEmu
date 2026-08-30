@@ -77,6 +77,23 @@ kill-acceptor perception gap BUG-006 left on the perception side. Bot-pursuable 
 Next action for broad PB-002 remains unchanged: run the live/client progression slice; do not claim PB-002
 closure from the rig-only evidence.
 
+**2026-08-30 — PB-002 complete-quest composition + classifier reclassification (uncommitted, local
+develop):** `QuestActObjCompleteQuest` (canonical **11** carrier quests / **53** Progress acts) is now
+pursued through `CompleteQuestLeg` — the act has NO event subscription, so the leg completes the
+prerequisite through the real accept → pursue → turn-in machinery and the parent's REAL step evaluation
+credits the objective from `HasQuestCompleted(prereq)`; the flag is produced by the engine's own
+`SetCompletedQuestFlag`, never by the scenario. Recursion is bounded (`MaxCompleteQuestDepth`=3 +
+ancestor-stack cycle guard). `QuestActCheckTimer` (2 Progress) and `QuestActSupplyRemoveItem` (1
+Progress) are reclassified as non-objectives (both `CountsAsAnObjective=false`, `RunAct` always true)
+and passed through without pursuit legs. `QuestActObjLevel` (1), `QuestActObjAbilityLevel` (11),
+`QuestActObjMateLevel` (7) stay `KnownPrimitiveGaps` with exact no-player-action reasons (real
+`OnLevelUp` event only; `AddActiveExp` character-XP share only; `Mate.AddExp` kill share only).
+`QuestActObjAggro` remains PARTIAL with the unchanged census (30 aggro progress acts / 30 quests);
+no broad PB-002 closure. Evidence is deterministic rig / A only: `LevelingLoopScenarioRigTests`
+**30/30** (28 existing + complete-quest positive + missing-prerequisite fail-closed control),
+`QuestActObjAggroTests` **2/2**, `QuestEtcItemObtainRigTests` **3/3**, `QuestZoneKillVictimRigTests`
+**2/2**, `PvpFlaggingRigTests` **11/11**; Release builds 0 errors; uncommitted, no commit.
+
 
 ## Three phases
 

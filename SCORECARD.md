@@ -136,6 +136,25 @@ The kill-event boundary "component forms without a real victim event remain fail
 aggressive forms whose acceptor template fails to resolve to a perceivable kill — no longer for the 30
 canonical aggro quests, which resolve through `AddQuestFromNpc` at first aggro.
 
+**2026-08-30 — PB-002 complete-quest composition + classifier reclassification (uncommitted, local
+develop):** `LevelingLoopScenario` now pursues `QuestActObjCompleteQuest` (canonical **11** carrier
+quests / **53** Progress acts) through `CompleteQuestLeg`: the act has NO event subscription, so the
+leg re-perceives and completes the prerequisite through the real accept → pursue → turn-in machinery
+and lets the parent's REAL step evaluation credit the objective from
+`HasQuestCompleted(prereq)` (the flag is produced by the engine's own `SetCompletedQuestFlag` at the
+prerequisite's drop-time, never by the scenario). Recursion is bounded by
+`LoopOptions.MaxCompleteQuestDepth` (default 3) and an ancestor-stack cycle guard. `QuestActCheckTimer`
+(canonical 68 rows / 2 Progress) and `QuestActSupplyRemoveItem` (61 rows / 1 Progress) are reclassified
+as non-objectives (`CountsAsAnObjective=false`, `RunAct` always true) and passed through without pursuit
+legs; `QuestActObjLevel` (1 quest), `QuestActObjAbilityLevel` (11), and `QuestActObjMateLevel` (7) stay
+as named `KnownPrimitiveGaps` with exact no-player-action reasons (real `OnLevelUp` event only;
+`AddActiveExp` character-XP share only; `Mate.AddExp` kill share only). `QuestActObjAggro` stays at the
+same PARTIAL boundary — no broad PB-002 closure claim. Evidence is deterministic rig / A only:
+`LevelingLoopScenarioRigTests` **30/30** (28 existing + complete-quest positive and missing-prerequisite
+fail-closed control), `QuestActObjAggroTests` **2/2**, `QuestEtcItemObtainRigTests` **3/3**,
+`QuestZoneKillVictimRigTests` **2/2**, `PvpFlaggingRigTests` **11/11**; Release builds 0 errors;
+uncommitted, no commit / E2E / soak / `.worktrees` touched.
+
 
 **PB-002 interaction candidate — historical/pre-fix context:** The earlier
 canonical quest-270 attempt (doodad 687, interaction skill 11229) reached

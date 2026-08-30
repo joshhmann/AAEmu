@@ -58,6 +58,28 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     DoodadFuncLootPack entries granting the act's ItemId; InteractWith
 ///     until the LIVE objective reaches Count (real acquisition → engine's
 ///     own DoItemsAcquiredEvents → OnItemGather credit), AdvanceQuest.
+///   - QuestActObjCompleteQuest    → cross-quest composition: the act has NO
+///     event subscription — its RunAct credits the objective from LIVE
+///     HasQuestCompleted(prereq) at step evaluation. The leg pursues the
+///     prerequisite quest through normal perception + the existing
+///     pursuit/turn-in machinery (bounded recursion depth, cycle guard),
+///     never writing the completed flag itself; the real evaluation credits
+///     the objective. An undiscoverable prerequisite or an unsupported
+///     prerequisite objective type fails closed naming the exact quest id.
+///   - QuestActObjLevel / AbilityLevel / MateLevel → NOT pursued: level and
+///     ability/mate training have no player-like action exposed (level
+///     credits from the real OnLevelUp event; ability exp only rises via the
+///     character-XP share AddActiveExp; mate level only via Mate.AddExp
+///     kill share). Granting XP/levels from the scenario would be fake
+///     progression — these stay as named gaps with fail-closed rejection.
+///   - QuestActCheckTimer          → gate/classifier, NOT an actionable
+///     objective: CountsAsAnObjective=false and RunAct returns true
+///     unconditionally; the engine arms the timeout path (QuestTimeoutTask
+///     → FailQuest on expiry) with no quest-side clock seam. Passed through;
+///     sleeping toward the canonical duration is never done.
+///   - QuestActSupplyRemoveItem    → supply-side cleanup, NOT an objective:
+///     CountsAsAnObjective=false, RunAct always true (consumes items).
+///     Passed through with no pursuit leg.
 ///   - QuestActObjItemGroupUse     → resolve the group's members via
 ///     QuestManager.GetGroupItems, pick a member present in inventory (or
 ///     the quest's Supply component grant), and consume it through the real
@@ -158,6 +180,13 @@ public static class LevelingLoopScenario
         public byte BandMax { get; init; } = 9;
         /// <summary>How many chain links to complete unprompted.</summary>
         public int MaxLinks { get; init; } = 2;
+        /// <summary>
+        /// Bounded recursion depth for cross-quest prerequisite composition
+        /// (QuestActObjCompleteQuest): how many nested prerequisite quests the
+        /// leg may pursue before failing closed. Canonical carriers are
+        /// acyclic and at most two levels deep (5862 → 5826/5863–5866).
+        /// </summary>
+        public int MaxCompleteQuestDepth { get; init; } = 3;
         /// <summary>Bounded InteractWith attempts per gather source before failing Navigation.</summary>
         public int MaxAttemptsPerGatherSource { get; init; } = 3;
 
@@ -524,27 +553,30 @@ public static class LevelingLoopScenario
             autoStarted);
     }
 
-    // ------------------------------------------------------------------ pursue
-
     private static readonly Dictionary<string, string> KnownPrimitiveGaps = new()
     {
         [nameof(QuestActObjAggro)] =
             "partial: NPC-acceptor aggro rank is pursued; component forms without a non-zero " +
             "acceptor template or a kill path that emits OnKillArgs.Target remain unsupported",
-        [nameof(QuestActObjCompleteQuest)] =
-            "missing cross-quest objective composition",
-        [nameof(QuestActObjAbilityLevel)] =
-            "missing ability-training composition",
-        [nameof(QuestActObjMateLevel)] =
-            "missing mount-training composition",
+        // QuestActObjCompleteQuest is pursued (CompleteQuestLeg) for
+        // prerequisites reachable through normal perception + existing legs;
+        // no entry here means "pursued", so its absence is intentional.
         [nameof(QuestActObjLevel)] =
-            "missing level-grind composition",
-        [nameof(QuestActCheckTimer)] =
-            "missing timed-objective budget policy (quest fails hard on timer expiry)",
-        [nameof(QuestActSupplyRemoveItem)] =
-            "not an objective act (supply-side) — classifier gap",
+            "no player-like action exposed: the act credits from the real OnLevelUp event, and " +
+            "the scenario has no honest level-grind action (granting XP directly would be fake " +
+            "progression)",
+        [nameof(QuestActObjAbilityLevel)] =
+            "no player-like action exposed: ability exp only rises via the character-XP share " +
+            "(CharacterAbilities.AddActiveExp) and the act has no OnAbilityLevelUp handler; " +
+            "training requires a client-driven ability-equip/spend path not exposed headless",
+        [nameof(QuestActObjMateLevel)] =
+            "no player-like action exposed: mate level only rises via Mate.AddExp kill share / " +
+            "MateXpUpdateTask, and the canonical trade-ins demand a Level-50 breed mate; no " +
+            "feeding/training action exists headless",
+        // QuestActCheckTimer / QuestActSupplyRemoveItem are NOT gaps: they are
+        // reclassified as non-objective acts (below) and are passed through by
+        // PursueObjectives. Their absence here is intentional.
     };
-
     private static string GapReason(string actTypeName)
     {
         return KnownPrimitiveGaps.TryGetValue(actTypeName, out var gap)
@@ -556,9 +588,14 @@ public static class LevelingLoopScenario
     /// <summary>
     /// Data-driven objective classification off the REAL quest template.
     /// Returns a fail-closed failure, or null when the quest reached Ready.
+    /// <paramref name="completeQuestDepth"/> and
+    /// <paramref name="completeQuestStack"/> bound the cross-quest
+    /// prerequisite composition (QuestActObjCompleteQuest): depth from
+    /// opts.MaxCompleteQuestDepth, cycles from the ancestor stack.
     /// </summary>
     private static LoopRunResult? PursueObjectives(GameplayActor actor, LoopOptions opts,
-        IKillCreditSeam? killSeam, uint questId, QuestTemplate template, PerceptionSnapshot perception)
+        IKillCreditSeam? killSeam, uint questId, QuestTemplate template, PerceptionSnapshot perception,
+        int completeQuestDepth = 0, HashSet<uint>? completeQuestStack = null)
     {
         var progressActs = template.GetComponents(QuestComponentKind.Progress)
             .SelectMany(c => c.ActTemplates)
@@ -596,6 +633,48 @@ public static class LevelingLoopScenario
                         if (groupUseFailure != null)
                             return Fail($"OBJECTIVES:group-item-use({groupUse.ItemGroupId})",
                                 ActorFailureReason.RejectedAction, groupUseFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjCompleteQuest completeQuest:
+                    {
+                        // Cross-quest prerequisite composition. The act has NO
+                        // event subscription: its RunAct credits from LIVE
+                        // HasQuestCompleted(prereq) at step evaluation. The leg
+                        // pursues the prerequisite through normal perception and
+                        // the existing pursuit/turn-in machinery, then relies on
+                        // the REAL step evaluation to credit the objective — the
+                        // completed flag is produced by the engine's own
+                        // SetCompletedQuestFlag at the prerequisite's drop-time,
+                        // never written by the scenario. Depth and cycles are
+                        // bounded (opts.MaxCompleteQuestDepth + ancestor stack,
+                        // see CompleteQuestLeg); the stack carries only the
+                        // ANCESTOR chain of this act, so sibling prerequisites
+                        // of the same progress step do not shadow each other.
+                        HashSet<uint> ancestors = completeQuestStack ?? [];
+                        if (ancestors.Contains(questId))
+                        {
+                            return Fail($"OBJECTIVES:complete-quest({completeQuest.QuestId})",
+                                ActorFailureReason.WrongDecision,
+                                $"quest {questId} prerequisite composition cycle detected " +
+                                $"(ancestors [{string.Join(" -> ", ancestors)}]) — refusing to recurse",
+                                actor, null);
+                        }
+                        if (completeQuestDepth >= opts.MaxCompleteQuestDepth)
+                        {
+                            return Fail($"OBJECTIVES:complete-quest({completeQuest.QuestId})",
+                                ActorFailureReason.WrongDecision,
+                                $"quest {questId} prerequisite composition exceeded depth " +
+                                $"{opts.MaxCompleteQuestDepth} — refusing to recurse further",
+                                actor, null);
+                        }
+                        var childAncestors = new HashSet<uint>(ancestors) { questId };
+                        var (completeFailure, completeReason) = CompleteQuestLeg(actor, opts,
+                            killSeam, questId, completeQuest, perception,
+                            completeQuestDepth + 1, childAncestors);
+                        if (completeFailure != null)
+                            return Fail($"OBJECTIVES:complete-quest({completeQuest.QuestId})",
+                                completeReason, completeFailure, actor, null);
                         break;
                     }
                 case QuestActObjItemUse itemUse:
@@ -720,6 +799,23 @@ public static class LevelingLoopScenario
                         break;
                     }
 
+                case QuestActCheckTimer:
+                    // Gate/classifier, NOT an objective (CountsAsAnObjective=false,
+                    // RunAct returns true unconditionally). The engine arms the
+                    // timeout path on InitializeAction (QuestTimeoutTask →
+                    // FailQuest on expiry) with no quest-side clock seam; the
+                    // loop never sleeps toward the canonical duration. Passing
+                    // through is NOT fake progress — the act contributes nothing
+                    // to the step result.
+                    break;
+
+                case QuestActSupplyRemoveItem:
+                    // Supply-side cleanup, NOT an objective (CountsAsAnObjective
+                    // =false, RunAct always true — consumes items from the
+                    // player's inventory). Passed through with no pursuit leg;
+                    // the act's own RunAct performs the removal at step
+                    // evaluation.
+                    break;
 
                 default:
                     return Fail($"OBJECTIVES:{act.GetType().Name}", ActorFailureReason.WrongDecision,
@@ -757,6 +853,7 @@ public static class LevelingLoopScenario
 
         return null;
     }
+
     /// <summary>
     /// The item-use leg: consume the exact item named by the objective through
     /// the real UseItem contract. Objective credit is read from the live quest
@@ -790,6 +887,117 @@ public static class LevelingLoopScenario
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Cross-quest prerequisite composition (QuestActObjCompleteQuest). The
+    /// act has NO event subscription — its RunAct credits the objective from
+    /// LIVE HasQuestCompleted(prereq) at step evaluation. This leg pursues
+    /// the prerequisite quest through normal perception (a FRESH Perceive
+    /// sweep — the passed snapshot only proves the parent's first sweep) and
+    /// the existing accept → pursue → turn-in machinery, then relies on the
+    /// REAL step evaluation of the parent to credit the objective. The
+    /// completed flag comes from the engine's own SetCompletedQuestFlag at
+    /// the prerequisite's drop-time — NEVER written by this scenario.
+    /// An already-completed prerequisite is a no-op (the real act state
+    /// passes). An undiscoverable prerequisite, an unsupported prerequisite
+    /// objective type, or a prerequisite that completes without the flagged
+    /// state fails closed naming the exact quest id. Depth and cycles are
+    /// bounded by the dispatch (opts.MaxCompleteQuestDepth + ancestor stack).
+    /// </summary>
+    private static (string? Failure, ActorFailureReason Reason) CompleteQuestLeg(
+        GameplayActor actor, LoopOptions opts, IKillCreditSeam? killSeam,
+        uint parentQuestId, QuestActObjCompleteQuest completeQuest, PerceptionSnapshot perception,
+        int completeQuestDepth, HashSet<uint> ancestors)
+    {
+        _ = perception; // the prerequisite's reachability is re-perceived below
+
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(parentQuestId);
+        if (quest == null)
+            return ($"quest {parentQuestId} left ActiveQuests before complete-quest pursuit started",
+                ActorFailureReason.StateTransition);
+
+        if (completeQuest.GetObjective(quest) >= 1)
+            return (null, ActorFailureReason.None); // already credited by a previous evaluation
+
+        var prereqQuestId = completeQuest.QuestId;
+        if (prereqQuestId == 0)
+        {
+            return ($"quest {parentQuestId} complete-quest act {completeQuest.DetailId} names no " +
+                    "prerequisite quest id — nothing to pursue",
+                ActorFailureReason.WrongDecision);
+        }
+
+        // Already completed — the real RunAct state check passes at step
+        // evaluation; the leg has nothing to do.
+        if (actor.Character.Quests!.HasQuestCompleted(prereqQuestId))
+            return (null, ActorFailureReason.None);
+
+        var prereqTemplate = QuestManager.Instance.GetTemplate(prereqQuestId);
+        if (prereqTemplate == null)
+        {
+            return ($"quest {parentQuestId} requires completing quest {prereqQuestId}, but no such " +
+                    "quest template is loaded — cannot pursue an unknown prerequisite",
+                ActorFailureReason.WrongDecision);
+        }
+
+        // Fresh perception sweep: the prerequisite must be discoverable
+        // through the normal channels (offered by a perceived target, or
+        // engine auto-started) to be pursued — never accepted behind the
+        // loop's back.
+        var sweep = Perceive(actor);
+        var prereqOffering = sweep.Offerings.FirstOrDefault(o => o.QuestId == prereqQuestId);
+        if (prereqOffering == null && !sweep.AutoStartedQuestIds.Contains(prereqQuestId))
+        {
+            return ($"quest {parentQuestId} requires completing quest {prereqQuestId} " +
+                    $"({prereqTemplate.Level} offered), but it is not PERCEIVED as a discoverable " +
+                    "offering nor engine auto-started — missing prerequisite reachability",
+                ActorFailureReason.Navigation);
+        }
+
+        if (prereqOffering != null && !actor.Character.Quests.ActiveQuests.ContainsKey(prereqQuestId))
+        {
+            var accept = actor.AcceptQuest(prereqQuestId, prereqOffering.AcceptorType,
+                prereqOffering.AcceptorId);
+            if (accept.State != ActorLifecycleState.Completed)
+            {
+                return ($"accept of prerequisite quest {prereqQuestId} refused: {accept.Detail}",
+                    accept.Failure ?? ActorFailureReason.RejectedAction);
+            }
+        }
+
+        // Pursue the prerequisite's OWN objectives through the full
+        // machinery — recursion into nested complete-quest prerequisites is
+        // bounded by depth + the ancestor stack — then turn it in through
+        // the real path.
+        var pursuit = PursueObjectives(actor, opts, killSeam, prereqQuestId, prereqTemplate,
+            sweep, completeQuestDepth, ancestors);
+        if (pursuit != null)
+        {
+            return ($"prerequisite quest {prereqQuestId} of {parentQuestId} failed closed during " +
+                    $"pursuit: {pursuit.FailReason}",
+                pursuit.Failure ?? ActorFailureReason.WrongDecision);
+        }
+
+        if (actor.Character.Quests!.HasQuestCompleted(prereqQuestId))
+            return (null, ActorFailureReason.None); // auto-completed during pursuit
+
+        var turnIn = TurnIn(actor, prereqQuestId, prereqTemplate, sweep);
+        if (turnIn != null)
+        {
+            return ($"turn-in of prerequisite quest {prereqQuestId} for {parentQuestId} failed: " +
+                    turnIn.FailReason, turnIn.Failure ?? ActorFailureReason.RejectedAction);
+        }
+
+        if (!actor.Character.Quests!.HasQuestCompleted(prereqQuestId))
+        {
+            return ($"prerequisite quest {prereqQuestId} was accepted, pursued, and turned in for " +
+                    $"{parentQuestId}, but its completed flag never set — refusing to credit the " +
+                    "complete-quest objective (no fake progress)",
+                ActorFailureReason.StateTransition);
+        }
+
+        return (null, ActorFailureReason.None);
     }
 
     /// <summary>
