@@ -7,8 +7,9 @@ using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
-using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
+using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
@@ -149,6 +150,19 @@ public class LevelingLoopScenarioRigTests
     private const uint CompleteQuestPrereqNpcTemplateId = 90_954;
     /// <summary>Fixture prereq id that is NEVER registered — the fail-closed control.</summary>
     private const uint CompleteQuestMissingPrereqQuestId = 90_999;
+
+    // Canonical level-objective quest (the ONLY QuestActObjLevel carrier):
+    // 6250 "새로운 당신을 위한 선물" — Start ConAcceptItem 442 (item 33027),
+    // Progress QuestActObjLevel 14 (Level 30), Reward SupplyItem 33028 ×5 +
+    // AutoComplete + SupplyItem 33029 ×1. Item 33027 has ZERO canonical grant
+    // sources (GM-granted starter) — the rig fixture-grants it as setup.
+    private const uint Quest6250Id = 6250;
+    private const uint Quest6250StarterItemId = 33_027;
+    private const uint Quest6250RewardItemA = 33_028;
+    private const uint Quest6250RewardItemB = 33_029;
+    private const byte Quest6250TargetLevel = 30;
+    /// <summary>Fixture NPC template for the level-grind prey (rig range).</summary>
+    private const uint LevelGrindNpcTemplateId = 90_955;
 
     /// <summary>
     /// Temporarily installs canonical SkillManager/DoodadManager data while
@@ -1094,6 +1108,148 @@ public class LevelingLoopScenarioRigTests
     }
 
     /// <summary>
+    /// E-LEVEL-1: canonical QuestActObjLevel pursuit — quest 6250
+    /// "새로운 당신을 위한 선물" (Start ConAcceptItem 33027, Progress
+    /// QuestActObjLevel 14 → Level 30, Reward AutoComplete + supplies).
+    /// The starter item is fixture-granted (it has ZERO canonical grant
+    /// sources — GM-granted in live play); the character is seeded near the
+    /// target level. The LevelLeg grinds perceived hostiles through the real
+    /// kill path; the rig's ILevelXpSeam mirrors Npc.DoDie's character-XP
+    /// grant at the REAL Character.AddExp boundary, so the live level rises
+    /// through the engine's own path. The real RunAct credits the objective
+    /// from live Owner.Level at step evaluation (headless-safe — the
+    /// OnLevelUp event is unavailable with Connection=null and is never
+    /// faked), and the quest auto-completes through the real reward step.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_Quest6250_LevelObjective_CompletesThroughLiveLevelState()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-level");
+        var character = session.Character;
+
+        // The rig's default ExperienceManager curve (TotalExp = level ×
+        // 100M) can never be bridged by real kill XP (~95/kill) — install a
+        // tight curve (TotalExp = level × 1000) so ONE kill crosses the
+        // Level-30 gate. The swap restores the default on dispose.
+        using var expSwap = InstallTightExpCurve();
+        character.Level = Quest6250TargetLevel - 1; // 29
+        // Seed 29,950 total exp (level 29's threshold is 29,000; level 30's
+        // is 30,000) through the REAL AddExp path — one 95-XP kill crosses
+        // to level 30. The Experience setter is private; AddExp is the
+        // engine's own public boundary.
+        character.AddExp(29 * 1000 + 950, false);
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Fixture-grant the canonical starter item (setup only — the item
+        // has no canonical grant source) so the quest is discoverable
+        // through the real ConAcceptItem channel.
+        GameplayActorTestRig.SeedItemTemplate(Quest6250StarterItemId);
+        GameplayActorTestRig.SeedItemTemplate(Quest6250RewardItemA);
+        GameplayActorTestRig.SeedItemTemplate(Quest6250RewardItemB);
+        GameplayActorTestRig.GiveBagItem(new GameplayActor(character), Quest6250StarterItemId, 1);
+
+        // World seed: attackable prey for the grind (fixture template).
+        // KillExp = ((level*5+90) + …) × npc_grade × ExpMultiplier — the
+        // fixture template defaults (grade 0, multiplier 0.0f) would zero
+        // it, so each prey is set to a level-1 Normal NPC with a 1.0
+        // multiplier → 95 XP per kill.
+        SpawnLevelGrindPrey(session, 4);
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 0,
+            BandMax = 0,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxLevelGrindKills = 16
+        }, new RigKillSeam(), new RigLevelXpSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(Quest6250Id);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjLevel));
+        await Assert.That(character.Quests!.HasQuestCompleted(Quest6250Id)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(Quest6250Id)).IsFalse();
+        // The live level rose through the engine's own AddExp path.
+        await Assert.That(character.Level).IsGreaterThanOrEqualTo(Quest6250TargetLevel);
+
+        // Audit subsequence: accept (item channel) → SetTarget → Cast →
+        // Loot (grind) → auto-complete (no turn-in — Reward AutoComplete).
+        var trace = result.TraceRecords;
+        var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, Quest6250Id);
+        var firstTarget = FirstAtLeast(trace, ActorActionType.Target, accept + 1);
+        var firstCast = FirstAtLeast(trace, ActorActionType.Cast, firstTarget + 1);
+        var firstLoot = FirstAtLeast(trace, ActorActionType.Loot, firstCast + 1);
+        await Assert.That(accept).IsGreaterThanOrEqualTo(0);
+        await Assert.That(firstTarget).IsGreaterThan(accept);
+        await Assert.That(firstCast).IsGreaterThan(firstTarget);
+        await Assert.That(firstLoot).IsGreaterThan(firstCast);
+        // Accepted through the ITEM acceptor triple (ConAcceptItem 33027).
+        await Assert.That(trace[accept].Detail).Contains("Item/33027");
+    }
+
+    /// <summary>
+    /// E-LEVEL-2 (fail-closed control): the same canonical quest 6250 with
+    /// NO XP source — the rig passes a kill seam but NO ILevelXpSeam, so
+    /// kills never raise the live level (the seam is the only rig path that
+    /// mirrors DoDie's character-XP grant). The LevelLeg must exhaust its
+    /// bounded kill budget and fail closed: the level stays 29, the
+    /// objective never credits, and the quest is never advanced, turned in,
+    /// or dropped.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_Quest6250_NoXpSource_FailsClosedWithoutLeveling()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-level-control");
+        var character = session.Character;
+        character.Level = Quest6250TargetLevel - 1; // 29
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        GameplayActorTestRig.SeedItemTemplate(Quest6250StarterItemId);
+        GameplayActorTestRig.SeedItemTemplate(Quest6250RewardItemA);
+        GameplayActorTestRig.SeedItemTemplate(Quest6250RewardItemB);
+        GameplayActorTestRig.GiveBagItem(new GameplayActor(character), Quest6250StarterItemId, 1);
+
+        for (var i = 0; i < 4; i++)
+        {
+            var objId = SpawnHubNpc(session, LevelGrindNpcTemplateId,
+                new Vector3(2 + i * 1.0f, -1, 0));
+            SeedCorpseLoot(session, objId);
+        }
+
+        // NO ILevelXpSeam — kills credit quest events but never raise the
+        // live level (the honest headless equivalent of a world with no
+        // kill-XP source).
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 0,
+            BandMax = 0,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxLevelGrindKills = 8
+        }, new RigKillSeam());
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo($"OBJECTIVES:level({Quest6250TargetLevel})");
+        await Assert.That(result.FailReason).Contains("level grind exhausted");
+        await Assert.That(character.Level).IsEqualTo((byte)(Quest6250TargetLevel - 1));
+
+        // No fake progress: the quest was accepted but never advanced,
+        // turned in, or dropped; the objective never credited.
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(Quest6250Id)).IsTrue();
+        await Assert.That(character.Quests.HasQuestCompleted(Quest6250Id)).IsFalse();
+        await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
+            or ActorActionType.AutoTurnIn)).IsFalse();
+    }
+
+    /// <summary>
     /// Seeds the synthetic complete-quest surface: a parent (90990) whose
     /// Progress act is QuestActObjCompleteQuest referencing
     /// <paramref name="prereqQuestId"/>, plus (when the prereq is the
@@ -1434,12 +1590,10 @@ public class LevelingLoopScenarioRigTests
     }
 
     /// <summary>
-    /// Rig kill seam (documented rig-faked damage, adventurer-spike
-    /// convention): bare fixture NPCs carry no template/AI/spawner
-    /// scaffolding for a full Npc.DoDie, so the killing blow is applied
-    /// through the REAL QuestManager.DoOnMonsterHuntEvents entry point —
-    /// the exact call DoDie makes for a character killer (group/zone/
-    /// kill-accept fanout included). Real damage is the live stack's job.
+    /// Rig kill seam: applies synthetic damage to bare fixture NPCs, then
+    /// enters the REAL QuestManager.DoOnMonsterHuntEvents boundary used by
+    /// Npc.DoDie for character killers. Real damage remains the live stack's
+    /// responsibility; objective progress remains engine-owned.
     /// </summary>
     private sealed class RigKillSeam : LevelingLoopScenario.IKillCreditSeam
     {
@@ -1450,6 +1604,24 @@ public class LevelingLoopScenarioRigTests
             QuestManager.Instance.DoOnMonsterHuntEvents(actor.Character, target);
             target.Hp = 0; // down — the alive filter excludes it from reselection
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Level-XP rig seam (documented test-only seam at the REAL
+    /// Character.AddExp boundary, mirroring Npc.DoDie's character-XP grant
+    /// for a character killer — Npc.cs:879). The level-grind leg (LevelLeg)
+    /// calls this after a rig kill so the live level rises through the
+    /// engine's own AddExp path; the scenario itself never writes XP/level.
+    /// </summary>
+    private sealed class RigLevelXpSeam : LevelingLoopScenario.ILevelXpSeam
+    {
+        public void GrantKillXp(GameplayActor actor, Npc target)
+        {
+            var killXp = target.KillExp;
+            if (killXp <= 0)
+                return;
+            actor.Character.AddExp(killXp, true);
         }
     }
     /// <summary>
@@ -1886,6 +2058,50 @@ public class LevelingLoopScenarioRigTests
         }
 
         return objId;
+    }
+
+    private static SingletonSwap InstallTightExpCurve()
+    {
+        var experienceManager = new ExperienceManager();
+        var expTemplates = new List<ExperienceLevelTemplate>();
+        var expByLevel = new List<int>();
+        for (var level = 1; level <= 55; level++)
+        {
+            expTemplates.Add(new ExperienceLevelTemplate
+            {
+                Level = (byte)level,
+                TotalExp = level * 1000,
+                TotalMateExp = level * 1000,
+                SkillPoints = 1
+            });
+            expByLevel.Add(level * 1000);
+        }
+        SetField(experienceManager, "_levelTemplatesByLevel", expTemplates);
+        SetField(experienceManager, "_expByLevel", expByLevel);
+        SetField(experienceManager, "_mateExpByLevel", expByLevel);
+        SetField(experienceManager, "<MaxPlayerLevel>k__BackingField", (byte)55);
+        SetField(experienceManager, "<MaxMateLevel>k__BackingField", (byte)50);
+        return SingletonSwap.Install(typeof(Singleton<ExperienceManager>), experienceManager);
+    }
+
+    /// <summary>
+    /// Spawns <paramref name="count"/> level-grind prey (fixture template
+    /// 90_955) as level-1 NORMAL-grade NPCs with a 1.0 exp multiplier —
+    /// KillExp = ((1*5+90) + 0) × 1 × 1 = 95 per kill. The bare fixture
+    /// template defaults (grade 0, multiplier 0.0f) would zero KillExp.
+    /// </summary>
+    private void SpawnLevelGrindPrey(HeadlessSession session, int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            var objId = SpawnHubNpc(session, LevelGrindNpcTemplateId,
+                new Vector3(2 + i * 1.0f, -1, 0));
+            var npc = session.World.GetNpc(objId)!;
+            npc.Level = 1;
+            npc.Template.NpcGradeId = NpcGradeType.Normal;
+            npc.Template.ExpMultiplier = 1.0f;
+            SeedCorpseLoot(session, objId);
+        }
     }
 
     /// <summary>Seeds one corpse's loot so the Loot contract action grants an item.</summary>

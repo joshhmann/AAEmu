@@ -66,12 +66,18 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     never writing the completed flag itself; the real evaluation credits
 ///     the objective. An undiscoverable prerequisite or an unsupported
 ///     prerequisite objective type fails closed naming the exact quest id.
-///   - QuestActObjLevel / AbilityLevel / MateLevel → NOT pursued: level and
-///     ability/mate training have no player-like action exposed (level
-///     credits from the real OnLevelUp event; ability exp only rises via the
-///     character-XP share AddActiveExp; mate level only via Mate.AddExp
-///     kill share). Granting XP/levels from the scenario would be fake
-///     progression — these stay as named gaps with fail-closed rejection.
+///   - QuestActObjLevel          → level-grind pursuit: the act credits from
+///     LIVE Owner.Level at step evaluation (no event needed headless). The
+///     leg grinds perceived hostiles through the real kill path (Npc.DoDie
+///     → Character.AddExp raises the live level) with a bounded kill budget;
+///     the real RunAct credits the objective. No XP/level is ever written by
+///     the scenario. Rigs mirror DoDie's character-XP grant through the
+///     documented ILevelXpSeam at the real Character.AddExp boundary.
+///   - QuestActObjAbilityLevel / MateLevel → NOT pursued: ability exp only
+///     rises via the character-XP share AddActiveExp (no OnAbilityLevelUp
+///     handler, no training action); mate level only via Mate.AddExp kill
+///     share (no feeding/training action, Level-50 breed mate required).
+///     These stay as named gaps with fail-closed rejection.
 ///   - QuestActCheckTimer          → gate/classifier, NOT an actionable
 ///     objective: CountsAsAnObjective=false and RunAct returns true
 ///     unconditionally; the engine arms the timeout path (QuestTimeoutTask
@@ -187,6 +193,13 @@ public static class LevelingLoopScenario
         /// acyclic and at most two levels deep (5862 → 5826/5863–5866).
         /// </summary>
         public int MaxCompleteQuestDepth { get; init; } = 3;
+        /// <summary>
+        /// Bounded kill budget for the level-grind leg (QuestActObjLevel):
+        /// how many real kills the leg may execute before failing closed.
+        /// The canonical carrier (quest 6250) demands Level 30; a character
+        /// seeded near the target needs only a handful of kills.
+        /// </summary>
+        public int MaxLevelGrindKills { get; init; } = 64;
         /// <summary>Bounded InteractWith attempts per gather source before failing Navigation.</summary>
         public int MaxAttemptsPerGatherSource { get; init; } = 3;
 
@@ -263,6 +276,24 @@ public static class LevelingLoopScenario
         bool TryKillAggro(GameplayActor actor, Npc target);
     }
 
+    /// <summary>
+    /// Level-XP seam for the level-grind leg (QuestActObjLevel) in a
+    /// deterministic rig. LIVE runs pass null — real cast damage must down
+    /// the prey so Npc.DoDie grants the killer's character XP through
+    /// Character.AddExp (the engine's own kill path). RIGS implement the
+    /// documented synthetic kill (RigKillSeam convention) and MUST mirror
+    /// DoDie's character-XP grant by calling the REAL
+    /// <see cref="Character.AddExp(int, bool)"/> boundary with the slain
+    /// NPC's KillExp — the exact call DoDie makes for a character killer
+    /// (Npc.cs:879). The seam is the ONLY place a rig may raise the live
+    /// level; the scenario itself never writes XP or level.
+    /// </summary>
+    public interface ILevelXpSeam
+    {
+        /// <summary>Grants the real kill XP of <paramref name="target"/> to the killer.</summary>
+        void GrantKillXp(GameplayActor actor, Npc target);
+    }
+
     /// <summary>One completed chain link, as PERCEIVED (never pre-scripted).</summary>
     public sealed record LinkRecord(
         uint QuestId, byte OfferedLevel, uint AcceptorTemplateId,
@@ -302,9 +333,9 @@ public static class LevelingLoopScenario
     }
 
     /// <summary>Runs the autonomous loop on an embodied character, adapted for the scenario runner.</summary>
-    public static BotScenarioRunner.ScenarioRunResult RunAsScenario(Character character, LoopOptions? options = null, IKillCreditSeam? killSeam = null)
+    public static BotScenarioRunner.ScenarioRunResult RunAsScenario(Character character, LoopOptions? options = null, IKillCreditSeam? killSeam = null, ILevelXpSeam? levelXpSeam = null)
     {
-        var res = Run(character, options, killSeam);
+        var res = Run(character, options, killSeam, levelXpSeam);
         return new BotScenarioRunner.ScenarioRunResult
         {
             Template = ScenarioName,
@@ -322,7 +353,7 @@ public static class LevelingLoopScenario
     }
 
     /// <summary>Runs the autonomous loop on an embodied character.</summary>
-    public static LoopRunResult Run(Character character, LoopOptions? options = null, IKillCreditSeam? killSeam = null)
+    public static LoopRunResult Run(Character character, LoopOptions? options = null, IKillCreditSeam? killSeam = null, ILevelXpSeam? levelXpSeam = null)
     {
         var opts = options ?? new LoopOptions();
         var actor = new GameplayActor(character);
@@ -431,7 +462,7 @@ public static class LevelingLoopScenario
 
                 // ---------------------------------------------------- 4. PURSUE
                 var template = QuestManager.Instance.GetTemplate(chosen.QuestId)!;
-                var pursuitFailure = PursueObjectives(actor, opts, killSeam, chosen.QuestId, template, perception);
+                var pursuitFailure = PursueObjectives(actor, opts, killSeam, levelXpSeam, chosen.QuestId, template, perception);
                 if (pursuitFailure != null)
                     return pursuitFailure;
 
@@ -561,10 +592,8 @@ public static class LevelingLoopScenario
         // QuestActObjCompleteQuest is pursued (CompleteQuestLeg) for
         // prerequisites reachable through normal perception + existing legs;
         // no entry here means "pursued", so its absence is intentional.
-        [nameof(QuestActObjLevel)] =
-            "no player-like action exposed: the act credits from the real OnLevelUp event, and " +
-            "the scenario has no honest level-grind action (granting XP directly would be fake " +
-            "progression)",
+        // QuestActObjLevel is pursued (LevelLeg) through the real kill-XP
+        // path; its absence here is intentional.
         [nameof(QuestActObjAbilityLevel)] =
             "no player-like action exposed: ability exp only rises via the character-XP share " +
             "(CharacterAbilities.AddActiveExp) and the act has no OnAbilityLevelUp handler; " +
@@ -594,8 +623,8 @@ public static class LevelingLoopScenario
     /// opts.MaxCompleteQuestDepth, cycles from the ancestor stack.
     /// </summary>
     private static LoopRunResult? PursueObjectives(GameplayActor actor, LoopOptions opts,
-        IKillCreditSeam? killSeam, uint questId, QuestTemplate template, PerceptionSnapshot perception,
-        int completeQuestDepth = 0, HashSet<uint>? completeQuestStack = null)
+        IKillCreditSeam? killSeam, ILevelXpSeam? levelXpSeam, uint questId, QuestTemplate template,
+        PerceptionSnapshot perception, int completeQuestDepth = 0, HashSet<uint>? completeQuestStack = null)
     {
         var progressActs = template.GetComponents(QuestComponentKind.Progress)
             .SelectMany(c => c.ActTemplates)
@@ -670,11 +699,27 @@ public static class LevelingLoopScenario
                         }
                         var childAncestors = new HashSet<uint>(ancestors) { questId };
                         var (completeFailure, completeReason) = CompleteQuestLeg(actor, opts,
-                            killSeam, questId, completeQuest, perception,
+                            killSeam, levelXpSeam, questId, completeQuest, perception,
                             completeQuestDepth + 1, childAncestors);
                         if (completeFailure != null)
                             return Fail($"OBJECTIVES:complete-quest({completeQuest.QuestId})",
                                 completeReason, completeFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjLevel levelAct:
+                    {
+                        // Level-grind pursuit: the act credits from LIVE
+                        // Owner.Level at step evaluation (no event needed
+                        // headless). The leg grinds perceived hostiles through
+                        // the real kill path with a bounded budget; the real
+                        // RunAct credits the objective. No XP/level is ever
+                        // written by the scenario (see LevelLeg).
+                        var (levelFailure, levelReason) = LevelLeg(actor, opts, killSeam,
+                            levelXpSeam, questId, levelAct, perception);
+                        if (levelFailure != null)
+                            return Fail($"OBJECTIVES:level({levelAct.Level})",
+                                levelReason, levelFailure, actor, null);
                         break;
                     }
                 case QuestActObjItemUse itemUse:
@@ -906,7 +951,7 @@ public static class LevelingLoopScenario
     /// bounded by the dispatch (opts.MaxCompleteQuestDepth + ancestor stack).
     /// </summary>
     private static (string? Failure, ActorFailureReason Reason) CompleteQuestLeg(
-        GameplayActor actor, LoopOptions opts, IKillCreditSeam? killSeam,
+        GameplayActor actor, LoopOptions opts, IKillCreditSeam? killSeam, ILevelXpSeam? levelXpSeam,
         uint parentQuestId, QuestActObjCompleteQuest completeQuest, PerceptionSnapshot perception,
         int completeQuestDepth, HashSet<uint> ancestors)
     {
@@ -970,7 +1015,7 @@ public static class LevelingLoopScenario
         // machinery — recursion into nested complete-quest prerequisites is
         // bounded by depth + the ancestor stack — then turn it in through
         // the real path.
-        var pursuit = PursueObjectives(actor, opts, killSeam, prereqQuestId, prereqTemplate,
+        var pursuit = PursueObjectives(actor, opts, killSeam, levelXpSeam, prereqQuestId, prereqTemplate,
             sweep, completeQuestDepth, ancestors);
         if (pursuit != null)
         {
@@ -995,6 +1040,177 @@ public static class LevelingLoopScenario
                     $"{parentQuestId}, but its completed flag never set — refusing to credit the " +
                     "complete-quest objective (no fake progress)",
                 ActorFailureReason.StateTransition);
+        }
+
+        return (null, ActorFailureReason.None);
+    }
+
+    /// <summary>
+    /// Level-grind leg (QuestActObjLevel). The act credits from LIVE
+    /// Owner.Level at step evaluation (QuestActObjLevel.RunAct reads
+    /// quest.Owner.Level >= Level and SetObjective(1)); the headless
+    /// OnLevelUp event is unavailable (Character.AddExp fires
+    /// DoOnLevelUpEvents only when Connection != null), so the leg relies on
+    /// the real step evaluation after the level actually rose — never on the
+    /// event. The level is raised ONLY by the engine's own kill path:
+    /// LIVE = real cast damage → Npc.DoDie → Character.AddExp(KillExp, true);
+    /// RIG = the documented <see cref="ILevelXpSeam"/> at the real
+    /// Character.AddExp boundary (mirroring DoDie's character-XP grant).
+    /// The scenario never writes XP or level directly. A bounded kill budget
+    /// (opts.MaxLevelGrindKills) fails closed when the level cannot rise.
+    /// </summary>
+    private static (string? Failure, ActorFailureReason Reason) LevelLeg(
+        GameplayActor actor, LoopOptions opts, IKillCreditSeam? killSeam, ILevelXpSeam? levelXpSeam,
+        uint questId, QuestActObjLevel levelAct, PerceptionSnapshot perception)
+    {
+        var character = actor.Character;
+        var quest = character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return ($"quest {questId} left ActiveQuests before level pursuit started",
+                ActorFailureReason.StateTransition);
+
+        if (levelAct.GetObjective(quest) >= 1)
+            return (null, ActorFailureReason.None); // already credited by a previous evaluation
+
+        if (character.Level >= levelAct.Level)
+            return (null, ActorFailureReason.None); // live level already satisfies the act
+
+        // The caller's snapshot is only the FIRST sweep's evidence; every
+        // round below re-observes (the spike loop's proven shape).
+        _ = perception;
+
+        var excluded = new HashSet<uint>();
+        var noTargetRounds = 0;
+        var killsLeft = opts.MaxLevelGrindKills;
+
+        while (character.Level < levelAct.Level)
+        {
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                return (null, ActorFailureReason.None); // auto-completed during grind
+
+            if (killsLeft-- <= 0)
+            {
+                return ($"level grind exhausted {opts.MaxLevelGrindKills} kill(s) for quest {questId} " +
+                        $"with character at level {character.Level}/{levelAct.Level} — no honest XP " +
+                        "source raised the level",
+                    ActorFailureReason.Starvation);
+            }
+
+            var observation = actor.Observe();
+            var target = SelectHuntTarget(character, observation, null, 0, excluded);
+            if (target == null)
+            {
+                noTargetRounds++;
+                if (noTargetRounds > opts.NoTargetRetries)
+                {
+                    return ($"no attackable target perceived for level grind of quest {questId} after " +
+                            $"{opts.NoTargetRetries} re-observe rounds (nearby npcs: " +
+                            $"[{string.Join(", ", observation.NearbyNpcObjIds)}]) — level remains " +
+                            $"{character.Level}/{levelAct.Level}",
+                        ActorFailureReason.Starvation);
+                }
+
+                continue;
+            }
+
+            noTargetRounds = 0;
+
+            // Sustain (vital recovery): if HP < 35%, recover before engaging
+            var maxHp = character.MaxHp > 0 ? character.MaxHp : 1;
+            if ((float)character.Hp / maxHp < 0.35f)
+            {
+                var potion = character.Inventory?.Bag.Items
+                    .FirstOrDefault(i => i?.Template != null && (ItemCategory)i.Template.CategoryId is ItemCategory.Healing_Potion or ItemCategory.Potion or ItemCategory.Food);
+                if (potion != null)
+                {
+                    actor.UseItem(potion.TemplateId);
+                }
+
+                var regenGuard = 0;
+                while ((float)character.Hp / maxHp < 0.8f && regenGuard++ < 10)
+                {
+                    actor.Tick(TimeSpan.FromSeconds(1));
+                }
+            }
+
+            var targetRequest = actor.SetTarget(target.ObjId);
+            if (targetRequest.State != ActorLifecycleState.Completed)
+            {
+                return ($"SetTarget on level-grind target {target.ObjId} refused: {targetRequest.Detail}",
+                    ActorFailureReason.RejectedAction);
+            }
+
+            // Distance maintenance: beyond the engage band, close in first
+            // and re-observe from the new position next round (melee default).
+            var distance = Vector3.Distance(character.Transform.World.Position, target.Transform.World.Position);
+            if (distance > opts.HuntEngageRange)
+            {
+                var closeIn = DriveRequest(actor, opts,
+                    actor.MoveToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
+                if (closeIn.State != ActorLifecycleState.Completed)
+                {
+                    return ($"close-in move onto level-grind target {target.ObjId} did not complete: " +
+                            $"{closeIn.State} ({closeIn.Detail ?? "n/a"})",
+                        closeIn.Failure ?? ActorFailureReason.Navigation);
+                }
+
+                continue;
+            }
+
+            // Cast-burst engagement: the rotation runs as a chain each burst
+            // round (Rejected skills are skipped); the round ends early when
+            // real damage drops the target or the seam applies its credit.
+            var hpRoundStart = target.Hp;
+            var executedAnyCast = false;
+            var down = false;
+            for (var burst = 0; burst < opts.MaxBurstCasts && !down; burst++)
+            {
+                var roundExecuted = false;
+                foreach (var skillId in opts.CastRotation)
+                {
+                    if (target.Hp <= 0)
+                        break; // dropped mid-chain — stop casting
+                    var cast = actor.Cast(skillId, target.ObjId);
+                    if (cast.State != ActorLifecycleState.Rejected)
+                        roundExecuted = true;
+                }
+
+                if (!roundExecuted)
+                    break; // whole rotation refused — re-observe next round
+                executedAnyCast = true;
+
+                // LIVE: real damage only. RIG: seam credit (real damage still wins).
+                down = target.Hp <= 0;
+                if (!down && killSeam != null)
+                {
+                    down = killSeam.TryKill(actor, target);
+                }
+            }
+
+            if (!down)
+            {
+                // NO-PROGRESS SKIP (spike E-M7-9): casts executed but zero net
+                // damage — leash-stuck/undamageable prey is EXCLUDED from
+                // reselection (never credited).
+                if (executedAnyCast && target.Hp >= hpRoundStart)
+                {
+                    excluded.Add(target.ObjId);
+                }
+
+                continue;
+            }
+
+            // DOWN: the engine's kill path grants the killer's character XP
+            // (LIVE: Npc.DoDie → Character.AddExp; RIG: the ILevelXpSeam
+            // mirrors that exact grant at the real AddExp boundary). The
+            // level rises only through that real path — never written here.
+            if (levelXpSeam != null)
+                levelXpSeam.GrantKillXp(actor, target);
+
+            excluded.Add(target.ObjId);
+            var loot = actor.Loot(target.ObjId);
+            if (loot.State == ActorLifecycleState.Rejected)
+                Logger.Debug("level leg: loot of corpse {ObjId} rejected ({Detail}) — tolerated", target.ObjId, loot.Detail);
         }
 
         return (null, ActorFailureReason.None);
@@ -2021,7 +2237,11 @@ public static class LevelingLoopScenario
             // filter — ANY attackable NPC inside the act's zone group is a
             // candidate (the zone gate below is the only filter).
             var matchesZoneKill = zoneGroupId != 0;
-            if ((!matchesTemplate && !matchesGroup && !matchesZoneKill) || !character.CanAttack(npc))
+            // Level-grind hunt (QuestActObjLevel) has NO filter at all —
+            // any attackable NPC is a candidate (the level leg grinds
+            // whatever hostiles are perceived).
+            var matchesAny = targetNpcTemplateId == null && monsterGroupId == 0 && zoneGroupId == 0;
+            if ((!matchesTemplate && !matchesGroup && !matchesZoneKill && !matchesAny) || !character.CanAttack(npc))
                 continue;
 
             // Zone-scoped hunt (QuestActObjZoneKill): the victim's zone
