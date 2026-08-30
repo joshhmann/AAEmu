@@ -488,7 +488,7 @@ public class Unit : BaseUnit, IUnit
 
         Events.OnDeath(this, new OnDeathArgs { Killer = killerUnit, Victim = this });
         ParentWorld.Events.OnUnitKilled(ParentWorld, new OnUnitKilledArgs { Killer = killerUnit, Victim = this });
-        killerUnit?.Events.OnKill(this, new OnKillArgs { Killer = killerUnit, Victim = this });
+        killerUnit?.Events.OnKill(this, new OnKillArgs { Target = this, Killer = killerUnit, Victim = this });
 
         Buffs.RemoveEffectsOnDeath();
 
