@@ -10,8 +10,10 @@ using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Units.Static;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.UnitTests.Utils.Mocks;
@@ -54,6 +56,22 @@ public class LevelingLoopScenarioRigTests
     private const uint DollLootFuncId = 90_811;
     /// <summary>quest_act_supply_items 3847 — quest 5650 grants item 29054 on accept.</summary>
     private const uint Quest5650SupplyItemId = 29_054;
+    // Group-gather rig ids (fixture range, collision-free): the canonical
+    // quest 5490 group-gather act 20 sources group 9 (members 28557/28558/
+    // 29288) from highlight doodad 6886; the fixture loot func grants 28557.
+    private const uint GroupGatherLootGroupId = 90_812;
+    private const uint GroupGatherLootFuncId = 90_813;
+    private const uint Quest5490GroupGatherItemId = 28_557;
+
+    // Synthetic group-use quest ids (fixture range — never collide with
+    // canonical quest_contexts): group-use act over the rig's usable item
+    // 1234 (TestItemTemplateId, use skill 90002 with a 1:1 reagent).
+    private const uint GroupUseQuestId = 90_900;
+    private const uint GroupUseStartComponentId = 90_901;
+    private const uint GroupUseProgressComponentId = 90_902;
+    private const uint GroupUseReadyComponentId = 90_903;
+    private const uint GroupUseItemGroupId = 90_910;
+    private const uint GroupUseOfferNpcTemplateId = 90_950;
 
     private const uint Quest269Id = 269;
     private const uint Quest270Id = 270;
@@ -567,8 +585,10 @@ public class LevelingLoopScenarioRigTests
 
     /// <summary>
     /// Fail-closed control: canonical quest 5490 (accept NPC 13472, level 1,
-    /// Progress QuestActObjItemGroupGather) remains outside this slice because no
-    /// item-group source resolution primitive is composed.
+    /// Progress QuestActObjItemGroupGather act 20 → group 9 ×10 from
+    /// highlight doodad 6886) is pursued by the composed group-gather leg,
+    /// but with NO source doodad perceived the leg fails closed with a
+    /// precise Navigation reason — progress is never faked.
     /// </summary>
     [Test]
     public async Task LevelingLoop_UnsupportedObjectiveType_FailsClosedNamingMissingPrimitive()
@@ -596,9 +616,9 @@ public class LevelingLoopScenarioRigTests
 
         await Assert.That(result.Passed).IsFalse();
         await Assert.That(result.FailStage.StartsWith("OBJECTIVES")).IsTrue();
-        await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.WrongDecision);
+        await Assert.That(result.Failure).IsEqualTo(ActorFailureReason.Navigation);
         await Assert.That(result.FailReason.Contains(nameof(QuestActObjItemGroupGather))).IsTrue();
-        await Assert.That(result.FailReason.Contains("missing item-group source resolution")).IsTrue();
+        await Assert.That(result.FailReason.Contains("no such source was PERCEIVED nearby")).IsTrue();
 
         // No fake progress: the quest was accepted but never advanced,
         // turned in, or dropped.
@@ -607,6 +627,197 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
             or ActorActionType.AutoTurnIn)).IsFalse();
         await Assert.That(character.Quests.HasQuestCompleted(5490)).IsFalse();
+    }
+    /// <summary>
+    /// E-GROUP-GATHER-1: canonical quest 5490 "신기루 섬을 깨끗하게"
+    /// (accept NPC 13472, Level 1; Progress = QuestActObjItemGroupGather
+    /// act 20 → group 9 ×10 from highlight doodad 6886; report NPC 13472).
+    /// The composed group-gather leg resolves the source DATA-DRIVEN from
+    /// HighlightDoodadId among PERCEIVED doodads, InteractWith grants a
+    /// group member through the real acquisition path (engine's own
+    /// DoItemsAcquiredEvents → OnItemGroupGather credit), and the quest
+    /// completes through the real report turn-in.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_Quest5490_CompletesGroupGatherThroughRealAcquisition()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-group-gather");
+        var character = session.Character;
+        character.Level = 1; // 5490 gate ≥1
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Group 9 members (canonical quest_item_group_items 120/121/134):
+        // 28557, 28558, 29288 — the fixture loot func grants 28557 ×10 per
+        // interaction (the act needs ×10; a 1-per-grant fixture would stack
+        // into one bag entry and trip InteractWith's no-delta guard).
+        GameplayActorTestRig.SeedItemTemplate(Quest5490GroupGatherItemId);
+        GameplayActorTestRig.SeedDoodadLootInteraction(GroupGatherLootGroupId, GroupGatherLootFuncId,
+            Quest5490GroupGatherItemId, count: 10);
+
+        // Source doodad: TEMPLATE id = canonical highlight 6886 so the
+        // data-driven resolution matches; phase group carries the loot func.
+        var objId = session.SpawnDoodad(6886);
+        var doodad = session.World.GetDoodad(objId)!;
+        doodad.FuncGroupId = GroupGatherLootGroupId;
+        doodad.Template = new DoodadTemplate { Id = 6886, FuncGroups = [] };
+        doodad.Transform.Local.SetPosition(new Vector3(2, 0, 0));
+        var region = session.World.GetRegionByPos(new Vector3(2, 0, 0));
+        if (region != null)
+        {
+            region.AddObject(doodad);
+            doodad.Region = region;
+        }
+
+        SpawnHubNpc(session, 13472, new Vector3(1, 0, 0)); // offerer + reporter
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1,
+            MaxAttemptsPerGatherSource = 4
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(5490u);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjItemGroupGather));
+        await Assert.That(character.Quests!.HasQuestCompleted(5490u)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(5490u)).IsFalse();
+
+        // Audit subsequence: accept → InteractWith → TurnInQuest.
+        var trace = result.TraceRecords;
+        var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, 5490u);
+        var interact = FirstAtLeast(trace, ActorActionType.InteractWith, accept + 1);
+        var turnIn = IndexOfFirst(trace, ActorActionType.TurnInQuest, 5490u);
+        await Assert.That(accept).IsGreaterThanOrEqualTo(0);
+        await Assert.That(interact).IsGreaterThan(accept);
+        await Assert.That(turnIn).IsGreaterThan(interact);
+
+        // Real acquisition: the InteractWith completed with a bag delta
+        // (the engine's no-delta guard only completes when the bag changed).
+        // The act's Cleanup flag removes the gathered items at completion,
+        // so the bag no longer holds them — the completed interaction is
+        // the acquisition evidence.
+        var interactDetail = trace.FirstOrDefault(r => r.Action == ActorActionType.InteractWith)?.Detail;
+        await Assert.That(interactDetail).IsNotNull();
+        await Assert.That(interactDetail!.Contains("bag")).IsTrue();
+    }
+
+    /// <summary>
+    /// E-GROUP-USE-1: synthetic quest with a QuestActObjItemGroupUse
+    /// Progress act over a rig item group whose single member is the rig's
+    /// usable item (TestItemTemplateId 1234, use skill 90002 with a 1:1
+    /// reagent). The composed group-use leg resolves the member via
+    /// QuestManager.GetGroupItems, consumes it through the real UseItem
+    /// contract (engine's OnItemUse → CheckGroupItem credit), and the quest
+    /// completes through the real report turn-in.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_GroupUse_CompletesThroughRealUseItem()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb-leveling-group-use");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Item group membership (QuestManager._groupItems) + the usable
+        // item template with its use skill (rig surface, 1:1 reagent).
+        var groupItems = (Dictionary<uint, List<uint>>)GameplayActorTestRig.GetField(
+            QuestManager.Instance, "_groupItems");
+        groupItems[GroupUseItemGroupId] = [GameplayActorTestRig.TestItemTemplateId];
+        GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.TestItemTemplateId);
+        GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.TestItemTemplateId,
+            GameplayActorTestRig.TestItemUseSkillId);
+
+        // Synthetic quest: Start (ConAcceptNpc) → Progress (group-use ×1) →
+        // Ready (ConReportNpc). The rig's RegisterQuestAct is private, so
+        // seed through the public offer helper + direct component wiring.
+        GameplayActorTestRig.SeedQuestOffer(GroupUseQuestId, GroupUseStartComponentId,
+            GroupUseOfferNpcTemplateId, level: 1);
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GameplayActorTestRig.GetField(
+            manager, "_questTemplates");
+        var questTemplate = questTemplates[GroupUseQuestId];
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GameplayActorTestRig.GetField(
+            manager, "_componentTemplates");
+
+        var progress = new QuestComponentTemplate(questTemplate)
+        {
+            Id = GroupUseProgressComponentId,
+            KindId = QuestComponentKind.Progress
+        };
+        componentTemplates[GroupUseProgressComponentId] = progress;
+        questTemplate.Components[GroupUseProgressComponentId] = progress;
+        var groupUseAct = new QuestActObjItemGroupUse(progress)
+        {
+            DetailId = GroupUseProgressComponentId,
+            ActId = GroupUseProgressComponentId,
+            ItemGroupId = GroupUseItemGroupId,
+            Count = 1,
+            ThisComponentObjectiveIndex = 0
+        };
+        progress.ActTemplates.Add(groupUseAct);
+
+        var ready = new QuestComponentTemplate(questTemplate)
+        {
+            Id = GroupUseReadyComponentId,
+            KindId = QuestComponentKind.Ready
+        };
+        componentTemplates[GroupUseReadyComponentId] = ready;
+        questTemplate.Components[GroupUseReadyComponentId] = ready;
+        var reportAct = new QuestActConReportNpc(ready)
+        {
+            DetailId = GroupUseReadyComponentId,
+            ActId = GroupUseReadyComponentId,
+            NpcId = GroupUseOfferNpcTemplateId
+        };
+        ready.ActTemplates.Add(reportAct);
+
+        // Stock the group member so the leg can consume it. GiveBagItem
+        // re-seeds the template WITHOUT a use skill (its SeedItemTemplate
+        // call resets UseSkillId to 0), so re-apply the use-skill binding
+        // after the grant — the UseItem contract needs it.
+        GameplayActorTestRig.GiveBagItem(actor, GameplayActorTestRig.TestItemTemplateId, 1);
+        GameplayActorTestRig.SeedItemTemplate(GameplayActorTestRig.TestItemTemplateId,
+            GameplayActorTestRig.TestItemUseSkillId);
+        SpawnHubNpc(session, GroupUseOfferNpcTemplateId, new Vector3(1, 0, 0));
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(GroupUseQuestId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjItemGroupUse));
+        await Assert.That(character.Quests!.HasQuestCompleted(GroupUseQuestId)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(GroupUseQuestId)).IsFalse();
+
+        // The reagent path consumed the used member.
+        await Assert.That(character.Inventory!.GetItemsCount(GameplayActorTestRig.TestItemTemplateId)).IsEqualTo(0);
+
+        // Audit subsequence: accept → UseItem → TurnInQuest.
+        var trace = result.TraceRecords;
+        var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, GroupUseQuestId);
+        var use = FirstAtLeast(trace, ActorActionType.UseItem, accept + 1);
+        var turnIn = IndexOfFirst(trace, ActorActionType.TurnInQuest, GroupUseQuestId);
+        await Assert.That(accept).IsGreaterThanOrEqualTo(0);
+        await Assert.That(use).IsGreaterThan(accept);
+        await Assert.That(turnIn).IsGreaterThan(use);
     }
 
     /// <summary>

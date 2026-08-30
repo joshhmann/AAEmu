@@ -1269,9 +1269,10 @@ public static class GameplayActorTestRig
     /// <summary>
     /// Seeds the DoodadManager surface for one skill-less loot interaction:
     /// a func row in the given group whose template is DoodadFuncLootItem
-    /// (always rolls, grants exactly 1). Missing-only per dictionary.
+    /// (always rolls, grants exactly <paramref name="count"/>). Missing-only
+    /// per dictionary.
     /// </summary>
-    public static void SeedDoodadLootInteraction(uint groupId, uint funcId, uint itemTemplateId)
+    public static void SeedDoodadLootInteraction(uint groupId, uint funcId, uint itemTemplateId, int count = 1)
     {
         SeedDoodadManager();
         var manager = DoodadManager.Instance;
@@ -1308,8 +1309,8 @@ public static class GameplayActorTestRig
             lootTemplates[funcId] = new DoodadFuncLootItem
             {
                 ItemId = itemTemplateId,
-                CountMin = 1,
-                CountMax = 2, // Random.Next(1, 2) == always exactly 1
+                CountMin = count,
+                CountMax = count + 1, // Random.Next(count, count + 1) == always exactly count
                 Percent = 10_000, // chance roll [0,10000) <= Percent → always
                 RemainTime = 0
             };

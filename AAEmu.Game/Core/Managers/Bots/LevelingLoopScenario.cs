@@ -1,10 +1,13 @@
 using System.Numerics;
 
-using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Containers;
+using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests;
@@ -48,6 +51,17 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     from HighlightDoodadId among PERCEIVED nearby doodads, InteractWith
 ///     until the bag holds Count items (real acquisition → engine's own
 ///     DoItemsAcquiredEvents → OnItemGather credit), AdvanceQuest.
+///   - QuestActObjItemGroupUse     → resolve the group's members via
+///     QuestManager.GetGroupItems, pick a member present in inventory (or
+///     the quest's Supply component grant), and consume it through the real
+///     UseItem contract until the objective Count is credited by the
+///     engine's OnItemUse → CheckGroupItem path.
+///   - QuestActObjItemGroupGather  → resolve group sources DATA-DRIVEN:
+///     HighlightDoodadId when set, else scan perceived doodads' func chains
+///     for DoodadFuncLootItem / DoodadFuncLootPack entries whose items are
+///     group members; InteractWith until the LIVE quest objective reaches
+///     Count (real acquisition → DoItemsAcquiredEvents → OnItemGroupGather
+///     credit; an interaction that completes without crediting fails closed).
 ///   - QuestActObjItemUse          → consume the act's ItemId through the
 ///     real UseItem contract until the objective Count is credited by the
 ///     engine's OnItemUse event.
@@ -499,10 +513,6 @@ public static class LevelingLoopScenario
 
     private static readonly Dictionary<string, string> KnownPrimitiveGaps = new()
     {
-        [nameof(QuestActObjItemGroupUse)] =
-            "missing item-use pursuit composition (UseItem primitive exists; group resolution uncomposed)",
-        [nameof(QuestActObjItemGroupGather)] =
-            "missing item-group source resolution (HighlightDoodadId is single-template; group sources unmapped)",
         [nameof(QuestActObjAggro)] =
             "partial: NPC-acceptor aggro rank is pursued; component forms without a non-zero " +
             "acceptor template or a kill path that emits OnKillArgs.Target remain unsupported",
@@ -560,12 +570,29 @@ public static class LevelingLoopScenario
                         break;
                     }
 
+                case QuestActObjItemGroupUse groupUse:
+                    {
+                        var groupUseFailure = GroupUseItemLeg(actor, questId, groupUse);
+                        if (groupUseFailure != null)
+                            return Fail($"OBJECTIVES:group-item-use({groupUse.ItemGroupId})",
+                                ActorFailureReason.RejectedAction, groupUseFailure, actor, null);
+                        break;
+                    }
                 case QuestActObjItemUse itemUse:
                     {
                         var useFailure = UseItemLeg(actor, questId, itemUse);
                         if (useFailure != null)
                             return Fail($"OBJECTIVES:item-use({itemUse.ItemId})",
                                 ActorFailureReason.RejectedAction, useFailure, actor, null);
+                        break;
+                    }
+
+                case QuestActObjItemGroupGather groupGather:
+                    {
+                        var groupGatherFailure = GroupGatherLeg(actor, opts, questId, groupGather, perception);
+                        if (groupGatherFailure != null)
+                            return Fail($"OBJECTIVES:group-gather({groupGather.ItemGroupId})",
+                                ActorFailureReason.Navigation, groupGatherFailure, actor, null);
                         break;
                     }
 
@@ -719,6 +746,204 @@ public static class LevelingLoopScenario
             if (request.State != ActorLifecycleState.Completed)
             {
                 return $"UseItem {use.ItemId} refused for quest {questId}: {request.Detail}";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Group item-use leg: resolves the act's item group members through
+    /// QuestManager.GetGroupItems, picks a member the character actually
+    /// holds (falling back to the quest's Supply-component grant when the
+    /// acceptance supply is a group member), and consumes it through the real
+    /// UseItem contract until the objective Count is credited by the
+    /// engine's OnItemUse → CheckGroupItem path. No inventory member and no
+    /// supply grant fails closed — progress is never faked.
+    /// </summary>
+    private static string? GroupUseItemLeg(GameplayActor actor, uint questId, QuestActObjItemGroupUse use)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return $"quest {questId} left ActiveQuests before group item-use pursuit started";
+
+        var groupItems = QuestManager.Instance.GetGroupItems(use.ItemGroupId);
+        if (groupItems.Count == 0)
+            return $"quest {questId} item group {use.ItemGroupId} has NO members " +
+                   "(empty quest_item_group_items) — cannot resolve a use target";
+
+        while (use.GetObjective(quest) < use.Count)
+        {
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                break;
+
+            // Pick the first group member present in inventory; the used
+            // member is consumed by the skill's reagent path, so re-resolve
+            // every iteration.
+            var memberId = groupItems.FirstOrDefault(itemId =>
+                (actor.Character.Inventory?.GetItemsCount(itemId) ?? 0) > 0);
+            if (memberId == 0)
+            {
+                // No member in inventory — fall back to the quest's own
+                // Supply-component grant (the acceptance supply) when it is
+                // a group member, mirroring quest 252's shape.
+                var supplyItemId = quest.Template.GetComponents(QuestComponentKind.Supply)
+                    .SelectMany(component => component.ActTemplates)
+                    .OfType<QuestActSupplyItem>()
+                    .Select(supply => supply.ItemId)
+                    .FirstOrDefault(itemId => groupItems.Contains(itemId));
+                if (supplyItemId == 0)
+                {
+                    return $"quest {questId} needs {use.Count} use(s) of item group {use.ItemGroupId} " +
+                           $"({string.Join(", ", groupItems)}), but inventory holds none and no " +
+                           "Supply-component grant is a group member — STARVATION (no fake credit)";
+                }
+                memberId = supplyItemId;
+            }
+
+            var objectiveBefore = use.GetObjective(quest);
+            var request = actor.UseItem(memberId);
+            if (request.State != ActorLifecycleState.Completed)
+            {
+                return $"UseItem {memberId} refused for quest {questId}: {request.Detail}";
+            }
+
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                break;
+
+            quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+            if (quest == null)
+            {
+                return $"quest {questId} left ActiveQuests without a completion flag after group item use";
+            }
+
+            var objectiveAfter = use.GetObjective(quest);
+            if (objectiveAfter <= objectiveBefore)
+            {
+                return $"UseItem {memberId} completed but group {use.ItemGroupId} objective stayed at " +
+                       $"{objectiveAfter}/{use.Count} — {use.Count - objectiveAfter} use(s) still needed " +
+                       "(no fake progress)";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Group item-gather leg: resolves the act's sources DATA-DRIVEN —
+    /// HighlightDoodadId when set, else a scan of perceived doodads' func
+    /// chains for DoodadFuncLootItem / DoodadFuncLootPack entries whose
+    /// items are group members — then InteractWith until the LIVE quest
+    /// objective reaches Count. Credit flows through the engine's own
+    /// acquisition path (Inventory.OnAcquiredItem → DoItemsAcquiredEvents →
+    /// OnItemGroupGather). An interaction that completes without crediting
+    /// the objective fails closed — progress is never faked.
+    /// </summary>
+    private static string? GroupGatherLeg(GameplayActor actor, LoopOptions opts, uint questId,
+        QuestActObjItemGroupGather gather, PerceptionSnapshot perception)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return $"quest {questId} left ActiveQuests before group gather pursuit started";
+
+        var groupItems = QuestManager.Instance.GetGroupItems(gather.ItemGroupId);
+        if (groupItems.Count == 0)
+            return $"quest {questId} item group {gather.ItemGroupId} has NO members " +
+                   "(empty quest_item_group_items) — cannot resolve a gather target";
+
+        var sources = new List<uint>();
+        if (gather.HighlightDoodadId > 0)
+        {
+            if (perception.DoodadObjIdsByTemplate.TryGetValue(gather.HighlightDoodadId, out var highlighted) &&
+                highlighted.Count > 0)
+            {
+                sources.AddRange(highlighted);
+            }
+            else
+            {
+                return $"quest {questId} {nameof(QuestActObjItemGroupGather)} needs {gather.Count} item(s) " +
+                       $"of group {gather.ItemGroupId} ({string.Join(", ", groupItems)}) from doodad " +
+                       $"template {gather.HighlightDoodadId}, but no such source was PERCEIVED nearby";
+            }
+        }
+        else
+        {
+            // No highlight — scan every perceived doodad's func chain for a
+            // loot entry whose item is a group member.
+            foreach (var (templateId, objIds) in perception.DoodadObjIdsByTemplate)
+            {
+                foreach (var objId in objIds)
+                {
+                    var doodad = actor.Character.ParentWorld?.GetDoodad(objId);
+                    if (doodad == null)
+                        continue;
+                    foreach (var func in DoodadManager.Instance.GetFuncsForGroup(doodad.FuncGroupId))
+                    {
+                        var funcTemplate = DoodadManager.Instance.GetFuncTemplate(func.FuncId, func.FuncType);
+                        switch (funcTemplate)
+                        {
+                            case DoodadFuncLootItem lootItem when groupItems.Contains(lootItem.ItemId):
+                                sources.Add(objId);
+                                break;
+                            case DoodadFuncLootPack lootPack:
+                                var pack = LootGameData.Instance.GetPack(lootPack.LootPackId);
+                                if (pack != null && pack.Loots.Any(loot => groupItems.Contains(loot.ItemId)))
+                                    sources.Add(objId);
+                                break;
+                        }
+                    }
+                }
+            }
+
+            if (sources.Count == 0)
+            {
+                return $"quest {questId} needs {gather.Count} item(s) of group {gather.ItemGroupId} " +
+                       $"({string.Join(", ", groupItems)}) but NO perceived doodad func chain grants a " +
+                       "group member (no DoodadFuncLootItem/DoodadFuncLootPack source) — " +
+                       "missing item-group source resolution";
+            }
+        }
+
+        var attemptsLeft = opts.MaxAttemptsPerGatherSource * sources.Count;
+        var sourceIndex = 0;
+        while (gather.GetObjective(quest) < gather.Count)
+        {
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                break;
+
+            if (attemptsLeft-- <= 0)
+            {
+                return $"gather exhausted {opts.MaxAttemptsPerGatherSource} attempt(s) per source across " +
+                       $"{sources.Count} source(s) of group {gather.ItemGroupId} with objective at " +
+                       $"{gather.GetObjective(quest)}/{gather.Count} — " +
+                       $"{gather.Count - gather.GetObjective(quest)} item(s) still needed";
+            }
+
+            var objectiveBefore = gather.GetObjective(quest);
+            var sourceObjId = sources[sourceIndex % sources.Count];
+            sourceIndex++;
+            var interact = actor.InteractWith(sourceObjId);
+            if (interact.State != ActorLifecycleState.Completed)
+            {
+                return $"InteractWith gather source {sourceObjId} refused: {interact.Detail}";
+            }
+
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                break;
+
+            quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+            if (quest == null)
+            {
+                return $"quest {questId} left ActiveQuests without a completion flag after group gather";
+            }
+
+            var objectiveAfter = gather.GetObjective(quest);
+            if (objectiveAfter <= objectiveBefore)
+            {
+                return $"InteractWith source {sourceObjId} completed but group {gather.ItemGroupId} " +
+                       $"objective stayed at {objectiveAfter}/{gather.Count} across {sources.Count} " +
+                       $"perceived source(s) — {gather.Count - objectiveAfter} item(s) still needed " +
+                       "(no fake progress)";
             }
         }
 
