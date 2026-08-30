@@ -8,11 +8,11 @@ using Xunit;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// Control-plane API live evidence (M5 stage 3, t_7b6d7a4b): a REAL game
+/// Control-plane API testing evidence (M5 stage 3, t_7b6d7a4b): a REAL game
 /// server boots with the bot control flag enabled (AAEMU_BOT_CTRL=1 +
-/// AAEMU_BOT_CTRL_TOKEN — the same binaries, same MySQL, same config
-/// precedence as prod), a bot is provisioned through the MANAGEMENT surface
-/// (t_2ea94a20), and the ACTION surface is driven end-to-end over HTTP:
+/// AAEMU_BOT_CTRL_TOKEN) in the deployment-shaped testing environment (same
+/// binaries, same MySQL, same config precedence), a bot is provisioned through
+/// the MANAGEMENT surface
 ///
 ///   - token auth gate (401 without/with wrong token; 200 with the secret)
 ///   - observe → move → interact: enqueue + trace polling, full lifecycle

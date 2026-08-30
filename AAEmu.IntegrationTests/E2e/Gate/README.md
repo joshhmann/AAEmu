@@ -13,8 +13,9 @@ Rule (spec §15/§21-13): **1,000 persistent citizens, not 1,000 thinking client
 
 ## What it does
 
-1. Boots the REAL E2E stack (MySQL compose + Login + Game — same binaries as
-   prod, canonical `compact.sqlite3`).
+1. Boots the REAL E2E testing stack (MySQL compose + Login + Game — same
+   binaries as the deployment-shaped testing environment, canonical
+   `compact.sqlite3`).
 2. Embodies N bots through the REAL login/enter-world flow
    (`BotNetworkSession`), then drives golden-route quests through the
    BotDriveBridge (`E2eQuestDriver`).

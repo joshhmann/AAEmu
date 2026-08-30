@@ -7,10 +7,11 @@ namespace AAEmu.IntegrationTests.E2e.Gate;
 
 /// <summary>
 /// Gate harness — staged soak runner (ARCHITECTURE_REVIEW deliverable 8/10,
-/// slice #10). Boots the REAL E2E stack (MySQL compose + Login + Game, same
-/// binaries as prod), embodies N bots through the REAL login/enter-world
-/// flow, drives golden-route quests through the BotDriveBridge, then samples
-/// a metrics window and fails HARD on the first budget overrun.
+/// slice #10). Boots the REAL E2E testing stack (MySQL compose + Login + Game,
+/// same binaries as the deployment-shaped testing environment), embodies N
+/// bots through the REAL login/enter-world flow, drives golden-route quests
+/// through the BotDriveBridge, then samples a metrics window and fails HARD on
+/// the first budget overrun.
 ///
 /// Metrics sampled per window:
 ///   - TickManager invoke p95/max + ActiveRegionTick worst pass (H2 bridge

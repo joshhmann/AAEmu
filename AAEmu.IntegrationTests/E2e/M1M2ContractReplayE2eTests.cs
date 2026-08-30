@@ -11,7 +11,7 @@ namespace AAEmu.IntegrationTests.E2e;
 /// directive): the M1 action + M2 action contract replay run headless
 /// against the REAL stack via the bridge `scenario` cmd (the same channel
 /// the gate harness uses for template stages): zero human in the loop.
-/// The server provisions a real bot (production HeadlessSession path) and
+/// The server provisions a real bot through the normal HeadlessSession path and
 /// drives ONE canonical M1 action (quest 251 full spine:
 /// accept_quest → advance_quest → turn_in_quest at the real NPC) + ONE
 /// canonical M2 action (mount segment: use first Lilyut horse item →

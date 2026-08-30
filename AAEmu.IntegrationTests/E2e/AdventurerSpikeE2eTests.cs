@@ -7,11 +7,11 @@ namespace AAEmu.IntegrationTests.E2e;
 /// <summary>
 /// M7 gating spike LIVE hook (ROADMAP M7: "a scoped spike — one adventurer
 /// clearing a short quest chain end-to-end — gates scheduling"): a REAL
-/// game server boots (same binaries, same MySQL, same config precedence as
-/// prod), one adventurer bot is provisioned through the shared lifecycle
-/// (HeadlessSession.Provision via the scenario bridge — real managed
-/// account + character row, level 10 Nuian, isolated from the
-/// presence-demo Citizen bots), and the adventurer-spike-fox scenario
+/// game server boots in the deployment-shaped testing environment (same
+/// binaries, same MySQL, same config precedence), and one adventurer bot is
+/// provisioned through the shared lifecycle (HeadlessSession.Provision via
+/// the scenario bridge — real managed account + character row, level 10 Nuian,
+/// isolated from the presence-demo Citizen bots), and
 /// drives quest 250 (Solzreed fox cull) end-to-end through the M5
 /// IGameplayActor contract ONLY:
 ///

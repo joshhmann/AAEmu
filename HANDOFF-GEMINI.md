@@ -59,6 +59,18 @@ Use this loop for every slice:
 8. **Repair** — fix the real engine/data/harness layer, retain the historical failure, and re-run the affected proof.
 9. **Scaling** — measure only after behavior is correct; default-off machinery must remain neutral when unset.
 
+## Environment terminology
+
+Use these names consistently in plans, reports, scripts, and handoffs:
+
+- **`dev`** — the current workspace and local-development stack.
+- **`testing`** (optionally **canary**) — the deployment-shaped,
+  non-player-facing server used for E2E, A5/Tier-3, soak, and validation runs.
+- **`production`** — the player-facing deployment only. Do not call the
+  testing server production or prod.
+- **`live`** — an evidence qualifier for an authenticated server/client run,
+  not another name for the testing environment.
+
 `H=human` means an actual player completing the curated scenario. A scripted actor, headless client, rig, or bot is functional/proxy evidence (at most H=1 by old scorecard conventions), never H=2. Josh's human verdict remains separate from automated and live-bot evidence.
 
 ## What is actually landed

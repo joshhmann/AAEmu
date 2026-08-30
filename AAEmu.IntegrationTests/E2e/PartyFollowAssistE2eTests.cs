@@ -5,12 +5,12 @@ using Xunit;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// M7 Party v1 slice 2 LIVE hook: a REAL game server boots (same binaries,
-/// same MySQL, same config precedence as prod), TWO bots are provisioned
-/// through the shared lifecycle (HeadlessSession.Provision via the scenario
-/// bridge — real managed accounts + character rows), and the
-/// m7-party-follow-assist multi-actor scenario drives a real party
-/// follow/assist run through the M5 IGameplayActor contract ONLY:
+/// M7 Party v1 slice 2 LIVE hook: a REAL game server boots in the
+/// deployment-shaped testing environment (same binaries, same MySQL, same
+/// config precedence), TWO bots are provisioned through the shared lifecycle
+/// (HeadlessSession.Provision via the scenario bridge — real managed accounts +
+/// character rows), and the m7-party-follow-assist multi-actor scenario drives
+/// a real party follow/assist run through the M5 IGameplayActor contract ONLY:
 ///
 ///   party invite/accept through TeamManager (real team membership) →
 ///   member Move legs to the leader (position convergence inside the

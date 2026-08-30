@@ -5,12 +5,13 @@ using Xunit;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// M7 party spike LIVE hook: a REAL game server boots (same binaries, same
-/// MySQL, same config precedence as prod), THREE bots are provisioned
-/// through the shared lifecycle (HeadlessSession.Provision via the scenario
-/// bridge — real managed accounts + character rows), and the m7-party-spike
-/// scenario drives a REAL party of three through one elite group encounter
-/// end-to-end via the M5 IGameplayActor contract ONLY:
+/// M7 party spike LIVE hook: a REAL game server boots in the
+/// deployment-shaped testing environment (same binaries, same MySQL, same
+/// config precedence), THREE bots are provisioned through the shared lifecycle
+/// (HeadlessSession.Provision via the scenario bridge — real managed accounts +
+/// character rows), and the m7-party-spike scenario drives a REAL party of
+/// three through one elite group encounter end-to-end via the M5
+/// IGameplayActor contract ONLY:
 ///
 ///   party invite/accept ×2 (real TeamManager party) → RALLY (members close
 ///   formation on the leader, interleaved move legs) → ENGAGE + assist

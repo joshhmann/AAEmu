@@ -13,12 +13,13 @@ using Xunit;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// TRANSFER-01 live-stack proof: a REAL game server boots (same binaries,
-/// same MySQL, same config precedence as prod), a REAL networked bot enters
-/// the world through the real login flow (BotNetworkSession — real login
-/// auth + cookie + create/select/spawn), and boards a REAL spawned transfer
-/// (ferries/carriages spawn from Data/Worlds/main_world/transfer_spawns.json
-/// through SpawnManager at boot) via the REAL C2G packet path:
+/// TRANSFER-01 live-stack proof: a REAL game server boots in the
+/// deployment-shaped testing environment (same binaries, same MySQL, same
+/// config precedence), a REAL networked bot enters the world through the real
+/// login flow (BotNetworkSession — real login auth + cookie + create/select/spawn),
+/// and boards a REAL spawned transfer (ferries/carriages spawn from
+/// Data/Worlds/main_world/transfer_spawns.json through SpawnManager at boot)
+/// via the REAL C2G packet path:
 ///
 ///   CSBoardingTransferPacket (offset 0x067, tl + attach point) →
 ///   transfer resolve by TlId → seat doodad with matching

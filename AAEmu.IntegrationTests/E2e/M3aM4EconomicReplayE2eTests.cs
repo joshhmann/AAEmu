@@ -6,11 +6,11 @@ namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
 /// BACKTRACK Phase 2 (t_b4f455b0) — M3a/M4 economic replay LIVE hook: a
-/// REAL game server boots (same binaries, same MySQL, same config precedence
-/// as prod), a bot is provisioned through the shared lifecycle, and the
-/// m3a-m4-replay scenario drives the curated M3a contract + M4
-/// economic/navigation route through the M5.1 + B1 CONTRACT ACTIONS ONLY on
-/// the live world:
+/// REAL game server boots in the deployment-shaped testing environment (same
+/// binaries, same MySQL, same config precedence), a bot is provisioned through
+/// the shared lifecycle, and the m3a-m4-replay scenario drives the curated
+/// M3a contract + M4 economic/navigation route through the M5.1 + B1 CONTRACT
+/// ACTIONS ONLY on the live world:
 ///
 ///   farm (Buy seeds → Plant → growth → Harvest) → craft (pack recipe
 ///   5403) → pack (PutDown → PackPickup) → vehicle (UseItem farm-wagon
@@ -21,8 +21,8 @@ namespace AAEmu.IntegrationTests.E2e;
 /// scenario refuses non-Completed events with their §17 reason), and the
 /// conservation criteria (pack instance, seeds, currency, labor, lifecycle)
 /// must all pass. The E2E stack boosts World.GrowthRate so the crop cycle
-/// completes within the scenario's maturity timeout (production rates would
-/// take hours — out of scope for a scripted replay), and World.LootRate so
+/// completes within the scenario's maturity timeout (player-facing production
+/// rates would take hours — out of scope for a scripted replay), and
 /// the actability-gated crop loot (the 1.2 emulator's actability multiplier
 /// is flat 1.0, leaving the millet-material/seed groups at ~3.6% rolls for
 /// any character) yields the craft materials a leveled farmer would get.

@@ -7,15 +7,16 @@ using MySql.Data.MySqlClient;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// M2b-E2E live stack orchestration — deterministic Login + Game + MySQL on
+/// M2b-E2E testing stack orchestration — deterministic Login + Game + MySQL on
 /// the dev host:
 ///   - MySQL 8 container (compose, SQL-seeded aaemu_login/aaemu_game)
 ///   - Login server process (real binary, real config, port 1237)
 ///   - Game server process (real binary, canonical Data/ClientData, 1239/1250)
 ///   - BotDriveBridge on 127.0.0.1:1260 (config-gated, dev config only)
 ///
-/// The stack is REAL: the same binaries, the same config precedence, the same
-/// MySQL the prod compose runs — nothing is stubbed or in-process.
+/// The stack is REAL: the same binaries, the same config precedence, and the
+/// same MySQL services as the deployment-shaped testing environment — nothing
+/// is stubbed or in-process.
 /// </summary>
 public static class E2eStack
 {
@@ -163,11 +164,10 @@ public static class E2eStack
         }
     }
 
-    /// <summary>
     /// Kills dotnet processes running AAEmu.Login.dll / AAEmu.Game.dll whose
     /// working directory is under E2E_ROOT — i.e. servers started by a
-    /// PREVIOUS E2E test run. Never touches prod servers (cwd differs).
-    /// </summary>
+    /// PREVIOUS E2E test run. Never touches player-facing production servers
+    /// (cwd differs).
     private static void KillStaleServers()
     {
         var root = Path.GetFullPath(E2eRoot);
@@ -388,8 +388,7 @@ public static class E2eStack
     private static string GameLocalConfig()
         // Replay pacing (scripted-actor scope, same class as GrowthRate):
         //   GrowthRate 3600 — crop cycle completes inside the scenario's
-        //     maturity timeout (production rates take hours).
-        //   LootRate 100 — the 1.2 emulator's actability loot multiplier is
+        //     maturity timeout (player-facing production rates take hours).
         //     flat 1.0 for every rank (Actability.s_expMultipliers), so the
         //     crop loot actability gates (millet material group max_dice 359,
         //     seed group 355) stay ~3.6% rolls for ANY character; dividing
@@ -455,8 +454,8 @@ public static class E2eStack
         var log = new FileStream(logPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
 
         // Host isolation (t_eecc5604): the e2e stack shares CT-133 (4 cores)
-        // with the prod compose stack and monitoring, and single-world
-        // physics warnings on the M6 soak traced to thread descheduling.
+        // with the player-facing production compose stack and monitoring, and
+        // single-world physics warnings on the M6 soak traced to thread descheduling.
         // NOTE: a priority bump (nice -5) was prototyped but is CLAMPED by
         // the LXC host: lxc.prlimit.nice=0 (RLIMIT_NICE hard 0 — verified,
         // even root cannot raise it in this container), so the game process

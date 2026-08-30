@@ -6,10 +6,10 @@ namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
 /// M5.1 deposit/withdraw replay hook (t_7c224245): a REAL game server
-/// boots (same binaries, same MySQL, same config precedence as prod), a
-/// bot is provisioned through the shared lifecycle, and the
-/// deposit-withdraw-cycle scenario drives the M5.1 economy actions through
-/// the REAL engine paths on the live server:
+/// boots in the deployment-shaped testing environment (same binaries, same
+/// MySQL, same config precedence), a bot is provisioned through the shared
+/// lifecycle, and the deposit-withdraw-cycle scenario drives the M5.1 economy
+/// actions through the REAL engine paths on the live server:
 ///
 ///   - Character.ChangeMoney — the exact calls CSDepositMoneyPacket /
 ///     CSWithdrawMoneyPacket make (engine-validated balances);

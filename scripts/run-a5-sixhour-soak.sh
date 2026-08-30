@@ -5,7 +5,7 @@
 # Runs the G2 A5 Tier-3 dormant-timer acceptance probe for a full six-hour
 # window (A5_TIER3_SIX_HOUR=1, 360 minutes, 60s samples) against a dedicated
 # E2E stack (shifted ports, its own compose project + E2E root) so a 6h run
-# never collides with a live dev stack.
+# never collides with the active dev stack.
 #
 # The exact dotnet invocation is taken from the repo's own docs:
 #   ROADMAP.md:30 and scorecard-explorations/mechanics/playerbot-capability-matrix.md:23
@@ -181,7 +181,9 @@ E2E_REBUILD="$E2E_REBUILD" \
 dotnet test --project "$REPO_ROOT/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj" --configuration Release \
     --filter-method AAEmu.IntegrationTests.E2e.G2.A5Tier3AcceptanceProbeTests.Probe_A5Tier3DormantTimers_SixHour \
     2>&1 | tee -a "$LOG_PATH"
-test_rc="${PIPESTATUS[0]}"
+# Save PIPESTATUS before any following command (including `set -e`) can replace it.
+pipeline_status=("${PIPESTATUS[@]}")
+test_rc="${pipeline_status[0]}"
 set -e
 
 echo "== dotnet test exited with code $test_rc"
