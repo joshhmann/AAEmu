@@ -50,6 +50,25 @@ H/UAT and M6 full-exit remain separate and unclaimed.
 | [`PLAYERBOT_BLOCKER ledger`](scorecard-explorations/playerbot-blockers.md) | Active bot blockers and retained resolutions |
 | [`PlayerBot Capability Matrix`](scorecard-explorations/mechanics/playerbot-capability-matrix.md) | Perceive / Decide / Act / Verify and autonomous-loop view |
 
+### Scope map
+
+The hierarchy below is authoritative for current planning and reporting:
+
+- **M0–M7** — landed foundation/product milestones (with any separately
+  recorded open human/client gates).
+- **Post-M7 readiness and closure** — the current umbrella scope; it is not a
+  new numbered milestone. It contains:
+  - **PB-001, PB-002, PB-005, PB-007** — capability/blocker tracks.
+  - **A3, A4, A5** — population/scaling acceptance gates.
+  - **slices** — implementation units within a track or gate.
+  - **H** — human/client acceptance, deferred separately from automated,
+    rig/proxy, and live evidence.
+
+The roadmap separately defines a future **M8 — Living Village**; this scope map
+does not promote readiness tracks or acceptance gates into M8, and no other
+official M8 number is implied. See [`ROADMAP.md`](ROADMAP.md) for the formal M8
+roadmap entry and [`STATUS.md`](STATUS.md) for the current evidence narrative.
+
 ### Dossiers and reports
 
 - Dossiers: [navigation](scorecard-explorations/mechanics/navigation-domain.md),
@@ -130,16 +149,18 @@ closes loop?** and **Bot closes loop autonomously?** A `No` or `Unknown` is
 preserved as evidence, not inferred from a proxy; H/UAT remains separate.
 
 ## Objective QAT/UAT matrix
-
-Apply the loop-closure definition above to each row. The evidence column names
-the current label and scope; the next-action column names any remaining
-functional, live, or human/client gate.
+Apply the loop-closure definition above to each row. The first rows record
+milestone-scoped gates for M1–M7; the rows prefixed **Post-M7 readiness** are
+child tracks or gates under the umbrella defined in the [scope map](#scope-map),
+not peer milestones. The evidence column names the current label and scope; the
+next-action column names any remaining functional, live, or human/client gate.
 
 **Evidence labels:** **A** = automated/contract; **R** = deterministic rig or
-PlayerBot proxy; **L** = live authenticated server/client; **H** = human/client
-feel. `H unknown` is intentional where Josh has not run the gate. A/R/L never
-becomes UAT. “Missing action” is the next evidence action, not a claim that it
-has already happened.
+**PlayerBot proxy; **L** = live authenticated server/client; **H** =
+human/client feel. `H unknown` is intentional where Josh has not run the gate.
+A/R/L never becomes UAT. “Missing action” is the next evidence action, not a
+claim that it has already happened.
+
 
 | Objective / gate | Player closes loop? | Bot closes loop autonomously? | Loop-closure evidence (A/R/L/H) | Remaining QAT/UAT action | Owner | Acceptance artifact |
 |---|---|---|---|---|---|---|
@@ -152,11 +173,11 @@ has already happened.
 | **M5 actor decision/action loop** | **Unknown (H/client gate where applicable)** | **Unknown/Open (universal decision loop)** | **A/R:** `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` at `263ecc66c474ca1c5f4b085e86ef3e47f49fd1` provide immutable observed context, legality-before-preference, bounded candidates, deterministic fixed-priority/personality/tie-break selection, terminal postcondition, and existing `GameplayActor` dispatch in `LevelingLoop`'s quest-accept choice; `BotDecisionProposalTests` 5/5. This is a decision primitive plus scoped quest consumer, not universal bot autonomy; broad M5 policy remains open. |
 | **M6 human/exit gate — B4 restart** | **N/A (restart gate)** | **Unknown/Open (harness-driven lifecycle; autonomous decision closure not demonstrated)** | **A/R:** current M6 focused evidence 105/105; `c97909f4f` isolates baseline population, `950cfd279` provides cooperative cancellation, and `155c82c66` adds the default-skipped six-hour natural dormant-timer stage. Corrected rehearsal at 4721 passed 1/1 with 1000 seeded, 50 embodied, 950 dormant, materialize p95 259.2ms, RSS +2.56%, 50 dematerialized, owned cleanup zero. No six-hour execution, M6 full-exit, or H/UAT result. |
 | **M7 adventurer/party loop** | **Unknown (H/client gate open)** | **Unknown/Open (A/R rig/proxy only; broad autonomous decision closure not demonstrated)** | **A/R:** current focused M7 evidence is **147/147** no-fail/no-skip: primary 36/36 (Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4, PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support 111/111. Hunt kill uses real `DoOnMonsterHuntEvents` with fixture HP=0; Party spike is synthetic/fixture. | **L/H:** no current live authenticated-client run or H/UAT; keep bounded LevelingLoop 254→255 only. Broad decision closure, real damage/Npc.DoDie, scheduler-driven route, party roles/regroup/restart/disconnect, mount/travel remain open. | M7 bot lane; Josh for H | [M7 roadmap reconciliation](ROADMAP.md) + [capability matrix](scorecard-explorations/mechanics/playerbot-capability-matrix.md) |
-| **PB-001 routed navigation** | **Unknown (live/H open)** | **Unknown (contract/nav coverage; autonomous loop open)** | **A/R:** landed `IGameplayActor.NavigateTo`; tracked `GameplayActorNavigateTests` five-test run passes and `BaiNavigationRigTests` covers GeoData/navmesh. | **L/H:** exercise interior and cross-region routes on the live stack and have Josh assess movement feel; broad coverage is still open. | Navigation lane; Josh for H | [Blocker PB-001](scorecard-explorations/playerbot-blockers.md) + focused test result in [STATUS](STATUS.md) |
-| **PB-002 autonomous progression** | **Unknown (broad route open)** | **Unknown (broad autonomous loop open)** | **A/R:** discovery/talk/template and `LevelingLoopScenarioRigTests` slices pass; item-use quest 252 is real-path evidence. Canonical interaction candidate quest 270 remains failed; broad claim is open. | **R/L/H:** expand runnable-content selection and objective execution, resolve or explicitly classify the quest-270 interaction, then run a live/client progression slice. | Quest/playerbot lane; Josh for H | [PB-002 blocker](scorecard-explorations/playerbot-blockers.md) + [leveling report](scorecard-explorations/generated/leveling-loop-2026-08-25.md) |
-| **PB-005 NPC grounding** | **N/A (audit outcome)** | **N/A (audit outcome)** | **A:** terrain replay corrected 593 non-whitelisted severe-positive rows; 702 intentional whitelist rows are unchanged. Cave/interior, submerged classification, and duplicate ownership remain unresolved. | **H:** Josh runs the W4-5 grounding tour and records coordinates/screenshots; engineering then classifies cave/deck/submerged findings and duplicate rows. | Server/data lane; Josh for H | [Grounding audit](scorecard-explorations/generated/npc-grounding-audit-2026-08-25.md) + [W4-5 packet](Docs/JOSH-QAT-WAVE4.md) |
-| **PB-007 narrow PvP** | **Unknown (H open)** | **Unknown (live login, not PlayerBot parity)** | **L:** isolated real-login E2E passes the flagged-aggression handshake and Peace block; this closes only the narrow handshake. | **L/H:** run the deferred WAR-HONOR (>251 hostile kills plus conflict timer) and broader PvP/honor/client-feel scope; do not reuse the handshake pass. | PvP lane; Josh for H | [PB-007 report](scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md) + W4-4 packet |
-| **A5 / Tier-3 dormancy** | **N/A (load gate)** | **N/A (load gate)** | **A/R/L:** A5 near-term gate passes with 100 dormant/10 embodied, RSS +2.09%, materialize p95 251.7 ms; G2-A3 1,000-bot transition p99 passes. | **A/R/L:** run an approved six-hour dormant-timer soak; setup cancellation safety is implemented by `950cfd279` (`BotDriveClient.CallAsync` token/timeout, compatible sync `Call`, cooperative A5Tier3 worker deadline/stop, no `Thread.Abort`). Preserve exact SHA, env, and cleanup evidence. No H claim is needed for this load gate. | Scaling/rig lane | [G2-A5 report](scorecard-explorations/generated/g2-a5-acceptance-report.md) + [G2-A3 report](scorecard-explorations/generated/g2-a3-storm-report.md) + PB-SOAK ledger entry |
+| **Post-M7 readiness — PB-001 routed navigation track** | **Unknown (live/H open)** | **Unknown (contract/nav coverage; autonomous loop open)** | **A/R:** landed `IGameplayActor.NavigateTo`; tracked `GameplayActorNavigateTests` five-test run passes and `BaiNavigationRigTests` covers GeoData/navmesh. | **L/H:** exercise interior and cross-region routes on the live stack and have Josh assess movement feel; broad coverage is still open. | Navigation lane; Josh for H | [Blocker PB-001](scorecard-explorations/playerbot-blockers.md) + focused test result in [STATUS](STATUS.md) |
+| **Post-M7 readiness — PB-002 autonomous progression track** | **Unknown (broad route open)** | **Unknown (broad autonomous loop open)** | **A/R:** discovery/talk/template and `LevelingLoopScenarioRigTests` slices pass; item-use quest 252 is real-path evidence. Canonical interaction candidate quest 270 remains failed; broad claim is open. | **R/L/H:** expand runnable-content selection and objective execution, resolve or explicitly classify the quest-270 interaction, then run a live/client progression slice. | Quest/playerbot lane; Josh for H | [PB-002 blocker](scorecard-explorations/playerbot-blockers.md) + [leveling report](scorecard-explorations/generated/leveling-loop-2026-08-25.md) |
+| **Post-M7 readiness — PB-005 NPC grounding track** | **N/A (audit outcome)** | **N/A (audit outcome)** | **A:** terrain replay corrected 593 non-whitelisted severe-positive rows; 702 intentional whitelist rows are unchanged. Cave/interior, submerged classification, and duplicate ownership remain unresolved. | **H:** Josh runs the W4-5 grounding tour and records coordinates/screenshots; engineering then classifies cave/deck/submerged findings and duplicate rows. | Server/data lane; Josh for H | [Grounding audit](scorecard-explorations/generated/npc-grounding-audit-2026-08-25.md) + [W4-5 packet](Docs/JOSH-QA-WAVE4.md) |
+| **Post-M7 readiness — PB-007 narrow PvP track** | **Unknown (H open)** | **Unknown (live login, not PlayerBot parity)** | **L:** isolated real-login E2E passes the flagged-aggression handshake and Peace block; this closes only the narrow handshake. | **L/H:** run the deferred WAR-HONOR (>251 hostile kills plus conflict timer) and broader PvP/honor/client-feel scope; do not reuse the handshake pass. | PvP lane; Josh for H | [PB-007 report](scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md) + W4-4 packet |
+| **Post-M7 readiness — A5 / Tier-3 dormancy gate** | **N/A (load gate)** | **N/A (load gate)** | **A/R/L:** A5 near-term gate passes with 100 dormant/10 embodied, RSS +2.09%, materialize p95 251.7 ms; G2-A3 1,000-bot transition p99 passes. | **A/R/L:** run an approved six-hour dormant-timer soak; setup cancellation safety is implemented by `950cfd279` (`BotDriveClient.CallAsync` token/timeout, compatible sync `Call`, cooperative A5Tier3 worker deadline/stop, no `Thread.Abort`). Preserve exact SHA, env, and cleanup evidence. No H claim is needed for this load gate. | Scaling/rig lane | [G2-A5 report](scorecard-explorations/generated/g2-a5-acceptance-report.md) + [G2-A3 report](scorecard-explorations/generated/g2-a3-storm-report.md) + PB-SOAK ledger entry |
 | **Mail** | **Unknown (client/UAT open)** | **Unknown (no PlayerBot parity recorded)** | **L:** Mail S3 authenticated restart E2E passed equipment/copper persistence, ownership, unread count, take, and delete. | **L/H:** capture the real-client return opcode (0x0a2 remains strongly inferred), run W4-1/W4-2 ownership UI checks, and close COD plus expiry/bounce follow-ups. | Mail lane; Josh for client capture | [Mail dossier](scorecard-explorations/mechanics/mail-domain.md) + [W4 mail packet](Docs/JOSH-QAT-WAVE4.md) + S3 note in [STATUS](STATUS.md) |
 | **Dominion** | **Unknown (client/UAT open)** | **Unknown (autonomous loop not recorded)** | **L:** slice-1 persistence, phase schedule/tax update, and kill-9 reload are recorded. | **L/H:** exercise real declare-trigger UI and later combat/siege-battle slices; current persistence does not imply combat or client UI acceptance. | Dominion lane; Josh for UI | [Dominion dossier](scorecard-explorations/mechanics/dominion-domain.md) + [ROADMAP slice](ROADMAP.md) |
 | **Ships** | **Unknown (client/UAT open)** | **Unknown (autonomous loop not recorded)** | **L (current fix context) / historical:** PB-006 records the region-sync fix and live sailing proof; the checked-in rowboat report is the pre-fix failure and remains historical. | **L/H:** rerun W4-6 B1–B6 on the current source/deploy, including steering, disembark/despawn, passenger view where available, and shipyard restart caveats. | Ships lane; Josh for feel | [Ships dossier](scorecard-explorations/mechanics/ships-domain.md) + [W4-6 packet](Docs/JOSH-QAT-WAVE4.md) + historical [rowboat report](scorecard-explorations/generated/ships-rowboat-e2e-report.md) |

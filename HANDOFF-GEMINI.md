@@ -12,6 +12,11 @@
 - Start from [`GEMINI-NEXT-INSTRUCTIONS.md`](GEMINI-NEXT-INSTRUCTIONS.md) for
   the safe temporary-worktree workflow, current MCP evidence boundary, and
   ordered continuation gates.
+- For label hierarchy, use the authoritative [scope map](PROJECT-CONTROL.md#scope-map):
+  M0–M7 are landed milestones; current PB tracks and A3/A4/A5 gates are under
+  the Post-M7 readiness and closure umbrella, with slices inside them and H
+  deferred separately. The roadmap's formally defined future M8 remains distinct.
+
 - Flash reports fifteen additional authenticated actor routes/tools beyond the
   earlier route-count checkpoint: `deposit_money`, `withdraw_money`,
   `deposit_item`, `withdraw_item`, `plant`, `harvest`, `craft`, `buy`, `sell`,

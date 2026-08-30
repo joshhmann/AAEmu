@@ -18,19 +18,67 @@ consumer only, and broad M5 policy/universal autonomy remain open. M6 includes
 `950cfd279` cancellation, `c97909f4f` population isolation, and opt-in
 six-hour leg `155c82c66` integrated here.
 
-The six-hour test is default skipped and requires
-`A5_TIER3_SIX_HOUR=1`, `A5_TIER3_SIX_HOUR_MINUTES>=360`, and
-`A5_TIER3_SIX_HOUR_SAMPLE_SECONDS` from 1 through 300. It uses cooperative
-deadline propagation and ID-bound `finally` cleanup. Corrected Tier3 readiness
-at source/test `4721cbd306cbf346bfe38b7373d5adf479b6231f` passed 1/1 in
-15m20.984s: seeded 1000, embodied 50, dormant 950, materialize p95 259.2ms,
-RSS +2.56%, 50 dematerialized, owned cleanup zero. Cancellation 3/3 and
-ownership 2/2 also pass. No six-hour execution or metrics are claimed.
+**Hierarchy note:** Current work is under **Post-M7 readiness and closure**, an
+umbrella scope rather than a new numbered milestone. PB-001/PB-002/PB-005/PB-007
+are capability/blocker tracks; A3/A4/A5 are population/scaling acceptance
+gates; slices sit inside those tracks or gates; H is deferred human/client
+acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
+formally defines a future **M8 — Living Village**; readiness labels are not
+renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+## 2026-08-29 — Post-M7 readiness and closure: PB-002 aggro slice
+
+- **PB-002 result: PARTIAL capability closure, broad autonomy OPEN.** The
+  `LevelingLoopScenario` now has an `AggroLeg` for canonical
+  `QuestActObjAggro` forms whose live quest instance has a non-zero NPC
+  acceptor template. It selects only normal perceived, attackable NPCs of
+  that template, requires the owner to be present in the victim's real aggro
+  ranking at a configured Rank1/Rank2/Rank3 threshold, then reuses the shared
+  SetTarget → Cast → kill → Loot path. Completion is read back from live quest
+  state after the real OnKill event boundary; no objective counter is written
+  by the scenario.
+- Canonical aggro census remains **37 rows, 30 attached progress acts, and
+  30 distinct quests**; all 30 use `QuestActConAcceptComponent` and none use
+  NPC/NPC-kill acceptance. This slice does not change acceptance-channel
+  counts. The supported component/NPC-acceptor boundary is exercised by
+  canonical quest **2432** (aggro act id **4**, NPC template **9**, Level 6).
+  Component forms without an NPC acceptor or without a kill path that emits
+  `OnKillArgs.Target = dead NPC` remain open and are explicitly fail-closed.
+- Evidence layer is **A / rig (proxy/bot-functional)**, not H, restart, or soak:
+  `LevelingLoopScenarioRigTests` **21/21** (including positive aggro and
+  no-owner-attribution control), `QuestActObjAggroTests` **2/2**. No live
+  client or human gameplay evidence is claimed; the separate A5 canary result
+  is diagnostic only and is recorded below.
+- Remaining broad PB-002 gaps include unsupported objective families
+  (item-group resolution, cross-quest, level/ability/mount training,
+  zone-scoped kills, and other named `KnownPrimitiveGaps`) plus the canonical
+  interaction fixture's missing phase functions. **Next action:** keep the
+  aggro boundary in the focused gate and extend only with another canonical
+  target whose live ranking and kill event are observable; do not claim
+  universal autonomous leveling or PB-002 closure.
+
+
+The six-hour stage is opt-in and requires `A5_TIER3_SIX_HOUR=1`,
+`A5_TIER3_SIX_HOUR_MINUTES>=360`, and sample seconds 1 through 300. The
+six-hour dormant soak DID execute at
+`/root/aaemu-e2e-a5-tier3-sixhour/logs/g2-a5-tier3-sixhour-report.json` for
+360.00003 minutes / 361 samples: DormantSpecs 1000 throughout, embodied 0,
+materializations/dematerializations 0, queues/failures/save-skips 0, DB writes
+delta 0, tick max 19.1ms, and save p95/max 85.7/100.8ms. Its RSS assertion
+failed because the baseline was captured before deferred world startup settled
+(baseline 1207.9MB, peak 5749.4MB, final 3744.1MB, budget +512MB); this is not
+yet classified as a leak.
+
+Evidence classification is **testing/canary diagnostic failure**, not live
+human gameplay evidence and not an A5 pass. Correction `ccd4ea857` adds
+explicit `A5_WARMUP_READY`, a post-quiescence baseline, separate startup-peak
+accounting, and fail-fast post-baseline RSS breach handling with FULL/PARTIAL
+report semantics. A corrected rerun (preferably a 12-hour testing soak) is
+pending. The old bounded Tier3 rehearsal below remains historical evidence.
 
 The prior full gate at `0ce518ac03a18de00fff1516aa9e794e8566bee6` remains
 2504 total / 2503 passed / 0 failed / 1 skipped, compiler 0/0, MCP 39; no new
-full gate was run for `da0fdc61`. The six-hour timer leg remains PENDING. No
-M6 full-exit or H/UAT claim is made; historical reports remain preserved.
+full gate was run for `da0fdc61`. No M6 full-exit or H/UAT claim is made;
+historical reports and failed soak provenance remain preserved.
 
 Josh human-QAT wave 4: Docs/JOSH-QAT-WAVE4.md (2026-08-25) — 8-pack for mail
 return (0x0a2 hypothesis), mail ownership guards, labor regen, war-gated
@@ -81,10 +129,15 @@ honor, NPC grounding tour, boats, slavetest observation, Mirage walk.
   cover selected perception-driven quest steps. Current item-use coverage drives
   `QuestActObjItemUse` through real `GameplayActor.UseItem` for canonical quest
   252 (NPC 7653, item 7738, use skill 11596, act row 1600/detail 43), with
-  fail-closed canonical quest 64 control. The failed canonical interaction
-  candidate remains open: quest 270, doodad 687, interaction skill 11229; the
-  real path reaches `Doodad.Use`, but the spawned fixture exposes no phase
-  functions. No implementation landed for this candidate. Broad autonomous
+  fail-closed canonical quest 64 control. **Historical/pre-fix interaction
+  context:** the earlier quest-270 candidate (doodad 687, interaction skill
+  11229) reached `Doodad.Use`, but its spawned fixture exposed no phase
+  functions; the old failure and “No implementation landed” conclusion are
+  preserved as historical evidence only. **Current result:** quest **269→270**
+  interaction is landed and verified at the deterministic rig layer through
+  `QuestActObjInteraction` / `GameplayActor.InteractWith`; the current
+  `LevelingLoopScenarioRigTests` total is **21/21** after the aggro work.
+  Broad PB-002 remains open with no live or human breadth claim.
 **Behavioral gate evidence (normal-clone full gate at source/test HEAD
 `792774d7707b8b578b8d9975896e0a1ac719f361`):** Release build PASS, compiler
 check 0/0, unit **2496 total / 2495 passed / 0 failed / 1 skipped**, and MCP
@@ -105,11 +158,20 @@ result is claimed.
   passed 1/1 in 15m20.984s: 1000 seeded, 50 embodied, 950 dormant,
   materialize p95 259.2ms, RSS +2.56%, 50 dematerialized, owned cleanup zero.
   This is readiness evidence only.
-- `155c82c66` adds the opt-in six-hour natural dormant-timer test. It is
-  default skipped and requires `A5_TIER3_SIX_HOUR=1`, minutes >=360, and sample
-  seconds 1..300. The leg has cooperative deadline propagation and ID-bound
-  `finally` cleanup. No six-hour execution or metrics are claimed; the timer
-  leg remains PENDING.
+- `155c82c66` adds the opt-in six-hour natural dormant-timer test. The old
+  default-skipped/no-result wording is historical pre-execution context only.
+  The executed canary report is
+  `/root/aaemu-e2e-a5-tier3-sixhour/logs/g2-a5-tier3-sixhour-report.json`:
+  360.00003 minutes / 361 samples, DormantSpecs 1000, embodied 0,
+  materializations/dematerializations 0, queues/failures/save-skips 0, DB
+  writes delta 0, tick max 19.1ms, save p95/max 85.7/100.8ms. RSS assertion
+  failed on the pre-quiescence baseline (1207.9MB → peak 5749.4MB → final
+  3744.1MB; budget +512MB), not yet classified as a leak.
+- This is a testing/canary diagnostic failure, not live human gameplay and not
+  an A5 pass. Correction `ccd4ea857` adds `A5_WARMUP_READY`, post-quiescence
+  baseline, separate startup peak, fail-fast post-baseline RSS breach, and
+  FULL/PARTIAL report semantics. A corrected rerun, preferably 12 hours,
+  remains pending.
 - Cancellation focused tests pass 3/3; ownership focused tests pass 2/2.
   The prior full gate at 0ce remains historical: 2504 total / 2503 passed /
   0 failed / 1 skipped, compiler 0/0, MCP 39. No new full gate was run at da0.
@@ -246,15 +308,14 @@ Indun addendum refuted PB-003's data premise before its E2E closed it.
   (MonsterHunt/MonsterGroupHunt) added to LevelingLoopScenario with
   cast-burst rotation, loot-per-corpse, no-progress exclusion; quests 329 +
   1652 complete unprompted (+620/+680 XP); suite 2393/2394 green.
-- Tier-3 shape MEASURED (g2-a5-acceptance-report.md §11, worktree tier3):
-  1,000 dormant seeded through real provisioning (~4.1 min sequential) /
-  exactly 50 embodied; RSS +0.13% vs the 50-active baseline (3832.1 →
-  3837.0 MB median); wake-to-visible p95 280.2 ms (10.7× under the 3 s bar);
-  steps/min parity 15003 vs 14995. No six-hour dormant-timer soak exists in
-  the current evidence; this leg remains unmeasured. Concurrent seedDormant
-  corrupts server state after ~100 bots (documented; seeding stays sequential).
-  Per-run ownership hardening `799b698ad` separately scopes A5/A5Tier3 cleanup
-  to newly observed account/character IDs; sibling-preservation tests pass 2/2.
+- **Historical Tier-3 shape measurement (g2-a5-acceptance-report.md §11):**
+  1,000 dormant seeded through real provisioning / exactly 50 embodied; RSS
+  +0.13% vs the 50-active baseline; wake-to-visible p95 280.2ms; steps/min
+  parity 15003 vs 14995. The later six-hour canary did execute; see the
+  current A5 diagnostic above. Concurrent `seedDormant` corrupts server state
+  after ~100 bots (documented; seeding stays sequential). Per-run ownership
+  hardening `799b698ad` separately scopes A5/A5Tier3 cleanup to newly observed
+  account/character IDs; sibling-preservation tests pass 2/2.
 
 **2026-08-26 wave 7 (validation infrastructure + dominion/pvp/crime
 verticals):** **G3-B5 DONE** — behavioral scenario library promoted
@@ -483,14 +544,20 @@ movement caveat and formal regrade wording remain unchanged; H stays separate.
 scheduled action → preserves identity, inventory, position, and metadata
 through restart → dematerializes safely. `c97909f4f` isolates the baseline
 presence roster before dormant seeding; `950cfd279` provides cooperative
-bridge cancellation; `155c82c66` adds the default-skipped natural six-hour
-dormant-timer stage with explicit controls, cooperative deadline, and ID-bound
-cleanup. Focused M6 evidence remains **105/105**. Corrected Tier3 readiness at
-`4721cbd306cbf346bfe38b7373d5adf479b6231f` is 1/1: 1000 seeded, embodied 50,
-dormant 950, materialized 50, p95 259.2ms, RSS +2.56%, 50 dematerialized,
-owned cleanup zero. No six-hour execution or metrics, M6 full-exit, or H/UAT
-claim is made.
-
+bridge cancellation; `155c82c66` adds the natural six-hour dormant-timer stage
+with explicit controls, cooperative deadline, and ID-bound cleanup. Focused
+M6 evidence remains **105/105**. Corrected Tier3 readiness at
+`4721cbd306cbf346bfe38b7373d5adf479b6231f` is historical 1/1: 1000 seeded,
+embodied 50, dormant 950, materialized 50, p95 259.2ms, RSS +2.56%, 50
+dematerialized, owned cleanup zero. The six-hour canary DID execute and
+produced `/root/aaemu-e2e-a5-tier3-sixhour/logs/g2-a5-tier3-sixhour-report.json`
+for 360.00003 minutes / 361 samples: DormantSpecs 1000, embodied 0,
+materializations/dematerializations 0, queues/failures/save-skips 0, DB writes
+delta 0, tick max 19.1ms, save p95/max 85.7/100.8ms. RSS assertion failed on
+the pre-quiescence baseline (1207.9MB baseline, 5749.4MB peak, 3744.1MB final,
+budget +512MB), not yet classified as a leak. Testing/canary diagnostic
+failure only, not an A5 pass or live/human evidence. `ccd4ea857` corrects
+warmup/baseline/peak handling; a preferably 12-hour rerun remains pending.
 **M7 player-loop reconciliation (2026-08-28; current source/test HEAD
 `ded008de8d67ece8718e9235fd02503b43ceb6a1`):** An ordinary
 `Character`/PlayerBot discovers and accepts a quest, navigates, chooses legal

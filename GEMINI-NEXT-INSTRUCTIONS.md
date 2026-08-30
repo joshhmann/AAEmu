@@ -4,6 +4,12 @@ This is the continuation brief for a fresh Gemini agent working on AAEmu. It is
 an evidence handoff, not a claim that MCP replaces the real client, packet, DB,
 restart, scaling, or human gates.
 
+For label hierarchy, use the authoritative [scope map](PROJECT-CONTROL.md#scope-map):
+M0–M7 are landed milestones; current PB-001/PB-002/PB-005/PB-007 tracks and
+A3/A4/A5 gates are under the **Post-M7 readiness and closure** umbrella. Slices
+belong inside tracks or gates, and H remains separate human/client acceptance.
+The roadmap formally defines a future M8; do not treat readiness labels as M8.
+
 ## 1. Audit result and checkpoint
 
 The handoff documents were audited against current source/test HEAD
