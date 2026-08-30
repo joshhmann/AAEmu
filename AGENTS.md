@@ -380,6 +380,20 @@ completes the named scenario.
 
 When asked to modify, fix, or improve code, **do not invent conventions**. Inspect the target area and the sources below, then mirror what is already there.
 
+### Documentation-first scope check
+
+Before planning or editing any non-trivial task, read the entire relevant current documentation set, not just a matching snippet. Start with:
+
+1. `AGENTS.md` (rules)
+2. `PROJECT-CONTROL.md` (authoritative scope map and records)
+3. `STATUS.md` (current state/evidence)
+4. `SCORECARD.md` (conservative evidence dimensions)
+5. `ROADMAP.md` (milestone requirements and next work)
+6. The relevant `Docs/wiki/`, dossier, evidence, and source/test docs for the task.
+
+Establish the hierarchy before implementation: **milestone/umbrella → capability track or gate → current slice → evidence boundary → next action**. Do not describe a slice as a completed track or milestone. Use repository documentation indexes/maps and graph/document-relationship tooling, including Graphify when available, to find related docs and avoid missing cross-references; graph output supplements, never replaces, reading authoritative documents. When scope or evidence changes, update the authoritative status, scorecard, and roadmap records in the same wave. Handoff docs are execution notes, not the project source of truth. Preserve historical evidence and distinguish rig/proxy, live, and human evidence.
+
+
 ### Authoritative sources (in order)
 
 1. **Neighboring code** in the same folder, namespace, and subsystem — this is the primary style guide.
