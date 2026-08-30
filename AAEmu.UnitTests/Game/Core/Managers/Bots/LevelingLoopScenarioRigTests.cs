@@ -13,6 +13,7 @@ using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units.Static;
+using AAEmu.Game.Models.Game.Units;
 using AAEmu.UnitTests.Utils.Mocks;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
@@ -823,6 +824,133 @@ public class LevelingLoopScenarioRigTests
             target.Hp = 0; // down — the alive filter excludes it from reselection
             return true;
         }
+    }
+    /// <summary>
+    /// Aggro-objective rig seam: executes the two normal engine event
+    /// boundaries used by Npc.DoDie. Headless fixture worlds do not have the
+    /// production WorldInstance event bus needed by the full DoDie method,
+    /// so the seam invokes QuestManager's real monster-hunt fanout and the
+    /// killer's real OnKill delegate with the slain NPC as Target. This is
+    /// synthetic damage only; objective progress remains engine-owned.
+    /// </summary>
+    private sealed class AggroRigKillSeam : LevelingLoopScenario.IAggroKillCreditSeam
+    {
+        public bool TryKill(GameplayActor actor, Npc target) => TryKillAggro(actor, target);
+
+        public bool TryKillAggro(GameplayActor actor, Npc target)
+        {
+            if (target.Hp <= 0)
+                return true;
+
+            QuestManager.Instance.DoOnMonsterHuntEvents(actor.Character, target);
+            target.Hp = 0;
+            actor.Character.Events.OnKill(actor.Character, new OnKillArgs
+            {
+                Target = target,
+                Killer = actor.Character,
+                Victim = target
+            });
+            return true;
+        }
+    }
+
+
+    /// <summary>
+    /// E-AGGRO-1: canonical component-only aggro objective. Quest 2432
+    /// (Level 6, Progress QuestActObjAggro id 4, Reward AutoComplete) is started by
+    /// the real EngageCombatGiveQuestId path on NPC template 9. The perceived
+    /// target carries the actor in its real aggro table; the aggro rig seam
+    /// then executes the engine kill-event boundary, causing the corrected
+    /// OnKill victim payload to rank and complete the live objective. There is
+    /// intentionally no synthetic AcceptQuest trace because this canonical
+    /// quest has no AcceptNpc act: engage is its acceptance channel.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_CanonicalAggroObjective_CompletesThroughLiveOnKillCredit()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-aggro");
+        var character = session.Character;
+        character.Faction = new AAEmu.Game.Models.Game.Faction.SystemFaction
+        {
+            Id = AAEmu.Game.Models.StaticValues.FactionsEnum.HaranyaAlliance,
+            MotherId = AAEmu.Game.Models.StaticValues.FactionsEnum.HaranyaAlliance
+        };
+        character.Level = 6; // canonical quest 2432 gate
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        var targetObjId = SpawnHubNpc(session, 9, new Vector3(1, 0, 0), 2432);
+        var target = session.World.GetNpc(targetObjId)!;
+        target.AddUnitAggro(AggroKind.Damage, character, 100);
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(2432u)).IsTrue();
+        await Assert.That(target.GetAggroRatingInPercent(character.ObjId)).IsLessThan(100f);
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        }, new AggroRigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(2432u);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjAggro));
+        await Assert.That(character.Quests.HasQuestCompleted(2432u)).IsTrue();
+
+        var trace = result.TraceRecords;
+        var firstObserve = IndexOfFirst(trace, ActorActionType.Observe, 0);
+        var firstTarget = IndexOfFirst(trace, ActorActionType.Target, targetObjId);
+        var firstCast = FirstAtLeast(trace, ActorActionType.Cast, firstTarget + 1);
+        var firstLoot = FirstAtLeast(trace, ActorActionType.Loot, firstCast + 1);
+        await Assert.That(firstObserve).IsGreaterThanOrEqualTo(0);
+        await Assert.That(firstTarget).IsGreaterThan(firstObserve);
+        await Assert.That(firstCast).IsGreaterThan(firstTarget);
+        await Assert.That(firstLoot).IsGreaterThan(firstCast);
+        await Assert.That(trace.Any(r => r.Action == ActorActionType.AcceptQuest &&
+            r.TargetId == 2432u)).IsFalse();
+    }
+
+    /// <summary>
+    /// E-AGGRO-2: fail-closed attribution control. The canonical quest is
+    /// auto-started by an out-of-range engage source, but the only perceived
+    /// target has no owner aggro entry. The loop must not cast, inject OnKill,
+    /// or complete the objective.
+    [Test]
+    public async Task LevelingLoop_AggroObjectiveWithoutOwnerAttribution_FailsClosed()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-aggro-no-credit");
+        var character = session.Character;
+        character.Faction = new AAEmu.Game.Models.Game.Faction.SystemFaction
+        {
+            Id = AAEmu.Game.Models.StaticValues.FactionsEnum.HaranyaAlliance,
+            MotherId = AAEmu.Game.Models.StaticValues.FactionsEnum.HaranyaAlliance
+        };
+        character.Level = 6;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        var engageSourceObjId = SpawnHubNpc(session, 9, new Vector3(100, 0, 0), 2432);
+        var engageSource = session.World.GetNpc(engageSourceObjId)!;
+        engageSource.AddUnitAggro(AggroKind.Damage, character, 100);
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(2432u)).IsTrue();
+
+        var targetObjId = SpawnHubNpc(session, 9, new Vector3(1, 0, 0));
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            NoTargetRetries = 1
+        }, new AggroRigKillSeam());
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo("OBJECTIVES:aggro(4)");
+        await Assert.That(result.FailReason).Contains("aggro attribution");
+        await Assert.That(result.FailReason).Contains(targetObjId.ToString());
+        await Assert.That(character.Quests.HasQuestCompleted(2432u)).IsFalse();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(2432u)).IsTrue();
+        await Assert.That(result.TraceRecords.Any(r => r.Action == ActorActionType.Cast)).IsFalse();
     }
 
     /// <summary>

@@ -64,6 +64,12 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     (Npc.DoDie → QuestManager.DoOnMonsterHuntEvents); RIG = the
 ///     documented synthetic kill through <see cref="IKillCreditSeam"/>
 ///     (the exact entry point Npc.DoDie calls for a character killer).
+///   - QuestActObjAggro              → resolve the acceptor NPC template
+///     named by the live quest instance, require that the perceived target
+///     has the owner in its real aggro table at a configured rank, then use
+///     the same SetTarget → cast → kill path. Aggro credit is read from the
+///     live objective after the REAL OnKill event (or the explicit
+///     <see cref="IAggroKillCreditSeam"/> rig seam); no counter is written.
 ///   - everything else             → fail closed (see GapReason).
 ///
 /// World access discipline: perception rides Observe() (region graph) +
@@ -185,6 +191,18 @@ public static class LevelingLoopScenario
     public interface IKillCreditSeam
     {
         bool TryKill(GameplayActor actor, Npc target);
+    }
+
+    /// <summary>
+    /// Kill-credit seam used by an aggro objective in a deterministic rig.
+    /// Unlike the ordinary hunt seam, this entry point MUST execute the
+    /// target's normal death path so Character.Events.OnKill receives the
+    /// slain NPC as OnKillArgs.Target. Returning true without that event is
+    /// deliberately rejected by AggroLeg.
+    /// </summary>
+    public interface IAggroKillCreditSeam : IKillCreditSeam
+    {
+        bool TryKillAggro(GameplayActor actor, Npc target);
     }
 
     /// <summary>One completed chain link, as PERCEIVED (never pre-scripted).</summary>
@@ -486,7 +504,8 @@ public static class LevelingLoopScenario
         [nameof(QuestActObjItemGroupGather)] =
             "missing item-group source resolution (HighlightDoodadId is single-template; group sources unmapped)",
         [nameof(QuestActObjAggro)] =
-            "missing aggro-attribution primitive",
+            "partial: NPC-acceptor aggro rank is pursued; component forms without a non-zero " +
+            "acceptor template or a kill path that emits OnKillArgs.Target remain unsupported",
         [nameof(QuestActObjZoneKill)] =
             "missing zone-scoped kill attribution (zone-gated victim/killer composition — the plain hunt leg does not cover it)",
         [nameof(QuestActObjCompleteQuest)] =
@@ -559,6 +578,16 @@ public static class LevelingLoopScenario
                                 interactionReason, interactionFailure, actor, null);
                         break;
                     }
+                case QuestActObjAggro aggro:
+                    {
+                        var (aggroFailure, aggroReason) = AggroLeg(actor, opts, killSeam,
+                            questId, aggro, perception);
+                        if (aggroFailure != null)
+                            return Fail($"OBJECTIVES:aggro({aggro.DetailId})", aggroReason,
+                                aggroFailure, actor, null);
+                        break;
+                    }
+
 
                 case QuestActObjMonsterHunt hunt:
                     {
@@ -1111,26 +1140,53 @@ public static class LevelingLoopScenario
             actor.Equip(item.TemplateId);
         }
     }
+    /// <summary>
+    /// Aggro-ranked objective leg. The objective's live quest instance supplies
+    /// the acceptor NPC template; no scenario NPC id is used. Combat itself is
+    /// the same hunt leg (SetTarget → Cast rotation → kill → Loot), while the
+    /// additional gate requires a real owner entry in the victim's aggro table
+    /// at one of the configured ranks. Progress is accepted only after the
+    /// objective's OnKill handler observes the slain NPC as Target.
+    /// </summary>
+    private static (string? Failure, ActorFailureReason Reason) AggroLeg(
+        GameplayActor actor, LoopOptions opts, IKillCreditSeam? killSeam, uint questId,
+        QuestActObjAggro aggro, PerceptionSnapshot perception)
+    {
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return ($"quest {questId} left ActiveQuests before aggro pursuit started",
+                ActorFailureReason.StateTransition);
+
+        if (quest.QuestAcceptorType != QuestAcceptorType.Npc || quest.AcceptorId == 0)
+        {
+            return ($"quest {questId} aggro objective requires a non-zero NPC acceptor " +
+                    $"template, got {quest.QuestAcceptorType}/{quest.AcceptorId}; " +
+                    "component-only forms without an NPC acceptor are unsupported",
+                ActorFailureReason.WrongDecision);
+        }
+
+        if (aggro.Rank1 <= 0 && aggro.Rank2 <= 0 && aggro.Rank3 <= 0)
+        {
+            return ($"quest {questId} aggro objective {aggro.DetailId} has no configured " +
+                    "rank threshold; refusing to invent aggro credit",
+                ActorFailureReason.WrongDecision);
+        }
+
+        return HuntLeg(actor, opts, killSeam, questId, aggro, quest.AcceptorId, 0,
+            perception, aggroObjective: true);
+    }
+
 
     /// <summary>
-    /// The hunt leg: targets resolved DATA-DRIVEN from the act among
-    /// PERCEIVED hostiles — single-template hunts match <paramref name="targetNpcTemplateId"/>
-    /// (the act's NpcId), group hunts match QuestManager.CheckGroupNpc on
-    /// the act's monster-group id; every candidate must be ALIVE and
-    /// CanAttack (BaseUnit faction check — the adventurer-spike selection
-    /// convention). Each engagement is a real SetTarget → Cast rotation →
-    /// Loot. Kill credit flows through the REAL engine path either way:
-    /// LIVE (killSeam == null) the cast rotation's real damage must down
-    /// the prey (Npc.DoDie → DoOnMonsterHuntEvents credits); rigs apply
-    /// the documented synthetic kill through <see cref="IKillCreditSeam"/>.
-    /// Objective progress is read back from the REAL quest state
-    /// (act.GetObjective) every round — kills are never counted by hand.
-    /// A target pinned at full HP across NoProgressSkipRounds cast rounds
-    /// is excluded from reselection — exclusion only, NEVER a credit.
+    /// The hunt/aggro combat leg: targets resolved DATA-DRIVEN from the act
+    /// among PERCEIVED hostiles. Aggro mode reuses this exact engagement path
+    /// but stops after the first rank credit (Aggro RunAct is satisfied by any
+    /// positive rank), rather than hunting to QuestActTemplate.Count.
     /// </summary>
     private static (string? Failure, ActorFailureReason Reason) HuntLeg(GameplayActor actor, LoopOptions opts,
         IKillCreditSeam? killSeam, uint questId, QuestActTemplate act,
-        uint? targetNpcTemplateId, uint monsterGroupId, PerceptionSnapshot perception)
+        uint? targetNpcTemplateId, uint monsterGroupId, PerceptionSnapshot perception,
+        bool aggroObjective = false)
     {
         var character = actor.Character;
         var quest = character.Quests?.ActiveQuests.GetValueOrDefault(questId);
@@ -1142,14 +1198,16 @@ public static class LevelingLoopScenario
         _ = perception;
 
         var targetLabel = targetNpcTemplateId is { } template
-            ? $"npc template {template}"
+            ? $"{(aggroObjective ? "aggro target" : "npc template")} {template}"
             : $"monster group {monsterGroupId}";
         var excluded = new HashSet<uint>();
         var noProgress = new Dictionary<uint, int>();
         var noTargetRounds = 0;
         var roundsLeft = opts.MaxHuntRounds;
 
-        while (act.GetObjective(quest) < act.Count)
+        while (aggroObjective
+            ? act.GetObjective(quest) <= 0
+            : act.GetObjective(quest) < act.Count)
         {
             if (roundsLeft-- <= 0)
             {
@@ -1165,15 +1223,48 @@ public static class LevelingLoopScenario
                 noTargetRounds++;
                 if (noTargetRounds > opts.NoTargetRetries)
                 {
-                    return ($"no attackable hunt target ({targetLabel}) perceived after " +
-                            $"{opts.NoTargetRetries} re-observe rounds (nearby npcs: " +
-                            $"[{string.Join(", ", observation.NearbyNpcObjIds)}])",
-                        ActorFailureReason.Starvation);
+                    var noTargetReason = aggroObjective && excluded.Count > 0
+                        ? $"no perceived {targetLabel} satisfies aggro attribution for owner " +
+                          $"{character.ObjId} after excluding target(s) " +
+                          $"[{string.Join(", ", excluded)}]; objective remains {act.GetObjective(quest)}"
+                        : $"no attackable {targetLabel} perceived after " +
+                          $"{opts.NoTargetRetries} re-observe rounds (nearby npcs: " +
+                          $"[{string.Join(", ", observation.NearbyNpcObjIds)}])";
+                    return (noTargetReason, ActorFailureReason.Starvation);
                 }
 
                 continue;
             }
-            noTargetRounds = 0;
+
+            if (aggroObjective)
+            {
+                var aggroRating = target.GetAggroRatingInPercent(character.ObjId);
+                if (!float.IsFinite(aggroRating) || aggroRating >= 100f ||
+                    !AggroRankCanCredit((QuestActObjAggro)act, aggroRating))
+                {
+                    excluded.Add(target.ObjId);
+                    noTargetRounds++;
+                    if (noTargetRounds > opts.NoTargetRetries)
+                    {
+                        return ($"no perceived {targetLabel} satisfies aggro attribution for " +
+                                $"owner {character.ObjId}: target {target.ObjId} rating " +
+                                $"{aggroRating:0.###}% is absent or outside ranks " +
+                                $"{((QuestActObjAggro)act).Rank1}/" +
+                                $"{((QuestActObjAggro)act).Rank2}/" +
+                                $"{((QuestActObjAggro)act).Rank3}; objective remains " +
+                                $"{act.GetObjective(quest)}",
+                            ActorFailureReason.Starvation);
+                    }
+
+                    continue;
+                }
+
+                noTargetRounds = 0;
+            }
+            else
+            {
+                noTargetRounds = 0;
+            }
 
             // Sustain (vital recovery): if HP < 35%, recover before engaging
             var maxHp = character.MaxHp > 0 ? character.MaxHp : 1;
@@ -1240,7 +1331,13 @@ public static class LevelingLoopScenario
                 executedAnyCast = true;
 
                 // LIVE: real damage only. RIG: seam credit (real damage still wins).
-                down = target.Hp <= 0 || (killSeam?.TryKill(actor, target) ?? false);
+                down = target.Hp <= 0;
+                if (!down && killSeam != null)
+                {
+                    down = aggroObjective && killSeam is IAggroKillCreditSeam aggroSeam
+                        ? aggroSeam.TryKillAggro(actor, target)
+                        : killSeam.TryKill(actor, target);
+                }
             }
 
             if (!down)
@@ -1266,6 +1363,13 @@ public static class LevelingLoopScenario
                 continue;
             }
 
+            if (aggroObjective && act.GetObjective(quest) <= 0)
+            {
+                return ($"target {target.ObjId} died, but QuestActObjAggro " +
+                        $"{act.DetailId} received no live OnKill credit; refusing completion",
+                    ActorFailureReason.StateTransition);
+            }
+
             // DOWN: loot the fresh corpse through the real contract path. A
             // Rejected loot is tolerated (recorded, never fatal) — not every
             // hunt objective drops loot.
@@ -1284,6 +1388,7 @@ public static class LevelingLoopScenario
 
     /// <summary>
     /// Hostile-selection primitive (adventurer-spike SelectHostile
+
     /// convention): the nearest ALIVE NPC the actor can attack
     /// (BaseUnit.CanAttack — faction-based; bare rig NPCs read attackable)
     /// whose template matches the hunt act — directly (single-template
@@ -1320,6 +1425,12 @@ public static class LevelingLoopScenario
         }
 
         return best;
+    }
+    private static bool AggroRankCanCredit(QuestActObjAggro aggro, float rating)
+    {
+        return (aggro.Rank1 > 0 && rating <= aggro.Rank1)
+               || (aggro.Rank2 > 0 && rating <= aggro.Rank2)
+               || (aggro.Rank3 > 0 && rating <= aggro.Rank3);
     }
 
     /// <summary>
