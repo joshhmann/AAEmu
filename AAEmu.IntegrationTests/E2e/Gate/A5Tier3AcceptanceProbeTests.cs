@@ -219,8 +219,28 @@ public class A5Tier3AcceptanceProbeTests
         long SchedulerFailures, long SaveSampleCount, double SaveP95Ms,
         double SaveMaxMs, long SaveSkips, long DbWrites);
 
+    private sealed record StartupRssTracker
+    {
+        public double PeakMb { get; private set; } = -1;
+
+        public void Observe(double rssMb)
+        {
+            if (rssMb > PeakMb)
+                PeakMb = rssMb;
+        }
+    }
+
+    private sealed record RssQuiescenceResult(
+        DateTime WarmupReadyAtUtc, double BaselineRssMb, double StartupPeakRssMb,
+        TimeSpan WarmupDuration, TimeSpan QuiescenceDuration,
+        long DormantSpecs, int GamePid, string ReadyMarker);
+
     private sealed record DormantTimerResult(
-        TimeSpan Window, long InitialDbWrites, long FinalDbWrites,
+        TimeSpan Window, bool CompletedFullWindow, long InitialDbWrites, long FinalDbWrites,
+        DateTime WarmupReadyAtUtc, double WarmupDurationSeconds, long WarmupDormantSpecs,
+        int WarmupGamePid, string WarmupReadyMarker, double BaselineRssMb,
+        double StartupPeakRssMb, double SteadyStatePeakRssMb, double RssGrowthMb,
+        TimeSpan QuiescenceDuration, DateTime? FailureAtUtc, TimeSpan? FailureElapsed,
         IReadOnlyList<DormantTimerSample> Samples, IReadOnlyList<string> Failures);
 
     private const double DormantTickP95BudgetMs = 100;
@@ -230,11 +250,47 @@ public class A5Tier3AcceptanceProbeTests
     private const double DormantSaveMaxBudgetMs = 10000;
     private const double DormantRssGrowthBudgetMb = 512;
     private const double DormantDbWritesBudgetPerMin = 500;
+    private const int RssQuiescenceConsecutiveSamples = 3;
+    private const double RssQuiescenceMaxRangeMb = 64;
+    private static readonly TimeSpan RssQuiescenceSampleInterval = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan RssQuiescenceTimeout = TimeSpan.FromMinutes(5);
+
+    [Fact]
+    public void RssQuiescenceRule_RequiresThreeConsecutiveStableReadings()
+    {
+        Assert.False(IsRssQuiescent([1000, 1020]));
+        Assert.True(IsRssQuiescent([1000, 1060, 1040]));
+        Assert.False(IsRssQuiescent([1000, 1100, 1010]));
+    }
+
+    [Fact]
+    public void RssBudgetRule_UsesStrictlyMoreThan512Mb()
+    {
+        Assert.False(ExceedsRssBudget(1400, 1912));
+        Assert.True(ExceedsRssBudget(1400, 1912.1));
+        Assert.False(ExceedsRssBudget(-1, 5000));
+    }
+    [Fact]
+    public void ValidatorMessage_DistinguishesStartupPeakFromSteadyStateGrowth()
+    {
+        var sample = new DormantTimerSample(
+            DateTime.UtcNow, 1, 1912.1, 0, 100, 0, 0,
+            1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1);
+        var failures = new List<string>();
+
+        Assert.True(ValidateDormantTimerSample(sample, 100, 1400, 5800, null, failures));
+        var failure = Assert.Single(failures);
+        Assert.Contains("steady-state RSS growth", failure);
+        Assert.Contains("startup peak=5800.0MB", failure);
+    }
+
 
     /// <summary>
     /// Optional natural-home dormant timer soak. This is deliberately skipped
     /// unless the operator opts in and supplies the duration; ordinary gate
-    /// runs never wait for this six-hour stage.
+    /// runs never wait for this six-hour stage. RSS warmup readiness is bounded
+    /// by WaitBoot, WaitDormantDiscovered, and three consecutive 15-second
+    /// readings whose range is at most 64 MB; no fixed elapsed sleep is used.
     /// </summary>
     [Fact]
     public async Task Probe_A5Tier3DormantTimers_SixHour()
@@ -275,13 +331,18 @@ public class A5Tier3AcceptanceProbeTests
 
             Environment.SetEnvironmentVariable("AAEMU_BOT_TRUE_DORMANCY", "1");
             Environment.SetEnvironmentVariable("AAEMU_BOT_PROXIMITY_FIDELITY", "1");
+            var startupRss = new StartupRssTracker();
+            var warmupStartedAtUtc = DateTime.UtcNow;
             E2eStack.RestartGameServer();
-            WaitBoot();
-            WaitDormantDiscovered(seededCount);
-
+            WaitBoot(startupRss.Observe);
+            WaitDormantDiscovered(seededCount, startupRss.Observe);
+            var quiescence = await WaitForRssQuiescenceAsync(
+                startupRss, seededCount, warmupStartedAtUtc, TestContext.Current.CancellationToken);
+            Console.WriteLine($"[a5t3-sixhour] startup quiescent after {quiescence.WarmupDuration.TotalSeconds:F0}s: " +
+                              $"baseline={quiescence.BaselineRssMb:F1}MB startupPeak={quiescence.StartupPeakRssMb:F1}MB");
             var result = await RunDormantTimerSoakAsync(
                 seededCount, TimeSpan.FromMinutes(windowMinutes),
-                TimeSpan.FromSeconds(sampleSeconds), TestContext.Current.CancellationToken);
+                TimeSpan.FromSeconds(sampleSeconds), quiescence, TestContext.Current.CancellationToken);
             WriteDormantTimerReport(windowMinutes, sampleSeconds, dormantTarget, seededCount, result);
             Assert.Empty(result.Failures);
         }
@@ -309,7 +370,8 @@ public class A5Tier3AcceptanceProbeTests
     }
 
     private static async Task<DormantTimerResult> RunDormantTimerSoakAsync(
-        int seededCount, TimeSpan window, TimeSpan sampleInterval, CancellationToken cancellationToken)
+        int seededCount, TimeSpan window, TimeSpan sampleInterval,
+        RssQuiescenceResult quiescence, CancellationToken cancellationToken)
     {
         var samples = new List<DormantTimerSample>();
         var failures = new List<string>();
@@ -317,8 +379,9 @@ public class A5Tier3AcceptanceProbeTests
         var initialDbWrites = ReadDbWriteCounters();
         if (initialDbWrites < 0)
             AddFailure(failures, "initial DB write counters unavailable");
-        var baselineRss = ReadRssMb();
         long? previousUptime = null;
+        DateTime? failureAtUtc = null;
+        TimeSpan? failureElapsed = null;
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(window + TimeSpan.FromMinutes(5));
 
@@ -330,8 +393,18 @@ public class A5Tier3AcceptanceProbeTests
                 var metrics = await MetricsAsync(deadline.Token);
                 var sample = ReadDormantTimerSample(metrics, ReadDbWriteCounters());
                 samples.Add(sample);
-                ValidateDormantTimerSample(sample, seededCount, baselineRss, previousUptime, failures);
+                var rssBudgetBreached = ValidateDormantTimerSample(
+                    sample, seededCount, quiescence.BaselineRssMb,
+                    quiescence.StartupPeakRssMb, previousUptime, failures);
                 previousUptime = sample.UptimeMs;
+                if (rssBudgetBreached)
+                {
+                    failureAtUtc = sample.At;
+                    failureElapsed = started.Elapsed;
+                    Console.WriteLine($"[a5t3-sixhour] steady-state RSS budget breached at " +
+                                      $"{failureElapsed.Value.TotalSeconds:F1}s; aborting soak");
+                    break;
+                }
             }
             catch (OperationCanceledException) when (deadline.IsCancellationRequested)
             {
@@ -360,7 +433,19 @@ public class A5Tier3AcceptanceProbeTests
             : double.PositiveInfinity;
         if (dbWritesPerMinute > DormantDbWritesBudgetPerMin)
             AddFailure(failures, $"DB writes exceeded dormant budget: {dbWritesPerMinute:F1}/min > {DormantDbWritesBudgetPerMin:F0}/min");
-        return new DormantTimerResult(started.Elapsed, initialDbWrites, finalDbWrites, samples, failures);
+
+        var steadyStatePeak = samples.Where(s => s.RssMb > 0)
+            .Select(s => s.RssMb).DefaultIfEmpty(-1).Max();
+        var rssGrowth = quiescence.BaselineRssMb > 0 && steadyStatePeak > 0
+            ? steadyStatePeak - quiescence.BaselineRssMb
+            : -1;
+        return new DormantTimerResult(
+            started.Elapsed, failureAtUtc is null && started.Elapsed >= window,
+            initialDbWrites, finalDbWrites, quiescence.WarmupReadyAtUtc,
+            quiescence.WarmupDuration.TotalSeconds, quiescence.DormantSpecs,
+            quiescence.GamePid, quiescence.ReadyMarker, quiescence.BaselineRssMb,
+            quiescence.StartupPeakRssMb, R(steadyStatePeak), R(rssGrowth),
+            quiescence.QuiescenceDuration, failureAtUtc, failureElapsed, samples, failures);
     }
 
     private static async Task<JsonElement> MetricsAsync(CancellationToken cancellationToken)
@@ -399,9 +484,9 @@ public class A5Tier3AcceptanceProbeTests
             dbWrites);
     }
 
-    private static void ValidateDormantTimerSample(
+    private static bool ValidateDormantTimerSample(
         DormantTimerSample sample, int seededCount, double baselineRss,
-        long? previousUptime, List<string> failures)
+        double startupPeakRss, long? previousUptime, List<string> failures)
     {
         if (sample.DbWrites < 0)
             AddFailure(failures, "DB write counters unavailable");
@@ -423,9 +508,23 @@ public class A5Tier3AcceptanceProbeTests
             AddFailure(failures, $"scheduler/save recovery counters nonzero: failures/skips={sample.SchedulerFailures}/{sample.SaveSkips}");
         if (sample.SaveP95Ms > DormantSaveP95BudgetMs || sample.SaveMaxMs > DormantSaveMaxBudgetMs)
             AddFailure(failures, $"save budget exceeded p95/max={sample.SaveP95Ms:F1}/{sample.SaveMaxMs:F1}ms");
-        if (baselineRss > 0 && sample.RssMb > baselineRss + DormantRssGrowthBudgetMb)
-            AddFailure(failures, $"RSS growth exceeded {DormantRssGrowthBudgetMb:F0}MB: baseline/sample={baselineRss:F1}/{sample.RssMb:F1}MB");
+
+        var rssBudgetBreached = ExceedsRssBudget(baselineRss, sample.RssMb);
+        if (rssBudgetBreached)
+            AddFailure(failures,
+                $"steady-state RSS growth exceeded {DormantRssGrowthBudgetMb:F0}MB: " +
+                $"baseline/sample={baselineRss:F1}/{sample.RssMb:F1}MB; " +
+                $"startup peak={startupPeakRss:F1}MB is excluded from this steady-state budget");
+        return rssBudgetBreached;
     }
+
+    private static bool IsRssQuiescent(IReadOnlyList<double> readings)
+        => readings.Count >= RssQuiescenceConsecutiveSamples &&
+           readings.TakeLast(RssQuiescenceConsecutiveSamples).Max() -
+           readings.TakeLast(RssQuiescenceConsecutiveSamples).Min() <= RssQuiescenceMaxRangeMb;
+
+    private static bool ExceedsRssBudget(double baselineRss, double sampleRss)
+        => baselineRss > 0 && sampleRss > baselineRss + DormantRssGrowthBudgetMb;
 
     private static void AddFailure(List<string> failures, string failure)
     {
@@ -485,7 +584,41 @@ public class A5Tier3AcceptanceProbeTests
                 rssGrowthMb = DormantRssGrowthBudgetMb,
                 dbWritesPerMinute = DormantDbWritesBudgetPerMin
             },
+            // `window` is measured from the post-warmup baseline; an RSS
+            // breach intentionally produces an ABORTED partial window.
             window = result.Window.TotalMinutes,
+            targetWindowMinutes = windowMinutes,
+            windowCompleted = result.CompletedFullWindow,
+            windowStatus = result.CompletedFullWindow ? "FULL" : "PARTIAL",
+            warmupReadyAtUtc = result.WarmupReadyAtUtc.ToString("O"),
+            warmupDurationSeconds = Math.Round(result.WarmupDurationSeconds, 1),
+            warmupBaselineRssMb = result.BaselineRssMb,
+            startupPeakRssMb = result.StartupPeakRssMb,
+            steadyStatePeakRssMb = result.SteadyStatePeakRssMb,
+            rssGrowthMb = result.RssGrowthMb,
+            quiescenceDurationSeconds = Math.Round(result.QuiescenceDuration.TotalSeconds, 1),
+            warmup = new
+            {
+                readyMarker = result.WarmupReadyMarker,
+                readyAtUtc = result.WarmupReadyAtUtc.ToString("O"),
+                warmupDurationSeconds = Math.Round(result.WarmupDurationSeconds, 1),
+                quiescenceDurationSeconds = Math.Round(result.QuiescenceDuration.TotalSeconds, 1),
+                signal = "WaitBoot tick.available + WaitDormantDiscovered expected dormantSpecs, then three RSS readings",
+                deferredStartupLimitation = "No product-level world-load-complete marker; RSS quiescence is the bounded readiness guard",
+                dormantSpecs = result.WarmupDormantSpecs,
+                gamePid = result.WarmupGamePid,
+                baselineRssMb = result.BaselineRssMb
+            },
+            rss = new
+            {
+                startupPeakRssMb = result.StartupPeakRssMb,
+                baselineRssMb = result.BaselineRssMb,
+                steadyStatePeakRssMb = result.SteadyStatePeakRssMb,
+                rssGrowthMb = result.RssGrowthMb,
+                steadyStateBudgetMb = DormantRssGrowthBudgetMb
+            },
+            failureAtUtc = result.FailureAtUtc?.ToString("O"),
+            failureElapsedSeconds = result.FailureElapsed?.TotalSeconds,
             initialDbWrites = result.InitialDbWrites,
             finalDbWrites = result.FinalDbWrites,
             dbWrites,
@@ -494,7 +627,7 @@ public class A5Tier3AcceptanceProbeTests
             samples = result.Samples,
             failures = result.Failures,
             passed = result.Failures.Count == 0,
-            sixHourDormantTimersLeg = windowMinutes >= 360 ? "RUN" : "NOT_RUN"
+            sixHourDormantTimersLeg = result.CompletedFullWindow ? "RUN" : "ABORTED"
         };
         File.WriteAllText(
             Path.Combine(EvidenceDir, "g2-a5-tier3-sixhour-report.json"),
@@ -742,13 +875,14 @@ public class A5Tier3AcceptanceProbeTests
         return (0, -1, -1, -1, -1);
     }
 
-    private static void WaitBoot()
+    private static void WaitBoot(Action<double>? observeRss = null)
     {
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(300);
         while (DateTime.UtcNow < deadline)
         {
             try
             {
+                observeRss?.Invoke(ReadRssMb());
                 var m = Metrics();
                 if (m.TryGetProperty("tick", out var tk) && tk.ValueKind == JsonValueKind.Object &&
                     tk.TryGetProperty("available", out var av) && av.GetBoolean())
@@ -760,7 +894,7 @@ public class A5Tier3AcceptanceProbeTests
         throw new TimeoutException("game server never became metric-ready after restart");
     }
 
-    private static void WaitDormantDiscovered(int expected)
+    private static void WaitDormantDiscovered(int expected, Action<double>? observeRss = null)
     {
         var deadline = DateTime.UtcNow + TimeSpan.FromMinutes(5);
         var last = -1L;
@@ -768,6 +902,7 @@ public class A5Tier3AcceptanceProbeTests
         {
             try
             {
+                observeRss?.Invoke(ReadRssMb());
                 last = Population(Metrics()).dormantSpecs;
                 if (last >= expected)
                     return;
@@ -777,6 +912,67 @@ public class A5Tier3AcceptanceProbeTests
         }
         throw new TimeoutException($"dormant discovery stalled at {last}/{expected} specs");
     }
+    private static async Task<RssQuiescenceResult> WaitForRssQuiescenceAsync(
+        StartupRssTracker startupRss, int expectedDormantSpecs,
+        DateTime warmupStartedAtUtc, CancellationToken cancellationToken)
+    {
+        var readings = new List<double>(RssQuiescenceConsecutiveSamples);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(RssQuiescenceTimeout);
+        var started = Stopwatch.StartNew();
+        var quiescenceStartedAtUtc = DateTime.UtcNow;
+        while (true)
+        {
+            timeout.Token.ThrowIfCancellationRequested();
+            var rss = ReadRssMb();
+            startupRss.Observe(rss);
+            if (rss > 0)
+            {
+                readings.Add(rss);
+                if (readings.Count > RssQuiescenceConsecutiveSamples)
+                    readings.RemoveAt(0);
+
+                if (IsRssQuiescent(readings))
+                {
+                    var metrics = await MetricsAsync(timeout.Token);
+                    var dormantSpecs = Population(metrics).dormantSpecs;
+                    if (dormantSpecs >= expectedDormantSpecs)
+                    {
+                        var baseline = readings.Average();
+                        var readyAt = DateTime.UtcNow;
+                        var warmupDuration = readyAt - warmupStartedAtUtc;
+                        var quiescenceDuration = readyAt - quiescenceStartedAtUtc;
+                        var gamePid = FindGamePid()
+                            ?? throw new InvalidOperationException("game PID unavailable at warmup boundary");
+                        var marker = $"A5_WARMUP_READY utc={readyAt:O} gamePid={gamePid} " +
+                                     $"dormantSpecs={dormantSpecs} baselineRssMb={baseline:F1} " +
+                                     $"startupPeakRssMb={startupRss.PeakMb:F1} " +
+                                     $"warmupDurationSeconds={warmupDuration.TotalSeconds:F1}";
+                        Directory.CreateDirectory(EvidenceDir);
+                        File.AppendAllText(
+                            Path.Combine(EvidenceDir, "g2-a5-tier3-sixhour-soak.log"),
+                            marker + Environment.NewLine);
+                        Console.WriteLine($"[a5t3-sixhour] {marker}");
+                        started.Stop();
+                        return new RssQuiescenceResult(
+                            readyAt, baseline, startupRss.PeakMb, warmupDuration,
+                            quiescenceDuration, dormantSpecs, gamePid, marker);
+                    }
+                    readings.Clear();
+                }
+            }
+
+            var remaining = RssQuiescenceTimeout - started.Elapsed;
+            if (remaining <= TimeSpan.Zero)
+                throw new TimeoutException(
+                    $"RSS did not quiesce within {RssQuiescenceTimeout.TotalMinutes:F0} minutes");
+            await Task.Delay(
+                remaining < RssQuiescenceSampleInterval ? remaining : RssQuiescenceSampleInterval,
+                timeout.Token);
+        }
+    }
+
+
 
     private static void WaitEmbodied(int target, TimeSpan window)
     {
