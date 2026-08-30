@@ -110,18 +110,40 @@ feel.)
   Sphere, Craft, Cinema, MonsterHunt/MonsterGroupHunt, Aggro (partial),
   ZoneKill, EtcItemObtain, CompleteQuest, and Level. CheckTimer and
   SupplyRemoveItem are non-objective gate/cleanup acts, not gaps.
-- **Remaining objective gaps:** `QuestActObjAbilityLevel` (11 quests) and
-  `QuestActObjMateLevel` (7 live quests; 1 orphaned data row). Aggro remains
-  partial for forms without a resolvable NPC acceptor, ranking, or kill event.
-  Separately, 70 component-only quests with no engage tie remain genuinely
-  unreachable as an acceptance channel; acceptance reachability is distinct
-  from objective support.
+- **Remaining objective gaps (2026-08-30 research decision):**
+  `QuestActObjAbilityLevel` is **blocked / not implementable now** — 15 raw
+  rows, 11 carrier quests (10 live after the 6069 drop), 9 single-ability
+  quests (6070/6075–6082) have zero accept surfaces, and quest 5967 is
+  self-gated by ten Ability ≥ 50 requirements; an exhaustive source trace found
+  no ordinary player action/packet that raises a specific ability's level
+  (only `Character.AddExp(exp, true)` distributes active-tree XP). Needs a data
+  ruling/drop and/or a 1.2 trainer client capture. `QuestActObjMateLevel` is
+  **implementable after a narrow rig proof** — 10 raw rows, 6 live carrier
+  quests (5430/5464/5465/5466/5812/5813), 4 dangling act rows; canonical
+  mate-targeted growth consumables exist and ordinary
+  `GameplayActor.UseItem(item, mateObjId)` can target a Mate, with the real
+  `AddExp` effect → `Mate.AddExp` → headless-safe `OnMateLevelUp` as the credit
+  path (2,021,250 XP to level 50; 29040 at 50k XP = bounded 41 uses). The gap
+  stays until the rig proof (fixture summon-item registration in `ItemManager`
+  + headless targeting) passes. Aggro remains partial for forms without a
+  resolvable NPC acceptor, ranking, or kill event. Separately, 70
+  component-only quests with no engage tie remain genuinely unreachable as an
+  acceptance channel; acceptance reachability is distinct from objective
+  support.
 - **Focused evidence:** `LevelingLoopScenarioRigTests` **32/32**,
   `QuestActObjAggroTests` **2/2**, `QuestEtcItemObtainRigTests` **3/3**,
   `QuestZoneKillVictimRigTests` **2/2**, and `PvpFlaggingRigTests` **11/11**;
   Game/UnitTests Release builds report 0 errors. These results do not close
   broad PB-002 autonomy.
-- **Remaining next actions:** Ability/Mate action-scope; rulings for the 70
+- **Evidence layer for Ability/Mate:** canonical SQL + code archaeology only
+  (dossiers `scorecard-explorations/mechanics/ability-level-objective-research.md`
+  and `mate-level-objective-research.md`); no implementation, no live
+  authenticated run, and no human/client evidence for either family.
+- **Remaining next actions:** (1) Mate rig proof (fixture summon-item
+  registration in `ItemManager` + headless mate-targeted potion use); (2) data
+  hygiene for the dangling act rows (Ability 34805–34808; Mate 33008/33212/
+  33213/35465) per data-defects §7; (3) ability data ruling/drop for
+  6070/6075–6082 and 5967 trainer-flow client capture; rulings for the 70
   unreachable acceptance forms/data; live authenticated progression; and
   human/client evidence.
 
