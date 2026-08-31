@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Numerics;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
@@ -109,6 +110,16 @@ public class ActiveRegionTickSpawnerScanTests
         await Assert.That(stats.SpawnersProcessed).IsEqualTo(0);
         await Assert.That(stats.CharacterSnapshotMs).IsGreaterThanOrEqualTo(0);
         await Assert.That(stats.SpawnerScanMs).IsGreaterThanOrEqualTo(0);
+
+        // State preservation — the empty snapshot must not mutate spawner or
+        // decoy state: no spawner is activated (SpawnedNpcs stays empty) and the
+        // singleton decoy's position is untouched.
+        await Assert.That(inRadius.SpawnedNpcs).IsEmpty()
+            .Because("an empty snapshot must not activate/update the in-radius spawner");
+        await Assert.That(outOfRadius.SpawnedNpcs).IsEmpty();
+        await Assert.That(nullTemplate.SpawnedNpcs).IsEmpty();
+        await Assert.That(decoy.Transform.Local.Position).IsEqualTo(new Vector3(0, 0, 0))
+            .Because("the singleton decoy character state must remain unchanged");
     }
 
     [Test]
