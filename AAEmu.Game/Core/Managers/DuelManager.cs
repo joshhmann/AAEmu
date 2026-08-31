@@ -84,6 +84,7 @@ public class DuelManager : Singleton<DuelManager>, IDuelManager
                 duel.DuelFlag = _combatFlag.Spawn(0); // set CombatFlag
 
                 // change the faction temporarily
+                // TODO: Handle pets/vehicle factions
                 SetFaction(duel.Challenger, FactionsEnum.RedTeam);
                 SetFaction(duel.Challenged, FactionsEnum.BlueTeam);
 
@@ -101,22 +102,22 @@ public class DuelManager : Singleton<DuelManager>, IDuelManager
         }
     }
 
-    private void SetFaction(Unit ower, FactionsEnum factionId)
+    private void SetFaction(Character owner, FactionsEnum factionId)
     {
         // change the faction temporarily
-        if (SaveFactions.ContainsKey(ower.Id))
+        if (SaveFactions.ContainsKey(owner.Id))
         {
-            SaveFactions[ower.Id] = ower.Faction.Id;
+            SaveFactions[owner.Id] = owner.Faction.Id;
         }
         else
         {
-            SaveFactions.Add(ower.Id, ower.Faction.Id);
+            SaveFactions.Add(owner.Id, owner.Faction.Id);
         }
 
-        ower.SetFaction(factionId);
+        owner.SetFaction(factionId);
     }
 
-    private void RestoreFaction(Unit owner)
+    private void RestoreFaction(Character owner)
     {
         // Defensive: if the accept path failed before SetFaction ran (e.g.
         // flag-spawn failure headless), there is nothing to restore — a bare
