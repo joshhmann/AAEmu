@@ -10,12 +10,19 @@ using AAEmu.UnitTests.Game.Quests.Playerbot;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
+using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Effects.Enums;
+using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units.Static;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World.Zones;
@@ -87,6 +94,21 @@ public class LevelingLoopScenarioRigTests
     private const uint EtcObtainLootGroupId = 90_985;
     private const uint EtcObtainLootFuncId = 90_986;
     private const uint EtcObtainSourceDoodadTemplateId = 90_987;
+    // Synthetic mate-level quest ids (fixture range — never collide with
+    // canonical quest_contexts): a Progress QuestActObjMateLevel over the
+    // rig's summon item 8158 (level 50, cleanup=false), accepted from a
+    // fixture offerer NPC. The growth item is the canonical potion template
+    // 29040 with a fixture use-skill carrying the REAL AddExp effect.
+    private const uint MateLevelQuestId = 91_601;
+    private const uint MateLevelStartComponentId = 91_611;
+    private const uint MateLevelProgressComponentId = 91_612;
+    private const uint MateLevelReadyComponentId = 91_613;
+    private const uint MateLevelOfferNpcTemplateId = 90_953;
+    private const uint MateLevelGrowthItemId = 29_040;
+    private const uint MateLevelGrowthSkillId = 90_501;
+    private const uint MateLevelSummonItemId = 8_158;
+    private const uint MateLevelSummonNpcId = 5_430;
+    private const int MateLevelUses = 41;
 
     private const uint Quest269Id = 269;
     private const uint Quest270Id = 270;
@@ -1000,6 +1022,92 @@ public class LevelingLoopScenarioRigTests
     }
 
     /// <summary>
+    /// E-MATE-LEVEL-1: the composed mate-growth leg (QuestActObjMateLevel)
+    /// through the REAL potion-use path. The synthetic quest (91_601,
+    /// offer/report NPC 90_953) carries a Progress QuestActObjMateLevel over
+    /// summon item 8158 (level 50, cleanup=false). The loop discovers and
+    /// accepts it, the MateLeg feeds the owner's registered mate the growth
+    /// item (canonical potion template 29040 with a fixture use-skill
+    /// carrying the REAL AddExp effect 13221, 50,000 XP) through the REAL
+    /// UseItem → skill → AddExp path 41 times (GCD-paced), the engine's
+    /// OnMateLevelUp credits the objective, and the quest completes through
+    /// the real report turn-in. No XP/level/objective is ever written by the
+    /// scenario. The canonical 23085 MotherFactionOnly=5 data gap is
+    /// documented as a data finding, not a code gap.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_QuestMateLevel_CompletesThroughRealPotionUse()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb-leveling-mate-level");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        SeedMateLevelQuest();
+        SeedMateGrowthSurface();
+
+        // The canonical mate exp curve: the rig default (TotalMateExp =
+        // level × 100M) would never level a mate from 41 × 50,000 XP.
+        using var expSwap = InstallCanonicalMateExpCurve();
+
+        // Stock the growth potions + summon item through the REAL
+        // acquisition path (AcquireDefaultItem → ItemManager.Create).
+        GameplayActorTestRig.GrantItem(actor, MateLevelGrowthItemId, MateLevelUses);
+        GameplayActorTestRig.GrantItem(actor, MateLevelSummonItemId, 1);
+
+        // Register the mate in the world + MateManager and wire it to the
+        // summon item (ItemId → UpdateMateItemData writes DetailLevel).
+        var summonItems = new List<Item>();
+        character.Inventory.Bag.GetAllItemsByTemplate(MateLevelSummonItemId, -1, out summonItems, out _);
+        var summonItem = (SummonMate)summonItems.Single();
+        var mateObjId = GameplayActorTestRig.SummonMate(session, actor, GameplayActorTestRig.MateObjId, tlId: 1);
+        var mate = (Mate)session.World.GetUnit(mateObjId)!;
+        mate.ItemId = summonItem.Id;
+        mate.DbInfo = new MateDb { ItemId = summonItem.Id, Level = 1, Xp = 0, Name = "test-mate" };
+        mate.Level = 1;
+        mate.Experience = 0;
+        mate.Transform.Local.SetPosition(character.Transform.World.Position);
+
+        SpawnHubNpc(session, MateLevelOfferNpcTemplateId, new Vector3(1, 0, 0)); // offerer + reporter
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 1,
+            BandMax = 1,
+            MaxLinks = 1,
+            MateGrowthItemId = MateLevelGrowthItemId,
+            MaxMateLevelUses = MateLevelUses
+        });
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(MateLevelQuestId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjMateLevel));
+        await Assert.That(character.Quests!.HasQuestCompleted(MateLevelQuestId)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(MateLevelQuestId)).IsFalse();
+
+        // The mate reached level 50 through the REAL AddExp path.
+        await Assert.That(mate.Level).IsEqualTo((byte)50);
+        await Assert.That(mate.Experience).IsEqualTo(2_021_250);
+
+        // Audit subsequence: accept → UseItem → TurnInQuest. The objective
+        // credit flowed through the engine's OnMateLevelUp event, never a
+        // manually written objective.
+        var trace = result.TraceRecords;
+        var accept = IndexOfFirst(trace, ActorActionType.AcceptQuest, MateLevelQuestId);
+        var useItem = FirstAtLeast(trace, ActorActionType.UseItem, accept + 1);
+        var turnIn = IndexOfFirst(trace, ActorActionType.TurnInQuest, MateLevelQuestId);
+        await Assert.That(accept).IsGreaterThanOrEqualTo(0);
+        await Assert.That(useItem).IsGreaterThan(accept);
+        await Assert.That(turnIn).IsGreaterThan(useItem);
+    }
+
+    /// <summary>
     /// E-COMPLETE-QUEST-1: QuestActObjCompleteQuest cross-quest composition.
     /// The synthetic parent (90990, offer/report NPC 90_953) carries a
     /// Progress QuestActObjCompleteQuest referencing prereq 90996 (a fixture
@@ -1340,6 +1448,109 @@ public class LevelingLoopScenarioRigTests
             NpcId = CompleteQuestParentNpcTemplateId
         };
         ready.ActTemplates.Add(reportAct);
+    }
+
+    /// <summary>
+    /// Seeds the synthetic mate-level quest: Start (ConAcceptNpc) →
+    /// Progress (QuestActObjMateLevel over summon item 8158, level 50,
+    /// cleanup=false) → Ready (ConReportNpc at the offerer).
+    /// </summary>
+    private static void SeedMateLevelQuest()
+    {
+        GameplayActorTestRig.SeedQuestOffer(MateLevelQuestId, MateLevelStartComponentId,
+            MateLevelOfferNpcTemplateId, level: 1);
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GameplayActorTestRig.GetField(
+            manager, "_questTemplates");
+        var questTemplate = questTemplates[MateLevelQuestId];
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GameplayActorTestRig.GetField(
+            manager, "_componentTemplates");
+
+        var progress = new QuestComponentTemplate(questTemplate)
+        {
+            Id = MateLevelProgressComponentId,
+            KindId = QuestComponentKind.Progress
+        };
+        componentTemplates[MateLevelProgressComponentId] = progress;
+        questTemplate.Components[MateLevelProgressComponentId] = progress;
+        var mateLevelAct = new QuestActObjMateLevel(progress)
+        {
+            DetailId = MateLevelProgressComponentId,
+            ActId = MateLevelProgressComponentId,
+            ItemId = MateLevelSummonItemId,
+            Level = 50,
+            Cleanup = false,
+            ThisComponentObjectiveIndex = 0
+        };
+        progress.ActTemplates.Add(mateLevelAct);
+
+        var ready = new QuestComponentTemplate(questTemplate)
+        {
+            Id = MateLevelReadyComponentId,
+            KindId = QuestComponentKind.Ready
+        };
+        componentTemplates[MateLevelReadyComponentId] = ready;
+        questTemplate.Components[MateLevelReadyComponentId] = ready;
+        var reportAct = new QuestActConReportNpc(ready)
+        {
+            DetailId = MateLevelReadyComponentId,
+            ActId = MateLevelReadyComponentId,
+            NpcId = MateLevelOfferNpcTemplateId
+        };
+        ready.ActTemplates.Add(reportAct);
+    }
+
+    /// <summary>
+    /// Seeds the growth surface: the canonical potion template 29040 with a
+    /// fixture use-skill (90_501) carrying the REAL AddExp effect
+    /// (SpecialEffect 13221, 50,000 XP), and the summon item 8158 as a
+    /// SummonMateTemplate so ItemManager.Create produces a real SummonMate
+    /// registered in _allItems. The canonical skill 23085 is blocked by a
+    /// canonical data gap (unit_reqs kind-38 MotherFactionOnly=5 — no
+    /// canonical faction satisfies it); the fixture skill uses the REAL
+    /// AddExp effect verbatim.
+    /// </summary>
+    private static void SeedMateGrowthSurface()
+    {
+        GameplayActorTestRig.SeedItemTemplate(MateLevelGrowthItemId, MateLevelGrowthSkillId,
+            useSkillAsReagent: true);
+        var templates = (Dictionary<uint, ItemTemplate>)GameplayActorTestRig.GetField(
+            ItemManager.Instance, "_templates");
+        if (!templates.TryGetValue(MateLevelSummonItemId, out var existing) || existing is not SummonMateTemplate)
+            templates[MateLevelSummonItemId] = new SummonMateTemplate
+            {
+                Id = MateLevelSummonItemId,
+                NpcId = MateLevelSummonNpcId,
+                MaxCount = 1
+            };
+
+        GameplayActorTestRig.SeedSkillTemplate(MateLevelGrowthSkillId);
+        var skills = (Dictionary<uint, SkillTemplate>)GameplayActorTestRig.GetField(
+            SkillManager.Instance, "_skills");
+        var template = skills[MateLevelGrowthSkillId];
+        template.TargetType = SkillTargetType.Others;
+        template.TargetSelection = SkillTargetSelection.Target;
+        template.MaxRange = 25;
+        template.MinRange = 0;
+        template.DefaultGcd = true;
+        template.Effects.Clear();
+        template.Effects.Add(new SkillEffect
+        {
+            EffectId = 13_221,
+            Template = new SpecialEffect
+            {
+                Id = 13_221,
+                SpecialEffectTypeId = SpecialType.AddExp,
+                Value1 = 50_000
+            },
+            StartLevel = 1,
+            EndLevel = 99,
+            Friendly = true,
+            NonFriendly = true,
+            Chance = 10_000,
+            ApplicationMethod = SkillEffectApplicationMethod.Target,
+            ConsumeItemCount = 1
+        });
     }
 
     /// <summary>
@@ -2085,6 +2296,41 @@ public class LevelingLoopScenarioRigTests
     }
 
     /// <summary>
+    /// Swaps in the CANONICAL mate exp curve (levels 1-50 total_mate_exp
+    /// from compact.sqlite3) so the mate-level leg's 41 × 50,000 XP
+    /// (2,050,000 ≥ 2,021,250) actually levels the mate to 50. The rig's
+    /// default ExperienceManager (TotalMateExp = level × 100M) would never
+    /// level a mate from the growth potion's 50,000 XP per use.
+    /// </summary>
+    private static SingletonSwap InstallCanonicalMateExpCurve()
+    {
+        var experienceManager = new ExperienceManager();
+        var expTemplates = new List<ExperienceLevelTemplate>();
+        var mateExpByLevel = new List<int>
+        {
+            0, 50, 250, 700, 1500, 2750, 4550, 7000, 10200, 14250,
+            19250, 25300, 32500, 40950, 50750, 62000, 74800, 89250, 105450, 123500,
+            143500, 165550, 189750, 216200, 245000, 276250, 310050, 346500, 385700, 427750,
+            472750, 520800, 572000, 626450, 684250, 745500, 810300, 878750, 950950, 1027000,
+            1107000, 1191050, 1279250, 1371700, 1468500, 1569750, 1675550, 1786000, 1901200, 2021250
+        };
+        for (var level = 1; level <= 50; level++)
+        {
+            expTemplates.Add(new ExperienceLevelTemplate
+            {
+                Level = (byte)level,
+                TotalExp = level * 1000,
+                TotalMateExp = mateExpByLevel[level - 1],
+                SkillPoints = 1
+            });
+        }
+        SetField(experienceManager, "_levelTemplatesByLevel", expTemplates);
+        SetField(experienceManager, "_expByLevel", expTemplates.Select(t => t.TotalExp).ToList());
+        SetField(experienceManager, "_mateExpByLevel", mateExpByLevel);
+        SetField(experienceManager, "<MaxPlayerLevel>k__BackingField", (byte)50);
+        SetField(experienceManager, "<MaxMateLevel>k__BackingField", (byte)50);
+        return SingletonSwap.Install(typeof(Singleton<ExperienceManager>), experienceManager);
+    }
     /// Spawns <paramref name="count"/> level-grind prey (fixture template
     /// 90_955) as level-1 NORMAL-grade NPCs with a 1.0 exp multiplier —
     /// KillExp = ((1*5+90) + 0) × 1 × 1 = 95 per kill. The bare fixture

@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Threading;
 
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
@@ -73,11 +74,20 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     the real RunAct credits the objective. No XP/level is ever written by
 ///     the scenario. Rigs mirror DoDie's character-XP grant through the
 ///     documented ILevelXpSeam at the real Character.AddExp boundary.
-///   - QuestActObjAbilityLevel / MateLevel → NOT pursued: ability exp only
-///     rises via the character-XP share AddActiveExp (no OnAbilityLevelUp
-///     handler, no training action); mate level only via Mate.AddExp kill
-///     share (no feeding/training action, Level-50 breed mate required).
-///     These stay as named gaps with fail-closed rejection.
+///   - QuestActObjAbilityLevel → NOT pursued: ability exp only rises via
+///     the character-XP share AddActiveExp (no OnAbilityLevelUp handler,
+///     no training action). Stays a named gap with fail-closed rejection.
+///   - QuestActObjMateLevel → mate-growth pursuit (MateLeg): the leg feeds
+///     the owner's registered mate the configured growth item through the
+///     REAL UseItem → skill → AddExp path (bounded by
+///     opts.MaxMateLevelUses), reads the LIVE objective after each use, and
+///     never writes XP/level/objective. The canonical growth potion (item
+///     29040 → skill 23085) is blocked by a canonical data gap (unit_reqs
+///     kind-38 MotherFactionOnly=5, no faction satisfies it — engine
+///     refuses with skill_urk_mother_faction_only); the leg is data-driven
+///     off opts.MateGrowthItemId so a working growth item (or a fixed
+///     canonical data row) makes the canonical carrier pursuable. No growth
+///     item in inventory or no registered mate fails closed.
 ///   - QuestActCheckTimer          → gate/classifier, NOT an actionable
 ///     objective: CountsAsAnObjective=false and RunAct returns true
 ///     unconditionally; the engine arms the timeout path (QuestTimeoutTask
@@ -200,6 +210,22 @@ public static class LevelingLoopScenario
         /// seeded near the target needs only a handful of kills.
         /// </summary>
         public int MaxLevelGrindKills { get; init; } = 64;
+        /// <summary>
+        /// Growth item fed to the owner's registered mate by the mate-level
+        /// leg (QuestActObjMateLevel) through the REAL UseItem → skill →
+        /// AddExp path. 0 = no feeding action configured (fail-closed).
+        /// The canonical growth potion (item 29040 → skill 23085) is
+        /// blocked by a canonical data gap (unit_reqs kind-38
+        /// MotherFactionOnly=5); a working growth item (or a fixed
+        /// canonical data row) makes the canonical carrier pursuable.
+        /// </summary>
+        public uint MateGrowthItemId { get; init; } = 0;
+        /// <summary>
+        /// Bounded use budget for the mate-level leg: how many growth-item
+        /// uses the leg may execute before failing closed. The canonical
+        /// level-50 threshold needs 41 × 50,000 XP (2,050,000 ≥ 2,021,250).
+        /// </summary>
+        public int MaxMateLevelUses { get; init; } = 41;
         /// <summary>Bounded InteractWith attempts per gather source before failing Navigation.</summary>
         public int MaxAttemptsPerGatherSource { get; init; } = 3;
 
@@ -598,10 +624,6 @@ public static class LevelingLoopScenario
             "no player-like action exposed: ability exp only rises via the character-XP share " +
             "(CharacterAbilities.AddActiveExp) and the act has no OnAbilityLevelUp handler; " +
             "training requires a client-driven ability-equip/spend path not exposed headless",
-        [nameof(QuestActObjMateLevel)] =
-            "no player-like action exposed: mate level only rises via Mate.AddExp kill share / " +
-            "MateXpUpdateTask, and the canonical trade-ins demand a Level-50 breed mate; no " +
-            "feeding/training action exists headless",
         // QuestActCheckTimer / QuestActSupplyRemoveItem are NOT gaps: they are
         // reclassified as non-objective acts (below) and are passed through by
         // PursueObjectives. Their absence here is intentional.
@@ -720,6 +742,20 @@ public static class LevelingLoopScenario
                         if (levelFailure != null)
                             return Fail($"OBJECTIVES:level({levelAct.Level})",
                                 levelReason, levelFailure, actor, null);
+                        break;
+                    }
+                case QuestActObjMateLevel mateLevel:
+                    {
+                        // Mate-growth pursuit: the leg feeds the owner's
+                        // registered mate the configured growth item through
+                        // the REAL UseItem → skill → AddExp path (bounded by
+                        // opts.MaxMateLevelUses), reading the LIVE objective
+                        // after each use. No XP/level/objective is ever
+                        // written by the scenario (see MateLeg).
+                        var (mateFailure, mateReason) = MateLeg(actor, opts, questId, mateLevel);
+                        if (mateFailure != null)
+                            return Fail($"OBJECTIVES:mate-level({mateLevel.ItemId})",
+                                mateReason, mateFailure, actor, null);
                         break;
                     }
                 case QuestActObjItemUse itemUse:
@@ -932,6 +968,102 @@ public static class LevelingLoopScenario
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// The mate-growth leg (QuestActObjMateLevel): feeds the owner's
+    /// registered mate the configured growth item through the REAL
+    /// UseItem → skill → AddExp path (the exact chain the rig proof
+    /// verified: GameplayActor.UseItem → Skill.Use → SpecialEffect AddExp →
+    /// Mate.AddExp → OnMateLevelUp → objective credit). The leg is bounded
+    /// by opts.MaxMateLevelUses, reads the LIVE objective after each use,
+    /// and NEVER writes XP/level/objective. Fail-closed: no growth item in
+    /// inventory, no registered mate, a refused use, or the budget
+    /// exhausting without the objective crediting all stop the loop with a
+    /// structured reason. The canonical growth potion (item 29040 → skill
+    /// 23085) is blocked by a canonical data gap (unit_reqs kind-38
+    /// MotherFactionOnly=5 — no canonical faction satisfies it, engine
+    /// refuses with skill_urk_mother_faction_only); the leg is data-driven
+    /// off opts.MateGrowthItemId so a working growth item (or a fixed
+    /// canonical data row) makes the canonical carrier pursuable.
+    /// </summary>
+    private static (string? Failure, ActorFailureReason Reason) MateLeg(
+        GameplayActor actor, LoopOptions opts, uint questId, QuestActObjMateLevel mateLevel)
+    {
+        var character = actor.Character;
+        var quest = character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return ($"quest {questId} left ActiveQuests before mate-level pursuit started",
+                ActorFailureReason.StateTransition);
+
+        if (mateLevel.GetObjective(quest) >= 1)
+            return (null, ActorFailureReason.None); // already credited by a previous evaluation
+
+        // The growth item must be present in the bag (the real UseItem path
+        // resolves it through normal inventory services).
+        var growthItemId = opts.MateGrowthItemId;
+        if (growthItemId == 0)
+        {
+            return ($"quest {questId} mate-level act {mateLevel.DetailId} needs a growth item, " +
+                    "but LoopOptions.MateGrowthItemId is 0 — no honest feeding action exists",
+                ActorFailureReason.WrongDecision);
+        }
+
+        var available = character.Inventory?.GetItemsCount(growthItemId) ?? 0;
+        if (available <= 0)
+        {
+            return ($"quest {questId} mate-level act {mateLevel.DetailId} needs growth item " +
+                    $"{growthItemId}, but inventory has none",
+                ActorFailureReason.Starvation);
+        }
+
+        // The owner's registered mate (the same registry AddActiveMateAndSpawn
+        // fills; the rig proof registers through it).
+        var mate = character.ParentWorld?.MateManager.GetActiveMates(character.Id).FirstOrDefault();
+        if (mate == null)
+        {
+            return ($"quest {questId} mate-level act {mateLevel.DetailId} needs a registered mate " +
+                    "to feed, but the owner has no active mate",
+                ActorFailureReason.Starvation);
+        }
+
+        var usesLeft = opts.MaxMateLevelUses;
+        while (mateLevel.GetObjective(quest) < 1)
+        {
+            if (actor.Character.Quests.HasQuestCompleted(questId))
+                return (null, ActorFailureReason.None); // auto-completed during growth
+
+            if (usesLeft-- <= 0)
+            {
+                return ($"mate growth exhausted {opts.MaxMateLevelUses} use(s) of item {growthItemId} " +
+                        $"for quest {questId} with objective {mateLevel.GetObjective(quest)}/1 — " +
+                        "the mate did not reach the required level",
+                    ActorFailureReason.Starvation);
+            }
+
+            var availableNow = character.Inventory?.GetItemsCount(growthItemId) ?? 0;
+            if (availableNow <= 0)
+            {
+                return ($"quest {questId} mate growth ran out of item {growthItemId} while objective " +
+                        $"is {mateLevel.GetObjective(quest)}/1",
+                    ActorFailureReason.Starvation);
+            }
+
+            var request = actor.UseItem(growthItemId, mate.ObjId);
+            if (request.State != ActorLifecycleState.Completed)
+            {
+                return ($"UseItem {growthItemId} on mate {mate.ObjId} refused for quest {questId}: " +
+                        request.Detail,
+                    ActorFailureReason.RejectedAction);
+            }
+
+            // GCD pacing: Skill.Use rejects back-to-back uses within 150 ms
+            // (SkillLastUsed + CheckInterval) — the same pacing the rig
+            // proof applies between uses.
+            Thread.Sleep(160);
+        }
+
+        return (null, ActorFailureReason.None);
     }
 
     /// <summary>

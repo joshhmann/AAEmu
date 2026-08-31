@@ -44,7 +44,35 @@ baseline, separate startup-peak accounting, fail-fast post-baseline RSS breach,
 and FULL/PARTIAL report semantics. A corrected rerun, preferably a 12-hour
 testing soak, is pending. Prior full-gate and failed-soak provenance remain
 historical; no A5 pass or H/UAT claim is inferred.
-## Post-M7 readiness and closure — PB-002 current objective frontier (2026-08-30)
+## Post-M7 readiness and closure — PB-002 MateLevel rig proof and canonical-data boundary (2026-08-30)
+
+- **PB-002 remains PARTIAL / configurable support, not universal closure.**
+  `QuestActObjMateLevel` has a configurable `MateLeg`; this is not universal
+  closure across canonical carriers or progression routes.
+- `MateLeg` uses explicit `LoopOptions.MateGrowthItemId`; default `0` fails
+  closed. It uses the ordinary item-use path and never writes mate XP, level,
+  or the quest objective directly.
+- **Deterministic rig proof:** `GameplayActor.UseItem(item, mateObjId)` →
+  real `AddExp` effect → `Mate.AddExp` → headless-safe `OnMateLevelUp` →
+  objective credit. **41 uses of 50k XP** reach **2,021,250 mate XP / level
+  50**.
+- Focused evidence is `GameplayActorMateLevelRigTests` **5/5** and
+  `LevelingLoopScenarioRigTests` **33/33**; Game/UnitTests Release builds
+  report **0 errors**. This is deterministic rig/proxy evidence only: no live
+  authenticated or human/client evidence.
+- Canonical item **29040** / skill **23085** is blocked by
+  `MotherFactionOnly=5`; no canonical faction satisfies it. Do not claim
+  canonical live-carrier closure. A data ruling/fix or an evidenced alternative
+  canonical growth-item source is needed.
+- `QuestActObjAbilityLevel` remains blocked: no ordinary player action raises a
+  specific ability level, nine quests have zero accept surfaces, and quest
+  **5967** is self-gated by ten Ability ≥ 50 requirements.
+- **Next action:** decide/fix the canonical 23085 data issue or document an
+  evidenced canonical growth-item source; then run live testing. Broad PB-002
+  progression and human/client acceptance remain open.
+
+## Post-M7 readiness and closure — PB-002 current objective frontier (historical/pre-rig snapshot; stale wording retained, 2026-08-30)
+
 
 - **PB-002 remains PARTIAL; broad autonomous progression is OPEN.** Evidence is
   deterministic rig/proxy only, not live authenticated progression or
