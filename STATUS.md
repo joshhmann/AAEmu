@@ -25,7 +25,35 @@ are capability/blocker tracks; A3/A4/A5 are population/scaling acceptance
 gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
-renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+## 2026-08-30 — Post-M7 readiness / scaling gate: A5 timing triage, ActiveRegionTick remediation, next calibration
+
+- **The 12-hour testing/canary report at SHA
+  `1ce4664f96705850136dc9d46999070fac9763fb` remains valid evidence:** FULL
+  720.000044 minutes / 721 samples; dormancy 1000/1000, embodied 0,
+  materializations/dematerializations 0/0, scheduler queues/failures/save-skips
+  0, DB writes 0, RSS growth 155.9MB < 512MB budget. Overall `passed=false` on
+  timing only.
+- **Timing evidence (classification unchanged):** seven distinct sampled
+  breaches — region 299/288/308/291/297/291ms (budget 200ms) and tick max
+  282.9ms (budget 250ms); 571 ActiveRegionTick overrun log events in-window
+  recurring ~76s; 566/571 same-second physics-slow warnings; no
+  workload/DB/RSS correlation. Classification remains **UNKNOWN host-level
+  physics-thread stall vs host steal** — not a relaxed threshold and not an
+  A5 pass.
+- **Remediation `1801baf987d70eb8f2ac64ac3a9fa84e470e74e8` landed:**
+  ActiveRegionTick now reuses ONE character snapshot and a direct
+  active-spawner scan (`SpawnManager.GetActiveNpcSpawners` /
+  `NpcSpawner.IsPlayerInSpawnRadius(IReadOnlyList<Character>)`), avoiding the
+  old `GetAllSpawners()` deep-copy and nested per-spawner `GetAllCharacters()`
+  enumeration; added `CharacterSnapshotMs`/`SpawnerScanMs` telemetry (bridge
+  `metrics`); no-player and active-player regression tests pass 2/2
+  (`ActiveRegionTickSpawnerScanTests`); builds clean. It reduces
+  allocation/work but still scans O(spawners) per pass — no zero-cost claim.
+- **Next action:** run bounded testing/canary calibration with the same warmup
+  and phase metrics, inspect `SpawnerScanMs`/`CharacterSnapshotMs`/physics
+  stalls; only then decide code fix vs budget calibration and another 12h run.
+- Evidence is testing/canary operational, not human/client evidence. All
+  historical reports are preserved.
 ## 2026-08-30 — Post-M7 readiness and closure: PB-002 MateLevel rig proof and canonical-data boundary
 
 - **PB-002 remains PARTIAL / configurable support, not universal closure.**
@@ -258,11 +286,12 @@ region stalls. All other workload metrics stayed healthy. No GC evidence;
 classification is **UNKNOWN / host-level physics-thread stall versus
 scheduler/host steal** — not a confirmed code regression and not a pass.
 Prior dormant soaks showed no recurring 100–300ms region stalls; the active
-1000-bot storm is not comparable. Next action: isolate/inspect testing-host
-CPU steal and physics-thread diagnostics, then a bounded timing reproduction;
-budgets are NOT relaxed yet. The A5 warmup correction (`ccd4ea857`) is
-validated; the corrected 12h rerun is complete but timing triage remains open.
-Evidence is testing/canary operational evidence, not live human gameplay.
+1000-bot storm is not comparable. Next action (historical — superseded by the 2026-08-30 scaling-gate
+entry above): isolate/inspect testing-host CPU steal and physics-thread
+diagnostics, then a bounded timing reproduction; budgets are NOT relaxed yet.
+The A5 warmup correction (`ccd4ea857`) is validated; the corrected 12h rerun is
+complete but timing triage remains open. Evidence is testing/canary operational
+evidence, not live human gameplay.
 
 The prior full gate at `0ce518ac03a18de00fff1516aa9e794e8566bee6` remains
 2504 total / 2503 passed / 0 failed / 1 skipped, compiler 0/0, MCP 39; no new
