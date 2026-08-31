@@ -44,6 +44,28 @@ baseline, separate startup-peak accounting, fail-fast post-baseline RSS breach,
 and FULL/PARTIAL report semantics. A corrected rerun, preferably a 12-hour
 testing soak, is pending. Prior full-gate and failed-soak provenance remain
 historical; no A5 pass or H/UAT claim is inferred.
+
+**Corrected 12-hour testing/canary soak (2026-08-30, SHA
+`1ce4664f96705850136dc9d46999070fac9763fb`):** completed FULL — 720.000044
+minutes / 721 samples. DormantSpecs 1000/1000, embodied 0, materializations/
+dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, RSS growth
+155.9MB < 512MB budget. Overall `passed=false` on timing only: seven distinct
+timing-breach samples (six failure strings after dedupe) — region
+299/288/308/291/297/291ms (budget 200ms) and one tick max 282.9ms (budget
+250ms). No RSS failure. Triage: 571 ActiveRegionTick overruns in the 12h game
+log (570 in window) at a recurring ~76s cadence (gaps 75–80s ×375, 30s ×126);
+566/571 coincide same-second with physics-slow warnings; region passes report
+deferred 0 characters; physics values 278–554ms track the region stalls. All
+other workload metrics stayed healthy. No GC evidence; classification is
+**UNKNOWN / host-level physics-thread stall versus scheduler/host steal** —
+not a confirmed code regression and not a pass. Prior dormant soaks showed no
+recurring 100–300ms region stalls; the active 1000-bot storm is not
+comparable. Next action: isolate/inspect testing-host CPU steal and
+physics-thread diagnostics, then a bounded timing reproduction; budgets are
+NOT relaxed yet. The A5 warmup correction (`ccd4ea857`) is validated; the
+corrected 12h rerun is complete but timing triage remains open. Evidence is
+testing/canary operational evidence, not live human gameplay.
 ## Post-M7 readiness and closure — PB-002 MateLevel rig proof and canonical-data boundary (2026-08-30)
 
 - **PB-002 remains PARTIAL / configurable support, not universal closure.**
@@ -1470,6 +1492,22 @@ quiescence (1207.9MB baseline, 5749.4MB peak, 3744.1MB final, budget
 +512MB). It is not yet classified as a leak and does not constitute an A5 pass
 or live/human evidence. `ccd4ea857` landed the warmup/baseline/peak correction;
 a preferably 12-hour rerun is pending.
+**Corrected 12-hour testing/canary soak (2026-08-30, SHA
+`1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+155.9MB < 512MB. `passed=false` on timing only: seven distinct breach samples
+(six failure strings after dedupe) — region 299/288/308/291/297/291ms (budget
+200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick overruns
+in the 12h game log (570 in window), recurring ~76s cadence, 566/571
+same-second with physics-slow warnings, deferred 0 characters; physics
+278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+physics-thread stall versus scheduler/host steal** — not a confirmed code
+regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+physics-thread diagnostics, bounded timing reproduction; budgets not relaxed.
+Warmup correction validated; timing triage remains open. Evidence is
+testing/canary operational, not live human gameplay.
 
 **M7 player loop — current source/test HEAD
 `ded008de8d67ece8718e9235fd02503b43ceb6a1`:** an ordinary
@@ -1757,6 +1795,22 @@ post-quiescence baseline, separate startup peak, fail-fast post-baseline RSS
 breach, and FULL/PARTIAL semantics. A corrected rerun, preferably 12 hours,
 remains pending. Preserve prior staged/historical reports and the human/H
 boundary.
+**Corrected 12-hour testing/canary soak (2026-08-30, SHA
+`1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+155.9MB < 512MB. `passed=false` on timing only: seven distinct breach samples
+(six failure strings after dedupe) — region 299/288/308/291/297/291ms (budget
+200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick overruns
+in the 12h game log (570 in window), recurring ~76s cadence, 566/571
+same-second with physics-slow warnings, deferred 0 characters; physics
+278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+physics-thread stall versus scheduler/host steal** — not a confirmed code
+regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+physics-thread diagnostics, bounded timing reproduction; budgets not relaxed.
+Warmup correction validated; timing triage remains open. Evidence is
+testing/canary operational, not live human gameplay.
 
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
@@ -2281,6 +2335,22 @@ clone; per-run soak ownership hardening `799b698ad` is source/test evidence):**
   `950cfd279`; `ccd4ea857` adds warmup-ready/post-quiescence baseline and
   startup-peak separation. A corrected rerun, preferably 12 hours, is pending;
   preserve prior reports and all human/H boundaries.
+- **Corrected 12-hour testing/canary soak (2026-08-30, SHA
+  `1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+  721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+  dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+  RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+  155.9MB < 512MB. `passed=false` on timing only: seven distinct breach
+  samples (six failure strings after dedupe) — region 299/288/308/291/297/291ms
+  (budget 200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick
+  overruns in the 12h game log (570 in window), recurring ~76s cadence,
+  566/571 same-second with physics-slow warnings, deferred 0 characters;
+  physics 278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+  physics-thread stall versus scheduler/host steal** — not a confirmed code
+  regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+  physics-thread diagnostics, bounded timing reproduction; budgets not
+  relaxed. Warmup correction validated; timing triage remains open. Evidence
+  is testing/canary operational, not live human gameplay.
 - **Mail S3:** **PASS / LANDED** in `31045d033` — authenticated
   `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets`
   passed 1/1 in 2m39s on isolated MySQL/Docker; the restart, instance-faithful
@@ -2846,6 +2916,22 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
     pass 2/2 and no broad wildcard cleanup remains. Setup cancellation is now
     cooperative via `950cfd279`; a corrected, preferably 12-hour, soak rerun
     is pending.
+    **Corrected 12-hour testing/canary soak (2026-08-30, SHA
+    `1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+    721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+    dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+    RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+    155.9MB < 512MB. `passed=false` on timing only: seven distinct breach
+    samples (six failure strings after dedupe) — region 299/288/308/291/297/291ms
+    (budget 200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick
+    overruns in the 12h game log (570 in window), recurring ~76s cadence,
+    566/571 same-second with physics-slow warnings, deferred 0 characters;
+    physics 278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+    physics-thread stall versus scheduler/host steal** — not a confirmed code
+    regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+    physics-thread diagnostics, bounded timing reproduction; budgets not
+    relaxed. Warmup correction validated; timing triage remains open. Evidence
+    is testing/canary operational, not live human gameplay.
   - FINAL Tier-3 acceptance: 1,000 registered / ≤50 embodied,
     RSS within 15% of the 50-only baseline; wake-to-visible p95 < 3s;
     dormant timers advance over 6h (Tier 3 = DB-driven scheduled simulation:
@@ -2867,6 +2953,22 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
     character IDs; sibling-preservation tests pass 2/2 and no broad wildcard
     cleanup remains. Setup cancellation is cooperative via `950cfd279`; a
     corrected, preferably 12-hour, soak rerun is pending.
+    **Corrected 12-hour testing/canary soak (2026-08-30, SHA
+    `1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+    721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+    dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+    RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+    155.9MB < 512MB. `passed=false` on timing only: seven distinct breach
+    samples (six failure strings after dedupe) — region 299/288/308/291/297/291ms
+    (budget 200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick
+    overruns in the 12h game log (570 in window), recurring ~76s cadence,
+    566/571 same-second with physics-slow warnings, deferred 0 characters;
+    physics 278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+    physics-thread stall versus scheduler/host steal** — not a confirmed code
+    regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+    physics-thread diagnostics, bounded timing reproduction; budgets not
+    relaxed. Warmup correction validated; timing triage remains open. Evidence
+    is testing/canary operational, not live human gameplay.
 - A6 (M) Manifest-driven mass provisioning (citizen manifest as data;
   replaces hardcoded CitizenNN + 10-bot clamp). Acceptance: cold boot →
   100 citizens on schedule < 60s. **Note 2026-08-24 (4e460305b):** soak

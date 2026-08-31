@@ -242,6 +242,28 @@ accounting, and fail-fast post-baseline RSS breach handling with FULL/PARTIAL
 report semantics. A corrected rerun (preferably a 12-hour testing soak) is
 pending. The old bounded Tier3 rehearsal below remains historical evidence.
 
+**Corrected 12-hour testing/canary soak (2026-08-30, SHA
+`1ce4664f96705850136dc9d46999070fac9763fb`):** completed FULL — 720.000044
+minutes / 721 samples. DormantSpecs 1000/1000, embodied 0,
+materializations/dematerializations 0, scheduler queues/failures/save-skips 0,
+DB writes 0, RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak
+2539.3MB, RSS growth 155.9MB < 512MB budget. Overall `passed=false` on timing
+only: seven distinct timing-breach samples (six failure strings after dedupe)
+— region 299/288/308/291/297/291ms (budget 200ms) and one tick max 282.9ms
+(budget 250ms). No RSS failure. Triage: 571 ActiveRegionTick overruns in the
+12h game log (570 in window) at a recurring ~76s cadence (gaps 75–80s ×375,
+30s ×126); 566/571 coincide same-second with physics-slow warnings; region
+passes report deferred 0 characters; physics values 278–554ms track the
+region stalls. All other workload metrics stayed healthy. No GC evidence;
+classification is **UNKNOWN / host-level physics-thread stall versus
+scheduler/host steal** — not a confirmed code regression and not a pass.
+Prior dormant soaks showed no recurring 100–300ms region stalls; the active
+1000-bot storm is not comparable. Next action: isolate/inspect testing-host
+CPU steal and physics-thread diagnostics, then a bounded timing reproduction;
+budgets are NOT relaxed yet. The A5 warmup correction (`ccd4ea857`) is
+validated; the corrected 12h rerun is complete but timing triage remains open.
+Evidence is testing/canary operational evidence, not live human gameplay.
+
 The prior full gate at `0ce518ac03a18de00fff1516aa9e794e8566bee6` remains
 2504 total / 2503 passed / 0 failed / 1 skipped, compiler 0/0, MCP 39; no new
 full gate was run for `da0fdc61`. No M6 full-exit or H/UAT claim is made;
@@ -339,6 +361,22 @@ result is claimed.
   baseline, separate startup peak, fail-fast post-baseline RSS breach, and
   FULL/PARTIAL report semantics. A corrected rerun, preferably 12 hours,
   remains pending.
+- **Corrected 12-hour testing/canary soak (2026-08-30, SHA
+  `1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+  721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+  dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+  RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+  155.9MB < 512MB. `passed=false` on timing only: seven distinct breach
+  samples (six failure strings after dedupe) — region 299/288/308/291/297/291ms
+  (budget 200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick
+  overruns in the 12h game log (570 in window), recurring ~76s cadence,
+  566/571 same-second with physics-slow warnings, deferred 0 characters;
+  physics 278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+  physics-thread stall versus scheduler/host steal** — not a confirmed code
+  regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+  physics-thread diagnostics, bounded timing reproduction; budgets not
+  relaxed. Warmup correction validated; timing triage remains open. Evidence
+  is testing/canary operational, not live human gameplay.
 - Cancellation focused tests pass 3/3; ownership focused tests pass 2/2.
   The prior full gate at 0ce remains historical: 2504 total / 2503 passed /
   0 failed / 1 skipped, compiler 0/0, MCP 39. No new full gate was run at da0.
@@ -725,6 +763,22 @@ the pre-quiescence baseline (1207.9MB baseline, 5749.4MB peak, 3744.1MB final,
 budget +512MB), not yet classified as a leak. Testing/canary diagnostic
 failure only, not an A5 pass or live/human evidence. `ccd4ea857` corrects
 warmup/baseline/peak handling; a preferably 12-hour rerun remains pending.
+**Corrected 12-hour testing/canary soak (2026-08-30, SHA
+`1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+155.9MB < 512MB. `passed=false` on timing only: seven distinct breach samples
+(six failure strings after dedupe) — region 299/288/308/291/297/291ms (budget
+200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick overruns
+in the 12h game log (570 in window), recurring ~76s cadence, 566/571
+same-second with physics-slow warnings, deferred 0 characters; physics
+278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+physics-thread stall versus scheduler/host steal** — not a confirmed code
+regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+physics-thread diagnostics, bounded timing reproduction; budgets not relaxed.
+Warmup correction validated; timing triage remains open. Evidence is
+testing/canary operational, not live human gameplay.
 **M7 player-loop reconciliation (2026-08-28; current source/test HEAD
 `ded008de8d67ece8718e9235fd02503b43ceb6a1`):** An ordinary
 `Character`/PlayerBot discovers and accepts a quest, navigates, chooses legal

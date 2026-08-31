@@ -81,6 +81,22 @@ feel.)
   baseline, separate startup-peak accounting, fail-fast post-baseline RSS
   breach handling, and FULL/PARTIAL report semantics. A corrected rerun,
   preferably a 12-hour testing soak, is pending.
+- **Corrected 12-hour testing/canary soak (2026-08-30, SHA
+  `1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+  721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+  dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+  RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+  155.9MB < 512MB. `passed=false` on timing only: seven distinct breach
+  samples (six failure strings after dedupe) — region 299/288/308/291/297/291ms
+  (budget 200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick
+  overruns in the 12h game log (570 in window), recurring ~76s cadence,
+  566/571 same-second with physics-slow warnings, deferred 0 characters;
+  physics 278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+  physics-thread stall versus scheduler/host steal** — not a confirmed code
+  regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+  physics-thread diagnostics, bounded timing reproduction; budgets not
+  relaxed. Warmup correction validated; timing triage remains open. Evidence
+  is testing/canary operational, not live human gameplay.
 - The prior full gate at source/test `0ce518ac03a18de00fff1516aa9e794e8566bee6`
   remains historical at 2504 total / 2503 passed / 0 failed / 1 skipped,
   compiler 0/0, MCP 39. H remains U (UNKNOWN) and no M6 full-exit claim is
@@ -259,6 +275,28 @@ post-baseline RSS breach, and FULL/PARTIAL report semantics. A corrected
 rerun, preferably a 12-hour testing soak, remains pending. Cancellation focused
 tests 3/3 and ownership tests 2/2 pass. H remains human-only and UNKNOWN.
 
+**Corrected 12-hour testing/canary soak (2026-08-30, SHA
+`1ce4664f96705850136dc9d46999070fac9763fb`):** completed FULL — 720.000044
+minutes / 721 samples. DormantSpecs 1000/1000, embodied 0, materializations/
+dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, RSS growth
+155.9MB < 512MB budget. Overall `passed=false` on timing only: seven distinct
+timing-breach samples (six failure strings after dedupe) — region
+299/288/308/291/297/291ms (budget 200ms) and one tick max 282.9ms (budget
+250ms). No RSS failure. Triage: 571 ActiveRegionTick overruns in the 12h game
+log (570 in window) at a recurring ~76s cadence (gaps 75–80s ×375, 30s ×126);
+566/571 coincide same-second with physics-slow warnings; region passes report
+deferred 0 characters; physics values 278–554ms track the region stalls. All
+other workload metrics stayed healthy. No GC evidence; classification is
+**UNKNOWN / host-level physics-thread stall versus scheduler/host steal** —
+not a confirmed code regression and not a pass. Prior dormant soaks showed no
+recurring 100–300ms region stalls; the active 1000-bot storm is not
+comparable. Next action: isolate/inspect testing-host CPU steal and
+physics-thread diagnostics, then a bounded timing reproduction; budgets are
+NOT relaxed yet. The A5 warmup correction (`ccd4ea857`) is validated; the
+corrected 12h rerun is complete but timing triage remains open. Evidence is
+testing/canary operational evidence, not live human gameplay.
+
 ## M2 loop reconciliation (2026-08-28)
 
 The M2 player loop is **clean reset → ordinary golden-path baseline
@@ -351,7 +389,13 @@ caveat, and H/client boundary remain unchanged.
 **A5 canary diagnostic (current result):** The bounded rehearsal and the
 executed six-hour dormant canary are separate evidence. See the current soak
 boundary above for the valid report path, 360.00003-minute / 361-sample result,
-RSS diagnostic failure, and pending corrected rerun.
+RSS diagnostic failure, and pending corrected rerun. The corrected 12-hour
+testing/canary soak (SHA `1ce4664f96705850136dc9d46999070fac9763fb`) is now
+complete: FULL 720.000044 minutes / 721 samples, RSS within budget (growth
+155.9MB < 512MB), `passed=false` on timing only (region 299/288/308/291/297/291ms
+and tick max 282.9ms) — classification UNKNOWN / host-level physics-thread
+stall versus scheduler/host steal; timing triage remains open (see current soak
+boundary above).
 
 ## M6/M7 loop reconciliation (2026-08-28)
 
@@ -373,6 +417,22 @@ the pre-quiescence baseline (1207.9MB baseline, 5749.4MB peak, 3744.1MB final,
 budget +512MB), not yet classified as a leak. This is a testing/canary
 diagnostic failure, not an A5 pass or H/UAT evidence. `ccd4ea857` corrects
 warmup baseline/peak handling; a preferably 12-hour rerun remains pending.
+**Corrected 12-hour testing/canary soak (2026-08-30, SHA
+`1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+155.9MB < 512MB. `passed=false` on timing only: seven distinct breach samples
+(six failure strings after dedupe) — region 299/288/308/291/297/291ms (budget
+200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick overruns
+in the 12h game log (570 in window), recurring ~76s cadence, 566/571
+same-second with physics-slow warnings, deferred 0 characters; physics
+278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+physics-thread stall versus scheduler/host steal** — not a confirmed code
+regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+physics-thread diagnostics, bounded timing reproduction; budgets not relaxed.
+Warmup correction validated; timing triage remains open. Evidence is
+testing/canary operational, not live human gameplay.
 Focused M7 evidence is **147/147** no-fail/no-skip: primary **36/36**
 (Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4,
 PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support
@@ -426,7 +486,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | ZONE-01 | Peace/conflict/war state transitions and PvP rules | Later | U | 2 | U | 1 | U | U | `ZoneManager`; conflict-state audit. **2026-08-24 (0482ba3f0): zone state machine data-wired + enforced** — hard-coded Conflict boot state removed → data-driven Peace default (legacy World.ConflictZonesStartAtConflict flag kept for tests); Peace-state PvP protection at the BaseUnit.CanAttack chokepoint (fail-open when no conflict entry; Hostile stays attackable). W=2 (real engine path end-to-end); A=1 rig-level state machine + enforcement tests — no live PvP scenario yet (kept honest); **2026-08-25 (mechanics/pvp-domain.md):** enforcement confirmed as exactly ONE hook inside CanAttack; missing for a real war cycle: war-declaration input (CSFactionDeclareHostile stub), runtime conflict seeding, war towers. H=UNKNOWN |
 | ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; current source/test HEAD `792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`); behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` retains the normal-clone Release gate 2496 total/2495 passed/0 failed/1 skipped, compiler 0/0, MCP stdio 39 tools, with the sole live-rig skip identified above. PB-002 focused item-use 1/1 and related scoped results above. H remains U. |
 | BOT-01 | Headless account/session/Character lifecycle | M6 | U | 0 | U | 0 | 0 | U | New fork capability |
-| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Historical bounded Tier3 readiness at `4721cbd306cbf346bfe38b7373d5adf479b6231f`; six-hour canary executed with diagnostic failure (see current A5 boundary above), so no A5 pass or soak grade is claimed. |
+| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Historical bounded Tier3 readiness at `4721cbd306cbf346bfe38b7373d5adf479b6231f`; six-hour canary executed with diagnostic failure and the corrected 12-hour testing/canary soak (SHA `1ce4664f96705850136dc9d46999070fac9763fb`) completed FULL with RSS within budget but `passed=false` on timing (region/tick breaches, classification UNKNOWN / host-level physics-thread stall versus scheduler/host steal; see current A5 boundary above), so no A5 pass or soak grade is claimed. |
 | REGRADE-01 | Gear regrading: spend regrade charms/scrolls to raise equipment tier with success/downgrade odds | Later | U | U | U | U | U | U | NEW 2026-08-25 (generated/mechanic-inventory-2026-08-25.md §3#1): item_grades/_grade_buffs/_enchanting_supports/_distributions + equip_slot_enchanting_costs tables; SCGradeEnchantResult/Broadcast G2C confirmations; GradeEnchant refs in ItemManager. Own dossier pending |
 | SOCKET-01 | Gem socketing: insert lunastones/lunagems into gear sockets with per-grade chance/level limits | Later | U | U | U | U | U | U | NEW 2026-08-25 (census §3#2): item_sockets/_chances/_level_limits/_num_limits + item_enchanting_gems; SCItemSocketingLunastone/LunagemResult packets. Own dossier pending |
 | GLIDER-01 | Glider flight: deploy/hang/unhang gliders (incl. costume wings-as-glider) for controlled aerial traversal | M7+ | U | U | U | U | U | U | NEW 2026-08-25 (census §3#3): CSHang/UnhangPacket, flying_state_change_effects; glider traces in ItemDetailType/BackpackType/UnitRequirementsGameData; no dedicated manager. Own dossier pending |
@@ -510,6 +570,22 @@ Add mechanics as SQL/code/runtime exploration reveals them; use stable IDs so
 > separation, fail-fast post-baseline RSS breach, and FULL/PARTIAL semantics;
 > a preferably 12-hour corrected rerun remains pending. Historical ownership
 > details and prior failed report/log provenance remain preserved.
+> **Corrected 12-hour testing/canary soak (2026-08-30, SHA
+> `1ce4664f96705850136dc9d46999070fac9763fb`):** FULL — 720.000044 minutes /
+> 721 samples; DormantSpecs 1000/1000, embodied 0, materializations/
+> dematerializations 0, scheduler queues/failures/save-skips 0, DB writes 0,
+> RSS baseline 2383.4MB, startup peak 2471.3MB, steady peak 2539.3MB, growth
+> 155.9MB < 512MB. `passed=false` on timing only: seven distinct breach
+> samples (six failure strings after dedupe) — region 299/288/308/291/297/291ms
+> (budget 200) and tick max 282.9ms (budget 250). Triage: 571 ActiveRegionTick
+> overruns in the 12h game log (570 in window), recurring ~76s cadence,
+> 566/571 same-second with physics-slow warnings, deferred 0 characters;
+> physics 278–554ms tracks the stalls. Classification **UNKNOWN / host-level
+> physics-thread stall versus scheduler/host steal** — not a confirmed code
+> regression, not a pass. Next: isolate/inspect testing-host CPU steal and
+> physics-thread diagnostics, bounded timing reproduction; budgets not
+> relaxed. Warmup correction validated; timing triage remains open. Evidence
+> is testing/canary operational, not live human gameplay.
 > **2026-08-26 recovery scorecard update (develop @ e5db6d390):** recovery
 > contents are confirmed on develop: grounding `38c4997d3`, recovered
 > Retribution wire-test merge `a4f7820ba`, and merchant merge `e5db6d390`;
