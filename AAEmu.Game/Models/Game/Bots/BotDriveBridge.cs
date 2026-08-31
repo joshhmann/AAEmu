@@ -320,6 +320,8 @@ public sealed class BotDriveBridge
             {
                 available = true,
                 charactersTotal = s.CharactersTotal,
+                characterSnapshotMs = s.CharacterSnapshotMs,
+                spawnerScanMs = s.SpawnerScanMs,
                 charactersProcessed = s.CharactersProcessed,
                 matesProcessed = s.MatesProcessed,
                 slavesProcessed = s.SlavesProcessed,

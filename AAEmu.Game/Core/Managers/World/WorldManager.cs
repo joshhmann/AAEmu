@@ -185,9 +185,12 @@ public class WorldManager(
             stats.SlavesProcessed = 0;
             stats.SpawnersTotal = 0;
             stats.SpawnersProcessed = 0;
+            stats.SpawnerScanMs = 0;
 
             // Players — chunked round-robin with continuation cursor
+            var snapshotStart = sw.ElapsedMilliseconds;
             var characters = GetAllCharacters();
+            stats.CharacterSnapshotMs = sw.ElapsedMilliseconds - snapshotStart;
             stats.CharactersTotal = characters.Count;
             if (characters.Count > 0)
             {
@@ -230,10 +233,9 @@ public class WorldManager(
                 if (sw.ElapsedMilliseconds >= ActiveRegionTickBudgetMs)
                     continue;
 
-                var npcSpawners = world.SpawnManager.GetAllSpawners();
-                var activeSpawners = npcSpawners.Values.SelectMany(x => x)
-                    .Where(spawner => spawner.Template != null && IsSpawnerActive(spawner))
-                    .ToList();
+                var spawnerScanStart = sw.ElapsedMilliseconds;
+                var activeSpawners = world.SpawnManager.GetActiveNpcSpawners(characters);
+                stats.SpawnerScanMs += sw.ElapsedMilliseconds - spawnerScanStart;
                 stats.SpawnersTotal += activeSpawners.Count;
 
                 // Consistent processing of spawners — drop-oldest semantics: once the budget
@@ -256,11 +258,6 @@ public class WorldManager(
         }
     }
 
-    private bool IsSpawnerActive(NpcSpawner spawner)
-    {
-        return spawner.IsPlayerInSpawnRadius();
-    }
-
     /// <summary>
     /// Per-pass counters for ActiveRegionTick (diagnostics, WebApi, tests).
     /// Reset at the start of every pass; written under <see cref="_regionTickLock"/>.
@@ -268,6 +265,8 @@ public class WorldManager(
     internal sealed class ActiveRegionTickStats
     {
         public int CharactersTotal { get; set; }
+        public long CharacterSnapshotMs { get; set; }
+        public long SpawnerScanMs { get; set; }
         public int CharactersProcessed { get; set; }
         public int MatesProcessed { get; set; }
         public int SlavesProcessed { get; set; }

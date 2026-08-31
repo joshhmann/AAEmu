@@ -5,6 +5,7 @@ using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.GameData;
+using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
@@ -1180,6 +1181,28 @@ public class SpawnManager(WorldInstance parentWorld)
         }
     }
     
+    /// <summary>
+    /// Gets NPC spawners that are eligible for an active-region tick without
+    /// materializing the complete spawner dictionary or its lists.
+    /// </summary>
+    public List<NpcSpawner> GetActiveNpcSpawners(IReadOnlyList<Character> players)
+    {
+        var active = new List<NpcSpawner>();
+        lock (NpcSpawners)
+        {
+            foreach (var spawners in NpcSpawners.Values)
+            {
+                foreach (var spawner in spawners)
+                {
+                    if (spawner.Template != null && spawner.IsPlayerInSpawnRadius(players))
+                        active.Add(spawner);
+                }
+            }
+        }
+
+        return active;
+    }
+
     /// <summary>
     /// Gets all Spawners.
     /// </summary>

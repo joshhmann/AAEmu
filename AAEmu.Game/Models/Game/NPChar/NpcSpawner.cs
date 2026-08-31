@@ -454,6 +454,16 @@ public class NpcSpawner : Spawner<Npc>
     /// </summary>
     public bool IsPlayerInSpawnRadius()
     {
+        return IsPlayerInSpawnRadius(WorldManager.Instance.GetAllCharacters());
+    }
+
+    /// <summary>
+    /// Checks the spawn radius using a caller-owned character snapshot. Region ticks
+    /// already take one snapshot; reusing it avoids an O(spawners × characters) allocation
+    /// storm when the radius cache expires.
+    /// </summary>
+    public bool IsPlayerInSpawnRadius(IReadOnlyList<Character> players)
+    {
         var testRadiusPc = Template.TestRadiusPc == 0 ? Template.TestRadiusNpc : Template.TestRadiusPc;
         var testRadius = testRadiusPc * 50f * testRadiusPc * 50f;
         // Проверяем, есть ли кэш для текущего SpawnerId
@@ -467,7 +477,6 @@ public class NpcSpawner : Spawner<Npc>
         }
 
         // Если кэш устарел или отсутствует, выполняем проверку
-        var players = WorldManager.Instance.GetAllCharacters();
         foreach (var player in players)
         {
             var distance = Vector3.DistanceSquared(player.Transform.World.Position, new Vector3(Position.X, Position.Y, Position.Z));
