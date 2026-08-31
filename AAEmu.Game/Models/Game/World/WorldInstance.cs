@@ -649,6 +649,23 @@ public partial class WorldInstance(WorldTemplate template, uint channelId, bool 
     }
 
     /// <summary>
+    /// Returns true if any slave in this instance satisfies <paramref name="predicate"/>.
+    /// Non-allocating: iterates the live dictionary with a struct enumerator (no snapshot
+    /// list). The predicate delegate is caller-owned — cache it (e.g. a static readonly
+    /// field) when called from hot paths such as the physics thread, where a per-step
+    /// <see cref="GetAllSlaves"/> snapshot would be pure GC churn.
+    /// </summary>
+    public bool AnySlave(Func<Slave, bool> predicate)
+    {
+        foreach (var pair in _slaves)
+        {
+            if (predicate(pair.Value))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Gets a Slave by it's ObjId
     /// </summary>
     /// <param name="slaveObjId"></param>

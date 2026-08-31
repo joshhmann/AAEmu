@@ -103,7 +103,12 @@ public class LevelingLoopScenarioRigTests
     private const uint MateLevelStartComponentId = 91_611;
     private const uint MateLevelProgressComponentId = 91_612;
     private const uint MateLevelReadyComponentId = 91_613;
-    private const uint MateLevelOfferNpcTemplateId = 90_953;
+    // Dedicated offerer NPC template (90_956, fixture range): the complete-quest
+    // suite shares NPC 90_953 for its synthetic parent 90990, whose prereq
+    // pointer is left at the deliberately-unseeded 90999 by the fail-closed
+    // control. A shared template would make the mate-level loop discover that
+    // leftover parent and fail on the unknown prerequisite in full-suite runs.
+    private const uint MateLevelOfferNpcTemplateId = 90_956;
     private const uint MateLevelGrowthItemId = 29_040;
     private const uint MateLevelGrowthSkillId = 90_501;
     private const uint MateLevelSummonItemId = 8_158;

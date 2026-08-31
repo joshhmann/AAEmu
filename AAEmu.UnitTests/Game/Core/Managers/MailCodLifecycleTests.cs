@@ -188,21 +188,34 @@ public sealed class MailCodLifecycleTests
     [Test]
     public async Task GetAttached_PartialBagFull_TransfersHeadAndRetainsRemainder()
     {
-        var item1 = CreateItem(AttachedItemId1, AttachedItemTemplateId1, _receiver.Id, 1);
-        var item2 = CreateItem(AttachedItemId2, AttachedItemTemplateId2, _receiver.Id, 1);
+        // Distinct fixture identity: the shared _receiver (Id=2) reuses the
+        // persistent containers other suites registered for character Id=2 in
+        // the shared ItemManager singleton — a stale bag would make this
+        // test's 1-slot bag appear full and nothing would transfer. A fresh
+        // character id gets brand-new containers (GetItemContainerForCharacter
+        // creates on miss), keeping the partial-transfer assertions exact.
+        var partialReceiver = new CharacterMock { AccountId = 3, Id = 3, Name = "partial-receiver", Money = 1000, NumInventorySlots = 1 };
+        partialReceiver.Inventory = new Inventory(partialReceiver);
+        partialReceiver.Mails = new CharacterMails(partialReceiver);
+        var partialCapture = new PacketCaptureSession();
+        var partialConn = new GameConnection(partialCapture) { ActiveChar = partialReceiver };
+        partialReceiver.Connection = partialConn;
+
+        var item1 = CreateItem(AttachedItemId1, AttachedItemTemplateId1, partialReceiver.Id, 1);
+        var item2 = CreateItem(AttachedItemId2, AttachedItemTemplateId2, partialReceiver.Id, 1);
 
         var mail = new BaseMail
         {
             Id = MultiItemMailId,
             Title = "multi-item",
-            ReceiverName = _receiver.Name,
+            ReceiverName = partialReceiver.Name,
             MailType = MailType.Normal,
             Header =
             {
                 Status = MailStatus.Read,
                 SenderId = _sender.Id,
                 SenderName = _sender.Name,
-                ReceiverId = _receiver.Id,
+                ReceiverId = partialReceiver.Id,
                 Attachments = 2
             },
             Body =
@@ -214,18 +227,14 @@ public sealed class MailCodLifecycleTests
         };
         _mailManager._allPlayerMails[MultiItemMailId] = mail;
 
-        _receiver.NumInventorySlots = 1;
-        _receiver.Inventory = new Inventory(_receiver);
-        _receiver.Mails = new CharacterMails(_receiver);
-
-        var success = _receiver.Mails.GetAttached(MultiItemMailId, takeMoney: true, takeItems: true, takeAllSelected: true);
+        var success = partialReceiver.Mails.GetAttached(MultiItemMailId, takeMoney: true, takeItems: true, takeAllSelected: true);
 
         await Assert.That(success).IsFalse();
         await Assert.That(mail.Body.Attachments).HasCount().EqualTo(1);
         await Assert.That(mail.Body.Attachments[0].Id).IsEqualTo(AttachedItemId2);
-        await Assert.That(_receiver.Inventory.Bag.GetItemBySlot(0)).IsNotNull();
-        await Assert.That(_receiver.Inventory.Bag.GetItemBySlot(0)!.Id).IsEqualTo(AttachedItemId1);
-        await Assert.That(HasError(ReceiverFrames, ErrorMessageType.BagFull)).IsTrue();
+        await Assert.That(partialReceiver.Inventory.Bag.GetItemBySlot(0)).IsNotNull();
+        await Assert.That(partialReceiver.Inventory.Bag.GetItemBySlot(0)!.Id).IsEqualTo(AttachedItemId1);
+        await Assert.That(HasError(partialCapture.CapturedPackets, ErrorMessageType.BagFull)).IsTrue();
     }
 
     [Test]

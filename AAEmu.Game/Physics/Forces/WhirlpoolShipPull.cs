@@ -40,6 +40,13 @@ public sealed class WhirlpoolShipPull(World world, Func<WorldInstance> getWorld)
     /// <summary>Minimum horizontal distance (m) before applying pull (prevents jitter near exact center).</summary>
     public const float MinDistanceMeters = 0.35f;
 
+    // Cached predicate for the per-step buff scan: the physics thread runs PreStep at
+    // TargetPhysicsTps (25/s) per world, and the generator is created unconditionally
+    // (even in the default Official sea-weather model). A per-step GetAllSlaves() snapshot
+    // would allocate a List<Slave> on every step with zero ships present.
+    private static readonly Func<Slave, bool> s_hasWhirlpoolBuff =
+        s => s?.Buffs.CheckBuff(WhirlpoolBuffId) == true;
+
     public override void PreStep(float timeStep)
     {
         if (timeStep <= 0f)
@@ -50,17 +57,8 @@ public sealed class WhirlpoolShipPull(World world, Func<WorldInstance> getWorld)
             return;
 
         // Avoid scanning all doodads if no ship is currently affected.
-        var slaves = gameWorld.GetAllSlaves();
-        var anyAffectedShip = false;
-        foreach (var s in slaves)
-        {
-            if (s?.Buffs.CheckBuff(WhirlpoolBuffId) == true)
-            {
-                anyAffectedShip = true;
-                break;
-            }
-        }
-        if (!anyAffectedShip)
+        // Non-allocating scan: no snapshot list on the physics hot path.
+        if (!gameWorld.AnySlave(s_hasWhirlpoolBuff))
             return;
 
         // Clamp dt to avoid a long hitch applying too many damage loops at once.
@@ -83,9 +81,11 @@ public sealed class WhirlpoolShipPull(World world, Func<WorldInstance> getWorld)
 
         var minDistSq = MinDistanceMeters * MinDistanceMeters;
 
+        // Buff-gated path: only reached when at least one ship carries buff 1918, so the
+        // snapshot allocation here is acceptable (the audit's "buff-gated" verdict).
+        var slaves = gameWorld.GetAllSlaves();
         // Track ships that are currently affected this tick, to cleanup stale accumulators.
         _affectedThisTick.Clear();
-
         foreach (var slave in slaves)
         {
             if (slave?.RigidBody is not { } body || body.MotionType == MotionType.Static || !body.IsActive)
