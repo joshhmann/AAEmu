@@ -27,6 +27,11 @@
         "UsePersistentHouseDoodads": false,
         "PvpHonorRate": 1.0,
         "TagShareEnabled": false,
-        "NpcLineOfSightCheck": true
+        "NpcLineOfSightCheck": true,
+        "PhysicsTelemetry": {
+            "Enabled": false,
+            "SamplePeriodSeconds": 60,
+            "SlowIterationMs": 100
+        }
     }
 }

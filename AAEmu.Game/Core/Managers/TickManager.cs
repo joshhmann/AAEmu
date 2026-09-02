@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using AAEmu.Commons.Utils;
 
 using NLog;
@@ -234,17 +234,30 @@ public sealed class TickMetricsSnapshot
 /// </summary>
 internal sealed class SampleRing
 {
-    private const int Capacity = 1024;
-    private readonly double[] _samples = new double[Capacity];
+    private const int DefaultCapacity = 1024;
+    private readonly double[] _samples;
+    private readonly int _capacity;
     private int _count;
     private int _head;
 
+    public SampleRing(int capacity = DefaultCapacity)
+    {
+        _capacity = Math.Max(1, capacity);
+        _samples = new double[_capacity];
+    }
     public void Add(double ms)
     {
         _samples[_head] = ms;
-        _head = (_head + 1) % Capacity;
-        if (_count < Capacity)
+        _head = (_head + 1) % _capacity;
+        if (_count < _capacity)
             _count++;
+    }
+
+    /// <summary>Drops all samples (window reset).</summary>
+    public void Clear()
+    {
+        _count = 0;
+        _head = 0;
     }
 
     public (long Count, double P50Ms, double P95Ms, double P99Ms, double MaxMs) Summarize()
@@ -254,7 +267,7 @@ internal sealed class SampleRing
 
         var ordered = new double[_count];
         for (var i = 0; i < _count; i++)
-            ordered[i] = _samples[(_head - _count + i + Capacity) % Capacity];
+            ordered[i] = _samples[(_head - _count + i + _capacity) % _capacity];
         Array.Sort(ordered);
 
         return (_count, Percentile(ordered, 0.50), Percentile(ordered, 0.95), Percentile(ordered, 0.99), ordered[^1]);

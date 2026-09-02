@@ -233,6 +233,11 @@ public class WorldManager(
                 if (sw.ElapsedMilliseconds >= ActiveRegionTickBudgetMs)
                     continue;
 
+                // An empty player snapshot cannot activate any spawner. Avoid the full
+                // spawner scan entirely so an empty world remains bounded by the budget.
+                if (characters.Count == 0)
+                    continue;
+
                 var spawnerScanStart = sw.ElapsedMilliseconds;
                 var activeSpawners = world.SpawnManager.GetActiveNpcSpawners(characters);
                 stats.SpawnerScanMs += sw.ElapsedMilliseconds - spawnerScanStart;

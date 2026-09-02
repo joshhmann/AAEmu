@@ -491,6 +491,51 @@ public sealed class BotDriveBridge
             Logger.Debug(ex, "gate metrics: save metrics unavailable");
             save = new { available = false, error = ex.Message };
         }
+        // A5 — per-iteration physics telemetry (loop gap, sleep overshoot,
+        // Step duration, broadcast duration, workload counts). Null when the
+        // world's physics telemetry is disabled or has no samples yet.
+        object physics = null;
+        try
+        {
+            // A5 soak physics is the default (main) world's physics thread.
+            // Prefer the default instance; fall back to the first world only
+            // when the default is not loaded yet (GetWorld logs FATAL per miss).
+            var worlds = WorldManager.Instance.GetWorlds();
+            var world = worlds.FirstOrDefault(w => w.Id == WorldManager.DefaultInstanceId)
+                ?? worlds.FirstOrDefault();
+            var telemetry = world?.Physics?.Telemetry;
+            if (telemetry != null)
+            {
+                var m = telemetry.Snapshot();
+                physics = new
+                {
+                    available = m.Available,
+                    worldId = world?.Id,
+                    sampleCount = m.SampleCount,
+                    loopGapP50Ms = m.LoopGapP50Ms,
+                    loopGapP95Ms = m.LoopGapP95Ms,
+                    loopGapMaxMs = m.LoopGapMaxMs,
+                    sleepOvershootP50Ms = m.SleepOvershootP50Ms,
+                    sleepOvershootP95Ms = m.SleepOvershootP95Ms,
+                    sleepOvershootMaxMs = m.SleepOvershootMaxMs,
+                    stepP50Ms = m.StepP50Ms,
+                    stepP95Ms = m.StepP95Ms,
+                    stepMaxMs = m.StepMaxMs,
+                    broadcastP50Ms = m.BroadcastP50Ms,
+                    broadcastP95Ms = m.BroadcastP95Ms,
+                    broadcastMaxMs = m.BroadcastMaxMs,
+                    pendingActionsMax = m.PendingActionsMax,
+                    bodiesMax = m.BodiesMax,
+                    shipsMax = m.ShipsMax,
+                    forcesMax = m.ForcesMax
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "gate metrics: physics telemetry unavailable");
+            physics = new { available = false, error = ex.Message };
+        }
 
         return new
         {
@@ -499,6 +544,7 @@ public sealed class BotDriveBridge
             scheduler,
             population,
             save,
+            physics,
             uptimeMs = Environment.TickCount64
         };
     }

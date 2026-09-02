@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Numerics;
+using System.Diagnostics;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
@@ -64,6 +65,12 @@ public class PhysicsManager
     private readonly ShipStaticBarrierInteraction _shipStaticBarriers = new();
     private readonly ShipCliffInteraction _shipCliff = new();
 
+    /// <summary>
+    /// Bounded per-iteration physics telemetry (A5 stall investigation).
+    /// Disabled by default; see <see cref="PhysicsTelemetryConfig"/>.
+    /// </summary>
+    internal PhysicsTelemetry Telemetry { get; private set; }
+
     /// <summary>Physics-thread loop counter for throttling <see cref="Slave.CreateWaterAndLandSurfaceCache"/>.</summary>
     private ulong _physicsLoopIndex;
 
@@ -87,6 +94,11 @@ public class PhysicsManager
     {
         _physWorld = new Jitter2.World();
         _physWorld.Gravity = new JVector(0, -9.81f, 0);
+
+        Telemetry = new PhysicsTelemetry(
+            AppConfiguration.Instance.World?.PhysicsTelemetry ?? new PhysicsTelemetryConfig(),
+            SimulationWorld.Template.Name,
+            TargetPhysicsTps);
 
         _buoyancy = new Buoyancy(_physWorld) {
             FluidBox = new JBoundingBox(
@@ -186,9 +198,17 @@ public class PhysicsManager
                 accumulatedTime += timeSinceLastTick;
                 var timeToNextStep = lastTick + targetStepTime - currentTick;
                 // Only sleep if needed, otherwise, directly continue
+                var sleepOvershootMs = 0d;
                 if (timeToNextStep.TotalMilliseconds > 1)
                 {
-                    Thread.Sleep((int)timeToNextStep.TotalMilliseconds);
+                    var sleepSw = Stopwatch.StartNew();
+                    var sleepRequestedMs = timeToNextStep.TotalMilliseconds;
+                    Thread.Sleep((int)sleepRequestedMs);
+                    sleepSw.Stop();
+                    // Overshoot = actual sleep wall-clock minus the requested sleep time
+                    // (compared against the un-truncated request, so the (int) truncation
+                    // of Thread.Sleep is not misreported as overshoot).
+                    sleepOvershootMs = Math.Max(0d, sleepSw.Elapsed.TotalMilliseconds - sleepRequestedMs);
                 }
                 else
                 if (timeToNextStep.TotalMilliseconds < -TargetPhysicsTps)
@@ -201,10 +221,12 @@ public class PhysicsManager
                 lastTick = currentTick;
                 _physicsLoopIndex++;
 
-                // 1. Process pending add/remove actions
-                while (_pendingActions.TryDequeue(out var action)) { action(); }
+                var stepMs = 0d;
+                var broadcastMs = 0d;
 
                 List<(RigidBody body, JVector vel, bool moving)> snapshot = [];
+                // 1. Process pending add/remove actions
+                while (_pendingActions.TryDequeue(out var action)) { action(); }
 
                 lock (_worldLock)
                 {
@@ -221,7 +243,10 @@ public class PhysicsManager
 
                     // 3. Step the physics world
                     // Potentially step multiple times to catch up if we were running behind.
+                    var stepSw = Stopwatch.StartNew();
                     _physWorld.Step((float)physicsTotalDelta.TotalSeconds, false);
+                    stepSw.Stop();
+                    stepMs = stepSw.Elapsed.TotalMilliseconds;
 
                     // 4. Sync positions and broadcast outside lock
                     // body, velocity, isMoving
@@ -430,6 +455,7 @@ public class PhysicsManager
                         }
                     }
 
+                    var broadcastSw = Stopwatch.StartNew();
                     foreach (var slave in shipsThisTick)
                     {
                         try
@@ -441,7 +467,20 @@ public class PhysicsManager
                             Logger.Error($"PhysicsThread Error on Slave {slave.Id} {slave.Name} ({slave.ObjId}): {slaveException.Message}\n{slaveException.StackTrace}");
                         }
                     }
+                    broadcastSw.Stop();
+                    broadcastMs = broadcastSw.Elapsed.TotalMilliseconds;
                 }
+
+                // Record per-iteration telemetry (bounded rings; no-op when disabled).
+                Telemetry.Record(
+                    loopGapMs: timeSinceLastTick.TotalMilliseconds,
+                    sleepOvershootMs: sleepOvershootMs,
+                    stepMs: stepMs,
+                    broadcastMs: broadcastMs,
+                    pendingActions: _pendingActions.Count,
+                    bodies: _bodies.Count,
+                    ships: _shipControllers.Count,
+                    forces: ForceGenerator.ActiveCount);
             }
         }
         catch (Exception e)

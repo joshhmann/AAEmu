@@ -204,6 +204,93 @@ public class WorldConfig
     /// Configure in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.NpcMaxStepHeight</c>.
     /// </summary>
     public float NpcMaxStepHeight { get; set; } = 0.5f;
+
+    /// <summary>
+    /// Physics-loop telemetry for the A5 stall investigation. Disabled by
+    /// default (default-safe): when enabled, each physics iteration is sampled
+    /// into bounded rings (loop gap, sleep overshoot, Step duration, broadcast
+    /// duration, pending-action/body/ship/force counts) and a periodic aggregate
+    /// log line is emitted (WARN on a slow window, DEBUG otherwise). Configure
+    /// in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.PhysicsTelemetry</c>.
+    /// </summary>
+    public PhysicsTelemetryConfig PhysicsTelemetry { get; set; } = new();
+}
+
+/// <summary>
+/// Configuration for per-iteration physics telemetry (A5 stall investigation).
+/// All values are safe defaults; telemetry is OFF unless <see cref="Enabled"/>.
+/// </summary>
+public class PhysicsTelemetryConfig
+{
+    /// <summary>Master switch. When false (default) no samples are recorded and no log lines are emitted.</summary>
+    public bool Enabled { get; set; } = false;
+
+    /// <summary>Seconds between periodic aggregate log lines (default 60).</summary>
+    public double SamplePeriodSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Loop-gap threshold (ms) above which the periodic aggregate is logged at
+    /// WARN instead of DEBUG (default 100).
+    /// </summary>
+    public double SlowIterationMs { get; set; } = 100;
+
+    /// <summary>
+    /// Minimum sample period (seconds). Values below this are clamped up.
+    /// </summary>
+    public const double MinSamplePeriodSeconds = 1;
+
+    /// <summary>
+    /// Maximum sample period (seconds). Values above this are clamped down so
+    /// ring-capacity arithmetic (period × physics TPS) stays bounded and can
+    /// never overflow or allocate unboundedly (1h × 25 TPS ≈ 90k samples/ring).
+    /// </summary>
+    public const double MaxSamplePeriodSeconds = 3600;
+
+    /// <summary>
+    /// Maximum slow-iteration threshold (ms). Values above this — including
+    /// +Infinity — are clamped down so the normalized threshold is always
+    /// finite. A threshold above 60s is meaningless for a ~40ms physics step
+    /// (it would effectively disable the WARN path), so the bound is safe.
+    /// </summary>
+    public const double MaxSlowIterationMs = 60000;
+
+    /// <summary>
+    /// Normalizes this config to safe bounds (clamp, matching the
+    /// <c>PlayerBotScheduler</c> WorkerCount convention): sample period is
+    /// clamped to [<see cref="MinSamplePeriodSeconds"/>, <see cref="MaxSamplePeriodSeconds"/>]
+    /// and the slow-iteration threshold is clamped to
+    /// [0, <see cref="MaxSlowIterationMs"/>]. NaN and infinities are replaced
+    /// with the safe defaults / bounds (Math.Clamp/Math.Max alone pass NaN
+    /// through, which would poison ring-capacity arithmetic; +Infinity would
+    /// otherwise survive the &lt; 0 check). <see cref="Enabled"/> is preserved
+    /// (default false). Returns a NEW normalized copy — the caller's shared
+    /// config instance is never mutated.
+    /// </summary>
+    public PhysicsTelemetryConfig Normalize()
+    {
+        var period = SamplePeriodSeconds;
+        if (double.IsNaN(period))
+            period = 60; // default
+        else if (period < MinSamplePeriodSeconds)
+            period = MinSamplePeriodSeconds;
+        else if (period > MaxSamplePeriodSeconds)
+            period = MaxSamplePeriodSeconds;
+
+        var slow = SlowIterationMs;
+        if (double.IsNaN(slow))
+            slow = 100; // default
+        else if (slow < 0)
+            slow = 0;
+        else if (slow > MaxSlowIterationMs)
+            slow = MaxSlowIterationMs;
+
+        return new PhysicsTelemetryConfig
+        {
+            Enabled = Enabled,
+            SamplePeriodSeconds = period,
+            SlowIterationMs = slow
+        };
+    }
 }
 
 public class DungeonLoadConfig
