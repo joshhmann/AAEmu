@@ -80,7 +80,9 @@ public enum BotActionKind : byte
     /// <summary>Put down a carried trade pack doodad.</summary>
     PutDown = 36,
     /// <summary>Load a trade pack onto a vehicle cargo box.</summary>
-    LoadPackOntoVehicle = 37
+    LoadPackOntoVehicle = 37,
+    /// <summary>Routed navigation to a unit via navmesh A* with waypoint stepping (PB-001).</summary>
+    NavigateToUnit = 38
 }
 
 /// <summary>Money amount parameter for DepositMoney/WithdrawMoney.</summary>
@@ -522,6 +524,12 @@ public sealed class BotActionCommandQueue
             {
                 var speed = spec.Payload is MoveActionParams m ? m.Speed : 5f;
                 return (actor.MoveToUnit(spec.TargetId, speed, spec.Timeout, key), null);
+            }
+
+            case BotActionKind.NavigateToUnit:
+            {
+                var speed = spec.Payload is MoveActionParams m ? m.Speed : 5f;
+                return (actor.NavigateToUnit(spec.TargetId, speed, spec.Timeout, key), null);
             }
 
             case BotActionKind.Stop:

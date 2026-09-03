@@ -51,6 +51,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest NavigateTo(System.Numerics.Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
         => Actor.NavigateTo(destination, speed, timeout, idempotencyKey);
 
+    public ActorRequest NavigateToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+        => Actor.NavigateToUnit(targetObjId, speed, timeout, idempotencyKey);
+
     public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
         => Actor.MoveToUnit(targetObjId, speed, timeout, idempotencyKey);
 

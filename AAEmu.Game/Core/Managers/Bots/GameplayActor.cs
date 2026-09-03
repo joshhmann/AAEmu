@@ -276,6 +276,26 @@ public class GameplayActor : IGameplayActor
         if (!TryBegin(request, "navigate"))
             return request;
 
+        return NavigateToInternal(request, destination, speed);
+    }
+
+    public ActorRequest NavigateToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
+    {
+        ExecutionBoundary.AssertOnExecutionThread("NavigateToUnit");
+
+        var request = NewRequest(ActorActionType.Move, targetObjId, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "navigate"))
+            return request;
+
+        var unit = ResolveUnit(targetObjId);
+        if (unit == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "target unit not found");
+
+        return NavigateToInternal(request, unit.Transform.World.Position, speed);
+    }
+
+    private ActorRequest NavigateToInternal(ActorRequest request, Vector3 destination, float speed)
+    {
         if (speed <= 0f)
             return Reject(request, ActorFailureReason.RejectedAction, "speed must be positive");
         if (!destination.IsFinite())

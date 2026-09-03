@@ -106,4 +106,62 @@ public class GameplayActorNavigateTests
         await Assert.That(actor.ActiveRequest).IsNull();
         await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(positionAtStop);
     }
+
+    [Test]
+    public async Task NavigateToUnit_TargetNotFound_RejectsWithRejectedAction()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("nav-unit-not-found");
+
+        var request = actor.NavigateToUnit(99999, speed: 5f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(request.Detail).IsEqualTo("RejectedAction: target unit not found");
+        await Assert.That(actor.ActiveRequest).IsNull();
+    }
+
+    [Test]
+    public async Task NavigateToUnit_AlreadyAtUnit_CompletesImmediately()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("nav-unit-already-there");
+        var targetPosition = new Vector3(25, 30, 10);
+        var npcObjId = GameplayActorTestRig.SpawnNpc(session);
+        var npc = session.World.GetNpc(npcObjId)!;
+        npc.Transform.World.Position = targetPosition;
+        GameplayActorTestRig.SetPosition(actor, targetPosition);
+
+        var request = actor.NavigateToUnit(npcObjId, speed: 5f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.Detail).IsEqualTo("already at destination");
+        await Assert.That(actor.ActiveRequest).IsNull();
+    }
+
+    [Test]
+    public async Task NavigateToUnit_WithoutGeoData_NavigatesToUnitPositionAndCompletes()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("nav-unit-direct");
+        GameplayActorTestRig.SetPosition(actor, Vector3.Zero);
+        session.World.Template.GeoData = null;
+        actor.BroadcastMovement = false;
+
+        var targetPosition = new Vector3(10, 0, 0);
+        var npcObjId = GameplayActorTestRig.SpawnNpc(session);
+        var npc = session.World.GetNpc(npcObjId)!;
+        npc.Transform.World.Position = targetPosition;
+
+        var request = actor.NavigateToUnit(npcObjId, speed: 2f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(ReferenceEquals(request, actor.ActiveRequest)).IsTrue();
+
+        var guard = 0;
+        while (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running && guard++ < 100)
+            actor.Tick(TimeSpan.FromSeconds(1));
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.Detail).IsEqualTo("arrived");
+        await Assert.That(Vector3.Distance(actor.Character.Transform.World.Position, targetPosition)).IsLessThanOrEqualTo(0.001f);
+        await Assert.That(actor.ActiveRequest).IsNull();
+    }
 }

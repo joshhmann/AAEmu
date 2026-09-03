@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using System.Threading;
 
 using AAEmu.Game.Core.Managers.UnitManagers;
@@ -495,7 +495,7 @@ public static class LevelingLoopScenario
                     return pursuitFailure;
 
                 // ---------------------------------------------------- 5. TURN-IN
-                var turnInFailure = TurnIn(actor, chosen.QuestId, template, perception);
+                var turnInFailure = TurnIn(actor, opts, chosen.QuestId, template, perception);
                 if (turnInFailure != null)
                     return turnInFailure;
                 // Auto-equip any reward upgrades
@@ -1169,7 +1169,7 @@ public static class LevelingLoopScenario
         if (actor.Character.Quests!.HasQuestCompleted(prereqQuestId))
             return (null, ActorFailureReason.None); // auto-completed during pursuit
 
-        var turnIn = TurnIn(actor, prereqQuestId, prereqTemplate, sweep);
+        var turnIn = TurnIn(actor, opts, prereqQuestId, prereqTemplate, sweep);
         if (turnIn != null)
         {
             return ($"turn-in of prerequisite quest {prereqQuestId} for {parentQuestId} failed: " +
@@ -1288,7 +1288,7 @@ public static class LevelingLoopScenario
             if (distance > opts.HuntEngageRange)
             {
                 var closeIn = DriveRequest(actor, opts,
-                    actor.MoveToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
+                    actor.NavigateToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
                 if (closeIn.State != ActorLifecycleState.Completed)
                 {
                     return ($"close-in move onto level-grind target {target.ObjId} did not complete: " +
@@ -1456,7 +1456,7 @@ public static class LevelingLoopScenario
             if (distance > opts.HuntEngageRange)
             {
                 var closeIn = DriveRequest(actor, opts,
-                    actor.MoveToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
+                    actor.NavigateToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
                 if (closeIn.State != ActorLifecycleState.Completed)
                 {
                     return ($"close-in move onto ability level grind target {target.ObjId} did not complete: " +
@@ -1710,6 +1710,16 @@ public static class LevelingLoopScenario
             var objectiveBefore = gather.GetObjective(quest);
             var sourceObjId = sources[sourceIndex % sources.Count];
             sourceIndex++;
+            var doodad = actor.Character.ParentWorld?.GetDoodad(sourceObjId);
+            if (doodad != null && Vector3.Distance(actor.Character.Transform.World.Position, doodad.Transform.World.Position) > 3f)
+            {
+                var closeIn = DriveRequest(actor, opts,
+                    actor.NavigateTo(doodad.Transform.World.Position, opts.TravelSpeed, opts.TravelTimeout));
+                if (closeIn.State != ActorLifecycleState.Completed)
+                {
+                    return $"NavigateTo group gather source {sourceObjId} did not complete: {closeIn.State} ({closeIn.Detail ?? "n/a"})";
+                }
+            }
             var interact = actor.InteractWith(sourceObjId);
             if (interact.State != ActorLifecycleState.Completed)
             {
@@ -2043,6 +2053,16 @@ public static class LevelingLoopScenario
 
             var sourceObjId = sources[sourceIndex % sources.Count];
             sourceIndex++;
+            var doodad = actor.Character.ParentWorld?.GetDoodad(sourceObjId);
+            if (doodad != null && Vector3.Distance(actor.Character.Transform.World.Position, doodad.Transform.World.Position) > 3f)
+            {
+                var closeIn = DriveRequest(actor, opts,
+                    actor.NavigateTo(doodad.Transform.World.Position, opts.TravelSpeed, opts.TravelTimeout));
+                if (closeIn.State != ActorLifecycleState.Completed)
+                {
+                    return $"NavigateTo gather source {sourceObjId} did not complete: {closeIn.State} ({closeIn.Detail ?? "n/a"})";
+                }
+            }
             var interact = actor.InteractWith(sourceObjId);
             if (interact.State != ActorLifecycleState.Completed)
             {
@@ -2220,7 +2240,7 @@ public static class LevelingLoopScenario
         if (distance > 5f)
         {
             var closeIn = DriveRequest(actor, opts,
-                actor.MoveToUnit(targetObjId, opts.TravelSpeed, opts.TravelTimeout));
+                actor.NavigateToUnit(targetObjId, opts.TravelSpeed, opts.TravelTimeout));
             if (closeIn.State != ActorLifecycleState.Completed)
             {
                 return $"close-in move onto talk NPC {targetObjId} did not complete: {closeIn.State} ({closeIn.Detail ?? "n/a"})";
@@ -2435,7 +2455,7 @@ public static class LevelingLoopScenario
             if (distance > opts.HuntEngageRange)
             {
                 var closeIn = DriveRequest(actor, opts,
-                    actor.MoveToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
+                    actor.NavigateToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
                 if (closeIn.State != ActorLifecycleState.Completed)
                 {
                     return ($"close-in move onto hunt target {target.ObjId} did not complete: " +
@@ -2641,7 +2661,7 @@ public static class LevelingLoopScenario
     /// through the real packet path. Auto-report quests use AutoTurnIn.
     /// Returns a fail-closed failure, or null when completed.
     /// </summary>
-    private static LoopRunResult? TurnIn(GameplayActor actor, uint questId, QuestTemplate template,
+    private static LoopRunResult? TurnIn(GameplayActor actor, LoopOptions opts, uint questId, QuestTemplate template,
         PerceptionSnapshot perception)
     {
         var readyActs = template.GetComponents(QuestComponentKind.Ready)
@@ -2671,6 +2691,18 @@ public static class LevelingLoopScenario
                     $"report NPC {reportNpc.NpcId} for quest {questId} not among perceived targets", actor, null);
             }
 
+            var reporterUnit = actor.Character.ParentWorld?.GetUnit(reporterObjId);
+            if (reporterUnit != null && Vector3.Distance(actor.Character.Transform.World.Position, reporterUnit.Transform.World.Position) > 3f)
+            {
+                var closeIn = DriveRequest(actor, opts,
+                    actor.NavigateToUnit(reporterObjId, opts.TravelSpeed, opts.TravelTimeout));
+                if (closeIn.State != ActorLifecycleState.Completed)
+                {
+                    return Fail("TURN-IN", ActorFailureReason.Navigation,
+                        $"navigate to report NPC {reportNpc.NpcId} did not complete: {closeIn.Detail}", actor, null);
+                }
+            }
+
             request = actor.TurnInQuest(questId, reporterObjId);
         }
         else if (reportDoodad != null)
@@ -2679,6 +2711,18 @@ public static class LevelingLoopScenario
             {
                 return Fail("TURN-IN", ActorFailureReason.Navigation,
                     $"report doodad {reportDoodad.DoodadId} for quest {questId} not among perceived targets", actor, null);
+            }
+
+            var reporterDoodad = actor.Character.ParentWorld?.GetDoodad(reporterObjIds[0]);
+            if (reporterDoodad != null && Vector3.Distance(actor.Character.Transform.World.Position, reporterDoodad.Transform.World.Position) > 3f)
+            {
+                var closeIn = DriveRequest(actor, opts,
+                    actor.NavigateTo(reporterDoodad.Transform.World.Position, opts.TravelSpeed, opts.TravelTimeout));
+                if (closeIn.State != ActorLifecycleState.Completed)
+                {
+                    return Fail("TURN-IN", ActorFailureReason.Navigation,
+                        $"navigate to report doodad {reportDoodad.DoodadId} did not complete: {closeIn.Detail}", actor, null);
+                }
             }
 
             request = actor.TurnInAtDoodad(questId, reporterObjIds[0]);

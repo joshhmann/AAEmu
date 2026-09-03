@@ -32,6 +32,12 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 
+## 2026-09-03 — Post-M7 readiness: PB-001 NavigateToUnit contract and LevelingLoopScenario integration
+
+- **PB-001 routed navigation expansion:** Landed `IGameplayActor.NavigateToUnit(uint targetObjId, ...)` across `IGameplayActor`, `GameplayActor`, and `PlayerBotControllerAdapter` (`BotActionKind.NavigateToUnit`), sharing the A* GeoData pathfinder and waypoint stepper with `NavigateTo`.
+- **LevelingLoopScenario integration:** Replaced straight-line `actor.MoveToUnit` calls with `actor.NavigateToUnit` in `HuntLeg` (hunt prey, talk NPCs), `LevelLeg` (grind targets), `AbilityLevelLeg` (ability grind targets), and `TurnIn` (report NPCs); wired `actor.NavigateTo` into `GatherLeg`, `GroupGatherLeg`, and `TurnIn` (report doodads) for sources/targets beyond 3 meters.
+- **Evidence:** `GameplayActorNavigateTests` **8/8** passed (+3 tests: `TargetNotFound` rejected-action, `AlreadyAtUnit` immediate completion, `WithoutGeoData` direct leg arrival). `BaiNavigationRigTests` **6/6** passed. `LevelingLoopScenarioRigTests` **35/35** passed. Full `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, **2,750 tests (2,749 passed, 1 skipped)**, 39 MCP BotControl tools, and 24 MCP Archaeology tools. Broad live stack navigation remains open.
+
 ## 2026-09-03 — Post-M7 readiness and closure: PB-002 QuestActObjAbilityLevel support and 70 component-only deferral
 
 - **PB-002 objective family closure:** `QuestActObjAbilityLevel` is now fully supported in `LevelingLoopScenario` via `AbilityLevelLeg`.

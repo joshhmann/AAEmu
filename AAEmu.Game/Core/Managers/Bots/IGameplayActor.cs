@@ -82,6 +82,14 @@ public interface IGameplayActor
     /// </summary>
     ActorRequest NavigateTo(Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null);
 
+    /// <summary>
+    /// Requests a routed navigation walk to a unit's current position (resolved at request time).
+    /// When GeoData (.bai navmesh) is available, plans an A* route through
+    /// the nav graph and walks intermediate waypoints sequentially.
+    /// Falls back to a direct straight-line leg when navmesh is unavailable.
+    /// </summary>
+    ActorRequest NavigateToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null);
+
     /// <summary>Move to a unit's current position (resolved at request time).</summary>
     ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null);
 

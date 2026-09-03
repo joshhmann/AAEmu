@@ -44,6 +44,7 @@ public class BotDecisionProposalTests
         private static ActorRequest Unsupported() => throw new NotSupportedException();
         public ActorRequest MoveTo(Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null) => Unsupported();
         public ActorRequest NavigateTo(Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest NavigateToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null) => Unsupported();
         public ActorRequest MoveToUnit(uint targetObjId, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Stop() => Unsupported();
         public ActorRequest Cast(uint skillId, uint targetObjId, string? idempotencyKey = null) => Unsupported();
