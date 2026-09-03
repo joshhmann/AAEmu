@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 
 using AAEmu.Game.Models.CryEngine.Entities;
 using AAEmu.Game.Models.CryEngine.Loaders;
@@ -32,6 +32,9 @@ public class AiGeoDataManager(WorldTemplate worldTemplate)
     /// <returns></returns>
     public bool CheckImpossibleWalk(Vector3 point)
     {
+        if (ObstacleManager.Instance.IsBlocked(point))
+            return true;
+
         var bai = worldTemplate.GetBaiByPos(point);
         if (bai != null)
         {

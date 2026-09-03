@@ -1,0 +1,2543 @@
+{
+  "zone": "marianople",
+  "bounds": {
+    "minX": 9500,
+    "minY": 10500,
+    "maxX": 12500,
+    "maxY": 13000
+  },
+  "totalObstacles": 252,
+  "categoryCounts": {
+    "prop": 102,
+    "crafting": 54,
+    "building": 9,
+    "structure": 26,
+    "door": 26,
+    "ladder": 16,
+    "wall": 1,
+    "gate": 13,
+    "fence": 5
+  },
+  "obstacles": [
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 9651.1,
+      "y": 10566.82,
+      "z": 270.35,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 9650.86,
+      "y": 10677.35,
+      "z": 224.31,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 9700.51,
+      "y": 10749.4,
+      "z": 226.72,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 9609.47,
+      "y": 10717.18,
+      "z": 239.66,
+      "yaw": -159.72,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5175,
+      "name": "Heroic Treasure Chest",
+      "category": "prop",
+      "x": 9842.31,
+      "y": 10888.9,
+      "z": 356.1,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 7083,
+      "name": "Engine Workbench",
+      "category": "crafting",
+      "x": 9890.9,
+      "y": 10605.98,
+      "z": 209.5,
+      "yaw": 151.28,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 9906.38,
+      "y": 10702.32,
+      "z": 229.88,
+      "yaw": -93.2,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 9862.11,
+      "y": 10630.93,
+      "z": 217.15,
+      "yaw": -155.14,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5041,
+      "name": "Farmhouse Memory Tome",
+      "category": "building",
+      "x": 10073.46,
+      "y": 10540.28,
+      "z": 182.33,
+      "yaw": 86.87,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 10080.66,
+      "y": 10541.84,
+      "z": 182.34,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 10190.33,
+      "y": 10690.79,
+      "z": 183.13,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 10146.43,
+      "y": 10745.33,
+      "z": 192.39,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 9786.39,
+      "y": 12219.44,
+      "z": 193.84,
+      "yaw": 102.75,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2154,
+      "name": "Well of Nui",
+      "category": "structure",
+      "x": 9962.59,
+      "y": 12285.71,
+      "z": 231.51,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 9570.2,
+      "y": 12468.55,
+      "z": 176.21,
+      "yaw": -24.35,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 9502.85,
+      "y": 12583.24,
+      "z": 155.82,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 9565.14,
+      "y": 12887.57,
+      "z": 178.86,
+      "yaw": 159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 9563.97,
+      "y": 12875.46,
+      "z": 178.84,
+      "yaw": 88.1,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 9611.9,
+      "y": 12416.26,
+      "z": 179.22,
+      "yaw": -113.43,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 9696.72,
+      "y": 12596.17,
+      "z": 166.8,
+      "yaw": -113.43,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 1970,
+      "name": "Southern Birchkeep Signpost",
+      "category": "prop",
+      "x": 9678.13,
+      "y": 12578.64,
+      "z": 165.79,
+      "yaw": 80.85,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 9720.07,
+      "y": 12789.61,
+      "z": 164.31,
+      "yaw": -2.69,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 9696.56,
+      "y": 12678.42,
+      "z": 161.96,
+      "yaw": -9.86,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 9662.36,
+      "y": 12689.48,
+      "z": 160.22,
+      "yaw": 89.36,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 9639.17,
+      "y": 12763.13,
+      "z": 163.74,
+      "yaw": 15.26,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 9693.05,
+      "y": 12759.65,
+      "z": 160.26,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 9665.7,
+      "y": 12678.18,
+      "z": 159.62,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2163,
+      "name": "White Arden/Dewstone Carriage Signpost",
+      "category": "prop",
+      "x": 9710.15,
+      "y": 12788.89,
+      "z": 162.12,
+      "yaw": 0,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 2162,
+      "name": "White Arden/Marianople Carriage Signpost",
+      "category": "prop",
+      "x": 9687.27,
+      "y": 12767.49,
+      "z": 160.13,
+      "yaw": -88.1,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 1971,
+      "name": "Northern Birchkeep Signpost",
+      "category": "prop",
+      "x": 9677.18,
+      "y": 12780.11,
+      "z": 160.81,
+      "yaw": 88.1,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 566,
+      "name": "Archeum Workbench",
+      "category": "crafting",
+      "x": 9659.72,
+      "y": 12675.09,
+      "z": 159.07,
+      "yaw": -88.1,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 566,
+      "name": "Archeum Workbench",
+      "category": "crafting",
+      "x": 9655.72,
+      "y": 12688.91,
+      "z": 158.59,
+      "yaw": -88.1,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 9666.56,
+      "y": 12784.0,
+      "z": 162.69,
+      "yaw": -4.48,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 9635.87,
+      "y": 12761.58,
+      "z": 161.76,
+      "yaw": 13.46,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 9674.67,
+      "y": 12794.53,
+      "z": 162.51,
+      "yaw": -80.85,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 9644.6,
+      "y": 12758.55,
+      "z": 161.65,
+      "yaw": -151.28,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 9660.89,
+      "y": 12814.94,
+      "z": 167.12,
+      "yaw": 102.75,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 9659.1,
+      "y": 12826.98,
+      "z": 167.13,
+      "yaw": -159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 315,
+      "name": "20m Ladder",
+      "category": "ladder",
+      "x": 9652.0,
+      "y": 12831.67,
+      "z": 161.27,
+      "yaw": 9.46,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 9820.34,
+      "y": 12664.95,
+      "z": 158.66,
+      "yaw": -48.92,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 9836.17,
+      "y": 12799.95,
+      "z": 176.48,
+      "yaw": -50.9,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 9840.86,
+      "y": 12796.73,
+      "z": 176.95,
+      "yaw": -26.19,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 9842.05,
+      "y": 12800.53,
+      "z": 177.51,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 9825.09,
+      "y": 12979.12,
+      "z": 185.7,
+      "yaw": 73.96,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 9876.26,
+      "y": 12664.47,
+      "z": 163.01,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 9879.38,
+      "y": 12657.18,
+      "z": 163.43,
+      "yaw": -6.27,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 9871.03,
+      "y": 12654.77,
+      "z": 162.82,
+      "yaw": -22.53,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 9881.89,
+      "y": 12656.95,
+      "z": 163.3,
+      "yaw": -6.27,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 9969.98,
+      "y": 12715.48,
+      "z": 177.55,
+      "yaw": -53.89,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 9940.85,
+      "y": 12795.14,
+      "z": 188.59,
+      "yaw": -155.14,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5174,
+      "name": "Ancient Treasure Chest",
+      "category": "prop",
+      "x": 10044.1,
+      "y": 12299.79,
+      "z": 240.73,
+      "yaw": -93.2,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 10151.96,
+      "y": 12402.8,
+      "z": 215.37,
+      "yaw": -9.86,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 1936,
+      "name": "White Arden Ferry Signpost",
+      "category": "prop",
+      "x": 10157.51,
+      "y": 12393.05,
+      "z": 216.16,
+      "yaw": 141.93,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 10178.98,
+      "y": 12499.0,
+      "z": 188.78,
+      "yaw": -9.86,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 10138.16,
+      "y": 12802.58,
+      "z": 201.51,
+      "yaw": 9.86,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2029,
+      "name": "Western White Arden Signpost",
+      "category": "prop",
+      "x": 10125.29,
+      "y": 12906.11,
+      "z": 192.11,
+      "yaw": -129.98,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5510,
+      "name": "Signpost",
+      "category": "prop",
+      "x": 10457.65,
+      "y": 10637.27,
+      "z": 170.78,
+      "yaw": 48.92,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 10408.25,
+      "y": 10653.54,
+      "z": 168.68,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 10620.0,
+      "y": 10735.06,
+      "z": 171.31,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 3217,
+      "name": "Well",
+      "category": "structure",
+      "x": 10742.6,
+      "y": 10567.94,
+      "z": 180.6,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 10730.8,
+      "y": 10554.06,
+      "z": 181.1,
+      "yaw": -159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 10736.39,
+      "y": 10559.97,
+      "z": 180.97,
+      "yaw": -159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 10728.31,
+      "y": 10553.64,
+      "z": 180.97,
+      "yaw": -159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2601,
+      "name": "Brewery Signpost",
+      "category": "prop",
+      "x": 10663.67,
+      "y": 10674.68,
+      "z": 166.85,
+      "yaw": -159.72,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 10834.8,
+      "y": 10834.25,
+      "z": 152.06,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 10856.95,
+      "y": 10905.25,
+      "z": 167.44,
+      "yaw": 5.37,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 10794.12,
+      "y": 10892.93,
+      "z": 158.28,
+      "yaw": -129.98,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 10785.3,
+      "y": 10884.53,
+      "z": 158.28,
+      "yaw": -41.17,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 10761.26,
+      "y": 10931.92,
+      "z": 174.76,
+      "yaw": 67.38,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 10945.86,
+      "y": 10738.55,
+      "z": 147.73,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 11007.36,
+      "y": 10906.72,
+      "z": 151.09,
+      "yaw": 159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 11005.56,
+      "y": 10894.67,
+      "z": 151.09,
+      "yaw": 84.42,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 10898.97,
+      "y": 10914.98,
+      "z": 166.7,
+      "yaw": 17.98,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 10895.91,
+      "y": 10926.76,
+      "z": 166.7,
+      "yaw": -69.54,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 10914.88,
+      "y": 10889.42,
+      "z": 153.78,
+      "yaw": -115.08,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11023.0,
+      "y": 10519.0,
+      "z": 175.78,
+      "yaw": 123.97,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11012.76,
+      "y": 10522.9,
+      "z": 175.82,
+      "yaw": -89.36,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 11014.29,
+      "y": 10531.67,
+      "z": 175.84,
+      "yaw": -165.67,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11012.78,
+      "y": 10520.38,
+      "z": 175.69,
+      "yaw": -89.36,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11158.82,
+      "y": 10708.17,
+      "z": 147.22,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 999,
+      "name": "Old Chest",
+      "category": "prop",
+      "x": 10582.8,
+      "y": 11447.95,
+      "z": 179.37,
+      "yaw": -33.6,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5174,
+      "name": "Ancient Treasure Chest",
+      "category": "prop",
+      "x": 10591.17,
+      "y": 11520.04,
+      "z": 189.96,
+      "yaw": 9.86,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 10553.23,
+      "y": 12157.37,
+      "z": 142.05,
+      "yaw": -136.77,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 999,
+      "name": "Old Chest",
+      "category": "prop",
+      "x": 10720.86,
+      "y": 11392.35,
+      "z": 188.92,
+      "yaw": -33.6,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 10689.38,
+      "y": 11701.24,
+      "z": 145.53,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 10676.98,
+      "y": 11883.0,
+      "z": 129.33,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 10681.4,
+      "y": 11868.43,
+      "z": 129.55,
+      "yaw": -60.0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 10666.53,
+      "y": 11862.4,
+      "z": 129.91,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 10702.61,
+      "y": 11871.6,
+      "z": 128.53,
+      "yaw": -37.36,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 1895,
+      "name": "Dawnsliver Signpost",
+      "category": "prop",
+      "x": 10732.41,
+      "y": 12078.85,
+      "z": 119.6,
+      "yaw": -116.76,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 10712.86,
+      "y": 12120.77,
+      "z": 120.34,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 10701.34,
+      "y": 12220.47,
+      "z": 118.47,
+      "yaw": -116.76,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 999,
+      "name": "Old Chest",
+      "category": "prop",
+      "x": 10769.5,
+      "y": 11299.04,
+      "z": 178.96,
+      "yaw": -88.1,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 10812.76,
+      "y": 11546.2,
+      "z": 188.3,
+      "yaw": 9.86,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 10826.55,
+      "y": 11879.17,
+      "z": 116.77,
+      "yaw": 88.1,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 717,
+      "name": "Tattered Wallpaper",
+      "category": "wall",
+      "x": 10845.25,
+      "y": 11966.17,
+      "z": 121.41,
+      "yaw": 19.79,
+      "keepOutRadius": 3.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 10799.76,
+      "y": 12025.18,
+      "z": 115.67,
+      "yaw": -136.77,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 10872.98,
+      "y": 12012.98,
+      "z": 128.38,
+      "yaw": 62.08,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 1212,
+      "name": "15m Ladder",
+      "category": "ladder",
+      "x": 10840.56,
+      "y": 11974.54,
+      "z": 115.95,
+      "yaw": -123.55,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 898,
+      "name": "Prison Gate",
+      "category": "gate",
+      "x": 10867.59,
+      "y": 11963.61,
+      "z": 120.2,
+      "yaw": 107.16,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 898,
+      "name": "Prison Gate",
+      "category": "gate",
+      "x": 10867.03,
+      "y": 11968.72,
+      "z": 120.2,
+      "yaw": -69.54,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 898,
+      "name": "Prison Gate",
+      "category": "gate",
+      "x": 10862.24,
+      "y": 11961.66,
+      "z": 120.22,
+      "yaw": 108.68,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 898,
+      "name": "Prison Gate",
+      "category": "gate",
+      "x": 10861.79,
+      "y": 11941.77,
+      "z": 120.2,
+      "yaw": -155.14,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 898,
+      "name": "Prison Gate",
+      "category": "gate",
+      "x": 10861.69,
+      "y": 11966.78,
+      "z": 120.2,
+      "yaw": -68.46,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 898,
+      "name": "Prison Gate",
+      "category": "gate",
+      "x": 10858.34,
+      "y": 11951.32,
+      "z": 120.24,
+      "yaw": -151.28,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 898,
+      "name": "Prison Gate",
+      "category": "gate",
+      "x": 10856.9,
+      "y": 11959.7,
+      "z": 120.21,
+      "yaw": 108.68,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 898,
+      "name": "Prison Gate",
+      "category": "gate",
+      "x": 10856.36,
+      "y": 11964.83,
+      "z": 120.21,
+      "yaw": -68.46,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 5175,
+      "name": "Heroic Treasure Chest",
+      "category": "prop",
+      "x": 10860.34,
+      "y": 12216.87,
+      "z": 112.31,
+      "yaw": 39.26,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 10813.59,
+      "y": 12244.1,
+      "z": 104.69,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5172,
+      "name": "Advanced Treasure Chest",
+      "category": "prop",
+      "x": 10926.79,
+      "y": 11434.04,
+      "z": 163.21,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 10958.01,
+      "y": 11664.24,
+      "z": 120.41,
+      "yaw": 141.93,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 10986.99,
+      "y": 11988.98,
+      "z": 136.19,
+      "yaw": 62.08,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 4349,
+      "name": "Western Gate Task Board",
+      "category": "gate",
+      "x": 10880.45,
+      "y": 12095.34,
+      "z": 124.48,
+      "yaw": 159.72,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 6381,
+      "name": "Penitent's Info Board",
+      "category": "structure",
+      "x": 10981.42,
+      "y": 12151.69,
+      "z": 132.53,
+      "yaw": -4.48,
+      "keepOutRadius": 4.0
+    },
+    {
+      "templateId": 1982,
+      "name": "Marianople Barracks Signpost",
+      "category": "prop",
+      "x": 10928.7,
+      "y": 12075.85,
+      "z": 128.25,
+      "yaw": 0,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 10891.55,
+      "y": 12247.24,
+      "z": 101.97,
+      "yaw": -136.77,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11120.23,
+      "y": 11490.72,
+      "z": 124.16,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 1897,
+      "name": "Torini Garden Signpost",
+      "category": "prop",
+      "x": 11088.72,
+      "y": 11646.29,
+      "z": 116.24,
+      "yaw": 159.72,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 1896,
+      "name": "Ribble's Farm Signpost",
+      "category": "prop",
+      "x": 11099.61,
+      "y": 11628.22,
+      "z": 115.85,
+      "yaw": -27.11,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 4350,
+      "name": "Southern Gate Task Board",
+      "category": "gate",
+      "x": 11099.71,
+      "y": 11788.18,
+      "z": 122.22,
+      "yaw": -91.9,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11051.0,
+      "y": 11784.97,
+      "z": 122.53,
+      "yaw": 62.08,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11050.01,
+      "y": 11889.43,
+      "z": 130.44,
+      "yaw": -147.87,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 1994,
+      "name": "Trieste Signpost",
+      "category": "prop",
+      "x": 11115.23,
+      "y": 11816.34,
+      "z": 125.29,
+      "yaw": -10.76,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11069.93,
+      "y": 11901.71,
+      "z": 156.48,
+      "yaw": -40.21,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 315,
+      "name": "20m Ladder",
+      "category": "ladder",
+      "x": 11083.3,
+      "y": 11857.41,
+      "z": 132.25,
+      "yaw": 166.0,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 6990,
+      "name": "Rusty Chest",
+      "category": "prop",
+      "x": 11061.69,
+      "y": 11960.65,
+      "z": 144.69,
+      "yaw": 82.03,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11083.41,
+      "y": 11981.71,
+      "z": 144.39,
+      "yaw": -147.87,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 1984,
+      "name": "Marianople Crafting Area Signpost",
+      "category": "prop",
+      "x": 11102.88,
+      "y": 11980.21,
+      "z": 144.69,
+      "yaw": -64.18,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 804,
+      "name": "5m Ladder",
+      "category": "ladder",
+      "x": 11041.43,
+      "y": 11918.0,
+      "z": 143.42,
+      "yaw": 51.77,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 566,
+      "name": "Archeum Workbench",
+      "category": "crafting",
+      "x": 11086.15,
+      "y": 11962.93,
+      "z": 144.12,
+      "yaw": 159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11089.11,
+      "y": 11963.11,
+      "z": 144.12,
+      "yaw": -95.84,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11075.01,
+      "y": 11904.88,
+      "z": 156.48,
+      "yaw": 46.96,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 11085.73,
+      "y": 11960.43,
+      "z": 144.15,
+      "yaw": -6.27,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11117.3,
+      "y": 11921.56,
+      "z": 141.43,
+      "yaw": 159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11109.9,
+      "y": 11928.96,
+      "z": 141.44,
+      "yaw": 75.09,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11107.57,
+      "y": 11924.16,
+      "z": 141.4,
+      "yaw": -14.36,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 315,
+      "name": "20m Ladder",
+      "category": "ladder",
+      "x": 11112.99,
+      "y": 11905.38,
+      "z": 138.74,
+      "yaw": -12.0,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 8033,
+      "name": "Ayanad Ruins Worldgate",
+      "category": "gate",
+      "x": 11134.49,
+      "y": 12046.35,
+      "z": 145.74,
+      "yaw": 93.0,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 6124,
+      "name": "Courthouse",
+      "category": "building",
+      "x": 11091.5,
+      "y": 12085.34,
+      "z": 144.62,
+      "yaw": -115.08,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 6123,
+      "name": "Courthouse",
+      "category": "building",
+      "x": 11098.5,
+      "y": 12069.49,
+      "z": 145.68,
+      "yaw": -25.27,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 2157,
+      "name": "Jewel of Marianople Signpost",
+      "category": "prop",
+      "x": 11134.0,
+      "y": 12038.34,
+      "z": 145.75,
+      "yaw": -24.35,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 805,
+      "name": "50m Ladder",
+      "category": "ladder",
+      "x": 11055.7,
+      "y": 12052.56,
+      "z": 113.96,
+      "yaw": 61.06,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 315,
+      "name": "20m Ladder",
+      "category": "ladder",
+      "x": 11066.11,
+      "y": 12047.31,
+      "z": 162.77,
+      "yaw": 62.02,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5175,
+      "name": "Heroic Treasure Chest",
+      "category": "prop",
+      "x": 11127.25,
+      "y": 12254.54,
+      "z": 132.36,
+      "yaw": 39.26,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5571,
+      "name": "Signpost",
+      "category": "prop",
+      "x": 11248.68,
+      "y": 11500.42,
+      "z": 131.87,
+      "yaw": 155.14,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 315,
+      "name": "20m Ladder",
+      "category": "ladder",
+      "x": 11257.57,
+      "y": 11893.07,
+      "z": 133.63,
+      "yaw": 121.0,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 315,
+      "name": "20m Ladder",
+      "category": "ladder",
+      "x": 11185.85,
+      "y": 11893.29,
+      "z": 148.8,
+      "yaw": -72.0,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 281,
+      "name": "10m Ladder",
+      "category": "ladder",
+      "x": 11171.33,
+      "y": 11881.1,
+      "z": 158.98,
+      "yaw": -155.37,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 873,
+      "name": "Closed Door",
+      "category": "door",
+      "x": 11207.6,
+      "y": 12003.26,
+      "z": 149.21,
+      "yaw": 54.9,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 315,
+      "name": "20m Ladder",
+      "category": "ladder",
+      "x": 11158.12,
+      "y": 11947.97,
+      "z": 134.36,
+      "yaw": 104.99,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 4352,
+      "name": "Northern Gate Task Board",
+      "category": "gate",
+      "x": 11190.73,
+      "y": 12209.5,
+      "z": 132.39,
+      "yaw": -82.03,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 1980,
+      "name": "Marianople Dock Signpost",
+      "category": "prop",
+      "x": 11205.4,
+      "y": 12196.87,
+      "z": 132.44,
+      "yaw": 93.2,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 281,
+      "name": "10m Ladder",
+      "category": "ladder",
+      "x": 11219.93,
+      "y": 12162.52,
+      "z": 138.42,
+      "yaw": 160.64,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 2600,
+      "name": "Solisa Signpost",
+      "category": "prop",
+      "x": 11332.05,
+      "y": 10621.49,
+      "z": 117.07,
+      "yaw": 159.72,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 11329.87,
+      "y": 10732.06,
+      "z": 130.82,
+      "yaw": -159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 11317.73,
+      "y": 10733.03,
+      "z": 130.83,
+      "yaw": -88.1,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 566,
+      "name": "Archeum Workbench",
+      "category": "crafting",
+      "x": 11291.97,
+      "y": 10733.4,
+      "z": 128.99,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 11286.69,
+      "y": 10746.31,
+      "z": 129.31,
+      "yaw": -91.9,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11296.69,
+      "y": 10823.85,
+      "z": 132.34,
+      "yaw": 93.2,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 11343.95,
+      "y": 10826.97,
+      "z": 134.63,
+      "yaw": -83.22,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 11343.84,
+      "y": 10812.49,
+      "z": 133.91,
+      "yaw": -159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 11331.7,
+      "y": 10813.46,
+      "z": 133.93,
+      "yaw": -88.1,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 11295.01,
+      "y": 10770.87,
+      "z": 131.45,
+      "yaw": 85.64,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11301.12,
+      "y": 10756.01,
+      "z": 129.29,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 566,
+      "name": "Archeum Workbench",
+      "category": "crafting",
+      "x": 11292.81,
+      "y": 10761.0,
+      "z": 129.32,
+      "yaw": -91.9,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11310.92,
+      "y": 10807.93,
+      "z": 132.14,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11291.7,
+      "y": 10765.03,
+      "z": 129.32,
+      "yaw": 159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 11315.36,
+      "y": 10812.42,
+      "z": 131.65,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11301.91,
+      "y": 10768.44,
+      "z": 129.25,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11708.19,
+      "y": 10530.72,
+      "z": 117.12,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 3217,
+      "name": "Well",
+      "category": "structure",
+      "x": 11795.74,
+      "y": 10590.32,
+      "z": 114.03,
+      "yaw": 52.89,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5172,
+      "name": "Advanced Treasure Chest",
+      "category": "prop",
+      "x": 11322.89,
+      "y": 11388.69,
+      "z": 135.41,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11371.15,
+      "y": 11475.35,
+      "z": 120.03,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11344.98,
+      "y": 12008.97,
+      "z": 137.18,
+      "yaw": 62.08,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11298.97,
+      "y": 12018.98,
+      "z": 143.75,
+      "yaw": 62.08,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 1993,
+      "name": "Noryette Signpost",
+      "category": "prop",
+      "x": 11375.88,
+      "y": 11980.69,
+      "z": 130.14,
+      "yaw": 85.64,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5175,
+      "name": "Heroic Treasure Chest",
+      "category": "prop",
+      "x": 11385.11,
+      "y": 12143.91,
+      "z": 133.85,
+      "yaw": 39.26,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11276.98,
+      "y": 12088.98,
+      "z": 143.01,
+      "yaw": 62.08,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 281,
+      "name": "10m Ladder",
+      "category": "ladder",
+      "x": 11385.34,
+      "y": 12220.47,
+      "z": 92.02,
+      "yaw": -95.84,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 281,
+      "name": "10m Ladder",
+      "category": "ladder",
+      "x": 11383.45,
+      "y": 12236.25,
+      "z": 91.2,
+      "yaw": -99.93,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11493.5,
+      "y": 11643.58,
+      "z": 113.04,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11467.88,
+      "y": 11601.51,
+      "z": 108.4,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 1999,
+      "name": "Gerald's Farm Signpost",
+      "category": "prop",
+      "x": 11494.79,
+      "y": 11590.13,
+      "z": 115.06,
+      "yaw": -98.54,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11487.06,
+      "y": 11755.82,
+      "z": 110.85,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 4351,
+      "name": "Eastern Gate Task Board",
+      "category": "gate",
+      "x": 11412.0,
+      "y": 11968.26,
+      "z": 127.31,
+      "yaw": -5.37,
+      "keepOutRadius": 3.5
+    },
+    {
+      "templateId": 5175,
+      "name": "Heroic Treasure Chest",
+      "category": "prop",
+      "x": 11468.44,
+      "y": 11971.07,
+      "z": 116.46,
+      "yaw": 39.26,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 281,
+      "name": "10m Ladder",
+      "category": "ladder",
+      "x": 11424.3,
+      "y": 12201.49,
+      "z": 92.02,
+      "yaw": -95.84,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 11555.81,
+      "y": 11292.33,
+      "z": 196.28,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 11554.1,
+      "y": 11307.09,
+      "z": 190.42,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11627.57,
+      "y": 11506.98,
+      "z": 130.31,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 1998,
+      "name": "Marianople Plantations Signpost",
+      "category": "prop",
+      "x": 11637.35,
+      "y": 11814.6,
+      "z": 109.07,
+      "yaw": 51.89,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 1996,
+      "name": "Marianople Housing Province Signpost",
+      "category": "prop",
+      "x": 11555.21,
+      "y": 11882.54,
+      "z": 112.47,
+      "yaw": -67.38,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 4233,
+      "name": "Marianople Specialty Workbench",
+      "category": "crafting",
+      "x": 11541.38,
+      "y": 12008.12,
+      "z": 113.0,
+      "yaw": -82.03,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11583.71,
+      "y": 12013.33,
+      "z": 109.43,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 11531.22,
+      "y": 12024.29,
+      "z": 113.47,
+      "yaw": -88.1,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11591.08,
+      "y": 12028.01,
+      "z": 109.19,
+      "yaw": -94.51,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5174,
+      "name": "Ancient Treasure Chest",
+      "category": "prop",
+      "x": 11605.5,
+      "y": 12174.03,
+      "z": 100.91,
+      "yaw": 9.86,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 11534.58,
+      "y": 12242.51,
+      "z": 107.08,
+      "yaw": 9.86,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5172,
+      "name": "Advanced Treasure Chest",
+      "category": "prop",
+      "x": 11617.77,
+      "y": 12192.86,
+      "z": 106.72,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 315,
+      "name": "20m Ladder",
+      "category": "ladder",
+      "x": 11659.93,
+      "y": 11620.1,
+      "z": 132.56,
+      "yaw": 90.0,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 11704.83,
+      "y": 12005.67,
+      "z": 116.06,
+      "yaw": 147.87,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11722.48,
+      "y": 11999.01,
+      "z": 118.18,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11756.6,
+      "y": 12000.53,
+      "z": 118.68,
+      "yaw": 159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 11736.55,
+      "y": 12003.02,
+      "z": 117.69,
+      "yaw": -4.48,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11754.08,
+      "y": 12000.73,
+      "z": 118.54,
+      "yaw": 159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 11776.0,
+      "y": 11922.2,
+      "z": 120.54,
+      "yaw": 127.91,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11691.01,
+      "y": 12138.14,
+      "z": 115.87,
+      "yaw": -2.69,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 11720.23,
+      "y": 12142.37,
+      "z": 119.21,
+      "yaw": 83.22,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11693.52,
+      "y": 12138.07,
+      "z": 115.73,
+      "yaw": -2.69,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 11841.24,
+      "y": 11563.14,
+      "z": 147.21,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 12219.26,
+      "y": 11691.3,
+      "z": 142.4,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 12164.67,
+      "y": 11910.68,
+      "z": 167.65,
+      "yaw": 0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 11510.31,
+      "y": 12340.54,
+      "z": 105.74,
+      "yaw": -65.24,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 11495.6,
+      "y": 12349.17,
+      "z": 105.74,
+      "yaw": -86.87,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 559,
+      "name": "Stonemason Workbench",
+      "category": "crafting",
+      "x": 11496.02,
+      "y": 12337.01,
+      "z": 105.72,
+      "yaw": -85.64,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 11495.77,
+      "y": 12346.64,
+      "z": 105.61,
+      "yaw": -86.87,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2198,
+      "name": "Roadsend Signpost",
+      "category": "prop",
+      "x": 11649.63,
+      "y": 12965.0,
+      "z": 127.12,
+      "yaw": 53.89,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 12124.23,
+      "y": 12598.9,
+      "z": 155.31,
+      "yaw": 102.75,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5174,
+      "name": "Ancient Treasure Chest",
+      "category": "prop",
+      "x": 12332.15,
+      "y": 10589.83,
+      "z": 101.29,
+      "yaw": 108.68,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 12483.27,
+      "y": 11110.58,
+      "z": 143.15,
+      "yaw": 159.72,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 12472.59,
+      "y": 11122.45,
+      "z": 143.17,
+      "yaw": 83.22,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 12482.6,
+      "y": 11121.77,
+      "z": 140.86,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 532,
+      "name": "Carpentry Workbench",
+      "category": "crafting",
+      "x": 12478.39,
+      "y": 11131.51,
+      "z": 141.41,
+      "yaw": -0.9,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 2306,
+      "name": "Well",
+      "category": "structure",
+      "x": 12429.14,
+      "y": 11173.7,
+      "z": 145.94,
+      "yaw": 0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 566,
+      "name": "Archeum Workbench",
+      "category": "crafting",
+      "x": 12475.6,
+      "y": 11152.01,
+      "z": 141.79,
+      "yaw": -94.51,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 560,
+      "name": "Leather Workbench",
+      "category": "crafting",
+      "x": 12498.64,
+      "y": 11178.62,
+      "z": 141.5,
+      "yaw": 77.36,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5392,
+      "name": "Signpost",
+      "category": "prop",
+      "x": 12340.56,
+      "y": 11337.86,
+      "z": 125.05,
+      "yaw": 108.68,
+      "keepOutRadius": 1.0
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 12404.57,
+      "y": 11325.71,
+      "z": 123.29,
+      "yaw": 108.68,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 2464,
+      "name": "Door",
+      "category": "door",
+      "x": 12412.36,
+      "y": 11497.27,
+      "z": 135.34,
+      "yaw": -144.78,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 4613,
+      "name": "Canyon Wooden Fence",
+      "category": "fence",
+      "x": 12333.91,
+      "y": 11761.57,
+      "z": 128.77,
+      "yaw": -25.88,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 4613,
+      "name": "Canyon Wooden Fence",
+      "category": "fence",
+      "x": 12329.66,
+      "y": 11763.83,
+      "z": 128.19,
+      "yaw": -26.19,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 4613,
+      "name": "Canyon Wooden Fence",
+      "category": "fence",
+      "x": 12322.76,
+      "y": 11765.43,
+      "z": 129.15,
+      "yaw": -99.12,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 4613,
+      "name": "Canyon Wooden Fence",
+      "category": "fence",
+      "x": 12321.38,
+      "y": 11768.59,
+      "z": 129.66,
+      "yaw": -25.97,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 4613,
+      "name": "Canyon Wooden Fence",
+      "category": "fence",
+      "x": 12317.3,
+      "y": 11770.41,
+      "z": 130.67,
+      "yaw": -26.11,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5172,
+      "name": "Advanced Treasure Chest",
+      "category": "prop",
+      "x": 12311.82,
+      "y": 11938.08,
+      "z": 127.94,
+      "yaw": 108.68,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 5089,
+      "name": "Basic Treasure Chest",
+      "category": "prop",
+      "x": 12475.32,
+      "y": 12028.76,
+      "z": 189.0,
+      "yaw": 108.68,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 674,
+      "name": "Stonebrothers Secret Chest",
+      "category": "prop",
+      "x": 12362.33,
+      "y": 12634.03,
+      "z": 117.14,
+      "yaw": 139.27,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 674,
+      "name": "Stonebrothers Secret Chest",
+      "category": "prop",
+      "x": 12360.94,
+      "y": 12621.44,
+      "z": 117.12,
+      "yaw": -95.84,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 1101,
+      "name": "Safe House Treasure Chest",
+      "category": "building",
+      "x": 12408.74,
+      "y": 12820.97,
+      "z": 106.03,
+      "yaw": -94.51,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 1101,
+      "name": "Safe House Treasure Chest",
+      "category": "building",
+      "x": 12413.63,
+      "y": 12814.68,
+      "z": 105.56,
+      "yaw": 159.72,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 1101,
+      "name": "Safe House Treasure Chest",
+      "category": "building",
+      "x": 12403.33,
+      "y": 12835.54,
+      "z": 105.75,
+      "yaw": -127.91,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 5173,
+      "name": "Rare Treasure Chest",
+      "category": "prop",
+      "x": 12399.18,
+      "y": 12810.94,
+      "z": 106.66,
+      "yaw": 78.52,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 12359.17,
+      "y": 12816.97,
+      "z": 137.72,
+      "yaw": -102.75,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 12351.3,
+      "y": 12803.04,
+      "z": 136.94,
+      "yaw": -116.76,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 384,
+      "name": "Chestnut Tree",
+      "category": "prop",
+      "x": 12481.85,
+      "y": 12503.63,
+      "z": 139.46,
+      "yaw": -116.76,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 1101,
+      "name": "Safe House Treasure Chest",
+      "category": "building",
+      "x": 12420.42,
+      "y": 12833.85,
+      "z": 105.24,
+      "yaw": -6.27,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 1101,
+      "name": "Safe House Treasure Chest",
+      "category": "building",
+      "x": 12423.47,
+      "y": 12806.55,
+      "z": 105.4,
+      "yaw": 67.38,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 1101,
+      "name": "Safe House Treasure Chest",
+      "category": "building",
+      "x": 12425.01,
+      "y": 12830.83,
+      "z": 105.22,
+      "yaw": -85.64,
+      "keepOutRadius": 10.0
+    },
+    {
+      "templateId": 1040,
+      "name": "Full Chest",
+      "category": "prop",
+      "x": 10950.5,
+      "y": 12393.4,
+      "z": 115.7,
+      "yaw": 30.0,
+      "keepOutRadius": 1.5
+    },
+    {
+      "templateId": 8218,
+      "name": "Artistry Workbench",
+      "category": "crafting",
+      "x": 11244.44,
+      "y": 11996.17,
+      "z": 145.71,
+      "yaw": -22.0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 8218,
+      "name": "Artistry Workbench",
+      "category": "crafting",
+      "x": 11176.72,
+      "y": 11974.95,
+      "z": 145.02,
+      "yaw": -13.0,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 8218,
+      "name": "Artistry Workbench",
+      "category": "crafting",
+      "x": 11226.38,
+      "y": 12032.43,
+      "z": 146.38,
+      "yaw": 146.0,
+      "keepOutRadius": 2.0
+    }
+  ]
+}

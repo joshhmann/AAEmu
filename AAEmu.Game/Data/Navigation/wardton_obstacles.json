@@ -1,0 +1,12 @@
+{
+  "zone": "wardton",
+  "bounds": {
+    "minX": 21400,
+    "minY": 11200,
+    "maxX": 22200,
+    "maxY": 12000
+  },
+  "totalObstacles": 0,
+  "categoryCounts": {},
+  "obstacles": []
+}

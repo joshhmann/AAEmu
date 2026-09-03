@@ -51,8 +51,9 @@ ZONE_PRESETS = {
     "solzreed": (18000, 8000, 24000, 14000),
     "wardton": (21400, 11200, 22200, 12000),
     "crescent": (20000, 8400, 21000, 9200),
-    "dewstone": (15000, 13000, 20000, 18000),
-    "marianople": (15000, 9000, 19500, 13500)
+    "dewstone": (10000, 13000, 14000, 16500),
+    "white_arden": (8000, 12000, 11000, 14000),
+    "marianople": (9500, 10500, 12500, 13000)
 }
 
 def load_obstacle_templates(xml_path=DOODAD_XML_PATH):

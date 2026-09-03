@@ -20,7 +20,7 @@ import argparse
 
 ZONES = {
     "solzreed": {
-        "name": "Solzreed Peninsula",
+        "name": "Solzreed Peninsula (Lv 1-10)",
         "min_x": 18000, "max_x": 24000,
         "min_y": 8000, "max_y": 14000,
         "landmarks": [
@@ -31,20 +31,33 @@ ZONES = {
         ]
     },
     "dewstone": {
-        "name": "Dewstone Plains",
-        "min_x": 15000, "max_x": 20000,
-        "min_y": 13000, "max_y": 18000,
+        "name": "Dewstone Plains (Lv 15-20)",
+        "min_x": 10000, "max_x": 14000,
+        "min_y": 13000, "max_y": 16500,
         "landmarks": [
-            {"name": "Royster's Camp", "x": 17200, "y": 14500},
-            {"name": "Sanddeep Gate", "x": 16100, "y": 17200}
+            {"name": "Royster's Camp", "x": 12850, "y": 14450},
+            {"name": "Lilyut Crossing", "x": 12600, "y": 15350},
+            {"name": "Windshade", "x": 10600, "y": 15000},
+            {"name": "Sanddeep Highway", "x": 10670, "y": 13170}
+        ]
+    },
+    "white_arden": {
+        "name": "White Arden (Lv 20-25)",
+        "min_x": 8000, "max_x": 11000,
+        "min_y": 12000, "max_y": 14000,
+        "landmarks": [
+            {"name": "Arden Central Hub", "x": 9680, "y": 12770},
+            {"name": "Birch Village Ferry", "x": 10280, "y": 12600}
         ]
     },
     "marianople": {
-        "name": "Marianople",
-        "min_x": 15000, "max_x": 19500,
-        "min_y": 9000, "max_y": 13500,
+        "name": "Marianople (Lv 25-30)",
+        "min_x": 9500, "max_x": 12500,
+        "min_y": 10500, "max_y": 13000,
         "landmarks": [
-            {"name": "Marianople City", "x": 17200, "y": 11200}
+            {"name": "Marianople Capital", "x": 10930, "y": 12040},
+            {"name": "Halcyona Border", "x": 11090, "y": 11600},
+            {"name": "Two Crowns Gate", "x": 11560, "y": 11840}
         ]
     }
 }

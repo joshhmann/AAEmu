@@ -141,6 +141,8 @@ public static class Program
                 services.AddSingleton<AiPathsManager>();
                 services.AddSingleton<IAiPathsManager>(sp => sp.GetRequiredService<AiPathsManager>());
 
+                services.AddSingleton<ObstacleManager>();
+
                 services.AddSingleton<AnimationManager>();
                 services.AddSingleton<IAnimationManager>(sp => sp.GetRequiredService<AnimationManager>());
 
