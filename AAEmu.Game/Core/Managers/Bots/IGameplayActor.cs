@@ -795,6 +795,13 @@ public interface IGameplayActor
     ActorRequest SellSpecialty(uint merchantNpcObjId, string? idempotencyKey = null);
 
     /// <summary>
+    /// Repairs damaged equipment at a blacksmith or merchant NPC through the REAL
+    /// CSRepairAllEquipmentsPacket path (Character.DoRepair).
+    /// If itemId is 0, repairs all damaged equipped items; otherwise repairs the single specified item.
+    /// </summary>
+    ActorRequest Repair(uint blacksmithNpcObjId, ulong itemId = 0, string? idempotencyKey = null);
+
+    /// <summary>
     /// Lists an item on the auction house through the REAL engine path —
     /// the same CSAuctionPostPacket call (AuctionManager.PostLotOnAuction):
     /// validates the item is in the actor's inventory, computes the listing
@@ -994,7 +1001,10 @@ public enum ActorActionType : byte
     SellSpecialty = 48,
 
     /// <summary>Cutscene/cinema playback through Character.Events.OnCinemaStarted / OnCinemaEnded (CSStartedCinemaPacket / CSCompletedCinemaPacket path).</summary>
-    PlayCinema = 49
+    PlayCinema = 49,
+
+    /// <summary>Equipment repair through Character.DoRepair (CSRepairAllEquipmentsPacket path).</summary>
+    Repair = 50
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

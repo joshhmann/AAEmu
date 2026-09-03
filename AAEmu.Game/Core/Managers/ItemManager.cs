@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Data;
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
@@ -41,7 +41,7 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
     private Dictionary<uint, AttributeModifiers> _modifiers;
     private Dictionary<uint, ItemTemplate> _templates;
     private Dictionary<uint, ItemDoodadTemplate> _itemDoodadTemplates;
-    private ItemConfig _config;
+    private ItemConfig _config = new();
 
     // Grade Enchanting
     private Dictionary<uint, EquipSlotEnchantingCost> _enchantingCosts;
@@ -204,32 +204,32 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
 
     public float GetDurabilityDecrementChance()
     {
-        return _config.DurabilityDecrementChance;
+        return _config?.DurabilityDecrementChance ?? 0f;
     }
 
     public float GetDurabilityRepairCostFactor()
     {
-        return _config.DurabilityRepairCostFactor;
+        return _config?.DurabilityRepairCostFactor ?? 1f;
     }
 
     public float GetDurabilityConst()
     {
-        return _config.DurabilityConst;
+        return _config?.DurabilityConst ?? 1f;
     }
 
     public float GetHoldableDurabilityConst()
     {
-        return _config.HoldableDurabilityConst;
+        return _config?.HoldableDurabilityConst ?? 1f;
     }
 
     public float GetWearableDurabilityConst()
     {
-        return _config.WearableDurabilityConst;
+        return _config?.WearableDurabilityConst ?? 1f;
     }
 
     public byte GetDeathDurabilityLossRatio()
     {
-        return _config.DeathDurabilityLossRatio;
+        return _config?.DeathDurabilityLossRatio ?? 0;
     }
 
     public float GetItemStatConst()
@@ -363,14 +363,14 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
 
     public List<uint> GetItemProcBindings(uint itemId)
     {
-        if (_itemProcBindings.TryGetValue(itemId, out var procIds))
+        if (_itemProcBindings != null && _itemProcBindings.TryGetValue(itemId, out var procIds))
             return procIds;
         return [];
     }
 
     public List<BonusTemplate> GetUnitModifiers(uint itemId)
     {
-        if (_itemUnitModifiers.TryGetValue(itemId, out var modifiers))
+        if (_itemUnitModifiers != null && _itemUnitModifiers.TryGetValue(itemId, out var modifiers))
             return modifiers;
         return [];
     }

@@ -2172,7 +2172,7 @@ public partial class Character : Unit, ICharacter
             ChangeMoney(SlotType.Inventory, -repairCost);
         }
 
-        Connection.SendPacket(new SCItemTaskSuccessPacket(ItemTaskType.Repair, tasks, []));
+        Connection?.SendPacket(new SCItemTaskSuccessPacket(ItemTaskType.Repair, tasks, []));
     }
 
     /// <summary>

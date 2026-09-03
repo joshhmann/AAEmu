@@ -411,5 +411,10 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   Implemented deterministic `CombatDecisionTree`: evaluates class roles (melee vs ranged/caster kiting via Ability1 inference), tactical spacing, emergency flee, and priority skill execution.
   Integrated into `LevelingLoopScenario` across `HuntLeg`, `LevelLeg`, and `AbilityLevelLeg`.
   Evidence: `CombatDecisionTreeTests` 5/5 green; `LevelingLoopScenarioRigTests` 37/37 green. Full gate: 2,765 total / 2,764 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
+- 2026-09-03 — PB-BAG Autonomous Bag Management, Vendoring & Durability Repair:
+  Implemented `BotBagManager`: audits bag capacity/fullness, classifies vendor junk while protecting quest items and potions, and runs bulk vendoring via `actor.Sell`.
+  Implemented canonical equipment repair on `GameplayActor.Repair` (`ActorActionType.Repair`) and `BotBagManager.RepairAllEquipment` at blacksmith/merchant NPCs via `Character.DoRepair`. Hardened `Character.DoRepair` and `ItemManager._config` with null safety.
+  Integrated into `LevelingLoopScenario` on quest turn-ins at settlement hubs.
+  Evidence: `BotBagManagerTests` 4/4 green; `LevelingLoopScenarioRigTests` 37/37 green. Full gate: 2,769 total / 2,768 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*

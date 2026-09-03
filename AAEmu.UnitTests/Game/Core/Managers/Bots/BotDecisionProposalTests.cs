@@ -92,6 +92,7 @@ public class BotDecisionProposalTests
         public ActorRequest Buy(uint merchantNpcObjId, uint itemTemplateId, int count, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Sell(uint merchantNpcObjId, ulong itemId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest SellSpecialty(uint merchantNpcObjId, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest Repair(uint blacksmithNpcObjId, ulong itemId = 0, string? idempotencyKey = null) => Unsupported();
         public ActorRequest PostAuction(ulong itemId, int startPrice, int buyoutPrice, AuctionDuration duration, string? idempotencyKey = null) => Unsupported();
         public ActorRequest BuyAuction(ulong lotId, int price, string? idempotencyKey = null) => Unsupported();
         public ActorAuditRecord? FindByKey(string idempotencyKey) => null;

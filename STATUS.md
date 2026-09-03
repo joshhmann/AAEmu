@@ -32,6 +32,16 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 
+## 2026-09-03 — Post-M7 readiness: PB-BAG Autonomous Bag Management, Vendoring & Durability Repair
+
+- **Autonomous Bag Management & Gear Maintenance (`BotBagManager`):** Implemented automated inventory capacity auditing, vendor junk classification, and equipment durability maintenance.
+  - **Inventory Auditing (`AuditBag`):** Tracks total capacity, free slots, used slots, fullness percent, damaged equipment count, and estimated junk salvage revenue. Detects near-full bags ($\le 2$ slots).
+  - **Strict Asset Protection (`IsTrash`):** Guarantees quest items (`Quest_Item`, quest equipment, `LootQuestId`), active weapons/armor, and essential sustain items (potions, food, water) are never sold. Filters for `Trash_*` categories (35, 98, 101, 102, 103, 104, 105) and common refundables.
+  - **Autonomous Vendoring (`SellAllTrash`):** Pumps real `actor.Sell` transactions against merchant NPCs, reclaiming inventory slots and converting mob loot into copper.
+  - **First-Class Equipment Repair (`GameplayActor.Repair` & `BotBagManager.RepairAllEquipment`):** Exposed `ActorActionType.Repair` on `IGameplayActor` and implemented canonical `Character.DoRepair` interaction with blacksmith/merchant NPCs, restoring weapons and armor to `MaxDurability`. Added null safety to `Character.DoRepair` packet dispatch and `ItemManager._config` lookups.
+  - **Leveling Loop Integration:** Automatically triggers maintenance on quest turn-ins at settlement hubs in `LevelingLoopScenario`.
+- **Evidence:** `BotBagManagerTests` **4/4** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,769 total tests (2,768 passed, 1 skipped)**, 39 MCP BotControl tools, and 24 MCP Archaeology tools.
+
 ## 2026-09-03 — Post-M7 readiness: PB-COMBAT Tactical Combat Decision Tree & Class Spacing
 
 - **Tactical Combat Decision Tree (`CombatDecisionTree`):** Implemented deterministic decision tree for playerbot combat. Evaluates health status, class roles (`CombatRole.Melee`, `RangedPhysical`, `RangedMagic`, `HealerSupport`), tactical spacing, and priority skill selection.

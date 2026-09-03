@@ -2102,6 +2102,27 @@ public static class GameplayActorTestRig
         return objId;
     }
 
+    /// <summary>
+    /// Spawns a blacksmith NPC (Template.Merchant + Blacksmith set — the
+    /// gates both repair and merchant paths check). Returns the NPC objId.
+    /// </summary>
+    public static uint SpawnBlacksmithNpc(HeadlessSession session, uint npcTemplateId = 1005)
+    {
+        var objId = session.SpawnNpc(npcTemplateId);
+        var npc = session.World.GetNpc(objId);
+        if (npc != null)
+        {
+            npc.Template = new NpcTemplate
+            {
+                Id = npcTemplateId,
+                Merchant = true,
+                Blacksmith = true
+            };
+        }
+
+        return objId;
+    }
+
     /// <summary>Sets an NPC's world position (shop-range tests).</summary>
     public static void SetNpcPosition(HeadlessSession session, uint npcObjId, System.Numerics.Vector3 position)
     {

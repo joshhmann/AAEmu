@@ -2840,7 +2840,65 @@ public static class LevelingLoopScenario
                 $"turn-in executed but quest {questId} did not complete (still active)", actor, null);
         }
 
+        // Autonomous maintenance: audit bag, sell trash, repair gear at hub
+        TryPerformBagMaintenance(actor, opts, perception);
+
         return null;
+    }
+
+    /// <summary>
+    /// Autonomous bag management: audits bag capacity, sells trash items to nearby merchants,
+    /// and repairs damaged equipment at blacksmiths to prevent full-bag lockups and broken gear.
+    /// </summary>
+    private static void TryPerformBagMaintenance(GameplayActor actor, LoopOptions opts, PerceptionSnapshot perception)
+    {
+        var audit = BotBagManager.AuditBag(actor.Character);
+        if (audit.TrashItems.Count == 0 && audit.DamagedEquipment.Count == 0 && !audit.IsNearFull)
+            return;
+
+        var world = actor.Character.ParentWorld;
+        if (world == null)
+            return;
+
+        uint? merchantObjId = null;
+        uint? blacksmithObjId = null;
+
+        foreach (var objId in perception.NpcObjIdsByTemplate.Values)
+        {
+            var npc = world.GetNpc(objId);
+            if (npc?.Template == null)
+                continue;
+
+            if (npc.Template.Merchant && merchantObjId == null)
+                merchantObjId = objId;
+
+            if (npc.Template.Blacksmith && blacksmithObjId == null)
+                blacksmithObjId = objId;
+
+            if (merchantObjId != null && blacksmithObjId != null)
+                break;
+        }
+
+        // Sell trash if merchant is nearby
+        if (merchantObjId != null && audit.TrashItems.Count > 0)
+        {
+            var merchant = world.GetNpc(merchantObjId.Value);
+            if (merchant != null && Vector3.Distance(actor.Character.Transform.World.Position, merchant.Transform.World.Position) <= 10f)
+            {
+                BotBagManager.SellAllTrash(actor, merchantObjId.Value);
+            }
+        }
+
+        // Repair gear if blacksmith or merchant is nearby
+        var repairNpcId = blacksmithObjId ?? merchantObjId;
+        if (repairNpcId != null && audit.DamagedEquipment.Count > 0)
+        {
+            var repairNpc = world.GetNpc(repairNpcId.Value);
+            if (repairNpc != null && Vector3.Distance(actor.Character.Transform.World.Position, repairNpc.Transform.World.Position) <= 5f)
+            {
+                BotBagManager.RepairAllEquipment(actor, repairNpcId.Value);
+            }
+        }
     }
 
     /// <summary>

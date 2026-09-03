@@ -2444,6 +2444,53 @@ public class GameplayActor : IGameplayActor
             $"sold specialty pack {packTemplateId} (instance {packItemId}) at trader {merchantNpcObjId}");
     }
 
+    public ActorRequest Repair(uint blacksmithNpcObjId, ulong itemId = 0, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.Repair, blacksmithNpcObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "repair"))
+            return request;
+
+        var npc = Character.ParentWorld?.GetNpc(blacksmithNpcObjId);
+        if (npc == null || npc.Template == null || (!npc.Template.Blacksmith && !npc.Template.Merchant))
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"blacksmith {blacksmithNpcObjId} not found or not a blacksmith/merchant");
+
+        var dist = Vector3.Distance(Character.Transform.World.Position, npc.Transform.World.Position);
+        if (dist > 5f)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"too far from blacksmith ({dist:F1}m > 5m)");
+
+        Character.CurrentInteractionObject = npc;
+
+        var toRepair = new List<Item>();
+        if (itemId == 0)
+        {
+            foreach (var item in Character.Inventory.Equipment.GetItemsSnapshot())
+            {
+                if (item is EquipItem eq && eq.Durability < eq.MaxDurability)
+                    toRepair.Add(item);
+            }
+        }
+        else
+        {
+            var item = Character.Inventory.Equipment.GetItemByItemId(itemId)
+                       ?? Character.Inventory.Bag.GetItemByItemId(itemId);
+            if (item is EquipItem eq && eq.Durability < eq.MaxDurability)
+                toRepair.Add(item);
+        }
+
+        if (toRepair.Count == 0)
+            return Complete(request, 0, "no damaged equipment needing repair");
+
+        request.Start($"repairing {toRepair.Count} items at blacksmith {blacksmithNpcObjId}");
+
+        var moneyBefore = Character.Money;
+        Character.DoRepair(toRepair);
+        var cost = moneyBefore - Character.Money;
+
+        return Complete(request, toRepair.Count, $"repaired {toRepair.Count} items for {cost} copper");
+    }
+
     public ActorRequest PostAuction(ulong itemId, int startPrice, int buyoutPrice, AuctionDuration duration, string? idempotencyKey = null)
     {
         var request = NewRequest(ActorActionType.AuctionPost, 0,

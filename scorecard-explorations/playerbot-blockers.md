@@ -82,6 +82,20 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   6. **Unit & Gate Evidence**: `CombatDecisionTreeTests` **5/5** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with **2,765 total tests (2,764 passed, 1 skipped)**.
 - Status: IMPLEMENTATION LANDED / ADVANCED CLASS EXPANSION OPEN
 
+### PB-BAG · Autonomous Bag Management, Vendoring & Durability Repair — IMPLEMENTATION LANDED 2026-09-03
+- Scenario: playerbot fills inventory bag with loot/drops during questing and combat; equipment durability degrades over time
+- Intended: autonomous inventory auditing, selling vendor junk, protecting quest items/consumables, and repairing gear at blacksmiths
+- Observed: previously bots had no bag maintenance, would eventually hit full inventory (refusing quest item rewards) and broken gear (0 durability loss of stats); now governed by `BotBagManager` and `GameplayActor.Repair`
+- Layer: BOT + INVENTORY + ECONOMY (bag capacity auditing, trash classification, vendoring, equipment maintenance)
+- Current evidence:
+  1. **Bag Auditing & Classification (`BotBagManager.AuditBag`)**: Computes capacity, free slots, fullness percentage, and classifies items into vendor junk vs protected assets.
+  2. **Strict Item Protection (`BotBagManager.IsTrash`)**: Explicitly safeguards quest items (`Quest_Item`, quest weapons/armor/accessories, `LootQuestId`), active equipment, and essential sustain consumables (potions, food, water). Only explicit `Trash_*` categories (35, 98, 101, 102, 103, 104, 105) and gray/common non-equipment with refund value are sold.
+  3. **Autonomous Vendoring (`BotBagManager.SellAllTrash`)**: Executes real `actor.Sell` path against merchant NPCs, reclaiming bag slots and converting junk into copper/silver.
+  4. **Canonical Equipment Repair (`GameplayActor.Repair` & `BotBagManager.RepairAllEquipment`)**: Executes real `Character.DoRepair` engine path at blacksmith or merchant NPCs, restoring weapons and armor to `MaxDurability`.
+  5. **Integrated into Leveling Loops (`LevelingLoopScenario.TryPerformBagMaintenance`)**: Automatically runs upon quest turn-ins at town/settlement hubs.
+  6. **Unit & Gate Evidence**: `BotBagManagerTests` **4/4** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with **2,769 total tests (2,768 passed, 1 skipped)**.
+- Status: IMPLEMENTATION LANDED / ADVANCED GEAR UPGRADE OPEN
+
 ### PB-SOAK · Dormant-timer soak and cancellation blocker — OPEN
 - Scenario: Tier-3 dormant bots and long-running scheduler validation.
 - Observed: no six-hour dormant-timer soak exists in current evidence; no soak
