@@ -120,6 +120,7 @@ public class DevMapperService : Singleton<DevMapperService>
 
     private readonly object _lock = new();
     private readonly Dictionary<uint, MapperSession> _activeSessions = [];
+    private volatile bool _hasActiveSessions;
 
     public string RoutesDirectory { get; set; } = Path.Combine("Data", "Routes");
     public string PathsDirectory { get; set; } = Path.Combine("Data", "Path");
@@ -129,6 +130,9 @@ public class DevMapperService : Singleton<DevMapperService>
 
     public bool IsRecording(uint characterId)
     {
+        if (!_hasActiveSessions)
+            return false;
+
         lock (_lock)
         {
             return _activeSessions.ContainsKey(characterId);
@@ -150,6 +154,7 @@ public class DevMapperService : Singleton<DevMapperService>
             var yaw = character.Transform.World.Rotation.Z;
             var session = new MapperSession(character.Id, cleanName, character.Name, pos, yaw);
             _activeSessions[character.Id] = session;
+            _hasActiveSessions = true;
 
             Logger.Info($"[Mapper] Started manual walk session '{cleanName}' for character {character.Name} ({character.Id}) at {pos}");
             return new MapperSessionSummary(true, $"Manual Walk Mode started for '{cleanName}'. Tracing waypoints & actions...", cleanName, 1, 0, 0f);
@@ -262,6 +267,7 @@ public class DevMapperService : Singleton<DevMapperService>
         {
             if (!_activeSessions.Remove(characterId, out session))
                 return new MapperSessionSummary(false, "No active recording session found for character.", "", 0, 0, 0f);
+            _hasActiveSessions = _activeSessions.Count > 0;
         }
 
         try
@@ -308,6 +314,17 @@ public class DevMapperService : Singleton<DevMapperService>
         {
             Logger.Error(ex, $"[Mapper] Failed to save route '{session.RouteName}': {ex.Message}");
             return new MapperSessionSummary(false, $"Error saving route files: {ex.Message}", session.RouteName, session.WaypointCount, session.ActionCount, session.TotalDistance);
+        }
+    }
+
+    public bool CancelSession(uint characterId)
+    {
+        lock (_lock)
+        {
+            var removed = _activeSessions.Remove(characterId);
+            if (removed)
+                _hasActiveSessions = _activeSessions.Count > 0;
+            return removed;
         }
     }
 

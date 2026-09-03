@@ -8,6 +8,7 @@ using AAEmu.Game.Models.Game.Units;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
+[NotInParallel]
 public class DevMapperServiceTests
 {
     private string _testRoutesDir = null!;
@@ -46,7 +47,6 @@ public class DevMapperServiceTests
     {
         var ch = new Character(new UnitCustomModelParams()) { Id = id, Name = name };
         ch.Transform.Local.SetPosition(pos.X, pos.Y, pos.Z, 0, 0, 0);
-        ch.Transform.FinalizeTransform();
         return ch;
     }
 
@@ -177,7 +177,6 @@ public class DevMapperServiceTests
         {
             Executed.Add($"nav:{destination.X},{destination.Y}");
             Character.Transform.Local.SetPosition(destination.X, destination.Y, destination.Z, 0, 0, 0);
-            Character.Transform.FinalizeTransform();
             var req = new ActorRequest(ActorActionType.Move, 0, destination, 0, null);
             req.Accept("test");
             req.Start("test");

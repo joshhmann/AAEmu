@@ -1,4 +1,5 @@
 using AAEmu.Commons.Utils;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
@@ -158,6 +159,10 @@ public class CharacterLifecycleService : Singleton<CharacterLifecycleService>, I
         var savedHouses = HousingManager.Instance.SaveDirtyHousesForCharacter(character.Id);
         if (savedHouses > 0)
             Logger.Debug($"Deactivate: Flushed {savedHouses} dirty house(s) for {character.Name} (id {character.Id}) on {reason}.");
+
+        // Clean up any in-progress dev mapper recording session on leave/disconnect
+        if (DevMapperService.Instance.IsRecording(character.Id))
+            DevMapperService.Instance.CancelSession(character.Id);
     }
 
     /// <summary>
