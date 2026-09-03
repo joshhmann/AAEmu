@@ -86,3 +86,40 @@ python3 Tools/Mapper/extract_doodad_obstacles.py \
   --zone wardton \
   --out Tools/Mapper/wardton_obstacles.json
 ```
+
+---
+
+## 5. Beyond Solzreed Inter-Zone Highways (Levels 15–30)
+
+Arterial highways connecting the Western Continent zones for bot travel and autonomous leveling progression:
+
+* **Solzreed $\rightarrow$ Dewstone Plains** (`Data/Path/highway_solzreed_to_dewstone.path`):
+  * **Distance:** 10.2 km, 402 waypoints (25m spacing).
+  * **Path:** Wardton (`21800, 11500`) $\rightarrow$ Lilyut Crossing (`12600, 15350`).
+* **Dewstone $\rightarrow$ Marianople** (`Data/Path/highway_dewstone_to_marianople.path`):
+  * **Distance:** 4.0 km, 163 waypoints (25m spacing).
+  * **Path:** Dewstone $\rightarrow$ Royster's Camp (`12850, 14450`) $\rightarrow$ Marianople City Gate (`10930, 12040`).
+
+---
+
+## 6. Runtime Obstacle Avoidance (`ObstacleManager`)
+
+Static doodad obstacles (fences, stone walls, closed gates, towers, buildings) are loaded at server startup into `ObstacleManager`:
+* **Spatial Hash Grid:** 100m cells for sub-microsecond point and line queries.
+* **A\* Pathfinding Integration:** Hooked into `AiGeodataManager.CheckImpossibleWalk(Vector3 point)`. Any navmesh node falling inside an obstacle's keep-out cylinder is treated as impassable, forcing A* to route around it.
+* **Catalogs Loaded:** `Data/Navigation/*_obstacles.json` (1,395 total placed obstacles across Solzreed, Dewstone, White Arden, and Marianople).
+
+---
+
+## 7. Generated Vector Heatmaps & Catalogs
+
+* **Heatmaps (`.svg`):**
+  * `solzreed_heatmap.svg` (4,570 NPCs, 15 checkpoints)
+  * `dewstone_heatmap.svg` (2,745 NPCs, 7 checkpoints)
+  * `white_arden_heatmap.svg` (948 NPCs, 13 checkpoints)
+  * `marianople_heatmap.svg` (1,692 NPCs, 17 checkpoints)
+* **Obstacle Catalogs (`.json`):**
+  * `solzreed_obstacles.json` (709 obstacles)
+  * `dewstone_obstacles.json` (327 obstacles)
+  * `white_arden_obstacles.json` (107 obstacles)
+  * `marianople_obstacles.json` (252 obstacles)

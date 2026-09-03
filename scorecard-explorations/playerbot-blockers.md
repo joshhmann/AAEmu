@@ -40,7 +40,20 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 - Layer: BOT + SERVER (no navmesh/waypoint network)
 - Historical evidence (retained): M7 spike shortcuts on record; soak run-1 drowning (fixed at home-anchor level).
 - Historical implementation report (retained): CryEngine `.bai` navigation engine hardened (G-cost fix, binary heap, per-block spatial grid, `BaiNavigationRigTests` 6/6 green, corridor detour improved from 1.91x to 1.22x). `IGameplayActor.NavigateTo` routed navigation contract landed supporting multi-waypoint navigation with automatic A* pathfinding over GeoData, waypoint stepping, and graceful fallback to direct leg.
-- Current implementation/evidence (2026-09-03): `IGameplayActor.NavigateToUnit` landed in `IGameplayActor`, `GameplayActor`, and `PlayerBotControllerAdapter` (`BotActionKind.NavigateToUnit`), sharing the A* GeoData pathfinder and waypoint stepper with `NavigateTo`. `LevelingLoopScenario` now uses `NavigateToUnit` for hunt prey, grind targets, talk NPCs, and turn-in reporters, and `NavigateTo` for gather/group-gather doodads. Tracked evidence: `GameplayActorNavigateTests` 8/8 green (+3 `NavigateToUnit` tests: target not found, already at unit, and direct-leg arrival); `BaiNavigationRigTests` 6/6 green; full gate passes 2,750 tests (2,749 passed, 1 skipped).
+- Current implementation/evidence (2026-09-03):
+  1. `IGameplayActor.NavigateToUnit` landed across `IGameplayActor`, `GameplayActor`, and `PlayerBotControllerAdapter` (`BotActionKind.NavigateToUnit`), sharing A* GeoData pathfinding and waypoint stepping. `LevelingLoopScenario` wired for all hunt/grind/talk/turn-in/gather legs. Evidence: `GameplayActorNavigateTests` 8/8 green.
+  2. **In-Game Dev Mapper (Manual Walk Mode)**: `DevMapperService` + in-game `/mapper walk <name>`, `/mapper mark <label>`, `/mapper stop`, `/mapper list`, `/mapper play <bot> <route>`. Automatically compacts straight waypoints and records doodad interactions, NPC talks, and combat casts into `Data/Routes/<name>.json` and `Data/Path/<name>.path`. Evidence: `DevMapperServiceTests` 5/5 green.
+  3. **Bulk Navigation Toolchain (`Tools/Mapper/`)**:
+     - `redline_to_path.py`: Converts 2D map lines/coordinates into 3D `.path` and `.json` routes with IDW ground Z-height estimation from NPC spawns.
+     - `generate_zone_heatmap.py`: Plots 25,118 NPC spawns and carriage checkpoints into 2D vector maps (`.svg`) for Solzreed, Dewstone Plains, White Arden, and Marianople.
+     - `extract_doodad_obstacles.py`: Correlates `doodad_spawns.json` with `Doodads.xml` across 15 structure categories to extract placed obstacles with keep-out radii.
+  4. **Beyond Solzreed Inter-Zone Expansion (Lv 15–30)**:
+     - Mapped Dewstone Plains (`w_garangdol_plains_1`, 2,745 NPCs, 327 obstacles), White Arden (`w_white_forest_1`, 948 NPCs, 107 obstacles), and Marianople (`w_marianople_1`, 1,692 NPCs, 252 obstacles).
+     - Generated inter-zone arterial highway networks: `highway_solzreed_to_dewstone.path` (10.2 km, 402 waypoints) and `highway_dewstone_to_marianople.path` (4.0 km, 163 waypoints).
+  5. **Doodad Obstacle Avoidance (`ObstacleManager`)**:
+     - `ObstacleManager` indexes 1,395 placed obstacles into a 100m 2D spatial hash grid (`Data/Navigation/*_obstacles.json`).
+     - Wired into `AiGeodataManager.CheckImpossibleWalk(Vector3 point)` so A* pathfinding automatically detours around fences, stone walls, closed gates, and buildings. Evidence: `ObstacleManagerTests` 3/3 green.
+  6. **Full Gate Evidence**: Release build 0 errors, script compiler 0 errors / 0 warnings, **2,758 total tests (2,757 passed, 1 skipped)**, MCP stdio protocol smoke 39 tools, MCP archaeology gate smoke 24 tools. Commits: `805f23c59`, `b34e34263`, `a1d0ae664`, `fc5c9fc1b` on `origin/develop`.
 - Status: IMPLEMENTATION LANDED / BROAD COVERAGE OPEN
 
 ### PB-002 · Progression ceiling: no viable quest content past curated Solzreed slice for bots — SCOPED SLICES LANDED / BROAD CLAIM OPEN 2026-08-28

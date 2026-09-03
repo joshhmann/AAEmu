@@ -219,6 +219,118 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 
 ## Change log (append-only)
 
+- 2026-09-02 — A5 MEMORY-PRESSURE DIAGNOSIS (user/live operational evidence;
+  no ledger state promoted, no rows flipped): recorded the memory-pressure
+  diagnosis additively in the durable A5 dossier
+  `scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md`
+  (new section 7) and mirrored the affected authoritative records
+  (STATUS / ROADMAP / SCORECARD / PROJECT-CONTROL). Evidence is **user/live
+  operational evidence** (not H/human gameplay feel, not independently
+  reproduced by this tool call): prod CT133 presence-demo healthy ~6 days,
+  no soak, **1,647 physics-slow warnings over 9 days**, simultaneous
+  both-world spikes ~500–575 ms with matching values (example 573/574 ms);
+  prod Game ~130,228 kB VmSwap on an 8 GB CT with 512 MB zram, swappiness
+  60, Game VmData ~4.7 GB, MySQL/Login/Adminer/API sharing the ceiling;
+  comparison/contrast soak (CT124, not a matched A/B) 0 KB swap on 48 GB
+  RAM and zero warnings in 12 h; user live 573 ms spike **coincided with**
+  a .NET BGC thread, ~25 MB RSS drop, and swap-in clustering (single
+  reported coincidence, not causal proof). Diagnosis: memory pressure/swap
+  + background GC/page faults is a **strongly supported provisional
+  infrastructure root cause** (Mai's CT133 diagnosis, user/live
+  operational evidence) for the **user-reported current PROD CT133 only**
+  — **no longer merely UNKNOWN host scheduling for that environment**;
+  the soak-time classification remains UNKNOWN (soak host had 0 swap, no
+  in-soak host/GC telemetry — memory/swap does NOT explain the 12 h soak
+  breaches). **A5 remains formally OPEN/UNCLOSED** until CT133 memory
+  remediation is applied and a comparable post-change run confirms the
+  warnings disappear; no H claim, no budget relaxation, no new
+  implementation scope. Next action: memory remediation first (preferred
+  CT133 → 16 GB; alternatives `DOTNET_GCHeapHardLimit` calibration or
+  disabling swap with OOM risk), before/after memory/swap/GC telemetry,
+  then rerun the post-remediation soak. A 1-hour calibration-lane
+  telemetry run (2026-09-02) is **no new soak result**: host sidecar
+  ~3,388 samples, 0 steal/CPU PSI/throttling, physics loop max 62 ms at
+  boot and ≤ 40 ms steady, 0 in-window physics-slow warnings. Durable
+- 2026-09-02 — A5 POST-REMEDIATION FOLLOW-UP (user/Mai operational
+  evidence; additive, no ledger state promoted, no rows flipped):
+  recorded the post-change observation additively in the durable A5
+  dossier `scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md`
+  (new section 8) and mirrored the affected authoritative records
+  (STATUS / ROADMAP / SCORECARD / PROJECT-CONTROL). Evidence is
+  **user/Mai operational evidence** (not H/human gameplay feel, not
+  independently reproduced by this tool call): running Game PID 3057037;
+  deployment since 20:06 UTC; ~10.5 h observation; CT host 16 GiB RAM /
+  8 GiB swap; effective CT and game-container cgroups
+  `memory.max=max`, `memory.swap.max=max`; `memory.events` zero OOM /
+  zero max hits; CT 4.2 GB / game container 2.8 GB; Game VmRSS 2.67 GB,
+  VmData 4.27 GB, **VmSwap 0 kB** (pre-restart ~129 MB); stack memory
+  game 2.6 GiB / db 467.5 MiB / login 43.2 MiB / adminer 8.8 MiB /
+  register-api 15 MB; GC trace capture alive 5.3 MB and growing; no GC
+  events in ordinary logs because events are in nettrace. Behavior:
+  17 physics warnings across the ~10.5 h observation (worst 340 ms) and
+  22 spikes in the first 2 h post-restart (worst 807 ms) as distinct
+  reported windows/classes; **500 ms+ signature absent in the later
+  observed period** (the ~10.5 h window's worst is 340 ms) — the 807 ms
+  first-2 h spike predates that absence, which is not claimed for the
+  first-2 h window. Classification: **strongly supports** the prod CT133
+  memory-pressure/swap hypothesis, **not fully proving** it — residual
+  ~300 ms events keep another cause open; historical 12 h soak
+  classification remains **UNKNOWN**; **no A5 pass is claimed**; budgets
+  unchanged. Next closure criteria: continue GC/nettrace capture,
+  correlate residual warnings with GC/thread/process/host telemetry, then
+  run a comparable post-change A5 soak with **zero budget breaches** before
+  closing A5. **A5 remains formally OPEN/UNCLOSED**; no H claim, no budget
+  relaxation, no new implementation scope. Labeled user/Mai operational
+  evidence, not H/human gameplay and not independently reproduced here.
+  No code/data/client/soak changes, no commit.
+- 2026-08-31 — UNDEFINED WORLD-MECHANICS CENSUS (read-only discovery;
+- 2026-08-31 — UNDEFINED WORLD-MECHANICS CENSUS (read-only discovery;
+  no ledger state promoted, no rows flipped): recorded the durable dossier
+  `scorecard-explorations/mechanics/undefined-world-mechanics-2026-08-31.md`
+  (data+code evidence only; provenance HEAD
+  `0f8254dc3d914193d432fb842169e9bb07075508`, canonical DB md5
+  `78b3bdbf038db3b927056106efdf91af` unchanged, target 1.2 r208022; no game
+  server/client/authenticated run; H UNKNOWN everywhere) and its additive
+  records: four new high-confidence SCORECARD ledger rows, all W=0/A=0/H=U —
+  **AGGRO-PACK-01** (truly undefined: `aggro_links` 130 / `npc_aggro_links`
+  643, 572 NPCs / 126 packs / 111 multi-member; no pack-membership consumer,
+  AI help path is distance+faction heuristic only), **RESPAWN-LADDER-01**
+  (data-only/hardcoded: `resurrection_waiting_times` 10 rows with siege
+  ladder + 600 s penalty ignored; `CharacterCombat.cs:31-32` hardcoded
+  ladder), **AUCTION-BANK-DOODAD-01** (truly undefined: 2+2 func rows,
+  spawned kiosk 7983 in `arche_mall_world`, no-op/unloaded funcs, zero
+  `banker=1`/`auctioneer=1` NPCs), **NPC-INTERACTION-01** (partial/undefined
+  dispatch: `npc_interaction_sets` 111 / `npc_interactions` 114, 142 NPCs,
+  loader/model only, hardcoded interaction menu). **BOOK-01** refreshed from
+  "wiring unverified" to **verified UNWIRED** (books 72 / pages 1206 /
+  contents 1873 / elems 846; `item_open_papers` 551; `ItemImpl.OpenPaper=23`
+  no handler, no book packet, no-op doodad). **INDUN-01** formalized as an
+  existing-dossier ledger row (NOT a new discovery) per the read-only roadmap
+  mechanics-gaps audit — zero ledger rows existed (mechanic-inventory row-22
+  "tracked" claim contradicted; real coverage 63/65); row added citing
+  `indun-domain.md` + PB-003 exit E2E 11/11 (layer DATA→E2E-coverage) with
+  Lane D slices S1-S3 (S4 deferred), H UNKNOWN. NPC-GROUP-01 recorded
+  exploration-only (non-player-facing, no row); medium signals
+  (common_farms behind PUBLICFARM-01, climates/zone_climates weather-state
+  absent, merchant_packs label-only, content_configs/world_var_defaults/
+  world_spec_configs unknown) captured without rows; rejected candidates
+  listed in the dossier. No scorecard grades promoted, no milestone touched,
+  no code/DB/soak/E2E change, no commit. Links: dossier + SCORECARD ledger +
+  ROADMAP Lane D tracks + STATUS census note + PROJECT-CONTROL matrix rows.
+- 2026-08-31 — ARCHAEOLOGY MCP (greenfield read-only data server): recorded
+  the new `AAEmu.ArchaeologyMcp/` MCP stdio server as a current-slice record
+  in STATUS / SCORECARD / ROADMAP / PROJECT-CONTROL and the AGENTS project
+  map. Greenfield, separate-process, read-only; 24-tool surface (raw
+  catalog/files/SQLite, AAPak list/read, search_everything,
+  trace_references, find_quest_objectives, typed domain helpers, lookup_row,
+  compare_source_data); canonical 679-table `compact.sqlite3` md5
+  `78b3bdbf038db3b927056106efdf91af` (unchanged), target 1.2 r208022;
+  allowlisted roots + optional env-configured AAPak; strict SQL/progress
+  timeout/path/symlink/no-shell controls. Focused evidence is code/tests/
+  smoke (A/R/L), not live client/H — H stays UNKNOWN. Client-neutral; does
+  not change PB/M7/A5 claims. No code, no commit, no build. Links:
+  `AAEmu.ArchaeologyMcp/README.md` and
+  `scorecard-explorations/mechanics/archaeology-data-source-inventory.md`.
 - 2026-08-17 — M5.3 DOSSIER (REQ-M5.3-1, t_5189977b): canonical dossier
   committed — scorecard-explorations/mechanics/m5-core-actions-canonical.md
   (movement/targeting/cast ground truth; every claim flagged DV-code /
@@ -284,5 +396,12 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   Unknown/Open player/bot closure. No source, test, generated-output, or
   ledger-state change; M5.3 canonical movement caveat/formal regrade and H
   boundary preserved. Source/test checkpoint `9ddc322feee4f06c55df9f429e8da3ed573c1b85`.
+- 2026-09-03 — PB-001 Navigation Toolchain, Dev Mapper, Beyond Solzreed & Obstacle Avoidance:
+  Landed `NavigateToUnit` across `IGameplayActor`, `GameplayActor`, and `PlayerBotControllerAdapter`, integrated into `LevelingLoopScenario` (hunt/grind/talk/turn-in).
+  Implemented in-game manual walk mode (`DevMapperService` + `/mapper` subcommands) saving `.path` and rich JSON action graphs (`DevMapperServiceTests` 5/5).
+  Built bulk navigation toolchain (`redline_to_path.py`, `generate_zone_heatmap.py`, `extract_doodad_obstacles.py`).
+  Mapped Western Continent expansion beyond Solzreed: Dewstone Plains (2,745 NPCs), White Arden (948 NPCs), and Marianople (1,692 NPCs), generating arterial highway routes (`highway_solzreed_to_dewstone.path` 10.2 km, `highway_dewstone_to_marianople.path` 4.0 km).
+  Implemented `ObstacleManager` indexing 1,395 placed obstacles across 4 zones into a 100m 2D spatial hash grid, wired into `AiGeodataManager.CheckImpossibleWalk` for A* obstacle avoidance (`ObstacleManagerTests` 3/3).
+  Full gate at `fc5c9fc1b`: 2,758 total / 2,757 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*

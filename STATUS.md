@@ -32,6 +32,22 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 
+## 2026-09-03 — Post-M7 readiness: In-Game Dev Mapper, Navigation Toolchain, Obstacle Avoidance & Beyond Solzreed Expansion
+
+- **In-Game Dev Mapper (Manual Walk Mode):** Implemented `DevMapperService` and in-game `/mapper` commands (`walk`, `mark`, `stop`, `list`, `play`). Traces character movement with distance/bearing compaction (1.5m, 20°), hooks doodad interactions, NPC talks, and combat casts. Dual exports to standard CryEngine `Data/Path/<name>.path` and rich action graphs in `Data/Routes/<name>.json`. Added volatile lock-free check for zero-overhead in normal bot loops and wired disconnect cleanup in `CharacterLifecycleService.Deactivate`. Unit tests: `DevMapperServiceTests` 5/5 passed.
+- **Bulk Navigation Toolchain (`Tools/Mapper/`):**
+  - `redline_to_path.py`: Converts annotated 2D coordinates/map lines into continuous 3D `.path` and `.json` waypoints with ground Z-height estimation from NPC spawns.
+  - `generate_zone_heatmap.py`: Plots 25,118 world NPC spawns and carriage checkpoints into 2D vector maps (`.svg`) revealing roads and settlement hubs.
+  - `extract_doodad_obstacles.py`: Correlates `doodad_spawns.json` against `Doodads.xml` across 15 structure categories, extracting coordinates and keep-out collision radii.
+- **Beyond Solzreed Inter-Zone Expansion (Levels 15–30):**
+  - Mapped Dewstone Plains (`w_garangdol_plains_1`, 2,745 NPCs, 7 carriage checkpoints, 327 obstacles), White Arden (`w_white_forest_1`, 948 NPCs, 13 checkpoints, 107 obstacles), and Marianople (`w_marianople_1`, 1,692 NPCs, 17 checkpoints, 252 obstacles).
+  - Built arterial inter-zone highway network connecting Wardton $\rightarrow$ Lilyut Crossing $\rightarrow$ Dewstone Plains (`highway_solzreed_to_dewstone.path`, 10.2 km, 402 waypoints) and Dewstone $\rightarrow$ Royster's Camp $\rightarrow$ Marianople City Gate (`highway_dewstone_to_marianople.path`, 4.0 km, 163 waypoints).
+- **Physical Obstacle Avoidance (`ObstacleManager`):**
+  - Created `ObstacleManager` indexing 1,395 placed obstacles across Solzreed, Dewstone, White Arden, and Marianople into a 100m 2D spatial hash grid (`Data/Navigation/*_obstacles.json`).
+  - Wired into `AiGeodataManager.CheckImpossibleWalk(Vector3 point)` so A* pathfinding expands around fences, stone walls, closed gates, and buildings.
+  - Sub-microsecond collision queries: `IsBlocked(point)`, `IntersectsObstacle(from, to)`, `GetNearbyObstacles(point, radius)`. Unit tests: `ObstacleManagerTests` 3/3 passed.
+- **Evidence:** Full `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, **2,758 total tests (2,757 passed, 1 skipped)**, 39 MCP BotControl tools, and 24 MCP Archaeology tools. Commits: `805f23c59`, `b34e34263`, `a1d0ae664`, `fc5c9fc1b` on `origin/develop`.
+
 ## 2026-09-03 — Post-M7 readiness: PB-001 NavigateToUnit contract and LevelingLoopScenario integration
 
 - **PB-001 routed navigation expansion:** Landed `IGameplayActor.NavigateToUnit(uint targetObjId, ...)` across `IGameplayActor`, `GameplayActor`, and `PlayerBotControllerAdapter` (`BotActionKind.NavigateToUnit`), sharing the A* GeoData pathfinder and waypoint stepper with `NavigateTo`.

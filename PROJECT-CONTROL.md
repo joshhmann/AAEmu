@@ -10,10 +10,10 @@ wiki status page. For human-facing wiki navigation, start at
 - **Project:** AAEmu fork (`joshhmann/AAEmu`), ArcheAge server emulator
 - **Target:** ArcheAge 1.2 client and reference data `compact.sqlite3` r208022
   (read-only)
-**Audited source/evidence baseline:** `f5e7a1980` (`develop`, current local
-source/test HEAD; CompleteQuest composition, non-objective classification, and
-Level objective pursuit landed; prior census checkpoint
-`9b8ba63175b459c2073cb7c742637f07bbb3b9e1`). M5 proposal
+**Audited source/evidence baseline:** `fc5c9fc1b` (`develop`, current local
+source/test HEAD; PB-001 Navigation Toolchain, In-Game Dev Mapper, Beyond
+Solzreed Expansion, and ObstacleManager pathfinding avoidance landed; gate
+2,758/2,757/0/1; prior baseline `f5e7a1980`). M5 proposal
 `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6 cancellation `950cfd279`,
 population isolation `c97909f4f`, and opt-in six-hour leg `155c82c66` are in
 its ancestry.
