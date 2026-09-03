@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
@@ -2936,6 +2936,68 @@ public class LevelingLoopScenarioRigTests
         npc.AddUnitAggro(AggroKind.Damage, character, 1);
 
         await Assert.That(character.Quests!.ActiveQuests.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task LevelingLoop_DeathRecovery_ResurrectsAtNuiAndRecoversHealth()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-death-recovery");
+        var character = session.Character;
+        character.Level = 10;
+        character.Hp = 0; // Dead
+        JoinActorRegion(session);
+
+        var nuiPortal = new AAEmu.Game.Models.Game.Portal
+        {
+            X = 20500f,
+            Y = 11200f,
+            Z = 45f
+        };
+
+        var notes = new List<string>();
+        var actor = new GameplayActor(character);
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            EnableDeathRecovery = true,
+            DeathPortalResolver = _ => nuiPortal
+        };
+
+        var recovered = LevelingLoopScenario.HandleDeathRecovery(actor, character, opts, notes);
+
+        await Assert.That(recovered).IsTrue();
+        await Assert.That(character.Hp).IsGreaterThan(0);
+        await Assert.That(character.Transform.World.Position.X).IsEqualTo(20500f);
+        await Assert.That(character.Transform.World.Position.Y).IsEqualTo(11200f);
+        await Assert.That(notes.Any(n => n.Contains("respawned-at-nui"))).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("health-recovered"))).IsTrue();
+    }
+
+    [Test]
+    public async Task LevelingLoop_InterZoneTravel_TransitionsToNextZoneHighway()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-interzone");
+        var character = session.Character;
+        character.Level = 15;
+        character.Hp = character.MaxHp;
+        character.SetPosition(20000f, 10000f, 50f, 0, 0, 0); // Solzreed
+        JoinActorRegion(session);
+
+        var notes = new List<string>();
+        var actor = new GameplayActor(character);
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            EnableInterZoneTravel = true
+        };
+
+        var transitioned = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
+
+        await Assert.That(transitioned).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("transitioning-solzreed-to-dewstone"))).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("arrived-at-dewstone"))).IsTrue();
+        await Assert.That(character.Transform.World.Position.X).IsEqualTo(12600f);
+        await Assert.That(character.Transform.World.Position.Y).IsEqualTo(15350f);
     }
 
 

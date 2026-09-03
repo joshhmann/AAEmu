@@ -32,6 +32,12 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 
+## 2026-09-03 — Post-M7 readiness: PB-002 Autonomous Inter-Zone Progression & Nui Shrine Death Recovery Loop
+
+- **Autonomous Inter-Zone Leveling Progression (`TryTransitionToNextZone`):** When bots exhaust all available quest offerings in their current starting zone, they evaluate their level against zone transition gates. Level $\ge 10$ in Solzreed transitions along the arterial highway to Dewstone Plains (Lilyut Crossing hub) to trigger fresh quest discovery. Level $\ge 20$ in Dewstone transitions to Marianople Capital Gate.
+- **Autonomous Death Recovery (`HandleDeathRecovery`):** When a bot dies in combat or during leveling loops, it enters death recovery, resurrects via the real `CharacterResurrection` engine path at the nearest Nui goddess shrine, relocates to the shrine anchor, and recovers HP/MP to safe operating threshold ($\ge 70\%$) before resuming quest pursuit.
+- **Evidence:** `LevelingLoopScenarioRigTests` **37/37** passed (+2 tests: `LevelingLoop_DeathRecovery_ResurrectsAtNuiAndRecoversHealth` and `LevelingLoop_InterZoneTravel_TransitionsToNextZoneHighway`). Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,760 total tests (2,759 passed, 1 skipped)**, 39 MCP BotControl tools, and 24 MCP Archaeology tools.
+
 ## 2026-09-03 — Post-M7 readiness: In-Game Dev Mapper, Navigation Toolchain, Obstacle Avoidance & Beyond Solzreed Expansion
 
 - **In-Game Dev Mapper (Manual Walk Mode):** Implemented `DevMapperService` and in-game `/mapper` commands (`walk`, `mark`, `stop`, `list`, `play`). Traces character movement with distance/bearing compaction (1.5m, 20°), hooks doodad interactions, NPC talks, and combat casts. Dual exports to standard CryEngine `Data/Path/<name>.path` and rich action graphs in `Data/Routes/<name>.json`. Added volatile lock-free check for zero-overhead in normal bot loops and wired disconnect cleanup in `CharacterLifecycleService.Deactivate`. Unit tests: `DevMapperServiceTests` 5/5 passed.

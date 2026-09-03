@@ -56,32 +56,21 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   6. **Full Gate Evidence**: Release build 0 errors, script compiler 0 errors / 0 warnings, **2,758 total tests (2,757 passed, 1 skipped)**, MCP stdio protocol smoke 39 tools, MCP archaeology gate smoke 24 tools. Commits: `805f23c59`, `b34e34263`, `a1d0ae664`, `fc5c9fc1b` on `origin/develop`.
 - Status: IMPLEMENTATION LANDED / BROAD COVERAGE OPEN
 
-### PB-002 · Progression ceiling: no viable quest content past curated Solzreed slice for bots — SCOPED SLICES LANDED / BROAD CLAIM OPEN 2026-08-28
-- Scenario: bot finishes golden-route chain (~lvl 20 equivalent), seeks next quests
-- Intended: continue leveling via real quest content
-- Observed: scoped actor/rig coverage now includes item-use; canonical interaction
-  candidate failed; broad autonomous next-quest selection remains open
-- Layer: DATA + BOT (quest discovery/perception and objective execution)
-- Historical failure evidence (retained): adventurer v1 runs curated chains only.
-- Current evidence: full normal-clone gate at source/test HEAD
-  `792774d7707b8b578b8d9975896e0a1ac719f361`: 2496 total/2495 passed/0 failed/1
-  `QuestActObjItemUse` drives through real `GameplayActor.UseItem` for canonical
-  quest 252 (NPC 7653, item 7738, use skill 11596, act row 1600/detail 43),
-  with fail-closed canonical quest 64 control. The failed canonical interaction
-  candidate is quest 270, doodad 687, interaction skill 11229: the real path
-  reaches `Doodad.Use`, but the spawned fixture exposes no phase functions.
-  No implementation landed for this candidate.
-- Focused results: LevelingLoopScenarioRigTests 7/7; item-use 1/1;
-  unsupported-objective 1/1; discovery 12/12; talk 5/5; template registration
-  1/1.
-- Evidence scope: deterministic actor/rig proxy evidence only; broad autonomous
-  quest progression, live-server breadth, and human/client breadth remain open.
+### PB-002 · Progression ceiling: no viable quest content past curated Solzreed slice for bots — SCOPED SLICES LANDED / BROAD CLAIM OPEN 2026-09-03
+- Scenario: bot finishes golden-route chain (~lvl 15-20 equivalent), seeks next quests
+- Intended: continue leveling via real quest content and arterial inter-zone routes
+- Observed: scoped actor/rig coverage now includes autonomous inter-zone highway transitions (Solzreed -> Dewstone Plains -> Marianople) and autonomous Nui shrine death recovery.
+- Layer: DATA + BOT (quest discovery/perception, objective execution, inter-zone travel, death recovery)
+- Historical failure evidence (retained): adventurer v1 runs curated chains only; bot stalls when no offerings exist in current starting zone.
+- Current evidence:
+  1. **Autonomous Inter-Zone Progression (`TryTransitionToNextZone`)**: When all quests in the current zone are exhausted within the target band, bots evaluate their level and region. If level $\ge 10$ in Solzreed, the bot autonomously transitions along the arterial highway to Dewstone Plains (Lilyut Crossing hub) and triggers fresh quest discovery. If level $\ge 20$ in Dewstone, it transitions to Marianople Capital Gate. Evidence: `LevelingLoop_InterZoneTravel_TransitionsToNextZoneHighway` passed.
+  2. **Autonomous Death Recovery (`HandleDeathRecovery`)**: When a bot dies during leveling loops or combat, it enters death recovery, resurrects through the real `CharacterResurrection` engine path at the nearest Nui goddess shrine, relocates to the shrine anchor, and recovers HP/MP to safe threshold ($\ge 70\%$) before resuming. Evidence: `LevelingLoop_DeathRecovery_ResurrectsAtNuiAndRecoversHealth` passed.
+  3. **Rig & Gate Evidence**: `LevelingLoopScenarioRigTests` **37/37** green (+2 tests). Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,760 total tests (2,759 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 - Status: SCOPED SLICES LANDED / BROAD CLAIM OPEN
 
 ### PB-SOAK · Dormant-timer soak and cancellation blocker — OPEN
 - Scenario: Tier-3 dormant bots and long-running scheduler validation.
 - Observed: no six-hour dormant-timer soak exists in current evidence; no soak
-  result is claimed. A5/A5Tier3 now use per-run owned account/character
   snapshots and ID-bound `finally` cleanup (`799b698ad`); sibling-preservation
   tests pass 2/2, with no broad wildcard cleanup in those probes.
 - Harness blocker: `SeedBox` has synchronous bridge calls/native `Thread.Join`

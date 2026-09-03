@@ -403,5 +403,9 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   Mapped Western Continent expansion beyond Solzreed: Dewstone Plains (2,745 NPCs), White Arden (948 NPCs), and Marianople (1,692 NPCs), generating arterial highway routes (`highway_solzreed_to_dewstone.path` 10.2 km, `highway_dewstone_to_marianople.path` 4.0 km).
   Implemented `ObstacleManager` indexing 1,395 placed obstacles across 4 zones into a 100m 2D spatial hash grid, wired into `AiGeodataManager.CheckImpossibleWalk` for A* obstacle avoidance (`ObstacleManagerTests` 3/3).
   Full gate at `fc5c9fc1b`: 2,758 total / 2,757 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
+- 2026-09-03 — PB-002 Autonomous Inter-Zone Progression & Nui Shrine Death Recovery:
+  Wired `TryTransitionToNextZone` into `LevelingLoopScenario`: bots that exhaust current starting-zone quests evaluate their level and transition along arterial highways (Solzreed -> Dewstone Plains -> Marianople), relocating to regional hubs and triggering fresh quest perception sweeps.
+  Wired `HandleDeathRecovery` into `LevelingLoopScenario`: bots dying in combat or leveling loops resurrect via the real `CharacterResurrection` engine path at the nearest Nui goddess shrine, relocate to the shrine anchor, and recover HP/MP to safe threshold before resuming.
+  Evidence: `LevelingLoopScenarioRigTests` 37/37 green (+2 tests). Full gate: 2,760 total / 2,759 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*

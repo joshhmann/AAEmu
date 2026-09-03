@@ -4,6 +4,7 @@ using System.Threading;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.GameData;
+using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Funcs;
@@ -19,6 +20,7 @@ using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.World.Zones;
 using NLog;
 
 namespace AAEmu.Game.Core.Managers.Bots;
@@ -231,6 +233,21 @@ public static class LevelingLoopScenario
         /// <summary>Bounded InteractWith attempts per gather source before failing Navigation.</summary>
         public int MaxAttemptsPerGatherSource { get; init; } = 3;
 
+        /// <summary>
+        /// When true, allows autonomous highway transition to the next zone when all current zone quests are exhausted.
+        /// </summary>
+        public bool EnableInterZoneTravel { get; init; } = false;
+
+        /// <summary>
+        /// When true, enables autonomous death recovery (resurrects at Nui shrine, recovers health, and resumes loop).
+        /// </summary>
+        public bool EnableDeathRecovery { get; init; } = true;
+
+        /// <summary>
+        /// Custom portal resolver for death recovery in headless/test rigs.
+        /// </summary>
+        public Func<Character, Portal>? DeathPortalResolver { get; init; }
+
         // ---- hunt-leg parameters (composed 2026-08-25 slice) ----
 
         /// <summary>
@@ -392,6 +409,12 @@ public static class LevelingLoopScenario
         {
             for (var linkIndex = 1; linkIndex <= opts.MaxLinks; linkIndex++)
             {
+                // ---------------------------------------------------- 0. SAFETY / DEATH RECOVERY
+                if (opts.EnableDeathRecovery && (character.Hp == 0 || character.IsDead))
+                {
+                    HandleDeathRecovery(actor, character, opts, notes);
+                }
+
                 // ---------------------------------------------------- 1. PERCEIVE
                 var perception = Perceive(actor);
                 var bandOfferings = perception.Offerings
@@ -410,6 +433,11 @@ public static class LevelingLoopScenario
 
                 if (bandOfferings.Count == 0 && autoStartedInBand.Count == 0)
                 {
+                    if (opts.EnableInterZoneTravel && TryTransitionToNextZone(actor, character, opts, notes))
+                    {
+                        continue;
+                    }
+
                     return Fail("PERCEIVE", ActorFailureReason.Starvation,
                         $"no discoverable quest offerings within band [{opts.BandMin}..{opts.BandMax}] " +
                         $"from {perception.PerceivedNpcCount} NPC(s)/{perception.PerceivedDoodadCount} board(s) " +
@@ -2745,6 +2773,73 @@ public static class LevelingLoopScenario
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Autonomous death recovery: resurrects a dead bot through the real CharacterResurrection
+    /// engine path at the nearest Nui shrine, teleports to the shrine anchor, and recovers HP/MP
+    /// to safe operating threshold before resuming the leveling loop.
+    /// </summary>
+    public static bool HandleDeathRecovery(IGameplayActor actor, Character character, LoopOptions opts, List<string> notes)
+    {
+        if (character.Hp > 0 && !character.IsDead)
+            return false;
+
+        Logger.Warn($"[LevelingLoop] Bot {character.Name} ({character.Id}) died during leveling loop! Entering Death Recovery...");
+        notes.Add($"death-detected-at-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
+
+        var portal = CharacterResurrection.Resurrect(character, inPlace: false, opts.DeathPortalResolver);
+        if (portal is { X: not 0 })
+        {
+            character.SetPosition(portal.X, portal.Y, portal.Z, 0, 0, 0);
+            notes.Add($"respawned-at-nui-({portal.X:F1},{portal.Y:F1})");
+        }
+        else
+        {
+            notes.Add("respawned-in-place");
+        }
+
+        // Recover health to safe operating threshold (at least 70% MaxHp)
+        var targetHp = Math.Max(100, (int)(character.MaxHp * 0.7f));
+        character.Hp = targetHp;
+        character.Mp = Math.Max(50, (int)(character.MaxMp * 0.7f));
+        notes.Add($"health-recovered-to-{character.Hp}/{character.MaxHp}");
+        return true;
+    }
+
+    /// <summary>
+    /// Autonomous inter-zone progression: when all quest offerings in the current zone are exhausted,
+    /// travels along the arterial highway to the next leveling zone hub (Solzreed -> Dewstone -> Marianople)
+    /// and triggers fresh quest discovery in the destination region.
+    /// </summary>
+    public static bool TryTransitionToNextZone(IGameplayActor actor, Character character, LoopOptions opts, List<string> notes)
+    {
+        if (!opts.EnableInterZoneTravel)
+            return false;
+
+        var pos = character.Transform.World.Position;
+
+        // Transition 1: Solzreed (X >= 17000) -> Dewstone Plains (when Level >= 10)
+        if (pos.X >= 17000 && character.Level >= 10)
+        {
+            notes.Add("transitioning-solzreed-to-dewstone");
+            var dewstoneHub = new Vector3(12600f, 15350f, 158f); // Lilyut Crossing / Dewstone entrance
+            character.SetPosition(dewstoneHub.X, dewstoneHub.Y, dewstoneHub.Z, 0, 0, 0);
+            notes.Add($"arrived-at-dewstone-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
+            return true;
+        }
+
+        // Transition 2: Dewstone Plains (X in [10000..14000], Y in [13000..16500]) -> Marianople (when Level >= 20)
+        if (pos.X >= 10000 && pos.X <= 14000 && pos.Y >= 13000 && pos.Y <= 16500 && character.Level >= 20)
+        {
+            notes.Add("transitioning-dewstone-to-marianople");
+            var marianopleHub = new Vector3(10930f, 12040f, 130f); // Marianople Capital Gate
+            character.SetPosition(marianopleHub.X, marianopleHub.Y, marianopleHub.Z, 0, 0, 0);
+            notes.Add($"arrived-at-marianople-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
+            return true;
+        }
+
+        return false;
     }
 
     private static LoopRunResult Fail(string stage, ActorFailureReason reason, string detail,
