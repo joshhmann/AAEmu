@@ -1,4 +1,5 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Network.Game;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Units;
@@ -24,6 +25,10 @@ public class CSStartInteractionPacket() : GamePacket(CSOffsets.CSStartInteractio
         // TODO: Distance-check
         if (npc != null)
         {
+            if (Connection.ActiveChar != null && DevMapperService.Instance.IsRecording(Connection.ActiveChar.Id))
+            {
+                DevMapperService.Instance.RecordTalk(Connection.ActiveChar.Id, npc.ObjId, npc.TemplateId, npc.Transform.World.Position);
+            }
             // The returned skillsList is supposed to be a list of what actions you can take, and the client will
             // use the first one regardless of what you put in there.
             // Also noted is that even when you send a zero (0) skill list back (one skill of 0),

@@ -1,5 +1,6 @@
 using System.Numerics;
 
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Char;
@@ -169,6 +170,12 @@ public static class VehicleMovementModel
         if (broadcast)
             targetUnit.BroadcastPacket(new SCOneUnitMovementPacket(targetUnit.ObjId, dmt), true);
         targetUnit.Transform.FinalizeTransform();
+
+        if (targetUnit is Character movingChar && DevMapperService.Instance.IsRecording(movingChar.Id))
+        {
+            DevMapperService.Instance.RecordPosition(movingChar.Id, new Vector3(dmt.X, dmt.Y, dmt.Z),
+                (float)MathUtil.ConvertDirectionToRadian(dmt.RotationZ));
+        }
 
         // Handle Fall Velocity
         if (dmt.FallVel > 0 && targetUnit is Unit unit)

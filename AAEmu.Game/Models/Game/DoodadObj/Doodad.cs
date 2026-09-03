@@ -1,6 +1,7 @@
 using AAEmu.Commons.Network;
 using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
@@ -419,6 +420,11 @@ public class Doodad : BaseUnit
         if (caster == null)
         {
             return;
+        }
+
+        if (caster is Character recordPlayer && DevMapperService.Instance.IsRecording(recordPlayer.Id))
+        {
+            DevMapperService.Instance.RecordInteract(recordPlayer.Id, ObjId, TemplateId, Transform.World.Position, startedSkillId);
         }
 
         // Fix #1443 (defense in depth): Refuse interaction with any doodad that has been
