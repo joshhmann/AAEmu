@@ -407,5 +407,9 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   Wired `TryTransitionToNextZone` into `LevelingLoopScenario`: bots that exhaust current starting-zone quests evaluate their level and transition along arterial highways (Solzreed -> Dewstone Plains -> Marianople), relocating to regional hubs and triggering fresh quest perception sweeps.
   Wired `HandleDeathRecovery` into `LevelingLoopScenario`: bots dying in combat or leveling loops resurrect via the real `CharacterResurrection` engine path at the nearest Nui goddess shrine, relocate to the shrine anchor, and recover HP/MP to safe threshold before resuming.
   Evidence: `LevelingLoopScenarioRigTests` 37/37 green (+2 tests). Full gate: 2,760 total / 2,759 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
+- 2026-09-03 — PB-COMBAT Tactical Combat Decision Tree & Class Spacing:
+  Implemented deterministic `CombatDecisionTree`: evaluates class roles (melee vs ranged/caster kiting via Ability1 inference), tactical spacing, emergency flee, and priority skill execution.
+  Integrated into `LevelingLoopScenario` across `HuntLeg`, `LevelLeg`, and `AbilityLevelLeg`.
+  Evidence: `CombatDecisionTreeTests` 5/5 green; `LevelingLoopScenarioRigTests` 37/37 green. Full gate: 2,765 total / 2,764 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*

@@ -32,6 +32,16 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 
+## 2026-09-03 — Post-M7 readiness: PB-COMBAT Tactical Combat Decision Tree & Class Spacing
+
+- **Tactical Combat Decision Tree (`CombatDecisionTree`):** Implemented deterministic decision tree for playerbot combat. Evaluates health status, class roles (`CombatRole.Melee`, `RangedPhysical`, `RangedMagic`, `HealerSupport`), tactical spacing, and priority skill selection.
+  - **Role Inference (`InferRole`):** Derives primary tactical style from starting specialization `character.Ability1` (`Wild` -> Ranged physical, `Magic`/`Death`/`Illusion` -> Caster, `Love`/`Romance` -> Support, others -> Melee).
+  - **Emergency Survival Flee (`EmergencyFlee`):** When HP drops below critical safety threshold ($\le 20\%$), disengages combat and sprints away from hostiles to prevent death.
+  - **Tactical Kiting & Spacing (`KiteSpacing`):** Ranged archers and magic casters dynamically backpedal 10m when hostiles penetrate melee range ($< 12\text{m}$), maintaining the optimal $12\text{–}22\text{m}$ damage band.
+  - **Melee Gap Closing (`CloseGap`):** Melee bots navigate to target reach before casting close-quarters skill rotations.
+- **Scenario Integration:** Wired into `LevelingLoopScenario.HuntLeg`, `LevelLeg`, and `AbilityLevelLeg`.
+- **Evidence:** `CombatDecisionTreeTests` **5/5** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,765 total tests (2,764 passed, 1 skipped)**, 39 MCP BotControl tools, and 24 MCP Archaeology tools.
+
 ## 2026-09-03 — Post-M7 readiness: PB-002 Autonomous Inter-Zone Progression & Nui Shrine Death Recovery Loop
 
 - **Autonomous Inter-Zone Leveling Progression (`TryTransitionToNextZone`):** When bots exhaust all available quest offerings in their current starting zone, they evaluate their level against zone transition gates. Level $\ge 10$ in Solzreed transitions along the arterial highway to Dewstone Plains (Lilyut Crossing hub) to trigger fresh quest discovery. Level $\ge 20$ in Dewstone transitions to Marianople Capital Gate.

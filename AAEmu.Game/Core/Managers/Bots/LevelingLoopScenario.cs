@@ -1310,10 +1310,32 @@ public static class LevelingLoopScenario
                     ActorFailureReason.RejectedAction);
             }
 
-            // Distance maintenance: beyond the engage band, close in first
-            // and re-observe from the new position next round (melee default).
-            var distance = Vector3.Distance(character.Transform.World.Position, target.Transform.World.Position);
-            if (distance > opts.HuntEngageRange)
+            // Tactical combat decision: evaluate positioning, class kiting, and emergency flee
+            var decision = CombatDecisionTree.Evaluate(
+                character,
+                target,
+                availableSkills: opts.CastRotation,
+                maxMeleeRange: opts.HuntEngageRange,
+                fleeHpPercentThreshold: 0.20f);
+
+            if (decision.Action == CombatTacticalAction.EmergencyFlee)
+            {
+                Logger.Warn("[LevelingLoop] Tactical emergency flee (HP critical) from target {TargetId}", target.ObjId);
+                if (decision.TargetPosition.HasValue)
+                {
+                    actor.NavigateTo(decision.TargetPosition.Value, opts.TravelSpeed * 1.2f, opts.TravelTimeout);
+                }
+                return ($"tactical retreat: {decision.Rationale}", ActorFailureReason.StateTransition);
+            }
+
+            if (decision.Action == CombatTacticalAction.KiteSpacing && decision.TargetPosition.HasValue)
+            {
+                Logger.Debug("[LevelingLoop] Tactical kite spacing from target {TargetId}", target.ObjId);
+                DriveRequest(actor, opts,
+                    actor.NavigateTo(decision.TargetPosition.Value, opts.TravelSpeed, TimeSpan.FromSeconds(2)));
+                continue;
+            }
+            else if (decision.Action == CombatTacticalAction.CloseGap)
             {
                 var closeIn = DriveRequest(actor, opts,
                     actor.NavigateToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
@@ -1480,8 +1502,32 @@ public static class LevelingLoopScenario
                     ActorFailureReason.RejectedAction);
             }
 
-            var distance = Vector3.Distance(character.Transform.World.Position, target.Transform.World.Position);
-            if (distance > opts.HuntEngageRange)
+            // Tactical combat decision: evaluate positioning, class kiting, and emergency flee
+            var decision = CombatDecisionTree.Evaluate(
+                character,
+                target,
+                availableSkills: opts.CastRotation,
+                maxMeleeRange: opts.HuntEngageRange,
+                fleeHpPercentThreshold: 0.20f);
+
+            if (decision.Action == CombatTacticalAction.EmergencyFlee)
+            {
+                Logger.Warn("[LevelingLoop] Tactical emergency flee (HP critical) from target {TargetId}", target.ObjId);
+                if (decision.TargetPosition.HasValue)
+                {
+                    actor.NavigateTo(decision.TargetPosition.Value, opts.TravelSpeed * 1.2f, opts.TravelTimeout);
+                }
+                return ($"tactical retreat: {decision.Rationale}", ActorFailureReason.StateTransition);
+            }
+
+            if (decision.Action == CombatTacticalAction.KiteSpacing && decision.TargetPosition.HasValue)
+            {
+                Logger.Debug("[LevelingLoop] Tactical kite spacing from target {TargetId}", target.ObjId);
+                DriveRequest(actor, opts,
+                    actor.NavigateTo(decision.TargetPosition.Value, opts.TravelSpeed, TimeSpan.FromSeconds(2)));
+                continue;
+            }
+            else if (decision.Action == CombatTacticalAction.CloseGap)
             {
                 var closeIn = DriveRequest(actor, opts,
                     actor.NavigateToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
@@ -2477,10 +2523,32 @@ public static class LevelingLoopScenario
                     ActorFailureReason.RejectedAction);
             }
 
-            // Distance maintenance: beyond the engage band, close in first
-            // and re-observe from the new position next round (melee default).
-            var distance = Vector3.Distance(character.Transform.World.Position, target.Transform.World.Position);
-            if (distance > opts.HuntEngageRange)
+            // Tactical combat decision: evaluate positioning, class kiting, and emergency flee
+            var decision = CombatDecisionTree.Evaluate(
+                character,
+                target,
+                availableSkills: opts.CastRotation,
+                maxMeleeRange: opts.HuntEngageRange,
+                fleeHpPercentThreshold: 0.20f);
+
+            if (decision.Action == CombatTacticalAction.EmergencyFlee)
+            {
+                Logger.Warn("[LevelingLoop] Tactical emergency flee (HP critical) from target {TargetId}", target.ObjId);
+                if (decision.TargetPosition.HasValue)
+                {
+                    actor.NavigateTo(decision.TargetPosition.Value, opts.TravelSpeed * 1.2f, opts.TravelTimeout);
+                }
+                return ($"tactical retreat: {decision.Rationale}", ActorFailureReason.StateTransition);
+            }
+
+            if (decision.Action == CombatTacticalAction.KiteSpacing && decision.TargetPosition.HasValue)
+            {
+                Logger.Debug("[LevelingLoop] Tactical kite spacing from target {TargetId}", target.ObjId);
+                DriveRequest(actor, opts,
+                    actor.NavigateTo(decision.TargetPosition.Value, opts.TravelSpeed, TimeSpan.FromSeconds(2)));
+                continue;
+            }
+            else if (decision.Action == CombatTacticalAction.CloseGap)
             {
                 var closeIn = DriveRequest(actor, opts,
                     actor.NavigateToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));

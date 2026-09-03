@@ -12,9 +12,10 @@ wiki status page. For human-facing wiki navigation, start at
   (read-only)
 **Audited source/evidence baseline:** current local source/test HEAD
 (PB-001 Navigation Toolchain, In-Game Dev Mapper, Beyond Solzreed Expansion,
-ObstacleManager pathfinding avoidance, and PB-002 Autonomous Inter-Zone
-Progression & Nui Shrine Death Recovery landed; gate 2,760/2,759/0/1; prior
-baseline `371b8a88a`). M5 proposal
+ObstacleManager pathfinding avoidance, PB-002 Autonomous Inter-Zone
+Progression & Nui Shrine Death Recovery, and PB-COMBAT Tactical Combat
+Decision Tree & Class Spacing landed; gate 2,765/2,764/0/1; prior
+baseline `4482b2ed5`). M5 proposal
 `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6 cancellation `950cfd279`,
 population isolation `c97909f4f`, and opt-in six-hour leg `155c82c66` are in
 its ancestry.

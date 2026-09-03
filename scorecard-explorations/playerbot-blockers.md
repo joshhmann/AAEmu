@@ -68,6 +68,20 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   3. **Rig & Gate Evidence**: `LevelingLoopScenarioRigTests` **37/37** green (+2 tests). Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,760 total tests (2,759 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 - Status: SCOPED SLICES LANDED / BROAD CLAIM OPEN
 
+### PB-COMBAT · Tactical Combat Decision Tree & Class Spacing — IMPLEMENTATION LANDED 2026-09-03
+- Scenario: playerbot engages in combat during leveling, grinding, and objective pursuit
+- Intended: class-adaptive combat positioning (ranged kiting, melee reach), emergency survival disengage, and combo evaluation
+- Observed: previously bots blindly traded blows at 3m melee until death regardless of class; now governed by deterministic `CombatDecisionTree`
+- Layer: BOT + COMBAT (tactical positioning, ability-tree role inference, kiting, retreat)
+- Current evidence:
+  1. **Role Inference (`InferRole`)**: Evaluates `character.Ability1` to categorize class tactics (`Wild` -> `RangedPhysical`, `Magic`/`Death`/`Illusion` -> `RangedMagic`, `Love`/`Romance` -> `HealerSupport`, others -> `Melee`).
+  2. **Emergency Survival Flee (`EmergencyFlee`)**: When HP drops below critical threshold ($\le 20\%$), bot disengages and navigates away from hostiles to avoid dying.
+  3. **Tactical Spacing & Kiting (`KiteSpacing`)**: When enemies penetrate the minimum safe range of ranged physical/caster classes ($< 12\text{m}$), bot steps/kites back 10m to re-establish $12\text{–}22\text{m}$ firing spacing.
+  4. **Melee Gap Closing (`CloseGap`)**: Melee bots close distance into engagement reach before firing skills.
+  5. **Integrated into Loop Scenarios**: Wired into `LevelingLoopScenario.HuntLeg`, `LevelLeg`, and `AbilityLevelLeg`.
+  6. **Unit & Gate Evidence**: `CombatDecisionTreeTests` **5/5** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with **2,765 total tests (2,764 passed, 1 skipped)**.
+- Status: IMPLEMENTATION LANDED / ADVANCED CLASS EXPANSION OPEN
+
 ### PB-SOAK · Dormant-timer soak and cancellation blocker — OPEN
 - Scenario: Tier-3 dormant bots and long-running scheduler validation.
 - Observed: no six-hour dormant-timer soak exists in current evidence; no soak
