@@ -108,6 +108,7 @@ Authoritative component diagram: [`Docs/wiki/Components.md`](Docs/wiki/Component
 | `AAEmu.Login/` | Login server |
 | `AAEmu.Game/` | Game server (largest codebase) |
 | `AAEmu.Aspire.AppHost/` | .NET Aspire orchestrator |
+| `AAEmu.ArchaeologyMcp/` | **Read-only archaeology MCP server** (greenfield, separate process; exposes `compact.sqlite3` + allowlisted repo roots as read-only MCP tools — see [`AAEmu.ArchaeologyMcp/README.md`](AAEmu.ArchaeologyMcp/README.md) and the [data-source inventory](scorecard-explorations/mechanics/archaeology-data-source-inventory.md)) |
 | `AAEmu.UnitTests/` | xUnit unit tests (mirror source layout) |
 | `AAEmu.IntegrationTests/` | Game-focused integration tests |
 | `AAEmu.Login.IntegrationTests/` | Login + Testcontainers MySQL |
@@ -368,11 +369,176 @@ gate. In particular, `./scripts/gate.sh` fails from linked worktrees because
 `RepoRoot` sees a `.git` file; use a normal clone, or fix the script in a
 separate code task, and never classify that failure as a source/code failure.
 
+## Archaeology MCP — development-cycle checkpoints
+
+The read-only archaeology MCP (`AAEmu.ArchaeologyMcp/`) is a client-neutral
+data-access slice, not a milestone or capability-track closure. It exposes the
+canonical ArcheAge 1.2 reference data (`compact.sqlite3`, 679 tables, md5
+`78b3bdbf038db3b927056106efdf91af`, target 1.2 r208022) and allowlisted repo
+source roots as read-only MCP tools. It does not change any PB/M7/A5 claim.
+### When to invoke archaeology (contributor contract)
+
+Contributors **MUST** invoke the read-only archaeology MCP when investigating or
+changing **source, schema, protocol, client-data, quest/objective,
+item/skill/NPC/mate/vehicle/world/physics behavior**, or when a change depends on
+a **reference-data fact** (a value that must match `compact.sqlite3` or the 1.2
+client). Ordinary unrelated changes (pure refactors, logging, plumbing that
+touches no reference data) **MAY skip** it. When in doubt, run it — it is
+read-only and cheap.
+
+**Tool/source routing** (start broad, then corroborate):
+
+- **Catalog first:** `list_sources` / `list_databases` / `list_tables` /
+  `describe_table` to confirm the surface and pick the right table.
+- **Bounded corroboration:** `query_sql` / `lookup_row` for a specific row or a
+  bounded read-only query.
+- **Source/code:** `search_everything` / `search_files` / `read_file` for repo
+  source and allowlisted files.
+- **Domain chains:** `trace_references` and the typed `trace_*` helpers /
+  `find_quest_objectives` for cross-table and quest-objective relationships.
+- **AAPak:** `list_pak_entries` / `read_pak_entry` **only** when
+  `ARCHEAGE_PAK_PATH` is intentionally configured; otherwise they return a
+  deterministic `not configured` error.
+- **Never exposed:** MySQL (mutable state) and E2E/soak roots are excluded by
+  default and must not be reached through archaeology.
+
+**Evidence contract** — when a finding is recorded (dossier, report, card, or
+commit message), include: the exact `git rev-parse HEAD`; the tool's
+`source_id`/`path`/`version`; the query/tool inputs; the confidence label
+(`exact` / `heuristic` / `textual`); truncation/bounds hit; the canonical DB md5
+(`78b3bdbf038db3b927056106efdf91af`); and whether the evidence is **data/code**
+vs **live/client/H**. When behavior is researched, link the acceptance dossier
+[`scorecard-explorations/mechanics/archaeology-mcp-acceptance.md`](scorecard-explorations/mechanics/archaeology-mcp-acceptance.md).
 Classify evidence by layer: contract/reflection/fake mapping; deterministic
 rig; live authenticated server/client; or human/client. Contract, reflection,
 fake-mapping, and rig evidence do not prove live behavior; live bot/client
 evidence does not prove human feel. `H` remains UNKNOWN until an actual human
 completes the named scenario.
+
+**Required before merge:** run `./scripts/archaeology-cycle.sh` **alongside**
+`./scripts/gate.sh` for any change that invoked archaeology (and always for
+archaeology MCP changes). `archaeology-cycle.sh` builds the MCP + archaeology
+unit tests + smoke; `gate.sh` runs the full unit suite + BotControl smoke. Run
+both before merge.
+
+The smallest maintainable process is **deterministic local checks on every
+archaeology change, with data refresh optional and explicit**. Do not run
+expensive live AAPak/DB scans on every commit; the canonical DB and `game_pak`
+are read-only reference data that change only on an intentional data update.
+
+### Checkpoint 1 — before coding (source/catalog/version inventory)
+
+Confirm the read-only surface is present and unchanged before planning a slice:
+
+```bash
+# Canonical DB md5 must match the recorded baseline (78b3bdbf…).
+md5sum AAEmu.Game/Data/compact.sqlite3
+# Catalog + table inventory via the stdio server (or the smoke script).
+bash ./Scripts/mcp-archaeology-smoke.sh
+```
+
+Expected evidence: `compact.sqlite3` md5 `78b3bdbf038db3b927056106efdf91af`
+(unchanged), 679 tables, `list_sources` shows the canonical DB + allowlisted
+roots, and the 24-tool surface is present. Inventory the relevant source
+(packets/managers/GameData) and the data tables the slice touches before
+writing code.
+
+### Checkpoint 2 — during coding (source/data cross-reference and relationship/acceptance query)
+
+Cross-reference every source claim against canonical data using the read-only
+tools, and run the acceptance query the change depends on:
+
+```bash
+# Relationship/acceptance query (example — use the tool the slice needs):
+#   trace_skill / trace_item / trace_quest / trace_npc / trace_mate /
+#   trace_vehicle / trace_crafting / trace_world_spawn / search_physics /
+#   find_quest_objectives / trace_references / search_everything / query_sql
+```
+
+Expected evidence: the tool returns `ok=true` with a deterministic
+`provenance` block (source_id, path, version, generated_at), and any
+`exact`/`heuristic`/`textual` evidence label is reported honestly. Do not
+invent data facts; verify them through `query_sql` (read-only) or the typed
+domain helpers.
+
+### Checkpoint 3 — before merge (MCP build + focused security tests + archaeology stdio smoke)
+
+The canonical one-command archaeology pre-merge check is
+`./scripts/archaeology-cycle.sh`, which runs all four phases from the repo
+root:
+
+```bash
+./scripts/archaeology-cycle.sh
+```
+
+It runs, in order: (1) Release build of `AAEmu.ArchaeologyMcp`; (2) Release
+build of `AAEmu.UnitTests`; (3) all archaeology-focused unit tests
+(`AAEmu.UnitTests.ArchaeologyMcp` namespace, which includes `SqlGuardTests`,
+`PakArchiveServiceTests`, `ArchaeologyMcpServerTests`, `ArchaeologyDomainTests`,
+and `ArchaeologyServiceTests`); (4) the archaeology stdio smoke
+(`Scripts/mcp-archaeology-smoke.sh`). It is read-only (builds write only to
+`bin`/`obj`; no source, data, or config mutated) and never claims to run AAPak
+(the AAPak tools report their deterministic unconfigured errors when
+`ARCHEAGE_PAK_PATH` is unset).
+
+Expected evidence: Release builds 0 errors; all archaeology-focused unit tests
+pass; the archaeology smoke prints
+`MCP archaeology stdio smoke passed: 24 tools … read-only`.
+
+The explicit phases, if run individually:
+
+```bash
+# 1. MCP build (must be 0 errors).
+dotnet build AAEmu.ArchaeologyMcp -c Release
+# 2. Focused security + surface tests.
+dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release \
+  --treenode-filter "/*/*/SqlGuardTests/*"
+dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release \
+  --treenode-filter "/*/*/PakArchiveServiceTests/*"
+dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release \
+  --treenode-filter "/*/*/ArchaeologyMcpServerTests/*"
+dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release \
+  --treenode-filter "/*/*/ArchaeologyDomainTests/*"
+# 3. Archaeology stdio smoke (24-tool protocol + read-only invariant).
+bash ./Scripts/mcp-archaeology-smoke.sh
+```
+
+**Gate note:** `./scripts/gate.sh` runs, as its 4/5 step, the existing
+**BotControl** MCP stdio smoke (`Scripts/mcp-stdio-smoke.sh`, 39 tools), and as
+its **5/5 step** the **lightweight archaeology gate smoke**
+(`Scripts/mcp-archaeology-gate-smoke.sh`, 24 tools) — so a lightweight
+archaeology availability/read-only check **IS wired into `gate.sh`**. That
+lightweight script requires no `game_pak`/client assets, no MySQL, and no
+archaeology unit-test run; it exercises protocol/server availability, the
+24-tool surface, the canonical repo-local `compact.sqlite3` (679+ tables), a
+simple read-only `SELECT`, and read-only rejection of a `DROP`
+(`ARCHEAGE_PAK_PATH` intentionally unset, so AAPak tools report their
+deterministic unconfigured errors). The **full** archaeology smoke
+(`Scripts/mcp-archaeology-smoke.sh`, 24 tools) and the archaeology-focused
+unit tests are **not** wired into `gate.sh` — they run only in
+`./scripts/archaeology-cycle.sh`, which runs **alongside** `./scripts/gate.sh`
+so the archaeology-focused tests are not run twice in one gate pass. Run both
+before merge.
+
+### Checkpoint 4 — after merge / periodic refresh (acceptance dossier and md5/provenance review)
+
+After an archaeology change merges, or on a periodic data refresh, re-verify
+the acceptance surface against the current HEAD:
+
+```bash
+# Re-run the acceptance dossier queries and the smoke.
+bash ./Scripts/mcp-archaeology-smoke.sh
+# Canonical DB must remain unchanged (read-only invariant).
+md5sum AAEmu.Game/Data/compact.sqlite3
+```
+
+Expected evidence: `compact.sqlite3` md5 still `78b3bdbf038db3b927056106efdf91af`;
+the acceptance dossier
+[`scorecard-explorations/mechanics/archaeology-mcp-acceptance.md`](scorecard-explorations/mechanics/archaeology-mcp-acceptance.md)
+is re-read and its queries re-run against the current HEAD; provenance blocks
+(source_id, path, version, generated_at) are reviewed for correctness. A data
+refresh (AAPak/DB scan) is **optional** and only warranted when the canonical
+data or `game_pak` actually changes — never on every commit.
 
 ---
 

@@ -120,6 +120,7 @@
     <Project Path="AAEmu.Login/AAEmu.Login.csproj" />
     <Project Path="AAEmu.BotControl/AAEmu.BotControl.csproj" />
     <Project Path="AAEmu.BotControlMcp/AAEmu.BotControlMcp.csproj" />
+    <Project Path="AAEmu.ArchaeologyMcp/AAEmu.ArchaeologyMcp.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj" />
