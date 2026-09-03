@@ -32,15 +32,17 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 
-## 2026-09-03 — Post-M7 readiness and closure: PB-002 QuestActObjAbilityLevel support and 70 component-only ruling
+## 2026-09-03 — Post-M7 readiness and closure: PB-002 QuestActObjAbilityLevel support and 70 component-only deferral
 
 - **PB-002 objective family closure:** `QuestActObjAbilityLevel` is now fully supported in `LevelingLoopScenario` via `AbilityLevelLeg`.
   - Dispatches grinding of perceived hostiles through `GameplayActor.CastSkill` and real engine `AddExp` / `AddActiveExp`.
   - Fails closed (`WrongDecision`) when the required ability is not one of the character's 3 active abilities (`Ability1`, `Ability2`, `Ability3`).
   - No synthetic objective credit or fake XP writes; uses live `ExperienceManager.GetLevelFromExp(ability.Exp)`.
 - **Ruling on the 70 component-only quests:**
-  - Archeology MCP database census confirmed: of 191 component quests, 76 are paired with talk/doodad/gather discovery channels, 45 are auto-started via `npc.Template.EngageCombatGiveQuestId`, and the remaining 70 have zero offer channel, zero engage tie, and no starter in `compact.sqlite3`.
-  - Formally ruled as unreachable data relics. Fail-closed behavior is verified; they are excluded from the autonomous acceptance frontier.
+  - Archeology MCP database census confirmed: of 191 component quests, 76 are paired with talk/doodad/gather discovery channels, and 45 are auto-started via `npc.Template.EngageCombatGiveQuestId`.
+  - Breakdown of the remaining 70: **68 Ayanad Library floor/room bounties** (category 에아나드 도서관, level 51–55), **10 Prologue cinematic sequence chains** (category 프롤로그), **6 Honor / 2 Mistmerrow Rift world-events** (categories 명예, 전장의 안개), and **4 minigame/title/regional triggers** (categories 놀이, 칭호, 기념행사).
+  - Rather than dead relics, these are specialized zone/event/script-driven quests without ordinary NPC/doodad/combat offer channels.
+  - **Ruling**: Formally **deferred** to their respective future systems (Ayanad Library mechanics, tutorial director, rift/world-schedule engine). For PB-002 autonomous leveling, they fail closed and are excluded from the ordinary acceptance frontier.
 - **Evidence:** `LevelingLoopScenarioRigTests` **35/35** passed (+2 ability level tests: normal completion and inactive fail-closed control). `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, 2,747 tests (2,746 passed, 1 skipped), 39 MCP BotControl tools, and 24 MCP Archaeology tools. Broad autonomous loop and human/client testing remain open.
 ## 2026-08-30 — Post-M7 readiness / scaling gate: A5 timing triage, ActiveRegionTick remediation, next calibration
 
