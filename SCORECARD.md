@@ -101,6 +101,61 @@ feel.)
   remains historical at 2504 total / 2503 passed / 0 failed / 1 skipped,
   compiler 0/0, MCP 39. H remains U (UNKNOWN) and no M6 full-exit claim is
   made.
+
+**2026-09-01 A5 stall investigation dossier (read-only) + 2026-09-02 memory
+diagnosis (user/live operational evidence):**
+[`scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md`](scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md) —
+two distinct failure modes (region overrun vs tick invoke max), 12h soak ran
+pre-remediation (`1ce4664f…` predates `1801baf98…`), budgets NOT relaxed.
+**2026-09-02:** section 7 records the memory-pressure diagnosis from
+**user/live operational evidence** (prod CT133 presence-demo ~6 days healthy,
+no soak, 1,647 physics-slow warnings over 9 days, both-world spikes
+~500–575 ms matching, e.g. 573/574 ms; prod Game ~130,228 kB VmSwap on 8 GB
+CT with 512 MB zram, swappiness 60, VmData ~4.7 GB, MySQL/Login/Adminer/API
+sharing the ceiling; comparison/contrast soak 0 KB swap on CT124 with 48 GB
+RAM, zero warnings in 12 h; live 573 ms spike coincided with a .NET BGC
+thread, ~25 MB RSS drop, swap-in clustering — single reported coincidence,
+not causal proof) — a **strongly supported provisional infrastructure
+root cause** (Mai's CT133 diagnosis, user/live operational evidence) for
+the **user-reported current PROD CT133 only**, **no longer merely UNKNOWN
+host scheduling for that environment**; the soak-time classification
+remains UNKNOWN (soak host had 0 swap, no in-soak host/GC telemetry —
+memory/swap does NOT explain the 12 h soak breaches). **A5 remains
+formally OPEN/UNCLOSED** until CT133 memory remediation is applied and a
+comparable post-change run confirms the warnings disappear. Next action:
+memory remediation first (preferred CT133 → 16 GB; alternatives
+`DOTNET_GCHeapHardLimit` calibration or disabling swap with OOM risk),
+before/after memory/swap/GC telemetry, then rerun the post-remediation
+soak. A 1-hour calibration-lane telemetry run (2026-09-02) is **no new soak
+result**: host sidecar ~3,388 samples, 0 steal/CPU PSI/throttling, physics
+loop max 62 ms at boot and ≤ 40 ms steady, 0 in-window physics-slow
+warnings. Durable planning item `A5-MEMORY-01` recorded in the dossier (no
+live kanban board file in-repo; not a fake issue); acceptance = before/after
+CT133 VmSwap/zram/GC/RSS telemetry plus a post-remediation full soak with
+zero breaches. Old 12 h report was pre-remediation; **no new soak pass is
+claimed**; budgets unchanged. **Post-remediation follow-up (2026-09-02,
+user/Mai operational evidence, additive):** section 8 of the A5 dossier
+records the post-change observation — Game PID 3057037, deployment since
+20:06 UTC, ~10.5 h; CT 16 GiB RAM / 8 GiB swap; cgroups
+`memory.max=max` / `memory.swap.max=max` with zero OOM/max hits; CT
+4.2 GB / container 2.8 GB; Game VmRSS 2.67 GB, VmData 4.27 GB, **VmSwap
+0 kB** (pre-restart ~129 MB); stack game 2.6 GiB / db 467.5 MiB / login
+43.2 MiB / adminer 8.8 MiB / register-api 15 MB; GC trace capture alive
+5.3 MB and growing; GC events in nettrace, not ordinary logs — 17 physics
+warnings across the ~10.5 h observation (worst 340 ms) and 22 spikes in
+the first 2 h post-restart (worst 807 ms) as distinct reported
+windows/classes; **500 ms+ signature absent in the later observed period**
+(the ~10.5 h window's worst is 340 ms) — the 807 ms first-2 h spike
+predates that absence, which is not claimed for the first-2 h window.
+This **strongly supports** the prod CT133 memory-pressure/swap
+hypothesis but does **not fully prove** it (residual ~300 ms events keep
+another cause open); historical 12 h soak classification remains
+**UNKNOWN**; **no A5 pass is claimed**; budgets unchanged. Next closure
+criteria: continue GC/nettrace capture, correlate residual warnings with
+GC/thread/process/host telemetry, then run a comparable post-change A5
+soak with zero budget breaches before closing A5. Labeled user/Mai
+operational evidence, not H/human gameplay and not independently
+reproduced here.
 - PB-001 is **IMPLEMENTATION + TRACKED FIVE-TEST CONTRACT EVIDENCE**:
   source/test commits `0c57ef0c9` and `57b6e2960`; focused command/result:
   `dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build --treenode-filter '/*/*/GameplayActorNavigateTests/*'`
@@ -116,6 +171,82 @@ feel.)
   artifact is checked in.
 - Only later Party, Trade, Expedition, Auction, and related actor expansion
   remains explicitly deferred and is not claimed as MCP-exposed. Grades in the
+## Archaeology MCP (2026-08-31) — greenfield read-only data server
+
+- **Greenfield, separate-process, read-only MCP.** `AAEmu.ArchaeologyMcp/` is a
+  new MCP stdio server (no MCP SDK; newline-delimited JSON-RPC 2.0, matching
+  the `AAEmu.BotControlMcp` convention) that runs as its own process and opens
+  SQLite with `Mode=ReadOnly`. It exposes the canonical ArcheAge 1.2 reference
+  data (`compact.sqlite3`) and allowlisted repo source roots as read-only MCP
+  tools. It is **client-neutral** (any MCP client can spawn the same process)
+  and does not change any PB/M7/A5 claim.
+- **Current tool surface: 24 tools.** Raw catalog/files/SQLite
+  (`list_sources`, `list_databases`, `list_tables`, `describe_table`,
+  `query_sql`, `read_file`, `search_files`); AAPak list/read
+  (`list_pak_entries`, `read_pak_entry`); cross-cutting search
+  (`search_everything`, `trace_references`, `find_quest_objectives`); typed
+  domain helpers (`trace_skill`, `trace_item`, `trace_quest`, `trace_npc`,
+  `trace_doodad`, `trace_mate`, `trace_vehicle`, `trace_crafting`,
+  `trace_world_spawn`, `search_physics`); plus `lookup_row` and
+  `compare_source_data`.
+- **Canonical DB:** `AAEmu.Game/Data/compact.sqlite3`, **679 tables**, md5
+  `78b3bdbf038db3b927056106efdf91af` (unchanged), target ArcheAge **1.2
+  r208022**. Read-only invariant: the md5 is unchanged after any tool run.
+- **Allowlisted roots + optional AAPak.** Primary root `AAEmu.Game/Data/`;
+  secondary roots `AAEmu.Game/` source, `SQL/`, `tools/`, `Scripts/*census.sh`,
+  `scorecard-explorations/`. E2E/soak roots, MySQL (mutable state), and secrets
+  are excluded by default; extra roots only via explicit
+  `ARCHEAGE_EXTRA_ROOTS` opt-in. The `game_pak` AAPak archive is reachable
+  read-only through `list_pak_entries`/`read_pak_entry` only when
+  `ARCHEAGE_PAK_PATH` is configured (bounded listing, 1 MiB reads, never
+  streamed wholesale); otherwise both tools return a deterministic
+  `not configured` error.
+- **Strict controls:** SQL allow-list (`SELECT`/`WITH`/`EXPLAIN`/schema-read
+  `PRAGMA` only; no mutation keywords, no multi-statement batches, no comments);
+  read-only connections; row/column/byte bounds; a native
+  `sqlite3_progress_handler` deadline (10 s) because `Microsoft.Data.Sqlite`
+  ignores `CommandTimeout`; path/symlink guards on `read_file`/`search_files`/
+  `list_databases`/`file:<name>` ids; no shell execution; no mutation tools.
+- **Focused evidence is code/tests/smoke, not live client/H.** Evidence is
+  `SqlGuardTests`, `ArchaeologyMcpServerTests` (24-tool surface),
+  `ArchaeologyDomainTests`, `PakArchiveServiceTests`, and the deterministic
+  `Scripts/mcp-archaeology-smoke.sh` protocol+read-only smoke. This is
+  **A/R/L** (function/restart/load per artifact) evidence only; **H stays
+  UNKNOWN** — no live client, no human run.
+- **Current known limits:** no MySQL surface (mutable state, excluded); no full
+  extracted client tree (only `game_pak` archive + decompiled UI Lua subset);
+  no graph output (graphify builders exist but `graphify-out/` is empty);
+  `search_everything`/`trace_references` are bounded text/schema-driven
+  (evidence labels `exact`/`heuristic`/`textual` are never overstated);
+  `search_physics` covers only the `physical_*` effect tables (no
+  collision/geometry data exists in the canonical DB).
+- **Development-cycle checkpoints:** deterministic local checks on every
+  archaeology change (before coding: source/catalog/version inventory; during
+  coding: source/data cross-reference and relationship/acceptance query;
+  before merge: MCP build + focused security tests + archaeology stdio smoke;
+  after merge/periodic refresh: acceptance dossier and md5/provenance review).
+  The canonical one-command pre-merge check is `./scripts/archaeology-cycle.sh`
+  (builds + archaeology unit tests + full smoke), run alongside `./scripts/gate.sh`.
+  `./scripts/gate.sh` runs the existing BotControl smoke (4/5) plus the
+  **lightweight archaeology gate smoke** (`Scripts/mcp-archaeology-gate-smoke.sh`,
+  24 tools, 5/5 — no game_pak/MySQL/archaeology unit tests); the **full**
+  archaeology smoke (`Scripts/mcp-archaeology-smoke.sh`) and the
+  archaeology-focused unit tests are **not** duplicated in `gate.sh` — they run
+  only in `archaeology-cycle.sh`. See [AGENTS.md](AGENTS.md) "Archaeology MCP —
+  development-cycle checkpoints".
+- **Contributor contract:** contributors MUST invoke archaeology when
+  investigating/changing source, schema, protocol, client-data,
+  quest/objective, item/skill/NPC/mate/vehicle/world/physics behavior, or any
+  change depending on a reference-data fact; ordinary unrelated changes MAY
+  skip it. Tool/source routing, the evidence contract (HEAD, source_id/path/
+  version, query inputs, confidence label, truncation/bounds, canonical DB
+  md5, data/code vs live/client/H), and the required pre-merge
+  `./scripts/archaeology-cycle.sh` alongside `./scripts/gate.sh` are defined
+  in [AGENTS.md](AGENTS.md) "Archaeology MCP — development-cycle checkpoints".
+- **Links:** [`AAEmu.ArchaeologyMcp/README.md`](AAEmu.ArchaeologyMcp/README.md)
+  and the authoritative data-source inventory
+  [`scorecard-explorations/mechanics/archaeology-data-source-inventory.md`](scorecard-explorations/mechanics/archaeology-data-source-inventory.md).
+
 ## Post-M7 readiness / scaling gate — A5 timing triage, ActiveRegionTick remediation, next calibration (2026-08-30)
 
 - **The 12-hour testing/canary report at SHA
@@ -145,6 +276,17 @@ feel.)
   stalls; only then decide code fix vs budget calibration and another 12h run.
 - Evidence is testing/canary operational, not human/client evidence. All
   historical reports are preserved.
+## Post-M7 readiness and closure — PB-002 AbilityLevel support and 70 component-only ruling (2026-09-03)
+
+- **PB-002 objective family closure:** `QuestActObjAbilityLevel` is now fully supported in `LevelingLoopScenario` via `AbilityLevelLeg`.
+  - Dispatches grinding of perceived hostiles through `GameplayActor.CastSkill` and real engine `AddExp` / `AddActiveExp`.
+  - Fails closed (`WrongDecision`) when the required ability is not one of the character's active abilities (`Ability1`, `Ability2`, `Ability3`).
+  - No synthetic objective credit or fake XP writes; uses live `ExperienceManager.GetLevelFromExp(ability.Exp)`.
+- **Ruling on the 70 component-only quests:**
+  - Archeology MCP database census confirmed: of 191 component quests, 76 are paired with talk/doodad/gather discovery channels, 45 are auto-started via `npc.Template.EngageCombatGiveQuestId`, and the remaining 70 have zero offer channel, zero engage tie, and no starter in `compact.sqlite3`.
+  - Formally ruled as unreachable data relics. Fail-closed behavior is verified; they are excluded from the autonomous acceptance frontier.
+- **Evidence:** `LevelingLoopScenarioRigTests` **35/35** passed (+2 ability level tests: normal completion and inactive fail-closed control). `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, 2,747 tests (2,746 passed, 1 skipped), 39 MCP BotControl tools, and 24 MCP Archaeology tools. Broad autonomous loop and human/client testing remain open.
+
 ## Post-M7 readiness and closure — PB-002 MateLevel rig proof and canonical-data boundary (2026-08-30)
 
 - **PB-002 remains PARTIAL / configurable support, not universal closure.**
@@ -485,6 +627,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | QUEST-01 | Solzreed curated starter quest chain + rewards | M1 | 2 | 1 | U | 1 | 2 | N/A | `Golden-Route-Solzreed.md`; quest scenario harness; `next-missing-776-777.md` (330/776/777 COMPONENT_NEXT_MISSING → 0 via QuestDataOverlay, Rei gate PASS t_d8a8c798); `act-ref-2145-rig.md` (2145→2146 + sibling 1960→1961 ACT_REF_MISSING_QUEST → 0 via `2026-08-05-prune-act-ref-missing-2145.sql`, Rei gate PASS t_53baa876); `no-start-cluster-1533-1548-evidence.md` (QUEST_NO_START cluster 1533–1548 → 0 via `2026-08-05-drop-no-start-cluster.sql` — 23 contexts/25 components/42 acts dropped, Rei gate PASS t_f884383f); `no-components-1391-rig.md` (QUEST_NO_COMPONENTS 1391 empty template → dropped via `2026-08-05-drop-1391.sql` — 1 context dropped, drift −1, Rei gate PASS t_a56e8e2d); real restart verified 2026-08-10 (t_cca63225/t_92a41fe6): M2 restart baseline control run A `E2e_RestartPersistence_TwoCheckpoints_FullStateMatch` PASS 4m01s — real process-level SIGKILL + cold boot, quests 254/266 active after restart, Step/Status/Objectives byte-equal, resume-through-turn-in completes; live probe 2/2 PASS (`restart-baseline-probe-20260810-195332.md`, q266 retained across real restart, still Ready after re-entry, completed_quests 3==3==3==3); M3b exit E2E restart cycles (f5b00c686); 2026-08-23 (6dbd41b64): QuestActEtcItemObtain credit path implemented — the long-standing census watch-item family closes, ~51 live quests fixed (QUEST-01 grades unchanged — the Solzreed curated scope was already graded) |
 | CTRL-01 | Movement, targeting, interaction, control-state recovery | M2/M5 | U | U | U | U | U | U | Actor-contract spike |
 | COMBAT-01 | PvE combat, death, resurrection, loot | M2/M5 | U | 1 | U | U | U | U | `SkillManager`; combat audit |
+| NPC-INTERACTION-01 | Data-driven per-NPC interaction skill menus (`npc_interaction_sets`/`npc_interactions`) | Later | U | 0 | U | 0 | U | U | NEW 2026-08-31 (`mechanics/undefined-world-mechanics-2026-08-31.md`): partial / undefined dispatch — `npc_interaction_sets` 111 rows, `npc_interactions` 114 rows (113 distinct skills ~21335-25256: common-tongue learning 21366/21521/21520, 무혐의 입증 21335, war-victory celebration 23146), 142 NPCs with `npc_interaction_set_id>0` (107 distinct sets). `NpcTemplate.NpcInteractionSetId` loaded (NpcManager.cs:574) with **zero consumers**; `CSStartInteractionPacket.cs:20-58` sends a hardcoded option chain (Banker/Auctioneer/Priest/…) and `SCNpcInteractionSkillListPacket` documents "the client will use the first one regardless". Per-NPC skill menus are not data-driven. W=0/A=0; H=UNKNOWN |
 | ABILITY-01 | Ability selection, skill use, progression | M2 | U | 1 | U | U | U | N/A | `SkillManager`; ability audit |
 | ITEM-01 | Inventory, equipment, stacking, split/move, full-inventory errors | M2 | U | 1 | U | U | U | U | `ItemManager`; inventory conservation audit. **2026-08-24 (0482ba3f0):** item_proc_bindings loaded + GetItemProcBindings; UnitProcs factory seam — items can carry procs. Evidence note only — grades stay conservative pending the inventory conservation audit |
 | LABOR-01 | Labor consume/regenerate/cap/persist | M3/M4 | U | U | U | U | U | U | Labor/ActAbility audit |
@@ -501,6 +644,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | ECON-01 | Currency/item/labor conservation across economy | M4/M8 | U | U | U | U | U | U | Cross-mechanic invariant audit |
 | MAIL-01 | Send, receive, attach, return, expire, persist | Later | U | 2 | U | 2 | 2 | U | `MailManager`; mail audit. **2026-08-26 Mail S3 acceptance (commit `31045d033`):** `MailS3RestartE2eTests.Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets` PASS 1/1 in 2m39s on isolated MySQL/Docker with authenticated actors. Real `CSSendMailPacket` send near a mailbox, process kill-9/restart, persisted `SlotType.Mail=5`, receiver ownership retargeting, post-registration unread recount (1), `CSListMail`/`CSReadMail`, sequential attachment take, exact equipment instance detail/grade/durability/rune/temper fidelity, copper transfer, read transition (1→0), and `CSDeleteMail` persistence deletion all passed. Ownership guards landed for receive paths. **Scope:** W=2/A=2/R=2 for this restart-and-attachment flow; C=U (full canonical mail contract not audited), H=U (no human client run), S=U (not a soak/security-grade score). Return opcode `0x0a2` remains **STRONGLY_INFERRED** pending real-client capture; COD enforcement and expiry/bounce E2E remain follow-ups. Prior 2026-08-23 return/expiry rig evidence and 2026-08-25 ownership/instance-faithfulness findings remain in the dated history below.
 | TRANSFER-01 | Fixed-route transport board/ride/disembark/recover | M4 | U | 2 | U | 1 | U | U | `TransferManager`; route audit. **2026-08-24 (3a534b539): transfer FUNCTIONAL + LIVE PROVEN** — CSBoardingTransferPacket TlId shadowing FIXED (multi-part transfers share the master's TlId but seats exist only on child parts; FirstOrDefault always resolved the seatless master, so boarding could never bond); read-only `transfers` bridge dump command; TransferRideE2eTests LIVE PASS (board Marianople Gondola tlId=1 ap=2 BondChairDouble → ride route samples → disembark at current position). W=2 (real engine path end-to-end); A=1 live board/ride/disembark E2E — recover/restart legs still open; H=UNKNOWN |
+| INDUN-01 | Instance dungeons: entry/party/isolation/clear/exit, completion hooks, cooldown persistence | Later | U | 1 | U | 1 | U | U | **FORMALIZED 2026-08-31** per the read-only roadmap mechanics-gaps audit + `mechanics/undefined-world-mechanics-2026-08-31.md` (the mechanic-inventory 2026-08-25 row 22 "tracked" claim had no ledger row — real coverage 63/65, corrected by this row). Dossier `mechanics/indun-domain.md` (2026-08-24): `IndunManager` structured — entry reqs (level/party/ticket/visit count), per-party `Dungeon`s on isolated `WorldInstance`s, queue-during-load, solo→party, kick-on-leave, 24h solo expiry, access-flag reset, in-memory 4h cooldowns; `indun_zones`(20)/`indun_events`(70)/`indun_actions`(104) loaded; portal doodad funcs from client data. W=1: low-level dungeons 45/46/47/50/51/52 have ZERO scripted completion events; cooldowns memory-only; `RestoreItemTime` dead; `DungeonLoaderTask` blocking sleeps; channel-select TODO. A=1 (L exit-leg, PB-003 CLOSED with layer correction DATA→E2E-coverage): `IndunExitE2eTests` 11/11 — entry skill 17731 → bosses 10166/10167 dead → completion events 4601/4602 → exit via portal 4289/skill 17733 → SCLoadInstancePacket(world 0/zone 179) both members at pre-entry anchor; report `/root/aaemu-e2e-pb003/logs/indun-exit-e2e-report.json`. Lane D slices S1 bot-party clear-then-exit (Hadir Farm 46), S2 completion hook (45/46/47/50/51/52), S3 cooldown persistence + channel-select + non-blocking loader; S4 phase scripting deferred. Conservative grades; H=UNKNOWN |
 | PVP-01 | Flagging, factions, damage, honor, death/recovery | Later | 2 | 2 | U | 2 | U | U | **Narrow handshake FIXED/CLOSED 2026-08-27** at behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e`; current source/test HEAD is `792774d7707b8b578b8d9975896e0a1ac719f361`. Live isolated E2E 1/1 in 2m09.910s observed victim-matched non-immune `SCUnitDamaged`, immune frames excluded, `SkillFired=True`, Retribution 2167, bloodstain 877 objId 44294, and crime branch; PEACE-BLOCK passed. Parser tests 2/2. WAR-HONOR deferred; broader PvP/honor scope remains open. |
 | DOMINION-01 | Dominion/castle-siege: zones, settings, plans, phase schedule, tax rate | M9+ | 2 | 2 | U | 2 | 2 | U | NEW + promoted 2026-08-26 (`mechanics/dominion-domain.md` dossier): first real reconstruction of the dominion system — DominionManager loads siege_zones(6)/siege_settings(11)/siege_plans(158) from canonical compact data; additive MySQL `aaemu_game.dominions` (SQL/updates/2026-08-26_aaemu_game_dominions.sql + base file); CSUpdateDominionTaxRatePacket wired (policy validation → persist → echo); phase cron Peace→Declare→Warmup→Siege→Payoff announcing via SCSiegeAlertPacket (0xed, documented placeholder payload); DeclareDominion special-effect now persists instead of hardcoded broadcast; enter-world rebroadcast of stored dominions; persistence E2E across kill -9 PASS (branch d42e708f5→66f124533). Combat/siege-battle explicitly NOT implemented (later slices); declare-trigger UI path still UNKNOWN (pack-planting hypothesis from client data); S=U/H=UNKNOWN |
 | FISH-01 | Fishing interaction, loot, labor, contest integration | M9.5 | U | 2 | U | 1 | U | U | Fishing audit. **2026-08-24 (cd5eedf11 / 33b4df563):** dossier `mechanics/fishing-domain.md` — basic 1.2 fishing is canonically encoded in plot 809 and the plot engine/reagents/labor/zone-loot-packs/radar/FishingLoot are all implemented + wired; `CastAt(position)` contract action added; **FishingVerificationE2eTests LIVE PASS** — labor −5, worm consumed via plot reagents, Fishing actability XP, loot item landed on bite (cast 2 of 2). W=2 (real engine path end-to-end); A=1 single-scenario live proof — sports-fishing stratum still orphaned (SpawnFishEffect unreachable, catch/convert/buy funcs stubbed); H=UNKNOWN |
@@ -515,7 +659,10 @@ Graphify and must be promoted by an end-to-end exploration.
 | ZONE-01 | Peace/conflict/war state transitions and PvP rules | Later | U | 2 | U | 1 | U | U | `ZoneManager`; conflict-state audit. **2026-08-24 (0482ba3f0): zone state machine data-wired + enforced** — hard-coded Conflict boot state removed → data-driven Peace default (legacy World.ConflictZonesStartAtConflict flag kept for tests); Peace-state PvP protection at the BaseUnit.CanAttack chokepoint (fail-open when no conflict entry; Hostile stays attackable). W=2 (real engine path end-to-end); A=1 rig-level state machine + enforcement tests — no live PvP scenario yet (kept honest); **2026-08-25 (mechanics/pvp-domain.md):** enforcement confirmed as exactly ONE hook inside CanAttack; missing for a real war cycle: war-declaration input (CSFactionDeclareHostile stub), runtime conflict seeding, war towers. H=UNKNOWN |
 | ACTOR-01 | Observe/action lifecycle, rejection, timeout, idempotency | M5 | U | 0 | U | 0 | 0 | U | New contract; current source/test HEAD `792774d7707b8b578b8d9975896e0a1ac719f361` (`origin/develop`); behavioral gate evidence baseline `3871459d142fdd1767b9365a1de8d4cd3652ab0e` retains the normal-clone Release gate 2496 total/2495 passed/0 failed/1 skipped, compiler 0/0, MCP stdio 39 tools, with the sole live-rig skip identified above. PB-002 focused item-use 1/1 and related scoped results above. H remains U. |
 | BOT-01 | Headless account/session/Character lifecycle | M6 | U | 0 | U | 0 | 0 | U | New fork capability |
-| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Historical bounded Tier3 readiness at `4721cbd306cbf346bfe38b7373d5adf479b6231f`; six-hour canary executed with diagnostic failure and the corrected 12-hour testing/canary soak (SHA `1ce4664f96705850136dc9d46999070fac9763fb`) completed FULL with RSS within budget but `passed=false` on timing (region/tick breaches, classification UNKNOWN / host-level physics-thread stall versus scheduler/host steal; see current A5 boundary above), so no A5 pass or soak grade is claimed. |
+| BOT-02 | Deterministic recovery + tick-budget compliance | M6 | U | 0 | U | 0 | 0 | 0 | Historical bounded Tier3 readiness at `4721cbd306cbf346bfe38b7373d5adf479b6231f`; six-hour canary executed with diagnostic failure and the corrected 12-hour testing/canary soak (SHA `1ce4664f96705850136dc9d46999070fac9763fb`) completed FULL with RSS within budget but `passed=false` on timing (region/tick breaches, classification UNKNOWN / host-level physics-thread stall versus scheduler/host steal; see current A5 boundary above), so no A5 pass or soak grade is claimed. **2026-09-01:** two distinct failure modes (region overrun vs tick invoke max) and the exact next calibration (bounded 6h rerun with 1s host-telemetry sidecar) are recorded in the read-only [A5 stall dossier](scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md); budgets NOT relaxed. **2026-09-02:** memory-pressure diagnosis from user/live operational evidence (prod CT133 1,647 physics-slow warnings over 9 days, both-world ~500–575 ms matching spikes; prod Game ~130,228 kB VmSwap on 8 GB CT with 512 MB zram, swappiness 60; comparison/contrast soak 0 KB swap on CT124 with 48 GB RAM, zero warnings in 12 h; live 573 ms spike coincided with .NET BGC thread, ~25 MB RSS drop, swap-in clustering — single reported coincidence, not causal proof) — a **strongly supported provisional infrastructure root cause** (Mai's CT133 diagnosis, user/live operational evidence) for the **user-reported current PROD CT133 only**, no longer merely UNKNOWN host scheduling for that environment; soak-time classification remains UNKNOWN (soak host had 0 swap, no in-soak host/GC telemetry — memory/swap does NOT explain the 12 h soak breaches); **A5 remains formally OPEN/UNCLOSED** until CT133 memory remediation is applied and a comparable post-change run confirms the warnings disappear; next action memory remediation first (preferred CT133 → 16 GB; alternatives `DOTNET_GCHeapHardLimit` calibration or disabling swap with OOM risk), before/after memory/swap/GC telemetry, then rerun the post-remediation soak; 1-hour calibration-lane telemetry run (2026-09-02) is no new soak result (host sidecar ~3,388 samples, 0 steal/CPU PSI/throttling, physics loop max 62 ms at boot and ≤ 40 ms steady, 0 in-window physics-slow warnings); planning item `A5-MEMORY-01` in the dossier (acceptance = before/after CT133 VmSwap/zram/GC/RSS telemetry plus post-remediation full soak with zero breaches); old 12 h report pre-remediation, no new soak pass claimed, budgets unchanged. **Post-remediation follow-up (2026-09-02, user/Mai operational evidence):** section 8 of the A5 dossier records the post-change observation (Game PID 3057037, deployment since 20:06 UTC, ~10.5 h; CT 16 GiB RAM / 8 GiB swap; cgroups `memory.max=max`/`memory.swap.max=max`, zero OOM/max hits; CT 4.2 GB / container 2.8 GB; Game VmRSS 2.67 GB, VmData 4.27 GB, VmSwap 0 kB vs pre-restart ~129 MB; stack game 2.6 GiB / db 467.5 MiB / login 43.2 MiB / adminer 8.8 MiB / register-api 15 MB; GC trace capture alive 5.3 MB and growing; GC events in nettrace) — 17 physics warnings across the ~10.5 h observation (worst 340 ms) and 22 spikes in the first 2 h post-restart (worst 807 ms) as distinct reported windows/classes; 500 ms+ signature absent in the later observed period (the ~10.5 h window's worst is 340 ms) — the 807 ms first-2 h spike predates that absence, which is not claimed for the first-2 h window; **strongly supports** the prod CT133 memory-pressure/swap hypothesis, **not fully proving** it (residual ~300 ms events keep another cause open); historical 12 h soak classification remains UNKNOWN; no A5 pass claimed; budgets unchanged; next closure criteria = continue GC/nettrace capture, correlate residual warnings with GC/thread/process/host telemetry, then a comparable post-change A5 soak with zero budget breaches before closing A5; labeled user/Mai operational evidence, not H/human gameplay and not independently reproduced here.|
+| AGGRO-PACK-01 | NPC aggro-link packs: shared-pull via `aggro_links`/`npc_aggro_links` membership | Later | U | 0 | U | 0 | U | U | NEW 2026-08-31 (`mechanics/undefined-world-mechanics-2026-08-31.md`): truly undefined — `aggro_links` 130 named packs (`10` 집단 생활 동물류, `101` 인던_하디르의농장, `27` 십자별 평원 - 일리온 원혼 무리) + `npc_aggro_links` 643 rows / 572 distinct NPCs / 126 links / 111 multi-member packs; **neither table read anywhere in C#**. NpcManager.cs:547-560 loads only per-NPC helper columns into `NpcTemplate`; the AI help path (AI/v2/Framework/Behavior.cs:375-418) is a distance + `AggroLinkSpecialRuleKind` faction heuristic that never consults pack membership. Pack members (e.g. wraiths 2325-2329/2441, trolls 2024/2025/2098) won't shared-pull as retail. Distinct from the catalogued `quest_act_obj_aggro` objectives (PB-002). W=0/A=0; H=UNKNOWN |
+| RESPAWN-LADDER-01 | Data-driven death/resurrection wait ladder (incl. siege ladder + penalty window) | Later | U | 0 | U | 0 | U | U | NEW 2026-08-31 (`mechanics/undefined-world-mechanics-2026-08-31.md`): data-only / hardcoded mismatch — `resurrection_waiting_times` 10 rows (id1→0/20, 2→5/15, 3→45/10, 4→90/5, 5-10→180/0, penalty 600 everywhere) never read; `CharacterCombat.cs:31-32` hardcodes `DeathWaitTimesSeconds=[15,30,60,90,120,150,180,210,240]` + reset 5 min, ignoring the canonical ladder, its siege variant, and the 600 s penalty window; `RespawnCooldownDurationMs=300_000` also hardcoded. In-world respawn countdown (`SCUnitDeathPacket.resurrectWaitingTime`) and post-revive penalty diverge from 1.2 data. Refines COMBAT-01 (PvE death/resurrection plumbing implemented; this is the template-data gap beneath). W=0/A=0; H=UNKNOWN |
+| AUCTION-BANK-DOODAD-01 | Auction-House/Bank UI doodad funcs (`doodad_func_auction_uis`/`bank_uis`, spawned kiosk 7983) | Later | U | 0 | U | 0 | U | U | NEW 2026-08-31 (`mechanics/undefined-world-mechanics-2026-08-31.md`): truly undefined — 2+2 func-table rows reference doodad templates 7983 "무인 창고" / 6669; **7983 is spawned** in `Data/Worlds/arche_mall_world/doodad_spawns.json` ("Auctioneer/Warehouse" @ 3452.5, 4289.4, 108.5, func-group 22065). `DoodadFuncAuctionUi`/`DoodadFuncBankUi` are Logger.Trace no-ops and the tables are never SELECTed → `DoodadFunc.Use` template null → the Mirage Island kiosk is non-functional. The hardcoded NPC open path (CSStartInteractionPacket.cs:36-56 Banker/Auctioneer) is unreachable too: zero `npcs` with `banker=1` or `auctioneer=1`. Adjacent to STORAGE-01 (not promoted). W=0/A=0; H=UNKNOWN |
 | REGRADE-01 | Gear regrading: spend regrade charms/scrolls to raise equipment tier with success/downgrade odds | Later | U | U | U | U | U | U | NEW 2026-08-25 (generated/mechanic-inventory-2026-08-25.md §3#1): item_grades/_grade_buffs/_enchanting_supports/_distributions + equip_slot_enchanting_costs tables; SCGradeEnchantResult/Broadcast G2C confirmations; GradeEnchant refs in ItemManager. Own dossier pending |
 | SOCKET-01 | Gem socketing: insert lunastones/lunagems into gear sockets with per-grade chance/level limits | Later | U | U | U | U | U | U | NEW 2026-08-25 (census §3#2): item_sockets/_chances/_level_limits/_num_limits + item_enchanting_gems; SCItemSocketingLunastone/LunagemResult packets. Own dossier pending |
 | GLIDER-01 | Glider flight: deploy/hang/unhang gliders (incl. costume wings-as-glider) for controlled aerial traversal | M7+ | U | U | U | U | U | U | NEW 2026-08-25 (census §3#3): CSHang/UnhangPacket, flying_state_change_effects; glider traces in ItemDetailType/BackpackType/UnitRequirementsGameData; no dedicated manager. Own dossier pending |
@@ -541,7 +688,7 @@ Graphify and must be promoted by an end-to-end exploration.
 | RANKS-01 | Rankings: periodic leaderboards (combat/economy scopes) with reward mail-outs | M9/M10 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#23): ranks/rank_rewards/rank_scope_links/rank_scopes all ZERO-wired (zero-data-wired list); SCRankAlarmPacket. Own dossier pending |
 | TOWERDEF-01 | Tower-defense events: wave-based base defense with progress targets per zone | M9/M10 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#24/§4#5): wiring surprise — silently the BEST-WIRED missing system: all four tower_def_* table groups 100% wired, TowerDefGameData loader, full SCTowerDef List/Start/WaveStart/End family, no row anywhere until now. Own dossier pending |
 | RACETRACK-01 | Race tracks: scheduled mount/vehicle races on shaped circuits | M10 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#25/§4 honorable mention): race_tracks/race_track_shapes tables present with ZERO .cs references — the purest canonical-data-without-code gap found. Own dossier pending |
-| BOOK-01 | Readable books: lore pages collected/read in-world | M9 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#26): books/book_pages/book_page_contents/book_elems tables present; wiring unverified this pass. Own dossier pending |
+| BOOK-01 | Readable books: lore pages collected/read in-world | M9 | U | 0 | U | 0 | U | U | NEW 2026-08-25 (census §3#26); **verified UNWIRED 2026-08-31** (`mechanics/undefined-world-mechanics-2026-08-31.md`): books 72 / book_pages 1206 / book_page_contents 1873 (Korean lore text) / book_elems 846; `item_open_papers` 551 rows (551 distinct items, 541 valid `book_page_id` links; 491 quest-category, 53 book; e.g. 29236 → book 10, 29237 → book 11, 20031 → page 66). `ItemImplEnum.OpenPaper=23` has **no item handler**, **no book-render packet** exists, and `DoodadFuncOpenPaper` is a Logger.Trace no-op — the full readable-book content graph and item→page links are unreachable in-game. Data-only / unwired. W=0/A=0; H=UNKNOWN |
 | CINEMA-01 | Cinematics/tutorials: quest-triggered camera scenes with captions/subtitles | M9 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#27): cinemas/cinema_captions/subtitles/effects (long-standing "cinema zero-wired" watch item); Started/CompletedCinema opcodes + CSSaveTutorial. Own dossier pending |
 | GATHER-01 | Wild-node gathering: logging/mining/herbalism/soil gathering on natural spawn nodes (labor-gated, distinct from FARM-01 planting) | M3 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#28): doodad_func_ore_mines/rock_mines/fiber_collects/soil_collects/tree_byproducts_collects/seed_collects/spice_collects/medicalingredient_mines/crystal_collects. Own dossier pending |
 | TAX-01 | Taxation: recurring house tax bills, payment windows, national/dominion tax rates | M3 | U | U | U | U | U | U | NEW 2026-08-25 (census §3#29): taxations 100% wired, TaxationsManager; ConstructHouseTax/RequestHouseTax/ChangeHousePay; SCHouseTaxInfo + National/DominionTaxRate packets; MailForTax weekly bills ride MAIL-01. Own dossier pending |

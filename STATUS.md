@@ -1,6 +1,12 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-08-30 · discovery-channel re-census at `9b8ba6317` (PB-002 evidence refresh; prior:
+Updated: 2026-09-03 · PB-002 QuestActObjAbilityLevel support + 70 component-only ruling (prior:
+2026-09-02 · A5 post-remediation follow-up (user/Mai operational evidence; prior:
+2026-09-02 · A5 memory-pressure diagnosis (user/live operational evidence; prior:
+2026-09-01 · A5 physics/tick stall investigation dossier (read-only; prior:
+2026-08-31 · undefined world-mechanics census + ledger reconciliation (read-only dossier; prior:
+2026-08-31 · archaeology MCP current-slice record (greenfield read-only data server; prior:
+2026-08-30 · discovery-channel re-census at `9b8ba6317` (PB-002 evidence refresh; prior:
 2026-08-28 · local source/test checkpoint reconciliation; prior:
 (PB-007 live closure + PB-002 item-use evidence; prior:
 2026-08-26
@@ -25,6 +31,17 @@ are capability/blocker tracks; A3/A4/A5 are population/scaling acceptance
 gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
+
+## 2026-09-03 — Post-M7 readiness and closure: PB-002 QuestActObjAbilityLevel support and 70 component-only ruling
+
+- **PB-002 objective family closure:** `QuestActObjAbilityLevel` is now fully supported in `LevelingLoopScenario` via `AbilityLevelLeg`.
+  - Dispatches grinding of perceived hostiles through `GameplayActor.CastSkill` and real engine `AddExp` / `AddActiveExp`.
+  - Fails closed (`WrongDecision`) when the required ability is not one of the character's 3 active abilities (`Ability1`, `Ability2`, `Ability3`).
+  - No synthetic objective credit or fake XP writes; uses live `ExperienceManager.GetLevelFromExp(ability.Exp)`.
+- **Ruling on the 70 component-only quests:**
+  - Archeology MCP database census confirmed: of 191 component quests, 76 are paired with talk/doodad/gather discovery channels, 45 are auto-started via `npc.Template.EngageCombatGiveQuestId`, and the remaining 70 have zero offer channel, zero engage tie, and no starter in `compact.sqlite3`.
+  - Formally ruled as unreachable data relics. Fail-closed behavior is verified; they are excluded from the autonomous acceptance frontier.
+- **Evidence:** `LevelingLoopScenarioRigTests` **35/35** passed (+2 ability level tests: normal completion and inactive fail-closed control). `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, 2,747 tests (2,746 passed, 1 skipped), 39 MCP BotControl tools, and 24 MCP Archaeology tools. Broad autonomous loop and human/client testing remain open.
 ## 2026-08-30 — Post-M7 readiness / scaling gate: A5 timing triage, ActiveRegionTick remediation, next calibration
 
 - **The 12-hour testing/canary report at SHA
@@ -52,8 +69,111 @@ formally defines a future **M8 — Living Village**; readiness labels are not
 - **Next action:** run bounded testing/canary calibration with the same warmup
   and phase metrics, inspect `SpawnerScanMs`/`CharacterSnapshotMs`/physics
   stalls; only then decide code fix vs budget calibration and another 12h run.
-- Evidence is testing/canary operational, not human/client evidence. All
-  historical reports are preserved.
+## 2026-09-01 — A5 physics/tick stall investigation dossier (read-only)
+
+- **Dossier:**
+  [`scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md`](scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md) —
+  read-only investigation (source report SHA-256 `6892e5e0…`, soak source SHA
+  `1ce4664f…`); no code/data edited, no tests run, no commit.
+- **Two distinct failure modes confirmed:** Mode A = ActiveRegionTick
+  region-pass overrun (6 sampled breaches 299/288/308/291/297/291ms vs 200ms
+  budget; 571 log overruns at ~76s cadence; 566/571 same-second physics-slow;
+  deferred 0 characters → descheduling time, not work time). Mode B =
+  TickManager invoke-max overrun (1 sampled breach 282.9ms vs 250ms budget at
+  16:48:02Z with region = 5ms that sample — NOT the region pass; sync
+  subscriber or tick-thread deschedule, per-subscriber attribution not
+  measured).
+- **12h soak ran PRE-remediation:** SHA `1ce4664f…` predates the
+  ActiveRegionTick deep-copy hotspot fix `1801baf98…` (landed after the run);
+  the 0-work pass profile makes an allocation hotspot an implausible stall
+  cause regardless.
+- **Classification unchanged: UNKNOWN, host-level scheduling/CPU steal
+  leading hypothesis.** Software hotspot and physics workload ruled out by the
+  0-work profile (zero rigid bodies, ~0ms physics work); GC pause unlikely
+  given SustainedLowLatency (`105b4d5ed`) but NOT measured during the soak. No
+  host metrics were collected during either soak — the single biggest gap.
+- **Budgets NOT relaxed.** 200ms region / 250ms tick-max / 100ms tick-p95
+  stand.
+- **Exact next calibration:** bounded 6h rerun (same SHA `1ce4664f` or current
+  HEAD) with a 1s host-telemetry sidecar — per-second process/thread CPU wall
+  (`/proc/<pid>/stat` + `/proc/<pid>/task/*/stat`), `/proc/stat` steal deltas,
+  PSI (`/proc/pressure/{cpu,io,memory}`), cgroup `cpu.stat` throttling deltas,
+  GC pause events (dotnet-counters / `DOTNET_EnableEventLog`), per-subscriber
+  tick attribution (bridge `metrics.tick.subscribers`), and a pinned
+  (`taskset -c`) control arm. Success criterion: stall seconds coincide with
+  steal/PSI/cgroup spikes or all-thread deschedules → classification moves to
+  host-scheduling; stalls with zero host signals and pinned CPUs → return to
+  the process (GC, thread-pool starvation, sync subscribers).
+## 2026-09-02 — A5 memory-pressure diagnosis (user/live operational evidence; additive)
+
+- **Dossier updated:**
+  [`scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md`](scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md) —
+  new section 7 records the memory-pressure diagnosis from **user/live
+  operational evidence** (not H/human gameplay feel, not independently
+  reproduced by this tool call).
+- **Evidence (exact labels preserved):** prod CT133 presence-demo healthy
+  ~6 days, no soak, **1,647 physics-slow warnings over 9 days**,
+  simultaneous both-world spikes ~500–575 ms with matching values (example
+  573/574 ms); prod Game ~130,228 kB VmSwap on an 8 GB CT with 512 MB zram,
+  swappiness 60, Game VmData ~4.7 GB, MySQL/Login/Adminer/API sharing the
+  ceiling; comparison/contrast soak (CT124, not a matched A/B) 0 KB swap
+  on 48 GB RAM and zero warnings in 12 h; user live 573 ms spike
+  **coincided with** a .NET BGC thread, ~25 MB RSS drop, and swap-in
+  clustering (single reported coincidence, not causal proof).
+- **Diagnosis:** memory pressure/swap + background GC/page faults is a
+  **strongly supported provisional infrastructure root cause** (Mai's
+  CT133 diagnosis, user/live operational evidence) for the
+  **user-reported current PROD CT133 only** — **no longer merely UNKNOWN
+  host scheduling for that environment**. The soak-time classification
+  remains UNKNOWN: the soak host had **0 swap** and no in-soak host/GC
+  telemetry was collected, so memory/swap does NOT explain the 12 h soak
+  breaches; budgets NOT relaxed. **A5 remains formally OPEN/UNCLOSED**
+  until CT133 memory remediation is applied and a comparable post-change
+  run confirms the warnings disappear; no H claim, no new implementation
+  scope.
+- **Next action — memory remediation first:** preferred CT133 memory
+  increase to 16 GB; alternatives `DOTNET_GCHeapHardLimit` calibration or
+  disabling swap with OOM risk; require before/after memory/swap/GC
+  telemetry, then rerun the post-remediation soak.
+- **1-hour calibration lane telemetry run (2026-09-02, no new soak
+  result):** host sidecar ~3,388 samples, 0 steal/CPU PSI/throttling;
+  physics loop max 62 ms at boot and ≤ 40 ms steady; 0 in-window
+  physics-slow warnings; no A5 pass claim.
+## 2026-09-02 — A5 post-remediation follow-up (user/Mai operational evidence; additive)
+
+- **Dossier updated:**
+  [`scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md`](scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md) —
+  new section 8 records the post-remediation follow-up from **user/Mai
+  operational evidence** (not H/human gameplay feel, not independently
+  reproduced by this tool call).
+- **Provenance (exact labels preserved):** running Game PID 3057037;
+  deployment since 20:06 UTC; ~10.5 h observation; CT host 16 GiB RAM /
+  8 GiB swap; effective CT and game-container cgroups
+  `memory.max=max`, `memory.swap.max=max`; `memory.events` zero OOM / zero
+  max hits; CT 4.2 GB / game container 2.8 GB; Game VmRSS 2.67 GB, VmData
+  4.27 GB, **VmSwap 0 kB** (pre-restart ~129 MB); stack memory game
+  2.6 GiB / db 467.5 MiB / login 43.2 MiB / adminer 8.8 MiB /
+  register-api 15 MB; GC trace capture alive 5.3 MB and growing; no GC
+  events in ordinary logs because events are in nettrace.
+- **Behavior (exact labels preserved):** 17 physics warnings across the
+  ~10.5 h observation, worst 340 ms; 22 spikes in the first 2 h
+  post-restart, worst 807 ms — a distinct reported window/class from the
+  ~10.5 h warning count; **500 ms+ signature absent in the later observed
+  period** (the ~10.5 h window's worst is 340 ms) — the 807 ms first-2 h
+  spike predates that absence, which is not claimed for the first-2 h
+  window.
+- **Classification:** **strongly supports** the prod CT133
+  memory-pressure/swap hypothesis, **not fully proving** it — residual
+  ~300 ms events keep another cause open. Historical 12 h soak
+  classification remains **UNKNOWN**; **no A5 pass is claimed**; budgets
+  unchanged.
+- **Next closure criteria:** continue GC/nettrace capture; correlate
+  residual warnings with GC/thread/process/host telemetry; then run a
+  comparable post-change A5 soak with **zero budget breaches** before
+  closing A5. **A5 remains formally OPEN/UNCLOSED**; no H claim, no
+  budget relaxation, no new implementation scope. Labeled user/Mai
+  operational evidence, not H/human gameplay and not independently
+  reproduced here. No code/data/client/soak changes, no commit.
 ## 2026-08-30 — Post-M7 readiness and closure: PB-002 MateLevel rig proof and canonical-data boundary
 
 - **PB-002 remains PARTIAL / configurable support, not universal closure.**
@@ -436,6 +556,92 @@ result is claimed.
 - **Deferred action-surface boundary:** only later Party, Trade, Expedition,
   Auction, and related actor expansion remains deferred and is not claimed as
   MCP-exposed.
+
+## 2026-08-31 — Archaeology MCP (greenfield read-only data server)
+
+- **Greenfield, separate-process, read-only MCP.** `AAEmu.ArchaeologyMcp/` is a
+  new MCP stdio server (no MCP SDK; newline-delimited JSON-RPC 2.0, matching
+  the `AAEmu.BotControlMcp` convention) that runs as its own process and opens
+  SQLite with `Mode=ReadOnly`. It exposes the canonical ArcheAge 1.2 reference
+  data (`compact.sqlite3`) and allowlisted repo source roots as read-only MCP
+  tools. It is **client-neutral** (any MCP client can spawn the same process)
+  and does not change any PB/M7/A5 claim.
+- **Current tool surface: 24 tools.** Raw catalog/files/SQLite
+  (`list_sources`, `list_databases`, `list_tables`, `describe_table`,
+  `query_sql`, `read_file`, `search_files`); AAPak list/read
+  (`list_pak_entries`, `read_pak_entry`); cross-cutting search
+  (`search_everything`, `trace_references`, `find_quest_objectives`); typed
+  domain helpers (`trace_skill`, `trace_item`, `trace_quest`, `trace_npc`,
+  `trace_doodad`, `trace_mate`, `trace_vehicle`, `trace_crafting`,
+  `trace_world_spawn`, `search_physics`); plus `lookup_row` and
+  `compare_source_data`.
+- **Canonical DB:** `AAEmu.Game/Data/compact.sqlite3`, **679 tables**, md5
+  `78b3bdbf038db3b927056106efdf91af` (unchanged), target ArcheAge **1.2
+  r208022**. Read-only invariant: the md5 is unchanged after any tool run.
+- **Allowlisted roots + optional AAPak.** Primary root `AAEmu.Game/Data/`;
+  secondary roots `AAEmu.Game/` source, `SQL/`, `tools/`, `Scripts/*census.sh`,
+  `scorecard-explorations/`. E2E/soak roots, MySQL (mutable state), and secrets
+  are excluded by default; extra roots only via explicit
+  `ARCHEAGE_EXTRA_ROOTS` opt-in. The `game_pak` AAPak archive is reachable
+  read-only through `list_pak_entries`/`read_pak_entry` only when
+  `ARCHEAGE_PAK_PATH` is configured (bounded listing, 1 MiB reads, never
+  streamed wholesale); otherwise both tools return a deterministic
+  `not configured` error.
+- **Strict controls:** SQL allow-list (`SELECT`/`WITH`/`EXPLAIN`/schema-read
+  `PRAGMA` only; no mutation keywords, no multi-statement batches, no comments);
+  read-only connections; row/column/byte bounds; a native
+  `sqlite3_progress_handler` deadline (10 s) because `Microsoft.Data.Sqlite`
+  ignores `CommandTimeout`; path/symlink guards on `read_file`/`search_files`/
+  `list_databases`/`file:<name>` ids; no shell execution; no mutation tools.
+- **Focused evidence is code/tests/smoke, not live client/H.** Evidence is
+  `SqlGuardTests`, `ArchaeologyMcpServerTests` (24-tool surface),
+  `ArchaeologyDomainTests`, `PakArchiveServiceTests`, and the deterministic
+  `Scripts/mcp-archaeology-smoke.sh` protocol+read-only smoke. This is
+  **A/R/L** (function/restart/load per artifact) evidence only; **H stays
+  UNKNOWN** — no live client, no human run.
+- **Current known limits:** no MySQL surface (mutable state, excluded); no full
+  extracted client tree (only `game_pak` archive + decompiled UI Lua subset);
+  no graph output (graphify builders exist but `graphify-out/` is empty);
+  `search_everything`/`trace_references` are bounded text/schema-driven
+  (evidence labels `exact`/`heuristic`/`textual` are never overstated);
+  `search_physics` covers only the `physical_*` effect tables (no
+  collision/geometry data exists in the canonical DB).
+- **Development-cycle checkpoints:** the smallest maintainable process is
+  deterministic local checks on every archaeology change (before coding:
+  source/catalog/version inventory; during coding: source/data cross-reference
+  and relationship/acceptance query; before merge: MCP build + focused
+  security tests + archaeology stdio smoke; after merge/periodic refresh:
+  acceptance dossier and md5/provenance review). The canonical one-command
+  pre-merge check is `./scripts/archaeology-cycle.sh` (builds + archaeology
+  unit tests + full smoke), run alongside `./scripts/gate.sh`. `./scripts/gate.sh`
+  runs the existing BotControl smoke (4/5) plus the **lightweight archaeology
+  gate smoke** (`Scripts/mcp-archaeology-gate-smoke.sh`, 24 tools, 5/5 — no
+  game_pak/MySQL/archaeology unit tests); the **full** archaeology smoke
+  (`Scripts/mcp-archaeology-smoke.sh`) and the archaeology-focused unit tests
+  are **not** duplicated in `gate.sh` — they run only in `archaeology-cycle.sh`.
+- **Contributor contract:** contributors MUST invoke archaeology when
+  investigating/changing source, schema, protocol, client-data,
+  quest/objective, item/skill/NPC/mate/vehicle/world/physics behavior, or any
+  change depending on a reference-data fact; ordinary unrelated changes MAY
+  skip it. Tool/source routing, the evidence contract (HEAD, source_id/path/
+  version, query inputs, confidence label, truncation/bounds, canonical DB
+  md5, data/code vs live/client/H), and the required pre-merge
+  `./scripts/archaeology-cycle.sh` alongside `./scripts/gate.sh` are defined
+  in [AGENTS.md](AGENTS.md) "Archaeology MCP — development-cycle checkpoints".
+- **Links:** [`AAEmu.ArchaeologyMcp/README.md`](AAEmu.ArchaeologyMcp/README.md)
+  and the authoritative data-source inventory
+  [`scorecard-explorations/mechanics/archaeology-data-source-inventory.md`](scorecard-explorations/mechanics/archaeology-data-source-inventory.md).
+
+## 2026-08-31 — World-mechanics gap tracks/findings census (read-only dossier + ledger reconciliation)
+
+- **Dossier:** [`scorecard-explorations/mechanics/undefined-world-mechanics-2026-08-31.md`](scorecard-explorations/mechanics/undefined-world-mechanics-2026-08-31.md) —
+  data+code evidence only, provenance HEAD `0f8254dc3d914193d432fb842169e9bb07075508`, canonical DB md5 `78b3bdbf038db3b927056106efdf91af` (unchanged), target 1.2 r208022. No gameplay/code/data change, no live/client/H claim; H UNKNOWN everywhere.
+- **Four genuinely new high-confidence gap rows added to the SCORECARD global ledger** — **not all the same classification** (all W=0/A=0, conservative, H=U): **AGGRO-PACK-01** (**truly undefined** — `aggro_links` 130 / `npc_aggro_links` 643, 572 NPCs / 126 packs / 111 multi-member; no pack-membership consumer — the AI help path is a distance+faction heuristic only); **RESPAWN-LADDER-01** (data-only/hardcoded mismatch — `resurrection_waiting_times` 10 rows vs `CharacterCombat` hardcoded ladder, siege ladder + 600 s penalty ignored; refines existing **COMBAT-01**, not genuinely undefined); **AUCTION-BANK-DOODAD-01** (**truly undefined** — 2+2 doodad-func rows, spawned kiosk 7983 in arche_mall, no-op/unloaded funcs; hardcoded NPC path unreachable with zero `banker=1`/`auctioneer=1` NPCs); **NPC-INTERACTION-01** (partial/undefined dispatch — `npc_interaction_sets` 111 / `npc_interactions` 114, 142 NPCs / 107 sets; loader/model only, hardcoded interaction menu).
+- **BOOK-01 refreshed** from "wiring unverified" to **verified UNWIRED** (books 72 / pages 1206 / contents 1873 / elems 846; `item_open_papers` 551; `ItemImpl.OpenPaper=23` no handler, no book packet, no-op doodad).
+- **INDUN-01 formalized** as an existing-dossier ledger row (NOT a new discovery): the read-only roadmap mechanics-gaps audit confirmed INDUN-01 had **zero ledger rows** (mechanic-inventory row-22 "tracked" claim contradicted — real coverage 63/65); row added citing `indun-domain.md` + PB-003 exit E2E 11/11 (layer DATA→E2E-coverage) with Lane D slices S1 bot-party clear-then-exit (Hadir Farm 46), S2 completion hook (45/46/47/50/51/52), S3 cooldown persistence/channel-select/non-blocking loader; S4 phase scripting deferred; H UNKNOWN.
+- **Exploration-only:** NPC-GROUP-01 (loaded, zero consumers, non-player-facing — no row). **Medium signals captured, not rows:** `common_farms` data-table gap behind tracked PUBLICFARM-01; `climates`/`zone_climates` partial (growth wired, weather-state absent); `merchant_packs` label-only; `content_configs`/`world_var_defaults`/`world_spec_configs` unknown-semantics data surface.
+- **Rejected candidates** recorded in the dossier: INDUN full phase scripting (deferred S4), FISH sports-fishing, PRISON labor/escape, SLAVE naval sub-scope, MAIL 0x0a2/COD, DOMINION combat slices, PVP WAR-HONOR, 70 component-only quests, LABOR regen tick, physics/collision "domain" (no canonical data).
+- This narrative update is additive; all historical blocks preserved. No commit.
 
 ## Deferred validation gates (bot-backtrack program, 2026-08-12)
 

@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
@@ -114,6 +114,21 @@ public class LevelingLoopScenarioRigTests
     private const uint MateLevelSummonItemId = 8_158;
     private const uint MateLevelSummonNpcId = 5_430;
     private const int MateLevelUses = 41;
+
+    // Synthetic ability-level quest ids (fixture range — never collide with
+    // canonical quest_contexts): a Progress QuestActObjAbilityLevel over an
+    // ability (level 2), accepted from a fixture offerer NPC.
+    private const uint AbilityLevelQuestId = 91_621;
+    private const uint AbilityLevelStartComponentId = 91_631;
+    private const uint AbilityLevelProgressComponentId = 91_632;
+    private const uint AbilityLevelReadyComponentId = 91_633;
+    private const uint AbilityLevelOfferNpcTemplateId = 90_957;
+
+    private const uint AbilityLevelInactiveQuestId = 91_622;
+    private const uint AbilityLevelInactiveStartComponentId = 91_641;
+    private const uint AbilityLevelInactiveProgressComponentId = 91_642;
+    private const uint AbilityLevelInactiveReadyComponentId = 91_643;
+    private const uint AbilityLevelInactiveOfferNpcTemplateId = 90_958;
 
     private const uint Quest269Id = 269;
     private const uint Quest270Id = 270;
@@ -1360,6 +1375,152 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(character.Quests.HasQuestCompleted(Quest6250Id)).IsFalse();
         await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
             or ActorActionType.AutoTurnIn)).IsFalse();
+    }
+
+    /// <summary>
+    /// Seeds a synthetic ability-level quest (91_621): Start (ConAcceptNpc
+    /// at NPC 90_957, level 1) → Progress (QuestActObjAbilityLevel with
+    /// specified AbilityId and required level) → Ready (ConReportNpc at
+    /// NPC 90_957).
+    /// </summary>
+    private static void SeedAbilityLevelQuest(uint questId, uint startCompId, uint progCompId,
+        uint readyCompId, uint npcId, AbilityType abilityId, byte requiredLevel)
+    {
+        GameplayActorTestRig.SeedQuestOffer(questId, startCompId, npcId, level: 1);
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GameplayActorTestRig.GetField(
+            manager, "_questTemplates");
+        var questTemplate = questTemplates[questId];
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GameplayActorTestRig.GetField(
+            manager, "_componentTemplates");
+
+        var progress = new QuestComponentTemplate(questTemplate)
+        {
+            Id = progCompId,
+            KindId = QuestComponentKind.Progress
+        };
+        componentTemplates[progCompId] = progress;
+        questTemplate.Components[progCompId] = progress;
+        var abilityLevelAct = new QuestActObjAbilityLevel(progress)
+        {
+            DetailId = progCompId,
+            ActId = progCompId,
+            AbilityId = abilityId,
+            Level = requiredLevel,
+            ThisComponentObjectiveIndex = 0
+        };
+        progress.ActTemplates = [abilityLevelAct];
+
+        var ready = new QuestComponentTemplate(questTemplate)
+        {
+            Id = readyCompId,
+            KindId = QuestComponentKind.Ready
+        };
+        componentTemplates[readyCompId] = ready;
+        questTemplate.Components[readyCompId] = ready;
+        var reportAct = new QuestActConReportNpc(ready)
+        {
+            DetailId = readyCompId,
+            ActId = readyCompId,
+            NpcId = npcId
+        };
+        ready.ActTemplates = [reportAct];
+    }
+
+    /// <summary>
+    /// E-ABILITY-LEVEL-1: QuestActObjAbilityLevel pursuit.
+    /// The character accepts the ability-level quest from the offerer NPC.
+    /// The AbilityLevelLeg grinds perceived hostiles through the real kill
+    /// path; each kill grants character XP through the engine's AddExp boundary,
+    /// which automatically shares into active abilities via AddActiveExp.
+    /// When the ability level crosses the threshold, the quest advances to Ready
+    /// and is turned in to the NPC.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_QuestAbilityLevel_CompletesThroughLiveAbilityState()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-ability-level");
+        var character = session.Character;
+
+        using var expSwap = InstallTightExpCurve();
+        character.Level = 1;
+        character.Ability1 = AbilityType.Fight;
+        character.Abilities.Abilities[AbilityType.Fight].Exp = 1950;
+        character.AddExp(1950, false);
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        SeedAbilityLevelQuest(AbilityLevelQuestId, AbilityLevelStartComponentId,
+            AbilityLevelProgressComponentId, AbilityLevelReadyComponentId,
+            AbilityLevelOfferNpcTemplateId, AbilityType.Fight, 2);
+        SpawnHubNpc(session, AbilityLevelOfferNpcTemplateId, new Vector3(1, 0, 0));
+        SpawnLevelGrindPrey(session, 4);
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 0,
+            BandMax = 5,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxLevelGrindKills = 16
+        }, new RigKillSeam(), new RigLevelXpSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(AbilityLevelQuestId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjAbilityLevel));
+        await Assert.That(character.Quests!.HasQuestCompleted(AbilityLevelQuestId)).IsTrue();
+        await Assert.That(character.Quests.ActiveQuests.ContainsKey(AbilityLevelQuestId)).IsFalse();
+
+        var ability = character.Abilities.Abilities[AbilityType.Fight];
+        var currentLevel = ExperienceManager.Instance.GetLevelFromExp(ability.Exp, out _);
+        await Assert.That((int)currentLevel).IsGreaterThanOrEqualTo(2);
+    }
+
+    /// <summary>
+    /// E-ABILITY-LEVEL-2 (fail-closed control): the quest requires an ability
+    /// that is NOT active on the character. AbilityLevelLeg fails closed with
+    /// WrongDecision, never attempting to grind or faking progress.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_QuestAbilityLevel_InactiveAbility_FailsWrongDecision()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-ability-inactive");
+        var character = session.Character;
+
+        using var expSwap = InstallTightExpCurve();
+        character.Level = 1;
+        character.Ability1 = AbilityType.Fight;
+        character.Ability2 = AbilityType.None;
+        character.Ability3 = AbilityType.None;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Quest requires Magic (7), but character only has Fight active.
+        SeedAbilityLevelQuest(AbilityLevelInactiveQuestId, AbilityLevelInactiveStartComponentId,
+            AbilityLevelInactiveProgressComponentId, AbilityLevelInactiveReadyComponentId,
+            AbilityLevelInactiveOfferNpcTemplateId, AbilityType.Magic, 2);
+        SpawnHubNpc(session, AbilityLevelInactiveOfferNpcTemplateId, new Vector3(1, 0, 0));
+        SpawnLevelGrindPrey(session, 4);
+
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 0,
+            BandMax = 5,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxLevelGrindKills = 16
+        }, new RigKillSeam(), new RigLevelXpSeam());
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo($"OBJECTIVES:ability-level({AbilityType.Magic}/2)");
+        await Assert.That(result.FailReason).Contains("not an active ability");
+        await Assert.That(character.Quests!.HasQuestCompleted(AbilityLevelInactiveQuestId)).IsFalse();
     }
 
     /// <summary>

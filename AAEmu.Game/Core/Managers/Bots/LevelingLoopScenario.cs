@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using System.Threading;
 
 using AAEmu.Game.Core.Managers.UnitManagers;
@@ -74,9 +74,11 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     the real RunAct credits the objective. No XP/level is ever written by
 ///     the scenario. Rigs mirror DoDie's character-XP grant through the
 ///     documented ILevelXpSeam at the real Character.AddExp boundary.
-///   - QuestActObjAbilityLevel → NOT pursued: ability exp only rises via
-///     the character-XP share AddActiveExp (no OnAbilityLevelUp handler,
-///     no training action). Stays a named gap with fail-closed rejection.
+///   - QuestActObjAbilityLevel → ability-growth pursuit (AbilityLevelLeg):
+///     the leg grinds perceived hostiles through the real kill path, with
+///     character XP automatically sharing into active abilities through
+///     CharacterAbilities.AddActiveExp. If the required ability is not active
+///     on the character, fails closed with WrongDecision.
 ///   - QuestActObjMateLevel → mate-growth pursuit (MateLeg): the leg feeds
 ///     the owner's registered mate the configured growth item through the
 ///     REAL UseItem → skill → AddExp path (bounded by
@@ -620,10 +622,9 @@ public static class LevelingLoopScenario
         // no entry here means "pursued", so its absence is intentional.
         // QuestActObjLevel is pursued (LevelLeg) through the real kill-XP
         // path; its absence here is intentional.
-        [nameof(QuestActObjAbilityLevel)] =
-            "no player-like action exposed: ability exp only rises via the character-XP share " +
-            "(CharacterAbilities.AddActiveExp) and the act has no OnAbilityLevelUp handler; " +
-            "training requires a client-driven ability-equip/spend path not exposed headless",
+        // QuestActObjAbilityLevel is pursued (AbilityLevelLeg) through the
+        // real kill-XP path sharing into active abilities; its absence here is
+        // intentional.
         // QuestActCheckTimer / QuestActSupplyRemoveItem are NOT gaps: they are
         // reclassified as non-objective acts (below) and are passed through by
         // PursueObjectives. Their absence here is intentional.
@@ -742,6 +743,15 @@ public static class LevelingLoopScenario
                         if (levelFailure != null)
                             return Fail($"OBJECTIVES:level({levelAct.Level})",
                                 levelReason, levelFailure, actor, null);
+                        break;
+                    }
+                case QuestActObjAbilityLevel abilityLevel:
+                    {
+                        var (abilityFailure, abilityReason) = AbilityLevelLeg(actor, opts, killSeam,
+                            levelXpSeam, questId, abilityLevel, perception);
+                        if (abilityFailure != null)
+                            return Fail($"OBJECTIVES:ability-level({abilityLevel.AbilityId}/{abilityLevel.Level})",
+                                abilityReason, abilityFailure, actor, null);
                         break;
                     }
                 case QuestActObjMateLevel mateLevel:
@@ -1346,6 +1356,188 @@ public static class LevelingLoopScenario
         }
 
         return (null, ActorFailureReason.None);
+    }
+
+    /// <summary>
+    /// Ability-level grind leg (QuestActObjAbilityLevel). The act credits from
+    /// LIVE Ability.Exp at step evaluation (QuestActObjAbilityLevel.RunAct reads
+    /// ExperienceManager.Instance.GetLevelFromExp(ability.Exp)). The leg verifies
+    /// the target ability is active on the character (fail-closed if inactive),
+    /// then grinds perceived hostiles through the real kill path with a bounded
+    /// budget; each kill grants character XP, which automatically shares into
+    /// active abilities via CharacterAbilities.AddActiveExp.
+    /// </summary>
+    private static (string? Failure, ActorFailureReason Reason) AbilityLevelLeg(
+        GameplayActor actor, LoopOptions opts, IKillCreditSeam? killSeam, ILevelXpSeam? levelXpSeam,
+        uint questId, QuestActObjAbilityLevel abilityAct, PerceptionSnapshot perception)
+    {
+        var character = actor.Character;
+        var quest = character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+            return ($"quest {questId} left ActiveQuests before ability level pursuit started",
+                ActorFailureReason.StateTransition);
+
+        if (abilityAct.GetObjective(quest) >= 1)
+            return (null, ActorFailureReason.None); // already credited by a previous evaluation
+
+        if (IsAbilitySatisfied(character, abilityAct))
+            return (null, ActorFailureReason.None); // live ability level already satisfies the act
+
+        // If a specific ability is required, verify that it is one of the character's active abilities.
+        if (abilityAct.AbilityId > 0 && character.Ability1 != abilityAct.AbilityId && character.Ability2 != abilityAct.AbilityId && character.Ability3 != abilityAct.AbilityId)
+        {
+            return ($"quest {questId} requires active ability {abilityAct.AbilityId} at level {abilityAct.Level}, " +
+                    $"but it is not an active ability (Ability1={character.Ability1}, Ability2={character.Ability2}, Ability3={character.Ability3})",
+                ActorFailureReason.WrongDecision);
+        }
+
+        _ = perception;
+
+        var excluded = new HashSet<uint>();
+        var noTargetRounds = 0;
+        var killsLeft = opts.MaxLevelGrindKills;
+
+        while (!IsAbilitySatisfied(character, abilityAct))
+        {
+            if (actor.Character.Quests?.HasQuestCompleted(questId) == true)
+                return (null, ActorFailureReason.None); // auto-completed during grind
+
+            if (killsLeft-- <= 0)
+            {
+                return ($"ability level grind exhausted {opts.MaxLevelGrindKills} kill(s) for quest {questId} " +
+                        $"with ability {abilityAct.AbilityId} — no honest XP source raised the level",
+                    ActorFailureReason.Starvation);
+            }
+
+            var observation = actor.Observe();
+            var target = SelectHuntTarget(character, observation, null, 0, excluded);
+            if (target == null)
+            {
+                noTargetRounds++;
+                if (noTargetRounds > opts.NoTargetRetries)
+                {
+                    return ($"no attackable target perceived for ability level grind of quest {questId} after " +
+                            $"{opts.NoTargetRetries} re-observe rounds (nearby npcs: " +
+                            $"[{string.Join(", ", observation.NearbyNpcObjIds)}])",
+                        ActorFailureReason.Starvation);
+                }
+
+                continue;
+            }
+
+            noTargetRounds = 0;
+
+            // Sustain (vital recovery): if HP < 35%, recover before engaging
+            var maxHp = character.MaxHp > 0 ? character.MaxHp : 1;
+            if ((float)character.Hp / maxHp < 0.35f)
+            {
+                var potion = character.Inventory?.Bag.Items
+                    .FirstOrDefault(i => i?.Template != null && (ItemCategory)i.Template.CategoryId is ItemCategory.Healing_Potion or ItemCategory.Potion or ItemCategory.Food);
+                if (potion != null)
+                {
+                    actor.UseItem(potion.TemplateId);
+                }
+
+                var regenGuard = 0;
+                while ((float)character.Hp / maxHp < 0.8f && regenGuard++ < 10)
+                {
+                    actor.Tick(TimeSpan.FromSeconds(1));
+                }
+            }
+
+            var targetRequest = actor.SetTarget(target.ObjId);
+            if (targetRequest.State != ActorLifecycleState.Completed)
+            {
+                return ($"SetTarget on ability level grind target {target.ObjId} refused: {targetRequest.Detail}",
+                    ActorFailureReason.RejectedAction);
+            }
+
+            var distance = Vector3.Distance(character.Transform.World.Position, target.Transform.World.Position);
+            if (distance > opts.HuntEngageRange)
+            {
+                var closeIn = DriveRequest(actor, opts,
+                    actor.MoveToUnit(target.ObjId, opts.TravelSpeed, opts.TravelTimeout));
+                if (closeIn.State != ActorLifecycleState.Completed)
+                {
+                    return ($"close-in move onto ability level grind target {target.ObjId} did not complete: " +
+                            $"{closeIn.State} ({closeIn.Detail ?? "n/a"})",
+                        closeIn.Failure ?? ActorFailureReason.Navigation);
+                }
+
+                continue;
+            }
+
+            var hpRoundStart = target.Hp;
+            var executedAnyCast = false;
+            var down = false;
+            for (var burst = 0; burst < opts.MaxBurstCasts && !down; burst++)
+            {
+                var roundExecuted = false;
+                foreach (var skillId in opts.CastRotation)
+                {
+                    if (target.Hp <= 0)
+                        break;
+                    var cast = actor.Cast(skillId, target.ObjId);
+                    if (cast.State != ActorLifecycleState.Rejected)
+                        roundExecuted = true;
+                }
+
+                if (!roundExecuted)
+                    break;
+                executedAnyCast = true;
+
+                down = target.Hp <= 0;
+                if (!down && killSeam != null)
+                {
+                    down = killSeam.TryKill(actor, target);
+                }
+            }
+
+            if (!down)
+            {
+                if (executedAnyCast && target.Hp >= hpRoundStart)
+                {
+                    excluded.Add(target.ObjId);
+                }
+
+                continue;
+            }
+
+            if (levelXpSeam != null)
+                levelXpSeam.GrantKillXp(actor, target);
+
+            excluded.Add(target.ObjId);
+            var loot = actor.Loot(target.ObjId);
+            if (loot.State == ActorLifecycleState.Rejected)
+                Logger.Debug("ability level leg: loot of corpse {ObjId} rejected ({Detail}) — tolerated", target.ObjId, loot.Detail);
+        }
+
+        return (null, ActorFailureReason.None);
+    }
+
+    private static bool IsAbilitySatisfied(Character character, QuestActObjAbilityLevel abilityAct)
+    {
+        if (character.Abilities == null)
+            return false;
+
+        if (abilityAct.AbilityId > 0)
+        {
+            if (!character.Abilities.Abilities.TryGetValue(abilityAct.AbilityId, out var ability))
+                return false;
+            int abLevel = ExperienceManager.Instance.GetLevelFromExp(ability.Exp, out _);
+            return abLevel >= abilityAct.Level;
+        }
+
+        for (var i = AbilityType.General + 1; i < AbilityType.None; i++)
+        {
+            if (!character.Abilities.Abilities.TryGetValue(i, out var ability))
+                return false;
+            int abLevel = ExperienceManager.Instance.GetLevelFromExp(ability.Exp, out _);
+            if (abLevel < abilityAct.Level)
+                return false;
+        }
+
+        return true;
     }
 
     /// <summary>
