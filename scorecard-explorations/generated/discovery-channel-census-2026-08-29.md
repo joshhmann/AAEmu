@@ -235,3 +235,16 @@ itself (deferred by design since the 2026-08-29 census).
 (30 both + 15 engage-only) = **4,226** quests the loop can pursue end-to-end. This is a strict +45 over the
 2026-08-29 figure of 4,181, and a strict −70 on the "unreachable" remainder (495 → 70; the 380 kill-only
 subset is now perceived, and 45 of the 115 component-only are now engine-startable).
+
+## 2026-09-03 re-census: Archaeology MCP classification of the 70 component-only quests (System-Driven Feature Quests)
+
+- **Investigation:** Querying `compact.sqlite3` via `AAEmu.ArchaeologyMcp` resolved the exact identity and categories of the 70 component-only quests in Bucket (d).
+- **Core Finding:** Rather than being dead data relics, these quests represent **system-driven and interactable feature quests** that are auto-granted or triggered by specific game systems (zone/room entry, cinematic cuts, rift schedules, festival objects) rather than ordinary NPC talk/doodad offer channels:
+  - **68 Ayanad Library floor/room bounties** (category `에아나드 도서관`, level 51–55; QIDs 6255, 6257, 6259, 6261, 6263–6349): Room-clearing bounty quests dynamically pushed upon entering library rooms/floors.
+  - **10 Prologue cinematic sequence chains** (category `프롤로그`, level 1; QIDs 6040, 6045–6053): Sequenced tutorial and intro cinematic cutscene chains auto-progressed by the client/server sequence director.
+  - **6 Honor world event quests** (category `명예`, level 50; QIDs 6004, 6005, 6008, 6020–6022): Dynamic battlefield and honor battle triggers.
+  - **2 Mistmerrow / Crimson Rift stages** (category `전장의 안개`, level 45; QIDs 5143–5144): Scheduled zone rift stages auto-pushed to players present in the zone during world events.
+  - **2 Mirage Isle minigames** (category `놀이`, level 50; QIDs 5063–5064): Minigame interaction challenges (Mandragora catching).
+  - **2 Car racing / title invitations** (category `칭호`, level 50; QIDs 5451–5452): Vehicle racing invitations and title achievements.
+  - **5 Regional celebrations / festivals** (categories `기념행사`, `릴리엇 구릉지`, `호랑이 등뼈 산맥`; QIDs 6213, 6214, 6216, 6224, 6281): Interactive festival doodad and regional celebration triggers.
+- **Architectural Ruling:** Formally **deferred** to their respective feature domain tracks (Ayanad Library mechanics, Tutorial director, World Event/Rift scheduler). For PB-002 autonomous leveling, they fail closed and are excluded from ordinary quest acceptance.
