@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
@@ -135,8 +135,12 @@ public class SCUnitStatePacket : GamePacket
 
         if (npc is not null)
         {
-            var referenceHeight = WorldManager.Instance.GetReferenceHeight(npc.Ai, _unit.Transform.Local.Position.X, _unit.Transform.Local.Position.Y, _unit.Transform.Local.Position.Z, _unit.Transform.ZoneId);
-            _unit.Transform.Local.SetHeight(referenceHeight);
+            var worldMgr = WorldManager.PeekInstance;
+            if (worldMgr != null)
+            {
+                var referenceHeight = worldMgr.GetReferenceHeight(npc.Ai, _unit.Transform.Local.Position.X, _unit.Transform.Local.Position.Y, _unit.Transform.Local.Position.Z, _unit.Transform.ZoneId);
+                _unit.Transform.Local.SetHeight(referenceHeight);
+            }
         }
 
         stream.WritePosition(_unit.Transform.Local.Position);
@@ -399,11 +403,6 @@ public class SCUnitStatePacket : GamePacket
                 validFlags |= 1 << index;
             }
             index++;
-        }
-        if (validFlags <= 0 && baseUnitType == BaseUnitType.Npc)
-        {
-            // ReSharper disable once GrammarMistakeInComment
-            unit.ModelParams.SetType(UnitCustomModelType.Skin); // additional check that the NPC has no body and no face
         }
         index = 0;
         do

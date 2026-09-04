@@ -57,8 +57,8 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Step cadence reported while a request is live.</summary>
     public TimeSpan ActiveCadence { get; init; } = TimeSpan.FromMilliseconds(100);
 
-    /// <summary>Minimum interval between movement broadcasts (default = 5 Hz cap).</summary>
-    public TimeSpan BroadcastInterval { get; init; } = TimeSpan.FromMilliseconds(200);
+    /// <summary>Minimum interval between movement broadcasts (100ms = 10 Hz, matching Simulation cadence).</summary>
+    public TimeSpan BroadcastInterval { get; init; } = TimeSpan.FromMilliseconds(100);
 
     /// <summary>Clock for elapsed accounting + broadcast throttle (tests inject FakeTimeProvider).</summary>
     public TimeProvider TimeProvider { get; init; } = TimeProvider.System;
@@ -87,8 +87,9 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     public bool EnableWildlifeHunt { get; set; } =
         Environment.GetEnvironmentVariable("AAEMU_PRESENCE_HUNT") is "1" or "true" or "True";
 
-    /// <summary>Perception radius for detecting nearby wildlife (default = 18m).</summary>
-    public float HuntPerceptionRadius { get; init; } = 18f;
+    /// <summary>Perception radius for detecting nearby wildlife (default = 45m).</summary>
+    public float HuntPerceptionRadius { get; init; } =
+        float.TryParse(Environment.GetEnvironmentVariable("AAEMU_PRESENCE_HUNT_RADIUS"), out var r) ? r : 45f;
 
     /// <summary>Scan interval for searching for nearby wildlife (default = 1.2s).</summary>
     public TimeSpan HuntScanInterval { get; init; } = TimeSpan.FromMilliseconds(1200);
@@ -391,7 +392,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             && state.Path is { IsFinished: false })
         {
             _ = state.Path.Move(bot.Character.Transform.World.Position, flatArrival: true);
-            state.PendingLeg = null;
+            state.PendingLeg = actor.MoveTo(state.Path.CurrentTarget, RoamSpeed, RoamLegTimeout);
         }
 
         // 4a. Ground clamp — the Simulation.cs:394 pattern: after movement,
@@ -408,7 +409,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             position = bot.Character.Transform.World.Position;
         }
 
-        // 4b. Throttled movement broadcast (4-6 Hz) with standstill packet on stop.
+        // 4b. Movement broadcast (10 Hz cadence) with standstill packet on stop.
         if (now - state.LastBroadcastUtc >= BroadcastInterval)
         {
             if (state.LastBroadcastPosition is { } lastPos &&
@@ -418,7 +419,8 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 if (bot.Character.Region?.HasHumanObservers() == true)
                 {
                     var currentSpeed = state.TargetNpcObjId != 0 ? HuntChaseSpeed : RoamSpeed;
-                    var moveType = BuildMoveType(bot.Character, position, lastPos, currentSpeed);
+                    var targetDest = state.PendingLeg?.Destination ?? state.Path?.CurrentTarget ?? position;
+                    var moveType = BuildMoveType(bot.Character, position, targetDest, lastPos, currentSpeed);
                     bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
                 }
             }
@@ -447,18 +449,22 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>
     /// Builds the movement payload for the broadcast — the exact shape
     /// Simulation.cs uses for NPCs (position, velocity from facing, rotation
-    /// bytes, walk flags/stance/alertness). ActorFlags 5 = walking.
+    /// bytes, walk flags/stance/alertness). ActorFlags 5 = walking, 4 = running.
     /// </summary>
-    private static UnitMoveType BuildMoveType(Character character, Vector3 position, Vector3 lastPos, float speed = 2.5f)
+    private static UnitMoveType BuildMoveType(Character character, Vector3 position, Vector3 targetPos, Vector3 lastPos, float speed = 2.5f)
     {
         var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
-        var angle = MathUtil.CalculateAngleFrom(lastPos, position);
+        var distToTarget = MathUtil.CalculateDistance(position, targetPos, false);
+        var angle = distToTarget > 0.1f
+            ? MathUtil.CalculateAngleFrom(position, targetPos)
+            : MathUtil.CalculateAngleFrom(lastPos, position);
         var speedMm = speed * 1000f;
         var (velX, velY) = MathUtil.AddDistanceToFront(speedMm, 0, 0, (float)angle.DegToRad());
 
         character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
         var (rx, ry, rz) = character.Transform.Local.ToRollPitchYawSBytesMovement();
 
+        var isRunning = speed > 3.0f;
         moveType.X = position.X;
         moveType.Y = position.Y;
         moveType.Z = position.Z;
@@ -467,11 +473,11 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         moveType.RotationX = rx;
         moveType.RotationY = ry;
         moveType.RotationZ = rz;
-        moveType.ActorFlags = 5; // 5-walk
+        moveType.ActorFlags = (byte)(isRunning ? 4 : 5);
         moveType.Flags = MoveTypeFlags.Moving;
-        moveType.DeltaMovement = [0, 63, 0];
-        moveType.Stance = GameStanceType.Relaxed;   // IDLE = 0x1 (Npc.CurrentGameStance is NPC-only; characters idle in Relaxed)
-        moveType.Alertness = MoveTypeAlertness.Idle; // IDLE = 0x0
+        moveType.DeltaMovement = [0, (sbyte)(isRunning ? 127 : 63), 0];
+        moveType.Stance = isRunning ? GameStanceType.Combat : GameStanceType.Relaxed;
+        moveType.Alertness = isRunning ? MoveTypeAlertness.Alert : MoveTypeAlertness.Idle;
         moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;
         return moveType;
     }

@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
 
 namespace AAEmu.Game.Models.Game.Units;
 
@@ -127,6 +127,7 @@ public class FaceModel : PacketMarshaler
 public class UnitCustomModelParams : PacketMarshaler
 {
     private UnitCustomModelType _type;
+    public UnitCustomModelType Type => _type;
     private uint HairColorId { get; set; }
     private uint SkinColorId { get; set; }
     private uint ModelId { get; set; }

@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Utils;
+using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.Creatures;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.World;
@@ -338,7 +338,7 @@ public class NpcManager(IObjectIdManager objectIdManager, IModelManager modelMan
         }
         else
         {
-            randomTemplate.ModelParams = new UnitCustomModelParams(UnitCustomModelType.Skin);
+            randomTemplate.ModelParams = new UnitCustomModelParams(UnitCustomModelType.None);
         }
 
         foreach (var (modelId, ibp) in ItemBodyParts)
@@ -703,7 +703,7 @@ public class NpcManager(IObjectIdManager objectIdManager, IModelManager modelMan
                         }
                         else
                         {
-                            template.ModelParams = new UnitCustomModelParams(UnitCustomModelType.Skin);
+                            template.ModelParams = new UnitCustomModelParams(UnitCustomModelType.None);
                         }
 
                         if (template.NpcPostureSetId > 0)
