@@ -276,6 +276,14 @@ reproduced here.
   stalls; only then decide code fix vs budget calibration and another 12h run.
 - Evidence is testing/canary operational, not human/client evidence. All
   historical reports are preserved.
+## Post-M7 readiness — PB-MOUNT Autonomous Mount Riding on Arterial Highways & Travel Mobility (2026-09-03)
+
+- **Autonomous Mount Management & Travel Mobility (`BotMountManager`):** Implemented automated mount summoning, mounting, high-speed travel (~10.5 m/s vs 5.4 m/s foot travel), and dismounting for combat/interaction.
+  - **Mount Lifecycle (`EnsureMounted`, `EnsureDismounted`, `IsMounted`):** Spawns and links character steed/snowlion companion, sets world transform/instance backing without invoking headless-incompatible resolvers, and boards rider via `actor.Mount` / `MateManager.MountMate`.
+  - **Engine Movement Synchronization (`GameplayActor.ApplyCharacterMove`):** Detects active mounted companion and redirects character movement commands to the mount (`VehicleMovementModel.ApplyUnitMove(Character, mate, ...)`), bypassing engine rider client-ignore rules while keeping the transform hierarchy synchronized.
+  - **Highway Transit Integration:** Wired into `LevelingLoopScenario.TryTransitionToNextZone` so bots automatically mount up during long-distance inter-zone transit (Solzreed -> Dewstone -> Marianople) and dismount upon reaching the destination quest hub.
+- **Evidence:** `BotMountManagerTests` **4/4** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, **2,773 total tests (2,772 passed, 1 skipped)**, 39 MCP BotControl tools, and 24 MCP Archaeology tools.
+
 ## Post-M7 readiness — PB-BAG Autonomous Bag Management, Vendoring & Durability Repair (2026-09-03)
 
 - **Autonomous Bag Management & Gear Maintenance (`BotBagManager`):** Implemented automated inventory capacity auditing, vendor junk classification, and equipment durability maintenance.

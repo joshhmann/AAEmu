@@ -96,6 +96,18 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   6. **Unit & Gate Evidence**: `BotBagManagerTests` **4/4** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with **2,769 total tests (2,768 passed, 1 skipped)**.
 - Status: IMPLEMENTATION LANDED / ADVANCED GEAR UPGRADE OPEN
 
+### PB-MOUNT · Autonomous Mount Riding on Arterial Highways & Travel Mobility — IMPLEMENTATION LANDED 2026-09-03
+- Scenario: playerbot travels long distances along arterial highway networks (e.g. 10.2 km Solzreed -> Dewstone route) on foot at slow speed (5.4 m/s)
+- Intended: autonomous mount summoning, mounting, high-speed arterial transit (~10.5 m/s, ~2x foot speed), and dismounting for combat/interaction
+- Observed: previously bots had no mount integration during autonomous loops, traveling only on foot; now governed by `BotMountManager` and engine `VehicleMovementModel`
+- Layer: BOT + VEHICLE + MOVEMENT (mount lifecycle, rider attachment, mate transform synchronization, speed scaling)
+- Current evidence:
+  1. **Autonomous Mount Manager (`BotMountManager`)**: Exposes `EnsureMounted`, `EnsureDismounted`, `IsMounted`, and travel speed constants (`MountedTravelSpeed = 10.5f`, `FootTravelSpeed = 5.4f`).
+  2. **Clean Engine Attachment & Mate Transform Seeding**: Seeds mount companion with owner linkage, attaches player via `actor.Mount` / `MateManager.MountMate`, and synchronizes movement through `VehicleMovementModel.ApplyUnitMove(Character, mate, ...)` bypassing rider client-ignore rules.
+  3. **Autonomous Arterial Travel Integration**: Wired into `LevelingLoopScenario.TryTransitionToNextZone` so bots mount during long-distance inter-zone transit and dismount upon reaching the destination quest hub.
+  4. **Unit & Gate Evidence**: `BotMountManagerTests` **4/4** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,773 total tests (2,772 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
+- Status: IMPLEMENTATION LANDED / ADVANCED COMBAT MOUNT EXPANSION OPEN
+
 ### PB-SOAK · Dormant-timer soak and cancellation blocker — OPEN
 - Scenario: Tier-3 dormant bots and long-running scheduler validation.
 - Observed: no six-hour dormant-timer soak exists in current evidence; no soak

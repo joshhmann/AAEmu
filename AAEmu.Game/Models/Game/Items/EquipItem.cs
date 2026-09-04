@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Models.Game.Items.Templates;
 
@@ -35,7 +35,8 @@ public class EquipItem : Item
             var grade = ItemManager.Instance.GetGradeTemplate(Grade);
             var cost = ItemManager.Instance.GetDurabilityRepairCostFactor() * 0.0099999998f *
                        (1f - Durability * 1f / MaxDurability) * template.Price;
-            cost = cost * grade.RefundMultiplier * 0.0099999998f;
+            var refundMultiplier = grade?.RefundMultiplier ?? 100;
+            cost = cost * refundMultiplier * 0.0099999998f;
             cost = (float)Math.Ceiling(cost);
             if (cost < 0 || cost < int.MinValue || cost > int.MaxValue)
                 cost = 0;

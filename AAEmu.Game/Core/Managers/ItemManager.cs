@@ -33,7 +33,7 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     private bool _loaded;
 
-    private Dictionary<int, GradeTemplate> _grades;
+    private Dictionary<int, GradeTemplate> _grades = [];
     private Dictionary<uint, Holdable> _holdables;
     private Dictionary<uint, Wearable> _wearables;
     private Dictionary<uint, WearableKind> _wearableKinds;
@@ -45,7 +45,7 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
 
     // Grade Enchanting
     private Dictionary<uint, EquipSlotEnchantingCost> _enchantingCosts;
-    private Dictionary<int, GradeTemplate> _gradesOrdered;
+    private Dictionary<int, GradeTemplate> _gradesOrdered = [];
     private Dictionary<uint, ItemGradeEnchantingSupport> _enchantingSupports;
 
     // Socketing
@@ -96,22 +96,22 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
 
     public GradeTemplate GetGradeTemplate(int grade)
     {
-        return _grades.GetValueOrDefault(grade);
+        return _grades?.GetValueOrDefault(grade);
     }
 
     public Holdable GetHoldable(uint id)
     {
-        return _holdables.GetValueOrDefault(id);
+        return _holdables?.GetValueOrDefault(id);
     }
 
     public EquipSlotEnchantingCost GetEquipSlotEnchantingCost(uint slotTypeId)
     {
-        return _enchantingCosts.GetValueOrDefault(slotTypeId);
+        return _enchantingCosts?.GetValueOrDefault(slotTypeId);
     }
 
     public GradeTemplate GetGradeTemplateByOrder(int gradeOrder)
     {
-        return _gradesOrdered.GetValueOrDefault(gradeOrder);
+        return _gradesOrdered?.GetValueOrDefault(gradeOrder);
     }
 
     public ItemGradeEnchantingSupport GetItemGradEnchantingSupportByItemId(uint itemId)

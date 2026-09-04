@@ -3692,13 +3692,20 @@ public class GameplayActor : IGameplayActor
         // is off we apply the same state directly — position/facing,
         // FinalizeTransform, the move-triggered buff sweep — without
         // constructing a packet nobody consumes.
+        var mate = Character.ParentWorld?.MateManager?.GetIsMounted(Character.ObjId, out _);
+        if (mate != null)
+        {
+            VehicleMovementModel.ApplyUnitMove(Character, mate,
+                VehicleMovementModel.BuildCharacterMove(next, angle, _moveSpeed), BroadcastMovement);
+            return;
+        }
+
         if (!BroadcastMovement)
         {
             Character.Buffs.TriggerRemoveOn(BuffRemoveOn.Move);
             Character.SetPlayerMoved();
-            Character.Transform.Local.SetPosition(next.X, next.Y, next.Z,
-                0f, 0f,
-                (float)MathUtil.ConvertDirectionToRadian(MathUtil.ConvertDegreeToSByteDirection(angle.RadToDeg() - 90)));
+            var heading = (float)MathUtil.ConvertDirectionToRadian(MathUtil.ConvertDegreeToSByteDirection(angle.RadToDeg() - 90));
+            Character.Transform.Local.SetPosition(next.X, next.Y, next.Z, 0f, 0f, heading);
             Character.Transform.FinalizeTransform();
             return;
         }

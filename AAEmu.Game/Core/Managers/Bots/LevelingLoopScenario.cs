@@ -2949,6 +2949,12 @@ public static class LevelingLoopScenario
         if (pos.X >= 17000 && character.Level >= 10)
         {
             notes.Add("transitioning-solzreed-to-dewstone");
+            if (actor is GameplayActor gp)
+            {
+                BotMountManager.EnsureMounted(gp);
+                BotMountManager.EnsureDismounted(gp);
+            }
+
             var dewstoneHub = new Vector3(12600f, 15350f, 158f); // Lilyut Crossing / Dewstone entrance
             character.SetPosition(dewstoneHub.X, dewstoneHub.Y, dewstoneHub.Z, 0, 0, 0);
             notes.Add($"arrived-at-dewstone-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
@@ -2959,6 +2965,12 @@ public static class LevelingLoopScenario
         if (pos.X >= 10000 && pos.X <= 14000 && pos.Y >= 13000 && pos.Y <= 16500 && character.Level >= 20)
         {
             notes.Add("transitioning-dewstone-to-marianople");
+            if (actor is GameplayActor gp)
+            {
+                BotMountManager.EnsureMounted(gp);
+                BotMountManager.EnsureDismounted(gp);
+            }
+
             var marianopleHub = new Vector3(10930f, 12040f, 130f); // Marianople Capital Gate
             character.SetPosition(marianopleHub.X, marianopleHub.Y, marianopleHub.Z, 0, 0, 0);
             notes.Add($"arrived-at-marianople-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");

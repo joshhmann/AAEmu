@@ -416,5 +416,10 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   Implemented canonical equipment repair on `GameplayActor.Repair` (`ActorActionType.Repair`) and `BotBagManager.RepairAllEquipment` at blacksmith/merchant NPCs via `Character.DoRepair`. Hardened `Character.DoRepair` and `ItemManager._config` with null safety.
   Integrated into `LevelingLoopScenario` on quest turn-ins at settlement hubs.
   Evidence: `BotBagManagerTests` 4/4 green; `LevelingLoopScenarioRigTests` 37/37 green. Full gate: 2,769 total / 2,768 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
+- 2026-09-03 — PB-MOUNT Autonomous Mount Riding on Arterial Highways & Travel Mobility:
+  Implemented `BotMountManager`: manages mount summoning, mounting, high-speed travel (~10.5 m/s vs 5.4 m/s foot travel), and dismounting for combat/interaction.
+  Engine movement synchronization on `GameplayActor.ApplyCharacterMove`: moves active mount directly via `VehicleMovementModel.ApplyUnitMove(Character, mate, ...)` when mounted, bypassing client-ignore rules while preserving server transform synchronization.
+  Integrated into `LevelingLoopScenario.TryTransitionToNextZone` for arterial highway transit between zone hubs.
+  Evidence: `BotMountManagerTests` 4/4 green; `LevelingLoopScenarioRigTests` 37/37 green. Full gate: 2,773 total / 2,772 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*

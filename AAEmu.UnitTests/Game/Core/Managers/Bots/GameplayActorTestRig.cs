@@ -618,6 +618,8 @@ public static class GameplayActorTestRig
                 FixedGrade = -1
             };
         }
+
+        SeedGrades();
     }
 
     /// <summary>
@@ -2017,12 +2019,15 @@ public static class GameplayActorTestRig
     {
         var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
         var gradesField = typeof(ItemManager).GetField("_grades", flags);
-        if (gradesField?.GetValue(ItemManager.Instance) == null)
+        var dict = (Dictionary<int, GradeTemplate>?)gradesField?.GetValue(ItemManager.Instance);
+        if (dict == null)
         {
-            gradesField?.SetValue(ItemManager.Instance, new Dictionary<int, GradeTemplate>
-            {
-                [0] = new GradeTemplate { Grade = 0, RefundMultiplier = 100 }
-            });
+            dict = [];
+            gradesField?.SetValue(ItemManager.Instance, dict);
+        }
+        if (!dict.ContainsKey(0))
+        {
+            dict[0] = new GradeTemplate { Grade = 0, RefundMultiplier = 100 };
         }
     }
 
