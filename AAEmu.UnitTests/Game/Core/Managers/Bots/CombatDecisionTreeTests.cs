@@ -112,4 +112,100 @@ public class CombatDecisionTreeTests
         await Assert.That(decision.SkillId).IsEqualTo(18131u);
         await Assert.That(decision.Rationale.Contains("cast-skill-in-ideal-range")).IsTrue();
     }
+
+    [Test]
+    public async Task Evaluate_BattlerageCombo_PrioritizesChargeThenTripleSlashThenWhirlwind()
+    {
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(102, 100, 10));
+        var skills = new uint[]
+        {
+            CombatDecisionTree.BattlerageWhirlwindSkillId,
+            CombatDecisionTree.BattlerageTripleSlashSkillId,
+            CombatDecisionTree.BattlerageChargeSkillId
+        };
+
+        // Round 1: Opener -> Charge
+        var d1 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills, lastSkillUsed: 0);
+        await Assert.That(d1.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d1.SkillId).IsEqualTo(CombatDecisionTree.BattlerageChargeSkillId);
+
+        // Round 2: After Charge -> Triple Slash
+        var d2 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills, lastSkillUsed: CombatDecisionTree.BattlerageChargeSkillId);
+        await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.BattlerageTripleSlashSkillId);
+
+        // Round 3: After Triple Slash -> Whirlwind Slash
+        var d3 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills, lastSkillUsed: CombatDecisionTree.BattlerageTripleSlashSkillId);
+        await Assert.That(d3.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d3.SkillId).IsEqualTo(CombatDecisionTree.BattlerageWhirlwindSkillId);
+    }
+
+    [Test]
+    public async Task Evaluate_SorceryCombo_PrioritizesFlameboltThenFreezingArrow()
+    {
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(116, 100, 10)); // dist = 16m
+        var skills = new uint[]
+        {
+            CombatDecisionTree.SorceryChainLightningSkillId,
+            CombatDecisionTree.SorceryFreezingArrowSkillId,
+            CombatDecisionTree.SorceryFlameboltSkillId
+        };
+
+        // Round 1: Opener -> Flamebolt (inflicts Burn)
+        var d1 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedMagic, availableSkills: skills, lastSkillUsed: 0);
+        await Assert.That(d1.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d1.SkillId).IsEqualTo(CombatDecisionTree.SorceryFlameboltSkillId);
+
+        // Round 2: After Flamebolt -> Freezing Arrow (bonus vs Burned)
+        var d2 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedMagic, availableSkills: skills, lastSkillUsed: CombatDecisionTree.SorceryFlameboltSkillId);
+        await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.SorceryFreezingArrowSkillId);
+
+        // Round 3: After Freezing Arrow -> Chain Lightning
+        var d3 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedMagic, availableSkills: skills, lastSkillUsed: CombatDecisionTree.SorceryFreezingArrowSkillId);
+        await Assert.That(d3.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d3.SkillId).IsEqualTo(CombatDecisionTree.SorceryChainLightningSkillId);
+    }
+
+    [Test]
+    public async Task Evaluate_ArcheryCombo_PrioritizesChargedBoltThenEndlessArrows()
+    {
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(116, 100, 10)); // dist = 16m
+        var skills = new uint[]
+        {
+            CombatDecisionTree.ArcheryEndlessArrowsSkillId,
+            CombatDecisionTree.ArcheryChargedBoltSkillId
+        };
+
+        // Round 1: Opener -> Charged Bolt (inflicts Slow)
+        var d1 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedPhysical, availableSkills: skills, lastSkillUsed: 0);
+        await Assert.That(d1.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d1.SkillId).IsEqualTo(CombatDecisionTree.ArcheryChargedBoltSkillId);
+
+        // Round 2: After Charged Bolt -> Endless Arrows (bonus vs Slowed)
+        var d2 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedPhysical, availableSkills: skills, lastSkillUsed: CombatDecisionTree.ArcheryChargedBoltSkillId);
+        await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.ArcheryEndlessArrowsSkillId);
+    }
+
+    [Test]
+    public async Task Evaluate_HealerSupport_Under70Hp_PrioritizesResurgence()
+    {
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(112, 100, 10)); // dist = 12m
+        var skills = new uint[]
+        {
+            CombatDecisionTree.VitalismAntithesisSkillId,
+            CombatDecisionTree.VitalismResurgenceSkillId
+        };
+
+        // When HP is healthy (100%), cast offensive Antithesis
+        bot.Hp = bot.MaxHp;
+        var dHealthy = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.HealerSupport, availableSkills: skills);
+        await Assert.That(dHealthy.SkillId).IsEqualTo(CombatDecisionTree.VitalismAntithesisSkillId);
+
+        // When HP is below 70% (50%), prioritize defensive HoT Resurgence
+        bot.Hp = Math.Max(1, (int)(bot.MaxHp * 0.50f));
+        var dInjured = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.HealerSupport, availableSkills: skills);
+        await Assert.That(dInjured.SkillId).IsEqualTo(CombatDecisionTree.VitalismResurgenceSkillId);
+    }
 }

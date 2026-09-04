@@ -59,6 +59,29 @@ public static class CombatDecisionTree
     public const float DefaultEmergencyFleeHpPercent = 0.20f;
     public const float DefaultDefensiveHealHpPercent = 0.50f;
 
+    // Canonical starter combo skill IDs
+    // Battlerage (Fight)
+    public const uint BattlerageTripleSlashSkillId = 18131; // 3단 베기 (Triple Slash)
+    public const uint BattlerageChargeSkillId = 11918;      // 돌격 (Charge)
+    public const uint BattlerageWhirlwindSkillId = 13282;   // 회오리 베기 (Whirlwind Slash)
+
+    // Sorcery (Magic)
+    public const uint SorceryFlameboltSkillId = 10752;       // 불꽃 송이 (Flamebolt)
+    public const uint SorceryFreezingArrowSkillId = 10667;   // 얼음 화살 (Freezing Arrow)
+    public const uint SorceryChainLightningSkillId = 11967; // 연쇄 번개 (Chain Lightning)
+
+    // Archery (Wild)
+    public const uint ArcheryChargedBoltSkillId = 16210;    // 충격 화살 (Charged Bolt)
+    public const uint ArcheryEndlessArrowsSkillId = 14835;  // 연속 쏘기 (Endless Arrows)
+
+    // Vitalism (Love)
+    public const uint VitalismAntithesisSkillId = 10534;    // 빛과 어둠 (Antithesis)
+    public const uint VitalismResurgenceSkillId = 10547;    // 샘솟는 생명력 (Resurgence)
+
+    // Occultism (Death)
+    public const uint OccultismHellSpearSkillId = 10135;    // 지옥의 창 (Hell Spear)
+    public const uint OccultismManaStarsSkillId = 12759;    // 활력 추출 / 마나 스타 (Mana Stars)
+
     /// <summary>
     /// Infers the primary combat role from the character's primary skill tree (Ability1).
     /// </summary>
@@ -76,6 +99,120 @@ public static class CombatDecisionTree
     }
 
     /// <summary>
+    /// Selects the optimal next skill based on class ability combos and combat history.
+    /// </summary>
+    public static uint SelectPrioritizedSkill(
+        Character bot,
+        Unit target,
+        CombatRole role,
+        IReadOnlyList<uint>? availableSkills,
+        uint lastSkillUsed = 0)
+    {
+        if (availableSkills == null || availableSkills.Count == 0)
+        {
+            if (bot.Skills?.Skills.Count > 0)
+                availableSkills = bot.Skills.Skills.Keys.ToList();
+            else
+                return 0u;
+        }
+
+        var candidates = new HashSet<uint>(availableSkills);
+
+        // Class combo rotations
+        switch (role)
+        {
+            case CombatRole.Melee:
+            {
+                // Battlerage combo chain: Charge (11918) -> Triple Slash (18131) -> Whirlwind Slash (13282)
+                if (lastSkillUsed == BattlerageChargeSkillId && candidates.Contains(BattlerageTripleSlashSkillId))
+                    return BattlerageTripleSlashSkillId;
+
+                if (lastSkillUsed == BattlerageTripleSlashSkillId && candidates.Contains(BattlerageWhirlwindSkillId))
+                    return BattlerageWhirlwindSkillId;
+
+                // Opener / default priority
+                if (candidates.Contains(BattlerageChargeSkillId) && lastSkillUsed != BattlerageChargeSkillId)
+                    return BattlerageChargeSkillId;
+
+                if (candidates.Contains(BattlerageTripleSlashSkillId))
+                    return BattlerageTripleSlashSkillId;
+
+                if (candidates.Contains(BattlerageWhirlwindSkillId))
+                    return BattlerageWhirlwindSkillId;
+
+                break;
+            }
+
+            case CombatRole.RangedMagic:
+            {
+                // Sorcery combo chain: Flamebolt (10752) [inflicts Burn] -> Freezing Arrow (10667) [43% bonus on Burn + Freeze] -> Chain Lightning (11967)
+                if (lastSkillUsed == SorceryFlameboltSkillId && candidates.Contains(SorceryFreezingArrowSkillId))
+                    return SorceryFreezingArrowSkillId;
+
+                if (lastSkillUsed == SorceryFreezingArrowSkillId && candidates.Contains(SorceryChainLightningSkillId))
+                    return SorceryChainLightningSkillId;
+
+                // Opener: Burn with Flamebolt
+                if (candidates.Contains(SorceryFlameboltSkillId))
+                    return SorceryFlameboltSkillId;
+
+                if (candidates.Contains(SorceryFreezingArrowSkillId))
+                    return SorceryFreezingArrowSkillId;
+
+                if (candidates.Contains(SorceryChainLightningSkillId))
+                    return SorceryChainLightningSkillId;
+
+                // Occultism combo fallback: Hell Spear (10135) -> Mana Stars (12759)
+                if (lastSkillUsed == OccultismHellSpearSkillId && candidates.Contains(OccultismManaStarsSkillId))
+                    return OccultismManaStarsSkillId;
+
+                if (candidates.Contains(OccultismHellSpearSkillId))
+                    return OccultismHellSpearSkillId;
+
+                if (candidates.Contains(OccultismManaStarsSkillId))
+                    return OccultismManaStarsSkillId;
+
+                break;
+            }
+
+            case CombatRole.RangedPhysical:
+            {
+                // Archery combo chain: Charged Bolt (16210) [inflicts Slow] -> Endless Arrows (14835) [bonus vs Slowed]
+                if (lastSkillUsed == ArcheryChargedBoltSkillId && candidates.Contains(ArcheryEndlessArrowsSkillId))
+                    return ArcheryEndlessArrowsSkillId;
+
+                // Opener: slow with Charged Bolt
+                if (candidates.Contains(ArcheryChargedBoltSkillId))
+                    return ArcheryChargedBoltSkillId;
+
+                if (candidates.Contains(ArcheryEndlessArrowsSkillId))
+                    return ArcheryEndlessArrowsSkillId;
+
+                break;
+            }
+
+            case CombatRole.HealerSupport:
+            {
+                // Vitalism rotation: Resurgence (10547) [HoT buff] -> Antithesis (10534) [damage/heal]
+                var hpPercent = bot.MaxHp > 0 ? (float)bot.Hp / bot.MaxHp : 1.0f;
+                if (hpPercent < 0.70f && candidates.Contains(VitalismResurgenceSkillId))
+                    return VitalismResurgenceSkillId;
+
+                if (candidates.Contains(VitalismAntithesisSkillId))
+                    return VitalismAntithesisSkillId;
+
+                if (candidates.Contains(VitalismResurgenceSkillId))
+                    return VitalismResurgenceSkillId;
+
+                break;
+            }
+        }
+
+        // Fallback: return the first available skill in the candidates list
+        return availableSkills[0];
+    }
+
+    /// <summary>
     /// Evaluates the combat decision tree against the observed battle state.
     /// </summary>
     public static CombatDecision Evaluate(
@@ -84,6 +221,7 @@ public static class CombatDecisionTree
         CombatRole? roleOverride = null,
         float? distanceOverride = null,
         IReadOnlyList<uint>? availableSkills = null,
+        uint lastSkillUsed = 0,
         float maxMeleeRange = DefaultMeleeMax,
         float fleeHpPercentThreshold = DefaultEmergencyFleeHpPercent,
         float healHpPercentThreshold = DefaultDefensiveHealHpPercent)
@@ -164,10 +302,11 @@ public static class CombatDecisionTree
         }
 
         // ---------------------------------------------------- 3. CAST COMBAT SKILL
-        var selectedSkill = (availableSkills != null && availableSkills.Count > 0) ? availableSkills[0] : 0u;
+        var selectedSkill = SelectPrioritizedSkill(bot, target, role, availableSkills, lastSkillUsed);
+        var comboInfo = (lastSkillUsed > 0 && selectedSkill > 0) ? $" (combo-following={lastSkillUsed})" : "";
         return new CombatDecision(
             Action: CombatTacticalAction.CastSkill,
-            Rationale: $"cast-skill-in-ideal-range (dist={distance:F1}m, role={role})",
+            Rationale: $"cast-skill-in-ideal-range (dist={distance:F1}m, role={role}){comboInfo}",
             Priority: 300,
             SkillId: selectedSkill,
             TargetObjId: target.ObjId

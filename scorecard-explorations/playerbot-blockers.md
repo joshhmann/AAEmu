@@ -69,18 +69,24 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   4. **Rig & Gate Evidence**: `LevelingLoopScenarioRigTests` **38/38** green (+3 tests). Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,774 total tests (2,773 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 - Status: SCOPED SLICES LANDED / BROAD CLAIM OPEN
 
-### PB-COMBAT · Tactical Combat Decision Tree & Class Spacing — IMPLEMENTATION LANDED 2026-09-03
+### PB-COMBAT · Tactical Combat Decision Tree & Class Ability Combos — IMPLEMENTATION LANDED 2026-09-03
 - Scenario: playerbot engages in combat during leveling, grinding, and objective pursuit
-- Intended: class-adaptive combat positioning (ranged kiting, melee reach), emergency survival disengage, and combo evaluation
-- Observed: previously bots blindly traded blows at 3m melee until death regardless of class; now governed by deterministic `CombatDecisionTree`
-- Layer: BOT + COMBAT (tactical positioning, ability-tree role inference, kiting, retreat)
+- Intended: class-adaptive combat positioning (ranged kiting, melee reach), emergency survival disengage, and class combo rotations
+- Observed: previously bots blindly traded blows at 3m melee until death regardless of class; now governed by deterministic `CombatDecisionTree` with class-specific ability combo chains
+- Layer: BOT + COMBAT (tactical positioning, ability-tree role inference, kiting, retreat, combo rotations)
 - Current evidence:
   1. **Role Inference (`InferRole`)**: Evaluates `character.Ability1` to categorize class tactics (`Wild` -> `RangedPhysical`, `Magic`/`Death`/`Illusion` -> `RangedMagic`, `Love`/`Romance` -> `HealerSupport`, others -> `Melee`).
-  2. **Emergency Survival Flee (`EmergencyFlee`)**: When HP drops below critical threshold ($\le 20\%$), bot disengages and navigates away from hostiles to avoid dying.
-  3. **Tactical Spacing & Kiting (`KiteSpacing`)**: When enemies penetrate the minimum safe range of ranged physical/caster classes ($< 12\text{m}$), bot steps/kites back 10m to re-establish $12\text{–}22\text{m}$ firing spacing.
-  4. **Melee Gap Closing (`CloseGap`)**: Melee bots close distance into engagement reach before firing skills.
-  5. **Integrated into Loop Scenarios**: Wired into `LevelingLoopScenario.HuntLeg`, `LevelLeg`, and `AbilityLevelLeg`.
-  6. **Unit & Gate Evidence**: `CombatDecisionTreeTests` **5/5** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with **2,765 total tests (2,764 passed, 1 skipped)**.
+  2. **Class-Specific Combo Rotations (`SelectPrioritizedSkill`)**:
+     - **Battlerage (`Fight`)**: Charge (11918) [snare] -> Triple Slash (18131) [trip on snared] -> Whirlwind Slash (13282) [bonus damage on tripped].
+     - **Sorcery (`Magic`)**: Flamebolt (10752) [inflicts Burn] -> Freezing Arrow (10667) [43% bonus on Burn + Freeze] -> Chain Lightning (11967).
+     - **Archery (`Wild`)**: Charged Bolt (16210) [inflicts Slow] -> Endless Arrows (14835) [bonus vs Slowed].
+     - **Vitalism (`Love`)**: Resurgence (10547) [HoT buff when HP < 70%] -> Antithesis (10534) [damage/heal].
+     - **Occultism (`Death`)**: Hell Spear (10135) [impale] -> Mana Stars (12759).
+  3. **Emergency Survival Flee (`EmergencyFlee`)**: When HP drops below critical threshold ($\le 20\%$), bot disengages and navigates away from hostiles to avoid dying.
+  4. **Tactical Spacing & Kiting (`KiteSpacing`)**: When enemies penetrate the minimum safe range of ranged physical/caster classes ($< 12\text{m}$), bot steps/kites back 10m to re-establish $12\text{–}22\text{m}$ firing spacing.
+  5. **Melee Gap Closing (`CloseGap`)**: Melee bots close distance into engagement reach before firing skills.
+  6. **Integrated into Loop Scenarios**: Wired into `LevelingLoopScenario.HuntLeg`, `LevelLeg`, and `AbilityLevelLeg`.
+  7. **Unit & Gate Evidence**: `CombatDecisionTreeTests` **9/9** green (+4 combo tests); `LevelingLoopScenarioRigTests` **38/38** green. Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,778 total tests (2,777 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 - Status: IMPLEMENTATION LANDED / ADVANCED CLASS EXPANSION OPEN
 
 ### PB-BAG · Autonomous Bag Management, Vendoring & Durability Repair — IMPLEMENTATION LANDED 2026-09-03
