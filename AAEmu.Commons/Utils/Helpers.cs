@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Reflection;
 
 namespace AAEmu.Commons.Utils;
@@ -221,7 +221,12 @@ public static class Helpers
 
     public static byte[] ConvertIp(string ip)
     {
-        var result = IPAddress.Parse(ip);
+        if (!IPAddress.TryParse(ip, out var result))
+        {
+            var addresses = Dns.GetHostAddresses(ip);
+            result = addresses.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                     ?? throw new FormatException($"Cannot resolve IPv4 address for host: {ip}");
+        }
         return result.GetAddressBytes().Reverse().ToArray();
     }
 

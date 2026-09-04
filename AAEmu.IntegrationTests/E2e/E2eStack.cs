@@ -59,6 +59,7 @@ public static class E2eStack
     public static int WebApiPort => EnvPort("E2E_WEBAPI_PORT", 1280);
     public const string DbHost = "127.0.0.1";
     public static int DbPort => EnvPort("E2E_DB_PORT", 3306);
+    public static string GameHost => Environment.GetEnvironmentVariable("E2E_GAME_HOST") ?? "192.168.0.165";
 
     private static int EnvPort(string name, int fallback)
         => int.TryParse(Environment.GetEnvironmentVariable(name), out var v) && v > 0 ? v : fallback;
@@ -454,7 +455,7 @@ public static class E2eStack
                 }
               },
               "GameServers": [
-                { "Id": 1, "Name": "AAEmu.Game (e2e)", "Host": "127.0.0.1", "Port": {{GamePort}} }
+                { "Id": 1, "Name": "AAEmu.Game (e2e)", "Host": "{{GameHost}}", "Port": {{GamePort}} }
               ]
             }
             """;
