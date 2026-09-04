@@ -32,6 +32,8 @@ public class DevMapperServiceTests
     [After(Test)]
     public void TearDown()
     {
+        DevMapperService.Instance.RoutesDirectory = Path.Combine("Data", "Routes");
+        DevMapperService.Instance.PathsDirectory = Path.Combine("Data", "Path");
         try
         {
             if (Directory.Exists(_testRoutesDir))

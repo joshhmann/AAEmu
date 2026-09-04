@@ -56,7 +56,13 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   5. **Doodad Obstacle Avoidance & Detour Navigation (`ObstacleManager`)**:
      - `ObstacleManager` indexes 1,409 placed obstacles into a 100m 2D spatial hash grid (`Data/Navigation/*_obstacles.json`), including 14 newly extracted Sharpwind Mines dungeon obstacles (`cuttingwind_deadmine_obstacles.json`).
      - Wired into `AiGeodataManager.CheckImpossibleWalk(Vector3 point)` for A* exclusion and `GameplayActor.NavigateToInternal` with `ObstacleManager.FindDetour` to compute tangent bypass waypoints when GeoData mesh has no path or is unavailable. Evidence: `ObstacleManagerTests` 5/5 green, `GameplayActorNavigateTests` 9/9 green.
-  6. **Full Gate Evidence**: Release build 0 errors, script compiler 0 errors / 0 warnings, **2,781 total tests (2,780 passed, 1 skipped)**, MCP stdio protocol smoke 39 tools, MCP archaeology gate smoke 24 tools. Commits: `805f23c59`, `b34e34263`, `a1d0ae664`, `fc5c9fc1b` on `origin/develop`.
+  6. **Sharpwind Mines (Cuttingwind Deadmines) 3D Dungeon Interior Corridor Navigation**:
+     - Generated canonical 3D interior tunnel waypoint networks linking Entrance `(718.7, 329.9, 168.3)` $\rightarrow$ Iron Bridge `(679.0, 326.5, 166.9)` $\rightarrow$ Boss 1 Nerta's Right Hand Wera `(503.4, 327.6, 166.0)` $\rightarrow$ Boss 2 Sharpwind Mines Ogre `(547.3, 409.6, 153.9)` $\rightarrow$ Cavern Hazard Pass $\rightarrow$ Final Boss Bloody Hand Okaphe `(611.3, 642.1, 140.0)`:
+       - `AAEmu.Game/Data/Path/dungeon_sharpwind_mines.path`: 220 dense 3D waypoints ($\le 3.5\text{m}$ spacing).
+       - `AAEmu.Game/Data/Routes/dungeon_sharpwind_mines.json`: Complete `DevMapper` route action graph (616.9m distance, labeled milestone anchors).
+     - Verified dungeon obstacle avoidance detours through `ObstacleManager` around hazardous powder kegs and explosives in the narrow cavern tunnel without getting stuck.
+     - Evidence: `SharpwindMinesNavigationTests` **5/5** green; `DevMapperServiceTests` hardened against singleton directory leakage.
+  7. **Full Gate Evidence**: Release build 0 errors, script compiler 0 errors / 0 warnings, **2,791 total tests (2,790 passed, 1 skipped)**, MCP stdio protocol smoke 39 tools, MCP archaeology gate smoke 24 tools.
 - Status: IMPLEMENTATION LANDED / BROAD COVERAGE OPEN
 
 ### PB-002 · Progression ceiling: no viable quest content past curated Solzreed slice for bots — SCOPED SLICES LANDED / BROAD CLAIM OPEN 2026-09-03
