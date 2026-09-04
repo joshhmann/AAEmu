@@ -53,10 +53,10 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   4. **Beyond Solzreed Inter-Zone Expansion (Lv 15–30)**:
      - Mapped Dewstone Plains (`w_garangdol_plains_1`, 2,745 NPCs, 327 obstacles), White Arden (`w_white_forest_1`, 948 NPCs, 107 obstacles), and Marianople (`w_marianople_1`, 1,692 NPCs, 252 obstacles).
      - Generated inter-zone arterial highway networks: `highway_solzreed_to_dewstone.path` (10.2 km, 402 waypoints) and `highway_dewstone_to_marianople.path` (4.0 km, 163 waypoints).
-  5. **Doodad Obstacle Avoidance (`ObstacleManager`)**:
-     - `ObstacleManager` indexes 1,395 placed obstacles into a 100m 2D spatial hash grid (`Data/Navigation/*_obstacles.json`).
-     - Wired into `AiGeodataManager.CheckImpossibleWalk(Vector3 point)` so A* pathfinding automatically detours around fences, stone walls, closed gates, and buildings. Evidence: `ObstacleManagerTests` 3/3 green.
-  6. **Full Gate Evidence**: Release build 0 errors, script compiler 0 errors / 0 warnings, **2,758 total tests (2,757 passed, 1 skipped)**, MCP stdio protocol smoke 39 tools, MCP archaeology gate smoke 24 tools. Commits: `805f23c59`, `b34e34263`, `a1d0ae664`, `fc5c9fc1b` on `origin/develop`.
+  5. **Doodad Obstacle Avoidance & Detour Navigation (`ObstacleManager`)**:
+     - `ObstacleManager` indexes 1,409 placed obstacles into a 100m 2D spatial hash grid (`Data/Navigation/*_obstacles.json`), including 14 newly extracted Sharpwind Mines dungeon obstacles (`cuttingwind_deadmine_obstacles.json`).
+     - Wired into `AiGeodataManager.CheckImpossibleWalk(Vector3 point)` for A* exclusion and `GameplayActor.NavigateToInternal` with `ObstacleManager.FindDetour` to compute tangent bypass waypoints when GeoData mesh has no path or is unavailable. Evidence: `ObstacleManagerTests` 5/5 green, `GameplayActorNavigateTests` 9/9 green.
+  6. **Full Gate Evidence**: Release build 0 errors, script compiler 0 errors / 0 warnings, **2,781 total tests (2,780 passed, 1 skipped)**, MCP stdio protocol smoke 39 tools, MCP archaeology gate smoke 24 tools. Commits: `805f23c59`, `b34e34263`, `a1d0ae664`, `fc5c9fc1b` on `origin/develop`.
 - Status: IMPLEMENTATION LANDED / BROAD COVERAGE OPEN
 
 ### PB-002 · Progression ceiling: no viable quest content past curated Solzreed slice for bots — SCOPED SLICES LANDED / BROAD CLAIM OPEN 2026-09-03

@@ -44,7 +44,14 @@ OBSTACLE_KEYWORDS = {
     "workbench": {"category": "crafting", "radius": 2.0},
     "forge": {"category": "crafting", "radius": 2.5},
     "chest": {"category": "prop", "radius": 1.5},
-    "signpost": {"category": "prop", "radius": 1.0}
+    "signpost": {"category": "prop", "radius": 1.0},
+    "explosive": {"category": "prop", "radius": 2.0},
+    "powder": {"category": "prop", "radius": 2.0},
+    "geyser": {"category": "hazard", "radius": 3.0},
+    "statue": {"category": "structure", "radius": 3.0},
+    "boulder": {"category": "structure", "radius": 3.5},
+    "rock": {"category": "structure", "radius": 3.0},
+    "barricade": {"category": "structure", "radius": 3.0}
 }
 
 ZONE_PRESETS = {
@@ -53,7 +60,9 @@ ZONE_PRESETS = {
     "crescent": (20000, 8400, 21000, 9200),
     "dewstone": (10000, 13000, 14000, 16500),
     "white_arden": (8000, 12000, 11000, 14000),
-    "marianople": (9500, 10500, 12500, 13000)
+    "marianople": (9500, 10500, 12500, 13000),
+    "sharpwind": (0, 0, 1000, 1000),
+    "cuttingwind": (0, 0, 1000, 1000)
 }
 
 def load_obstacle_templates(xml_path=DOODAD_XML_PATH):
@@ -93,6 +102,7 @@ def main():
     parser = argparse.ArgumentParser(description="Extract doodad obstacles (fences, walls, buildings) from game world data.")
     parser.add_argument("--zone", default="wardton", choices=list(ZONE_PRESETS.keys()), help="Zone preset (default: wardton)")
     parser.add_argument("--bounds", help="Custom bounding box 'minX,minY,maxX,maxY'")
+    parser.add_argument("--spawns", default=DOODAD_SPAWNS_PATH, help="Doodad spawns JSON path (default: main_world/doodad_spawns.json)")
     parser.add_argument("--out", default="obstacles.json", help="Output JSON path (default: obstacles.json)")
     args = parser.parse_args()
 
@@ -106,8 +116,8 @@ def main():
     templates = load_obstacle_templates()
     print(f"  Identified {len(templates)} obstacle templates (fences, walls, gates, houses).")
 
-    print(f"Filtering doodad spawns in bounding box [{min_x}, {min_y}] -> [{max_x}, {max_y}]...")
-    all_spawns = load_doodad_spawns()
+    print(f"Filtering doodad spawns in bounding box [{min_x}, {min_y}] -> [{max_x}, {max_y}] from {args.spawns}...")
+    all_spawns = load_doodad_spawns(args.spawns)
     print(f"  Total world doodads: {len(all_spawns)}")
 
     obstacles = []

@@ -1,4 +1,5 @@
 using System.Numerics;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 
 using AAEmu.Game.Models.Game.Bots;
@@ -163,5 +164,40 @@ public class GameplayActorNavigateTests
         await Assert.That(request.Detail).IsEqualTo("arrived");
         await Assert.That(Vector3.Distance(actor.Character.Transform.World.Position, targetPosition)).IsLessThanOrEqualTo(0.001f);
         await Assert.That(actor.ActiveRequest).IsNull();
+    }
+
+    [After(Test)]
+    public void Cleanup()
+    {
+        ObstacleManager.Instance.Clear();
+    }
+
+    [Test]
+    public async Task Navigate_WithObstacleInPath_DetoursAroundObstacle()
+    {
+        ObstacleManager.Instance.Clear();
+        var (actor, session) = GameplayActorTestRig.CreateActor("navigate-obstacle-detour");
+        GameplayActorTestRig.SetPosition(actor, Vector3.Zero);
+        session.World.Template.GeoData = null;
+        actor.BroadcastMovement = false;
+
+        // Place an obstacle directly in the line of travel: at (10, 0, 0) with radius 3m
+        var obs = new NavObstacle(999, "Barricade", "wall", new Vector3(10, 0, 0), 0f, 3.0f);
+        ObstacleManager.Instance.AddObstacle(obs);
+
+        var destination = new Vector3(20, 0, 0);
+        var request = actor.NavigateTo(destination, speed: 5f);
+
+        // Request must start as obstacle detour
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(request.StateChanges.Any(c => c.Contains("obstacle detour"))).IsTrue();
+
+        var guard = 0;
+        while (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running && guard++ < 100)
+            actor.Tick(TimeSpan.FromSeconds(1));
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.Detail).IsEqualTo("arrived");
+        await Assert.That(Vector3.Distance(actor.Character.Transform.World.Position, destination)).IsLessThanOrEqualTo(0.001f);
     }
 }

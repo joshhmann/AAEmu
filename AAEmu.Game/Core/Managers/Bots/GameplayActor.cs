@@ -332,6 +332,21 @@ public class GameplayActor : IGameplayActor
             }
         }
 
+        // Local obstacle detour bypass when GeoData has no path or is unavailable
+        if (ObstacleManager.Instance.IntersectsObstacle(currentPos, destination))
+        {
+            var detour = ObstacleManager.Instance.FindDetour(currentPos, destination);
+            if (detour is { Count: > 1 })
+            {
+                _moveWaypoints = new Queue<Vector3>(detour);
+                _moveSpeed = speed;
+                ResetMoveProgressTracking();
+                _moveTarget = _moveWaypoints.Dequeue();
+                request.Start($"navigating obstacle detour ({detour.Count} waypoints)");
+                return request;
+            }
+        }
+
         return StartMove(request, destination, speed);
     }
 

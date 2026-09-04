@@ -95,4 +95,41 @@ public class ObstacleManagerTests
         await Assert.That(nearby.Count).IsEqualTo(1);
         await Assert.That(nearby[0].Name).IsEqualTo("Wooden Fence");
     }
+
+    [Test]
+    public async Task FindDetour_WhenDirectPathClear_ReturnsEmpty()
+    {
+        var manager = new ObstacleManager();
+        manager.AddObstacle(new NavObstacle(301, "Fence", "fence", new Vector3(50f, 50f, 10f), 0f, 2f));
+
+        // Line from (0, 0, 10) to (10, 0, 10) does not intersect obstacle at (50, 50)
+        var detour = manager.FindDetour(new Vector3(0f, 0f, 10f), new Vector3(10f, 0f, 10f));
+        await Assert.That(detour.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task FindDetour_WhenObstacleBlocksLine_ProducesBypassWaypoints()
+    {
+        var manager = new ObstacleManager();
+        // Place a gate directly between (0, 0, 10) and (20, 0, 10) at (10, 0, 10) with radius 3m
+        manager.AddObstacle(new NavObstacle(302, "Fort Gate", "gate", new Vector3(10f, 0f, 10f), 0f, 3.0f));
+
+        var from = new Vector3(0f, 0f, 10f);
+        var to = new Vector3(20f, 0f, 10f);
+
+        var detour = manager.FindDetour(from, to, margin: 1.0f);
+
+        // Detour should have at least the bypass waypoint + target
+        await Assert.That(detour.Count).IsGreaterThanOrEqualTo(2);
+
+        // The final waypoint must be the destination
+        var last = detour.Last();
+        await Assert.That(last.X).IsEqualTo(to.X);
+        await Assert.That(last.Y).IsEqualTo(to.Y);
+
+        // The intermediate waypoint must bypass the obstacle radius (at least 3.0 + 1.0 = 4.0m from obstacle center)
+        var bypass = detour[0];
+        var distToObstacle = Vector2.Distance(new Vector2(bypass.X, bypass.Y), new Vector2(10f, 0f));
+        await Assert.That(distToObstacle).IsGreaterThanOrEqualTo(3.9f);
+    }
 }

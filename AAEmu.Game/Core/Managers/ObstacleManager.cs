@@ -90,6 +90,15 @@ public class ObstacleManager : Singleton<ObstacleManager>, ILoadable
         }
     }
 
+    public void Clear()
+    {
+        lock (_lock)
+        {
+            _grid.Clear();
+            _allObstacles.Clear();
+        }
+    }
+
     public void Load()
     {
         lock (_lock)
@@ -249,6 +258,132 @@ public class ObstacleManager : Singleton<ObstacleManager>, ILoadable
             }
 
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Returns all static obstacles that intersect the segment between 'from' and 'to'.
+    /// </summary>
+    public List<NavObstacle> GetIntersectingObstacles(Vector3 from, Vector3 to, float actorRadius = 0.5f)
+    {
+        lock (_lock)
+        {
+            if (_allObstacles.Count == 0)
+                return [];
+
+            var minX = MathF.Min(from.X, to.X);
+            var maxX = MathF.Max(from.X, to.X);
+            var minY = MathF.Min(from.Y, to.Y);
+            var maxY = MathF.Max(from.Y, to.Y);
+
+            var minCellX = (int)MathF.Floor(minX / CellSize);
+            var maxCellX = (int)MathF.Floor(maxX / CellSize);
+            var minCellY = (int)MathF.Floor(minY / CellSize);
+            var maxCellY = (int)MathF.Floor(maxY / CellSize);
+
+            var tested = new HashSet<NavObstacle>();
+            var results = new List<NavObstacle>();
+
+            for (var cx = minCellX; cx <= maxCellX; cx++)
+            {
+                for (var cy = minCellY; cy <= maxCellY; cy++)
+                {
+                    if (!_grid.TryGetValue((cx, cy), out var obstacles))
+                        continue;
+
+                    foreach (var obs in obstacles)
+                    {
+                        if (!tested.Add(obs))
+                            continue;
+
+                        var minZ = MathF.Min(from.Z, to.Z) - VerticalTolerance;
+                        var maxZ = MathF.Max(from.Z, to.Z) + VerticalTolerance;
+                        if (obs.Position.Z < minZ || obs.Position.Z > maxZ)
+                            continue;
+
+                        var effectiveRadius = obs.Radius + actorRadius;
+                        if (SegmentIntersectsCircle(from.X, from.Y, to.X, to.Y, obs.Position.X, obs.Position.Y, effectiveRadius))
+                            results.Add(obs);
+                    }
+                }
+            }
+
+            return results;
+        }
+    }
+
+    /// <summary>
+    /// Computes detour waypoints around blocking obstacles between 'from' and 'to'.
+    /// If no obstacles intersect the path, returns an empty list.
+    /// If obstacles block the path, calculates tangent bypass waypoints around each obstacle,
+    /// selecting the shortest unblocked path.
+    /// </summary>
+    public List<Vector3> FindDetour(Vector3 from, Vector3 to, float margin = 1.0f)
+    {
+        lock (_lock)
+        {
+            if (_allObstacles.Count == 0)
+                return [];
+
+            var blocking = GetIntersectingObstacles(from, to);
+            if (blocking.Count == 0)
+                return [];
+
+            // Sort blocking obstacles by 2D distance from 'from'
+            blocking.Sort((a, b) =>
+                Vector2.DistanceSquared(new Vector2(from.X, from.Y), new Vector2(a.Position.X, a.Position.Y))
+                    .CompareTo(Vector2.DistanceSquared(new Vector2(from.X, from.Y), new Vector2(b.Position.X, b.Position.Y))));
+
+            var waypoints = new List<Vector3>();
+            var current = from;
+
+            foreach (var obs in blocking)
+            {
+                var dir = new Vector2(to.X - current.X, to.Y - current.Y);
+                var dirLen = dir.Length();
+                if (dirLen < 0.001f)
+                    break;
+
+                var normal = new Vector2(-dir.Y / dirLen, dir.X / dirLen);
+                var bypassRadius = obs.Radius + margin;
+
+                var obsVec = new Vector2(obs.Position.X - current.X, obs.Position.Y - current.Y);
+                var projT = Math.Clamp(Vector2.Dot(obsVec, dir) / (dirLen * dirLen), 0f, 1f);
+                var zInterp = current.Z + projT * (to.Z - current.Z);
+
+                var c1 = new Vector3(obs.Position.X + normal.X * bypassRadius, obs.Position.Y + normal.Y * bypassRadius, zInterp);
+                var c2 = new Vector3(obs.Position.X - normal.X * bypassRadius, obs.Position.Y - normal.Y * bypassRadius, zInterp);
+
+                var c1Blocked = IsBlocked(c1);
+                var c2Blocked = IsBlocked(c2);
+
+                Vector3 chosen;
+                if (!c1Blocked && !c2Blocked)
+                {
+                    var d1 = Vector3.Distance(current, c1) + Vector3.Distance(c1, to);
+                    var d2 = Vector3.Distance(current, c2) + Vector3.Distance(c2, to);
+                    chosen = d1 <= d2 ? c1 : c2;
+                }
+                else if (!c1Blocked)
+                {
+                    chosen = c1;
+                }
+                else if (!c2Blocked)
+                {
+                    chosen = c2;
+                }
+                else
+                {
+                    var expandedRadius = bypassRadius + 1.5f;
+                    chosen = new Vector3(obs.Position.X + normal.X * expandedRadius, obs.Position.Y + normal.Y * expandedRadius, zInterp);
+                }
+
+                waypoints.Add(chosen);
+                current = chosen;
+            }
+
+            waypoints.Add(to);
+            return waypoints;
         }
     }
 

@@ -1,0 +1,157 @@
+{
+  "zone": "cuttingwind",
+  "bounds": {
+    "minX": 0,
+    "minY": 0,
+    "maxX": 1000,
+    "maxY": 1000
+  },
+  "totalObstacles": 14,
+  "categoryCounts": {
+    "structure": 2,
+    "prop": 7,
+    "hazard": 5
+  },
+  "obstacles": [
+    {
+      "templateId": 5058,
+      "name": "Iron Bridge",
+      "category": "structure",
+      "x": 679.0,
+      "y": 326.45,
+      "z": 166.9,
+      "yaw": -90.35,
+      "keepOutRadius": 5.0
+    },
+    {
+      "templateId": 5568,
+      "name": "Explosives",
+      "category": "prop",
+      "x": 464.63,
+      "y": 339.22,
+      "z": 168.4,
+      "yaw": -151.2,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5282,
+      "name": "Powder Keg",
+      "category": "prop",
+      "x": 462.9,
+      "y": 338.4,
+      "z": 168,
+      "yaw": 98.4,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5282,
+      "name": "Powder Keg",
+      "category": "prop",
+      "x": 617.1,
+      "y": 458.9,
+      "z": 149.3,
+      "yaw": -101.3,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5282,
+      "name": "Powder Keg",
+      "category": "prop",
+      "x": 617.5,
+      "y": 461.7,
+      "z": 149.3,
+      "yaw": -98.4,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5064,
+      "name": "Blocked Geyser",
+      "category": "hazard",
+      "x": 697.2,
+      "y": 319.7,
+      "z": 144,
+      "yaw": 95.6,
+      "keepOutRadius": 3.0
+    },
+    {
+      "templateId": 5064,
+      "name": "Blocked Geyser",
+      "category": "hazard",
+      "x": 687.9,
+      "y": 333.9,
+      "z": 143.9,
+      "yaw": 154.7,
+      "keepOutRadius": 3.0
+    },
+    {
+      "templateId": 5064,
+      "name": "Blocked Geyser",
+      "category": "hazard",
+      "x": 692.8,
+      "y": 327.1,
+      "z": 143.8,
+      "yaw": 22.5,
+      "keepOutRadius": 3.0
+    },
+    {
+      "templateId": 5064,
+      "name": "Blocked Geyser",
+      "category": "hazard",
+      "x": 685,
+      "y": 313.9,
+      "z": 143.7,
+      "yaw": -67.5,
+      "keepOutRadius": 3.0
+    },
+    {
+      "templateId": 5064,
+      "name": "Blocked Geyser",
+      "category": "hazard",
+      "x": 670.2,
+      "y": 330.5,
+      "z": 144.1,
+      "yaw": 233.4,
+      "keepOutRadius": 3.0
+    },
+    {
+      "templateId": 5282,
+      "name": "Powder Keg",
+      "category": "prop",
+      "x": 617.2,
+      "y": 460.3,
+      "z": 149.3,
+      "yaw": -95.6,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5568,
+      "name": "Explosives",
+      "category": "prop",
+      "x": 619.71,
+      "y": 461.4,
+      "z": 149.96,
+      "yaw": 9829.8,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5568,
+      "name": "Explosives",
+      "category": "prop",
+      "x": 619.25,
+      "y": 458.31,
+      "z": 149.92,
+      "yaw": 6284.6,
+      "keepOutRadius": 2.0
+    },
+    {
+      "templateId": 5602,
+      "name": "Lion Statue",
+      "category": "structure",
+      "x": 489.65,
+      "y": 323.05,
+      "z": 168.0,
+      "yaw": 644.6,
+      "keepOutRadius": 3.0
+    }
+  ]
+}
