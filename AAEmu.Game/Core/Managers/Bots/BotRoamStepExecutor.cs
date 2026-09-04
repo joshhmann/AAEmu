@@ -250,7 +250,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             if (state.LastBroadcastPosition is { } lastPos &&
                 Vector3.Distance(lastPos, position) > 0.01f)
             {
-                var moveType = BuildMoveType(bot.Character, position);
+                var moveType = BuildMoveType(bot.Character, position, lastPos);
                 bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
             }
 
@@ -276,20 +276,23 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// Simulation.cs uses for NPCs (position, velocity from facing, rotation
     /// bytes, walk flags/stance/alertness). ActorFlags 5 = walking.
     /// </summary>
-    private static UnitMoveType BuildMoveType(Character character, Vector3 position)
+    private static UnitMoveType BuildMoveType(Character character, Vector3 position, Vector3 lastPos)
     {
         var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
-        var angle = MathUtil.CalculateAngleFrom(character.Transform.World.Position, position);
+        var angle = MathUtil.CalculateAngleFrom(lastPos, position);
         var (velX, velY) = MathUtil.AddDistanceToFront(4000, 0, 0, (float)angle.DegToRad());
+
+        character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+        var (rx, ry, rz) = character.Transform.Local.ToRollPitchYawSBytesMovement();
 
         moveType.X = position.X;
         moveType.Y = position.Y;
         moveType.Z = position.Z;
         moveType.VelX = (short)velX;
         moveType.VelY = (short)velY;
-        moveType.RotationX = 0;
-        moveType.RotationY = 0;
-        moveType.RotationZ = 0;
+        moveType.RotationX = rx;
+        moveType.RotationY = ry;
+        moveType.RotationZ = rz;
         moveType.ActorFlags = 5; // 5-walk
         moveType.Flags = 0;
         moveType.DeltaMovement = [0, 63, 0];

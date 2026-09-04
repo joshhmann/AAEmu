@@ -50,10 +50,11 @@ public sealed class PlayerBotLifecycleAdapter : IPlayerBotLifecycleService
             var ctx = botContext as BotContext ?? new BotContext { BotId = character.Id, Name = character.Name };
             _lifecycle.ActivateHeadless(character, ctx);
 
-            // PRESENCE: place the character into the region graph so real
-            // clients in the area receive SCUnitStatePacket (the headless
-            // equivalent of the first CSMoveUnitPacket placement).
-            WorldManager.Instance.AddVisibleObject(character);
+            // PRESENCE: spawn the character into the world so it is registered
+            // into ParentWorld._units (allowing target selection, spells, etc.)
+            // and placed into the region graph for client visibility.
+            character.IsOnline = true;
+            character.Spawn();
 
             Logger.Info("PlayerBot embodied (real lifecycle): {CharacterName} (id {CharacterId}, objId {ObjId})",
                 character.Name, character.Id, character.ObjId);
