@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
@@ -274,15 +274,16 @@ public class Simulation : Patrol
         // presumably the path is already registered in MovePath
         //Logger.Warn("trying to get on the path...");
         //Character.SendMessage("[MoveTo] trying to get on the path...");
-        // first go to the closest checkpoint
-        npc.BroadcastPacket(new SCUnitModelPostureChangedPacket(npc, npc.AnimActionId, false), true);
         Path = GetPaths(MoveFileName);
 
         if (Path.Count == 0)
         {
             Logger.Warn($"Stop moving... Информация о пути MoveFileName={MoveFileName} отсутствует!");
+            StopMove(npc);
             return;
         }
+
+        npc.BroadcastPacket(new SCUnitModelPostureChangedPacket(npc, npc.AnimActionId, false), true);
 
         var i = GetMinCheckPoint(npc, Path);
         if (i < 0)
@@ -318,15 +319,16 @@ public class Simulation : Patrol
         // presumably the path is already registered in MovePath
         //Logger.Warn("trying to get on the path...");
         //Character.SendMessage("[MoveTo] trying to get on the path...");
-        // first go to the closest checkpoint
-        npc.BroadcastPacket(new SCUnitModelPostureChangedPacket(npc, npc.AnimActionId, false), true);
         Path = GetPaths(MoveFileName);
 
         if (Path.Count == 0)
         {
             Logger.Warn($"Stop moving... Информация о пути MoveFileName={MoveFileName} отсутствует!");
+            StopMove(npc);
             return;
         }
+
+        npc.BroadcastPacket(new SCUnitModelPostureChangedPacket(npc, npc.AnimActionId, false), true);
 
         var i = GetMinCheckPoint(npc, Path);
         if (i < 0)
