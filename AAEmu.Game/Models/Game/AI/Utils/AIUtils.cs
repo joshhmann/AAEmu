@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.AI.Enums;
 using AAEmu.Game.Models.Game.AI.v2.AiCharacters;
@@ -14,15 +14,24 @@ public static class AiUtils
     public static Vector3 CalcNextRoamingPosition(NpcAi ai)
     {
         var maxRoamingDistance = 6;
-        var newPosition = new Vector3(
-            (Random.Shared.NextSingle() - 0.5f) * maxRoamingDistance * 2 + ai.IdlePosition.X,
-            (Random.Shared.NextSingle() - 0.5f) * maxRoamingDistance * 2 + ai.IdlePosition.Y,
-            ai.IdlePosition.Z);
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var newPosition = new Vector3(
+                (Random.Shared.NextSingle() - 0.5f) * maxRoamingDistance * 2 + ai.IdlePosition.X,
+                (Random.Shared.NextSingle() - 0.5f) * maxRoamingDistance * 2 + ai.IdlePosition.Y,
+                ai.IdlePosition.Z);
 
-        // Get terrain height at new position
-        newPosition.Z = WorldManager.Instance.GetReferenceHeight(ai, newPosition.X, newPosition.Y, newPosition.Z, ai.Owner.Transform.ZoneId);
+            // Get terrain height at new position
+            newPosition.Z = WorldManager.Instance.GetReferenceHeight(ai, newPosition.X, newPosition.Y, newPosition.Z, ai.Owner.Transform.ZoneId);
 
-        return newPosition;
+            // Avoid picking points with impassable vertical jumps (> 1.5m)
+            if (Math.Abs(newPosition.Z - ai.Owner.Transform.World.Position.Z) <= 1.5f)
+            {
+                return newPosition;
+            }
+        }
+
+        return ai.IdlePosition;
     }
 
     public static NpcAi GetAiByType(AiParamType type, Npc owner)

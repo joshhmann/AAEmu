@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
@@ -1339,6 +1339,7 @@ public partial class Npc : Unit
             }
             else if (IsStepBlocked(Transform.Local.Position.Z, terrainHeight, maxStepHeight))
             {
+                StopMovement();
                 return false; // blocked by a step/slope steeper than walkable — halt
             }
         }
