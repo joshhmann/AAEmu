@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.Intrinsics;
 
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
@@ -318,44 +319,40 @@ public class MathUtil
 
     public static float DistanceSqVectors(Vector3 loc, Vector3 loc2, bool includeZAxis = false)
     {
-        double dx = loc.X - loc2.X;
-        double dy = loc.Y - loc2.Y;
-
-        if (!includeZAxis)
+        if (includeZAxis)
         {
-            return (float)(dx * dx + dy * dy);
+            return Vector3.DistanceSquared(loc, loc2);
         }
 
-        double dz = loc.Z - loc2.Z;
-        return (float)(dx * dx + dy * dy + dz * dz);
+        float dx = loc.X - loc2.X;
+        float dy = loc.Y - loc2.Y;
+        return (dx * dx) + (dy * dy);
     }
 
     public static float CalculateDistance(Vector3 loc, Vector3 loc2, bool includeZAxis = false)
     {
-        double dx = loc.X - loc2.X;
-        double dy = loc.Y - loc2.Y;
-
         if (includeZAxis)
         {
-            double dz = loc.Z - loc2.Z;
-            return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            return Vector3.Distance(loc, loc2);
         }
 
-        return (float)Math.Sqrt(dx * dx + dy * dy);
+        float dx = loc.X - loc2.X;
+        float dy = loc.Y - loc2.Y;
+        return MathF.Sqrt((dx * dx) + (dy * dy));
     }
     
     public static float CalculateDistance(WorldSpawnPosition loc, WorldSpawnPosition loc2, bool includeZAxis = false)
     {
-        double dx = loc.X - loc2.X;
-        double dy = loc.Y - loc2.Y;
+        float dx = loc.X - loc2.X;
+        float dy = loc.Y - loc2.Y;
 
         if (includeZAxis)
         {
-            double dz = loc.Z - loc2.Z;
-            return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            float dz = loc.Z - loc2.Z;
+            return MathF.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
         }
 
-        return (float)Math.Sqrt(dx * dx + dy * dy);
+        return MathF.Sqrt((dx * dx) + (dy * dy));
     }
 
     public static float CalculateDistance(GameObject loc, GameObject loc2, bool includeZAxis = false)
@@ -366,10 +363,95 @@ public class MathUtil
     public static float GetDistance(Vector3 v1, Vector3 v2, bool point3d = false)
     {
         return point3d
-            ?
-            MathF.Sqrt(MathF.Pow(v1.X - v2.X, 2) + MathF.Pow(v1.Y - v2.Y, 2) + MathF.Pow(v1.Y - v2.Y, 2))
-            :
-            MathF.Sqrt(MathF.Pow(v1.X - v2.X, 2) + MathF.Pow(v1.Y - v2.Y, 2));
+            ? Vector3.Distance(v1, v2)
+            : Vector2.Distance(new Vector2(v1.X, v1.Y), new Vector2(v2.X, v2.Y));
+    }
+
+    /// <summary>
+    /// SIMD-accelerated 2D proximity filter (AVX2 / Vector256 / Vector128).
+    /// Finds all indices in [0..length-1] where (xs[i] - originX)^2 + (ys[i] - originY)^2 &lt;= maxRadiusSq.
+    /// Writes matching indices into <paramref name="matchingIndices"/> and returns the count of matches.
+    /// </summary>
+    public static int FilterWithinRadius2D(
+        ReadOnlySpan<float> xs,
+        ReadOnlySpan<float> ys,
+        float originX,
+        float originY,
+        float maxRadiusSq,
+        Span<int> matchingIndices)
+    {
+        int count = 0;
+        int i = 0;
+        int length = Math.Min(xs.Length, ys.Length);
+
+        if (Vector256.IsHardwareAccelerated && length >= Vector256<float>.Count)
+        {
+            var vOriginX = Vector256.Create(originX);
+            var vOriginY = Vector256.Create(originY);
+            var vMaxRadSq = Vector256.Create(maxRadiusSq);
+            ref float xRef = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(xs);
+            ref float yRef = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(ys);
+            int step = Vector256<float>.Count;
+
+            for (; i <= length - step; i += step)
+            {
+                var vx = Vector256.LoadUnsafe(ref xRef, (nuint)i);
+                var vy = Vector256.LoadUnsafe(ref yRef, (nuint)i);
+
+                var dx = vx - vOriginX;
+                var dy = vy - vOriginY;
+                var distSq = (dx * dx) + (dy * dy);
+
+                var mask = Vector256.LessThanOrEqual(distSq, vMaxRadSq);
+                uint bits = Vector256.ExtractMostSignificantBits(mask);
+                while (bits != 0 && count < matchingIndices.Length)
+                {
+                    int bit = System.Numerics.BitOperations.TrailingZeroCount(bits);
+                    matchingIndices[count++] = i + bit;
+                    bits &= bits - 1;
+                }
+            }
+        }
+        else if (Vector128.IsHardwareAccelerated && length >= Vector128<float>.Count)
+        {
+            var vOriginX = Vector128.Create(originX);
+            var vOriginY = Vector128.Create(originY);
+            var vMaxRadSq = Vector128.Create(maxRadiusSq);
+            ref float xRef = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(xs);
+            ref float yRef = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(ys);
+            int step = Vector128<float>.Count;
+
+            for (; i <= length - step; i += step)
+            {
+                var vx = Vector128.LoadUnsafe(ref xRef, (nuint)i);
+                var vy = Vector128.LoadUnsafe(ref yRef, (nuint)i);
+
+                var dx = vx - vOriginX;
+                var dy = vy - vOriginY;
+                var distSq = (dx * dx) + (dy * dy);
+
+                var mask = Vector128.LessThanOrEqual(distSq, vMaxRadSq);
+                uint bits = Vector128.ExtractMostSignificantBits(mask);
+                while (bits != 0 && count < matchingIndices.Length)
+                {
+                    int bit = System.Numerics.BitOperations.TrailingZeroCount(bits);
+                    matchingIndices[count++] = i + bit;
+                    bits &= bits - 1;
+                }
+            }
+        }
+
+        for (; i < length; i++)
+        {
+            float dx = xs[i] - originX;
+            float dy = ys[i] - originY;
+            if ((dx * dx + dy * dy) <= maxRadiusSq && count < matchingIndices.Length)
+            {
+                matchingIndices[count++] = i;
+            }
+        }
+
+        return count;
     }
 
     public static Vector3 GetVectorFromQuat(Quaternion quat)

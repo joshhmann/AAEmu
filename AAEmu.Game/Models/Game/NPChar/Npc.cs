@@ -1058,8 +1058,11 @@ public partial class Npc : Unit
 
     public override void AddVisibleObject(Character character)
     {
-        character.SendPacket(new SCUnitStatePacket(this));
-        character.SendPacket(new SCUnitPointsPacket(ObjId, Hp, Mp));
+        if (character.Connection != null)
+        {
+            character.SendPacket(new SCUnitStatePacket(this));
+            character.SendPacket(new SCUnitPointsPacket(ObjId, Hp, Mp));
+        }
 
         base.AddVisibleObject(character);
     }
@@ -1068,7 +1071,8 @@ public partial class Npc : Unit
     {
         base.RemoveVisibleObject(character);
 
-        character.SendPacket(new SCUnitsRemovedPacket([ObjId]));
+        if (character.Connection != null)
+            character.SendPacket(new SCUnitsRemovedPacket([ObjId]));
     }
 
     //Tagging!

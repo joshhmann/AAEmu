@@ -148,54 +148,73 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
         // Show the player all the facilities in the region when he/she is added
         if (obj is Character objectAsCharacter)
         {
-            var objectsInRegion = GetList(new List<GameObject>(), obj.ObjId);
-            foreach (var go in objectsInRegion)
+            if (objectAsCharacter.Connection != null)
             {
-                // Ignore doodads here, as we have a special packet for those
-                if (go is Doodad)
-                    continue;
+                var objectsInRegion = GetList(new List<GameObject>(), obj.ObjId);
+                foreach (var go in objectsInRegion)
+                {
+                    // Ignore doodads here, as we have a special packet for those
+                    if (go is Doodad)
+                        continue;
 
-                if (go is Gimmick)
-                    continue;
+                    if (go is Gimmick)
+                        continue;
 
-                // turn on the motion of the visible NPC
-                if (go is Npc { Ai: not null } npc)
-                    npc.Ai.ShouldTick = true;
+                    // turn on the motion of the visible NPC
+                    if (go is Npc { Ai: not null } npc)
+                        npc.Ai.ShouldTick = true;
 
-                go.AddVisibleObject(objectAsCharacter);
+                    go.AddVisibleObject(objectAsCharacter);
+                }
+
+                // Handle Doodads separately with sets of SCDoodadsCreatedPacket
+                var doodads = GetList(new List<Doodad>(), obj.ObjId).ToArray();
+                for (var i = 0; i < doodads.Length; i += SCDoodadsCreatedPacket.MaxCountPerPacket)
+                {
+                    var count = doodads.Length - i;
+                    var temp = new Doodad[count <= SCDoodadsCreatedPacket.MaxCountPerPacket
+                        ? count
+                        : SCDoodadsCreatedPacket.MaxCountPerPacket];
+                    Array.Copy(doodads, i, temp, 0, temp.Length);
+                    objectAsCharacter.SendPacket(new SCDoodadsCreatedPacket(temp));
+                }
+
+                // Handle Gimmicks separately with sets of SCGimmicksCreatedPacket
+                var gimmicks = GetList(new List<Gimmick>(), obj.ObjId).ToArray();
+                for (var i = 0; i < gimmicks.Length; i += SCGimmicksCreatedPacket.MaxCountPerPacket)
+                {
+                    var count = gimmicks.Length - i;
+                    var temp = new Gimmick[count <= SCGimmicksCreatedPacket.MaxCountPerPacket
+                        ? count
+                        : SCGimmicksCreatedPacket.MaxCountPerPacket];
+                    Array.Copy(gimmicks, i, temp, 0, temp.Length);
+                    objectAsCharacter.SendPacket(new SCGimmicksCreatedPacket(temp));
+                }
+                // Not sure why or if this is needed, but it's always sent after the creation packets with no reference to any of them
+                if (gimmicks.Length > 0)
+                    objectAsCharacter.SendPacket(new SCGimmickJointsBrokenPacket([]));
             }
-
-            // Handle Doodads separately with sets of SCDoodadsCreatedPacket
-            var doodads = GetList(new List<Doodad>(), obj.ObjId).ToArray();
-            for (var i = 0; i < doodads.Length; i += SCDoodadsCreatedPacket.MaxCountPerPacket)
+            else
             {
-                var count = doodads.Length - i;
-                var temp = new Doodad[count <= SCDoodadsCreatedPacket.MaxCountPerPacket
-                    ? count
-                    : SCDoodadsCreatedPacket.MaxCountPerPacket];
-                Array.Copy(doodads, i, temp, 0, temp.Length);
-                objectAsCharacter.SendPacket(new SCDoodadsCreatedPacket(temp));
+                // Headless bot: wake up NPCs in the region so they interact with the bot
+                var objectsInRegion = GetList(new List<GameObject>(), obj.ObjId);
+                foreach (var go in objectsInRegion)
+                {
+                    if (go is Npc { Ai: not null } npc)
+                        npc.Ai.ShouldTick = true;
+                }
             }
-
-            // Handle Gimmicks separately with sets of SCGimmicksCreatedPacket
-            var gimmicks = GetList(new List<Gimmick>(), obj.ObjId).ToArray();
-            for (var i = 0; i < gimmicks.Length; i += SCGimmicksCreatedPacket.MaxCountPerPacket)
-            {
-                var count = gimmicks.Length - i;
-                var temp = new Gimmick[count <= SCGimmicksCreatedPacket.MaxCountPerPacket
-                    ? count
-                    : SCGimmicksCreatedPacket.MaxCountPerPacket];
-                Array.Copy(gimmicks, i, temp, 0, temp.Length);
-                objectAsCharacter.SendPacket(new SCGimmicksCreatedPacket(temp));
-            }
-            // Not sure why or if this is needed, but it's always sent after the creation packets with no reference to any of them
-            if (gimmicks.Length > 0)
-                objectAsCharacter.SendPacket(new SCGimmickJointsBrokenPacket([]));
         }
 
-        // show the object to all players in the region
-        foreach (var characterInRegion in GetList(new List<Character>(), obj.ObjId))
-            obj.AddVisibleObject(characterInRegion);
+        // Show the object to all connected players in the region
+        if (HasHumanObservers())
+        {
+            foreach (var characterInRegion in GetList(new List<Character>(), obj.ObjId))
+            {
+                if (characterInRegion.Connection != null)
+                    obj.AddVisibleObject(characterInRegion);
+            }
+        }
     }
 
     public void RemoveFromCharacters(GameObject obj)
@@ -206,62 +225,81 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
         // Special handling for characters (players)
         if (obj is Character character1)
         {
-            // Existing logic for sending SCUnitsRemovedPacket, SCDoodadsRemovedPacket, etc. remains unchanged.
-            var unitIds = GetListId<Unit>([], character1.ObjId).ToArray();
-            var units = GetList(new List<Unit>(), character1.ObjId);
-            foreach (var t in units)
+            if (character1.Connection != null)
             {
-                if (t is Npc { Ai: not null } npc)
+                // Existing logic for sending SCUnitsRemovedPacket, SCDoodadsRemovedPacket, etc. remains unchanged.
+                var unitIds = GetListId<Unit>([], character1.ObjId).ToArray();
+                var units = GetList(new List<Unit>(), character1.ObjId);
+                foreach (var t in units)
                 {
-                    npc.Ai.ShouldTick = false;
+                    if (t is Npc { Ai: not null } npc)
+                    {
+                        npc.Ai.ShouldTick = false;
+                    }
+                }
+                for (var offset = 0; offset < unitIds.Length; offset += SCUnitsRemovedPacket.MaxCountPerPacket)
+                {
+                    var length = unitIds.Length - offset;
+                    var temp = new uint[length > SCUnitsRemovedPacket.MaxCountPerPacket
+                        ? SCUnitsRemovedPacket.MaxCountPerPacket
+                        : length];
+                    Array.Copy(unitIds, offset, temp, 0, temp.Length);
+                    character1.SendPacket(new SCUnitsRemovedPacket(temp));
+                }
+
+                var doodadIds = GetListId<Doodad>([], character1.ObjId).ToArray();
+                for (var offset = 0; offset < doodadIds.Length; offset += SCDoodadsRemovedPacket.MaxCountPerPacket)
+                {
+                    var length = doodadIds.Length - offset;
+                    var last = length <= SCDoodadsRemovedPacket.MaxCountPerPacket;
+                    var temp = new uint[last ? length : SCDoodadsRemovedPacket.MaxCountPerPacket];
+                    Array.Copy(doodadIds, offset, temp, 0, temp.Length);
+                    character1.SendPacket(new SCDoodadsRemovedPacket(last, temp));
+                }
+
+                var gimmickIds = GetList<Gimmick>([], character1.ObjId).Select(g => g.ObjId).ToArray();
+                for (var offset = 0; offset < gimmickIds.Length; offset += SCGimmicksRemovedPacket.MaxCountPerPacket)
+                {
+                    var length = gimmickIds.Length - offset;
+                    var last = length <= SCGimmicksRemovedPacket.MaxCountPerPacket;
+                    var temp = new uint[last ? length : SCGimmicksRemovedPacket.MaxCountPerPacket];
+                    Array.Copy(gimmickIds, offset, temp, 0, temp.Length);
+                    character1.SendPacket(new SCGimmicksRemovedPacket(temp));
+                }
+
+                if (character1.CurrentTarget != null && unitIds.Contains(character1.CurrentTarget.ObjId))
+                {
+                    character1.CurrentTarget = null;
+                    character1.SendPacket(new SCTargetChangedPacket(character1.ObjId, 0));
                 }
             }
-            for (var offset = 0; offset < unitIds.Length; offset += SCUnitsRemovedPacket.MaxCountPerPacket)
+            else
             {
-                var length = unitIds.Length - offset;
-                var temp = new uint[length > SCUnitsRemovedPacket.MaxCountPerPacket
-                    ? SCUnitsRemovedPacket.MaxCountPerPacket
-                    : length];
-                Array.Copy(unitIds, offset, temp, 0, temp.Length);
-                character1.SendPacket(new SCUnitsRemovedPacket(temp));
+                // Headless bot: untarget if needed
+                var unitIds = GetListId<Unit>([], character1.ObjId);
+                if (character1.CurrentTarget != null && unitIds.Contains(character1.CurrentTarget.ObjId))
+                {
+                    character1.CurrentTarget = null;
+                }
             }
 
-            var doodadIds = GetListId<Doodad>([], character1.ObjId).ToArray();
-            for (var offset = 0; offset < doodadIds.Length; offset += SCDoodadsRemovedPacket.MaxCountPerPacket)
+            // Also remove this character from visibility of nearby connected players.
+            if (HasHumanObservers())
             {
-                var length = doodadIds.Length - offset;
-                var last = length <= SCDoodadsRemovedPacket.MaxCountPerPacket;
-                var temp = new uint[last ? length : SCDoodadsRemovedPacket.MaxCountPerPacket];
-                Array.Copy(doodadIds, offset, temp, 0, temp.Length);
-                character1.SendPacket(new SCDoodadsRemovedPacket(last, temp));
+                foreach (var characterInRegion in GetList(new List<Character>(), character1.ObjId))
+                {
+                    if (characterInRegion.Connection != null)
+                        obj.RemoveVisibleObject(characterInRegion);
+                }
             }
-
-            var gimmickIds = GetList<Gimmick>([], character1.ObjId).Select(g => g.ObjId).ToArray();
-            for (var offset = 0; offset < gimmickIds.Length; offset += SCGimmicksRemovedPacket.MaxCountPerPacket)
-            {
-                var length = gimmickIds.Length - offset;
-                var last = length <= SCGimmicksRemovedPacket.MaxCountPerPacket;
-                var temp = new uint[last ? length : SCGimmicksRemovedPacket.MaxCountPerPacket];
-                Array.Copy(gimmickIds, offset, temp, 0, temp.Length);
-                character1.SendPacket(new SCGimmicksRemovedPacket(temp));
-            }
-
-            if (character1.CurrentTarget != null && unitIds.Contains(character1.CurrentTarget.ObjId))
-            {
-                character1.CurrentTarget = null;
-                character1.SendPacket(new SCTargetChangedPacket(character1.ObjId, 0));
-            }
-
-            // Also remove this character from visibility of nearby players.
-            // Without this, other players keep a stale local copy ("ghost target")
-            // when the character disconnects or leaves the world.
-            foreach (var characterInRegion in GetList(new List<Character>(), character1.ObjId))
-                obj.RemoveVisibleObject(characterInRegion);
 
         }
         // Special handling for non-player objects (NPCs, vehicles, doodads, etc.)
         else
         {
+            if (!HasHumanObservers())
+                return;
+
             // Get all characters in this region that should receive a removal packet
             var charactersInRegion = GetList(new List<Character>(), obj.ObjId);
 

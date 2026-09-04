@@ -880,7 +880,8 @@ public class Doodad : BaseUnit
     /// <param name="character"></param>
     public override void AddVisibleObject(Character character)
     {
-        character.SendPacket(new SCDoodadCreatedPacket(this));
+        if (character.Connection != null)
+            character.SendPacket(new SCDoodadCreatedPacket(this));
         base.AddVisibleObject(character);
     }
 
@@ -891,7 +892,8 @@ public class Doodad : BaseUnit
     public override void RemoveVisibleObject(Character character)
     {
         base.RemoveVisibleObject(character);
-        character.SendPacket(new SCDoodadRemovedPacket(ObjId));
+        if (character.Connection != null)
+            character.SendPacket(new SCDoodadRemovedPacket(ObjId));
     }
 
     /// <summary>

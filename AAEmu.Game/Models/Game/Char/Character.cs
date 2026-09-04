@@ -2874,9 +2874,12 @@ public partial class Character : Unit, ICharacter
 
     public override void AddVisibleObject(Character character)
     {
-        if (this != character) // Never send to self, or the client crashes
-            character.SendPacket(new SCUnitStatePacket(this));
-        character.SendPacket(new SCUnitPointsPacket(ObjId, Hp, Mp));
+        if (character.Connection != null)
+        {
+            if (this != character) // Never send to self, or the client crashes
+                character.SendPacket(new SCUnitStatePacket(this));
+            character.SendPacket(new SCUnitPointsPacket(ObjId, Hp, Mp));
+        }
         /*
         // If player is hanging on something, also send a hung packet, this should work in theory, but doesn't
         if (this.Transform.StickyParent != null)
@@ -2889,7 +2892,7 @@ public partial class Character : Unit, ICharacter
     {
         base.RemoveVisibleObject(character);
 
-        if (this != character) // Never send to self, or the client crashes
+        if (character.Connection != null && this != character) // Never send to self, or the client crashes
             character.SendPacket(new SCUnitsRemovedPacket([ObjId]));
     }
 
