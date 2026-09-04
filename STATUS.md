@@ -32,6 +32,13 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 
+## 2026-09-03 — Post-M7 readiness: PB-005 Clean 733 Duplicate NPC Spawns in World Data
+
+- **Cleaned 733 Duplicate NPC Spawns (`main_world/npc_spawns.json`):** Excised all 733 exact duplicate spawn records from the canonical world data file (`AAEmu.Game/Data/Worlds/main_world/npc_spawns.json`), reducing active spawn rows from 25,118 to 24,385.
+  - **Preserved File Integrity:** Retained all 8,261 inline Korean/English template name comments (e.g. `// Gorgon`, `// Royal Falcon`), disabled commented blocks, and standard 4-space JSON formatting.
+  - **Deduplication Key:** Resolved duplicates by `(UnitId, Position.X, Position.Y, Position.Z)` at centimeter precision ($0.01\text{m}$).
+- **Evidence:** Script compilation check passed with 0 errors and 0 warnings. Full `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, **2,778 total tests (2,777 passed, 1 skipped)**, 39 MCP BotControl tools, and 24 MCP Archaeology tools.
+
 ## 2026-09-03 — Post-M7 readiness: PB-002 Dewstone Plains Early Quest Chain & Adaptive Perception Expansion
 
 - **Dewstone Plains Early Quest Chain Expansion:** Extended the leveling bot progression beyond starting zone boundaries into canonical early Dewstone Plains content (Lilyut Crossing / Royster's Ford / Afindelle camp).
