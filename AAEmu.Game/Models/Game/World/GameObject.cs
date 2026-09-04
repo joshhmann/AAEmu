@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Exceptions;
+using AAEmu.Commons.Exceptions;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Game;
@@ -145,6 +145,13 @@ public class GameObject : IGameObject
     /// <param name="self">Include sending to self (only for if called from Character)</param>
     public virtual void BroadcastPacket(GamePacket packet, bool self)
     {
+        if (self && this is Character chr)
+            chr.SendPacket(packet);
+
+        var currentRegion = Region ?? (this as Character)?.Region;
+        if (currentRegion != null && !currentRegion.HasHumanObservers())
+            return;
+
         var nested = t_broadcastDepth > 0;
         t_broadcastDepth++;
 
@@ -160,9 +167,10 @@ public class GameObject : IGameObject
 
             WorldManager.GetAround(this, characters);
             foreach (var character in characters)
-                character.SendPacket(packet);
-            if (self && this is Character chr)
-                chr.SendPacket(packet);
+            {
+                if (character.Connection != null)
+                    character.SendPacket(packet);
+            }
         }
         finally
         {

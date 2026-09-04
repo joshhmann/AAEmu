@@ -17,6 +17,7 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
     private int _objectsSize, _charactersSize;
     private Region[] _neighbors;
     private int _playerCount;
+    private int _humanObserverCount;
 
     private int X { get; } = x;
     private int Y { get; } = y;
@@ -62,11 +63,18 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
                 obj.Transform.ZoneId = zoneId;
         }
 
-        if (obj is Character)
+        if (obj is Character chrObj)
         {
+            var isHuman = chrObj.Connection != null;
             foreach (var region in GetNeighbors())
+            {
                 if (region != null)
+                {
                     Interlocked.Increment(ref region._playerCount);
+                    if (isHuman)
+                        Interlocked.Increment(ref region._humanObserverCount);
+                }
+            }
         }
         // Show debug info to subscribed players
         if (obj.Transform?._debugTrackers?.Count > 0)
@@ -107,16 +115,23 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
                 _objectsSize = 0;
             }
 
-            if (obj is Character)
+            if (obj is Character chrObj)
             {
+                var isHuman = chrObj.Connection != null;
                 // Decrement AFTER the array removal (full fence): a reader seeing
                 // count==0 is guaranteed the character is already out of the array
                 // (the removal store precedes the decrement store), so the
                 // lock-free short-circuit can never skip a present character.
                 Interlocked.Decrement(ref _charactersSize);
                 foreach (var region in GetNeighbors())
+                {
                     if (region != null)
+                    {
                         Interlocked.Decrement(ref region._playerCount);
+                        if (isHuman)
+                            Interlocked.Decrement(ref region._humanObserverCount);
+                    }
+                }
             }
         }
         // Show debug info to subscribed players
@@ -315,6 +330,11 @@ public class Region(WorldInstance worldInstance, int x, int y, uint zoneKey)
     public bool HasPlayerActivity()
     {
         return _playerCount > 0;
+    }
+
+    public bool HasHumanObservers()
+    {
+        return Volatile.Read(ref _humanObserverCount) > 0;
     }
 
     public List<uint> GetObjectIdsList(List<uint> result, uint exclude)
