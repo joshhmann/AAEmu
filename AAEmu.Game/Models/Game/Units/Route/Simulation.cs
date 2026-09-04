@@ -9,6 +9,7 @@ using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units.Movements;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Models.Tasks.Npcs;
 using AAEmu.Game.Models.Tasks.UnitMove;
 using AAEmu.Game.Utils;
@@ -365,7 +366,7 @@ public class Simulation : Patrol
             return;
         }
 
-        var dist = MathUtil.CalculateDistance(npc.Transform.World.Position, target, true);
+        var dist = MathUtil.CalculateDistance(npc.Transform.World.Position, target, false);
         if (dist > RangeToCheckPoint)
         {
             move = true;
@@ -380,9 +381,10 @@ public class Simulation : Patrol
 
             var oldPosition = npc.Transform.Local.ClonePosition();
 
-            var targetDist = MathUtil.CalculateDistance(npc.Transform.Local.Position, target, true);
+            var targetDist = MathUtil.CalculateDistance(npc.Transform.Local.Position, target, false);
             if (targetDist <= 0.05f)
             {
+                OnMove(npc);
                 return;
             }
 
@@ -397,7 +399,8 @@ public class Simulation : Patrol
             npc.Transform.Local.SetPosition(newX, newY, newZ);
 
             var angle = MathUtil.CalculateAngleFrom(npc.Transform.Local.Position, target);
-            var (velX, velY) = MathUtil.AddDistanceToFront(4000, 0, 0, (float)angle.DegToRad());
+            var speedMm = (npc.BaseMoveSpeed * npc.MoveSpeedMul) > 0 ? (float)(npc.BaseMoveSpeed * npc.MoveSpeedMul * 1000f) : (RunningMode ? 4000f : 2500f);
+            var (velX, velY) = MathUtil.AddDistanceToFront(speedMm, 0, 0, (float)angle.DegToRad());
             npc.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
             var (rx, ry, rz) = npc.Transform.Local.ToRollPitchYawSBytesMovement();
 
@@ -410,7 +413,7 @@ public class Simulation : Patrol
             moveType.RotationY = ry;
             moveType.RotationZ = rz;
             moveType.ActorFlags = (byte)(RunningMode ? 4 : 5); // 5-walk, 4-run, 3-stand still
-            moveType.Flags = 0;
+            moveType.Flags = MoveTypeFlags.Moving;
 
             moveType.DeltaMovement = new sbyte[3];
             moveType.DeltaMovement[0] = 0;

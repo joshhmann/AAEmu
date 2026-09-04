@@ -1,7 +1,8 @@
-﻿using System.Numerics;
+using System.Numerics;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Units.Movements;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
 
 namespace AAEmu.Game.Models.Game.Units.Route;
@@ -77,7 +78,8 @@ public class Line : Patrol
             }
             move = true;
         }
-        if (Math.Abs(z) > distance)
+        var isSwimmingOrFlying = npc.TemplateId == 13677 || npc.TemplateId == 13676 || npc.TemplateId == 13680;
+        if (isSwimmingOrFlying && Math.Abs(z) > distance)
         {
             if (Math.Abs(MaxXYZ - Math.Abs(z)) > tolerance)
             {
@@ -132,6 +134,7 @@ public class Line : Patrol
         moveType.RotationZ = rotZ;
 
         moveType.ActorFlags = 5;     // 5-walk, 4-run, 3-stand still
+        moveType.Flags = MoveTypeFlags.Moving;
         moveType.DeltaMovement = new sbyte[3];
         moveType.DeltaMovement[0] = 0;
         moveType.DeltaMovement[1] = 127;

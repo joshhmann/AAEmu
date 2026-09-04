@@ -8,6 +8,7 @@ using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.Units.Movements;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
 
 using NLog;
@@ -251,8 +252,11 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             if (state.LastBroadcastPosition is { } lastPos &&
                 Vector3.Distance(lastPos, position) > 0.01f)
             {
-                var moveType = BuildMoveType(bot.Character, position, lastPos);
-                bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
+                if (bot.Character.Region?.HasHumanObservers() == true)
+                {
+                    var moveType = BuildMoveType(bot.Character, position, lastPos, RoamSpeed);
+                    bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
+                }
             }
 
             state.LastBroadcastUtc = now;
@@ -277,11 +281,12 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// Simulation.cs uses for NPCs (position, velocity from facing, rotation
     /// bytes, walk flags/stance/alertness). ActorFlags 5 = walking.
     /// </summary>
-    private static UnitMoveType BuildMoveType(Character character, Vector3 position, Vector3 lastPos)
+    private static UnitMoveType BuildMoveType(Character character, Vector3 position, Vector3 lastPos, float speed = 2.5f)
     {
         var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
         var angle = MathUtil.CalculateAngleFrom(lastPos, position);
-        var (velX, velY) = MathUtil.AddDistanceToFront(4000, 0, 0, (float)angle.DegToRad());
+        var speedMm = speed * 1000f;
+        var (velX, velY) = MathUtil.AddDistanceToFront(speedMm, 0, 0, (float)angle.DegToRad());
 
         character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
         var (rx, ry, rz) = character.Transform.Local.ToRollPitchYawSBytesMovement();
@@ -295,7 +300,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         moveType.RotationY = ry;
         moveType.RotationZ = rz;
         moveType.ActorFlags = 5; // 5-walk
-        moveType.Flags = 0;
+        moveType.Flags = MoveTypeFlags.Moving;
         moveType.DeltaMovement = [0, 63, 0];
         moveType.Stance = GameStanceType.Relaxed;   // IDLE = 0x1 (Npc.CurrentGameStance is NPC-only; characters idle in Relaxed)
         moveType.Alertness = MoveTypeAlertness.Idle; // IDLE = 0x0

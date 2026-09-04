@@ -3828,6 +3828,9 @@ public class GameplayActor : IGameplayActor
     /// </summary>
     private void BroadcastStop()
     {
+        if (!BroadcastMovement)
+            return;
+
         var position = Character.Transform.World.Position;
         var rotZ = Character.Transform.Local.ToRollPitchYawSBytesMovement().Item3;
         Character.BroadcastPacket(
