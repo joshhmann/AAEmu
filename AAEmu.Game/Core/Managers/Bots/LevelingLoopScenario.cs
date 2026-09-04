@@ -238,6 +238,49 @@ public static class LevelingLoopScenario
     public const uint SeedMarianopleViarnaNpcTemplateId = 458;
     public const uint SeedMarianopleGoblinMarauderNpcTemplateId = 4941;
 
+    // ---- Canonical White Arden segment ids (compact.sqlite3 canonical 1.2).
+    // White Arden progression (Lokan & Mikael at Arden Entrance).
+    /// <summary>Quest 111 "부상자 치료" (Wounded Warriors) — Gather: accept Mikael (2072), gather Medicinal Herbs 17471 (doodad 539), report Mikael (2072).</summary>
+    public const uint SeedWhiteArdenQuestWoundedWarriorsId = 111;
+    /// <summary>Quest 112 "시간 벌기" (Buying Time) — MonsterGroupHunt: accept Lokan (2071), cull group 11, report Lokan (2071).</summary>
+    public const uint SeedWhiteArdenQuestBuyingTimeId = 112;
+    /// <summary>Quest 113 "사용할 수 없는 성물" (Ghost Hunter) — Gather: accept Rinus (2107), gather Relic 3990 (doodad 1750), report Rinus (2107).</summary>
+    public const uint SeedWhiteArdenQuestGhostHunterId = 113;
+    /// <summary>Quest 136 "옛 숲지기들의 대장" (Captain of Old Forest Keepers) — Delivery: accept Rico (2108), report Elmo (2109).</summary>
+    public const uint SeedWhiteArdenQuestForestKeepersId = 136;
+
+    public const uint SeedWhiteArdenMikaelNpcTemplateId = 2072;
+    public const uint SeedWhiteArdenLokanNpcTemplateId = 2071;
+    public const uint SeedWhiteArdenRinusNpcTemplateId = 2107;
+    public const uint SeedWhiteArdenRicoNpcTemplateId = 2108;
+    public const uint SeedWhiteArdenElmoNpcTemplateId = 2109;
+    public const uint SeedWhiteArdenHerbsDoodadTemplateId = 539;
+    public const uint SeedWhiteArdenHerbsItemTemplateId = 17471;
+    public const uint SeedWhiteArdenRelicDoodadTemplateId = 1750;
+    public const uint SeedWhiteArdenRelicItemTemplateId = 3990;
+
+    // ---- Canonical Two Crowns segment ids (compact.sqlite3 canonical 1.2).
+    // Two Crowns progression (Sundowne Village hub -> Weeping Mine).
+    /// <summary>Quest 608 "수상한 계약" (A Peculiar Herb) — Gather: accept Sundowne Villager Lemina (1719), gather Herb 16399 (doodad 2955), report Lemina (1719).</summary>
+    public const uint SeedTwoCrownsQuestPeculiarHerbId = 608;
+    /// <summary>Quest 609 "부당한 협박" (Foxhunt) — Gather: accept Hunter Tanos (1717), gather Fox Tails 5023 (doodad 676), report Guard Captain Tesar (1713).</summary>
+    public const uint SeedTwoCrownsQuestFoxhuntId = 609;
+    /// <summary>Quest 611 "눈물의 철광산" (The Mayor's Fears) — Delivery: accept Mayor Sandallion (1715), report Tolus's Aide (7923).</summary>
+    public const uint SeedTwoCrownsQuestMayorsFearsId = 611;
+    /// <summary>Quest 615 "숨은 조력자" (An Unexpected Ally) — Delivery: accept Serf Miner Delegate Androi (1720), report Guard Captain Tesar (1713).</summary>
+    public const uint SeedTwoCrownsQuestUnexpectedAllyId = 615;
+
+    public const uint SeedTwoCrownsLeminaNpcTemplateId = 1719;
+    public const uint SeedTwoCrownsTanosNpcTemplateId = 1717;
+    public const uint SeedTwoCrownsTesarNpcTemplateId = 1713;
+    public const uint SeedTwoCrownsSandallionNpcTemplateId = 1715;
+    public const uint SeedTwoCrownsAndroiNpcTemplateId = 1720;
+    public const uint SeedTwoCrownsTolusAideNpcTemplateId = 7923;
+    public const uint SeedTwoCrownsHerbDoodadTemplateId = 2955;
+    public const uint SeedTwoCrownsHerbItemTemplateId = 16399;
+    public const uint SeedTwoCrownsFoxTailDoodadTemplateId = 676;
+    public const uint SeedTwoCrownsFoxTailItemTemplateId = 5023;
+
     /// <summary>Loop parameters. Defaults = the honest L1–9 starter band.</summary>
     public sealed record LoopOptions
     {
@@ -2999,7 +3042,7 @@ public static class LevelingLoopScenario
         var portal = CharacterResurrection.Resurrect(character, inPlace: false, opts.DeathPortalResolver);
         if (portal is { X: not 0 })
         {
-            character.SetPosition(portal.X, portal.Y, portal.Z, 0, 0, 0);
+            RelocateToHub(character, new Vector3(portal.X, portal.Y, portal.Z));
             notes.Add($"respawned-at-nui-({portal.X:F1},{portal.Y:F1})");
         }
         else
@@ -3013,6 +3056,24 @@ public static class LevelingLoopScenario
         character.Mp = Math.Max(50, (int)(character.MaxMp * 0.7f));
         notes.Add($"health-recovered-to-{character.Hp}/{character.MaxHp}");
         return true;
+    }
+
+    /// <summary>
+    /// Repositions the character to a new hub and synchronizes world region membership.
+    /// </summary>
+    private static void RelocateToHub(Character character, Vector3 hub)
+    {
+        character.SetPosition(hub.X, hub.Y, hub.Z, 0, 0, 0);
+        if (character.ParentWorld != null)
+        {
+            var newRegion = character.ParentWorld.GetRegionByPos(hub);
+            if (newRegion != null && newRegion != character.Region)
+            {
+                character.Region?.RemoveObject(character);
+                newRegion.AddObject(character);
+                character.Region = newRegion;
+            }
+        }
     }
 
     /// <summary>
@@ -3038,7 +3099,7 @@ public static class LevelingLoopScenario
             }
 
             var dewstoneHub = new Vector3(12600f, 15350f, 158f); // Lilyut Crossing / Dewstone entrance
-            character.SetPosition(dewstoneHub.X, dewstoneHub.Y, dewstoneHub.Z, 0, 0, 0);
+            RelocateToHub(character, dewstoneHub);
             notes.Add($"arrived-at-dewstone-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
             return true;
         }
@@ -3054,8 +3115,40 @@ public static class LevelingLoopScenario
             }
 
             var marianopleHub = new Vector3(10930f, 12040f, 130f); // Marianople Capital Gate
-            character.SetPosition(marianopleHub.X, marianopleHub.Y, marianopleHub.Z, 0, 0, 0);
+            RelocateToHub(character, marianopleHub);
             notes.Add($"arrived-at-marianople-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
+            return true;
+        }
+
+        // Transition 3: Marianople (X in [10000..12000], Y in [11000..12500]) -> White Arden (when Level >= 25)
+        if (pos.X >= 10000 && pos.X <= 12000 && pos.Y >= 11000 && pos.Y <= 12500 && character.Level >= 25)
+        {
+            notes.Add("transitioning-marianople-to-white-arden");
+            if (actor is GameplayActor gp)
+            {
+                BotMountManager.EnsureMounted(gp);
+                BotMountManager.EnsureDismounted(gp);
+            }
+
+            var whiteArdenHub = new Vector3(11045f, 12885f, 157f); // White Arden entrance settlement
+            RelocateToHub(character, whiteArdenHub);
+            notes.Add($"arrived-at-white-arden-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
+            return true;
+        }
+
+        // Transition 4: White Arden (X in [9000..12000], Y in [12500..14500]) -> Two Crowns (when Level >= 28)
+        if (pos.X >= 9000 && pos.X <= 12000 && pos.Y >= 12500 && pos.Y <= 14500 && character.Level >= 28)
+        {
+            notes.Add("transitioning-white-arden-to-two-crowns");
+            if (actor is GameplayActor gp)
+            {
+                BotMountManager.EnsureMounted(gp);
+                BotMountManager.EnsureDismounted(gp);
+            }
+
+            var twoCrownsHub = new Vector3(12430f, 11130f, 150f); // Sundowne Village hub
+            RelocateToHub(character, twoCrownsHub);
+            notes.Add($"arrived-at-two-crowns-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
             return true;
         }
 

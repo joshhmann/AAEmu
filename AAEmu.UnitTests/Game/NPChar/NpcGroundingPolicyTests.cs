@@ -29,12 +29,39 @@ public class NpcGroundingPolicyTests
     }
 
     [Test]
-    public async Task ResolveSpawnZ_SevereSubmersion_PreservesSourceZ()
+    public async Task ResolveSpawnZ_SevereSubmersion_CaveDweller_PreservesSourceZ()
     {
-        // Raw terrain cannot distinguish a cave/interior floor from bad submerged data.
-        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 320.76f, groundZ: 591.01f, out var resolvedZ);
+        // Cave/mine dweller (Kobold Miner 2020) inside subterranean mine legitimately stands below outdoor mountain.
+        var action = NpcGroundingPolicy.ResolveSpawnZ(2020, canFly: false, spawnerZ: 320.76f, groundZ: 591.01f, out var resolvedZ);
         await Assert.That(action).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.KeptSourceZ);
         await Assert.That(resolvedZ).IsEqualTo(320.76f);
+    }
+
+    [Test]
+    public async Task ResolveSpawnZ_SevereSubmersion_PlainGroundNpc_ClampsToGround()
+    {
+        // Open-world plain ground NPC (10082) buried below terrain gets clamped up to ground.
+        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 248.0f, groundZ: 252.0f, out var resolvedZ);
+        await Assert.That(action).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.ClampedToGround);
+        await Assert.That(resolvedZ).IsEqualTo(252.0f);
+    }
+
+    [Test]
+    public async Task ResolveSpawnZ_NegativeSubThreshold_KeepsSourceZ()
+    {
+        // -1.5m offset: within +/- 2m tolerance for roads/slopes.
+        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 250.5f, groundZ: 252.0f, out var resolvedZ);
+        await Assert.That(action).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.KeptSourceZ);
+        await Assert.That(resolvedZ).IsEqualTo(250.5f);
+    }
+
+    [Test]
+    public async Task ResolveSpawnZ_ExactlyAtNegativeThreshold_Clamps()
+    {
+        // Exactly -2.0m offset: clamps to ground.
+        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 250.0f, groundZ: 252.0f, out var resolvedZ);
+        await Assert.That(action).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.ClampedToGround);
+        await Assert.That(resolvedZ).IsEqualTo(252.0f);
     }
 
     [Test]
@@ -78,9 +105,16 @@ public class NpcGroundingPolicyTests
     [Test]
     public async Task Whitelist_AerialAndWaterSpecies_AreExempt()
     {
-        // Purple Falcon (61 severe spawns, movement_id != 2), Ocean Razorbeak (+100 m ocean-surface drift)
-        foreach (var tpl in new uint[] { 1243, 8616, 10820, 8608, 8609 })
+        // Purple Falcon (61 severe spawns, movement_id != 2), Ocean Razorbeak (+100 m ocean-surface drift), Skyfin
+        foreach (var tpl in new uint[] { 1243, 8616, 10820, 8608, 8609, 1218, 12640 })
             await Assert.That(NpcGroundingPolicy.IsIntentionalFloater(tpl)).IsTrue();
+    }
+
+    [Test]
+    public async Task Whitelist_CaveDwellers_AreExemptFromSubmergedClamping()
+    {
+        foreach (var tpl in new uint[] { 2020, 2023, 10537, 1880, 6991, 5754, 9724, 12625 })
+            await Assert.That(NpcGroundingPolicy.IsCaveOrInterior(tpl)).IsTrue();
     }
 
     [Test]
@@ -122,10 +156,11 @@ public class NpcGroundingPolicyTests
 
     // ------------------------------------------------------------- threshold
 
-[Test]
+    [Test]
     public async Task ClampSeverity_IsExactlyTwoMeters()
     {
         await Assert.That(NpcGroundingPolicy.ClampSeverityM).IsEqualTo(2f);
+        await Assert.That(NpcGroundingPolicy.NegativeClampSeverityM).IsEqualTo(-2f);
     }
 
 

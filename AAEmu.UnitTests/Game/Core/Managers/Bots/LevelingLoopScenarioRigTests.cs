@@ -2991,13 +2991,43 @@ public class LevelingLoopScenarioRigTests
             EnableInterZoneTravel = true
         };
 
-        var transitioned = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
-
-        await Assert.That(transitioned).IsTrue();
+        // Transition 1: Solzreed -> Dewstone
+        var transitioned1 = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
+        await Assert.That(transitioned1).IsTrue();
         await Assert.That(notes.Any(n => n.Contains("transitioning-solzreed-to-dewstone"))).IsTrue();
         await Assert.That(notes.Any(n => n.Contains("arrived-at-dewstone"))).IsTrue();
         await Assert.That(character.Transform.World.Position.X).IsEqualTo(12600f);
         await Assert.That(character.Transform.World.Position.Y).IsEqualTo(15350f);
+
+        // Transition 2: Dewstone -> Marianople
+        character.Level = 20;
+        character.SetPosition(12600f, 15350f, 158f, 0, 0, 0);
+        var transitioned2 = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
+        await Assert.That(transitioned2).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("transitioning-dewstone-to-marianople"))).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("arrived-at-marianople"))).IsTrue();
+        await Assert.That(character.Transform.World.Position.X).IsEqualTo(10930f);
+        await Assert.That(character.Transform.World.Position.Y).IsEqualTo(12040f);
+
+        // Transition 3: Marianople -> White Arden
+        character.Level = 25;
+        character.SetPosition(10930f, 12040f, 130f, 0, 0, 0);
+        var transitioned3 = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
+        await Assert.That(transitioned3).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("transitioning-marianople-to-white-arden"))).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("arrived-at-white-arden"))).IsTrue();
+        await Assert.That(character.Transform.World.Position.X).IsEqualTo(11045f);
+        await Assert.That(character.Transform.World.Position.Y).IsEqualTo(12885f);
+
+        // Transition 4: White Arden -> Two Crowns
+        character.Level = 28;
+        character.SetPosition(11045f, 12885f, 157f, 0, 0, 0);
+        var transitioned4 = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
+        await Assert.That(transitioned4).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("transitioning-white-arden-to-two-crowns"))).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("arrived-at-two-crowns"))).IsTrue();
+        await Assert.That(character.Transform.World.Position.X).IsEqualTo(12430f);
+        await Assert.That(character.Transform.World.Position.Y).IsEqualTo(11130f);
     }
 
     [Test]
@@ -3401,6 +3431,90 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(result.Links.Count).IsEqualTo(2);
         await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedMarianopleQuestPastureHuntId)).IsTrue();
         await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedMarianopleQuestGuardDeliveryId)).IsTrue();
+    }
+
+    [Test]
+    public async Task LevelingLoop_WhiteArdenStage5_ForestKeepers_DiscoversAndCompletesDelivery()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-white-arden-stage5");
+        var character = session.Character;
+        character.Level = 20;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Seed canonical White Arden delivery: Rico (2108) -> Elmo (2109)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedWhiteArdenQuestForestKeepersId, // 136
+            876, 1476,
+            LevelingLoopScenario.SeedWhiteArdenRicoNpcTemplateId,  // 2108
+            LevelingLoopScenario.SeedWhiteArdenElmoNpcTemplateId, // 2109
+            level: 20);
+
+        SpawnHubNpc(session, LevelingLoopScenario.SeedWhiteArdenRicoNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedWhiteArdenElmoNpcTemplateId, new Vector3(5f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = false,
+            BandMin = 18,
+            BandMax = 25,
+            MaxLinks = 1
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts);
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"White Arden loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedWhiteArdenQuestForestKeepersId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedWhiteArdenQuestForestKeepersId)).IsTrue();
+    }
+
+    [Test]
+    public async Task LevelingLoop_TwoCrownsStage5_UnexpectedAlly_DiscoversAndCompletesDelivery()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-two-crowns-stage5");
+        var character = session.Character;
+        character.Level = 28;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(612, true);
+        character.Quests!.SetCompletedQuestFlag(614, true);
+        character.Quests!.SetCompletedQuestFlag(2430, true);
+        character.Quests!.SetCompletedQuestFlag(4900, true);
+
+        // Seed canonical Two Crowns quest 615: Androi (1720) -> Tesar (1713)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedTwoCrownsQuestUnexpectedAllyId, // 615
+            2598, 2601,
+            LevelingLoopScenario.SeedTwoCrownsAndroiNpcTemplateId,  // 1720
+            LevelingLoopScenario.SeedTwoCrownsTesarNpcTemplateId,   // 1713
+            level: 27);
+
+        SpawnHubNpc(session, LevelingLoopScenario.SeedTwoCrownsAndroiNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedTwoCrownsTesarNpcTemplateId, new Vector3(8f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 25,
+            BandMax = 35,
+            MaxLinks = 1
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts);
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Two Crowns loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedTwoCrownsQuestUnexpectedAllyId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedTwoCrownsQuestUnexpectedAllyId)).IsTrue();
     }
 
 

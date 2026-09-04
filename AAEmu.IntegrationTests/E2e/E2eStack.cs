@@ -129,6 +129,11 @@ public static class E2eStack
         }
     }
 
+    public static string ComposeProject =>
+        Environment.GetEnvironmentVariable("COMPOSE_PROJECT_NAME")
+        ?? Environment.GetEnvironmentVariable("E2E_COMPOSE_PROJECT")
+        ?? (E2eRoot == "/root/aaemu-e2e" ? "e2e" : Path.GetFileName(E2eRoot.TrimEnd('/', '\\')).Replace('-', '_'));
+
     /// <summary>
     /// Destroys the e2e MySQL container + volume so the next `up` re-seeds
     /// from SQL. Fresh accounts every run: no stale characters, no completed
@@ -137,9 +142,8 @@ public static class E2eStack
     private static void ResetDbVolume()
     {
         var envFile = Path.Combine(E2eRoot, ".env");
-        // Compose project name derives from the compose file's directory
-        // (Scripts/e2e -> "e2e"), same as every other invocation in this rig.
-        Run("docker", $"compose -f {ComposeFile} --env-file {envFile} down -v", E2eRoot,
+        EnsureEnvFile(envFile);
+        Run("docker", $"compose -p {ComposeProject} -f {ComposeFile} --env-file {envFile} down -v", E2eRoot,
             timeoutMs: 120_000, check: false);
     }
 
@@ -228,24 +232,46 @@ public static class E2eStack
         return (p.ExitCode, stdout.Result);
     }
 
+    private static void EnsureEnvFile(string envFile)
+    {
+        Directory.CreateDirectory(E2eRoot);
+        var lines = File.Exists(envFile) ? File.ReadAllLines(envFile).ToList() : [];
+        var foundPassword = false;
+        var foundPort = false;
+        var foundProject = false;
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (lines[i].StartsWith("DB_PASSWORD="))
+            {
+                DbPassword = lines[i]["DB_PASSWORD=".Length..].Trim();
+                foundPassword = true;
+            }
+            else if (lines[i].StartsWith("DB_HOST_PORT="))
+            {
+                lines[i] = $"DB_HOST_PORT={DbPort}";
+                foundPort = true;
+            }
+            else if (lines[i].StartsWith("COMPOSE_PROJECT_NAME="))
+            {
+                lines[i] = $"COMPOSE_PROJECT_NAME={ComposeProject}";
+                foundProject = true;
+            }
+        }
+        if (!foundPassword)
+            lines.Add($"DB_PASSWORD={DbPassword}");
+        if (!foundPort)
+            lines.Add($"DB_HOST_PORT={DbPort}");
+        if (!foundProject)
+            lines.Add($"COMPOSE_PROJECT_NAME={ComposeProject}");
+        File.WriteAllLines(envFile, lines);
+    }
+
     private static void EnsureDb()
     {
         var envFile = Path.Combine(E2eRoot, ".env");
-        Directory.CreateDirectory(E2eRoot);
-        if (File.Exists(envFile))
-        {
-            foreach (var line in File.ReadAllLines(envFile))
-            {
-                if (line.StartsWith("DB_PASSWORD="))
-                    DbPassword = line["DB_PASSWORD=".Length..].Trim();
-            }
-        }
-        else
-        {
-            File.WriteAllText(envFile, $"DB_PASSWORD={DbPassword}\n");
-        }
+        EnsureEnvFile(envFile);
 
-        Run("docker", $"compose -f {ComposeFile} --env-file {envFile} up -d db", E2eRoot);
+        Run("docker", $"compose -p {ComposeProject} -f {ComposeFile} --env-file {envFile} up -d db", E2eRoot);
 
         // Wait for MySQL by probing it FROM THE TEST PROCESS over TCP
         // (MySql.Data — the same client the Login server uses). No docker

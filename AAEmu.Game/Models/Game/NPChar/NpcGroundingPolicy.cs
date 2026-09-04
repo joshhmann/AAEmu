@@ -153,10 +153,50 @@ public static class NpcGroundingPolicy
         9897u, // Angler Kuruhara — pier deck
         3575u, // Dock Worker — dock deck
         4947u, // Dock Worker Dewie — dock deck
+
+        // --- (3f) Skyfin aerial species (movement_id != 2) & deep sea ---
+        1217u, 1218u, 3723u, 3724u, 9386u, 9465u, 9553u, 10079u, 12365u, 13583u, 13763u, 14238u, 14750u, 14755u, 14757u, 14758u, 14759u,
+        12640u,// Deep Ocean Doomgaze — deep aquatic
     }.ToFrozenSet();
+
+    /// <summary>
+    /// Cave, mine, crypt, and subterranean dungeon dwellers whose stand surface is far below
+    /// the outdoor mountain/terrain heightmap. Submerged checks preserve source z for these.
+    /// </summary>
+    private static readonly FrozenSet<uint> CaveOrInteriorDwellers = new[]
+    {
+        2020u, // Striped Muzzle Kobold Miner (mine)
+        2023u, // Deshak the Cave Troll (cave)
+        10537u,// Apprentice Wizard Valaren (mine/cave)
+        10622u,// Kobold Taskmaster (mine/cave)
+        1880u, // Dahuta Cult Priestess (Dahuta cult cave)
+        6991u, // Lord Colin's Henchman (Dahuta cult cave)
+        1900u, // Cave Spider (cave)
+        1881u, // Hypnotized Miner (mine)
+        5754u, // Sayen (cave)
+        2504u, // Whitewing Astra (Astra cave)
+        3369u, // Spotted Kobold Warrior (Kobold cave)
+        3370u, // Spotted Kobold Stonethrower (Kobold cave)
+        9724u, // Cave Bat (cave)
+        12625u,// Name-Cursed Blademage (crypt)
+        12626u,// Name-Cursed Blademage (crypt)
+        12627u,// Name-Cursed Wizard (crypt)
+        12628u,// Name-Cursed Wizard (crypt)
+        13059u,// Ancient Spirit (underground ruin)
+        13061u,// Dahuta's Follower (underwater temple)
+        8083u, // Minotaur Berserker (labyrinth)
+        849u,  // Skeletal Merchant (crypt)
+        850u,  // Skeleton Warrior (crypt)
+        1419u, // Ruby Miner (mine)
+    }.ToFrozenSet();
+
+    public const float NegativeClampSeverityM = -2f;
 
     /// <summary>True when this npc template is exempt from spawn-time Z clamping (remedy C).</summary>
     public static bool IsIntentionalFloater(uint npcTemplateId) => IntentionalFloaters.Contains(npcTemplateId);
+
+    /// <summary>True when this npc template is a known cave, mine, or subterranean dweller.</summary>
+    public static bool IsCaveOrInterior(uint npcTemplateId) => CaveOrInteriorDwellers.Contains(npcTemplateId);
 
     // ---------------------------------------------------------------
     // Spawn-time clamp decision (remedy A)
@@ -168,9 +208,9 @@ public static class NpcGroundingPolicy
         Exempted,
         /// <summary>No usable ground sample (GeoData exception / out-of-bounds sentinel 0).</summary>
         NoGroundSample,
-        /// <summary>Sub-2 m offsets and negative offsets (cave/interior suspects) preserve source z.</summary>
+        /// <summary>Sub-threshold offsets (-2m..2m) and whitelisted cave/interior dwellers preserve source z.</summary>
         KeptSourceZ,
-        /// <summary>Positive offset at or above severity threshold — z snapped to terrain.</summary>
+        /// <summary>Offset at or beyond positive/negative severity threshold — z snapped to terrain.</summary>
         ClampedToGround,
 
     }
@@ -193,11 +233,22 @@ public static class NpcGroundingPolicy
             return SpawnGroundingAction.NoGroundSample;
 
         var offset = spawnerZ - groundZ;
-        if (offset < ClampSeverityM)
-            return SpawnGroundingAction.KeptSourceZ;
+        if (offset >= ClampSeverityM)
+        {
+            resolvedZ = groundZ;
+            return SpawnGroundingAction.ClampedToGround;
+        }
 
-        resolvedZ = groundZ;
-        return SpawnGroundingAction.ClampedToGround;
+        if (offset <= NegativeClampSeverityM)
+        {
+            if (IsCaveOrInterior(npcTemplateId))
+                return SpawnGroundingAction.KeptSourceZ;
+
+            resolvedZ = groundZ;
+            return SpawnGroundingAction.ClampedToGround;
+        }
+
+        return SpawnGroundingAction.KeptSourceZ;
     }
 
     // ---------------------------------------------------------------
