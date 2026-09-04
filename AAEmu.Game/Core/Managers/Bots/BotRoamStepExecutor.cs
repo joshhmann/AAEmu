@@ -239,6 +239,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         if (clampedZ != 0f && Math.Abs(clampedZ - position.Z) > 0.05f)
         {
             bot.Character.Transform.Local.SetPosition(position.X, position.Y, clampedZ);
+            bot.Character.Transform.FinalizeTransform();
             position = bot.Character.Transform.World.Position;
         }
 
