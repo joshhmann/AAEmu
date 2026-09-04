@@ -3044,6 +3044,99 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedDewstoneQuestRoysterDangerId)).IsTrue();
     }
 
+    [Test]
+    public async Task LevelingLoop_DewstoneStage2_VisitConstructionSite_DiscoversAndCompletesDelivery()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-dewstone-construction");
+        var character = session.Character;
+        character.Level = 15;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(1656, true); // Mark 1656 completed
+        character.Quests!.SetCompletedQuestFlag(3758, true); // Mark 3758 completed
+        character.Quests!.SetCompletedQuestFlag(3706, true); // Mark prerequisite 3706 completed so Royster offers 921
+
+        // Seed canonical Dewstone quest 921: Lord Royster (680) -> Foreman (699)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedDewstoneQuestConstructionVisitId, // 921
+            4290, 4291,
+            LevelingLoopScenario.SeedDewstoneRoysterNpcTemplateId, // 680
+            LevelingLoopScenario.SeedDewstoneForemanNpcTemplateId, // 699
+            level: 15);
+
+        SpawnHubNpc(session, LevelingLoopScenario.SeedDewstoneRoysterNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedDewstoneForemanNpcTemplateId, new Vector3(5f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 10,
+            BandMax = 20,
+            MaxLinks = 1
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts);
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Dewstone construction loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedDewstoneQuestConstructionVisitId);
+        await Assert.That(result.Links[0].AcceptorTemplateId).IsEqualTo(LevelingLoopScenario.SeedDewstoneRoysterNpcTemplateId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedDewstoneQuestConstructionVisitId)).IsTrue();
+    }
+
+    [Test]
+    public async Task LevelingLoop_DewstoneStage2_ScarredJacob_HuntsBossAndReportsMedd()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-dewstone-jacob-hunt");
+        var character = session.Character;
+        character.Level = 16;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(LevelingLoopScenario.SeedDewstoneQuestCrisisDeliveryId, true);
+
+        // Seed canonical Dewstone quest 931: Detective Medd (5849) -> hunt Scarred Jacob (714) -> report Medd (5849)
+        GameplayActorTestRig.SeedQuestHunt(
+            LevelingLoopScenario.SeedDewstoneQuestScarredJacobId, // 931
+            4295, 4296, 4297,
+            LevelingLoopScenario.SeedDewstoneMeddNpcTemplateId, // 5849
+            LevelingLoopScenario.SeedDewstoneScarredJacobNpcTemplateId, // 714
+            LevelingLoopScenario.SeedDewstoneMeddNpcTemplateId, // 5849
+            huntCount: 1,
+            level: 16);
+
+        // Spawn Detective Medd and Scarred Jacob in perception range
+        SpawnHubNpc(session, LevelingLoopScenario.SeedDewstoneMeddNpcTemplateId, new Vector3(2f, 0f, 0f));
+        var jacobObjId = SpawnHubNpc(session, LevelingLoopScenario.SeedDewstoneScarredJacobNpcTemplateId, new Vector3(8f, 0f, 0f));
+        SeedCorpseLoot(session, jacobObjId);
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 10,
+            BandMax = 20,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Dewstone Jacob hunt loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedDewstoneQuestScarredJacobId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjMonsterHunt));
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedDewstoneQuestScarredJacobId)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedDewstoneQuestScarredJacobId)).IsFalse();
+    }
+
 
     /// <summary>Index of the first record of the action type at or after start.</summary>
     private static int FirstAtLeast(IReadOnlyList<ActorAuditRecord> trace, ActorActionType action, int start)

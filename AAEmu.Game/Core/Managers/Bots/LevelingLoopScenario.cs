@@ -202,11 +202,17 @@ public static class LevelingLoopScenario
     public const uint SeedDewstoneQuestBanditHuntId = 48;
     /// <summary>Quest 55 "위기감" (Sense of Crisis) — Delivery: accept Guard Captain Brann (679), report Detective Medd (5849) at Windshade.</summary>
     public const uint SeedDewstoneQuestCrisisDeliveryId = 55;
+    /// <summary>Quest 921 "공사 현장 방문" (Visit Construction Site) — Delivery: accept Lord Royster (680), report Foreman (699) at the quarry.</summary>
+    public const uint SeedDewstoneQuestConstructionVisitId = 921;
+    /// <summary>Quest 931 "흉터난 제이콥" (Scarred Jacob) — Hunt: accept Detective Medd (5849), hunt Scarred Jacob (714), report Detective Medd (5849).</summary>
+    public const uint SeedDewstoneQuestScarredJacobId = 931;
 
     public const uint SeedDewstoneAfindelleNpcTemplateId = 673;
     public const uint SeedDewstoneRoysterNpcTemplateId = 680;
     public const uint SeedDewstoneBrannNpcTemplateId = 679;
     public const uint SeedDewstoneMeddNpcTemplateId = 5849;
+    public const uint SeedDewstoneForemanNpcTemplateId = 699;
+    public const uint SeedDewstoneScarredJacobNpcTemplateId = 714;
     public const uint SeedDewstoneHerbsDoodadTemplateId = 2796;
     public const uint SeedDewstoneHerbsItemTemplateId = 5264;
 

@@ -3004,6 +3004,70 @@ public static class GameplayActorTestRig
             new QuestActConReportNpc(readyComponent) { DetailId = readyComponentId, ActId = readyComponentId, NpcId = reportNpcTemplateId });
     }
 
+    /// <summary>
+    /// Seeds a complete hunt quest: Start component offered by <paramref name="offerNpcTemplateId"/>,
+    /// Progress component requiring monster hunt of <paramref name="huntNpcTemplateId"/> x <paramref name="huntCount"/>,
+    /// and Ready component reported to <paramref name="reportNpcTemplateId"/>.
+    /// </summary>
+    public static void SeedQuestHunt(uint questId, uint startComponentId, uint progressComponentId, uint readyComponentId,
+        uint offerNpcTemplateId, uint huntNpcTemplateId, uint reportNpcTemplateId, int huntCount = 1, byte level = 15)
+    {
+        var startComponent = EnsureQuestStartComponent(questId, startComponentId, level);
+        if (!startComponent.ActTemplates.OfType<QuestActConAcceptNpc>().Any(a => a.NpcId == offerNpcTemplateId))
+        {
+            RegisterQuestAct(nameof(QuestActConAcceptNpc), startComponentId,
+                new QuestActConAcceptNpc(startComponent) { DetailId = startComponentId, NpcId = offerNpcTemplateId });
+        }
+
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GetField(manager, "_questTemplates");
+        var questTemplate = questTemplates[questId];
+
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GetField(manager, "_componentTemplates");
+        if (!componentTemplates.TryGetValue(progressComponentId, out var progressComponent))
+        {
+            progressComponent = new QuestComponentTemplate(questTemplate)
+            {
+                Id = progressComponentId,
+                KindId = QuestComponentKind.Progress
+            };
+            componentTemplates[progressComponentId] = progressComponent;
+        }
+        if (!questTemplate.Components.ContainsKey(progressComponentId))
+            questTemplate.Components[progressComponentId] = progressComponent;
+
+        if (!progressComponent.ActTemplates.OfType<QuestActObjMonsterHunt>().Any(a => a.NpcId == huntNpcTemplateId))
+        {
+            RegisterQuestAct(nameof(QuestActObjMonsterHunt), progressComponentId,
+                new QuestActObjMonsterHunt(progressComponent)
+                {
+                    DetailId = progressComponentId,
+                    ActId = progressComponentId,
+                    NpcId = huntNpcTemplateId,
+                    Count = huntCount,
+                    ThisComponentObjectiveIndex = 0
+                });
+        }
+
+        if (!componentTemplates.TryGetValue(readyComponentId, out var readyComponent))
+        {
+            readyComponent = new QuestComponentTemplate(questTemplate)
+            {
+                Id = readyComponentId,
+                KindId = QuestComponentKind.Ready
+            };
+            componentTemplates[readyComponentId] = readyComponent;
+        }
+        if (!questTemplate.Components.ContainsKey(readyComponentId))
+            questTemplate.Components[readyComponentId] = readyComponent;
+
+        if (!readyComponent.ActTemplates.OfType<QuestActConReportNpc>().Any(a => a.NpcId == reportNpcTemplateId))
+        {
+            RegisterQuestAct(nameof(QuestActConReportNpc), readyComponentId,
+                new QuestActConReportNpc(readyComponent) { DetailId = readyComponentId, ActId = readyComponentId, NpcId = reportNpcTemplateId });
+        }
+    }
+
     /// <summary>Registers an NPC-talk group membership (QuestManager._groupNpcs).</summary>
     public static void SeedNpcTalkGroup(uint groupId, params uint[] npcTemplateIds)
     {
