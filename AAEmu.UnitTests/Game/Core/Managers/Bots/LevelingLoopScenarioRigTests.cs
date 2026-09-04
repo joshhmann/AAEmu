@@ -3137,6 +3137,69 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedDewstoneQuestScarredJacobId)).IsFalse();
     }
 
+    [Test]
+    public async Task LevelingLoop_DewstoneStage3_SharpwindMines_DiscoversAlistairAndClearsDungeonGroupHunt()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-dewstone-sharpwind-group");
+        var character = session.Character;
+        character.Level = 22;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(4892, true); // Mark earlier Alistair quests 4892 & 5084 completed
+        character.Quests!.SetCompletedQuestFlag(5084, true);
+
+        // Register Monster Group 602 with dungeon bosses (Wera, Ogre, Okaphe)
+        GameplayActorTestRig.SeedNpcTalkGroup(
+            LevelingLoopScenario.SeedSharpwindMonsterGroupId, // 602
+            LevelingLoopScenario.SeedSharpwindBossWeraNpcTemplateId, // 12150
+            LevelingLoopScenario.SeedSharpwindBossOgreNpcTemplateId, // 12152
+            LevelingLoopScenario.SeedSharpwindBossOkapheNpcTemplateId // 12188
+        );
+
+        // Seed canonical Dewstone stage 3 quest 6381: Alistair (12162) -> cull group 602 (hunt count 3) -> auto-complete
+        GameplayActorTestRig.SeedQuestMonsterGroupHunt(
+            LevelingLoopScenario.SeedDewstoneQuestSharpwindConfusionId, // 6381
+            27325, 27326,
+            LevelingLoopScenario.SeedDewstoneAlistairNpcTemplateId, // 12162
+            LevelingLoopScenario.SeedSharpwindMonsterGroupId, // 602
+            huntCount: 3,
+            level: 22,
+            autoComplete: true);
+
+        // Spawn Quest Giver Alistair
+        SpawnHubNpc(session, LevelingLoopScenario.SeedDewstoneAlistairNpcTemplateId, new Vector3(2f, 0f, 0f));
+
+        // Spawn the 3 dungeon bosses in perception range
+        var weraObjId = SpawnHubNpc(session, LevelingLoopScenario.SeedSharpwindBossWeraNpcTemplateId, new Vector3(6f, 0f, 0f));
+        var ogreObjId = SpawnHubNpc(session, LevelingLoopScenario.SeedSharpwindBossOgreNpcTemplateId, new Vector3(9f, 0f, 0f));
+        var okapheObjId = SpawnHubNpc(session, LevelingLoopScenario.SeedSharpwindBossOkapheNpcTemplateId, new Vector3(12f, 0f, 0f));
+        SeedCorpseLoot(session, weraObjId);
+        SeedCorpseLoot(session, ogreObjId);
+        SeedCorpseLoot(session, okapheObjId);
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 15,
+            BandMax = 25,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Dewstone Sharpwind Mines group hunt loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedDewstoneQuestSharpwindConfusionId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjMonsterGroupHunt));
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedDewstoneQuestSharpwindConfusionId)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedDewstoneQuestSharpwindConfusionId)).IsFalse();
+    }
+
 
     /// <summary>Index of the first record of the action type at or after start.</summary>
     private static int FirstAtLeast(IReadOnlyList<ActorAuditRecord> trace, ActorActionType action, int start)

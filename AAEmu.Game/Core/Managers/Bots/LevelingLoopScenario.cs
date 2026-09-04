@@ -206,6 +206,13 @@ public static class LevelingLoopScenario
     public const uint SeedDewstoneQuestConstructionVisitId = 921;
     /// <summary>Quest 931 "흉터난 제이콥" (Scarred Jacob) — Hunt: accept Detective Medd (5849), hunt Scarred Jacob (714), report Detective Medd (5849).</summary>
     public const uint SeedDewstoneQuestScarredJacobId = 931;
+    /// <summary>Quest 6381 "칼바람 속의 혼란" (Confusion in the Cutting Wind) — Dungeon Group Hunt: accept Alistair (12162), cull Sharpwind Mines group 602, auto-complete.</summary>
+    public const uint SeedDewstoneQuestSharpwindConfusionId = 6381;
+    public const uint SeedDewstoneAlistairNpcTemplateId = 12162;
+    public const uint SeedSharpwindMonsterGroupId = 602;
+    public const uint SeedSharpwindBossWeraNpcTemplateId = 12150;
+    public const uint SeedSharpwindBossOgreNpcTemplateId = 12152;
+    public const uint SeedSharpwindBossOkapheNpcTemplateId = 12188;
 
     public const uint SeedDewstoneAfindelleNpcTemplateId = 673;
     public const uint SeedDewstoneRoysterNpcTemplateId = 680;
@@ -724,6 +731,9 @@ public static class LevelingLoopScenario
 
         foreach (var act in progressActs)
         {
+            if (!act.CountsAsAnObjective)
+                continue;
+
             switch (act)
             {
                 case QuestActObjItemGather gather:

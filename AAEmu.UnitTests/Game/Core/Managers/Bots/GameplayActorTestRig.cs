@@ -3074,6 +3074,67 @@ public static class GameplayActorTestRig
         }
     }
 
+    /// <summary>
+    /// Seeds a complete monster group hunt quest: Start component offered by <paramref name="offerNpcTemplateId"/>,
+    /// Progress component requiring monster group hunt of <paramref name="monsterGroupId"/> x <paramref name="huntCount"/>,
+    /// and optional AutoComplete on completion.
+    /// </summary>
+    public static void SeedQuestMonsterGroupHunt(uint questId, uint startComponentId, uint progressComponentId,
+        uint offerNpcTemplateId, uint monsterGroupId, int huntCount = 1, byte level = 22, bool autoComplete = true)
+    {
+        var startComponent = EnsureQuestStartComponent(questId, startComponentId, level);
+        if (!startComponent.ActTemplates.OfType<QuestActConAcceptNpc>().Any(a => a.NpcId == offerNpcTemplateId))
+        {
+            RegisterQuestAct(nameof(QuestActConAcceptNpc), startComponentId,
+                new QuestActConAcceptNpc(startComponent) { DetailId = startComponentId, NpcId = offerNpcTemplateId });
+        }
+
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GetField(manager, "_questTemplates");
+        var questTemplate = questTemplates[questId];
+
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GetField(manager, "_componentTemplates");
+        if (!componentTemplates.TryGetValue(progressComponentId, out var progressComponent))
+        {
+            progressComponent = new QuestComponentTemplate(questTemplate)
+            {
+                Id = progressComponentId,
+                KindId = QuestComponentKind.Progress
+            };
+            componentTemplates[progressComponentId] = progressComponent;
+        }
+        if (!questTemplate.Components.ContainsKey(progressComponentId))
+            questTemplate.Components[progressComponentId] = progressComponent;
+
+        var existingGroupHunt = progressComponent.ActTemplates.OfType<QuestActObjMonsterGroupHunt>().FirstOrDefault(a => a.QuestMonsterGroupId == monsterGroupId);
+        if (existingGroupHunt != null)
+        {
+            existingGroupHunt.Count = huntCount;
+        }
+        else
+        {
+            RegisterQuestAct(nameof(QuestActObjMonsterGroupHunt), progressComponentId,
+                new QuestActObjMonsterGroupHunt(progressComponent)
+                {
+                    DetailId = progressComponentId,
+                    ActId = progressComponentId,
+                    QuestMonsterGroupId = monsterGroupId,
+                    Count = huntCount,
+                    ThisComponentObjectiveIndex = 0
+                });
+        }
+
+        if (autoComplete && !progressComponent.ActTemplates.OfType<QuestActConAutoComplete>().Any())
+        {
+            RegisterQuestAct(nameof(QuestActConAutoComplete), progressComponentId,
+                new QuestActConAutoComplete(progressComponent)
+                {
+                    DetailId = progressComponentId + 1000,
+                    ActId = progressComponentId + 1000
+                });
+        }
+    }
+
     /// <summary>Registers an NPC-talk group membership (QuestManager._groupNpcs).</summary>
     public static void SeedNpcTalkGroup(uint groupId, params uint[] npcTemplateIds)
     {
