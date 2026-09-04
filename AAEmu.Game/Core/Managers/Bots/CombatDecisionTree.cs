@@ -65,10 +65,23 @@ public static class CombatDecisionTree
     public const uint BattlerageChargeSkillId = 11918;      // 돌격 (Charge)
     public const uint BattlerageWhirlwindSkillId = 13282;   // 회오리 베기 (Whirlwind Slash)
 
+    // Defense (Adamant)
+    public const uint DefenseShieldSlamSkillId = 10399;     // 방패 휘두르기 (Shield Slam) [Stuns]
+    public const uint DefenseBullRushSkillId = 10501;       // 제압 (Bull Rush) [Trips stunned target, silences]
+
+    // Shadowplay (Vocation)
+    public const uint ShadowplayRapidStrikesSkillId = 18125;// 연속 베기 (Rapid Strikes)
+    public const uint ShadowplayOverwhelmSkillId = 10648;   // 덮치기 (Overwhelm) [Gap-close, stuns]
+    public const uint ShadowplayShadowsmiteSkillId = 10496; // 어둠의 일격 (Shadowsmite) [Trips stunned target]
+
     // Sorcery (Magic)
     public const uint SorceryFlameboltSkillId = 10752;       // 불꽃 송이 (Flamebolt)
     public const uint SorceryFreezingArrowSkillId = 10667;   // 얼음 화살 (Freezing Arrow)
     public const uint SorceryChainLightningSkillId = 11967; // 연쇄 번개 (Chain Lightning)
+
+    // Witchcraft (Illusion)
+    public const uint WitchcraftEarthenGripSkillId = 14376; // 대지의 손아귀 (Earthen Grip) [Snare, life steal]
+    public const uint WitchcraftEnervateSkillId = 10159;    // 정신 파괴 (Enervate) [Mana burn, debuff]
 
     // Archery (Wild)
     public const uint ArcheryChargedBoltSkillId = 16210;    // 충격 화살 (Charged Bolt)
@@ -78,9 +91,17 @@ public static class CombatDecisionTree
     public const uint VitalismAntithesisSkillId = 10534;    // 빛과 어둠 (Antithesis)
     public const uint VitalismResurgenceSkillId = 10547;    // 샘솟는 생명력 (Resurgence)
 
+    // Songcraft (Romance)
+    public const uint SongcraftCriticalDiscordSkillId = 11973; // 칼의 화음 (Critical Discord) [Damage, Discord]
+    public const uint SongcraftStartlingStrainSkillId = 11934; // 매혹의 노래 (Startling Strain) [Stuns, Charmed]
+
     // Occultism (Death)
     public const uint OccultismHellSpearSkillId = 10135;    // 지옥의 창 (Hell Spear)
     public const uint OccultismManaStarsSkillId = 12759;    // 활력 추출 / 마나 스타 (Mana Stars)
+
+    // Auramancy (Will)
+    public const uint AuramancyThwartSkillId = 16486;       // 기선 제압 (Thwart) [Shaken debuff, Inspired stack]
+    public const uint AuramancyConversionShieldSkillId = 11869; // 활력 방패 (Conversion Shield)
 
     /// <summary>
     /// Infers the primary combat role from the character's primary skill tree (Ability1).
@@ -123,6 +144,17 @@ public static class CombatDecisionTree
         {
             case CombatRole.Melee:
             {
+                // Defense combo chain: Shield Slam (10399) [Stuns] -> Bull Rush (10501) [Trips stunned target]
+                if (lastSkillUsed == DefenseShieldSlamSkillId && candidates.Contains(DefenseBullRushSkillId))
+                    return DefenseBullRushSkillId;
+
+                // Shadowplay combo chain: Overwhelm (10648) [Stuns] -> Shadowsmite (10496) [Trips stunned target] -> Rapid Strikes (18125)
+                if (lastSkillUsed == ShadowplayOverwhelmSkillId && candidates.Contains(ShadowplayShadowsmiteSkillId))
+                    return ShadowplayShadowsmiteSkillId;
+
+                if (lastSkillUsed == ShadowplayShadowsmiteSkillId && candidates.Contains(ShadowplayRapidStrikesSkillId))
+                    return ShadowplayRapidStrikesSkillId;
+
                 // Battlerage combo chain: Charge (11918) -> Triple Slash (18131) -> Whirlwind Slash (13282)
                 if (lastSkillUsed == BattlerageChargeSkillId && candidates.Contains(BattlerageTripleSlashSkillId))
                     return BattlerageTripleSlashSkillId;
@@ -130,12 +162,30 @@ public static class CombatDecisionTree
                 if (lastSkillUsed == BattlerageTripleSlashSkillId && candidates.Contains(BattlerageWhirlwindSkillId))
                     return BattlerageWhirlwindSkillId;
 
-                // Opener / default priority
+                // Openers / default priority:
+                // 1. Crowd-control / gap-closers
+                if (candidates.Contains(DefenseShieldSlamSkillId) && lastSkillUsed != DefenseShieldSlamSkillId)
+                    return DefenseShieldSlamSkillId;
+
+                if (candidates.Contains(ShadowplayOverwhelmSkillId) && lastSkillUsed != ShadowplayOverwhelmSkillId)
+                    return ShadowplayOverwhelmSkillId;
+
                 if (candidates.Contains(BattlerageChargeSkillId) && lastSkillUsed != BattlerageChargeSkillId)
                     return BattlerageChargeSkillId;
 
+                // 2. Follow-up finishers
+                if (candidates.Contains(DefenseBullRushSkillId))
+                    return DefenseBullRushSkillId;
+
+                if (candidates.Contains(ShadowplayShadowsmiteSkillId))
+                    return ShadowplayShadowsmiteSkillId;
+
+                // 3. Spammers / bread & butter
                 if (candidates.Contains(BattlerageTripleSlashSkillId))
                     return BattlerageTripleSlashSkillId;
+
+                if (candidates.Contains(ShadowplayRapidStrikesSkillId))
+                    return ShadowplayRapidStrikesSkillId;
 
                 if (candidates.Contains(BattlerageWhirlwindSkillId))
                     return BattlerageWhirlwindSkillId;
@@ -152,9 +202,24 @@ public static class CombatDecisionTree
                 if (lastSkillUsed == SorceryFreezingArrowSkillId && candidates.Contains(SorceryChainLightningSkillId))
                     return SorceryChainLightningSkillId;
 
-                // Opener: Burn with Flamebolt
+                // Witchcraft combo chain: Enervate (10159) -> Earthen Grip (14376) [bonus damage & life drain on Enervated]
+                if (lastSkillUsed == WitchcraftEnervateSkillId && candidates.Contains(WitchcraftEarthenGripSkillId))
+                    return WitchcraftEarthenGripSkillId;
+
+                // Occultism combo chain: Hell Spear (10135) -> Mana Stars (12759)
+                if (lastSkillUsed == OccultismHellSpearSkillId && candidates.Contains(OccultismManaStarsSkillId))
+                    return OccultismManaStarsSkillId;
+
+                // Auramancy utility buff
+                if (candidates.Contains(AuramancyConversionShieldSkillId) && lastSkillUsed != AuramancyConversionShieldSkillId)
+                    return AuramancyConversionShieldSkillId;
+
+                // Openers: Burn with Flamebolt or debuff with Enervate
                 if (candidates.Contains(SorceryFlameboltSkillId))
                     return SorceryFlameboltSkillId;
+
+                if (candidates.Contains(WitchcraftEnervateSkillId))
+                    return WitchcraftEnervateSkillId;
 
                 if (candidates.Contains(SorceryFreezingArrowSkillId))
                     return SorceryFreezingArrowSkillId;
@@ -162,15 +227,17 @@ public static class CombatDecisionTree
                 if (candidates.Contains(SorceryChainLightningSkillId))
                     return SorceryChainLightningSkillId;
 
-                // Occultism combo fallback: Hell Spear (10135) -> Mana Stars (12759)
-                if (lastSkillUsed == OccultismHellSpearSkillId && candidates.Contains(OccultismManaStarsSkillId))
-                    return OccultismManaStarsSkillId;
+                if (candidates.Contains(WitchcraftEarthenGripSkillId))
+                    return WitchcraftEarthenGripSkillId;
 
                 if (candidates.Contains(OccultismHellSpearSkillId))
                     return OccultismHellSpearSkillId;
 
                 if (candidates.Contains(OccultismManaStarsSkillId))
                     return OccultismManaStarsSkillId;
+
+                if (candidates.Contains(AuramancyThwartSkillId))
+                    return AuramancyThwartSkillId;
 
                 break;
             }
@@ -188,15 +255,28 @@ public static class CombatDecisionTree
                 if (candidates.Contains(ArcheryEndlessArrowsSkillId))
                     return ArcheryEndlessArrowsSkillId;
 
+                if (candidates.Contains(ShadowplayRapidStrikesSkillId))
+                    return ShadowplayRapidStrikesSkillId;
+
                 break;
             }
 
             case CombatRole.HealerSupport:
             {
+                // Songcraft combo chain: Startling Strain (11934) [Stuns & Charms] -> Critical Discord (11973) [amplified vs Charmed]
+                if (lastSkillUsed == SongcraftStartlingStrainSkillId && candidates.Contains(SongcraftCriticalDiscordSkillId))
+                    return SongcraftCriticalDiscordSkillId;
+
                 // Vitalism rotation: Resurgence (10547) [HoT buff] -> Antithesis (10534) [damage/heal]
                 var hpPercent = bot.MaxHp > 0 ? (float)bot.Hp / bot.MaxHp : 1.0f;
                 if (hpPercent < 0.70f && candidates.Contains(VitalismResurgenceSkillId))
                     return VitalismResurgenceSkillId;
+
+                if (candidates.Contains(SongcraftStartlingStrainSkillId) && lastSkillUsed != SongcraftStartlingStrainSkillId)
+                    return SongcraftStartlingStrainSkillId;
+
+                if (candidates.Contains(SongcraftCriticalDiscordSkillId))
+                    return SongcraftCriticalDiscordSkillId;
 
                 if (candidates.Contains(VitalismAntithesisSkillId))
                     return VitalismAntithesisSkillId;

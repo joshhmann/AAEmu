@@ -208,4 +208,94 @@ public class CombatDecisionTreeTests
         var dInjured = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.HealerSupport, availableSkills: skills);
         await Assert.That(dInjured.SkillId).IsEqualTo(CombatDecisionTree.VitalismResurgenceSkillId);
     }
+
+    [Test]
+    public async Task Evaluate_DefenseCombo_PrioritizesShieldSlamThenBullRush()
+    {
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(102, 100, 10)); // dist = 2m
+        var skills = new uint[]
+        {
+            CombatDecisionTree.DefenseBullRushSkillId,
+            CombatDecisionTree.DefenseShieldSlamSkillId
+        };
+
+        // Round 1: Opener -> Shield Slam (Stuns target)
+        var d1 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills, lastSkillUsed: 0);
+        await Assert.That(d1.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d1.SkillId).IsEqualTo(CombatDecisionTree.DefenseShieldSlamSkillId);
+
+        // Round 2: After Shield Slam -> Bull Rush (Trips stunned target)
+        var d2 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills, lastSkillUsed: CombatDecisionTree.DefenseShieldSlamSkillId);
+        await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.DefenseBullRushSkillId);
+    }
+
+    [Test]
+    public async Task Evaluate_ShadowplayCombo_PrioritizesOverwhelmThenShadowsmiteThenRapidStrikes()
+    {
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(102, 100, 10)); // dist = 2m
+        var skills = new uint[]
+        {
+            CombatDecisionTree.ShadowplayRapidStrikesSkillId,
+            CombatDecisionTree.ShadowplayShadowsmiteSkillId,
+            CombatDecisionTree.ShadowplayOverwhelmSkillId
+        };
+
+        // Round 1: Opener -> Overwhelm (Gap-close leap & stun)
+        var d1 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills, lastSkillUsed: 0);
+        await Assert.That(d1.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d1.SkillId).IsEqualTo(CombatDecisionTree.ShadowplayOverwhelmSkillId);
+
+        // Round 2: After Overwhelm -> Shadowsmite (Trips stunned target)
+        var d2 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills, lastSkillUsed: CombatDecisionTree.ShadowplayOverwhelmSkillId);
+        await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.ShadowplayShadowsmiteSkillId);
+
+        // Round 3: After Shadowsmite -> Rapid Strikes (Filler)
+        var d3 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills, lastSkillUsed: CombatDecisionTree.ShadowplayShadowsmiteSkillId);
+        await Assert.That(d3.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d3.SkillId).IsEqualTo(CombatDecisionTree.ShadowplayRapidStrikesSkillId);
+    }
+
+    [Test]
+    public async Task Evaluate_WitchcraftCombo_PrioritizesEnervateThenEarthenGrip()
+    {
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(115, 100, 10)); // dist = 15m
+        var skills = new uint[]
+        {
+            CombatDecisionTree.WitchcraftEarthenGripSkillId,
+            CombatDecisionTree.WitchcraftEnervateSkillId
+        };
+
+        // Round 1: Opener -> Enervate (Debuff & mana burn)
+        var d1 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedMagic, availableSkills: skills, lastSkillUsed: 0);
+        await Assert.That(d1.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d1.SkillId).IsEqualTo(CombatDecisionTree.WitchcraftEnervateSkillId);
+
+        // Round 2: After Enervate -> Earthen Grip (Snare & life drain combo)
+        var d2 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedMagic, availableSkills: skills, lastSkillUsed: CombatDecisionTree.WitchcraftEnervateSkillId);
+        await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.WitchcraftEarthenGripSkillId);
+    }
+
+    [Test]
+    public async Task Evaluate_SongcraftCombo_PrioritizesStartlingStrainThenCriticalDiscord()
+    {
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(112, 100, 10)); // dist = 12m
+        var skills = new uint[]
+        {
+            CombatDecisionTree.SongcraftCriticalDiscordSkillId,
+            CombatDecisionTree.SongcraftStartlingStrainSkillId
+        };
+
+        // Round 1: Opener -> Startling Strain (Stuns and Charms target)
+        var d1 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.HealerSupport, availableSkills: skills, lastSkillUsed: 0);
+        await Assert.That(d1.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d1.SkillId).IsEqualTo(CombatDecisionTree.SongcraftStartlingStrainSkillId);
+
+        // Round 2: After Startling Strain -> Critical Discord (Amplified vs Charmed)
+        var d2 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.HealerSupport, availableSkills: skills, lastSkillUsed: CombatDecisionTree.SongcraftStartlingStrainSkillId);
+        await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.SongcraftCriticalDiscordSkillId);
+    }
 }
