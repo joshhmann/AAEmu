@@ -238,4 +238,120 @@ public class BotBagManagerTests
         await Assert.That(repairedCount).IsEqualTo(1);
         await Assert.That(equip.Durability).IsEqualTo(equip.MaxDurability);
     }
+
+    [Test]
+    public async Task CalculateGearScore_EvaluatesLevelGradeAndBrokenState()
+    {
+        var lowLevel = new Item
+        {
+            Id = 101,
+            Grade = 1,
+            Template = new ItemTemplate { Id = 101, Level = 10, LevelRequirement = 10 }
+        };
+        var highLevel = new Item
+        {
+            Id = 102,
+            Grade = 1,
+            Template = new ItemTemplate { Id = 102, Level = 20, LevelRequirement = 20 }
+        };
+        var highGrade = new Item
+        {
+            Id = 103,
+            Grade = 4,
+            Template = new ItemTemplate { Id = 103, Level = 10, LevelRequirement = 10 }
+        };
+        var brokenItem = new TestEquipItem(104, new EquipItemTemplate { Id = 104, Level = 50 }, 100)
+        {
+            Durability = 0
+        };
+
+        var scoreLow = BotBagManager.CalculateGearScore(lowLevel);
+        var scoreHigh = BotBagManager.CalculateGearScore(highLevel);
+        var scoreGrade = BotBagManager.CalculateGearScore(highGrade);
+        var scoreBroken = BotBagManager.CalculateGearScore(brokenItem);
+
+        await Assert.That(scoreHigh).IsGreaterThan(scoreLow);
+        await Assert.That(scoreGrade).IsGreaterThan(scoreLow);
+        await Assert.That(scoreBroken).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task IsUpgrade_IdentifiesBetterGearAndRejectsUnderleveled()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("test-upgrade-eval");
+        var character = session.Character;
+        character.Level = 15;
+
+        const uint equippedId = 90_041;
+        const uint upgradeId = 90_042;
+        const uint overleveledId = 90_043;
+        const uint inferiorId = 90_044;
+
+        GameplayActorTestRig.SeedEquipItemTemplate(equippedId, EquipmentItemSlotType.Mainhand, level: 10, levelRequirement: 10);
+        GameplayActorTestRig.SeedEquipItemTemplate(upgradeId, EquipmentItemSlotType.Mainhand, level: 15, levelRequirement: 15);
+        GameplayActorTestRig.SeedEquipItemTemplate(overleveledId, EquipmentItemSlotType.Mainhand, level: 25, levelRequirement: 25);
+        GameplayActorTestRig.SeedEquipItemTemplate(inferiorId, EquipmentItemSlotType.Mainhand, level: 5, levelRequirement: 5);
+
+        GameplayActorTestRig.StockItem(session, equippedId, 1);
+        var equipReq = actor.Equip(equippedId);
+        await Assert.That(equipReq.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        GameplayActorTestRig.StockItem(session, upgradeId, 1);
+        GameplayActorTestRig.StockItem(session, overleveledId, 1);
+        GameplayActorTestRig.StockItem(session, inferiorId, 1);
+
+        var upgradeItem = character.Inventory.Bag.GetItemsSnapshot().First(i => i.TemplateId == upgradeId);
+        var overleveledItem = character.Inventory.Bag.GetItemsSnapshot().First(i => i.TemplateId == overleveledId);
+        var inferiorItem = character.Inventory.Bag.GetItemsSnapshot().First(i => i.TemplateId == inferiorId);
+
+        await Assert.That(BotBagManager.IsUpgrade(character, upgradeItem, out var targetSlot)).IsTrue();
+        await Assert.That(targetSlot).IsEqualTo(EquipmentItemSlot.Mainhand);
+        await Assert.That(BotBagManager.IsUpgrade(character, overleveledItem, out _)).IsFalse();
+        await Assert.That(BotBagManager.IsUpgrade(character, inferiorItem, out _)).IsFalse();
+    }
+
+    [Test]
+    public async Task AutoEquipUpgrades_EquipsUpgradeAndDisplacesOldGear_MarkingDisplacedAsObsolete()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("test-autoequip");
+        var character = session.Character;
+        character.Level = 20;
+
+        const uint oldSwordTemplateId = 90_031;
+        const uint upgradeSwordTemplateId = 90_032;
+
+        GameplayActorTestRig.SeedEquipItemTemplate(oldSwordTemplateId, EquipmentItemSlotType.Mainhand, level: 10, levelRequirement: 10);
+        GameplayActorTestRig.SeedEquipItemTemplate(upgradeSwordTemplateId, EquipmentItemSlotType.Mainhand, level: 20, levelRequirement: 20);
+
+        // Equip old sword into Mainhand
+        GameplayActorTestRig.StockItem(session, oldSwordTemplateId, 1);
+        var initialEquip = actor.Equip(oldSwordTemplateId);
+        await Assert.That(initialEquip.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        var currentEquipped = character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Mainhand);
+        await Assert.That(currentEquipped?.TemplateId).IsEqualTo(oldSwordTemplateId);
+
+        // Stock upgrade sword into Bag
+        GameplayActorTestRig.StockItem(session, upgradeSwordTemplateId, 1);
+        await Assert.That(character.Inventory.Bag.GetItemsSnapshot().Any(i => i.TemplateId == upgradeSwordTemplateId)).IsTrue();
+
+        // Act: AutoEquipUpgrades
+        var (equippedCount, log) = BotBagManager.AutoEquipUpgrades(actor);
+
+        await Assert.That(equippedCount).IsGreaterThan(0);
+        await Assert.That(log.Count).IsGreaterThan(0);
+
+        // Assert: Mainhand now has the upgrade sword
+        var newlyEquipped = character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Mainhand);
+        await Assert.That(newlyEquipped?.TemplateId).IsEqualTo(upgradeSwordTemplateId);
+
+        // Assert: Old sword was displaced into Bag
+        var displacedInBag = character.Inventory.Bag.GetItemsSnapshot().FirstOrDefault(i => i.TemplateId == oldSwordTemplateId);
+        await Assert.That(displacedInBag).IsNotNull();
+
+        // Assert: Displaced old sword is recognized as obsolete equipment and classified as trash for vendoring
+        await Assert.That(BotBagManager.IsObsoleteEquipment(character, displacedInBag!)).IsTrue();
+        var audit = BotBagManager.AuditBag(character);
+        await Assert.That(audit.TrashItems.Any(i => i.TemplateId == oldSwordTemplateId)).IsTrue();
+    }
 }

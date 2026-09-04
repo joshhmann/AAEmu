@@ -1185,7 +1185,8 @@ public static class GameplayActorTestRig
     /// is DI-only; the rig seeds the singleton during Seed().
     /// </summary>
     public static void SeedEquipItemTemplate(uint templateId,
-        EquipmentItemSlotType slotType = EquipmentItemSlotType.OneHanded)
+        EquipmentItemSlotType slotType = EquipmentItemSlotType.OneHanded,
+        int level = 1, int levelRequirement = 0, int grade = 0)
     {
         var templates = (Dictionary<uint, ItemTemplate>)GetField(ItemManager.Instance, "_templates");
         if (!templates.ContainsKey(templateId))
@@ -1194,6 +1195,11 @@ public static class GameplayActorTestRig
             {
                 Id = templateId,
                 MaxCount = 1,
+                Level = level,
+                LevelRequirement = levelRequirement,
+                FixedGrade = grade,
+                Sellable = true,
+                Refund = 50,
                 HoldableTemplate = new Holdable { Id = templateId, SlotTypeId = (uint)slotType }
             };
         }

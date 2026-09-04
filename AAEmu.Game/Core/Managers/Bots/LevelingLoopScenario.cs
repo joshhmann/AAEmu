@@ -2410,38 +2410,13 @@ public static class LevelingLoopScenario
     }
 
     /// <summary>
-    /// Scans the actor's inventory bag for equippable items and attempts to
-    /// equip them via the real <see cref="IGameplayActor.Equip"/> engine path.
+    /// Evaluates bag items and equips upgrades using the BotBagManager gear score engine.
     /// Non-equippable items or occupied slots with higher/equivalent gear are
     /// handled fail-safe by the engine's CanAccept / Equip rules.
     /// </summary>
     private static void EquipUpgrades(GameplayActor actor)
     {
-        var character = actor.Character;
-        var inventory = character.Inventory;
-        if (inventory?.Bag == null)
-            return;
-
-        foreach (var item in inventory.Bag.Items.ToList())
-        {
-            if (item?.Template == null)
-                continue;
-
-            var allowedSlots = EquipmentContainer.GetAllowedGearSlots(item.Template);
-            if (allowedSlots.Count == 0)
-                continue;
-            if (item.Template.LevelRequirement > character.Level)
-                continue;
-
-            var targetSlot = allowedSlots.FirstOrDefault(s => inventory.Equipment.GetItemBySlot((int)s) == null, allowedSlots[0]);
-            var occupant = inventory.Equipment.GetItemBySlot((int)targetSlot);
-            if (occupant != null && item.Template.Level <= occupant.Template.Level)
-                continue;
-            if (occupant?.TemplateId == item.TemplateId)
-                continue;
-
-            actor.Equip(item.TemplateId);
-        }
+        BotBagManager.AutoEquipUpgrades(actor);
     }
     /// <summary>
     /// Aggro-ranked objective leg. The objective's live quest instance supplies
@@ -2931,6 +2906,9 @@ public static class LevelingLoopScenario
     /// </summary>
     private static void TryPerformBagMaintenance(GameplayActor actor, LoopOptions opts, PerceptionSnapshot perception)
     {
+        // Auto-equip any upgrades before evaluating bag sales and repairs
+        BotBagManager.AutoEquipUpgrades(actor);
+
         var audit = BotBagManager.AuditBag(actor.Character);
         if (audit.TrashItems.Count == 0 && audit.DamagedEquipment.Count == 0 && !audit.IsNearFull)
             return;

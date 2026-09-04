@@ -104,9 +104,13 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   2. **Strict Item Protection (`BotBagManager.IsTrash`)**: Explicitly safeguards quest items (`Quest_Item`, quest weapons/armor/accessories, `LootQuestId`), active equipment, and essential sustain consumables (potions, food, water). Only explicit `Trash_*` categories (35, 98, 101, 102, 103, 104, 105) and gray/common non-equipment with refund value are sold.
   3. **Autonomous Vendoring (`BotBagManager.SellAllTrash`)**: Executes real `actor.Sell` path against merchant NPCs, reclaiming bag slots and converting junk into copper/silver.
   4. **Canonical Equipment Repair (`GameplayActor.Repair` & `BotBagManager.RepairAllEquipment`)**: Executes real `Character.DoRepair` engine path at blacksmith or merchant NPCs, restoring weapons and armor to `MaxDurability`.
-  5. **Integrated into Leveling Loops (`LevelingLoopScenario.TryPerformBagMaintenance`)**: Automatically runs upon quest turn-ins at town/settlement hubs.
-  6. **Unit & Gate Evidence**: `BotBagManagerTests` **4/4** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with **2,769 total tests (2,768 passed, 1 skipped)**.
-- Status: IMPLEMENTATION LANDED / ADVANCED GEAR UPGRADE OPEN
+  5. **Gear Scoring & Auto-Equipping Upgrades (`BotBagManager.CalculateGearScore`, `IsUpgrade`, `AutoEquipUpgrades`)**:
+     - Evaluates gear score across item level, grade rarity, weapon DPS, and broken durability penalties.
+     - Automatically equips upgrades from quest rewards or mob drops into optimal slots, displacing older gear into the bag.
+     - Identifies displaced, strictly inferior gear as obsolete (`BotBagManager.IsObsoleteEquipment`), routing it into `AuditBag.TrashItems` for safe merchant sale.
+     - Integrated directly into `LevelingLoopScenario.TryPerformBagMaintenance` and `EquipUpgrades`.
+  6. **Unit & Gate Evidence**: `BotBagManagerTests` **7/7** green (+3 tests); `LevelingLoopScenarioRigTests` **40/40** green. Full `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, in-game script compilation succeeded, **2,786 total tests (2,785 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
+- Status: IMPLEMENTATION LANDED / ADVANCED GEAR UPGRADE LANDED
 
 ### PB-MOUNT · Autonomous Mount Riding on Arterial Highways & Travel Mobility — IMPLEMENTATION LANDED 2026-09-03
 - Scenario: playerbot travels long distances along arterial highway networks (e.g. 10.2 km Solzreed -> Dewstone route) on foot at slow speed (5.4 m/s)
