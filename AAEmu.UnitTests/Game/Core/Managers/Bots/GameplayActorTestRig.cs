@@ -3042,7 +3042,12 @@ public static class GameplayActorTestRig
         if (!questTemplate.Components.ContainsKey(progressComponentId))
             questTemplate.Components[progressComponentId] = progressComponent;
 
-        if (!progressComponent.ActTemplates.OfType<QuestActObjMonsterHunt>().Any(a => a.NpcId == huntNpcTemplateId))
+        var existingHunt = progressComponent.ActTemplates.OfType<QuestActObjMonsterHunt>().FirstOrDefault(a => a.NpcId == huntNpcTemplateId);
+        if (existingHunt != null)
+        {
+            existingHunt.Count = huntCount;
+        }
+        else
         {
             RegisterQuestAct(nameof(QuestActObjMonsterHunt), progressComponentId,
                 new QuestActObjMonsterHunt(progressComponent)

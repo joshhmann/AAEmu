@@ -5,6 +5,20 @@
 > Engine: real QuestManager.Load + real unit_reqs from canonical compact.sqlite3;
 > bots = ordinary Character records (no Connection); all mutations through normal gameplay services.
 
+## cat34-daily
+```
+# Scenario: cat34-daily
+Verdict: PASS
+- gate [prereq-1958]: REFUSED (pass) refused without prereq quest 1958 completed: RejectedAction: quest 1959 accept refused by engine gate (Npc/0)
+- stage START: 0 events, advance=ran, step=Reward, status=Completed
+- stage PROGRESS: 1 events, advance=ran, step=Dropped, status=Completed
+- criterion [quest-1959-completed]: PASS quest 1959 completed (flag set, not active)
+- criterion [quest-1959-not-active]: PASS quest 1959 not active
+- criterion [reaccept-refused]: PASS re-accept of completed quest 1959 refused by engine (repeatable/daily gate)
+- actor requests: 4
+
+```
+
 ## level22-gate
 ```
 # Scenario: level22-gate
@@ -14,6 +28,21 @@ Verdict: PASS
 - stage READY: 1 events, advance=skipped (quest terminal), step=Dropped, status=Completed
 - criterion [quest-168-completed]: PASS quest 168 completed (flag set, not active)
 - criterion [level-at-22]: PASS level 22 >= 22
+- actor requests: 4
+
+```
+
+## deposit-withdraw-cycle
+```
+# Scenario: deposit-withdraw-cycle
+Verdict: PASS
+- stage deposit-money: 1 events, advance=n/a, step=DepositMoney, status=deposited 1000 copper into bank
+- stage withdraw-money: 1 events, advance=n/a, step=WithdrawMoney, status=withdrew 400 copper from bank
+- stage deposit-item: 1 events, advance=n/a, step=DepositItem, status=deposited 5 of item 15589 into bank
+- stage withdraw-item: 1 events, advance=n/a, step=WithdrawItem, status=withdrew 5 of item 15589 from bank
+- criterion [bank-money-600]: PASS bank money 600 == 600
+- criterion [bag-item-restored]: PASS Inventory holds 5 of item 15589 (expected 5)
+- criterion [bank-item-empty]: PASS Bank holds 0 of item 15589 (expected 0)
 - actor requests: 4
 
 ```
@@ -43,35 +72,6 @@ Verdict: FAIL at VERIFY (WrongDecision) — criterion 'quest-168-completed' fail
 - stage REWARD: 0 events, advance=ran, step=Ready, status=Ready
 - criterion [quest-168-completed]: FAIL quest 168 not completed: active=True, flag=False
 - actor requests: 6
-
-```
-
-## deposit-withdraw-cycle
-```
-# Scenario: deposit-withdraw-cycle
-Verdict: PASS
-- stage deposit-money: 1 events, advance=n/a, step=DepositMoney, status=deposited 1000 copper into bank
-- stage withdraw-money: 1 events, advance=n/a, step=WithdrawMoney, status=withdrew 400 copper from bank
-- stage deposit-item: 1 events, advance=n/a, step=DepositItem, status=deposited 5 of item 15589 into bank
-- stage withdraw-item: 1 events, advance=n/a, step=WithdrawItem, status=withdrew 5 of item 15589 from bank
-- criterion [bank-money-600]: PASS bank money 600 == 600
-- criterion [bag-item-restored]: PASS Inventory holds 5 of item 15589 (expected 5)
-- criterion [bank-item-empty]: PASS Bank holds 0 of item 15589 (expected 0)
-- actor requests: 4
-
-```
-
-## cat34-daily
-```
-# Scenario: cat34-daily
-Verdict: PASS
-- gate [prereq-1958]: REFUSED (pass) refused without prereq quest 1958 completed: RejectedAction: quest 1959 accept refused by engine gate (Npc/0)
-- stage START: 0 events, advance=ran, step=Reward, status=Completed
-- stage PROGRESS: 1 events, advance=ran, step=Dropped, status=Completed
-- criterion [quest-1959-completed]: PASS quest 1959 completed (flag set, not active)
-- criterion [quest-1959-not-active]: PASS quest 1959 not active
-- criterion [reaccept-refused]: PASS re-accept of completed quest 1959 refused by engine (repeatable/daily gate)
-- actor requests: 4
 
 ```
 

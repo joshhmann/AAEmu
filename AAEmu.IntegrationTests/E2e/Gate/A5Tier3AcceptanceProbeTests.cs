@@ -334,8 +334,8 @@ public class A5Tier3AcceptanceProbeTests
             var startupRss = new StartupRssTracker();
             var warmupStartedAtUtc = DateTime.UtcNow;
             E2eStack.RestartGameServer();
-            WaitBoot(startupRss.Observe);
-            WaitDormantDiscovered(seededCount, startupRss.Observe);
+            WaitBoot(startupRss.Observe, TestContext.Current.CancellationToken);
+            WaitDormantDiscovered(seededCount, startupRss.Observe, TestContext.Current.CancellationToken);
             var quiescence = await WaitForRssQuiescenceAsync(
                 startupRss, seededCount, warmupStartedAtUtc, TestContext.Current.CancellationToken);
             Console.WriteLine($"[a5t3-sixhour] startup quiescent after {quiescence.WarmupDuration.TotalSeconds:F0}s: " +
@@ -875,11 +875,12 @@ public class A5Tier3AcceptanceProbeTests
         return (0, -1, -1, -1, -1);
     }
 
-    private static void WaitBoot(Action<double>? observeRss = null)
+    private static void WaitBoot(Action<double>? observeRss = null, CancellationToken cancellationToken = default)
     {
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(300);
         while (DateTime.UtcNow < deadline)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 observeRss?.Invoke(ReadRssMb());
@@ -888,18 +889,21 @@ public class A5Tier3AcceptanceProbeTests
                     tk.TryGetProperty("available", out var av) && av.GetBoolean())
                     return;
             }
+            catch (OperationCanceledException) { throw; }
             catch { /* bridge hiccup during boot */ }
-            Thread.Sleep(5000);
+            if (cancellationToken.WaitHandle.WaitOne(5000))
+                cancellationToken.ThrowIfCancellationRequested();
         }
         throw new TimeoutException("game server never became metric-ready after restart");
     }
 
-    private static void WaitDormantDiscovered(int expected, Action<double>? observeRss = null)
+    private static void WaitDormantDiscovered(int expected, Action<double>? observeRss = null, CancellationToken cancellationToken = default)
     {
         var deadline = DateTime.UtcNow + TimeSpan.FromMinutes(5);
         var last = -1L;
         while (DateTime.UtcNow < deadline)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 observeRss?.Invoke(ReadRssMb());
@@ -907,8 +911,10 @@ public class A5Tier3AcceptanceProbeTests
                 if (last >= expected)
                     return;
             }
+            catch (OperationCanceledException) { throw; }
             catch { /* bridge hiccup */ }
-            Thread.Sleep(2000);
+            if (cancellationToken.WaitHandle.WaitOne(2000))
+                cancellationToken.ThrowIfCancellationRequested();
         }
         throw new TimeoutException($"dormant discovery stalled at {last}/{expected} specs");
     }
@@ -974,12 +980,13 @@ public class A5Tier3AcceptanceProbeTests
 
 
 
-    private static void WaitEmbodied(int target, TimeSpan window)
+    private static void WaitEmbodied(int target, TimeSpan window, CancellationToken cancellationToken = default)
     {
         var deadline = DateTime.UtcNow + window;
         var lastReported = -1;
         while (DateTime.UtcNow < deadline)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 var m = Metrics();
@@ -995,8 +1002,10 @@ public class A5Tier3AcceptanceProbeTests
                 if (embodied >= target && stepping)
                     return;
             }
+            catch (OperationCanceledException) { throw; }
             catch { /* bridge hiccup during boot */ }
-            Thread.Sleep(5000);
+            if (cancellationToken.WaitHandle.WaitOne(5000))
+                cancellationToken.ThrowIfCancellationRequested();
         }
         throw new TimeoutException($"tier3 probe: baseline only reached partial embodiment within {window.TotalMinutes}min");
     }
@@ -1023,12 +1032,13 @@ public class A5Tier3AcceptanceProbeTests
 
     // --------------------------------------------------------------- sampling
 
-    private static List<Sample> SampleWindow(int minutes)
+    private static List<Sample> SampleWindow(int minutes, CancellationToken cancellationToken = default)
     {
         var samples = new List<Sample>();
         var windowStart = DateTime.UtcNow;
         while ((DateTime.UtcNow - windowStart).TotalMinutes < minutes)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 var m = Metrics();
@@ -1042,11 +1052,13 @@ public class A5Tier3AcceptanceProbeTests
 
                 samples.Add(new Sample(DateTime.UtcNow, ReadRssMb(), TickP(), Region(), Steps()));
             }
+            catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
                 Console.WriteLine($"[a5t3] sample lost: {ex.Message}");
             }
-            Thread.Sleep(15_000);
+            if (cancellationToken.WaitHandle.WaitOne(15_000))
+                cancellationToken.ThrowIfCancellationRequested();
         }
         return samples;
     }

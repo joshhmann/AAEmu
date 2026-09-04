@@ -223,6 +223,21 @@ public static class LevelingLoopScenario
     public const uint SeedDewstoneHerbsDoodadTemplateId = 2796;
     public const uint SeedDewstoneHerbsItemTemplateId = 5264;
 
+    // ---- Canonical Marianople segment ids (compact.sqlite3 canonical 1.2).
+    // Marianople Capital progression (Yuno Pasture -> West Gate Bryce -> South Gate Killian -> Viarna Grounds).
+    /// <summary>Quest 321 "방목장을 지켜라!" (Protect the Pasture!) — Hunt: accept Yuno (440), cull Goblin Marauders (4941), report Yuno (440).</summary>
+    public const uint SeedMarianopleQuestPastureHuntId = 321;
+    /// <summary>Quest 173 "마리아노플의 경비병" (Guards of Marianople) — Delivery: accept Yuno (440), report West Gate Captain Bryce (501).</summary>
+    public const uint SeedMarianopleQuestGuardDeliveryId = 173;
+    /// <summary>Quest 188 "노르예트 가문의 정원" (Noryette Family's Garden) — Delivery: accept South Gate Captain Killian (903), report Keeper Viarna (458).</summary>
+    public const uint SeedMarianopleQuestGardenDeliveryId = 188;
+
+    public const uint SeedMarianopleYunoNpcTemplateId = 440;
+    public const uint SeedMarianopleBryceNpcTemplateId = 501;
+    public const uint SeedMarianopleKillianNpcTemplateId = 903;
+    public const uint SeedMarianopleViarnaNpcTemplateId = 458;
+    public const uint SeedMarianopleGoblinMarauderNpcTemplateId = 4941;
+
     /// <summary>Loop parameters. Defaults = the honest L1–9 starter band.</summary>
     public sealed record LoopOptions
     {

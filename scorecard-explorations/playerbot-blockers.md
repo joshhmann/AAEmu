@@ -77,8 +77,9 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
      - **Stage 1 (Levels 10–15)**: Extended quest discovery perception band adaptively (`AdaptiveBand = true`) so leveling bots discover early offerings including Afindelle (NPC 673) and Lord Royster (NPC 680, quests 1656 and 865). Added data-driven and fallback gather resolution in `GatherLeg` for doodads missing explicit `highlight_doodad_id`. Evidence: `LevelingLoop_DewstoneExpansion_DiscoversAndCompletesDewstoneQuestChain` passed.
      - **Stage 2 (Levels 15–20+)**: Canonical Dewstone mid-chain progression covering Quest 921 ("Visiting the Construction Site", Lord Royster 680 $\rightarrow$ Foreman 699, gated by prerequisite Quest 3706 "Return Orders") and Quest 931 ("Scarred Jacob", Detective Medd 5849 $\rightarrow$ hunt Scarred Jacob 714 $\rightarrow$ report Detective Medd 5849). Defensive index bounds checking landed on `QuestActTemplate.AddObjective`/`SetObjective`/`GetObjective`. Evidence: `LevelingLoop_DewstoneStage2_VisitConstructionSite_DiscoversAndCompletesDelivery` and `LevelingLoop_DewstoneStage2_ScarredJacob_HuntsBossAndReportsMedd` passed.
      - **Stage 3 (Levels 20–25 Dungeon Entry)**: Canonical Sharpwind Mines dungeon progression covering Quest 6381 ("Confusion in the Cutting Wind", Alistair 12162 $\rightarrow$ cull Monster Group 602 dungeon bosses Wera 12150, Ogre 12152, Okaphe 12188 $\rightarrow$ auto-complete). Hardened `LevelingLoopScenario.PursueObjectives` to guard against non-objective acts (`!act.CountsAsAnObjective`, e.g. `QuestActConAutoComplete`). Evidence: `LevelingLoop_DewstoneStage3_SharpwindMines_DiscoversAlistairAndClearsDungeonGroupHunt` passed.
-  3. **Autonomous Death Recovery (`HandleDeathRecovery`)**: When a bot dies during leveling loops or combat, it enters death recovery, resurrects through the real `CharacterResurrection` engine path at the nearest Nui goddess shrine, relocates to the shrine anchor, and recovers HP/MP to safe threshold ($\ge 70\%$) before resuming. Evidence: `LevelingLoop_DeathRecovery_ResurrectsAtNuiAndRecoversHealth` passed.
-  4. **Rig & Gate Evidence**: `LevelingLoopScenarioRigTests` **41/41** green (+3 tests). Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, in-game script compilation succeeded, **2,792 total tests (2,791 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
+     - **Stage 4 (Levels 24–28 Marianople Capital Expansion)**: Canonical Marianople capital progression covering Quest 321 ("Protect the Pasture!", Shepherd Yuno 440 $\rightarrow$ cull Goblin Marauders 4941 $\rightarrow$ report Yuno 440), Quest 173 ("Guards of Marianople", Shepherd Yuno 440 $\rightarrow$ deliver report to West Gate Captain Bryce 501 at Marianople Capital Gate), and Quest 188 ("Noryette Family's Garden", South Gate Captain Killian 903 $\rightarrow$ deliver report to Hunting Grounds Keeper Viarna 458 at Marianople Gardens, gated by Quest 174 prerequisite via `UnitReqs` kind 31 `CompleteQuestContext`). Hardened `GameplayActorTestRig.SeedQuestHunt` to dynamically sync `existingHunt.Count` with `huntCount`. Evidence: `LevelingLoopScenarioRigTests` **45/45** green (+4 tests).
+   3. **Autonomous Death Recovery (`HandleDeathRecovery`)**: When a bot dies during leveling loops or combat, it enters death recovery, resurrects through the real `CharacterResurrection` engine path at the nearest Nui goddess shrine, relocates to the shrine anchor, and recovers HP/MP to safe threshold ($\ge 70\%$) before resuming. Evidence: `LevelingLoop_DeathRecovery_ResurrectsAtNuiAndRecoversHealth` passed.
+   4. **Rig & Gate Evidence**: `LevelingLoopScenarioRigTests` **45/45** green (+4 tests).
 - Status: SCOPED SLICES LANDED / BROAD CLAIM OPEN
 
 ### PB-COMBAT · Tactical Combat Decision Tree & Class Ability Combos — IMPLEMENTATION LANDED 2026-09-03
@@ -131,18 +132,22 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   4. **Unit & Gate Evidence**: `BotMountManagerTests` **4/4** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,773 total tests (2,772 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 - Status: IMPLEMENTATION LANDED / ADVANCED COMBAT MOUNT EXPANSION OPEN
 
-### PB-SOAK · Dormant-timer soak and cancellation blocker — OPEN
+### PB-SOAK · Dormant-timer soak and cancellation blocker — HARNESS HARDENED / SOAK OPEN
 - Scenario: Tier-3 dormant bots and long-running scheduler validation.
 - Observed: no six-hour dormant-timer soak exists in current evidence; no soak
   snapshots and ID-bound `finally` cleanup (`799b698ad`); sibling-preservation
   tests pass 2/2, with no broad wildcard cleanup in those probes.
-- Harness blocker: `SeedBox` has synchronous bridge calls/native `Thread.Join`
-  without hard cancellation.
+- Harness blocker (RESOLVED): `SeedBox` synchronous bridge calls and native `Thread.Join`
+  were replaced by asynchronous `BotDriveClient.CallAsync`, cooperative `CancellationToken`
+  propagation, and `Task.WhenAll` (`950cfd279`). Furthermore, `WaitBoot`, `WaitEmbodied`,
+  `WaitDormantDiscovered`, and `SampleWindow` in `A5Tier3AcceptanceProbeTests` were hardened
+  to accept `CancellationToken` and replace blocking `Thread.Sleep` with cooperative
+  `cancellationToken.WaitHandle.WaitOne(...)`, aborting immediately on cancellation/timeout.
+  Evidence: `BotDriveClientCancellationTests` 3/3 passed.
 - Layer: BOT + SERVER (harness lifecycle and cancellation).
-- Evidence: current source/test HEAD
-  `792774d7707b8b578b8d9975896e0a1ac719f361`; prior staged and historical
-  reports remain preserved and are not relabeled as a current six-hour result.
-- Status: OPEN
+- Evidence: current source/test HEAD `origin/develop`; 6-hour soak remains open pending
+  dedicated operational environment soak validation; harness cancellation fully hardened.
+- Status: HARNESS HARDENED / SOAK OPEN
 
 
 ## FIXED (evidence retained)

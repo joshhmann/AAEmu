@@ -3200,6 +3200,209 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedDewstoneQuestSharpwindConfusionId)).IsFalse();
     }
 
+    [Test]
+    public async Task LevelingLoop_MarianopleStage4_PastureHunt_CullsGoblinMaraudersAndReportsYuno()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-marianople-pasture-hunt");
+        var character = session.Character;
+        character.Level = 24;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(LevelingLoopScenario.SeedMarianopleQuestGuardDeliveryId, true);
+        character.Quests!.SetCompletedQuestFlag(181, true);
+        character.Quests!.SetCompletedQuestFlag(182, true);
+
+        // Seed canonical Marianople stage 4 hunt quest 321: Shepherd Yuno (440) -> hunt Goblin Marauder (4941) x 1 -> report Yuno (440)
+        GameplayActorTestRig.SeedQuestHunt(
+            LevelingLoopScenario.SeedMarianopleQuestPastureHuntId, // 321
+            1340, 2012, 1342,
+            LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, // 440
+            LevelingLoopScenario.SeedMarianopleGoblinMarauderNpcTemplateId, // 4941
+            LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, // 440
+            huntCount: 1,
+            level: 24);
+
+        // Spawn Quest Giver Yuno
+        SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, new Vector3(2f, 0f, 0f));
+
+        // Spawn Goblin Marauder in combat range
+        var mobObjId = SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleGoblinMarauderNpcTemplateId, new Vector3(6f, 0f, 0f));
+        SeedCorpseLoot(session, mobObjId);
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 20,
+            BandMax = 26,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Marianople Pasture hunt loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedMarianopleQuestPastureHuntId);
+        await Assert.That(result.Links[0].Pursuit).Contains(nameof(QuestActObjMonsterHunt));
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedMarianopleQuestPastureHuntId)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedMarianopleQuestPastureHuntId)).IsFalse();
+    }
+
+    [Test]
+    public async Task LevelingLoop_MarianopleStage4_GuardDelivery_ReportsWestGateCaptainBryce()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-marianople-guard-delivery");
+        var character = session.Character;
+        character.Level = 24;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(LevelingLoopScenario.SeedMarianopleQuestPastureHuntId, true);
+        character.Quests!.SetCompletedQuestFlag(181, true);
+
+        // Seed canonical Marianople stage 4 delivery quest 173: Shepherd Yuno (440) -> report West Gate Captain Bryce (501)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedMarianopleQuestGuardDeliveryId, // 173
+            2131, 2132,
+            LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, // 440
+            LevelingLoopScenario.SeedMarianopleBryceNpcTemplateId, // 501
+            level: 24);
+
+        // Spawn Quest Giver Yuno and Turn-in Bryce
+        SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleBryceNpcTemplateId, new Vector3(10f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 20,
+            BandMax = 26,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Marianople Guard delivery loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedMarianopleQuestGuardDeliveryId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedMarianopleQuestGuardDeliveryId)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedMarianopleQuestGuardDeliveryId)).IsFalse();
+    }
+
+    [Test]
+    public async Task LevelingLoop_MarianopleStage4_GardenDelivery_ReportsViarna()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-marianople-garden-delivery");
+        var character = session.Character;
+        character.Level = 24;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(162, true);
+        character.Quests!.SetCompletedQuestFlag(171, true);
+        character.Quests!.SetCompletedQuestFlag(174, true); // Prerequisite for Quest 188 (unit_reqs 32668)
+        character.Quests!.SetCompletedQuestFlag(175, true);
+        character.Quests!.SetCompletedQuestFlag(272, true);
+        character.Quests!.SetCompletedQuestFlag(306, true);
+
+        // Seed canonical Marianople stage 4 delivery quest 188: South Gate Captain Killian (903) -> report Keeper Viarna (458)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedMarianopleQuestGardenDeliveryId, // 188
+            2364, 2365,
+            LevelingLoopScenario.SeedMarianopleKillianNpcTemplateId, // 903
+            LevelingLoopScenario.SeedMarianopleViarnaNpcTemplateId, // 458
+            level: 24);
+
+        // Spawn Quest Giver Killian and Turn-in Viarna
+        SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleKillianNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleViarnaNpcTemplateId, new Vector3(10f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 20,
+            BandMax = 26,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Marianople Garden delivery loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedMarianopleQuestGardenDeliveryId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedMarianopleQuestGardenDeliveryId)).IsTrue();
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(LevelingLoopScenario.SeedMarianopleQuestGardenDeliveryId)).IsFalse();
+    }
+
+    [Test]
+    public async Task LevelingLoop_MarianopleStage4_ChainedProgression_PastureHuntThenGuardDelivery()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-marianople-chained-stage4");
+        var character = session.Character;
+        character.Level = 24;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(174, true);
+        character.Quests!.SetCompletedQuestFlag(181, true);
+        character.Quests!.SetCompletedQuestFlag(182, true);
+
+        // Seed Quest 321 (Hunt)
+        GameplayActorTestRig.SeedQuestHunt(
+            LevelingLoopScenario.SeedMarianopleQuestPastureHuntId, // 321
+            1340, 2012, 1342,
+            LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, // 440
+            LevelingLoopScenario.SeedMarianopleGoblinMarauderNpcTemplateId, // 4941
+            LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, // 440
+            huntCount: 1,
+            level: 24);
+
+        // Seed Quest 173 (Delivery)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedMarianopleQuestGuardDeliveryId, // 173
+            2131, 2132,
+            LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, // 440
+            LevelingLoopScenario.SeedMarianopleBryceNpcTemplateId, // 501
+            level: 24);
+
+        // Spawn Quest Giver Yuno, Goblin Marauder, and Bryce
+        SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleYunoNpcTemplateId, new Vector3(2f, 0f, 0f));
+        var mobObjId = SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleGoblinMarauderNpcTemplateId, new Vector3(6f, 0f, 0f));
+        SeedCorpseLoot(session, mobObjId);
+        SpawnHubNpc(session, LevelingLoopScenario.SeedMarianopleBryceNpcTemplateId, new Vector3(10f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 20,
+            BandMax = 26,
+            MaxLinks = 2,
+            CastRotation = [GameplayActorTestRig.TestSkillId]
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts, new RigKillSeam());
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Marianople Stage 4 chained loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(2);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedMarianopleQuestPastureHuntId)).IsTrue();
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedMarianopleQuestGuardDeliveryId)).IsTrue();
+    }
+
 
     /// <summary>Index of the first record of the action type at or after start.</summary>
     private static int FirstAtLeast(IReadOnlyList<ActorAuditRecord> trace, ActorActionType action, int start)
