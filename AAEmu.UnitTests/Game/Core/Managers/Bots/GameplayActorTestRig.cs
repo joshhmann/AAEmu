@@ -2972,6 +2972,38 @@ public static class GameplayActorTestRig
         progress.ActTemplates.Add(act);
     }
 
+    /// <summary>
+    /// Seeds a complete delivery/talk quest: Start component offered by <paramref name="offerNpcTemplateId"/>
+    /// and Ready component reported to <paramref name="reportNpcTemplateId"/>.
+    /// </summary>
+    public static void SeedQuestDelivery(uint questId, uint startComponentId, uint readyComponentId,
+        uint offerNpcTemplateId, uint reportNpcTemplateId, byte level = 15)
+    {
+        var startComponent = EnsureQuestStartComponent(questId, startComponentId, level);
+        RegisterQuestAct(nameof(QuestActConAcceptNpc), startComponentId,
+            new QuestActConAcceptNpc(startComponent) { DetailId = startComponentId, NpcId = offerNpcTemplateId });
+
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GetField(manager, "_questTemplates");
+        var questTemplate = questTemplates[questId];
+
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GetField(manager, "_componentTemplates");
+        if (!componentTemplates.TryGetValue(readyComponentId, out var readyComponent))
+        {
+            readyComponent = new QuestComponentTemplate(questTemplate)
+            {
+                Id = readyComponentId,
+                KindId = QuestComponentKind.Ready
+            };
+            componentTemplates[readyComponentId] = readyComponent;
+        }
+        if (!questTemplate.Components.ContainsKey(readyComponentId))
+            questTemplate.Components[readyComponentId] = readyComponent;
+
+        RegisterQuestAct(nameof(QuestActConReportNpc), readyComponentId,
+            new QuestActConReportNpc(readyComponent) { DetailId = readyComponentId, ActId = readyComponentId, NpcId = reportNpcTemplateId });
+    }
+
     /// <summary>Registers an NPC-talk group membership (QuestManager._groupNpcs).</summary>
     public static void SeedNpcTalkGroup(uint groupId, params uint[] npcTemplateIds)
     {

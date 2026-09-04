@@ -32,6 +32,14 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 
+## 2026-09-03 — Post-M7 readiness: PB-002 Dewstone Plains Early Quest Chain & Adaptive Perception Expansion
+
+- **Dewstone Plains Early Quest Chain Expansion:** Extended the leveling bot progression beyond starting zone boundaries into canonical early Dewstone Plains content (Lilyut Crossing / Royster's Ford / Afindelle camp).
+  - **Adaptive Perception Band (`AdaptiveBand = true`):** Automatically computes dynamic level bounds (`[effectiveBandMin..effectiveBandMax]`) for characters level $\ge 10$, allowing them to perceive and pursue quests across zone transition bands without hardcoding narrow level ranges.
+  - **Canonical Seed Constants:** Added standard template IDs for Dewstone early progression in `LevelingLoopScenario`: Afindelle (NPC 673), Lord Royster (NPC 680), Constable Brann (NPC 679), Medd (NPC 5849), canonical quests 44 (Wounded Afindelle), 328 (Royster's Danger), 48 (Bandit Hunt), 55 (Crisis Delivery), and herbs doodad/item templates (2796 / 5264).
+  - **Data-Driven & Fallback Gather Resolution (`GatherLeg`):** Expanded `GatherLeg` with fallback doodad discovery when `HighlightDoodadId == 0`, inspecting perceived doodad function chains and loot packs to resolve gather objectives data-driven.
+- **Evidence:** `LevelingLoopScenarioRigTests` **38/38** green (+1 test). Full `./scripts/gate.sh` passed cleanly with 0 compiler errors/warnings, **2,774 total tests (2,773 passed, 1 skipped)**, 39 MCP BotControl tools, and 24 MCP Archaeology tools.
+
 ## 2026-09-03 — Post-M7 readiness: PB-MOUNT Autonomous Mount Riding on Arterial Highways & Travel Mobility
 
 - **Autonomous Mount Management & Travel Mobility (`BotMountManager`):** Implemented automated mount summoning, mounting, high-speed travel (~10.5 m/s vs 5.4 m/s foot travel), and dismounting for combat/interaction.

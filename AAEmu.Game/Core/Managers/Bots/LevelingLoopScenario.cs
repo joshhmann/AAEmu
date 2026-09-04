@@ -192,12 +192,36 @@ public static class LevelingLoopScenario
     public const uint SeedGroupHuntTargetNpcTemplateA = 7674;
     public const uint SeedGroupHuntTargetNpcTemplateB = 7648;
 
+    // ---- Canonical Dewstone segment ids (compact.sqlite3 canonical 1.2).
+    // Early Dewstone progression (Lilyut Crossing -> Royster's Camp -> Windshade).
+    /// <summary>Quest 44 "부상자 치료" (Treating the Wounded) — Gather: accept Afindelle (673), gather Wild Herbs 5264, report Afindelle (673).</summary>
+    public const uint SeedDewstoneQuestWoundedId = 44;
+    /// <summary>Quest 328 "로이스터 야영지의 위험" (Danger at Royster's Camp) — Delivery: accept Afindelle (673), report Lord Royster (680).</summary>
+    public const uint SeedDewstoneQuestRoysterDangerId = 328;
+    /// <summary>Quest 48 "도적떼 소탕" (Sweeping the Bandits) — Hunt: accept Guard Captain Brann (679), report Guard Captain Brann (679).</summary>
+    public const uint SeedDewstoneQuestBanditHuntId = 48;
+    /// <summary>Quest 55 "위기감" (Sense of Crisis) — Delivery: accept Guard Captain Brann (679), report Detective Medd (5849) at Windshade.</summary>
+    public const uint SeedDewstoneQuestCrisisDeliveryId = 55;
+
+    public const uint SeedDewstoneAfindelleNpcTemplateId = 673;
+    public const uint SeedDewstoneRoysterNpcTemplateId = 680;
+    public const uint SeedDewstoneBrannNpcTemplateId = 679;
+    public const uint SeedDewstoneMeddNpcTemplateId = 5849;
+    public const uint SeedDewstoneHerbsDoodadTemplateId = 2796;
+    public const uint SeedDewstoneHerbsItemTemplateId = 5264;
+
     /// <summary>Loop parameters. Defaults = the honest L1–9 starter band.</summary>
     public sealed record LoopOptions
     {
         /// <summary>Inclusive availability band for offering choice.</summary>
         public byte BandMin { get; init; } = 1;
         public byte BandMax { get; init; } = 9;
+
+        /// <summary>
+        /// When true, allows the offering search band to dynamically scale to the character's
+        /// level in higher level zones (e.g. Dewstone Plains Lv 10-20, Marianople Lv 20-30).
+        /// </summary>
+        public bool AdaptiveBand { get; init; } = false;
         /// <summary>How many chain links to complete unprompted.</summary>
         public int MaxLinks { get; init; } = 2;
         /// <summary>
@@ -416,9 +440,16 @@ public static class LevelingLoopScenario
                 }
 
                 // ---------------------------------------------------- 1. PERCEIVE
+                var effectiveBandMin = (opts.EnableInterZoneTravel || opts.AdaptiveBand) && character.Level >= 10
+                    ? (byte)Math.Max(1, character.Level - 4)
+                    : opts.BandMin;
+                var effectiveBandMax = (opts.EnableInterZoneTravel || opts.AdaptiveBand) && character.Level >= 10
+                    ? (byte)Math.Max(opts.BandMax, character.Level + 5)
+                    : opts.BandMax;
+
                 var perception = Perceive(actor);
                 var bandOfferings = perception.Offerings
-                    .Where(o => o.Level >= opts.BandMin && o.Level <= opts.BandMax)
+                    .Where(o => o.Level >= effectiveBandMin && o.Level <= effectiveBandMax)
                     .ToList();
 
                 // Engine auto-started quests (engage-combat channel) are
@@ -426,7 +457,7 @@ public static class LevelingLoopScenario
                 // explicit accept dispatch. Lowest level first, then id.
                 var autoStartedInBand = perception.AutoStartedQuestIds
                     .Select(id => (Id: id, Level: QuestManager.Instance.GetTemplate(id)?.Level ?? 0))
-                    .Where(q => q.Level >= opts.BandMin && q.Level <= opts.BandMax)
+                    .Where(q => q.Level >= effectiveBandMin && q.Level <= effectiveBandMax)
                     .OrderBy(q => q.Level)
                     .ThenBy(q => q.Id)
                     .ToList();
@@ -439,7 +470,7 @@ public static class LevelingLoopScenario
                     }
 
                     return Fail("PERCEIVE", ActorFailureReason.Starvation,
-                        $"no discoverable quest offerings within band [{opts.BandMin}..{opts.BandMax}] " +
+                        $"no discoverable quest offerings within band [{effectiveBandMin}..{effectiveBandMax}] " +
                         $"from {perception.PerceivedNpcCount} NPC(s)/{perception.PerceivedDoodadCount} board(s) " +
                         $"({perception.TotalOfferingsSeen} offering(s) seen, all out of band or gated)", actor, links);
                 }
@@ -462,7 +493,7 @@ public static class LevelingLoopScenario
                             observed => observed.ActiveQuestIds.Contains(offering.QuestId)),
                         idempotencyKey: $"leveling:{character.Id}:{linkIndex}:{offering.QuestId}",
                         timeout: TimeSpan.FromSeconds(30),
-                        rationale: $"lowest offered level in [{opts.BandMin}..{opts.BandMax}]",
+                        rationale: $"lowest offered level in [{effectiveBandMin}..{effectiveBandMax}]",
                         policyVersion: "leveling-v1",
                         priority: opts.BandMax - offering.Level,
                         tieBreakKey: offering.QuestId.ToString("D10"),
@@ -2098,21 +2129,63 @@ public static class LevelingLoopScenario
     /// DoItemsAcquiredEvents → OnItemGather path credits the objective —
     /// the loop never fires quest events by hand).
     /// </summary>
-
     private static string? GatherLeg(GameplayActor actor, LoopOptions opts, uint questId,
         QuestActObjItemGather gather, PerceptionSnapshot perception)
     {
-        if (gather.HighlightDoodadId == 0)
+        var sources = new List<uint>();
+        if (gather.HighlightDoodadId > 0)
         {
-            return $"quest {questId} gathers item {gather.ItemId} with NO highlight_doodad_id — " +
-                   "missing gather-source resolution primitive (source is not data-discoverable)";
+            if (perception.DoodadObjIdsByTemplate.TryGetValue(gather.HighlightDoodadId, out var highlighted) &&
+                highlighted.Count > 0)
+            {
+                sources.AddRange(highlighted);
+            }
+            else
+            {
+                return $"quest {questId} needs item {gather.ItemId} ×{gather.Count} from doodad template " +
+                       $"{gather.HighlightDoodadId}, but no such source was PERCEIVED nearby";
+            }
         }
-
-        if (!perception.DoodadObjIdsByTemplate.TryGetValue(gather.HighlightDoodadId, out var sources) ||
-            sources.Count == 0)
+        else
         {
-            return $"quest {questId} needs item {gather.ItemId} ×{gather.Count} from doodad template " +
-                   $"{gather.HighlightDoodadId}, but no such source was PERCEIVED nearby";
+            if (gather.ItemId == SeedDewstoneHerbsItemTemplateId &&
+                perception.DoodadObjIdsByTemplate.TryGetValue(SeedDewstoneHerbsDoodadTemplateId, out var herbs))
+            {
+                sources.AddRange(herbs);
+            }
+            else
+            {
+                foreach (var (_, objIds) in perception.DoodadObjIdsByTemplate)
+                {
+                    foreach (var objId in objIds)
+                    {
+                        var doodad = actor.Character.ParentWorld?.GetDoodad(objId);
+                        if (doodad == null)
+                            continue;
+                        foreach (var func in DoodadManager.Instance.GetFuncsForGroup(doodad.FuncGroupId))
+                        {
+                            var funcTemplate = DoodadManager.Instance.GetFuncTemplate(func.FuncId, func.FuncType);
+                            switch (funcTemplate)
+                            {
+                                case DoodadFuncLootItem lootItem when lootItem.ItemId == gather.ItemId:
+                                    sources.Add(objId);
+                                    break;
+                                case DoodadFuncLootPack lootPack:
+                                    var pack = LootGameData.Instance.GetPack(lootPack.LootPackId);
+                                    if (pack != null && pack.Loots.Any(loot => loot.ItemId == gather.ItemId))
+                                        sources.Add(objId);
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (sources.Count == 0)
+            {
+                return $"quest {questId} gathers item {gather.ItemId} with NO highlight_doodad_id — " +
+                       "missing gather-source resolution primitive (source is not data-discoverable)";
+            }
         }
 
         var attemptsLeft = opts.MaxAttemptsPerGatherSource * sources.Count;

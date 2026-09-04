@@ -3000,6 +3000,50 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(character.Transform.World.Position.Y).IsEqualTo(15350f);
     }
 
+    [Test]
+    public async Task LevelingLoop_DewstoneExpansion_DiscoversAndCompletesDewstoneQuestChain()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-dewstone-expansion");
+        var character = session.Character;
+        character.Level = 15;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        character.Quests!.SetCompletedQuestFlag(LevelingLoopScenario.SeedDewstoneQuestWoundedId, true);
+
+        // Seed canonical early Dewstone quest 328: Afindelle (673) -> Lord Royster (680)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedDewstoneQuestRoysterDangerId, // 328
+            1375, 1377,
+            LevelingLoopScenario.SeedDewstoneAfindelleNpcTemplateId, // 673
+            LevelingLoopScenario.SeedDewstoneRoysterNpcTemplateId,   // 680
+            level: 15);
+
+        // Spawn both Dewstone NPCs in perception reach
+        SpawnHubNpc(session, LevelingLoopScenario.SeedDewstoneAfindelleNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedDewstoneRoysterNpcTemplateId, new Vector3(5f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            EnableInterZoneTravel = true,
+            AdaptiveBand = true,
+            BandMin = 10,
+            BandMax = 20,
+            MaxLinks = 1
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts);
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Dewstone loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedDewstoneQuestRoysterDangerId);
+        await Assert.That(result.Links[0].AcceptorTemplateId).IsEqualTo(LevelingLoopScenario.SeedDewstoneAfindelleNpcTemplateId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedDewstoneQuestRoysterDangerId)).IsTrue();
+    }
+
 
     /// <summary>Index of the first record of the action type at or after start.</summary>
     private static int FirstAtLeast(IReadOnlyList<ActorAuditRecord> trace, ActorActionType action, int start)
