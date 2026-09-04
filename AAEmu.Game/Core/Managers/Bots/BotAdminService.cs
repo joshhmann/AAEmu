@@ -196,6 +196,13 @@ public sealed class BotAdminService
 
             var homePos = home ?? _terrainResolver(existing.Character.Transform.World.Position,
                 existing.Character.Transform.ZoneId);
+            if (home.HasValue)
+            {
+                var clamped = _terrainResolver(home.Value, existing.Character.Transform.ZoneId);
+                homePos = clamped;
+                existing.Character.Transform.Local.SetPosition(clamped.X, clamped.Y, clamped.Z);
+                _regionUpdater(existing.Character);
+            }
             ArmRoam(existing.Character, homePos);
             return new BotAdminCommandResult(true,
                 $"Bot '{name}' (id {existing.CharacterId}) re-activated, roaming around {homePos.X:F0}/{homePos.Y:F0}/{homePos.Z:F0}.");
@@ -232,6 +239,13 @@ public sealed class BotAdminService
             : $" (fidelity Full: {full})";
 
         var spawnHome = home ?? _terrainResolver(character.Transform.World.Position, character.Transform.ZoneId);
+        if (home.HasValue)
+        {
+            var clamped = _terrainResolver(home.Value, character.Transform.ZoneId);
+            spawnHome = clamped;
+            character.Transform.Local.SetPosition(clamped.X, clamped.Y, clamped.Z);
+            _regionUpdater(character);
+        }
         ArmRoam(character, spawnHome);
 
         return new BotAdminCommandResult(true,

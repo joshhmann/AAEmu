@@ -352,10 +352,14 @@ public class BotAdminServiceTests
         await Assert.That(rig.Provisions[0].Name).IsEqualTo("Guard");
 
         // Roam home = GM position (terrain resolver identity → unchanged).
-        var botId = rig.Manager.GetAll()[0].CharacterId;
+        var botChar = rig.Manager.GetAll()[0].Character;
+        var botId = botChar.Id;
         var route = rig.Executor.GetRoamRoute(botId);
         await Assert.That(route).IsNotNull();
         await Assert.That(route!.AllWaypointsWithin(gmPosition, BotAdminService.GmRoamRadius)).IsTrue();
+        await Assert.That(botChar.Transform.Local.Position).IsEqualTo(gmPosition);
+        await Assert.That(rig.RegionUpdates).HasCount().EqualTo(1);
+        await Assert.That(rig.RegionUpdates[0].Id).IsEqualTo(botChar.Id);
     }
 
     [Test]
