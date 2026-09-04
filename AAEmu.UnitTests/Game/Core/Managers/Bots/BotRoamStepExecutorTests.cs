@@ -4,6 +4,9 @@ using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.Faction;
+using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.StaticValues;
 
 using Microsoft.Extensions.Time.Testing;
 
@@ -205,5 +208,68 @@ public class BotRoamStepExecutorTests
             var next = await executor.StepAsync(runtime, CancellationToken.None);
             await Assert.That(next).IsNotNull();
         }
+    }
+
+    [Test]
+    public async Task Step_WithNearbyWildlife_DisruptsAndEngagesTarget()
+    {
+        var (baseExecutor, actor, runtime, clock) = CreateRig("hunt-bot");
+
+        var route = new BotPath([new Vector3(50, 0, 0)], BotPath.LoopMode.Loop);
+
+        var wildlife = new Npc
+        {
+            ObjId = 9876,
+            Hp = 100,
+            MaxHp = 100,
+            Faction = new SystemFaction { Id = (FactionsEnum)115 }
+        };
+        wildlife.Transform.World.Position = new Vector3(2f, 0, 0);
+
+        BotRoamStepExecutor executor = new()
+        {
+            ActorFactory = _ => actor,
+            TimeProvider = clock,
+            BroadcastInterval = TimeSpan.FromMilliseconds(200),
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2.5f,
+            HuntChaseSpeed = 4.5f,
+            HuntPerceptionRadius = 20f,
+            HuntScanInterval = TimeSpan.FromMilliseconds(100),
+            HuntCastInterval = TimeSpan.FromMilliseconds(100),
+            EnableWildlifeHunt = true,
+            NearbyNpcProvider = (_, _) => [wildlife],
+            UnitResolver = (_, id) => id == wildlife.ObjId ? wildlife : null
+        };
+        executor.SetRoamRoute(runtime.Character, route);
+
+        // Step 1: Scan detects wildlife, bot engages target
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        var next = await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(next).IsNotNull();
+        await Assert.That(actor.Character.CurrentTarget).IsNotNull();
+        await Assert.That(actor.Character.CurrentTarget!.ObjId).IsEqualTo(wildlife.ObjId);
+
+        // Step 2: Since wildlife is at 2m (<= 3m melee reach), bot executes combat cast
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        next = await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(next).IsNotNull();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Cast)).IsTrue();
+
+        // Step 3: Wildlife dies (Hp = 0), bot drops target and resumes roam
+        wildlife.Hp = 0;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        next = await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.Character.CurrentTarget).IsNull();
+
+        // Step 4: Bot resumes patrol leg toward (50, 0, 0)
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        next = await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.ActiveRequest).IsNotNull();
+        await Assert.That(actor.ActiveRequest!.Action).IsEqualTo(ActorActionType.Move);
     }
 }

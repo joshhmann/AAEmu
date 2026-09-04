@@ -5,8 +5,10 @@ using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Units.Movements;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
@@ -29,6 +31,10 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///        b. throttled movement broadcast — SCOneUnitMovementPacket is
 ///           broadcast to around-units at ~4-6 Hz (reduced vs the NPC 10 Hz
 ///           cadence) so real clients see the bot walking.
+///   4. opportunistic wildlife combat loop:
+///        when nearby hostile wildlife is detected within perception radius,
+///        the bot temporarily branches into combat mode (chases, faces, casts
+///        class combos, loots upon kill), and resumes its patrol seamlessly.
 ///
 /// The scheduler's per-bot execution lease guarantees at most one in-flight
 /// step per bot, and the M5 A1 marshal executes every step on the single
@@ -74,6 +80,34 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Per-leg navigation budget (longer than the actor default so a full route leg never times out mid-walk).</summary>
     public TimeSpan RoamLegTimeout { get; init; } = TimeSpan.FromSeconds(60);
 
+    /// <summary>
+    /// Whether opportunistic wildlife hunting is enabled. Defaults to true when
+    /// the AAEMU_PRESENCE_HUNT environment variable is set to "1", "true", or "True".
+    /// </summary>
+    public bool EnableWildlifeHunt { get; set; } =
+        Environment.GetEnvironmentVariable("AAEMU_PRESENCE_HUNT") is "1" or "true" or "True";
+
+    /// <summary>Perception radius for detecting nearby wildlife (default = 18m).</summary>
+    public float HuntPerceptionRadius { get; init; } = 18f;
+
+    /// <summary>Scan interval for searching for nearby wildlife (default = 1.2s).</summary>
+    public TimeSpan HuntScanInterval { get; init; } = TimeSpan.FromMilliseconds(1200);
+
+    /// <summary>Cadence for casting skills on engaged wildlife (default = 800ms).</summary>
+    public TimeSpan HuntCastInterval { get; init; } = TimeSpan.FromMilliseconds(800);
+
+    /// <summary>Melee engagement distance to target before stopping to cast (default = 3.0m).</summary>
+    public float HuntMeleeRange { get; init; } = 3.0f;
+
+    /// <summary>Speed at which the bot chases target wildlife (default = 4.5 m/s sprint).</summary>
+    public float HuntChaseSpeed { get; init; } = 4.5f;
+
+    /// <summary>Nearby NPC detection seam (null → WorldManager.GetAround&lt;Npc&gt;).</summary>
+    public Func<Character, float, IEnumerable<Npc>>? NearbyNpcProvider { get; init; }
+
+    /// <summary>Unit resolver seam (null → Character.ParentWorld?.GetUnit).</summary>
+    public Func<Character, uint, Unit?>? UnitResolver { get; init; }
+
     private sealed class BotRoamState
     {
         public required IGameplayActor Actor { get; init; }
@@ -81,6 +115,13 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         public ActorRequest? PendingLeg { get; set; }
         public DateTime LastBroadcastUtc { get; set; } = DateTime.MinValue;
         public Vector3? LastBroadcastPosition { get; set; }
+        public bool WasMoving { get; set; }
+
+        public uint TargetNpcObjId { get; set; }
+        public DateTime TargetEngagedUtc { get; set; } = DateTime.MinValue;
+        public DateTime LastScanUtc { get; set; } = DateTime.MinValue;
+        public DateTime LastCastUtc { get; set; } = DateTime.MinValue;
+        public uint LastSkillUsed { get; set; }
     }
 
     private readonly ConcurrentDictionary<uint, BotRoamState> _states = [];
@@ -168,11 +209,148 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         if (actor is GameplayActor concreteActor && concreteActor.BroadcastMovement)
             concreteActor.BroadcastMovement = false;
 
-        // 1. Issue the next leg when idle and a route is active. The issued
-        // leg is remembered as PendingLeg — GameplayActor clears its active
-        // request the moment it reaches a terminal state, so the executor
-        // can only observe a completion through the leg reference itself.
-        if (actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
+        // 1. Opportunistic wildlife hunt loop
+        if (EnableWildlifeHunt)
+        {
+            if (state.TargetNpcObjId != 0)
+            {
+                var targetUnit = UnitResolver != null
+                    ? UnitResolver(bot.Character, state.TargetNpcObjId) as Npc
+                    : bot.Character.ParentWorld?.GetUnit(state.TargetNpcObjId) as Npc;
+
+                var isDeadOrInvalid = targetUnit == null
+                    || targetUnit.Hp <= 0
+                    || !IsAttackableWildlife(bot.Character, targetUnit)
+                    || now - state.TargetEngagedUtc > TimeSpan.FromSeconds(30);
+
+                if (isDeadOrInvalid)
+                {
+                    if (targetUnit != null && targetUnit.Hp <= 0)
+                    {
+                        _ = actor.Loot(targetUnit.ObjId);
+                    }
+
+                    if (bot.Character.CurrentTarget?.ObjId == state.TargetNpcObjId)
+                    {
+                        bot.Character.CurrentTarget = null;
+                        bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, 0), true);
+                    }
+
+                    state.TargetNpcObjId = 0;
+                    state.LastSkillUsed = 0;
+
+                    if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+                    {
+                        _ = actor.Stop();
+                        state.PendingLeg = null;
+                    }
+                }
+                else
+                {
+                    // Target is valid and alive
+                    if (bot.Character.CurrentTarget?.ObjId != targetUnit!.ObjId)
+                    {
+                        bot.Character.CurrentTarget = targetUnit;
+                        bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, targetUnit.ObjId), true);
+                    }
+
+                    var dist = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, targetUnit.Transform.World.Position, false);
+                    var role = CombatDecisionTree.InferRole(bot.Character);
+                    var engageRange = role == CombatRole.Melee ? HuntMeleeRange : 15.0f;
+
+                    if (dist > engageRange)
+                    {
+                        var targetPos = targetUnit.Transform.World.Position;
+                        var needsMove = actor.ActiveRequest is not { IsTerminal: false, Action: ActorActionType.Move }
+                            || (state.PendingLeg?.Destination.HasValue == true
+                                && Vector3.Distance(state.PendingLeg.Destination.Value, targetPos) > 2.0f);
+
+                        if (needsMove)
+                        {
+                            if (actor.ActiveRequest is { IsTerminal: false })
+                                _ = actor.Stop();
+                            state.PendingLeg = actor.MoveTo(targetPos, HuntChaseSpeed, TimeSpan.FromSeconds(10));
+                        }
+                    }
+                    else
+                    {
+                        if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+                        {
+                            _ = actor.Stop();
+                            state.PendingLeg = null;
+                        }
+
+                        var angle = MathUtil.CalculateAngleFrom(bot.Character.Transform.World.Position, targetUnit.Transform.World.Position);
+                        bot.Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+                        bot.Character.Transform.FinalizeTransform();
+
+                        if (now - state.LastCastUtc >= HuntCastInterval)
+                        {
+                            var skillId = CombatDecisionTree.SelectPrioritizedSkill(
+                                bot.Character,
+                                targetUnit,
+                                role,
+                                null,
+                                state.LastSkillUsed);
+
+                            if (skillId > 0)
+                            {
+                                var castResult = actor.Cast(skillId, targetUnit.ObjId);
+                                if (castResult.State != ActorLifecycleState.Rejected)
+                                {
+                                    state.LastSkillUsed = skillId;
+                                    state.LastCastUtc = now;
+                                }
+                                else
+                                {
+                                    state.LastSkillUsed = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (now - state.LastScanUtc >= HuntScanInterval)
+            {
+                state.LastScanUtc = now;
+                var nearbyNpcs = NearbyNpcProvider != null
+                    ? NearbyNpcProvider(bot.Character, HuntPerceptionRadius)
+                    : WorldManager.GetAround<Npc>(bot.Character, HuntPerceptionRadius);
+
+                Npc? bestNpc = null;
+                var bestDist = float.MaxValue;
+                foreach (var npc in nearbyNpcs)
+                {
+                    if (!IsAttackableWildlife(bot.Character, npc))
+                        continue;
+
+                    var d = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, npc.Transform.World.Position, false);
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        bestNpc = npc;
+                    }
+                }
+
+                if (bestNpc != null)
+                {
+                    state.TargetNpcObjId = bestNpc.ObjId;
+                    state.TargetEngagedUtc = now;
+                    bot.Character.CurrentTarget = bestNpc;
+                    bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, bestNpc.ObjId), true);
+                    if (actor.ActiveRequest is { IsTerminal: false })
+                    {
+                        _ = actor.Stop();
+                        state.PendingLeg = null;
+                    }
+                    Logger.Debug("Bot {CharacterId} engaged wildlife {NpcName} ({NpcId}) at {Dist:F1}m",
+                        bot.CharacterId, bestNpc.Name, bestNpc.ObjId, bestDist);
+                }
+            }
+        }
+
+        // 2. Issue the next leg when idle, not hunting, and a route is active.
+        if (state.TargetNpcObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
         {
             var target = state.Path.CurrentTarget;
             var leg = actor.MoveTo(target, RoamSpeed, RoamLegTimeout);
@@ -186,7 +364,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             }
         }
 
-        // 2. Tick the actor (advances the active leg through the Transform).
+        // 3. Tick the actor (advances the active leg through the Transform).
         var elapsed = _lastStepUtc.TryGetValue(bot.CharacterId, out var last)
             ? now - last
             : ActiveCadence;
@@ -196,17 +374,9 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
         actor.Tick(elapsed);
 
-        // 2a. Flat arrival owns the leg for ground-clamped walkers: step 3a
-        // clamps Z to the heightmap, so a leg whose waypoint Z disagrees
-        // with the terrain can never complete via the actor's 3D arrival
-        // check (GameplayActor.Tick requires |Z gap| <= 0.5) — the bot
-        // would stand at the waypoint X/Y until the 60s leg timeout, then
-        // re-issue the same leg forever (the t_d7e45251 wedge; prod: bot Z
-        // clamped to terrain while the waypoint Z comes from a different
-        // terrain source). When the bot is flat-within the current waypoint,
-        // interrupt the leg; 2b then advances the route and the clamp keeps
-        // the bot on the ground.
-        if (state.PendingLeg is { IsTerminal: false, Action: ActorActionType.Move }
+        // 3a. Flat arrival owns the leg for ground-clamped walkers (only when roaming)
+        if (state.TargetNpcObjId == 0
+            && state.PendingLeg is { IsTerminal: false, Action: ActorActionType.Move }
             && state.Path is { IsFinished: false })
         {
             var flat = MathUtil.CalculateDistance(
@@ -215,22 +385,16 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 _ = actor.Stop();
         }
 
-        // 2b. Route advance on arrival: when the pending Move leg reached a
-        // terminal state (arrived / interrupted-at-waypoint /
-        // already-at-destination — immediately or during this tick), move
-        // the route to the next waypoint so the bot keeps walking (Loop
-        // wraps, Once finishes). Without this the executor would re-issue
-        // the SAME waypoint forever — the bot freezes after one leg.
-        if (state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move }
+        // 3b. Route advance on arrival: when the pending Move leg reached a terminal state
+        if (state.TargetNpcObjId == 0
+            && state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move }
             && state.Path is { IsFinished: false })
         {
-            // Flat arrival: the clamp owns Z, so the route advances on the
-            // waypoint's X/Y alone (never blocked by a Z mismatch).
             _ = state.Path.Move(bot.Character.Transform.World.Position, flatArrival: true);
             state.PendingLeg = null;
         }
 
-        // 3a. Ground clamp — the Simulation.cs:394 pattern: after movement,
+        // 4a. Ground clamp — the Simulation.cs:394 pattern: after movement,
         // snap Z to the heightmap so bots walk ON the terrain, never under it.
         var position = bot.Character.Transform.World.Position;
         var clampedZ = GroundHeightProvider != null
@@ -244,17 +408,26 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             position = bot.Character.Transform.World.Position;
         }
 
-        // 3b. Throttled movement broadcast (4-6 Hz). BroadcastPacket sends to
-        // around-units (real clients near the bot); the bot's own SendPacket
-        // no-ops at the null-safe sink (no connection).
+        // 4b. Throttled movement broadcast (4-6 Hz) with standstill packet on stop.
         if (now - state.LastBroadcastUtc >= BroadcastInterval)
         {
             if (state.LastBroadcastPosition is { } lastPos &&
                 Vector3.Distance(lastPos, position) > 0.01f)
             {
+                state.WasMoving = true;
                 if (bot.Character.Region?.HasHumanObservers() == true)
                 {
-                    var moveType = BuildMoveType(bot.Character, position, lastPos, RoamSpeed);
+                    var currentSpeed = state.TargetNpcObjId != 0 ? HuntChaseSpeed : RoamSpeed;
+                    var moveType = BuildMoveType(bot.Character, position, lastPos, currentSpeed);
+                    bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
+                }
+            }
+            else if (state.WasMoving)
+            {
+                state.WasMoving = false;
+                if (bot.Character.Region?.HasHumanObservers() == true)
+                {
+                    var moveType = BuildStopMoveType(bot.Character, position);
                     bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
                 }
             }
@@ -263,15 +436,10 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             state.LastBroadcastPosition = position;
         }
 
-        // Live request → keep waking on the scan cadence. A bot with an
-        // unfinished route also stays alive in the instant between legs —
-        // the next step issues the next leg (returning dormant here would
-        // make the scheduler stop waking the bot, freezing it after one
-        // leg mid-route). Only a route-less or finished-route bot goes
-        // dormant.
         var live = actor.ActiveRequest is { IsTerminal: false };
         var routeActive = state.Path is { IsFinished: false };
-        return live || routeActive
+        var hunting = state.TargetNpcObjId != 0;
+        return live || routeActive || hunting
             ? (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence))
             : DormantTask;
     }
@@ -306,5 +474,59 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         moveType.Alertness = MoveTypeAlertness.Idle; // IDLE = 0x0
         moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;
         return moveType;
+    }
+
+    /// <summary>
+    /// Builds a standstill movement payload broadcast when a bot transitions from moving to stationary.
+    /// </summary>
+    private static UnitMoveType BuildStopMoveType(Character character, Vector3 position)
+    {
+        var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
+        var (rx, ry, rz) = character.Transform.Local.ToRollPitchYawSBytesMovement();
+
+        moveType.X = position.X;
+        moveType.Y = position.Y;
+        moveType.Z = position.Z;
+        moveType.VelX = 0;
+        moveType.VelY = 0;
+        moveType.RotationX = rx;
+        moveType.RotationY = ry;
+        moveType.RotationZ = rz;
+        moveType.ActorFlags = 1; // 1-idle
+        moveType.Flags = MoveTypeFlags.Stopping;
+        moveType.DeltaMovement = [0, 0, 0];
+        moveType.Stance = GameStanceType.Relaxed;
+        moveType.Alertness = MoveTypeAlertness.Idle;
+        moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;
+        return moveType;
+    }
+
+    /// <summary>
+    /// Checks if an NPC is attackable wildlife (monster faction 115, hostile relation, or unfactioned).
+    /// Safe against missing FactionManager singleton in test/headless environments.
+    /// </summary>
+    private static bool IsAttackableWildlife(Character bot, Npc npc)
+    {
+        if (npc.Hp <= 0)
+            return false;
+
+        // Faction 115 is standard monster wildlife
+        if ((int?)npc.Faction?.Id == 115)
+            return true;
+
+        if (npc.Faction == null)
+            return true;
+
+        try
+        {
+            if (!bot.CanAttack(npc))
+                return false;
+
+            return bot.GetRelationStateTo(npc) == RelationState.Hostile;
+        }
+        catch
+        {
+            return true;
+        }
     }
 }

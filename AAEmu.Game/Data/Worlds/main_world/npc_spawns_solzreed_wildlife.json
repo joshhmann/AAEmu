@@ -1,0 +1,542 @@
+[
+  {
+    "Id": 981001,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14472.0,
+      "Y": 14400.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 0.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981002,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14466.0,
+      "Y": 14410.39,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 60.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981003,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14454.0,
+      "Y": 14410.39,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 120.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981004,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14448.0,
+      "Y": 14400.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 180.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981005,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14454.0,
+      "Y": 14389.61,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 240.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981006,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14466.0,
+      "Y": 14389.61,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 300.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981007,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14480.0,
+      "Y": 14400.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 0.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981008,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14474.14,
+      "Y": 14414.14,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 45.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981009,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14460.0,
+      "Y": 14420.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 90.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981010,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14445.86,
+      "Y": 14414.14,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 135.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981011,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14440.0,
+      "Y": 14400.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 180.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981012,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14445.86,
+      "Y": 14385.86,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 225.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981013,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14460.0,
+      "Y": 14380.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 270.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981014,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14474.14,
+      "Y": 14385.86,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 315.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981015,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14488.0,
+      "Y": 14400.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 0.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981016,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14482.65,
+      "Y": 14416.46,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 36.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981017,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14468.65,
+      "Y": 14426.63,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 72.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981018,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14451.35,
+      "Y": 14426.63,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 108.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981019,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14437.35,
+      "Y": 14416.46,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 144.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981020,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14432.0,
+      "Y": 14400.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 180.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981021,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14437.35,
+      "Y": 14383.54,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 216.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981022,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14451.35,
+      "Y": 14373.37,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 252.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981023,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14468.65,
+      "Y": 14373.37,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 288.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981024,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14482.65,
+      "Y": 14383.54,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 324.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981025,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14496.0,
+      "Y": 14400.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 0.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981026,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14491.18,
+      "Y": 14418.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 30.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981027,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14478.0,
+      "Y": 14431.18,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 60.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981028,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14460.0,
+      "Y": 14436.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 90.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981029,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14442.0,
+      "Y": 14431.18,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 120.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981030,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14428.82,
+      "Y": 14418.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 150.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981031,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14424.0,
+      "Y": 14400.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 180.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981032,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14428.82,
+      "Y": 14382.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 210.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981033,
+    "UnitId": 3492,
+    "Title": "Solzreed Fox",
+    "Position": {
+      "X": 14442.0,
+      "Y": 14368.82,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 240.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981034,
+    "UnitId": 3475,
+    "Title": "Solzreed Boar",
+    "Position": {
+      "X": 14460.0,
+      "Y": 14364.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 270.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981035,
+    "UnitId": 172,
+    "Title": "Plains Wolf",
+    "Position": {
+      "X": 14478.0,
+      "Y": 14368.82,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 300.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  },
+  {
+    "Id": 981036,
+    "UnitId": 259,
+    "Title": "Big Claw Boar Piglet",
+    "Position": {
+      "X": 14491.18,
+      "Y": 14382.0,
+      "Z": 109.0,
+      "Roll": 0.0,
+      "Pitch": 0.0,
+      "Yaw": 330.0
+    },
+    "RespawnTime": 15,
+    "Scale": 1.0
+  }
+]
