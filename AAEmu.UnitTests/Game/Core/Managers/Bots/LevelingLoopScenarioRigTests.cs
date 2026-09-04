@@ -3028,6 +3028,36 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(notes.Any(n => n.Contains("arrived-at-two-crowns"))).IsTrue();
         await Assert.That(character.Transform.World.Position.X).IsEqualTo(12430f);
         await Assert.That(character.Transform.World.Position.Y).IsEqualTo(11130f);
+
+        // Transition 5: Two Crowns -> Cinderstone Moore
+        character.Level = 32;
+        character.SetPosition(12430f, 11130f, 150f, 0, 0, 0);
+        var transitioned5 = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
+        await Assert.That(transitioned5).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("transitioning-two-crowns-to-cinderstone"))).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("arrived-at-cinderstone"))).IsTrue();
+        await Assert.That(character.Transform.World.Position.X).IsEqualTo(14280f);
+        await Assert.That(character.Transform.World.Position.Y).IsEqualTo(11337f);
+
+        // Transition 6: Cinderstone Moore -> Halcyona
+        character.Level = 35;
+        character.SetPosition(14280f, 11337f, 182f, 0, 0, 0);
+        var transitioned6 = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
+        await Assert.That(transitioned6).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("transitioning-cinderstone-to-halcyona"))).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("arrived-at-halcyona"))).IsTrue();
+        await Assert.That(character.Transform.World.Position.X).IsEqualTo(11308f);
+        await Assert.That(character.Transform.World.Position.Y).IsEqualTo(10736f);
+
+        // Transition 7: Halcyona -> Hellswamp
+        character.Level = 40;
+        character.SetPosition(11308f, 10736f, 129f, 0, 0, 0);
+        var transitioned7 = LevelingLoopScenario.TryTransitionToNextZone(actor, character, opts, notes);
+        await Assert.That(transitioned7).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("transitioning-halcyona-to-hellswamp"))).IsTrue();
+        await Assert.That(notes.Any(n => n.Contains("arrived-at-hellswamp"))).IsTrue();
+        await Assert.That(character.Transform.World.Position.X).IsEqualTo(7458f);
+        await Assert.That(character.Transform.World.Position.Y).IsEqualTo(9908f);
     }
 
     [Test]
@@ -3515,6 +3545,131 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(result.Links.Count).IsEqualTo(1);
         await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedTwoCrownsQuestUnexpectedAllyId);
         await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedTwoCrownsQuestUnexpectedAllyId)).IsTrue();
+    }
+
+    [Test]
+    public async Task LevelingLoop_CinderstoneStage6_WharfDelivery_DiscoversAndCompletesDelivery()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-cinderstone-stage6");
+        var character = session.Character;
+        character.Level = 30;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        // Quest 538 has canonical prerequisite quest 537 in unit_reqs
+        character.Quests!.SetCompletedQuestFlag(537, true);
+
+        // Seed canonical Cinderstone quest 538: Siculus (2387) -> Ertina (2427)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedCinderstoneQuestWharfDeliveryId, // 538
+            2128, 2129,
+            LevelingLoopScenario.SeedCinderstoneSiculusNpcTemplateId, // 2387
+            LevelingLoopScenario.SeedCinderstoneErtinaNpcTemplateId,  // 2427
+            level: 30);
+
+        SpawnHubNpc(session, LevelingLoopScenario.SeedCinderstoneSiculusNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedCinderstoneErtinaNpcTemplateId, new Vector3(8f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 28,
+            BandMax = 35,
+            MaxLinks = 1
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts);
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Cinderstone loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedCinderstoneQuestWharfDeliveryId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedCinderstoneQuestWharfDeliveryId)).IsTrue();
+    }
+
+    [Test]
+    public async Task LevelingLoop_HalcyonaStage6_ToDorothy_DiscoversAndCompletesDelivery()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-halcyona-stage6");
+        var character = session.Character;
+        character.Level = 33;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        // Mark Gerard's other quests completed so 1770 is selected
+        character.Quests!.SetCompletedQuestFlag(1768, true);
+        character.Quests!.SetCompletedQuestFlag(1769, true);
+
+        // Seed canonical Halcyona quest 1770: Gerard (2798) -> Dorothy (2806)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedHalcyonaQuestToDorothyId, // 1770
+            13679, 13680,
+            LevelingLoopScenario.SeedHalcyonaGerardNpcTemplateId,  // 2798
+            LevelingLoopScenario.SeedHalcyonaDorothyNpcTemplateId, // 2806
+            level: 33);
+
+        SpawnHubNpc(session, LevelingLoopScenario.SeedHalcyonaGerardNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedHalcyonaDorothyNpcTemplateId, new Vector3(8f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 30,
+            BandMax = 38,
+            MaxLinks = 1
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts);
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Halcyona loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedHalcyonaQuestToDorothyId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedHalcyonaQuestToDorothyId)).IsTrue();
+    }
+
+    [Test]
+    public async Task LevelingLoop_HellswampStage6_VillageRules_DiscoversAndCompletesDelivery()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-hellswamp-stage6");
+        var character = session.Character;
+        character.Level = 35;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Seed canonical Hellswamp quest 3105: Argo (9247) -> Uno (9246)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedHellswampQuestVillageRulesId, // 3105
+            13964, 13965,
+            LevelingLoopScenario.SeedHellswampArgoNpcTemplateId, // 9247
+            LevelingLoopScenario.SeedHellswampUnoNpcTemplateId,  // 9246
+            level: 35);
+
+        SpawnHubNpc(session, LevelingLoopScenario.SeedHellswampArgoNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedHellswampUnoNpcTemplateId, new Vector3(8f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 33,
+            BandMax = 42,
+            MaxLinks = 1
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts);
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Hellswamp loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedHellswampQuestVillageRulesId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedHellswampQuestVillageRulesId)).IsTrue();
     }
 
 

@@ -1,0 +1,1217 @@
+{
+  "RouteName": "highway_halcyona_to_hellswamp",
+  "Author": "RedlineTool",
+  "TotalDistance": 3707.52,
+  "WaypointCount": 151,
+  "ActionCount": 0,
+  "Actions": [
+    {
+      "ActionType": "Waypoint",
+      "X": 10612.0,
+      "Y": 10725.0,
+      "Z": 171.5495,
+      "Yaw": 2.9081,
+      "Label": "start"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10589.11,
+      "Y": 10730.44,
+      "Z": 171.6411,
+      "Yaw": 2.9081,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10566.22,
+      "Y": 10735.89,
+      "Z": 172.0903,
+      "Yaw": 2.9081,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10543.33,
+      "Y": 10741.33,
+      "Z": 171.9622,
+      "Yaw": 2.9081,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10520.44,
+      "Y": 10746.78,
+      "Z": 171.7995,
+      "Yaw": 2.9081,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10497.56,
+      "Y": 10752.22,
+      "Z": 171.7995,
+      "Yaw": 2.9081,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10474.67,
+      "Y": 10757.67,
+      "Z": 171.7995,
+      "Yaw": 2.9081,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10451.78,
+      "Y": 10763.11,
+      "Z": 171.3897,
+      "Yaw": 2.9081,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10428.89,
+      "Y": 10768.56,
+      "Z": 172.8047,
+      "Yaw": 2.9081,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10406.0,
+      "Y": 10774.0,
+      "Z": 173.6107,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10386.94,
+      "Y": 10758.65,
+      "Z": 169.3588,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10367.88,
+      "Y": 10743.29,
+      "Z": 163.3619,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10348.82,
+      "Y": 10727.94,
+      "Z": 163.3619,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10329.76,
+      "Y": 10712.59,
+      "Z": 166.9244,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10310.71,
+      "Y": 10697.24,
+      "Z": 166.9244,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10291.65,
+      "Y": 10681.88,
+      "Z": 171.5761,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10272.59,
+      "Y": 10666.53,
+      "Z": 176.1525,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10253.53,
+      "Y": 10651.18,
+      "Z": 176.7762,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10234.47,
+      "Y": 10635.82,
+      "Z": 182.8622,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10215.41,
+      "Y": 10620.47,
+      "Z": 182.8622,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10196.35,
+      "Y": 10605.12,
+      "Z": 185.3777,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10177.29,
+      "Y": 10589.76,
+      "Z": 185.3661,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10158.24,
+      "Y": 10574.41,
+      "Z": 185.6894,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10139.18,
+      "Y": 10559.06,
+      "Z": 182.5173,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10120.12,
+      "Y": 10543.71,
+      "Z": 182.7804,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10101.06,
+      "Y": 10528.35,
+      "Z": 183.2609,
+      "Yaw": -2.4635,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10082.0,
+      "Y": 10513.0,
+      "Z": 184.4242,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10057.73,
+      "Y": 10511.35,
+      "Z": 183.9833,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10033.46,
+      "Y": 10509.69,
+      "Z": 187.156,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 10009.19,
+      "Y": 10508.04,
+      "Z": 192.029,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9984.92,
+      "Y": 10506.38,
+      "Z": 197.4874,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9960.65,
+      "Y": 10504.73,
+      "Z": 197.4874,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9936.38,
+      "Y": 10503.08,
+      "Z": 200.3824,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9912.12,
+      "Y": 10501.42,
+      "Z": 205.3694,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9887.85,
+      "Y": 10499.77,
+      "Z": 205.4603,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9863.58,
+      "Y": 10498.12,
+      "Z": 205.6341,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9839.31,
+      "Y": 10496.46,
+      "Z": 205.6061,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9815.04,
+      "Y": 10494.81,
+      "Z": 212.2593,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9790.77,
+      "Y": 10493.15,
+      "Z": 214.2612,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9766.5,
+      "Y": 10491.5,
+      "Z": 214.2357,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9742.23,
+      "Y": 10489.85,
+      "Z": 214.1797,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9717.96,
+      "Y": 10488.19,
+      "Z": 221.7447,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9693.69,
+      "Y": 10486.54,
+      "Z": 224.6406,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9669.42,
+      "Y": 10484.88,
+      "Z": 225.7553,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9645.15,
+      "Y": 10483.23,
+      "Z": 226.7989,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9620.88,
+      "Y": 10481.58,
+      "Z": 226.7941,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9596.62,
+      "Y": 10479.92,
+      "Z": 226.1023,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9572.35,
+      "Y": 10478.27,
+      "Z": 223.7213,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9548.08,
+      "Y": 10476.62,
+      "Z": 223.3192,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9523.81,
+      "Y": 10474.96,
+      "Z": 220.8638,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9499.54,
+      "Y": 10473.31,
+      "Z": 218.996,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9475.27,
+      "Y": 10471.65,
+      "Z": 216.031,
+      "Yaw": -3.0736,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9451.0,
+      "Y": 10470.0,
+      "Z": 213.6748,
+      "Yaw": 3.0978,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9428.17,
+      "Y": 10471.0,
+      "Z": 211.8527,
+      "Yaw": 3.0978,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9405.33,
+      "Y": 10472.0,
+      "Z": 206.4024,
+      "Yaw": 3.0978,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9382.5,
+      "Y": 10473.0,
+      "Z": 196.5446,
+      "Yaw": 3.0978,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9359.67,
+      "Y": 10474.0,
+      "Z": 196.8044,
+      "Yaw": 3.0978,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9336.83,
+      "Y": 10475.0,
+      "Z": 197.1787,
+      "Yaw": 3.0978,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9314.0,
+      "Y": 10476.0,
+      "Z": 196.7531,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9298.19,
+      "Y": 10457.16,
+      "Z": 197.2131,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9282.39,
+      "Y": 10438.32,
+      "Z": 197.2439,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9266.58,
+      "Y": 10419.48,
+      "Z": 192.3955,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9250.77,
+      "Y": 10400.65,
+      "Z": 190.3456,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9234.97,
+      "Y": 10381.81,
+      "Z": 187.4371,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9219.16,
+      "Y": 10362.97,
+      "Z": 188.1235,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9203.35,
+      "Y": 10344.13,
+      "Z": 187.9173,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9187.55,
+      "Y": 10325.29,
+      "Z": 188.3242,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9171.74,
+      "Y": 10306.45,
+      "Z": 188.6292,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9155.94,
+      "Y": 10287.61,
+      "Z": 188.6063,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9140.13,
+      "Y": 10268.77,
+      "Z": 188.3504,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9124.32,
+      "Y": 10249.94,
+      "Z": 187.4214,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9108.52,
+      "Y": 10231.1,
+      "Z": 186.0936,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9092.71,
+      "Y": 10212.26,
+      "Z": 185.1709,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9076.9,
+      "Y": 10193.42,
+      "Z": 185.1863,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9061.1,
+      "Y": 10174.58,
+      "Z": 184.0124,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9045.29,
+      "Y": 10155.74,
+      "Z": 180.1859,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9029.48,
+      "Y": 10136.9,
+      "Z": 176.7916,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 9013.68,
+      "Y": 10118.06,
+      "Z": 176.822,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8997.87,
+      "Y": 10099.23,
+      "Z": 175.2656,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8982.06,
+      "Y": 10080.39,
+      "Z": 174.6668,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8966.26,
+      "Y": 10061.55,
+      "Z": 167.9293,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8950.45,
+      "Y": 10042.71,
+      "Z": 167.5854,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8934.65,
+      "Y": 10023.87,
+      "Z": 159.5382,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8918.84,
+      "Y": 10005.03,
+      "Z": 163.8821,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8903.03,
+      "Y": 9986.19,
+      "Z": 167.1506,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8887.23,
+      "Y": 9967.35,
+      "Z": 164.8777,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8871.42,
+      "Y": 9948.52,
+      "Z": 162.4348,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8855.61,
+      "Y": 9929.68,
+      "Z": 166.4252,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8839.81,
+      "Y": 9910.84,
+      "Z": 170.6,
+      "Yaw": -2.2689,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8824.0,
+      "Y": 9892.0,
+      "Z": 170.6,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8803.74,
+      "Y": 9905.78,
+      "Z": 171.1366,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8783.48,
+      "Y": 9919.57,
+      "Z": 173.3471,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8763.22,
+      "Y": 9933.35,
+      "Z": 172.6539,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8742.96,
+      "Y": 9947.13,
+      "Z": 168.365,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8722.7,
+      "Y": 9960.91,
+      "Z": 167.1614,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8702.43,
+      "Y": 9974.7,
+      "Z": 186.9368,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8682.17,
+      "Y": 9988.48,
+      "Z": 190.4288,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8661.91,
+      "Y": 10002.26,
+      "Z": 190.352,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8641.65,
+      "Y": 10016.04,
+      "Z": 190.5596,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8621.39,
+      "Y": 10029.83,
+      "Z": 191.8939,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8601.13,
+      "Y": 10043.61,
+      "Z": 194.7436,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8580.87,
+      "Y": 10057.39,
+      "Z": 196.0316,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8560.61,
+      "Y": 10071.17,
+      "Z": 197.0063,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8540.35,
+      "Y": 10084.96,
+      "Z": 196.9821,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8520.09,
+      "Y": 10098.74,
+      "Z": 198.3857,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8499.83,
+      "Y": 10112.52,
+      "Z": 197.2057,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8479.57,
+      "Y": 10126.3,
+      "Z": 196.9769,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8459.3,
+      "Y": 10140.09,
+      "Z": 196.142,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8439.04,
+      "Y": 10153.87,
+      "Z": 197.3532,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8418.78,
+      "Y": 10167.65,
+      "Z": 198.9529,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8398.52,
+      "Y": 10181.43,
+      "Z": 199.4238,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8378.26,
+      "Y": 10195.22,
+      "Z": 200.245,
+      "Yaw": 2.5442,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8358.0,
+      "Y": 10209.0,
+      "Z": 200.2375,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8334.32,
+      "Y": 10201.08,
+      "Z": 200.2374,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8310.63,
+      "Y": 10193.16,
+      "Z": 215.6583,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8286.95,
+      "Y": 10185.24,
+      "Z": 220.6315,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8263.26,
+      "Y": 10177.32,
+      "Z": 220.9368,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8239.58,
+      "Y": 10169.39,
+      "Z": 220.2365,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8215.89,
+      "Y": 10161.47,
+      "Z": 220.8872,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8192.21,
+      "Y": 10153.55,
+      "Z": 220.526,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8168.53,
+      "Y": 10145.63,
+      "Z": 220.2259,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8144.84,
+      "Y": 10137.71,
+      "Z": 219.9931,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8121.16,
+      "Y": 10129.79,
+      "Z": 219.8172,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8097.47,
+      "Y": 10121.87,
+      "Z": 219.6848,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8073.79,
+      "Y": 10113.95,
+      "Z": 219.5846,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8050.11,
+      "Y": 10106.03,
+      "Z": 219.5078,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8026.42,
+      "Y": 10098.11,
+      "Z": 219.4483,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 8002.74,
+      "Y": 10090.18,
+      "Z": 214.812,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7979.05,
+      "Y": 10082.26,
+      "Z": 221.829,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7955.37,
+      "Y": 10074.34,
+      "Z": 220.4173,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7931.68,
+      "Y": 10066.42,
+      "Z": 218.9281,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7908.0,
+      "Y": 10058.5,
+      "Z": 208.8806,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7884.32,
+      "Y": 10050.58,
+      "Z": 209.2094,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7860.63,
+      "Y": 10042.66,
+      "Z": 209.5725,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7836.95,
+      "Y": 10034.74,
+      "Z": 209.8312,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7813.26,
+      "Y": 10026.82,
+      "Z": 210.1101,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7789.58,
+      "Y": 10018.89,
+      "Z": 210.3763,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7765.89,
+      "Y": 10010.97,
+      "Z": 210.5692,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7742.21,
+      "Y": 10003.05,
+      "Z": 210.561,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7718.53,
+      "Y": 9995.13,
+      "Z": 210.1129,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7694.84,
+      "Y": 9987.21,
+      "Z": 208.8977,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7671.16,
+      "Y": 9979.29,
+      "Z": 206.7864,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7647.47,
+      "Y": 9971.37,
+      "Z": 204.3064,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7623.79,
+      "Y": 9963.45,
+      "Z": 202.3847,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7600.11,
+      "Y": 9955.53,
+      "Z": 192.8335,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7576.42,
+      "Y": 9947.61,
+      "Z": 192.6004,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7552.74,
+      "Y": 9939.68,
+      "Z": 192.7715,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7529.05,
+      "Y": 9931.76,
+      "Z": 192.8689,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7505.37,
+      "Y": 9923.84,
+      "Z": 193.2227,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7481.68,
+      "Y": 9915.92,
+      "Z": 197.5561,
+      "Yaw": -2.8188,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 7458.0,
+      "Y": 9908.0,
+      "Z": 197.4566,
+      "Yaw": 0.0,
+      "Label": "end"
+    }
+  ]
+}

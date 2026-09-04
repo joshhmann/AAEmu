@@ -281,6 +281,27 @@ public static class LevelingLoopScenario
     public const uint SeedTwoCrownsFoxTailDoodadTemplateId = 676;
     public const uint SeedTwoCrownsFoxTailItemTemplateId = 5023;
 
+    // ---- Canonical Cinderstone Moore segment ids (compact.sqlite3 canonical 1.2).
+    // Cinderstone progression (Pass -> Seachild Wharf hub).
+    /// <summary>Quest 538 "도움 요청을 위해 부두로" (To the Wharf for Help) — Delivery: accept Vice Commander Siculus (2387), report Ertina (2427).</summary>
+    public const uint SeedCinderstoneQuestWharfDeliveryId = 538;
+    public const uint SeedCinderstoneSiculusNpcTemplateId = 2387;
+    public const uint SeedCinderstoneErtinaNpcTemplateId = 2427;
+
+    // ---- Canonical Halcyona segment ids (compact.sqlite3 canonical 1.2).
+    // Halcyona progression (Solisa plains farmland).
+    /// <summary>Quest 1770 "도로시에게" (To Dorothy) — Delivery: accept Farmer Gerard (2798), report Dorothy (2806).</summary>
+    public const uint SeedHalcyonaQuestToDorothyId = 1770;
+    public const uint SeedHalcyonaGerardNpcTemplateId = 2798;
+    public const uint SeedHalcyonaDorothyNpcTemplateId = 2806;
+
+    // ---- Canonical Hellswamp segment ids (compact.sqlite3 canonical 1.2).
+    // Hellswamp progression (Swamp settlement).
+    /// <summary>Quest 3105 "마을의 규칙" (Rules of the Village) — Delivery: accept Village Chief Argo (9247), report Uno (9246).</summary>
+    public const uint SeedHellswampQuestVillageRulesId = 3105;
+    public const uint SeedHellswampArgoNpcTemplateId = 9247;
+    public const uint SeedHellswampUnoNpcTemplateId = 9246;
+
     /// <summary>Loop parameters. Defaults = the honest L1–9 starter band.</summary>
     public sealed record LoopOptions
     {
@@ -3149,6 +3170,54 @@ public static class LevelingLoopScenario
             var twoCrownsHub = new Vector3(12430f, 11130f, 150f); // Sundowne Village hub
             RelocateToHub(character, twoCrownsHub);
             notes.Add($"arrived-at-two-crowns-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
+            return true;
+        }
+
+        // Transition 5: Two Crowns (X in [11500..13000], Y in [10500..12000]) -> Cinderstone Moore (when Level >= 32)
+        if (pos.X >= 11500 && pos.X <= 13000 && pos.Y >= 10500 && pos.Y <= 12000 && character.Level >= 32)
+        {
+            notes.Add("transitioning-two-crowns-to-cinderstone");
+            if (actor is GameplayActor gp)
+            {
+                BotMountManager.EnsureMounted(gp);
+                BotMountManager.EnsureDismounted(gp);
+            }
+
+            var cinderstoneHub = new Vector3(14280f, 11337f, 182f); // Vice Commander Siculus / Cinderstone border
+            RelocateToHub(character, cinderstoneHub);
+            notes.Add($"arrived-at-cinderstone-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
+            return true;
+        }
+
+        // Transition 6: Cinderstone Moore (X in [13500..16500], Y in [10500..12500]) -> Halcyona (when Level >= 35)
+        if (pos.X >= 13500 && pos.X <= 16500 && pos.Y >= 10500 && pos.Y <= 12500 && character.Level >= 35)
+        {
+            notes.Add("transitioning-cinderstone-to-halcyona");
+            if (actor is GameplayActor gp)
+            {
+                BotMountManager.EnsureMounted(gp);
+                BotMountManager.EnsureDismounted(gp);
+            }
+
+            var halcyonaHub = new Vector3(11308f, 10736f, 129f); // Farmer Gerard / Solisa farmland
+            RelocateToHub(character, halcyonaHub);
+            notes.Add($"arrived-at-halcyona-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
+            return true;
+        }
+
+        // Transition 7: Halcyona (X in [10000..12000], Y in [10000..11200]) -> Hellswamp (when Level >= 40)
+        if (pos.X >= 10000 && pos.X <= 12000 && pos.Y >= 10000 && pos.Y <= 11200 && character.Level >= 40)
+        {
+            notes.Add("transitioning-halcyona-to-hellswamp");
+            if (actor is GameplayActor gp)
+            {
+                BotMountManager.EnsureMounted(gp);
+                BotMountManager.EnsureDismounted(gp);
+            }
+
+            var hellswampHub = new Vector3(7458f, 9908f, 198f); // Village Chief Argo / Hellswamp settlement
+            RelocateToHub(character, hellswampHub);
+            notes.Add($"arrived-at-hellswamp-({character.Transform.World.Position.X:F1},{character.Transform.World.Position.Y:F1})");
             return true;
         }
 
