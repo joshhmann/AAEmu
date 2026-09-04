@@ -190,6 +190,11 @@ public class PvpFlaggingRigTests
         return SingletonSwap.Install(typeof(Singleton<ZoneManager>), zoneManager);
     }
 
+    private static IDisposable SeedEffectTaskManager()
+        => SingletonSwap.Install(
+            typeof(Singleton<EffectTaskManager>),
+            new EffectTaskManager(Mock.Of<ITaskManager>().Object));
+
     /// <summary>Puts a character into the seeded test zone WITHOUT the public setter's OnZoneChange side effects.</summary>
     private static void SetZone(GameplayActor actor, uint zoneKey)
         => typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
@@ -418,14 +423,15 @@ public class PvpFlaggingRigTests
 
         GameplayActorTestRig.SeedBuffTemplate(9801);
         GameplayActorTestRig.SeedBuffTemplate(9802);
-        var ccTemplate = new BuffTemplate { Id = 9801, Kind = BuffKind.Bad, Stun = true };
-        var nonCcTemplate = new BuffTemplate { Id = 9802, Kind = BuffKind.Bad };
+        var ccTemplate = new BuffTemplate { Id = 9801, Kind = BuffKind.Bad, Stun = true, Duration = 30000 };
+        var nonCcTemplate = new BuffTemplate { Id = 9802, Kind = BuffKind.Bad, Duration = 30000 };
         var buffDict = (Dictionary<uint, BuffTemplate>)typeof(SkillManager)
             .GetField("_buffs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .GetValue(SkillManager.Instance)!;
         buffDict[9801] = ccTemplate;
         buffDict[9802] = nonCcTemplate;
 
+        using var effectTaskSwap = SeedEffectTaskManager();
         using var zoneSwap = SeedConflictZone(CreateConflict(ZoneConflictType.War));
         var (killer, victim, session) = CreatePair("pvp-multi-assist");
 
