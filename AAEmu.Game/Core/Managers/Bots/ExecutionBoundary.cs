@@ -136,6 +136,22 @@ public static class ExecutionBoundary
         AssertOnExecutionThread("Transform write inside bot step");
     }
 
+    /// <summary>
+    /// Starts threadpool work WITHOUT the caller's execution scope.
+    /// <c>Task.Run</c> captures the ambient <see cref="ExecutionContext"/> —
+    /// a bot step's <see cref="EnterBotStep"/> scope would flow onto the
+    /// worker thread and any Transform write there would trip
+    /// <see cref="AssertTransformWrite"/> as a false off-boundary violation
+    /// (live signature: skill-plot effects landing ~2 s after a bot's cast).
+    /// Engine dispatches that are independent work (skill plots) must use
+    /// this so the step scope never leaks onto pool threads.
+    /// </summary>
+    internal static Task RunUnscoped(Func<Task> work)
+    {
+        using (ExecutionContext.SuppressFlow())
+            return Task.Run(work);
+    }
+
     /// <summary>Test seam: pins an explicit boundary thread (sticky — the drain won't overwrite it). 0 = unpinned.</summary>
     public static void SetExecutionThreadForTest(int threadId)
     {

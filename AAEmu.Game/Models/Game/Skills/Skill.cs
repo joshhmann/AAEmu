@@ -2,6 +2,7 @@ using System.Numerics;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
@@ -205,7 +206,11 @@ public class Skill
         // If skill uses Plots, then start the plot
         if (Template.Plot != null)
         {
-            Task.Run(() => Template.Plot.RunAsync(caster, casterCaster, target, targetCaster, skillObject, this));
+            // M5 execution boundary: the plot is independent engine work —
+            // run it without the caller's execution scope so a bot-step's
+            // AsyncLocal scope never flows onto the plot thread and trips
+            // the boundary's write assertion when plot effects land.
+            _ = ExecutionBoundary.RunUnscoped(() => Template.Plot.RunAsync(caster, casterCaster, target, targetCaster, skillObject, this));
             if (Template.PlotOnly)
                 return SkillResult.Success;
         }
