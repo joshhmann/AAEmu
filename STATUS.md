@@ -33,11 +33,12 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
   restart → boot catch-up fired to a strictly forward phase with recomputed growth_time
   (`CheckRestartConservation` null, no fail-fast tripped). Isolated root
   `/root/aaemu-e2e-a5-restart` (62xx ports, DB 63306, `aaemu_a5_restart`,
-  `E2E_REBUILD=1`); game-data hardlink-seeded from the sixhour root
-  (canonical md5 `78b3bdbf038db3b927056106efdf91af` verified); `ensure-log-caps.sh`
-  copied in (fresh roots lack it — pre-existing gap, not a code bug).
 - Still open: 2-from-stack planting + due-in-window at rate 3 (only the 6h asserted
   soak exercises it), the 6h asserted soak itself, SHAPE re-show. **A5 OPEN.**
+- **2026-09-05 deferral (user direction):** soaks run on the testing server while
+  development continues locally. Local 6h launch NOT retried (pre-flight blocked on
+  leftover `aaemu_a5_t3_sixhour-db-1` holding 43306; servers 504194/513509 already
+  stopped, PASS report preserved as `.bak-preb2`). Restart-leg PASS above stands.
 
 ## 2026-09-05 — A5 b2 prelaunch correction record (no runtime proof, A5 stays OPEN)
 
