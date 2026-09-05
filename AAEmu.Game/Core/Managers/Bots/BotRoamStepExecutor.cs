@@ -1,15 +1,21 @@
 using System.Collections.Concurrent;
 using System.Numerics;
 
+using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Models;
-using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Templates;
+using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.Units.Movements;
+using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
 
@@ -114,6 +120,34 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
     /// <summary>Unit resolver seam (null → Character.ParentWorld?.GetUnit).</summary>
     public Func<Character, uint, Unit?>? UnitResolver { get; init; }
+    /// <summary>
+    /// Whether the opportunistic livestock-butcher loop is enabled. Defaults
+    /// to true when the AAEMU_PRESENCE_BUTCHER environment variable is set to
+    /// "1", "true", or "True". Off (the default) = zero behavior change.
+    /// </summary>
+    public bool EnableWildlifeButcher { get; set; } =
+        Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BUTCHER") is "1" or "true" or "True";
+
+    /// <summary>Perception radius for detecting nearby butcherable livestock doodads (default = 45m).</summary>
+    public float ButcherPerceptionRadius { get; init; } =
+        float.TryParse(Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BUTCHER_RADIUS"), out var r) ? r : 45f;
+
+    /// <summary>Scan interval for searching for butcherable livestock (default = 1.2s).</summary>
+    public TimeSpan ButcherScanInterval { get; init; } = TimeSpan.FromMilliseconds(1200);
+
+    /// <summary>Nearby livestock-doodad detection seam (null → WorldManager.GetAround&lt;Doodad&gt;).</summary>
+    public Func<Character, float, IEnumerable<Doodad>>? NearbyDoodadProvider { get; init; }
+
+    /// <summary>Livestock-doodad resolver seam (null → Character.ParentWorld?.GetDoodad).</summary>
+    public Func<Character, uint, Doodad?>? DoodadResolver { get; init; }
+
+    /// <summary>
+    /// Butcher-skill resolver seam: the interaction skill for a livestock
+    /// doodad's CURRENT phase, 0 = not butcherable in this phase (null → the
+    /// data-driven default — no doodad or skill ids assumed).
+    /// </summary>
+    public Func<Doodad, uint>? ButcherSkillResolver { get; init; }
+
 
     internal sealed class BotRoamState
     {
@@ -136,6 +170,9 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         public DateTime LastScanUtc { get; set; } = DateTime.MinValue;
         public DateTime LastCastUtc { get; set; } = DateTime.MinValue;
         public uint LastSkillUsed { get; set; }
+
+        public uint TargetButcherDoodadObjId { get; set; }
+        public DateTime LastButcherScanUtc { get; set; } = DateTime.MinValue;
     }
 
     private readonly ConcurrentDictionary<uint, BotRoamState> _states = [];
@@ -443,6 +480,10 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 {
                     state.TargetNpcObjId = bestNpc.ObjId;
                     state.TargetEngagedUtc = now;
+                    // Hunt preempts an in-progress butcher approach — a single
+                    // active disruption at a time (the butcher scan below only
+                    // runs while not hunting).
+                    state.TargetButcherDoodadObjId = 0;
                     bot.Character.CurrentTarget = bestNpc;
                     bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, bestNpc.ObjId), true);
                     if (actor.ActiveRequest is { IsTerminal: false })
@@ -456,8 +497,120 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             }
         }
 
-        // 2. Issue the next leg when idle, not hunting, and a route is active.
-        if (state.TargetNpcObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
+        // 1b. Opportunistic livestock-butcher loop (wildlife slice 4, Option A
+        // livestock-only): works on EXISTING livestock doodad chains only
+        // (canonical cow 5782 → butchered 5790 → LootPack 79 → 9907, pack 6390
+        // → beef 8048; sheep 5649 → 640 → mutton 8052 — resolved data-driven,
+        // never assumed). NPC corpses NEVER become doodads: there is no
+        // corpse→doodad pipeline here (B stays gated); the leg only scans
+        // world doodads already standing on a butcherable phase, approaches
+        // into interaction range, and fires the existing Interact
+        // ActorRequest. Logging only on the terminal outcome (slice 1/3
+        // idiom) — zero success-path change.
+        if (EnableWildlifeButcher)
+        {
+            if (state.TargetButcherDoodadObjId != 0)
+            {
+                var butcherDoodad = DoodadResolver != null
+                    ? DoodadResolver(bot.Character, state.TargetButcherDoodadObjId)
+                    : bot.Character.ParentWorld?.GetDoodad(state.TargetButcherDoodadObjId);
+                var butcherSkillId = butcherDoodad != null ? ResolveButcherSkill(butcherDoodad) : 0;
+
+                if (butcherDoodad == null || butcherSkillId == 0 || butcherDoodad.Despawn > DateTime.MinValue)
+                {
+                    // Stale: despawned/consumed, or left its butcherable phase
+                    // (someone else butchered it into the loot phase) — drop.
+                    Logger.Debug("Roam butcher target lost for bot {CharacterId}: doodad {DoodadId} (butcherable no longer)",
+                        bot.CharacterId, state.TargetButcherDoodadObjId);
+                    state.TargetButcherDoodadObjId = 0;
+                    if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+                    {
+                        _ = actor.Stop();
+                        state.PendingLeg = null;
+                    }
+                }
+                else
+                {
+                    var butcherDist = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, butcherDoodad.Transform.World.Position, false);
+                    if (butcherDist > GameplayActor.MaxInteractRange)
+                    {
+                        var butcherPos = butcherDoodad.Transform.World.Position;
+                        var needsButcherMove = actor.ActiveRequest is not { IsTerminal: false, Action: ActorActionType.Move }
+                            || (state.PendingLeg?.Destination.HasValue == true
+                                && Vector3.Distance(state.PendingLeg.Destination.Value, butcherPos) > 2.0f);
+
+                        if (needsButcherMove)
+                        {
+                            if (actor.ActiveRequest is { IsTerminal: false })
+                                _ = actor.Stop();
+                            state.PendingLeg = actor.MoveTo(butcherPos, HuntChaseSpeed, TimeSpan.FromSeconds(10));
+                        }
+                    }
+                    else
+                    {
+                        // Interact needs a free actor (TryBegin busy-rejects) —
+                        // park the approach leg first (hunt-engage precedent).
+                        if (actor.ActiveRequest is { IsTerminal: false })
+                        {
+                            _ = actor.Stop();
+                            state.PendingLeg = null;
+                        }
+
+                        var beforePhase = butcherDoodad.FuncGroupId;
+                        var butcher = actor.Interact(butcherDoodad.ObjId, butcherSkillId);
+                        if (butcher is { IsTerminal: true, State: ActorLifecycleState.Completed } && butcherDoodad.FuncGroupId != beforePhase)
+                            Logger.Debug("Roam butcher completed for bot {CharacterId}: livestock doodad {DoodadId} (template {TemplateId}) phase {Before}→{After} ({Detail})",
+                                bot.CharacterId, butcherDoodad.ObjId, butcherDoodad.TemplateId, beforePhase, butcherDoodad.FuncGroupId, butcher.Detail);
+                        else if (butcher is { IsTerminal: true, State: ActorLifecycleState.Completed })
+                            Logger.Debug("Roam butcher no-op for bot {CharacterId}: livestock doodad {DoodadId} (template {TemplateId}) — Completed with phase unchanged ({Detail})",
+                                bot.CharacterId, butcherDoodad.ObjId, butcherDoodad.TemplateId, butcher.Detail);
+                        else if (butcher.IsTerminal)
+                            Logger.Debug("Roam butcher rejected for bot {CharacterId}: livestock doodad {DoodadId} (template {TemplateId}) — {State} ({Detail})",
+                                bot.CharacterId, butcherDoodad.ObjId, butcherDoodad.TemplateId, butcher.State, butcher.Detail);
+                        state.TargetButcherDoodadObjId = 0;
+                    }
+                }
+            }
+            else if (state.TargetNpcObjId == 0 && now - state.LastButcherScanUtc >= ButcherScanInterval)
+            {
+                state.LastButcherScanUtc = now;
+                var nearbyDoodads = NearbyDoodadProvider != null
+                    ? NearbyDoodadProvider(bot.Character, ButcherPerceptionRadius)
+                    : WorldManager.GetAround<Doodad>(bot.Character, ButcherPerceptionRadius);
+
+                Doodad? bestDoodad = null;
+                var bestDoodadDist = float.MaxValue;
+                foreach (var doodad in nearbyDoodads)
+                {
+                    if (doodad == null || doodad.Despawn > DateTime.MinValue)
+                        continue;
+                    if (ResolveButcherSkill(doodad) == 0)
+                        continue;
+
+                    var d = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, doodad.Transform.World.Position, false);
+                    if (d < bestDoodadDist)
+                    {
+                        bestDoodadDist = d;
+                        bestDoodad = doodad;
+                    }
+                }
+
+                if (bestDoodad != null)
+                {
+                    state.TargetButcherDoodadObjId = bestDoodad.ObjId;
+                    if (actor.ActiveRequest is { IsTerminal: false })
+                    {
+                        _ = actor.Stop();
+                        state.PendingLeg = null;
+                    }
+                    Logger.Debug("Bot {CharacterId} engaged butcherable livestock {TemplateId} ({DoodadId}) at {Dist:F1}m",
+                        bot.CharacterId, bestDoodad.TemplateId, bestDoodad.ObjId, bestDoodadDist);
+                }
+            }
+        }
+
+        // 2. Issue the next leg when idle, not hunting, not butchering, and a route is active.
+        if (state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
         {
             var target = state.Path.CurrentTarget;
             var leg = actor.MoveTo(target, RoamSpeed, RoamLegTimeout);
@@ -483,6 +636,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
         // 3a. Flat arrival owns the leg for ground-clamped walkers (only when roaming)
         if (state.TargetNpcObjId == 0
+            && state.TargetButcherDoodadObjId == 0
             && state.PendingLeg is { IsTerminal: false, Action: ActorActionType.Move }
             && state.Path is { IsFinished: false })
         {
@@ -494,6 +648,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
         // 3b. Route advance on arrival: when the pending Move leg reached a terminal state
         if (state.TargetNpcObjId == 0
+            && state.TargetButcherDoodadObjId == 0
             && state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move }
             && state.Path is { IsFinished: false })
         {
@@ -522,7 +677,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 }
                 else
                 {
-                    var currentMoveSpeed = state.TargetNpcObjId != 0 ? HuntChaseSpeed : RoamSpeed;
+                    var currentMoveSpeed = state.TargetNpcObjId != 0 || state.TargetButcherDoodadObjId != 0 ? HuntChaseSpeed : RoamSpeed;
                     var maxDz = Math.Max(0.2f, (currentMoveSpeed * (float)elapsed.TotalSeconds) * 1.5f);
                     targetZ = Math.Abs(dz) <= maxDz ? clampedZ : position.Z + Math.Sign(dz) * maxDz;
                 }
@@ -559,7 +714,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 state.WasMoving = true;
                 if (bot.Character.Region?.HasHumanObservers() == true)
                 {
-                    var currentSpeed = state.TargetNpcObjId != 0 ? HuntChaseSpeed : RoamSpeed;
+                    var currentSpeed = state.TargetNpcObjId != 0 || state.TargetButcherDoodadObjId != 0 ? HuntChaseSpeed : RoamSpeed;
                     var targetDest = state.PendingLeg?.Destination ?? state.Path?.CurrentTarget ?? position;
                     var moveType = BuildMoveType(bot.Character, position, targetDest, lastPos, dtSeconds, state, currentSpeed);
                     bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
@@ -602,8 +757,9 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         var live = actor.ActiveRequest is { IsTerminal: false };
         var routeActive = state.Path is { IsFinished: false };
         var hunting = state.TargetNpcObjId != 0;
+        var butchering = state.TargetButcherDoodadObjId != 0;
         var effectiveCadence = state.CadenceOverride ?? ActiveCadence;
-        return live || routeActive || hunting
+        return live || routeActive || hunting || butchering
             ? (state.CadenceOverride.HasValue ? Task.FromResult<TimeSpan?>(effectiveCadence) : (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence)))
             : DormantTask;
     }
@@ -729,5 +885,75 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         {
             return true;
         }
+    }
+    /// <summary>
+    /// Butcher-skill seam dispatch: the interaction skill for a livestock
+    /// doodad's current phase, 0 = not butcherable in this phase.
+    /// </summary>
+    private uint ResolveButcherSkill(Doodad doodad)
+        => ButcherSkillResolver != null ? ButcherSkillResolver(doodad) : TryResolveButcherSkill(doodad);
+
+    /// <summary>
+    /// Data-driven butcher-skill resolution for a livestock doodad's CURRENT
+    /// phase (no doodad or skill ids assumed — the canonical 1.2 shape only):
+    /// the phase carries a DoodadFuncUse whose skill rides the Butcher world
+    /// interaction (wi 20 — butcher skills like 도축하기; feed/milk/shear
+    /// Use-skills ride wi 19 instead) and whose NextPhase yields meat (carries
+    /// loot funcs). Canonical: cow 5782 Use 498 (skill 13972) → 5790
+    /// (LootPack 79 → beef); sheep 5649 Use 1283 (skill 13970) → 640 (loot →
+    /// mutton). Returns 0 when the phase has no such func (already-butchered
+    /// loot phases, sheared phases, empty groups). Safe against missing
+    /// DoodadManager/SkillManager singletons in test/headless environments.
+    /// </summary>
+    private static uint TryResolveButcherSkill(Doodad doodad)
+    {
+        List<DoodadFunc>? funcs;
+        try
+        {
+            funcs = DoodadManager.Instance.GetFuncsForGroup(doodad.FuncGroupId);
+        }
+        catch
+        {
+            return 0;
+        }
+        if (funcs == null)
+            return 0;
+
+        foreach (var func in funcs)
+        {
+            if (func == null || func.FuncType != "DoodadFuncUse" || func.SkillId == 0 || func.NextPhase <= 0)
+                continue;
+
+            SkillTemplate? skillTemplate;
+            try
+            {
+                skillTemplate = SkillManager.Instance.GetSkillTemplate(func.SkillId);
+            }
+            catch
+            {
+                continue;
+            }
+            if (skillTemplate?.Effects.Any(e =>
+                    e?.Template is InteractionEffect interaction
+                    && interaction.WorldInteraction == WorldInteractionType.Butcher) != true)
+                continue;
+
+            List<DoodadFunc>? nextFuncs;
+            try
+            {
+                nextFuncs = DoodadManager.Instance.GetFuncsForGroup((uint)func.NextPhase);
+            }
+            catch
+            {
+                continue;
+            }
+            if (nextFuncs == null
+                || !nextFuncs.Any(f => f?.FuncType is "DoodadFuncLootPack" or "DoodadFuncLootItem"))
+                continue;
+
+            return func.SkillId;
+        }
+
+        return 0;
     }
 }

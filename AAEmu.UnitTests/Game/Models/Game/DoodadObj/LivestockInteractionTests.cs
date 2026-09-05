@@ -20,6 +20,7 @@ using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Tasks.Doodads;
 using AAEmu.UnitTests.Game.Core.Managers.Bots;
+using AAEmu.UnitTests.Game.Housing;
 using TUnit.Core.Interfaces;
 
 namespace AAEmu.UnitTests.Game.Models.Game.DoodadObj;
@@ -46,7 +47,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.DoodadObj;
 /// PhaseStateRestartRecoveryTests (8/8) — do not regress those paths.
 /// </summary>
 [NotInParallel] // touches process-wide singletons (t_4f11a519 pattern)
-[ParallelLimiter<LivestockSequentialParallelLimit>] // t_f3700374: [NotInParallel] does NOT serialize within a class
+[ParallelLimiter<SequentialParallelLimit>] // housing-lane limiter: serialize against house/pack/butcher-leg tests sharing WorldManager/singleton state (stacked limiters do not compile)
 public class LivestockInteractionTests
 {
     // ---- Dairy calf 2672 (canonical chain) ----
