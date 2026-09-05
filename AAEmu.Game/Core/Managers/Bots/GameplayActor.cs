@@ -152,6 +152,19 @@ public class GameplayActor : IGameplayActor
     /// </summary>
     public float MoveDeceleration { get; set; } = 14f;
 
+    /// <summary>
+    /// Corner-blend radius for routed Move legs (meters, spline/path corner
+    /// blending): instead of braking to a stop at every intermediate
+    /// waypoint, the leg cuts corners — when the actor comes within this
+    /// distance of an intermediate waypoint it steers directly for the next
+    /// one, carrying its trapezoidal speed through. The shortcut's closest
+    /// approach to the skipped waypoint is at most this radius, so it
+    /// doubles as the lateral-deviation tolerance. Non-positive disables
+    /// blending (legacy stop-at-waypoint). The final destination always
+    /// uses the exact eased arrival regardless of this setting.
+    /// </summary>
+    public float MoveCornerBlendRadius { get; set; } = 1f;
+
     /// <summary>Max audit records retained (newest last).</summary>
     private const int MaxTraceRecords = 512;
 
@@ -388,6 +401,37 @@ public class GameplayActor : IGameplayActor
         _moveSpeed = speed;
         ResetMoveProgressTracking();
         request.Start("walking");
+        return request;
+    }
+
+    /// <summary>
+    /// Test seam: starts a routed Move leg over an explicit waypoint list
+    /// (the same _moveWaypoints shape NavigateTo builds from navmesh paths
+    /// and obstacle detours, without requiring GeoData or obstacles
+    /// headless). Corner blending, the trapezoid profile, and arrival apply
+    /// exactly as on production routed legs.
+    /// </summary>
+    internal ActorRequest NavigateRoutedForTest(IReadOnlyList<Vector3> route, float speed = 5f, TimeSpan? timeout = null)
+    {
+        ExecutionBoundary.AssertOnExecutionThread("NavigateRoutedForTest");
+
+        var request = NewRequest(ActorActionType.Move, 0, route[^1], timeout: timeout ?? DefaultMoveTimeout);
+        if (!TryBegin(request, "navigate"))
+            return request;
+        if (speed <= 0f)
+            return Reject(request, ActorFailureReason.RejectedAction, "speed must be positive");
+        if (route.Count == 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "route must be non-empty");
+        if (route.Any(p => !p.IsFinite()))
+            return Reject(request, ActorFailureReason.RejectedAction, "route must be finite");
+        if (route.Count == 1)
+            return StartMove(request, route[0], speed);
+
+        _moveWaypoints = new Queue<Vector3>(route);
+        _moveSpeed = speed;
+        ResetMoveProgressTracking();
+        _moveTarget = _moveWaypoints.Dequeue();
+        request.Start($"navigating test route ({route.Count} waypoints)");
         return request;
     }
 
@@ -3621,6 +3665,32 @@ public class GameplayActor : IGameplayActor
             var legTarget = _unstickWaypoint ?? destination;
             var flatDistance = MathUtil.CalculateDistance(position, legTarget, false);
             var zDistance = Math.Abs(legTarget.Z - position.Z);
+            // Corner blending (spline/path corner rounding): an intermediate
+            // routed waypoint inside the blend radius is cut, not stopped
+            // at — the leg re-anchors on the NEXT waypoint and steps toward
+            // it in the SAME tick, carrying _moveCurrentSpeed through (no
+            // stop-start, no dead tick). The shortcut's closest approach to
+            // the skipped waypoint is at most the blend radius (the
+            // lateral-deviation tolerance), the trapezoid never brakes into
+            // intermediate waypoints (its braking curve re-anchors on the
+            // remaining distance automatically), and the single-tick heading
+            // change is smaller than the legacy stop-turn — keeping the
+            // 360°/s broadcast slew in BotRoamStepExecutor out of
+            // saturation. The final destination, pure-vertical legs, and
+            // unstick recovery legs keep the exact legacy arrival below.
+            if (MoveCornerBlendRadius > 0f
+                && _unstickWaypoint == null
+                && _moveWaypoints is { Count: > 0 }
+                && flatDistance > 0.0001f
+                && flatDistance <= MoveCornerBlendRadius)
+            {
+                _moveTarget = _moveWaypoints.Dequeue();
+                legTarget = _moveTarget.Value;
+                flatDistance = MathUtil.CalculateDistance(position, legTarget, false);
+                zDistance = Math.Abs(legTarget.Z - position.Z);
+                _lastProgressPosition = position;
+                _noProgressElapsed = TimeSpan.Zero;
+            }
 
             if (flatDistance <= ArrivalRadius && zDistance <= ArrivalRadius)
             {
