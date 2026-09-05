@@ -508,6 +508,79 @@ public class BotAdminServiceTests
         await Assert.That(rig.TerrainRequests).IsEmpty();
     }
 
+    // ----------------------------------------------------------------- lab
+
+    [Test]
+    public async Task Lab_CircleMode_ArmsCircleRouteAndSetsCadence()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+        var bot = rig.Manager.Seed(MakeBot(1, "Tester"), PlayerBotState.Active);
+        bot.Character.Transform.Local.SetPosition(100, 200, 10);
+
+        var result = service.Lab("Tester", "circle", 20);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Message).Contains("CIRCLE");
+        await Assert.That(result.Message).Contains("20 Hz");
+
+        var route = rig.Executor.GetRoamRoute(bot.CharacterId);
+        await Assert.That(route).IsNotNull();
+        await Assert.That(route!.Waypoints.Count).IsEqualTo(32);
+        await Assert.That(route.Mode).IsEqualTo(BotPath.LoopMode.Loop);
+
+        var state = rig.Executor.GetBotState(bot.CharacterId);
+        await Assert.That(state).IsNotNull();
+        await Assert.That(state!.BroadcastIntervalOverride).IsEqualTo(TimeSpan.FromMilliseconds(50));
+    }
+
+    [Test]
+    public async Task Lab_LineMode_ArmsStraightLineRoute()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+        var bot = rig.Manager.Seed(MakeBot(2, "Runner"), PlayerBotState.Active);
+        bot.Character.Transform.Local.SetPosition(10, 20, 30);
+
+        var result = service.Lab("Runner", "line", 10);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Message).Contains("STRAIGHT LINE");
+
+        var route = rig.Executor.GetRoamRoute(bot.CharacterId);
+        await Assert.That(route).IsNotNull();
+        await Assert.That(route!.Waypoints.Count).IsEqualTo(2);
+        await Assert.That(route.Mode).IsEqualTo(BotPath.LoopMode.PingPong);
+    }
+
+    [Test]
+    public async Task Lab_TelemetryMode_TogglesTelemetryLogging()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+        var bot = rig.Manager.Seed(MakeBot(3, "LoggerBot"), PlayerBotState.Active);
+
+        var result1 = service.Lab("LoggerBot", "telemetry");
+        await Assert.That(result1.Success).IsTrue();
+        await Assert.That(result1.Message).Contains("ENABLED");
+
+        var result2 = service.Lab("LoggerBot", "telemetry");
+        await Assert.That(result2.Success).IsTrue();
+        await Assert.That(result2.Message).Contains("DISABLED");
+    }
+
+    [Test]
+    public async Task Lab_UnknownBot_ReturnsFriendlyError()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+
+        var result = service.Lab("Ghost", "circle", 10);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Message).Contains("No bot found");
+    }
+
     [Test]
     public async Task Go_TerrainClampedTarget_IsUsedForTransformAndRoute()
     {

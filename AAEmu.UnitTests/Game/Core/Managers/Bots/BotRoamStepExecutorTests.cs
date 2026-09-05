@@ -272,4 +272,83 @@ public class BotRoamStepExecutorTests
         await Assert.That(actor.ActiveRequest).IsNotNull();
         await Assert.That(actor.ActiveRequest!.Action).IsEqualTo(ActorActionType.Move);
     }
+
+    [Test]
+    public async Task Step_ContinuousSlopeClamping_ClampsSmoothlyWithoutDeadband()
+    {
+        // Terrain slope: 10% grade (z = 0.1 * x)
+        var (executor, actor, runtime, clock) = CreateRig("slope-bot", terrain: (pos, _) => pos.X * 0.1f);
+
+        var route = new BotPath([new Vector3(10, 0, 0)], BotPath.LoopMode.Once);
+        executor.SetRoamRoute(runtime.Character, route);
+
+        // Step 5 times (at 2 m/s, 100ms = 0.2m per step) -> x reaches ~1.0m, terrain Z is ~0.1m
+        for (var i = 0; i < 5; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            _ = await executor.StepAsync(runtime, CancellationToken.None);
+        }
+
+        var pos = actor.Character.Transform.World.Position;
+        await Assert.That(pos.X).IsGreaterThan(0.5f);
+        // Bot Z must closely follow terrain Z without requiring a 5cm deadband threshold
+        await Assert.That(pos.Z).IsGreaterThan(0.05f);
+        await Assert.That(Math.Abs(pos.Z - (pos.X * 0.1f))).IsLessThan(0.01f);
+    }
+
+    [Test]
+    public async Task Step_CadenceOverride_ControlsCadence()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("cadence-bot");
+        var route = new BotPath([new Vector3(10, 0, 0)], BotPath.LoopMode.Loop);
+        executor.SetRoamRoute(runtime.Character, route);
+
+        // Override cadence to 20 Hz (50ms)
+        executor.SetBotCadence(runtime.CharacterId, 20);
+
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        var next = await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(next).IsNotNull();
+        await Assert.That(next.Value).IsEqualTo(TimeSpan.FromMilliseconds(50));
+
+        // Revert cadence to default (pass 0)
+        executor.SetBotCadence(runtime.CharacterId, 0);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        next = await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(next).IsNotNull();
+        await Assert.That(next.Value).IsEqualTo(TimeSpan.FromMilliseconds(100));
+    }
+
+    [Test]
+    public async Task BotPath_BuildCircle_ProducesSmoothSamples()
+    {
+        var center = new Vector3(100, 200, 50);
+        var circle = BotPath.BuildCircle(center, 10f, 32);
+
+        await Assert.That(circle.Waypoints.Count).IsEqualTo(32);
+        await Assert.That(circle.Mode).IsEqualTo(BotPath.LoopMode.Loop);
+
+        // All points should be approximately 10m from center (X, Y)
+        foreach (var wp in circle.Waypoints)
+        {
+            var dist = MathF.Sqrt(MathF.Pow(wp.X - center.X, 2) + MathF.Pow(wp.Y - center.Y, 2));
+            await Assert.That(Math.Abs(dist - 10f)).IsLessThan(0.01f);
+            await Assert.That(wp.Z).IsEqualTo(center.Z);
+        }
+    }
+
+    [Test]
+    public async Task BotPath_BuildStraightLine_ProducesPingPongRoute()
+    {
+        var start = new Vector3(0, 0, 10);
+        var end = new Vector3(20, 0, 10);
+        var path = BotPath.BuildStraightLine(start, end);
+
+        await Assert.That(path.Waypoints.Count).IsEqualTo(2);
+        await Assert.That(path.Mode).IsEqualTo(BotPath.LoopMode.PingPong);
+        await Assert.That(path.Waypoints[0]).IsEqualTo(end);
+        await Assert.That(path.Waypoints[1]).IsEqualTo(start);
+    }
 }

@@ -196,4 +196,28 @@ public class BotPath
     /// <summary>A straight single-leg route to a target (used for return-home).</summary>
     public static BotPath PathTo(Vector3 target, float maxStepPerTick = 5f, float arrivalRadius = ArrivalRadiusDefault)
         => new([target], LoopMode.Once, arrivalRadius, maxStepPerTick);
+
+    /// <summary>
+    /// Builds an analytical smooth circle route around center with dense waypoints for continuous curvature.
+    /// </summary>
+    public static BotPath BuildCircle(Vector3 center, float radius, int samples = 32)
+    {
+        var waypoints = new List<Vector3>(samples);
+        for (var i = 0; i < samples; i++)
+        {
+            var theta = (float)(i * 2 * Math.PI / samples);
+            var x = center.X + MathF.Cos(theta) * radius;
+            var y = center.Y + MathF.Sin(theta) * radius;
+            waypoints.Add(new Vector3(x, y, center.Z));
+        }
+        return new BotPath(waypoints, LoopMode.Loop, ArrivalRadiusDefault, radius * 0.2f);
+    }
+
+    /// <summary>
+    /// Builds a straight line back-and-forth route between two endpoints.
+    /// </summary>
+    public static BotPath BuildStraightLine(Vector3 start, Vector3 end)
+    {
+        return new BotPath([end, start], LoopMode.PingPong, ArrivalRadiusDefault);
+    }
 }

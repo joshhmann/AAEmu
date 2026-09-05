@@ -32,6 +32,7 @@ public class BotCmd : SubCommandBase, ICommand, ICommandV2
         Register(new BotRemoveSubCommand(), "remove", "rm");
         Register(new BotGoSubCommand(), "go");
         Register(new BotToSubCommand(), "to");
+        Register(new BotLabSubCommand(), "lab");
     }
 
     public void OnLoad()

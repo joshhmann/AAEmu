@@ -856,6 +856,23 @@ public class WorldManager(
     }
 
     /// <summary>
+    /// Evaluates the true bilinear terrain heightmap at (x, y), bypassing discrete 3D navmesh/obstacle vertex snaps.
+    /// </summary>
+    public float GetTerrainHeight(uint zoneKey, float x, float y)
+    {
+        var world = GetWorldTemplateByZoneKey(zoneKey)
+            ?? GetWorldTemplateByName("main_world");
+        try
+        {
+            return world?.GetHeight(x, y) ?? 0f;
+        }
+        catch
+        {
+            return 0f;
+        }
+    }
+
+    /// <summary>
     /// Returns target height of World position of transform according to loaded heightmaps
     /// </summary>
     /// <param name="transform"></param>

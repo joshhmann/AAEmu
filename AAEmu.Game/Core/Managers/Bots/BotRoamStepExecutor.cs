@@ -54,11 +54,17 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Max elapsed reported per step (clamp against scheduler stalls).</summary>
     public static readonly TimeSpan MaxStepElapsed = TimeSpan.FromSeconds(1);
 
-    /// <summary>Step cadence reported while a request is live.</summary>
-    public TimeSpan ActiveCadence { get; init; } = TimeSpan.FromMilliseconds(100);
+    /// <summary>Step cadence reported while a request is live (default = 100ms / 10 Hz; can be overridden via AAEMU_PRESENCE_BROADCAST_HZ).</summary>
+    public TimeSpan ActiveCadence { get; init; } =
+        int.TryParse(Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BROADCAST_HZ"), out var hz) && hz > 0
+            ? TimeSpan.FromSeconds(1.0 / hz)
+            : TimeSpan.FromMilliseconds(100);
 
-    /// <summary>Minimum interval between movement broadcasts (100ms = 10 Hz, matching Simulation cadence).</summary>
-    public TimeSpan BroadcastInterval { get; init; } = TimeSpan.FromMilliseconds(100);
+    /// <summary>Minimum interval between movement broadcasts (100ms = 10 Hz, matching Simulation cadence; can be overridden via AAEMU_PRESENCE_BROADCAST_HZ).</summary>
+    public TimeSpan BroadcastInterval { get; init; } =
+        int.TryParse(Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BROADCAST_HZ"), out var bhz) && bhz > 0
+            ? TimeSpan.FromSeconds(1.0 / bhz)
+            : TimeSpan.FromMilliseconds(100);
 
     /// <summary>Clock for elapsed accounting + broadcast throttle (tests inject FakeTimeProvider).</summary>
     public TimeProvider TimeProvider { get; init; } = TimeProvider.System;
@@ -109,14 +115,21 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Unit resolver seam (null → Character.ParentWorld?.GetUnit).</summary>
     public Func<Character, uint, Unit?>? UnitResolver { get; init; }
 
-    private sealed class BotRoamState
+    internal sealed class BotRoamState
     {
         public required IGameplayActor Actor { get; init; }
         public BotPath? Path { get; set; }
         public ActorRequest? PendingLeg { get; set; }
         public DateTime LastBroadcastUtc { get; set; } = DateTime.MinValue;
+        public long? LastBroadcastTicks { get; set; }
+        public long? NextBroadcastTicks { get; set; }
         public Vector3? LastBroadcastPosition { get; set; }
+        public float CurrentYawDegrees { get; set; }
+        public bool HasInitializedYaw { get; set; }
         public bool WasMoving { get; set; }
+        public bool TelemetryLogging { get; set; }
+        public TimeSpan? BroadcastIntervalOverride { get; set; }
+        public TimeSpan? CadenceOverride { get; set; }
 
         public uint TargetNpcObjId { get; set; }
         public DateTime TargetEngagedUtc { get; set; } = DateTime.MinValue;
@@ -187,6 +200,84 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// </summary>
     internal BotPath? GetRoamRoute(uint characterId)
         => _states.TryGetValue(characterId, out var state) ? state.Path : null;
+
+    /// <summary>
+    /// Overrides movement broadcast cadence and scheduler tick cadence for a specific bot (e.g. 5, 10, or 20 Hz).
+    /// Pass hz &lt;= 0 to clear the override and revert to defaults.
+    /// </summary>
+    public void SetBotCadence(Character character, int hz)
+    {
+        ArgumentNullException.ThrowIfNull(character);
+        var characterId = character.Id;
+        if (!_states.TryGetValue(characterId, out var state))
+        {
+            state = new BotRoamState { Actor = ActorFactory(character) };
+            _states[characterId] = state;
+        }
+
+        if (hz <= 0)
+        {
+            state.BroadcastIntervalOverride = null;
+            state.CadenceOverride = null;
+        }
+        else
+        {
+            var interval = TimeSpan.FromSeconds(1.0 / hz);
+            state.BroadcastIntervalOverride = interval;
+            state.CadenceOverride = interval;
+        }
+    }
+
+    public void SetBotCadence(uint characterId, int hz)
+    {
+        if (_states.TryGetValue(characterId, out var state))
+        {
+            if (hz <= 0)
+            {
+                state.BroadcastIntervalOverride = null;
+                state.CadenceOverride = null;
+            }
+            else
+            {
+                var interval = TimeSpan.FromSeconds(1.0 / hz);
+                state.BroadcastIntervalOverride = interval;
+                state.CadenceOverride = interval;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Toggles debug telemetry logging for movement broadcasts for a specific bot.
+    /// </summary>
+    public bool ToggleTelemetry(Character character)
+    {
+        ArgumentNullException.ThrowIfNull(character);
+        var characterId = character.Id;
+        if (!_states.TryGetValue(characterId, out var state))
+        {
+            state = new BotRoamState { Actor = ActorFactory(character) };
+            _states[characterId] = state;
+        }
+
+        state.TelemetryLogging = !state.TelemetryLogging;
+        return state.TelemetryLogging;
+    }
+
+    public bool ToggleTelemetry(uint characterId)
+    {
+        if (_states.TryGetValue(characterId, out var state))
+        {
+            state.TelemetryLogging = !state.TelemetryLogging;
+            return state.TelemetryLogging;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Retrieves internal roam state for telemetry and verification.
+    /// </summary>
+    internal BotRoamState? GetBotState(uint characterId)
+        => _states.TryGetValue(characterId, out var state) ? state : null;
 
     public Task<TimeSpan?> StepAsync(PlayerBotRuntime bot, CancellationToken cancellationToken)
     {
@@ -395,33 +486,74 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             state.PendingLeg = actor.MoveTo(state.Path.CurrentTarget, RoamSpeed, RoamLegTimeout);
         }
 
-        // 4a. Ground clamp — the Simulation.cs:394 pattern: after movement,
-        // snap Z to the heightmap so bots walk ON the terrain, never under it.
+        // 4a. Ground clamp — continuous slope-constrained following
         var position = bot.Character.Transform.World.Position;
         var clampedZ = GroundHeightProvider != null
             ? GroundHeightProvider(position, bot.Character.Transform.ZoneId)
-            : WorldManager.PeekInstance?.GetReferenceHeight(
-                null, position.X, position.Y, position.Z, bot.Character.Transform.ZoneId) ?? 0f;
-        if (clampedZ != 0f && Math.Abs(clampedZ - position.Z) > 0.05f)
+            : (WorldManager.PeekInstance?.GetTerrainHeight(bot.Character.Transform.ZoneId, position.X, position.Y) is { } th && th != 0f
+                ? th
+                : WorldManager.PeekInstance?.GetReferenceHeight(
+                    null, position.X, position.Y, position.Z, bot.Character.Transform.ZoneId) ?? 0f);
+
+        if (clampedZ != 0f)
         {
-            bot.Character.Transform.Local.SetPosition(position.X, position.Y, clampedZ);
-            bot.Character.Transform.FinalizeTransform();
-            position = bot.Character.Transform.World.Position;
+            var dz = clampedZ - position.Z;
+            if (Math.Abs(dz) > 0.001f)
+            {
+                float targetZ;
+                if (Math.Abs(dz) > 3.0f)
+                {
+                    targetZ = clampedZ;
+                }
+                else
+                {
+                    var currentMoveSpeed = state.TargetNpcObjId != 0 ? HuntChaseSpeed : RoamSpeed;
+                    var maxDz = Math.Max(0.2f, (currentMoveSpeed * (float)elapsed.TotalSeconds) * 1.5f);
+                    targetZ = Math.Abs(dz) <= maxDz ? clampedZ : position.Z + Math.Sign(dz) * maxDz;
+                }
+
+                bot.Character.Transform.Local.SetPosition(position.X, position.Y, targetZ);
+                bot.Character.Transform.FinalizeTransform();
+                position = bot.Character.Transform.World.Position;
+            }
         }
 
-        // 4b. Movement broadcast (10 Hz cadence) with standstill packet on stop.
-        if (now - state.LastBroadcastUtc >= BroadcastInterval)
+        // 4b. Movement broadcast with monotonic fixed schedule and standstill packet on stop.
+        var currentTicks = TimeProvider.GetTimestamp();
+        var freq = TimeProvider.TimestampFrequency;
+        var effectiveBroadcastInterval = state.BroadcastIntervalOverride ?? BroadcastInterval;
+        var intervalTicks = freq > 0 ? (long)(effectiveBroadcastInterval.TotalSeconds * freq) : 0L;
+
+        if (state.NextBroadcastTicks is null)
         {
+            state.NextBroadcastTicks = currentTicks;
+            state.LastBroadcastTicks = currentTicks;
+            state.LastBroadcastPosition = position;
+        }
+
+        if (currentTicks >= state.NextBroadcastTicks.Value)
+        {
+            var elapsedTicks = currentTicks - (state.LastBroadcastTicks ?? currentTicks);
+            var dtSeconds = freq > 0 ? (float)elapsedTicks / freq : (float)effectiveBroadcastInterval.TotalSeconds;
+            if (dtSeconds <= 0.001f)
+                dtSeconds = (float)effectiveBroadcastInterval.TotalSeconds;
+
             if (state.LastBroadcastPosition is { } lastPos &&
-                Vector3.Distance(lastPos, position) > 0.01f)
+                Vector3.Distance(lastPos, position) > 0.005f)
             {
                 state.WasMoving = true;
                 if (bot.Character.Region?.HasHumanObservers() == true)
                 {
                     var currentSpeed = state.TargetNpcObjId != 0 ? HuntChaseSpeed : RoamSpeed;
                     var targetDest = state.PendingLeg?.Destination ?? state.Path?.CurrentTarget ?? position;
-                    var moveType = BuildMoveType(bot.Character, position, targetDest, lastPos, currentSpeed);
+                    var moveType = BuildMoveType(bot.Character, position, targetDest, lastPos, dtSeconds, state, currentSpeed);
                     bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
+
+                    if (state.TelemetryLogging)
+                    {
+                        Logger.Info("[BotTelemetry] {Bot} Pos=({X:F2},{Y:F2},{Z:F2}) Vel=({Vx},{Vy},{Vz}) Yaw={Yaw:F1} dt={Dt:F3}s",
+                            bot.Character.Name, position.X, position.Y, position.Z, moveType.VelX, moveType.VelY, moveType.VelZ, state.CurrentYawDegrees, dtSeconds);
+                    }
                 }
             }
             else if (state.WasMoving)
@@ -431,45 +563,83 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 {
                     var moveType = BuildStopMoveType(bot.Character, position);
                     bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
+
+                    if (state.TelemetryLogging)
+                    {
+                        Logger.Info("[BotTelemetry] {Bot} STOP Pos=({X:F2},{Y:F2},{Z:F2})",
+                            bot.Character.Name, position.X, position.Y, position.Z);
+                    }
                 }
             }
 
-            state.LastBroadcastUtc = now;
+            state.LastBroadcastTicks = currentTicks;
             state.LastBroadcastPosition = position;
+            state.LastBroadcastUtc = now;
+
+            var nextTicks = state.NextBroadcastTicks.Value;
+            while (currentTicks >= nextTicks && intervalTicks > 0)
+            {
+                nextTicks += intervalTicks;
+            }
+            state.NextBroadcastTicks = nextTicks;
         }
 
         var live = actor.ActiveRequest is { IsTerminal: false };
         var routeActive = state.Path is { IsFinished: false };
         var hunting = state.TargetNpcObjId != 0;
+        var effectiveCadence = state.CadenceOverride ?? ActiveCadence;
         return live || routeActive || hunting
-            ? (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence))
+            ? (state.CadenceOverride.HasValue ? Task.FromResult<TimeSpan?>(effectiveCadence) : (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence)))
             : DormantTask;
     }
 
     /// <summary>
-    /// Builds the movement payload for the broadcast — the exact shape
-    /// Simulation.cs uses for NPCs (position, velocity from facing, rotation
-    /// bytes, walk flags/stance/alertness). ActorFlags 5 = walking, 4 = running.
+    /// Builds the movement payload for the broadcast — deriving 3D velocity from
+    /// post-constraint displacement over monotonic delta-time and applying smooth yaw turning.
     /// </summary>
-    private static UnitMoveType BuildMoveType(Character character, Vector3 position, Vector3 targetPos, Vector3 lastPos, float speed = 2.5f)
+    private static UnitMoveType BuildMoveType(
+        Character character,
+        Vector3 position,
+        Vector3 targetPos,
+        Vector3 lastPos,
+        float dtSeconds,
+        BotRoamState state,
+        float speed = 2.5f)
     {
         var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
-        var distToTarget = MathUtil.CalculateDistance(position, targetPos, false);
-        var angle = distToTarget > 0.1f
-            ? MathUtil.CalculateAngleFrom(position, targetPos)
-            : MathUtil.CalculateAngleFrom(lastPos, position);
-        var speedMm = speed * 1000f;
-        var (velX, velY) = MathUtil.AddDistanceToFront(speedMm, 0, 0, (float)angle.DegToRad());
 
-        character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+        var dt = dtSeconds > 0.001f ? dtSeconds : 0.1f;
+        var vx = (position.X - lastPos.X) / dt * 1000f;
+        var vy = (position.Y - lastPos.Y) / dt * 1000f;
+        var vz = (position.Z - lastPos.Z) / dt * 1000f;
+
+        var distMoved = MathUtil.CalculateDistance(lastPos, position, false);
+        var angle = distMoved > 0.01f
+            ? MathUtil.CalculateAngleFrom(lastPos, position)
+            : MathUtil.CalculateAngleFrom(position, targetPos);
+        var targetYaw = (float)angle - 90f;
+
+        if (!state.HasInitializedYaw)
+        {
+            state.CurrentYawDegrees = targetYaw;
+            state.HasInitializedYaw = true;
+        }
+        else
+        {
+            var maxTurnDelta = 360f * dt;
+            state.CurrentYawDegrees = MoveAngleTowards(state.CurrentYawDegrees, targetYaw, maxTurnDelta);
+        }
+
+        character.Transform.Local.SetRotationDegree(0f, 0f, state.CurrentYawDegrees);
         var (rx, ry, rz) = character.Transform.Local.ToRollPitchYawSBytesMovement();
 
         var isRunning = speed > 3.0f;
         moveType.X = position.X;
         moveType.Y = position.Y;
         moveType.Z = position.Z;
-        moveType.VelX = (short)velX;
-        moveType.VelY = (short)velY;
+        moveType.VelX = (short)Math.Clamp(vx, short.MinValue, short.MaxValue);
+        moveType.VelY = (short)Math.Clamp(vy, short.MinValue, short.MaxValue);
+        moveType.VelZ = (short)Math.Clamp(vz, short.MinValue, short.MaxValue);
         moveType.RotationX = rx;
         moveType.RotationY = ry;
         moveType.RotationZ = rz;
@@ -480,6 +650,15 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         moveType.Alertness = isRunning ? MoveTypeAlertness.Alert : MoveTypeAlertness.Idle;
         moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;
         return moveType;
+    }
+
+    private static float MoveAngleTowards(float current, float target, float maxDelta)
+    {
+        var diff = (target - current) % 360f;
+        if (diff > 180f) diff -= 360f;
+        if (diff < -180f) diff += 360f;
+        if (Math.Abs(diff) <= maxDelta) return target;
+        return current + Math.Sign(diff) * maxDelta;
     }
 
     /// <summary>
@@ -495,6 +674,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         moveType.Z = position.Z;
         moveType.VelX = 0;
         moveType.VelY = 0;
+        moveType.VelZ = 0;
         moveType.RotationX = rx;
         moveType.RotationY = ry;
         moveType.RotationZ = rz;

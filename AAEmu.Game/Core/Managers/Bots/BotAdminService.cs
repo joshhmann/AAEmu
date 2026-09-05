@@ -329,6 +329,82 @@ public sealed class BotAdminService
     }
 
     /// <summary>
+    /// Commands a bot into a specific movement test mode (circle, line, ramp, roam)
+    /// at the given broadcast frequency (5, 10, or 20 Hz), or toggles telemetry logging.
+    /// </summary>
+    public BotAdminCommandResult Lab(string nameOrId, string mode, int hz = 10)
+    {
+        var runtime = FindByNameOrId(nameOrId);
+        if (runtime == null)
+            return new BotAdminCommandResult(false, $"No bot found matching '{nameOrId}'.");
+
+        var character = runtime.Character;
+        var pos = character.Transform.World.Position;
+        var normalizedMode = mode.Trim().ToLowerInvariant();
+
+        switch (normalizedMode)
+        {
+            case "telemetry":
+            case "tel":
+            {
+                var enabled = _stepExecutor.ToggleTelemetry(character);
+                return new BotAdminCommandResult(true,
+                    $"Bot '{character.Name}' telemetry logging is now {(enabled ? "ENABLED" : "DISABLED")}.");
+            }
+
+            case "circle":
+            {
+                var route = BotPath.BuildCircle(pos, 10f, 32);
+                _stepExecutor.SetRoamRoute(character, route);
+                _stepExecutor.SetBotCadence(character, hz);
+                _scheduler.Start();
+                _scheduler.Wake(character.Id);
+                return new BotAdminCommandResult(true,
+                    $"Bot '{character.Name}' running CIRCLE test (r=10m, 32 points) at {hz} Hz.");
+            }
+
+            case "line":
+            case "straight":
+            {
+                var endPos = new Vector3(pos.X + 20f, pos.Y, pos.Z);
+                var clampedEnd = _terrainResolver(endPos, character.Transform.ZoneId);
+                var route = BotPath.BuildStraightLine(pos, clampedEnd);
+                _stepExecutor.SetRoamRoute(character, route);
+                _stepExecutor.SetBotCadence(character, hz);
+                _scheduler.Start();
+                _scheduler.Wake(character.Id);
+                return new BotAdminCommandResult(true,
+                    $"Bot '{character.Name}' running STRAIGHT LINE test (20m ping-pong) at {hz} Hz.");
+            }
+
+            case "ramp":
+            {
+                var rampEnd = new Vector3(pos.X, pos.Y + 25f, pos.Z);
+                var clampedRamp = _terrainResolver(rampEnd, character.Transform.ZoneId);
+                var route = BotPath.BuildStraightLine(pos, clampedRamp);
+                _stepExecutor.SetRoamRoute(character, route);
+                _stepExecutor.SetBotCadence(character, hz);
+                _scheduler.Start();
+                _scheduler.Wake(character.Id);
+                return new BotAdminCommandResult(true,
+                    $"Bot '{character.Name}' running RAMP test (25m ping-pong) at {hz} Hz.");
+            }
+
+            case "roam":
+            {
+                ArmRoam(character, pos);
+                _stepExecutor.SetBotCadence(character, hz);
+                return new BotAdminCommandResult(true,
+                    $"Bot '{character.Name}' resumed standard ROAM patrol at {hz} Hz.");
+            }
+
+            default:
+                return new BotAdminCommandResult(false,
+                    $"Unknown lab mode '{mode}'. Supported modes: circle, line, ramp, roam, telemetry.");
+        }
+    }
+
+    /// <summary>
     /// Re-arms the patrol route around <paramref name="home"/> and wakes the
     /// scheduler (idempotent Start — the scheduler's Exchange guard means an
     /// already-running scheduler is untouched).
