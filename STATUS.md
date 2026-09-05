@@ -37,8 +37,17 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
   soak exercises it), the 6h asserted soak itself, SHAPE re-show. **A5 OPEN.**
 - **2026-09-05 deferral (user direction):** soaks run on the testing server while
   development continues locally. Local 6h launch NOT retried (pre-flight blocked on
-  leftover `aaemu_a5_t3_sixhour-db-1` holding 43306; servers 504194/513509 already
-  stopped, PASS report preserved as `.bak-preb2`). Restart-leg PASS above stands.
+  leftover `aaemu_a5_t3_sixhour-db-1` holding 43306; local servers 504194/513509
+  stopped, local PASS report preserved as `.bak-preb2`). Restart-leg PASS stands.
+- **2026-09-05 6h asserted b2 soak LAUNCHED on testing server (.165):** start
+  20:33:00Z, HEAD `02903804b` (b2 code), E2E root
+  `/root/aaemu-e2e-a5-tier3-sixhour`, log `soak-run-20260905-133300.log`
+  (filename in PDT). Fresh clone `/root/aaemu-b2-soak` (prod `/root/AAEmu`
+  checkout untouched); canonical game-data rsynced (md5 verified); idle
+  sixhour servers stopped, leftover db cleared, stale Aug-30 report preserved
+  as `.bak-remote-20260830`. Window ETA ≈ warmup-ready + 6h (~02:40Z Sep 6).
+  Verdict lives only in the fresh `g2-a5-tier3-sixhour-report.json`
+  (`passed` + `failures`).
 
 ## 2026-09-05 — A5 b2 prelaunch correction record (no runtime proof, A5 stays OPEN)
 
