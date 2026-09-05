@@ -58,11 +58,12 @@ feel.)
   `harvest`, `craft`, `buy`, `sell`, `pack_pickup`, `put_down`,
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
-- Current source/test HEAD is local `develop` at `9ad5735b2` (bot-wildlife crash cluster; prior
-  `f5e7a1980`); CompleteQuest composition, non-objective act classification, and Level objective
-  pursuit are landed, plus SusManager teleport reset (`da06470ab`),
-  `ExecutionBoundary.RunUnscoped` for skill plots (`16112c24c`), and trapezoidal Move profile
-  (`a38484f9e`). M5 proposal `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6
+- Current source/test HEAD is local `develop` at `322390b32` (combat bonus-snapshot + aggro-table
+  kill races; prior `7c0772f12` loot-race regression, `9ad5735b2` bot-wildlife crash cluster);
+  CompleteQuest composition, non-objective act classification, and Level objective pursuit are
+  landed, plus SusManager teleport reset (`da06470ab`), `ExecutionBoundary.RunUnscoped` for skill
+  plots (`16112c24c`), and trapezoidal Move profile (`a38484f9e`). M5 proposal
+  `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6
   cancellation `950cfd279`, population isolation `c97909f4f`, and opt-in
   six-hour leg `155c82c66` remain integrated.
   `A5_TIER3_SIX_HOUR=1`, minutes >=360, and sample seconds 1..300; it
@@ -107,6 +108,17 @@ feel.)
   (`Probe_A5Tier3DormantTimers_SixHour`, log header start 2026-09-05T05:21:27Z, HEAD `9ad5735b2`,
   ETA ~11:21 UTC 2026-09-05) is IN FLIGHT — report path still holds the stale 2026-08-30 `46129ae`
   until the fresh report lands with `passed=true`.
+- **2026-09-05 closeout (code landed, docs-only):** loot-race regression `7c0772f12` (deterministic
+  AlwaysDrop pack, 40x16-thread hammer, fail-pre/pass-post; pushed); .165 presence-demo rebuilt on
+  `7c0772f12` (rollback tag kept, healthy, 5-min 0/0/0, 250 bots). Live triage: Effect 15109/skill
+  16210 IndexOutOfRange (GetBonuses race) + ClearAggroOfUnit InvalidOperationException via Npc.DoDie
+  (aggro race), Effects 15109/1134. Fix `322390b32` (+360/-84, BonusesLock whole-body, static
+  AggroLock, BuffToleranceTests hammer + NpcAggroRaceTests; API stable; no-nesting audited); gate
+  2836/1/1 (sole fail known PvP honor flake, 11/11 isolated green), MCP 39 + 24; pushed. Soak #1
+  died +72min by EXTERNAL kill (zero-failure ticks, no OOM/disk/exit markers; ~06:33 UTC) — partial
+  evidence, not a pass. Soak #2 rerun ON `322390b32` detached (PPID=1), log
+  `soak-run-20260905-022834.log`, ETA ~15:28 UTC 2026-09-05; A5 stays OPEN, soak #2 is the
+  candidate — no pass claim until the fresh report lands with `passed=true`.
 - The prior full gate at source/test `0ce518ac03a18de00fff1516aa9e794e8566bee6`
   remains historical at 2504 total / 2503 passed / 0 failed / 1 skipped,
   compiler 0/0, MCP 39. H remains U (UNKNOWN) and no M6 full-exit claim is

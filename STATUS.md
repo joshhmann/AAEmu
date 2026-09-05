@@ -15,9 +15,9 @@ MET with live evidence; PB-002 quest-discovery primitive and item-use slice
 landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; current local source/test HEAD is `9ad5735b2`
-(bot-wildlife crash cluster; prior `f5e7a1980` CompleteQuest/non-objective
-classification and Level objective pursuit). M5's
+Branch of record: develop; current local source/test HEAD is `322390b32`
+(combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
+bot-wildlife crash cluster). M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
 primitive remains integrated in `LevelingLoop`'s accept choice at
 `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`; focused contract 5/5, scoped quest
@@ -31,6 +31,16 @@ are capability/blocker tracks; A3/A4/A5 are population/scaling acceptance
 gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
+
+## 2026-09-05 — Closeout: loot-test gap closed, combat kill-races fixed, soak #1 externally killed, soak #2 rerun on `322390b32` (docs-only)
+
+- **Loot-race test gap closed — `7c0772f12 test(combat): loot GenerateLoot concurrent-generation regression`** (deterministic AlwaysDrop pack, 40x16-thread hammer, mutation-checked fail-pre/pass-post). Pushed to origin.
+- **Testing deploy:** .165 presence-demo rebuilt on `7c0772f12`, rollback tag `rollback-pre-7c0772f12` kept, healthy, 5-min baseline 0/0/0, 250 bots roaming.
+- **Live triage new findings:** Effect 15109/skill 16210 IndexOutOfRange (GetBonuses snapshot-copy race) + InvalidOperationException in ClearAggroOfUnit via Npc.DoDie (aggro-table race), Effects 15109/1134.
+- **Combat kill-races fixed — `322390b32 fix(combat): close bonus-snapshot and aggro-table kill races`** (+360/-84: BonusesLock whole-body incl. UpdateGearBonuses slot reset, static AggroLock after per-unit proved insufficient, BuffToleranceTests hammer + new NpcAggroRaceTests; public API stable; lock-ordering audited no-nesting). Full gate 2836 pass/1 fail/1 skip (sole fail = known load-dependent PvP honor flake, 11/11 isolated green), MCP smokes 39 + 24 pass. Pushed to origin.
+- **Soak #1 died at +72min by EXTERNAL kill** (zero-failure ticks to the end, healthy game ticks, no exit markers/OOM/disk; SIGKILL-class session teardown ~06:33 UTC) — partial evidence only, not a pass; killer unknown.
+- **Soak #2 rerun ON `322390b32`:** orphan `aaemu_a5_t3_sixhour-db-1` cleared, stale Aug-29 report renamed `.bak-pre322390b32`, launched detached HUP-proof (session leader, PPID=1), log `soak-run-20260905-022834.log`, early ticks [+0/x0/?0] advancing, ETA ~15:28 UTC 2026-09-05. Calibration/pb007/dev-DB/.165 lanes untouched.
+- **A5 stays OPEN:** no zero-breach post-change run yet; soak #2 is the candidate. No soak-pass claim until the fresh report lands with `passed=true`.
 
 ## 2026-09-05 — Docs/correlation: HEAD `9ad5735b2` record, live triage, A5 calibration correlation, 6h soak in-flight (read-only)
 

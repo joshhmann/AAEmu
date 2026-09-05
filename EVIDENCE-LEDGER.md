@@ -432,5 +432,24 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   HEAD `9ad5735b2`, ETA ~11:21 UTC 2026-09-05);
   report path still holds the stale 2026-08-30 `46129ae` run — no soak-pass claim. No ledger-state
   change; H stays UNKNOWN.
+- 2026-09-05 — Docs closeout (code landed, docs-only): `7c0772f12` loot-race regression closed
+  (deterministic AlwaysDrop pack, 40x16-thread hammer, mutation-checked fail-pre/pass-post;
+  pushed to origin). .165 presence-demo rebuilt on `7c0772f12` (rollback tag
+  `rollback-pre-7c0772f12` kept, healthy, 5-min baseline 0/0/0, 250 bots roaming). Live triage new
+  findings: Effect 15109/skill 16210 IndexOutOfRange (GetBonuses snapshot-copy race) +
+  InvalidOperationException in ClearAggroOfUnit via Npc.DoDie (aggro-table race), Effects
+  15109/1134. `322390b32` closed both races (+360/-84: BonusesLock whole-body incl.
+  UpdateGearBonuses slot reset, static AggroLock after per-unit proved insufficient,
+  BuffToleranceTests hammer + new NpcAggroRaceTests; public API stable; lock-ordering audited
+  no-nesting); full gate 2836 pass/1 fail/1 skip (sole fail = known load-dependent PvP honor flake,
+  11/11 isolated green), MCP smokes 39 + 24 pass; pushed to origin. Soak #1 died at +72min by
+  EXTERNAL kill (zero-failure ticks to the end, healthy game ticks, no exit markers/OOM/disk;
+  SIGKILL-class session teardown ~06:33 UTC) — partial evidence only, not a pass; killer unknown.
+  Soak #2 rerun ON `322390b32`: orphan `aaemu_a5_t3_sixhour-db-1` cleared, stale Aug-29 report
+  renamed `.bak-pre322390b32`, launched detached HUP-proof (session leader, PPID=1), log
+  `soak-run-20260905-022834.log`, early ticks [+0/x0/?0] advancing, ETA ~15:28 UTC 2026-09-05;
+  calibration/pb007/dev-DB/.165 lanes untouched. A5 stays OPEN: no zero-breach post-change run yet;
+  soak #2 is the candidate. No ledger-state change; H stays UNKNOWN.
+
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*
