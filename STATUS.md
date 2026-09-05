@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-05 · Tier 1 gate RED @ f04804f (flake family, no regression); soak b2 in flight on .165
+Updated: 2026-09-05 · Tier 1 gate GREEN on re-run @ d860979 (flake confirmed); soak b2 in flight on .165
 Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
@@ -25,6 +25,11 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-05 — Tier 1 gate GREEN on re-run @ d860979 (flake confirmed, base green)
+
+- 2844 total / 2843 passed / 0 failed / 1 skipped (same environmental live-rig skip `Provision_Activate_Persist_Deactivate_RoundTrip`); build + ScriptCompiler clean; MCP smokes 39 + 24 pass.
+- Zero code delta since RED `f04804f` ⇒ the 2 fails (`Duel_RequestAccept_…`, `DoDie_MultiParticipantAssists_…`) were the Q1 cross-class singleton-race flake, not a regression. Q4 build unblocked on this base.
 
 ## 2026-09-05 — Tier 1 gate RED @ f04804f (known flake family, no regression)
 
