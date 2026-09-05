@@ -206,6 +206,109 @@ public class GameplayActorTests
     }
 
     [Test]
+    public async Task Move_CornerBlending_BlendedCornerStaysWithinTolerance()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-blend-1");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var corner = new Vector3(10, 0, 0);
+        var destination = new Vector3(10, 10, 0);
+        var request = actor.NavigateRoutedForTest(new List<Vector3> { corner, destination }, speed: 5f);
+
+        var samples = new List<Vector3> { actor.Character.Transform.World.Position };
+        var guard = 0;
+        while (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running && guard++ < 200)
+        {
+            actor.Tick(TimeSpan.FromSeconds(0.1));
+            samples.Add(actor.Character.Transform.World.Position);
+        }
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        // Exact eased arrival at the FINAL destination regardless of blending.
+        await Assert.That(Vector3.Distance(samples[^1], destination)).IsLessThanOrEqualTo(GameplayActor.ArrivalRadius + 0.1f);
+
+        // The corner shortcut's closest approach to the skipped waypoint
+        // stays within the blend radius (segment distance = true path
+        // deviation, not sample-phase luck).
+        var minDeviation = float.MaxValue;
+        for (var i = 1; i < samples.Count; i++)
+            minDeviation = Math.Min(minDeviation, DistancePointToSegment(corner, samples[i - 1], samples[i]));
+        await Assert.That(minDeviation <= actor.MoveCornerBlendRadius + 0.05f).IsTrue();
+    }
+
+    [Test]
+    public async Task Move_CornerBlending_VelocityNeverZeroMidPath()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-blend-2");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var request = actor.NavigateRoutedForTest(
+            new List<Vector3> { new Vector3(10, 0, 0), new Vector3(10, 10, 0) }, speed: 5f);
+
+        // Per-tick displacement while the leg is still Running afterwards
+        // (mid-path): blending advances past the corner in the SAME tick it
+        // re-anchors, so no mid-path tick stands still — the legacy
+        // stop-at-waypoint advance tick displaces exactly zero.
+        var minMidPathStep = float.MaxValue;
+        var guard = 0;
+        while (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running && guard++ < 200)
+        {
+            var before = actor.Character.Transform.World.Position;
+            actor.Tick(TimeSpan.FromSeconds(0.1));
+            if (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running)
+                minMidPathStep = Math.Min(minMidPathStep, Vector3.Distance(before, actor.Character.Transform.World.Position));
+        }
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(minMidPathStep).IsGreaterThan(0.001f);
+    }
+
+    [Test]
+    public async Task Move_CornerBlendingDisabled_LegacyStopAtWaypoint()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-blend-3");
+        actor.MoveCornerBlendRadius = 0f;
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var corner = new Vector3(10, 0, 0);
+        var destination = new Vector3(10, 10, 0);
+        var request = actor.NavigateRoutedForTest(new List<Vector3> { corner, destination }, speed: 5f);
+
+        var samples = new List<Vector3> { actor.Character.Transform.World.Position };
+        var standstillTicks = 0;
+        var guard = 0;
+        while (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running && guard++ < 200)
+        {
+            var before = actor.Character.Transform.World.Position;
+            actor.Tick(TimeSpan.FromSeconds(0.1));
+            var after = actor.Character.Transform.World.Position;
+            samples.Add(after);
+            if (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running
+                && Vector3.Distance(before, after) <= 0.0001f)
+                standstillTicks++;
+        }
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        // Legacy: the corner waypoint is hit exactly (within arrival radius)
+        // via a stop-at-waypoint tick that advances without moving — and the
+        // leg still completes at the final destination.
+        await Assert.That(samples.Min(p => Vector3.Distance(p, corner))).IsLessThanOrEqualTo(GameplayActor.ArrivalRadius + 0.05f);
+        await Assert.That(standstillTicks).IsGreaterThanOrEqualTo(1);
+        await Assert.That(Vector3.Distance(samples[^1], destination)).IsLessThanOrEqualTo(GameplayActor.ArrivalRadius + 0.1f);
+    }
+
+    private static float DistancePointToSegment(Vector3 p, Vector3 a, Vector3 b)
+    {
+        var ab = b - a;
+        var denom = Vector3.Dot(ab, ab);
+        if (denom <= 0f)
+            return Vector3.Distance(p, a);
+        var t = Math.Clamp(Vector3.Dot(p - a, ab) / denom, 0f, 1f);
+        return Vector3.Distance(p, a + ab * t);
+    }
+
+
+    [Test]
     public async Task Move_Timeout_ExpiresWithNavigationFailure()
     {
         var (actor, _) = GameplayActorTestRig.CreateActor("move-3");
