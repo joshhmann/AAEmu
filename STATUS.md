@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-05 · Tier 1 gate GREEN on re-run @ d860979 (flake confirmed); soak b2 in flight on .165
+Updated: 2026-09-05 · Tier 1 gate GREEN @ 6c64b449d (lane fix + smokes); soak b2 in flight on .165
 Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
@@ -25,6 +25,11 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-05 — Tier 1 gate GREEN @ 6c64b449d (singleton lane + smokes)
+
+- 2855 total / 2854 passed / 0 failed / 1 skipped (environmental live-rig skip); Release build ok; ScriptCompiler 0/0; MCP BotControl smoke 39 tools pass; archaeology gate smoke 24 tools / 679 tables read-only pass.
+- Covers the 48-class `ParallelLimiter<SequentialParallelLimit>` lane + Q4 grant rig. Q6 live run unblocked once its dedicated lane (72xx) is verified free.
 
 ## 2026-09-05 — Tier 1 gate GREEN on re-run @ d860979 (flake confirmed, base green)
 
