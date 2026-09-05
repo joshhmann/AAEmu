@@ -45,7 +45,7 @@
 | Q2 | B5 runner fidelity (runner-only) | DONE 2026-09-05 (fixed + fake-runner + real subset green) |
 | Q3 | PB-001 routed-geometry gate (branch-local) | P0 build |
 | Q4 | M5-B1 loot + bag conservation | P0 investigate, build if gap |
-| Q5 | NPC wildlife skills data audit (read-only) | P0 investigation |
+| Q5 | NPC wildlife skills data audit (read-only) | DONE investigation 2026-09-05 (verdicts recorded; OQ-1 blocks loot contents) |
 | Q6 | PB-002 bounded interzone loop (existing data) | P0 live-proof (loop exists) |
 | Q7 | PB-005 named grounding decisions | BLOCKED on rulings |
 | Q8 | PB-007 WAR-HONOR (deferred) | BLOCKED, listed not opened |
@@ -116,8 +116,8 @@
 - **Q5 — NPC wildlife canonical skills data audit (read-only, no code).**
   - Contract: per live wildlife template (fox 3492 + Solzreed boar/wolf set from `Data/Worlds/main_world/npc_spawns_solzreed_wildlife.json`): `InCombat` skill rows vs `BaseSkillId`-only flag, cooldowns/ranges, `SkillUseParam1/2` note, verdict (random-among-N / single-attack / event-only); plus loot-pack census per template (which carry packs — feeds Q4)
   - Negative/recovery: a live template with no `np_skills` rows, or ambiguous `SkillUseParam1/2` semantics, gets verdict UNKNOWN (never inferred) — the audit records the gap and proceeds with the remaining templates
-  - Evidence EXISTS: the spawn set ([npc_spawns_solzreed_wildlife.json](AAEmu.Game/Data/Worlds/main_world/npc_spawns_solzreed_wildlife.json)) + the loader/picker shape (`NpcGameData`/`np_skills`, `Behavior.cs` filter/pick — code VERIFIED); no per-template verdict table exists yet — that table is the PLANNED output
-  - Evidence PLANNED: dossier table + recommendation (rotation weights? cooldown-only? health-gated?) via archaeology MCP against DB md5 `78b3bdbf038db3b927056106efdf91af`
+  - Evidence EXISTS: the spawn set ([npc_spawns_solzreed_wildlife.json](AAEmu.Game/Data/Worlds/main_world/npc_spawns_solzreed_wildlife.json)) + the loader/picker shape (`NpcGameData`/`np_skills`, `Behavior.cs` filter/pick — code VERIFIED)
+  - Evidence EXISTS: per-template verdict table + loot-pack census in scorecard-explorations/generated/wildlife-skills-audit-2026-09-05.md — all four templates (172/259/3475/3492) zero np_skills rows ⇒ UNKNOWN; 3475→pack 4530 (boar meat, 100%); packs 1616/1763 content-less (OQ-1); 172/259 no packs (OQ-4).
   - Dependencies: archaeology MCP + spawn JSON. Non-goal: picker changes, rotation implementation, skinning. Done: table + verdicts recorded
 - **Q6 — PB-002 bounded interzone loop on existing data (no new content). Live proof of the EXISTING loop, not a new build.**
   - Contract: bot exhausts Solzreed offerings → level ≥ 10 mounts the arterial highway (PB-MOUNT) → Dewstone Lilyut hub → perceives (AdaptiveBand) and clears canonical early chain 44 (Afindelle 673) / 328 (Royster 680) / 48 / 55 (Brann 679, Medd 5849) with `GatherLeg` fallback (herb doodad/item 2796/5264); death → Nui-shrine recovery → resume at the implemented recovery level (70% MaxHp floor + 70% MaxMp — VERIFIED `LevelingLoopScenario.cs:3074-3077`); stuck → bounded unstick or `TimedOut(Navigation)`; every turn-in shows quest-reward deltas; restart mid-route → resume without dup/loss; credit only from live engine events (no synthetic writes)
