@@ -156,6 +156,7 @@ public class BotAdminServiceTests
         public List<(string Account, string Name, Race Race, Gender Gender, byte Level)> Provisions { get; } = [];
         public List<Vector3> TerrainRequests { get; } = [];
         public List<Character> RegionUpdates { get; } = [];
+        public List<uint> SusMovementResets { get; } = [];
         public HashSet<string> TakenNames { get; } = [];
 
         private uint _nextId = 9000;
@@ -182,7 +183,8 @@ public class BotAdminServiceTests
                 },
                 groundHeightProvider: (pos, zoneId) => 0f, // no heightmap data → route keeps home.Z
                 nameIsTaken: n => TakenNames.Contains(n),
-                regionUpdater: c => RegionUpdates.Add(c));
+                regionUpdater: c => RegionUpdates.Add(c),
+                susMovementReset: id => SusMovementResets.Add(id));
         }
 
         /// <summary>Provisioner that throws (squatting / DB failure simulation).</summary>
@@ -196,7 +198,8 @@ public class BotAdminServiceTests
                 terrainResolver: (pos, zoneId) => pos,
                 groundHeightProvider: (pos, zoneId) => 0f,
                 nameIsTaken: n => TakenNames.Contains(n),
-                regionUpdater: c => RegionUpdates.Add(c));
+                regionUpdater: c => RegionUpdates.Add(c),
+                susMovementReset: id => SusMovementResets.Add(id));
         }
     }
 
@@ -506,6 +509,56 @@ public class BotAdminServiceTests
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Message).Contains("No bot found");
         await Assert.That(rig.TerrainRequests).IsEmpty();
+    }
+
+    [Test]
+    public async Task Go_ResetsSusMovementAnalysis_AfterTeleport()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+        var bot = rig.Manager.Seed(MakeBot(1, "Bob"), PlayerBotState.Active);
+
+        var result = service.Go("Bob", new Vector3(1234, 5678, 90));
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(rig.SusMovementResets).IsEquivalentTo(new[] { bot.CharacterId });
+    }
+
+    [Test]
+    public async Task Go_UnknownBot_DoesNotResetSusMovementAnalysis()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+
+        var result = service.Go("Ghost", new Vector3(1, 2, 3));
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(rig.SusMovementResets).IsEmpty();
+    }
+
+    [Test]
+    public async Task Add_WithHome_ResetsSusMovementAnalysis_AfterTeleport()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+
+        var result = service.Add("Bob", new Vector3(500, 600, 70));
+
+        await Assert.That(result.Success).IsTrue();
+        var botId = rig.Manager.GetAll()[0].CharacterId;
+        await Assert.That(rig.SusMovementResets).IsEquivalentTo(new[] { botId });
+    }
+
+    [Test]
+    public async Task Add_WithoutHome_DoesNotResetSusMovementAnalysis()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+
+        var result = service.Add("Bob");
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(rig.SusMovementResets).IsEmpty();
     }
 
     // ----------------------------------------------------------------- lab

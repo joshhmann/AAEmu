@@ -1,6 +1,7 @@
 using System.Numerics;
 
 using AAEmu.Commons.Utils;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
@@ -68,6 +69,7 @@ public sealed class BotAdminService
     private readonly Func<Vector3, uint, float> _groundHeightProvider;
     private readonly Func<string, bool> _nameIsTaken;
     private readonly Action<Character> _regionUpdater;
+    private readonly Action<uint> _susMovementReset;
 
     /// <summary>
     /// DI-friendly constructor. <paramref name="provisioner"/> defaults to the
@@ -87,7 +89,8 @@ public sealed class BotAdminService
         Func<Vector3, uint, Vector3>? terrainResolver = null,
         Func<Vector3, uint, float>? groundHeightProvider = null,
         Func<string, bool>? nameIsTaken = null,
-        Action<Character>? regionUpdater = null)
+        Action<Character>? regionUpdater = null,
+        Action<uint>? susMovementReset = null)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
@@ -101,6 +104,11 @@ public sealed class BotAdminService
         // Region-graph update after a teleport — the Unit.CheckMovedPosition
         // facility. Injectable so the rig can record it without the singleton.
         _regionUpdater = regionUpdater ?? (c => WorldManager.Instance.AddVisibleObject(c));
+        // Anti-cheat movement-analysis reset after a GM teleport — without it
+        // SusManager logs false "moving a bit fast" positives for the jumped
+        // distance (GameObject.DisabledSetPosition precedent). Injectable so
+        // the rig can record it without the singleton.
+        _susMovementReset = susMovementReset ?? (id => SusManager.PeekInstance?.ResetAnalyzePlayerDeltaMovement(id));
     }
 
     /// <summary>
@@ -245,6 +253,7 @@ public sealed class BotAdminService
             spawnHome = clamped;
             character.Transform.Local.SetPosition(clamped.X, clamped.Y, clamped.Z);
             _regionUpdater(character);
+            _susMovementReset(character.Id);
         }
         ArmRoam(character, spawnHome);
 
@@ -318,9 +327,11 @@ public sealed class BotAdminService
 
         // Teleport: set the transform + update region membership so clients in
         // the new area start receiving the bot's presence (the same facility
-        // Unit.CheckMovedPosition uses for real client movement).
+        // Unit.CheckMovedPosition uses for real client movement). Reset the
+        // anti-cheat movement analysis so the jump distance is not flagged.
         character.Transform.Local.SetPosition(clamped.X, clamped.Y, clamped.Z);
         _regionUpdater(character);
+        _susMovementReset(character.Id);
 
         ArmRoam(character, clamped);
         return new BotAdminCommandResult(true,
