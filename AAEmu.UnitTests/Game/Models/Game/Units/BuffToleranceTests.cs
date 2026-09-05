@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 
 using AAEmu.Commons.Utils;
@@ -24,6 +25,10 @@ namespace AAEmu.UnitTests.Game.Models.Game.Units;
 /// already active (live: Key 4 on every repeated bot CC).</item>
 /// <item>Torn bonus reads — plot-thread <see cref="Unit.GetBonuses"/> racing
 /// game-loop buff mutation surfaced null slots (live Npc.Armor NRE).</item>
+/// <item>Torn bonus snapshots — the <c>new List&lt;...&gt;(Bonuses.Values)</c>
+/// copies raced Add/Remove structural changes (live IndexOutOfRange in
+/// GetBonuses via Npc.Sta/MaxHp); all Add/Remove/Get paths now share
+/// <c>Unit.BonusesLock</c>.</item>
 /// </list>
 /// Loot double-generation (concurrent killing blows corrupting
 /// LootingContainer.Items) is fixed alongside but has no unit test — it
@@ -68,6 +73,76 @@ public class BuffToleranceTests
 
         var result = character.GetBonuses(UnitAttribute.MaxHealth);
         await Assert.That(result).IsEmpty();
+    }
+
+    [Test]
+    public async Task GetBonuses_ConcurrentAddRemove_DoesNotThrow()
+    {
+        // Live IndexOutOfRange (Effect 15109/skill 16210 via Npc.Sta/MaxHp):
+        // snapshot reads raced structural table changes. Hammer distinct
+        // indices (forces dict growth/removal) against concurrent snapshot
+        // reads; any torn copy or concurrent-mutation throw lands in errors.
+        var (actor, _) = GameplayActorTestRig.CreateActor("tol-3");
+        var character = actor.Character;
+
+        var template = new BonusTemplate { Attribute = UnitAttribute.MaxHealth, ModifierType = UnitModifierType.Value, Value = 10 };
+        var dynTemplate = new DynamicBonusTemplate { Attribute = UnitAttribute.MaxHealth, ModifierType = UnitModifierType.Value, FuncType = "ManualFunc" };
+
+        var errors = new ConcurrentBag<Exception>();
+        using var gate = new ManualResetEventSlim(false);
+        const int Writers = 4, Readers = 4, WriterIters = 800, ReaderIters = 4000;
+
+        var tasks = new List<Task>();
+        for (var w = 0; w < Writers; w++)
+        {
+            var seed = w;
+            tasks.Add(Task.Run(() =>
+            {
+                gate.Wait();
+                try
+                {
+                    for (var i = 0; i < WriterIters; i++)
+                    {
+                        uint index = (uint)(1000 + seed * WriterIters + i);
+                        character.AddBonus(index, new Bonus { Template = template, Value = template.Value });
+                        character.AddDynamicBonus(index, new DynamicBonus { Template = dynTemplate });
+                        if ((i & 1) == 0)
+                        {
+                            character.RemoveBonus(index, UnitAttribute.MaxHealth);
+                            character.RemoveDynamicBonus(index, UnitAttribute.MaxHealth);
+                        }
+                        character.RemoveBonus((uint)(i % 8), UnitAttribute.MaxHealth);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(ex);
+                }
+            }));
+        }
+        for (var r = 0; r < Readers; r++)
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                gate.Wait();
+                try
+                {
+                    for (var i = 0; i < ReaderIters; i++)
+                    {
+                        _ = character.GetBonuses(UnitAttribute.MaxHealth);
+                        _ = character.GetDynamicBonuses(UnitAttribute.MaxHealth);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(ex);
+                }
+            }));
+        }
+        gate.Set();
+        await Task.WhenAll(tasks);
+
+        await Assert.That(errors).IsEmpty();
     }
 
     private static Buff MakeBuff(Character character, uint templateId)

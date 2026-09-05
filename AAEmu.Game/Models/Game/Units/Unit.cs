@@ -269,6 +269,8 @@ public class Unit : BaseUnit, IUnit
     public PlotState ActivePlotState { get; set; }
     public Dictionary<uint, List<Bonus>> Bonuses { get; set; }
     public Dictionary<uint, List<DynamicBonus>> DynamicBonuses { get; set; }
+    public object BonusesLock { get; set; }
+    private static object AggroLock { get; } = new();
     public UnitCooldowns Cooldowns { get; set; }
     public virtual Expedition Expedition { get; set; }
 
@@ -315,6 +317,7 @@ public class Unit : BaseUnit, IUnit
         IsInBattle = false;
         Equipment = new EquipmentContainer(0, SlotType.Equipment, false, this);
         ChargeLock = new object();
+        BonusesLock = new object();
         Cooldowns = new UnitCooldowns();
         CharacterTagging = new Tagging(this); //Adding because Tagging works differently than Aggro
     }
@@ -699,96 +702,117 @@ public class Unit : BaseUnit, IUnit
 
     public override void AddBonus(uint bonusIndex, Bonus bonus)
     {
-        var bonuses = Bonuses.TryGetValue(bonusIndex, out var bonusList) ? bonusList : [];
-        bonuses.Add(bonus);
-        Bonuses[bonusIndex] = bonuses;
+        lock (BonusesLock)
+        {
+            var bonuses = Bonuses.TryGetValue(bonusIndex, out var bonusList) ? bonusList : [];
+            bonuses.Add(bonus);
+            Bonuses[bonusIndex] = bonuses;
+        }
     }
 
     public override void RemoveBonus(uint bonusIndex, UnitAttribute attribute)
     {
-        if (!Bonuses.TryGetValue(bonusIndex, out var bonuses))
+        lock (BonusesLock)
         {
-            return;
-        }
-
-        foreach (var bonus in new List<Bonus>(bonuses))
-        {
-            // Torn reads under concurrent buff mutation can surface null
-            // slots (plot-thread GetBonuses vs game-loop Add/Remove) — skip
-            // them instead of throwing (live Npc.Armor NRE).
-            if (bonus?.Template != null && bonus.Template.Attribute == attribute)
+            if (!Bonuses.TryGetValue(bonusIndex, out var bonuses))
             {
-                bonuses.Remove(bonus);
+                return;
+            }
+
+            foreach (var bonus in new List<Bonus>(bonuses))
+            {
+                // Torn reads under concurrent buff mutation can surface null
+                // slots (plot-thread GetBonuses vs game-loop Add/Remove) — skip
+                // them instead of throwing (live Npc.Armor NRE).
+                if (bonus?.Template != null && bonus.Template.Attribute == attribute)
+                {
+                    bonuses.Remove(bonus);
+                }
             }
         }
     }
 
     public List<Bonus> GetBonuses(UnitAttribute attribute)
     {
-        var result = new List<Bonus>();
-        if (Bonuses == null)
+        // Snapshot copies race Add/Remove from other threads (live
+        // IndexOutOfRange in the List copy ctor via Npc.Sta/MaxHp) — hold
+        // the table lock for the whole read so copies are atomic.
+        lock (BonusesLock)
         {
-            return result;
-        }
-        foreach (var bonuses in new List<List<Bonus>>(Bonuses.Values))
-        {
-            foreach (var bonus in new List<Bonus>(bonuses))
+            var result = new List<Bonus>();
+            if (Bonuses == null)
             {
-                if (bonus?.Template != null && bonus.Template.Attribute == attribute)
+                return result;
+            }
+            foreach (var bonuses in new List<List<Bonus>>(Bonuses.Values))
+            {
+                foreach (var bonus in new List<Bonus>(bonuses))
                 {
-                    result.Add(bonus);
+                    if (bonus?.Template != null && bonus.Template.Attribute == attribute)
+                    {
+                        result.Add(bonus);
+                    }
                 }
             }
+            return result;
         }
-        return result;
     }
 
     public override void AddDynamicBonus(uint bonusIndex, DynamicBonus bonus)
     {
-        var bonuses = DynamicBonuses.TryGetValue(bonusIndex, out var bonusList) ? bonusList : [];
-        bonuses.Add(bonus);
-        DynamicBonuses[bonusIndex] = bonuses;
+        lock (BonusesLock)
+        {
+            var bonuses = DynamicBonuses.TryGetValue(bonusIndex, out var bonusList) ? bonusList : [];
+            bonuses.Add(bonus);
+            DynamicBonuses[bonusIndex] = bonuses;
+        }
     }
 
     public override void RemoveDynamicBonus(uint bonusIndex, UnitAttribute attribute)
     {
-        if (!DynamicBonuses.TryGetValue(bonusIndex, out var bonuses))
+        lock (BonusesLock)
         {
-            return;
-        }
-
-        foreach (var bonus in new List<DynamicBonus>(bonuses))
-        {
-            if (bonus?.Template != null && bonus.Template.Attribute == attribute)
+            if (!DynamicBonuses.TryGetValue(bonusIndex, out var bonuses))
             {
-                bonuses.Remove(bonus);
+                return;
             }
-        }
 
-        if (bonuses.Count == 0)
-        {
-            DynamicBonuses.Remove(bonusIndex);
+            foreach (var bonus in new List<DynamicBonus>(bonuses))
+            {
+                if (bonus?.Template != null && bonus.Template.Attribute == attribute)
+                {
+                    bonuses.Remove(bonus);
+                }
+            }
+
+            if (bonuses.Count == 0)
+            {
+                DynamicBonuses.Remove(bonusIndex);
+            }
         }
     }
 
     public List<DynamicBonus> GetDynamicBonuses(UnitAttribute attribute)
     {
-        var result = new List<DynamicBonus>();
-        if (DynamicBonuses == null)
+        lock (BonusesLock)
         {
-            return result;
-        }
-        foreach (var bonuses in new List<List<DynamicBonus>>(DynamicBonuses.Values))
-        {
-            foreach (var bonus in new List<DynamicBonus>(bonuses))
+            var result = new List<DynamicBonus>();
+            if (DynamicBonuses == null)
             {
-                if (bonus?.Template != null && bonus.Template.Attribute == attribute)
+                return result;
+            }
+            foreach (var bonuses in new List<List<DynamicBonus>>(DynamicBonuses.Values))
+            {
+                foreach (var bonus in new List<DynamicBonus>(bonuses))
                 {
-                    result.Add(bonus);
+                    if (bonus?.Template != null && bonus.Template.Attribute == attribute)
+                    {
+                        result.Add(bonus);
+                    }
                 }
             }
+            return result;
         }
-        return result;
     }
 
     public double CalculateWithBonuses(double value, UnitAttribute attr)
@@ -1133,7 +1157,10 @@ public class Unit : BaseUnit, IUnit
 
     public void UpdateGearBonuses(Item itemAdded, Item itemRemoved)
     {
-        Bonuses[GearBonusesIndex] = [];
+        lock (BonusesLock)
+        {
+            Bonuses[GearBonusesIndex] = [];
+        }
 
         foreach (var item in Equipment.GetItemsSnapshot())
         {
@@ -1681,20 +1708,31 @@ public class Unit : BaseUnit, IUnit
         amount = (int)(amount * (unit.AggroMul / 100.0f));
         amount = (int)(amount * (IncomingAggroMul / 100.0f));
 
-        if (AggroTable.TryGetValue(unit.ObjId, out var aggro))
+        Aggro aggro;
+        var isFreshAggro = false;
+        lock (AggroLock)
         {
-            aggro.AddAggro(kind, amount);
-            isNewAggro = true;
-        }
-        else
-        {
-            aggro = new Aggro(unit);
-            aggro.AddAggro(kind, amount);
-            if (AggroTable.TryAdd(unit.ObjId, aggro))
+            if (AggroTable.TryGetValue(unit.ObjId, out aggro))
             {
-                unit.Events.OnHealed += OnAbuserHealed;
-                unit.Events.OnDeath += OnAbuserDied;
+                aggro.AddAggro(kind, amount);
+                isNewAggro = true;
             }
+            else
+            {
+                aggro = new Aggro(unit);
+                aggro.AddAggro(kind, amount);
+                if (AggroTable.TryAdd(unit.ObjId, aggro))
+                {
+                    unit.Events.OnHealed += OnAbuserHealed;
+                    unit.Events.OnDeath += OnAbuserDied;
+                }
+                isFreshAggro = true;
+            }
+        }
+        // Fresh-aggro side effects (quest hook, first-hit packet) stay
+        // outside the lock: they re-enter buff/quest/packet systems.
+        if (isFreshAggro)
+        {
 
             // TODO: make this party/raid wide? Take into account pets/slaves?
             // If there is a quest starter attached to this NPC, start it when unit gets added for the first time
@@ -1716,9 +1754,12 @@ public class Unit : BaseUnit, IUnit
         if (player == null)
             return isNewAggro;
 
-        if (aggro.TotalAggro > 0 && !IsDead && Hp > 0 && !player.IsInAggroListOf.ContainsKey(this.ObjId))
+        lock (AggroLock)
         {
-            player.IsInAggroListOf.Add(this.ObjId, this);
+            if (aggro.TotalAggro > 0 && !IsDead && Hp > 0 && !player.IsInAggroListOf.ContainsKey(this.ObjId))
+            {
+                player.IsInAggroListOf.Add(this.ObjId, this);
+            }
         }
         //player?.Quests.OnAggro(this);
         // инициируем событие
@@ -1735,36 +1776,47 @@ public class Unit : BaseUnit, IUnit
         if (unit is null)
             return;
 
-        if (unit is Character targetPlayer)
+        // Plain-dictionary/list mutations below race AddUnitAggro from a
+        // concurrent killing blow on the DoDie path (live
+        // InvalidOperationException in ClearAggroOfUnit) — serialize them.
+        // CheckIfEmptyAggroToReturn stays outside: it can enter the AI
+        // scheduler (GoToReturn).
+        bool aggroChanged;
+        lock (AggroLock)
         {
-            targetPlayer.IsInAggroListOf.Remove(ObjId);
-            // Also remove from assault lists if both are players
-            if (this is Character thisPlayer)
+            if (unit is Character targetPlayer)
             {
-                thisPlayer.AssaultOn.Remove(targetPlayer.Id);
-                targetPlayer.AssaultedBy.Remove(thisPlayer.Id);
+                targetPlayer.IsInAggroListOf.Remove(ObjId);
+                // Also remove from assault lists if both are players
+                if (this is Character thisPlayer)
+                {
+                    thisPlayer.AssaultOn.Remove(targetPlayer.Id);
+                    targetPlayer.AssaultedBy.Remove(thisPlayer.Id);
+                }
             }
+
+            // var player = unit as Character;
+            // player?.SendMessage($"ClearAggroOfUnit {player.Name} for {this.ObjId}");
+
+            var lastAggroCount = AggroTable.Count;
+            if (lastAggroCount <= 0)
+            {
+                return;
+            }
+            if (AggroTable.TryRemove(unit.ObjId, out _))
+            {
+                unit.Events.OnHealed -= OnAbuserHealed;
+                unit.Events.OnDeath -= OnAbuserDied;
+            }
+            else
+            {
+                Logger.Warn($"Failed to remove unit[{unit.ObjId}] aggro from NPC[{ObjId}]");
+            }
+
+            aggroChanged = AggroTable.Count != lastAggroCount;
         }
 
-        // var player = unit as Character;
-        // player?.SendMessage($"ClearAggroOfUnit {player.Name} for {this.ObjId}");
-
-        var lastAggroCount = AggroTable.Count;
-        if (lastAggroCount <= 0)
-        {
-            return;
-        }
-        if (AggroTable.TryRemove(unit.ObjId, out _))
-        {
-            unit.Events.OnHealed -= OnAbuserHealed;
-            unit.Events.OnDeath -= OnAbuserDied;
-        }
-        else
-        {
-            Logger.Warn($"Failed to remove unit[{unit.ObjId}] aggro from NPC[{ObjId}]");
-        }
-
-        if (AggroTable.Count != lastAggroCount)
+        if (aggroChanged)
             (this as Npc)?.CheckIfEmptyAggroToReturn(unit);
     }
 
@@ -1783,6 +1835,9 @@ public class Unit : BaseUnit, IUnit
         // Adding for tagging
         CharacterTagging.ClearAllTaggers();
 
+        // AggroTable is a ConcurrentDictionary (safe enumeration) and the
+        // per-unit teardown goes through locked ClearAggroOfUnit paths
+        // elsewhere; keep this pass lock-free as before.
         foreach (var table in AggroTable)
         {
             var unit = table.Value.Owner?.ParentWorld.GetUnit(table.Key);
