@@ -58,9 +58,11 @@ feel.)
   `harvest`, `craft`, `buy`, `sell`, `pack_pickup`, `put_down`,
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
-- Current source/test HEAD is local `develop` at `f5e7a1980`; CompleteQuest
-  composition, non-objective act classification, and Level objective pursuit
-  are landed. M5 proposal `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6
+- Current source/test HEAD is local `develop` at `9ad5735b2` (bot-wildlife crash cluster; prior
+  `f5e7a1980`); CompleteQuest composition, non-objective act classification, and Level objective
+  pursuit are landed, plus SusManager teleport reset (`da06470ab`),
+  `ExecutionBoundary.RunUnscoped` for skill plots (`16112c24c`), and trapezoidal Move profile
+  (`a38484f9e`). M5 proposal `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`, M6
   cancellation `950cfd279`, population isolation `c97909f4f`, and opt-in
   six-hour leg `155c82c66` remain integrated.
   `A5_TIER3_SIX_HOUR=1`, minutes >=360, and sample seconds 1..300; it
@@ -97,6 +99,14 @@ feel.)
   physics-thread diagnostics, bounded timing reproduction; budgets not
   relaxed. Warmup correction validated; timing triage remains open. Evidence
   is testing/canary operational, not live human gameplay.
+- **2026-09-05 docs/correlation (read-only):** live triage ~05:36 UTC (`--since 2h`) = 7 `threw on
+  target` (Effect 15109/skill 16210 IndexOutOfRange on wildlife) + 0 boundary violations + 0
+  `moving a bit fast`; game container restarted ~46 min prior. Calibration correlation
+  (`/tmp/opencode/a5_corr.py`): 10 physics-slow warnings vs 214,900 telemetry samples, zero host
+  contention (steal/throttle 0.00) ⇒ in-process pause/GC suspect. Tier-3 6h soak
+  (`Probe_A5Tier3DormantTimers_SixHour`, log header start 2026-09-05T05:21:27Z, HEAD `9ad5735b2`,
+  ETA ~11:21 UTC 2026-09-05) is IN FLIGHT — report path still holds the stale 2026-08-30 `46129ae`
+  until the fresh report lands with `passed=true`.
 - The prior full gate at source/test `0ce518ac03a18de00fff1516aa9e794e8566bee6`
   remains historical at 2504 total / 2503 passed / 0 failed / 1 skipped,
   compiler 0/0, MCP 39. H remains U (UNKNOWN) and no M6 full-exit claim is

@@ -15,9 +15,9 @@ MET with live evidence; PB-002 quest-discovery primitive and item-use slice
 landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
 day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
 scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; current local source/test HEAD is `f5e7a1980`
-(CompleteQuest/non-objective classification and Level objective pursuit; prior
-re-census checkpoint `9b8ba6317`). M5's
+Branch of record: develop; current local source/test HEAD is `9ad5735b2`
+(bot-wildlife crash cluster; prior `f5e7a1980` CompleteQuest/non-objective
+classification and Level objective pursuit). M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
 primitive remains integrated in `LevelingLoop`'s accept choice at
 `263ecc66c474ca1c5f4b085e86ef3e47f49fd1`; focused contract 5/5, scoped quest
@@ -31,6 +31,29 @@ are capability/blocker tracks; A3/A4/A5 are population/scaling acceptance
 gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
+
+## 2026-09-05 — Docs/correlation: HEAD `9ad5735b2` record, live triage, A5 calibration correlation, 6h soak in-flight (read-only)
+
+- **Source/test HEAD now `9ad5735b2`** (was `f5e7a1980`): four commits landed 2026-09-04 —
+  `da06470ab` SusManager reset on GM-bot teleports (suppresses false `moving a bit fast` alerts);
+  `16112c24c` skill plots run via new `ExecutionBoundary.RunUnscoped` (AsyncLocal bot-step scope leaked onto plot threads, tripping the M5 boundary write assertion live: thread 47 vs boundary 24);
+  `a38484f9e` trapezoidal speed profile for actor Move legs (ramp at MoveAcceleration $12\text{m/s}^2$, brake along $v = \sqrt{2ad}$ at MoveDeceleration $14\text{m/s}^2$);
+  `9ad5735b2` bot-wildlife crash cluster (Buffs tolerance dup key, LootingContainer loot race now atomic under ItemsLock, plot-thread bonus torn reads).
+- **Live triage 2026-09-05 ~05:36 UTC** (`docker logs aaemu-game-1 --since 2h` on 192.168.0.165): **7 total** =
+  7 `threw on target` + 0 `EXECUTION BOUNDARY VIOLATION` + 0 `moving a bit fast`. All 7 are
+  `Effect 15109 (DamageEffect)` of skill 16210 `IndexOutOfRangeException` on wildlife targets
+  (04:55–05:19 UTC). Game container restarted ~46 min prior (`aaemu-game-1` Up 46 minutes, healthy);
+  siblings healthy (`aaemu_a5_t3_sixhour-db-1` Up 15h, login Up 14h, db Up 9d, adminer Up 9d).
+- **A5 calibration correlation** (`/tmp/opencode/a5_corr.py`): 10 `Physics thread is running slow`
+  warnings vs **214,900** host-telemetry samples (2026-09-02 → 2026-09-05). At-warning windows show
+  stealPct 0.00, psiCpuFull10 0.00, cgroupThrottledUs 0.00, psiMemSome10 0.00 — zero host contention
+  ⇒ in-process pause/GC suspect, not host steal. Calibration lane PID 2814356 healthy (elapsed ~68h).
+- **A5 Tier-3 6h soak IN FLIGHT — not passed**: `Probe_A5Tier3DormantTimers_SixHour` running
+  (PIDs 3589460/3590814; log header `start: 2026-09-05T05:21:27Z` = 22:21 PDT 2026-09-04, git HEAD
+  `9ad5735b2`, `E2E_REBUILD=1`; ETA ~11:21 UTC 2026-09-05); log `soak-run-20260904-222127.log`
+  (filename in PDT) shows steady `[+0/x0/?0]` ticks. Report
+  `g2-a5-tier3-sixhour-report.json` is still the stale 2026-08-30 run (commit `46129ae`,
+  `passed=false` on timing only). No soak-pass claim until the fresh report lands with `passed=true`.
 
 ## 2026-09-03 — Post-M7 readiness: PB-005 Clean 733 Duplicate NPC Spawns in World Data
 

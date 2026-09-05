@@ -421,5 +421,16 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   Engine movement synchronization on `GameplayActor.ApplyCharacterMove`: moves active mount directly via `VehicleMovementModel.ApplyUnitMove(Character, mate, ...)` when mounted, bypassing client-ignore rules while preserving server transform synchronization.
   Integrated into `LevelingLoopScenario.TryTransitionToNextZone` for arterial highway transit between zone hubs.
   Evidence: `BotMountManagerTests` 4/4 green; `LevelingLoopScenarioRigTests` 37/37 green. Full gate: 2,773 total / 2,772 passed / 0 failed / 1 skipped, script compiler 0/0, MCP BotControl 39 tools, MCP Archaeology 24 tools.
+- 2026-09-05 — Docs/correlation workstream (read-only, no code): recorded source/test HEAD `9ad5735b2`
+  (four 2026-09-04 commits: `da06470ab` SusManager teleport reset, `16112c24c`
+  `ExecutionBoundary.RunUnscoped` for skill plots, `a38484f9e` trapezoidal Move profile,
+  `9ad5735b2` bot-wildlife crash cluster). Live triage ~05:36 UTC: 7 `threw on target`
+  (Effect 15109/skill 16210 IndexOutOfRange) + 0 boundary violations + 0 `moving a bit fast`;
+  game container restarted ~46 min prior. A5 calibration correlation: 10 physics-slow warnings vs
+  214,900 telemetry samples, zero host contention (steal/throttle 0.00) ⇒ in-process pause/GC
+  suspect. A5 Tier-3 6h soak in flight (log header start 2026-09-05T05:21:27Z = 22:21 PDT 2026-09-04,
+  HEAD `9ad5735b2`, ETA ~11:21 UTC 2026-09-05);
+  report path still holds the stale 2026-08-30 `46129ae` run — no soak-pass claim. No ledger-state
+  change; H stays UNKNOWN.
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*
