@@ -120,6 +120,92 @@ public class GameplayActorTests
     }
 
     [Test]
+    public async Task Move_AcceleratesFromStandstill_FirstTickShorterThanCruiseStep()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-accel-1");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var request = actor.MoveTo(new Vector3(50, 0, 0), speed: 5f);
+        actor.Tick(TimeSpan.FromSeconds(0.1));
+
+        // Default accel 12 m/s² × 0.1 s = 1.2 m/s → 0.12 m step; the legacy
+        // constant-speed step would cover the full 0.5 m cruise step.
+        var x = actor.Character.Transform.World.Position.X;
+        await Assert.That(x).IsGreaterThan(0f);
+        await Assert.That(x).IsLessThan(0.5f);
+        await Assert.That(Math.Abs(x - 0.12f) <= 0.02f).IsTrue();
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+    }
+
+    [Test]
+    public async Task Move_SpeedRampsUpToCruise_ThenHoldsIt()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-accel-2");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        _ = actor.MoveTo(new Vector3(50, 0, 0), speed: 5f);
+        var steps = new List<float>();
+        var prev = 0f;
+        for (var i = 0; i < 6; i++)
+        {
+            actor.Tick(TimeSpan.FromSeconds(0.1));
+            var x = actor.Character.Transform.World.Position.X;
+            steps.Add(x - prev);
+            prev = x;
+        }
+
+        // 1.2, 2.4, 3.6, 4.8 m/s then cruise 5 m/s (0.5 m steps) — far from
+        // the target, so the braking curve never engages on this leg.
+        for (var i = 1; i < 4; i++)
+            await Assert.That(steps[i] > steps[i - 1]).IsTrue();
+        await Assert.That(Math.Abs(steps[4] - 0.5f) <= 0.02f).IsTrue();
+        await Assert.That(Math.Abs(steps[5] - 0.5f) <= 0.02f).IsTrue();
+    }
+
+    [Test]
+    public async Task Move_DeceleratesIntoArrival_AndStillCompletes()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-accel-3");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var request = actor.MoveTo(new Vector3(10, 0, 0), speed: 5f);
+        var steps = new List<float>();
+        var prev = 0f;
+        var guard = 0;
+        while (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running && guard++ < 200)
+        {
+            actor.Tick(TimeSpan.FromSeconds(0.1));
+            var x = actor.Character.Transform.World.Position.X;
+            steps.Add(x - prev);
+            prev = x;
+        }
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.X - 10f) <= 0.6f).IsTrue();
+
+        // Trapezoid, not constant: the peak mid-leg step exceeds both the
+        // eased-out first step and the braked final step.
+        var max = steps.Max();
+        await Assert.That(max > steps[0]).IsTrue();
+        await Assert.That(max > steps[^1]).IsTrue();
+    }
+
+    [Test]
+    public async Task Move_ZeroAccelDecel_LegacyConstantSpeedStep()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-accel-4");
+        actor.MoveAcceleration = 0f;
+        actor.MoveDeceleration = 0f;
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        _ = actor.MoveTo(new Vector3(50, 0, 0), speed: 5f);
+        actor.Tick(TimeSpan.FromSeconds(0.1));
+
+        // Unbounded ramps reproduce the legacy step exactly: 5 m/s × 0.1 s.
+        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.X - 0.5f) <= 0.02f).IsTrue();
+    }
+
+    [Test]
     public async Task Move_Timeout_ExpiresWithNavigationFailure()
     {
         var (actor, _) = GameplayActorTestRig.CreateActor("move-3");

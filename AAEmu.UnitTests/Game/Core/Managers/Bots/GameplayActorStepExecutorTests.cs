@@ -40,11 +40,12 @@ public class GameplayActorStepExecutorTests
 
         var move = actor.MoveTo(new Vector3(4, 0, 0), speed: 2f);
 
-        // First step: elapsed = one cadence (100ms) → 0.2 units.
+        // First step eases out: accel 12 m/s² × 100 ms = 1.2 m/s → 0.12 m
+        // (the legacy constant-speed step covered the full 0.2 m).
         clock.Advance(TimeSpan.FromMilliseconds(100));
         var next = await executor.StepAsync(runtime, CancellationToken.None);
         await Assert.That(next).IsNotNull();
-        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.X - 0.2f) <= 0.01f).IsTrue();
+        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.X - 0.12f) <= 0.02f).IsTrue();
         await Assert.That(move.State).IsEqualTo(ActorLifecycleState.Running);
 
         // Keep stepping to arrival (speed 2/s, 4 units → ~20 steps at 100ms).

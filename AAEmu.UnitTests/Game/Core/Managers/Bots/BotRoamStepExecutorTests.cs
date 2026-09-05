@@ -186,8 +186,12 @@ public class BotRoamStepExecutorTests
             .IsGreaterThanOrEqualTo(4);
 
         // The bot walks ON the terrain — the clamp owns Z (never the flat
-        // route Z, never wedged at a waypoint).
-        await Assert.That(actor.Character.Transform.World.Position.Z).IsEqualTo(135f);
+        // route Z, never wedged at a waypoint). Sampled at a fixed step the
+        // value is phase-sensitive (Z dives near each waypoint as the actor
+        // interpolates toward the flat route Z, then the clamp recovers it;
+        // the eased profile shifts leg timing vs the legacy constant step),
+        // so assert a slope-following band, far from the wedged 126.
+        await Assert.That(Math.Abs(actor.Character.Transform.World.Position.Z - 135f) <= 1.5f).IsTrue();
     }
 
     [Test]

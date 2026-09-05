@@ -81,9 +81,12 @@ public class BotMountManagerTests
 
         await Assert.That(req.State).IsNotEqualTo(ActorLifecycleState.Rejected);
 
-        // Both rider and steed positions must synchronize to destination
+        // Both rider and steed positions must synchronize to destination.
+        // Arrival completes inside the actor's arrival radius (the eased
+        // profile stops the leg as soon as flat distance <= 0.5 m instead
+        // of landing exactly on the point like the legacy constant step).
         await Assert.That(req.Detail).IsEqualTo("arrived");
-        await Assert.That(character.Transform.World.Position.X).IsEqualTo(110f);
+        await Assert.That(Math.Abs(character.Transform.World.Position.X - 110f) <= GameplayActor.ArrivalRadius).IsTrue();
         await Assert.That(Vector3.Distance(character.Transform.World.Position, destination)).IsLessThan(1.0f);
         await Assert.That(Vector3.Distance(mate.Transform.World.Position, destination)).IsLessThan(1.0f);
     }

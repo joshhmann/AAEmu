@@ -136,6 +136,22 @@ public class GameplayActor : IGameplayActor
     /// </summary>
     public int MaxUnstickNudges { get; set; } = 1;
 
+    /// <summary>
+    /// Acceleration out of standstill for Move legs (m/s², locomotion
+    /// smoothing): instead of stepping 0 → cruise in a single tick, the
+    /// leg ramps up at this rate. Non-positive counts as unbounded
+    /// (legacy constant-speed start).
+    /// </summary>
+    public float MoveAcceleration { get; set; } = 12f;
+
+    /// <summary>
+    /// Braking rate toward the Move target (m/s², locomotion smoothing):
+    /// the leg caps speed at v = √(2·a·d) so it eases into arrival instead
+    /// of holding cruise into the arrival clamp. Non-positive counts as
+    /// unbounded (legacy constant-speed finish).
+    /// </summary>
+    public float MoveDeceleration { get; set; } = 14f;
+
     /// <summary>Max audit records retained (newest last).</summary>
     private const int MaxTraceRecords = 512;
 
@@ -3459,6 +3475,16 @@ public class GameplayActor : IGameplayActor
     private Queue<Vector3>? _moveWaypoints;
     private float _moveSpeed;
 
+    /// <summary>
+    /// Current speed of the active Move leg (trapezoidal profile state):
+    /// ramps from 0 at <see cref="MoveAcceleration"/>, capped at cruise
+    /// mid-leg and at the braking curve near the target. Reset for every
+    /// new leg (<see cref="ResetMoveProgressTracking"/>); intermediate
+    /// routed waypoints deliberately carry speed through (no stop-start
+    /// at every waypoint).
+    /// </summary>
+    private float _moveCurrentSpeed;
+
     // M7 hardening #5 (movement stuck detection): progress tracking for the
     // active Move leg. _lastProgressPosition/_noProgressElapsed sample
     // whether the character actually displaces; _unstickWaypoint is a short
@@ -3631,9 +3657,10 @@ public class GameplayActor : IGameplayActor
             if (UpdateMoveStuckState(request, position, elapsed))
                 return;
 
-            var step = Math.Min(_moveSpeed * (float)Math.Max(elapsed.TotalSeconds, 0.05), flatDistance);
+            var dt = (float)Math.Max(elapsed.TotalSeconds, 0.05);
             if (flatDistance > 0.0001f)
             {
+                var step = Math.Min(ProfiledMoveSpeed(flatDistance, dt) * dt, flatDistance);
                 var angle = (float)MathUtil.CalculateAngleFrom(position, legTarget).DegToRad();
                 var (newX, newY) = MathUtil.AddDistanceToFront(step, position.X, position.Y, angle);
                 var fraction = step / flatDistance;
@@ -3643,7 +3670,7 @@ public class GameplayActor : IGameplayActor
             else
             {
                 var dir = legTarget.Z >= position.Z ? 1f : -1f;
-                var zStep = Math.Min(step, zDistance);
+                var zStep = Math.Min(ProfiledMoveSpeed(zDistance, dt) * dt, zDistance);
                 ApplyCharacterMove(new Vector3(position.X, position.Y, position.Z + dir * zStep));
             }
             return;
@@ -3730,6 +3757,29 @@ public class GameplayActor : IGameplayActor
     }
 
     /// <summary>
+    /// Trapezoidal speed profile for the active Move leg: ramps from the
+    /// current speed toward cruise at <see cref="MoveAcceleration"/>, capped
+    /// by the braking curve v = √(2·a·d) at <see cref="MoveDeceleration"/>
+    /// so the leg eases into arrival. Cruise is untouched mid-leg and the
+    /// caller still clamps the step to the remaining distance (no
+    /// overshoot, no asymptotic crawl — the leg always terminates in the
+    /// arrival radius). Non-positive accel/decel count as unbounded, which
+    /// reproduces the legacy constant-speed step exactly.
+    /// </summary>
+    private float ProfiledMoveSpeed(float distanceToTarget, float dt)
+    {
+        var cruise = _moveSpeed;
+        var accel = MoveAcceleration > 0f ? MoveAcceleration : float.PositiveInfinity;
+        var decel = MoveDeceleration > 0f ? MoveDeceleration : float.PositiveInfinity;
+        var allowed = Math.Min(cruise, MathF.Sqrt(2f * decel * distanceToTarget));
+        if (allowed > _moveCurrentSpeed)
+            _moveCurrentSpeed = Math.Min(allowed, _moveCurrentSpeed + accel * dt);
+        else
+            _moveCurrentSpeed = Math.Max(allowed, _moveCurrentSpeed - decel * dt);
+        return _moveCurrentSpeed;
+    }
+
+    /// <summary>
     /// Fresh progress tracking for a new Move leg (M7 hardening #5).
     /// </summary>
     private void ResetMoveProgressTracking()
@@ -3738,6 +3788,7 @@ public class GameplayActor : IGameplayActor
         _noProgressElapsed = TimeSpan.Zero;
         _unstickAttempts = 0;
         _unstickWaypoint = null;
+        _moveCurrentSpeed = 0f;
     }
 
     /// <summary>
@@ -3869,6 +3920,7 @@ public class GameplayActor : IGameplayActor
         _unstickWaypoint = null;
         _noProgressElapsed = TimeSpan.Zero;
         _unstickAttempts = 0;
+        _moveCurrentSpeed = 0f;
         _pendingPutDownPackId = null;
         ClearDriveState();
     }
