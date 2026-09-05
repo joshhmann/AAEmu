@@ -53,6 +53,46 @@ public class GameplayActorLoadPackOntoVehicleTests
 
     private static uint _nextSlaveObjId = 0x3000;
 
+    /// <summary>Unique high-base world ids (suite-health): every headless
+    /// session world defaults to instance id 1, and the shared _worlds
+    /// registry is first-wins — a third-lane id-1 world holding slot 1 makes
+    /// DoodadManager.Create's ParentWorld round-trip (Transform.InstanceId
+    /// → WorldManager.GetWorld) resolve to the FOREIGN world, so the pack
+    /// doodad spawns there and session.World.GetDoodad finds nothing. A
+    /// per-test unique id keeps this class's worlds out of every shared
+    /// slot (0x6000_0000 base is unused by the other world-id rigs:
+    /// 0x4000_0000 plant, 0x5000_0000 house/cast/M3aM4, 0x7000_0000 soak).
+    /// Registration is still removed in TearDown with an identity guard.</summary>
+    private static uint s_nextWorldId = 0x6000_0000;
+    /// <summary>
+    /// Gives the session world a UNIQUE high-base instance id and registers
+    /// it in the shared WorldManager for the duration of the test. The
+    /// engine's world-lookup paths (DoodadManager.Create's ParentWorld
+    /// setter, Region.AddObject's Transform.InstanceId assignment) resolve
+    /// through WorldManager.GetWorld — the rig worlds are unregistered by
+    /// design (t_449d0c41), so the real engine factory would NRE on them.
+    /// The registration is removed in TearDown with an identity guard.
+    /// </summary>
+    private void RegisterWorld(HeadlessSession session)
+    {
+        const System.Reflection.BindingFlags Flags =
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        typeof(WorldInstance).GetField("<Id>k__BackingField", Flags)!
+            .SetValue(session.World, s_nextWorldId++);
+        var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)typeof(WorldManager)
+            .GetField("_worlds", Flags)!
+            .GetValue(WorldManager.Instance)!;
+        worlds.TryAdd(session.World.Id, session.World);
+        _registeredWorld = session.World;
+        session.World.SpawnManager ??= new SpawnManager(session.World);
+        // Re-pin the character transform to the renamed world id so later
+        // Region.AddObject InstanceId assignments no-op instead of
+        // re-entering the shared registry (CreateActor rig pattern).
+        typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
+            .GetField("_instanceId", Flags)!
+            .SetValue(session.Character.Transform, session.World.Id);
+    }
+
     private WorldInstance? _registeredWorld;
 
     /// <summary>AppConfiguration.Instance.World captured in SetUp (null in unit
@@ -74,8 +114,9 @@ public class GameplayActorLoadPackOntoVehicleTests
     public void TearDown()
     {
         AppConfiguration.Instance.World = _previousWorldConfig;
-        // Identity-guarded unregister (t_449d0c41 discipline): never remove
-        // a sibling class's id-1 world; only the world this test registered.
+        // Identity-guarded unregister (t_449d0c41 discipline): only remove
+        // the world this test registered (ids are unique per test, but a
+        // sibling lane must never lose its entry to our cleanup).
         if (_registeredWorld != null)
         {
             var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)typeof(WorldManager)
@@ -85,24 +126,6 @@ public class GameplayActorLoadPackOntoVehicleTests
                 worlds.TryRemove(_registeredWorld.Id, out _);
             _registeredWorld = null;
         }
-    }
-
-    /// <summary>
-    /// Registers the headless session world in the shared WorldManager for
-    /// the duration of the test. The engine's world-lookup paths
-    /// (DoodadManager.Create's ParentWorld setter, Region.AddObject's
-    /// Transform.InstanceId assignment) resolve through
-    /// WorldManager.GetWorld — the rig worlds are unregistered by design
-    /// (t_449d0c41), so the real engine factory would NRE on them. The
-    /// registration is removed in TearDown with an identity guard.
-    /// </summary>
-    private void RegisterWorld(HeadlessSession session)
-    {
-        var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)typeof(WorldManager)
-            .GetField("_worlds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .GetValue(WorldManager.Instance)!;
-        worlds.TryAdd(session.World.Id, session.World);
-        _registeredWorld = session.World;
     }
 
     private static void SeedEquipSurface()

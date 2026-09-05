@@ -447,6 +447,15 @@ public class GameplayActorHouseBuildActionsTests
     private static (GameplayActor Actor, HeadlessSession Session) CreateActor(string name)
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        // Hermetic tax identity (suite-health): the engine's first-house-free
+        // rule and all account tallies key on Character.AccountId, and the
+        // rig default (0) is shared with every headless actor process-wide —
+        // including permanent third-lane houses (e.g. CropHarvestLoopRig id
+        // 77). A unique account per actor keeps this class's tax assertions
+        // immune to foreign _houses entries regardless of lane interleaving.
+        // Tests that need a same-account second house follow the actor
+        // (accountId: actor.Character.AccountId), so their shape is unchanged.
+        actor.Character.AccountId = s_nextAccountId++;
         RigWorld(session);
         GameplayActorTestRig.WireHouseZone(session, SolzreedZoneKey, new Zone
         {
@@ -455,6 +464,11 @@ public class GameplayActorHouseBuildActionsTests
             FactionId = SolzreedFaction
         });
         GameplayActorTestRig.AttachConnection(actor);
+        // Prod shape: the connection carries the login account and the
+        // character row belongs to it (Build stamps house.AccountId from
+        // connection.AccountId while the tax branch reads Character.AccountId).
+        // Mirror the unique account onto both so the row and the tally agree.
+        actor.Character.Connection!.AccountId = actor.Character.AccountId;
         return (actor, session);
     }
 
@@ -473,6 +487,8 @@ public class GameplayActorHouseBuildActionsTests
     private static (GameplayActor Actor, HeadlessSession Session) CreateActorOnUnregisteredWorld(string name)
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        // Hermetic tax identity — see CreateActor.
+        actor.Character.AccountId = s_nextAccountId++;
         // World id uniqueness + transform sync + spawn surface, but NO
         // _worlds.TryAdd — GetWorld(instanceId) must resolve null.
         typeof(WorldInstance).GetField("<Id>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
@@ -487,11 +503,14 @@ public class GameplayActorHouseBuildActionsTests
             FactionId = SolzreedFaction
         });
         GameplayActorTestRig.AttachConnection(actor);
+        actor.Character.Connection!.AccountId = actor.Character.AccountId; // prod shape — see CreateActor.
         return (actor, session);
     }
 
     /// <summary>Same world rigging as the M5.1 plant tests (unique high-base world id, registration, transform sync).</summary>
     private static uint s_nextWorldId = 0x5000_0000;
+    /// <summary>Unique account ids per actor (hermetic tax identity — see CreateActor).</summary>
+    private static uint s_nextAccountId = 0x00A0_0000;
 
     private static void RigWorld(HeadlessSession session)
     {
