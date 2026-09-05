@@ -42,7 +42,7 @@
 | # | Card (parent) | Readiness |
 |---|---|---|
 | Q1 | G0 full-gate / honor-flake diagnostic | DONE investigation 2026-09-05 (root-caused; fix is separate build card) |
-| Q2 | B5 runner fidelity (runner-only) | P0 build |
+| Q2 | B5 runner fidelity (runner-only) | DONE 2026-09-05 (fixed + fake-runner + real subset green) |
 | Q3 | PB-001 routed-geometry gate (branch-local) | P0 build |
 | Q4 | M5-B1 loot + bag conservation | P0 investigate, build if gap |
 | Q5 | NPC wildlife skills data audit (read-only) | P0 investigation |
@@ -77,6 +77,16 @@
   - Negative/recovery: a forced test failure must FAIL the scenario and the run (currently PASSES — see observed evidence)
   - Evidence EXISTS (observed 2026-09-05, throwaway copy + fake-`dotnet`, no live runtime/network; experiment removed after recording): with `dotnet test` forced to exit 1, all 7 scenarios reported PASS and the run exited 0; `SCENARIOS="fishing"` still ran all 7 keys; publish invoked the hardcoded `/root/aaemu-e2e/runtime/game` despite an `E2E_ROOT` override
   - Evidence PLANNED: runner fix (pipefail + pipeline-status capture + `E2E_ROOT`-resolved runtime/log paths + working env-subset selection) + fake-runner green + one real subset run (`SCENARIOS="fishing" ./Scripts/e2e/bot-regression-pass.sh` from the repo root against the isolated E2E stack; artifact: per-scenario JSON under the isolated `$E2E_ROOT/logs/`)
+  - **Fixed 2026-09-05 (`Scripts/e2e/bot-regression-pass.sh`, runner-only, no engine/scenario changes):**
+    `set -uo pipefail` (pipeline exit = `dotnet test`, not `tail`); assoc map renamed
+    `SCENARIOS` → `SCENARIO_CLASS` so the operator subset env is honored (exact-token
+    match); publish + evidence paths resolved under `${E2E_ROOT:-/root/aaemu-e2e}`;
+    restored the dropped `ORDER` array; usage comment corrected to exact keys.
+  - Evidence PLANNED → DONE: fake-runner green (forced exit 1 ⇒ `✗ fishing FAIL`,
+    `0 passed / 1 failed`, exit 1; `SCENARIOS="fishing duels"` all-pass ⇒ `2 passed /
+    0 failed`, exit 0) + one real subset run (`SCENARIOS="fishing"
+    ./Scripts/e2e/bot-regression-pass.sh` from repo root vs isolated default stack:
+    fishing PASS, exit 0, artifact `/root/aaemu-e2e/logs/fishing-e2e-report.json`).
   - Repro recipe (durable throwaway; fake-`dotnet` ONLY — never a real build, publish, or live run):
     ```bash
     tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
