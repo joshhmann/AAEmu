@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-05 · A5 soak #2 PASS record (docs-only); develop `ca7762d7d` / source `322390b32`
+Updated: 2026-09-05 · A5 b2 prelaunch correction (docs-only); develop `ca7762d7d` / source `322390b32`
 Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
@@ -25,6 +25,26 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-05 — A5 b2 prelaunch correction record (no runtime proof, A5 stays OPEN)
+
+- **Correction:** pushed `948bf9662` (b2 helper build + full UnitTests gate)
+  did NOT prove runtime; prior "canaries mature ~67 min at GrowthRate 3600"
+  was wrong 1000x (14.4M ms / 3600 ≈ 4 s, not ~67 min).
+- **Correction committed as `a88f4df20` on `948bf9662`, stack-free verification only (no
+  commit/push, no runtime):** explicit per-isolated-run `E2E_GROWTH_RATE`
+  (default stays 3600); 6h-canary rate 3 → ~80 min post-plant, due checked
+  60–120 min INTO window; restart rate 120 → ~2 min; actual wither is the
+  `DoodadFuncTimer` delay, not GrowthRate-divided; stack-aware seed IDs,
+  owned canary discovery, in-window transfer observations, restart
+  validation. Pre-fix RED unit regressions for sizing + restart false-passes;
+  post-fix IntegrationTests Release build 0 errors + 25 exact-method pure
+  facts pass (23 b2 validators + 2 RSS); full UnitTests gate 2844 total /
+  2843 passed / 0 failed / 1 skipped, compiler 0/0, MCP 39+24 ran before the
+  final IntegrationTests-only cleanup.
+- **Runtime NOT RUN:** isolated real planting 2-from-stack, bounded restart,
+  6h asserted soak; shape re-show also open; b1 historical pass unchanged;
+  no live deployment / human-feel claim. **A5 OPEN.**
 
 ## 2026-09-05 — A5 soak #2 PASS: 6h quiescence-budget leg closed (docs-only record)
 

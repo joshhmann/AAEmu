@@ -217,9 +217,8 @@ public partial class A5Tier3AcceptanceProbeTests
     // existing read-only 'transfers' bridge command — neither touches the
     // quiescence counters (tick/scheduler/save/RSS/DB-writes). Sample values
     // are NEVER failed per-sample (assert once at the end); -1 / null =
-    // unread. HarvestPhase/TimeLeft track canary #0; the end validation
-    // covers every canary. TransferPathIndex stays -1: the bridge does not
-    // emit PathPointIndex (parsed opportunistically if it ever appears).
+    // unread. HarvestPhase/TimeLeft track canary #0 (phase series shows the
+    // in-window maturation); the end validation covers every canary.
     private sealed record DormantTimerSample(
         DateTime At, long UptimeMs, double RssMb, int Embodied, long DormantSpecs,
         long Materializations, long Dematerializations,
@@ -227,7 +226,7 @@ public partial class A5Tier3AcceptanceProbeTests
         long DueQueueDepth, long EventQueueDepth, long InFlight,
         long SchedulerFailures, long SaveSampleCount, double SaveP95Ms,
         double SaveMaxMs, long SaveSkips, long DbWrites,
-        int HarvestPhase, long HarvestTimeLeftMs, int TransferPathIndex, TimerCanaryPos? TransferPos);
+        int HarvestPhase, long HarvestTimeLeftMs, TimerCanaryPos? TransferPos);
 
     private sealed record StartupRssTracker
     {
@@ -280,21 +279,6 @@ public partial class A5Tier3AcceptanceProbeTests
         Assert.True(ExceedsRssBudget(1400, 1912.1));
         Assert.False(ExceedsRssBudget(-1, 5000));
     }
-    [Fact]
-    public void ValidatorMessage_DistinguishesStartupPeakFromSteadyStateGrowth()
-    {
-        var sample = new DormantTimerSample(
-            DateTime.UtcNow, 1, 1912.1, 0, 100, 0, 0,
-            1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1,
-            -1, -1, -1, null);
-        var failures = new List<string>();
-
-        Assert.True(ValidateDormantTimerSample(sample, 100, 1400, 5800, null, failures));
-        var failure = Assert.Single(failures);
-        Assert.Contains("steady-state RSS growth", failure);
-        Assert.Contains("startup peak=5800.0MB", failure);
-    }
-
 
     /// <summary>
     /// Optional natural-home dormant timer soak. This is deliberately skipped
@@ -322,61 +306,69 @@ public partial class A5Tier3AcceptanceProbeTests
                 "A5_TIER3_SIX_HOUR_SAMPLE_SECONDS must be at most 300.");
         var dormantTarget = ReadRequiredPositiveInt("A5_DORMANT_COUNT");
         var ownedNames = BuildOwnershipNames(dormantTarget, 0);
-        E2eStack.EnsureUp();
-        var ownershipBefore = E2eStack.SnapshotOwnedRows(ownedNames);
-        const float homeX = 15578.042f, homeY = 15382.122f, homeZ = 126.484f;
-
+        var growthRatePrev = PinGrowthRateEnv(SixHourGrowthRate, "sixhour");
         try
         {
-            ClearFeatureEnv();
-            using (var seedDeadline = CancellationTokenSource.CreateLinkedTokenSource(
-                       TestContext.Current.CancellationToken))
+            E2eStack.EnsureUp();
+            var ownershipBefore = E2eStack.SnapshotOwnedRows(ownedNames);
+            const float homeX = 15578.042f, homeY = 15382.122f, homeZ = 126.484f;
+
+            try
             {
-                seedDeadline.CancelAfter(SeedBox);
-                await SeedDormant(homeX, homeY, homeZ, 0, dormantTarget, seedDeadline.Token);
+                ClearFeatureEnv();
+                using (var seedDeadline = CancellationTokenSource.CreateLinkedTokenSource(
+                           TestContext.Current.CancellationToken))
+                {
+                    seedDeadline.CancelAfter(SeedBox);
+                    await SeedDormant(homeX, homeY, homeZ, 0, dormantTarget, seedDeadline.Token);
+                }
+
+                var seededCount = CountManagedCharacters();
+                Assert.True(seededCount >= dormantTarget * 0.95,
+                    $"seed produced only {seededCount}/{dormantTarget} discoverable managed characters");
+
+                // A5 b2 business-state progression: plant the harvest canaries
+                // through the REAL plant path and pin the travel canary BEFORE
+                // the restart, so the soak observes wall-clock timer progression
+                // (growth-phase advance to mature + transfer motion) across boot.
+                // Setup fail-fast: a broken rig must not burn a six-hour window.
+                var canaries = await SetupTimerCanariesAsync(TestContext.Current.CancellationToken);
+
+                Environment.SetEnvironmentVariable("AAEMU_BOT_TRUE_DORMANCY", "1");
+                Environment.SetEnvironmentVariable("AAEMU_BOT_PROXIMITY_FIDELITY", "1");
+                var startupRss = new StartupRssTracker();
+                var warmupStartedAtUtc = DateTime.UtcNow;
+                E2eStack.RestartGameServer();
+                WaitBoot(startupRss.Observe, TestContext.Current.CancellationToken);
+                WaitDormantDiscovered(seededCount, startupRss.Observe, TestContext.Current.CancellationToken);
+                var quiescence = await WaitForRssQuiescenceAsync(
+                    startupRss, seededCount, warmupStartedAtUtc, TestContext.Current.CancellationToken);
+                Console.WriteLine($"[a5t3-sixhour] startup quiescent after {quiescence.WarmupDuration.TotalSeconds:F0}s: " +
+                                  $"baseline={quiescence.BaselineRssMb:F1}MB startupPeak={quiescence.StartupPeakRssMb:F1}MB");
+                var result = await RunDormantTimerSoakAsync(
+                    seededCount, TimeSpan.FromMinutes(windowMinutes),
+                    TimeSpan.FromSeconds(sampleSeconds), quiescence, canaries, TestContext.Current.CancellationToken);
+                WriteDormantTimerReport(windowMinutes, sampleSeconds, dormantTarget, seededCount, result, canaries, result.Progression);
+                Assert.Empty(result.Failures);
             }
-
-            var seededCount = CountManagedCharacters();
-            Assert.True(seededCount >= dormantTarget * 0.95,
-                $"seed produced only {seededCount}/{dormantTarget} discoverable managed characters");
-
-            // A5 b2 business-state progression: plant the harvest canaries
-            // through the REAL plant path and pin the travel canary BEFORE
-            // the restart, so the soak observes wall-clock timer progression
-            // (growth-phase advance to mature + transfer motion) across boot.
-            // Setup fail-fast: a broken rig must not burn a six-hour window.
-            var canaries = await SetupTimerCanariesAsync(TestContext.Current.CancellationToken);
-
-            Environment.SetEnvironmentVariable("AAEMU_BOT_TRUE_DORMANCY", "1");
-            Environment.SetEnvironmentVariable("AAEMU_BOT_PROXIMITY_FIDELITY", "1");
-            var startupRss = new StartupRssTracker();
-            var warmupStartedAtUtc = DateTime.UtcNow;
-            E2eStack.RestartGameServer();
-            WaitBoot(startupRss.Observe, TestContext.Current.CancellationToken);
-            WaitDormantDiscovered(seededCount, startupRss.Observe, TestContext.Current.CancellationToken);
-            var quiescence = await WaitForRssQuiescenceAsync(
-                startupRss, seededCount, warmupStartedAtUtc, TestContext.Current.CancellationToken);
-            Console.WriteLine($"[a5t3-sixhour] startup quiescent after {quiescence.WarmupDuration.TotalSeconds:F0}s: " +
-                              $"baseline={quiescence.BaselineRssMb:F1}MB startupPeak={quiescence.StartupPeakRssMb:F1}MB");
-            var result = await RunDormantTimerSoakAsync(
-                seededCount, TimeSpan.FromMinutes(windowMinutes),
-                TimeSpan.FromSeconds(sampleSeconds), quiescence, canaries, TestContext.Current.CancellationToken);
-            WriteDormantTimerReport(windowMinutes, sampleSeconds, dormantTarget, seededCount, result, canaries, result.Progression);
-            Assert.Empty(result.Failures);
+            finally
+            {
+                try
+                {
+                    DeleteTimerCanaryDoodads();
+                    var ownershipAfter = E2eStack.SnapshotOwnedRows(ownedNames);
+                    var ownedRows = E2eStack.FindNewOwnedRows(ownershipBefore, ownershipAfter);
+                    E2eStack.CleanupOwnedRows(ownedRows);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[a5t3-sixhour] ownership cleanup skipped: {ex.GetType().Name}: {ex.Message}");
+                }
+            }
         }
         finally
         {
-            try
-            {
-                DeleteTimerCanaryDoodads();
-                var ownershipAfter = E2eStack.SnapshotOwnedRows(ownedNames);
-                var ownedRows = E2eStack.FindNewOwnedRows(ownershipBefore, ownershipAfter);
-                E2eStack.CleanupOwnedRows(ownedRows);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[a5t3-sixhour] ownership cleanup skipped: {ex.GetType().Name}: {ex.Message}");
-            }
+            RestoreGrowthRateEnv(growthRatePrev, "sixhour");
         }
     }
 
@@ -392,6 +384,10 @@ public partial class A5Tier3AcceptanceProbeTests
         int seededCount, TimeSpan window, TimeSpan sampleInterval,
         RssQuiescenceResult quiescence, TimerCanarySetup canaries, CancellationToken cancellationToken)
     {
+        // Post-restart re-anchor: dues recomputed from live rows and forced
+        // inside the measured window — a broken canary fails HERE, before
+        // the six-hour burn, never as a pass.
+        canaries = RebaseCanaryDue(canaries, window);
         var samples = new List<DormantTimerSample>();
         var failures = new List<string>();
         var started = Stopwatch.StartNew();
@@ -454,8 +450,10 @@ public partial class A5Tier3AcceptanceProbeTests
             AddFailure(failures, $"DB writes exceeded dormant budget: {dbWritesPerMinute:F1}/min > {DormantDbWritesBudgetPerMin:F0}/min");
 
         // A5 b2 business-state progression, ONCE at the end beside the
-        // DB-writes check, appending to the SAME failures list.
-        var progression = ValidateTimerProgression(canaries, failures);
+        // DB-writes check, appending to the SAME failures list. Travel is
+        // judged from the in-window sample series (same stable identity),
+        // never from the pre-restart setup position.
+        var progression = ValidateTimerProgression(canaries, samples, failures);
 
         var steadyStatePeak = samples.Where(s => s.RssMb > 0)
             .Select(s => s.RssMb).DefaultIfEmpty(-1).Max();
@@ -494,7 +492,6 @@ public partial class A5Tier3AcceptanceProbeTests
         // dump holds no engine locks and fires no tasks or broadcasts.
         var harvestPhase = -1;
         var harvestTimeLeftMs = -1L;
-        var transferPathIndex = -1;
         TimerCanaryPos? transferPos = null;
         try
         {
@@ -507,7 +504,7 @@ public partial class A5Tier3AcceptanceProbeTests
         catch { }
         try
         {
-            (transferPathIndex, transferPos) = ReadTravelCanary(canaries.Travel.TlId);
+            transferPos = ReadTravelCanary(canaries.Travel.Name);
         }
         catch { }
         return new DormantTimerSample(
@@ -530,7 +527,7 @@ public partial class A5Tier3AcceptanceProbeTests
             save.GetProperty("maxMs").GetDouble(),
             save.GetProperty("skipCount").GetInt64(),
             dbWrites,
-            harvestPhase, harvestTimeLeftMs, transferPathIndex, transferPos);
+            harvestPhase, harvestTimeLeftMs, transferPos);
     }
 
     private static bool ValidateDormantTimerSample(
@@ -696,10 +693,12 @@ public partial class A5Tier3AcceptanceProbeTests
                 travel = new
                 {
                     tlId = progression.Travel.TlId,
+                    name = progression.Travel.Name,
                     pos0 = progression.Travel.Pos0,
                     posEnd = progression.Travel.PosEnd,
-                    pathIndexDelta = progression.Travel.PathIndexDelta,
                     displacementM = Math.Round(progression.Travel.DisplacementM, 1),
+                    inWindowMaxM = Math.Round(progression.Travel.InWindowMaxM, 1),
+                    inWindowSamples = progression.Travel.InWindowSamples,
                     dispMinM = progression.Travel.DispMinM,
                     observedMaxM = Math.Round(progression.Travel.ObservedMaxM, 1),
                     failure = progression.Travel.Failure

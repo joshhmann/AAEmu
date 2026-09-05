@@ -483,6 +483,25 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   "Preferably 12-hour" remains recommendation-only. H separate, unchanged. Soak #1 (+72min
   external-kill, cause UNKNOWN) stays recorded as partial evidence, not a pass. No other
   ledger-state change.
+- 2026-09-05 — A5 b2 prelaunch correction record (no ledger-state change,
+  no grade promotion, earned history preserved): pushed `948bf9662` (b2 helper
+  build + full UnitTests gate) did NOT prove runtime; prior "canaries mature
+  ~67 min at GrowthRate 3600" was wrong 1000x (14.4M ms / 3600 ≈ 4 s).
+  Correction committed as `a88f4df20` on `948bf9662`, stack-free verification only (no
+  commit/push, no runtime): explicit per-isolated-run `E2E_GROWTH_RATE`
+  (default stays 3600), 6h-canary rate 3 → ~80 min post-plant, due checked
+  60–120 min INTO window, restart rate 120 → ~2 min, actual wither as the
+  `DoodadFuncTimer` delay (not GrowthRate-divided), stack-aware seed IDs,
+  owned canary discovery, in-window transfer observations, restart validation.
+  Pre-fix RED unit regressions for sizing + restart false-passes; post-fix
+  IntegrationTests
+  Release build 0 errors + 25 exact-method pure facts pass (23 b2 validators
+  + 2 RSS); full UnitTests gate 2844 total / 2843 passed / 0 failed /
+  1 skipped, compiler 0/0, MCP 39+24 ran before the final
+  IntegrationTests-only cleanup. Runtime NOT RUN: isolated real planting
+  2-from-stack, bounded restart, 6h asserted soak; shape re-show also open;
+  b1 historical pass unchanged; A5 OPEN; no live deployment / human-feel
+  claim.
 
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*

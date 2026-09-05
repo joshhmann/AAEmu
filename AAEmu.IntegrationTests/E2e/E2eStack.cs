@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -412,6 +413,24 @@ public static class E2eStack
         CanonicalSqliteMd5 = Md5File(CanonicalSqlite);
     }
 
+    /// <summary>Isolated-run World.GrowthRate for the E2E game config.
+    /// E2E_GROWTH_RATE unset = 3600 (existing replay pacing: crop cycles
+    /// complete inside scripted maturity timeouts). Set = strict positive
+    /// finite double, else throw BEFORE boot — never a silent fallback rate.
+    /// The A5 timer-progression legs pin their own rate pre-EnsureUp and
+    /// verify the effective rate empirically from the planted row.</summary>
+    private static string GameGrowthRate()
+    {
+        var raw = Environment.GetEnvironmentVariable("E2E_GROWTH_RATE");
+        if (string.IsNullOrWhiteSpace(raw))
+            return "3600";
+        if (!double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var rate) ||
+            !double.IsFinite(rate) || rate <= 0)
+            throw new InvalidOperationException(
+                $"E2E_GROWTH_RATE={raw} is not a positive finite number — refusing to boot the isolated stack on an ambiguous growth rate.");
+        return rate.ToString(CultureInfo.InvariantCulture);
+    }
+
     private static string GameLocalConfig()
         // Replay pacing (scripted-actor scope, same class as GrowthRate):
         //   GrowthRate 3600 — crop cycle completes inside the scenario's
@@ -424,24 +443,24 @@ public static class E2eStack
         //     engine only multiplies coin loot by rates). NOTE: keep this
         //     template strict JSON — BotDriveBridge.ReadConfig parses it with
         //     System.Text.Json (no comment support).
-        => $$"""
-            {
-              "Network": { "Host": "*", "Port": {{GamePort}}, "NumConnections": 10 },
-              "StreamNetwork": { "Host": "*", "Port": {{StreamPort}} },
-              "WebApiNetwork": { "Host": "*", "Port": {{WebApiPort}} },
-              "LoginNetwork": { "Host": "127.0.0.1", "Port": "{{InternalPort}}" },
-              "Connections": {
-                "MySQLProvider": {
-                  "Host": "127.0.0.1", "Port": "{{DbPort}}", "User": "root",
-                  "Password": "{{DbPassword}}", "Database": "aaemu_game"
-                }
-              },
-              "ClientData": { "Sources": [ "./ClientData/game_pak" ] },
-              "HeightMapsEnable": true,
-              "World": { "AutoSaveInterval": 0.2, "UsePersistentHouseDoodads": true, "GrowthRate": 3600, "LootRate": 100 },
-              "Bots": { "EnableE2EBridge": true, "E2EBridgePort": {{BridgePort}} }
-            }
-            """;
+         => $$"""
+             {
+               "Network": { "Host": "*", "Port": {{GamePort}}, "NumConnections": 10 },
+               "StreamNetwork": { "Host": "*", "Port": {{StreamPort}} },
+               "WebApiNetwork": { "Host": "*", "Port": {{WebApiPort}} },
+               "LoginNetwork": { "Host": "127.0.0.1", "Port": "{{InternalPort}}" },
+               "Connections": {
+                 "MySQLProvider": {
+                   "Host": "127.0.0.1", "Port": "{{DbPort}}", "User": "root",
+                   "Password": "{{DbPassword}}", "Database": "aaemu_game"
+                 }
+               },
+               "ClientData": { "Sources": [ "./ClientData/game_pak" ] },
+               "HeightMapsEnable": true,
+               "World": { "AutoSaveInterval": 0.2, "UsePersistentHouseDoodads": true, "GrowthRate": {{GameGrowthRate()}}, "LootRate": 100 },
+               "Bots": { "EnableE2EBridge": true, "E2EBridgePort": {{BridgePort}} }
+             }
+             """;
 
     private static string LoginLocalConfig()
         => $$"""
