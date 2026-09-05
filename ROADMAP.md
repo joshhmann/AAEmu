@@ -43,7 +43,7 @@
 |---|---|---|
 | Q1 | G0 full-gate / honor-flake diagnostic | DONE investigation 2026-09-05 (root-caused; fix is separate build card) |
 | Q2 | B5 runner fidelity (runner-only) | DONE 2026-09-05 (fixed + fake-runner + real subset green) |
-| Q3 | PB-001 routed-geometry gate (branch-local) | P0 build |
+| Q3 | PB-001 routed-geometry gate (branch-local) | REVIEWED 2026-09-05 NOT gate-ready (0/7); fix punch-list recorded, branch UNMERGED |
 | Q4 | M5-B1 loot + bag conservation | P0 investigate, build if gap |
 | Q5 | NPC wildlife skills data audit (read-only) | DONE investigation 2026-09-05 (verdicts recorded; OQ-1 blocks loot contents) |
 | Q6 | PB-002 bounded interzone loop (existing data) | P0 live-proof (loop exists) |
@@ -103,6 +103,8 @@
   - Negative: minimum-distance-to-corner alone, seam-only evidence, or a keep-out cut each FAIL the gate
   - Evidence EXISTS: branch diff (`GameplayActor.cs` +70, `GameplayActorTests.cs` +103); 3 named blend tests (insufficient alone); reported unit counts 37+4+11+5+27
   - Evidence PLANNED: per-clause rig numbers + `SCOneUnitMovementPacket` wire capture + deviation/yaw/clearance tables on a stated tip, including real-routed-callsite runs
+  - **Review 2026-09-05 (branch-local, no merge): NOT gate-ready — 0/7 PASS (A3.1 FAIL, A3.5 FAIL, A3.7 FAIL, A3.2/A3.3/A3.4/A3.6 UNPROVEN).** A3.1 asserts only min-distance-to-corner (named fail shape) at single radius/speed/angle, no yaw measurement. A3.5 enters only via `NavigateRoutedForTest`, never `NavigateToInternal`. Seam defect CONFIRMED: `GameplayActor.cs:418` indexes `route[^1]` before the `:423` empty-guard (throws instead of `RejectedAction` reject). 1m-skip concern SUSTAINED (instantaneous heading flip, no curve). Unit counts 37+4+11+5+27 receipts only.
+  - Punch-list (fix-or-drop, never a relaxed bound): (1) reorder :418/:423 + fail-pre/post test; (2) max-deviation rig sweeping radii/speeds/angles + per-tick heading + continuity; (3) clearance table or producer-flag gating; (4) steep-leg tests; (5) short-leg tests incl. ArrivalRadius; (6) real-path reruns; (7) wire yaw capture; (8) seam-contract tests. Drop if rig items unfunded.
   - Dependencies: none (branch-local). Non-goal: merge, new pathfinding, obstacle-index changes. Done: all clauses green + review; a failing clause ends fix-or-drop, never a relaxed bound
 - **Q4 — M5-B1 loot grant proof (existing paths only). Priority: HIGH — genuine acceptance gap.**
   - Actual contract (`GameplayActor.cs:1277-1305` — VERIFIED): `Rejected` covers preflight ONLY (owner not found / out of `MaxLootingRange` / empty at entry); after `OpenBag` the request returns `Completed(granted)` with `granted` = container before-after count — INCLUDING `Completed(0)`. The count is not bag/money proof
