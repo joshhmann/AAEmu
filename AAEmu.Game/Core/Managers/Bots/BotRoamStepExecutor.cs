@@ -54,17 +54,17 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Max elapsed reported per step (clamp against scheduler stalls).</summary>
     public static readonly TimeSpan MaxStepElapsed = TimeSpan.FromSeconds(1);
 
-    /// <summary>Step cadence reported while a request is live (default = 100ms / 10 Hz; can be overridden via AAEMU_PRESENCE_BROADCAST_HZ).</summary>
+    /// <summary>Step cadence reported while a request is live (default = 15 Hz / ~66.7ms; can be overridden via AAEMU_PRESENCE_BROADCAST_HZ).</summary>
     public TimeSpan ActiveCadence { get; init; } =
         int.TryParse(Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BROADCAST_HZ"), out var hz) && hz > 0
             ? TimeSpan.FromSeconds(1.0 / hz)
-            : TimeSpan.FromMilliseconds(100);
+            : TimeSpan.FromSeconds(1.0 / 15);
 
-    /// <summary>Minimum interval between movement broadcasts (100ms = 10 Hz, matching Simulation cadence; can be overridden via AAEMU_PRESENCE_BROADCAST_HZ).</summary>
+    /// <summary>Minimum interval between movement broadcasts (default = 15 Hz / ~66.7ms; can be overridden via AAEMU_PRESENCE_BROADCAST_HZ).</summary>
     public TimeSpan BroadcastInterval { get; init; } =
         int.TryParse(Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BROADCAST_HZ"), out var bhz) && bhz > 0
             ? TimeSpan.FromSeconds(1.0 / bhz)
-            : TimeSpan.FromMilliseconds(100);
+            : TimeSpan.FromSeconds(1.0 / 15);
 
     /// <summary>Clock for elapsed accounting + broadcast throttle (tests inject FakeTimeProvider).</summary>
     public TimeProvider TimeProvider { get; init; } = TimeProvider.System;

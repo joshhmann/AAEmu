@@ -329,78 +329,142 @@ public sealed class BotAdminService
     }
 
     /// <summary>
-    /// Commands a bot into a specific movement test mode (circle, line, ramp, roam)
-    /// at the given broadcast frequency (5, 10, or 20 Hz), or toggles telemetry logging.
+    /// Commands a bot (or 'all' bots) into a specific movement test mode (circle, line, ramp, roam)
+    /// at the given broadcast frequency (5, 10, 15, 20 Hz), or toggles telemetry logging.
+    /// Supports direct frequency shorthand (e.g. /bot lab all 15 or /bot lab Citizen01 15).
     /// </summary>
     public BotAdminCommandResult Lab(string nameOrId, string mode, int hz = 10)
     {
-        var runtime = FindByNameOrId(nameOrId);
-        if (runtime == null)
+        var normalizedMode = mode.Trim().ToLowerInvariant();
+        var isBulk = nameOrId.Equals("all", StringComparison.OrdinalIgnoreCase) || nameOrId == "*";
+
+        if (int.TryParse(mode, out var directHz))
+        {
+            hz = directHz;
+            normalizedMode = "cadence";
+        }
+
+        if (isBulk)
+        {
+            var allBots = _manager.GetAll();
+            if (allBots.Count == 0)
+                return new BotAdminCommandResult(false, "No active bots found in registry.");
+
+            var count = 0;
+            foreach (var runtime in allBots)
+            {
+                var character = runtime.Character;
+                var pos = character.Transform.World.Position;
+                count++;
+
+                switch (normalizedMode)
+                {
+                    case "cadence":
+                    case "hz":
+                        _stepExecutor.SetBotCadence(character, hz);
+                        break;
+                    case "telemetry":
+                    case "tel":
+                        _stepExecutor.ToggleTelemetry(character);
+                        break;
+                    case "circle":
+                        _stepExecutor.SetRoamRoute(character, BotPath.BuildCircle(pos, 10f, 32));
+                        _stepExecutor.SetBotCadence(character, hz);
+                        break;
+                    case "line":
+                    case "straight":
+                        var endPos = _terrainResolver(new Vector3(pos.X + 20f, pos.Y, pos.Z), character.Transform.ZoneId);
+                        _stepExecutor.SetRoamRoute(character, BotPath.BuildStraightLine(pos, endPos));
+                        _stepExecutor.SetBotCadence(character, hz);
+                        break;
+                    case "roam":
+                    default:
+                        ArmRoam(character, pos);
+                        _stepExecutor.SetBotCadence(character, hz);
+                        break;
+                }
+                _scheduler.Wake(character.Id);
+            }
+
+            return new BotAdminCommandResult(true,
+                $"Updated {count} bots to mode '{normalizedMode}' at {hz} Hz.");
+        }
+
+        var runtimeTarget = FindByNameOrId(nameOrId);
+        if (runtimeTarget == null)
             return new BotAdminCommandResult(false, $"No bot found matching '{nameOrId}'.");
 
-        var character = runtime.Character;
-        var pos = character.Transform.World.Position;
-        var normalizedMode = mode.Trim().ToLowerInvariant();
+        var targetChar = runtimeTarget.Character;
+        var targetPos = targetChar.Transform.World.Position;
 
         switch (normalizedMode)
         {
+            case "cadence":
+            case "hz":
+            {
+                _stepExecutor.SetBotCadence(targetChar, hz);
+                _scheduler.Wake(targetChar.Id);
+                return new BotAdminCommandResult(true,
+                    $"Bot '{targetChar.Name}' cadence set to {hz} Hz.");
+            }
+
             case "telemetry":
             case "tel":
             {
-                var enabled = _stepExecutor.ToggleTelemetry(character);
+                var enabled = _stepExecutor.ToggleTelemetry(targetChar);
                 return new BotAdminCommandResult(true,
-                    $"Bot '{character.Name}' telemetry logging is now {(enabled ? "ENABLED" : "DISABLED")}.");
+                    $"Bot '{targetChar.Name}' telemetry logging is now {(enabled ? "ENABLED" : "DISABLED")}.");
             }
 
             case "circle":
             {
-                var route = BotPath.BuildCircle(pos, 10f, 32);
-                _stepExecutor.SetRoamRoute(character, route);
-                _stepExecutor.SetBotCadence(character, hz);
+                var route = BotPath.BuildCircle(targetPos, 10f, 32);
+                _stepExecutor.SetRoamRoute(targetChar, route);
+                _stepExecutor.SetBotCadence(targetChar, hz);
                 _scheduler.Start();
-                _scheduler.Wake(character.Id);
+                _scheduler.Wake(targetChar.Id);
                 return new BotAdminCommandResult(true,
-                    $"Bot '{character.Name}' running CIRCLE test (r=10m, 32 points) at {hz} Hz.");
+                    $"Bot '{targetChar.Name}' running CIRCLE test (r=10m, 32 points) at {hz} Hz.");
             }
 
             case "line":
             case "straight":
             {
-                var endPos = new Vector3(pos.X + 20f, pos.Y, pos.Z);
-                var clampedEnd = _terrainResolver(endPos, character.Transform.ZoneId);
-                var route = BotPath.BuildStraightLine(pos, clampedEnd);
-                _stepExecutor.SetRoamRoute(character, route);
-                _stepExecutor.SetBotCadence(character, hz);
+                var endPos = new Vector3(targetPos.X + 20f, targetPos.Y, targetPos.Z);
+                var clampedEnd = _terrainResolver(endPos, targetChar.Transform.ZoneId);
+                var route = BotPath.BuildStraightLine(targetPos, clampedEnd);
+                _stepExecutor.SetRoamRoute(targetChar, route);
+                _stepExecutor.SetBotCadence(targetChar, hz);
                 _scheduler.Start();
-                _scheduler.Wake(character.Id);
+                _scheduler.Wake(targetChar.Id);
                 return new BotAdminCommandResult(true,
-                    $"Bot '{character.Name}' running STRAIGHT LINE test (20m ping-pong) at {hz} Hz.");
+                    $"Bot '{targetChar.Name}' running STRAIGHT LINE test (20m ping-pong) at {hz} Hz.");
             }
 
             case "ramp":
             {
-                var rampEnd = new Vector3(pos.X, pos.Y + 25f, pos.Z);
-                var clampedRamp = _terrainResolver(rampEnd, character.Transform.ZoneId);
-                var route = BotPath.BuildStraightLine(pos, clampedRamp);
-                _stepExecutor.SetRoamRoute(character, route);
-                _stepExecutor.SetBotCadence(character, hz);
+                var rampEnd = new Vector3(targetPos.X, targetPos.Y + 25f, targetPos.Z);
+                var clampedRamp = _terrainResolver(rampEnd, targetChar.Transform.ZoneId);
+                var route = BotPath.BuildStraightLine(targetPos, clampedRamp);
+                _stepExecutor.SetRoamRoute(targetChar, route);
+                _stepExecutor.SetBotCadence(targetChar, hz);
                 _scheduler.Start();
-                _scheduler.Wake(character.Id);
+                _scheduler.Wake(targetChar.Id);
                 return new BotAdminCommandResult(true,
-                    $"Bot '{character.Name}' running RAMP test (25m ping-pong) at {hz} Hz.");
+                    $"Bot '{targetChar.Name}' running RAMP test (25m ping-pong) at {hz} Hz.");
             }
 
             case "roam":
             {
-                ArmRoam(character, pos);
-                _stepExecutor.SetBotCadence(character, hz);
+                ArmRoam(targetChar, targetPos);
+                _stepExecutor.SetBotCadence(targetChar, hz);
                 return new BotAdminCommandResult(true,
-                    $"Bot '{character.Name}' resumed standard ROAM patrol at {hz} Hz.");
+                    $"Bot '{targetChar.Name}' resumed standard ROAM patrol at {hz} Hz.");
             }
 
             default:
                 return new BotAdminCommandResult(false,
-                    $"Unknown lab mode '{mode}'. Supported modes: circle, line, ramp, roam, telemetry.");
+                    $"Unknown lab mode '{mode}'. Supported modes: circle, line, ramp, roam, telemetry, or a frequency like 15.");
         }
     }
 
