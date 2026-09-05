@@ -315,7 +315,29 @@ public sealed class BotNetworkSession : IDisposable
         }
     }
 
-    /// <summary>Graceful disconnect: close the game socket (server saves on
+    /// <summary>Sends a REAL CSCreateDoodadPacket over the authenticated game
+    /// link — the exact client placement path: the server runs
+    /// CSCreateDoodadPacket.Read → DoodadManager.CreatePlayerDoodad (item
+    /// lookup in the sender's bag, labor gate, seed consumption, InitDoodad
+    /// phase arming + Save). Used by the A5 timer-progression canary setup to
+    /// plant through the REAL plant path (test-harness send only; the engine
+    /// path itself is untouched).</summary>
+    public void SendCreateDoodad(uint doodadTemplateId, float x, float y, float z, ulong itemId, float zRot = 0f, float scale = 1f)
+    {
+        if (!InWorld)
+            throw new InvalidOperationException($"{BotName}: not in world — cannot place doodad {doodadTemplateId}");
+        _game.SendGameFrame(CSOffsets.CSCreateDoodadPacket, 1, body =>
+        {
+            body.Write(doodadTemplateId);
+            body.Write(AAEmu.Commons.Utils.Helpers.ConvertLongX(x));
+            body.Write(AAEmu.Commons.Utils.Helpers.ConvertLongY(y));
+            body.Write(z);
+            body.Write(zRot);
+            body.Write(scale);
+            body.Write(itemId);
+        });
+    }
+
     /// disconnect) then the rest.</summary>
     public void Disconnect()
     {

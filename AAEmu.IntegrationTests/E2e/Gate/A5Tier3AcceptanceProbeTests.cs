@@ -44,7 +44,7 @@ namespace AAEmu.IntegrationTests.E2e.G2;
 /// Report: g2-a5-tier3-report.json under $E2E_ROOT/logs.
 /// </summary>
 [Collection("e2e")]
-public class A5Tier3AcceptanceProbeTests
+public partial class A5Tier3AcceptanceProbeTests
 {
     private static string EvidenceDir => Path.Combine(E2eStack.E2eRoot, "logs");
 
@@ -211,13 +211,23 @@ public class A5Tier3AcceptanceProbeTests
             }
         }
     }
+    // Timer-progression canary observes (A5 b2): business-state progression
+    // of the planted harvest canary + the tracked travel transfer. Harvest
+    // comes from a direct MySQL SELECT on `doodads` and travel from the
+    // existing read-only 'transfers' bridge command — neither touches the
+    // quiescence counters (tick/scheduler/save/RSS/DB-writes). Sample values
+    // are NEVER failed per-sample (assert once at the end); -1 / null =
+    // unread. HarvestPhase/TimeLeft track canary #0; the end validation
+    // covers every canary. TransferPathIndex stays -1: the bridge does not
+    // emit PathPointIndex (parsed opportunistically if it ever appears).
     private sealed record DormantTimerSample(
         DateTime At, long UptimeMs, double RssMb, int Embodied, long DormantSpecs,
         long Materializations, long Dematerializations,
         double TickP95Ms, double TickMaxMs, double RegionMs,
         long DueQueueDepth, long EventQueueDepth, long InFlight,
         long SchedulerFailures, long SaveSampleCount, double SaveP95Ms,
-        double SaveMaxMs, long SaveSkips, long DbWrites);
+        double SaveMaxMs, long SaveSkips, long DbWrites,
+        int HarvestPhase, long HarvestTimeLeftMs, int TransferPathIndex, TimerCanaryPos? TransferPos);
 
     private sealed record StartupRssTracker
     {
@@ -241,7 +251,7 @@ public class A5Tier3AcceptanceProbeTests
         int WarmupGamePid, string WarmupReadyMarker, double BaselineRssMb,
         double StartupPeakRssMb, double SteadyStatePeakRssMb, double RssGrowthMb,
         TimeSpan QuiescenceDuration, DateTime? FailureAtUtc, TimeSpan? FailureElapsed,
-        IReadOnlyList<DormantTimerSample> Samples, IReadOnlyList<string> Failures);
+        IReadOnlyList<DormantTimerSample> Samples, List<string> Failures, TimerProgressionEnd Progression);
 
     private const double DormantTickP95BudgetMs = 100;
     private const double DormantTickMaxBudgetMs = 250;
@@ -275,7 +285,8 @@ public class A5Tier3AcceptanceProbeTests
     {
         var sample = new DormantTimerSample(
             DateTime.UtcNow, 1, 1912.1, 0, 100, 0, 0,
-            1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1);
+            1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1,
+            -1, -1, -1, null);
         var failures = new List<string>();
 
         Assert.True(ValidateDormantTimerSample(sample, 100, 1400, 5800, null, failures));
@@ -329,6 +340,13 @@ public class A5Tier3AcceptanceProbeTests
             Assert.True(seededCount >= dormantTarget * 0.95,
                 $"seed produced only {seededCount}/{dormantTarget} discoverable managed characters");
 
+            // A5 b2 business-state progression: plant the harvest canaries
+            // through the REAL plant path and pin the travel canary BEFORE
+            // the restart, so the soak observes wall-clock timer progression
+            // (growth-phase advance to mature + transfer motion) across boot.
+            // Setup fail-fast: a broken rig must not burn a six-hour window.
+            var canaries = await SetupTimerCanariesAsync(TestContext.Current.CancellationToken);
+
             Environment.SetEnvironmentVariable("AAEMU_BOT_TRUE_DORMANCY", "1");
             Environment.SetEnvironmentVariable("AAEMU_BOT_PROXIMITY_FIDELITY", "1");
             var startupRss = new StartupRssTracker();
@@ -342,14 +360,15 @@ public class A5Tier3AcceptanceProbeTests
                               $"baseline={quiescence.BaselineRssMb:F1}MB startupPeak={quiescence.StartupPeakRssMb:F1}MB");
             var result = await RunDormantTimerSoakAsync(
                 seededCount, TimeSpan.FromMinutes(windowMinutes),
-                TimeSpan.FromSeconds(sampleSeconds), quiescence, TestContext.Current.CancellationToken);
-            WriteDormantTimerReport(windowMinutes, sampleSeconds, dormantTarget, seededCount, result);
+                TimeSpan.FromSeconds(sampleSeconds), quiescence, canaries, TestContext.Current.CancellationToken);
+            WriteDormantTimerReport(windowMinutes, sampleSeconds, dormantTarget, seededCount, result, canaries, result.Progression);
             Assert.Empty(result.Failures);
         }
         finally
         {
             try
             {
+                DeleteTimerCanaryDoodads();
                 var ownershipAfter = E2eStack.SnapshotOwnedRows(ownedNames);
                 var ownedRows = E2eStack.FindNewOwnedRows(ownershipBefore, ownershipAfter);
                 E2eStack.CleanupOwnedRows(ownedRows);
@@ -371,7 +390,7 @@ public class A5Tier3AcceptanceProbeTests
 
     private static async Task<DormantTimerResult> RunDormantTimerSoakAsync(
         int seededCount, TimeSpan window, TimeSpan sampleInterval,
-        RssQuiescenceResult quiescence, CancellationToken cancellationToken)
+        RssQuiescenceResult quiescence, TimerCanarySetup canaries, CancellationToken cancellationToken)
     {
         var samples = new List<DormantTimerSample>();
         var failures = new List<string>();
@@ -391,7 +410,7 @@ public class A5Tier3AcceptanceProbeTests
             try
             {
                 var metrics = await MetricsAsync(deadline.Token);
-                var sample = ReadDormantTimerSample(metrics, ReadDbWriteCounters());
+                var sample = ReadDormantTimerSample(metrics, ReadDbWriteCounters(), canaries);
                 samples.Add(sample);
                 var rssBudgetBreached = ValidateDormantTimerSample(
                     sample, seededCount, quiescence.BaselineRssMb,
@@ -434,6 +453,10 @@ public class A5Tier3AcceptanceProbeTests
         if (dbWritesPerMinute > DormantDbWritesBudgetPerMin)
             AddFailure(failures, $"DB writes exceeded dormant budget: {dbWritesPerMinute:F1}/min > {DormantDbWritesBudgetPerMin:F0}/min");
 
+        // A5 b2 business-state progression, ONCE at the end beside the
+        // DB-writes check, appending to the SAME failures list.
+        var progression = ValidateTimerProgression(canaries, failures);
+
         var steadyStatePeak = samples.Where(s => s.RssMb > 0)
             .Select(s => s.RssMb).DefaultIfEmpty(-1).Max();
         var rssGrowth = quiescence.BaselineRssMb > 0 && steadyStatePeak > 0
@@ -445,7 +468,7 @@ public class A5Tier3AcceptanceProbeTests
             quiescence.WarmupDuration.TotalSeconds, quiescence.DormantSpecs,
             quiescence.GamePid, quiescence.ReadyMarker, quiescence.BaselineRssMb,
             quiescence.StartupPeakRssMb, R(steadyStatePeak), R(rssGrowth),
-            quiescence.QuiescenceDuration, failureAtUtc, failureElapsed, samples, failures);
+            quiescence.QuiescenceDuration, failureAtUtc, failureElapsed, samples, failures, progression);
     }
 
     private static async Task<JsonElement> MetricsAsync(CancellationToken cancellationToken)
@@ -454,7 +477,7 @@ public class A5Tier3AcceptanceProbeTests
         return await bridge.CallAsync("{\"cmd\":\"metrics\"}", 15000, cancellationToken);
     }
 
-    private static DormantTimerSample ReadDormantTimerSample(JsonElement metrics, long dbWrites)
+    private static DormantTimerSample ReadDormantTimerSample(JsonElement metrics, long dbWrites, TimerCanarySetup canaries)
     {
         var population = metrics.GetProperty("population");
         var dormancy = population.GetProperty("dormancy");
@@ -462,6 +485,31 @@ public class A5Tier3AcceptanceProbeTests
         var region = metrics.GetProperty("regionTick");
         var scheduler = metrics.GetProperty("scheduler");
         var save = metrics.GetProperty("save");
+        // Canary observes ride along: harvest canary #0 via a direct MySQL
+        // SELECT on `doodads`, travel via the existing read-only 'transfers'
+        // bridge command. Both are fenced: a canary-read failure degrades to
+        // sentinels and NEVER fails per-sample (the single end validation
+        // owns the verdict), and neither touches the quiescence counters —
+        // SELECTs skip Com_insert/update/delete/replace and the transfers
+        // dump holds no engine locks and fires no tasks or broadcasts.
+        var harvestPhase = -1;
+        var harvestTimeLeftMs = -1L;
+        var transferPathIndex = -1;
+        TimerCanaryPos? transferPos = null;
+        try
+        {
+            if (canaries.Harvest.Length > 0 && ReadCanaryDoodadRow(canaries.Harvest[0].DbId) is { } row)
+            {
+                harvestPhase = row.Phase;
+                harvestTimeLeftMs = (long)(row.GrowthUtc - DateTime.UtcNow).TotalMilliseconds;
+            }
+        }
+        catch { }
+        try
+        {
+            (transferPathIndex, transferPos) = ReadTravelCanary(canaries.Travel.TlId);
+        }
+        catch { }
         return new DormantTimerSample(
             DateTime.UtcNow,
             metrics.GetProperty("uptimeMs").GetInt64(),
@@ -481,7 +529,8 @@ public class A5Tier3AcceptanceProbeTests
             save.GetProperty("p95Ms").GetDouble(),
             save.GetProperty("maxMs").GetDouble(),
             save.GetProperty("skipCount").GetInt64(),
-            dbWrites);
+            dbWrites,
+            harvestPhase, harvestTimeLeftMs, transferPathIndex, transferPos);
     }
 
     private static bool ValidateDormantTimerSample(
@@ -554,7 +603,7 @@ public class A5Tier3AcceptanceProbeTests
 
     private static void WriteDormantTimerReport(
         int windowMinutes, int sampleSeconds, int dormantTarget, int seededCount,
-        DormantTimerResult result)
+        DormantTimerResult result, TimerCanarySetup canaries, TimerProgressionEnd progression)
     {
         Directory.CreateDirectory(EvidenceDir);
         var dbWrites = Math.Max(0, result.FinalDbWrites - result.InitialDbWrites);
@@ -582,7 +631,10 @@ public class A5Tier3AcceptanceProbeTests
                 saveMaxMs = DormantSaveMaxBudgetMs,
                 saveSkips = 0,
                 rssGrowthMb = DormantRssGrowthBudgetMb,
-                dbWritesPerMinute = DormantDbWritesBudgetPerMin
+                dbWritesPerMinute = DormantDbWritesBudgetPerMin,
+                // Timer-progression (b2) thresholds mirrored beside the readings.
+                travelDispMinM = canaries.Travel.DispMinM,
+                harvestMatureGroupId = TimerCanaryMatureGroupId
             },
             // `window` is measured from the post-warmup baseline; an RSS
             // breach intentionally produces an ABORTED partial window.
@@ -623,6 +675,36 @@ public class A5Tier3AcceptanceProbeTests
             finalDbWrites = result.FinalDbWrites,
             dbWrites,
             dbWritesPerMinute,
+            timerProgression = new
+            {
+                canary = new
+                {
+                    seedItemId = TimerCanarySeedItemId,
+                    doodadId = TimerCanaryDoodadId,
+                    matureGroupId = TimerCanaryMatureGroupId,
+                    totalDelayMs = TimerCanaryTotalDelayMs,
+                    growthRate = canaries.GrowthRate
+                },
+                harvest = progression.Harvest.Select(h => new
+                {
+                    dbId = h.DbId,
+                    before = new { phase = h.StartPhase, plantUtc = h.PlantUtc.ToString("O"), growthUtc = h.StartGrowthUtc.ToString("O") },
+                    dueUtc = h.DueUtc.ToString("O"),
+                    after = new { phase = h.EndPhase, growthUtc = h.EndGrowthUtc.ToString("O"), readUtc = h.EndUtc.ToString("O") },
+                    failure = h.Failure
+                }),
+                travel = new
+                {
+                    tlId = progression.Travel.TlId,
+                    pos0 = progression.Travel.Pos0,
+                    posEnd = progression.Travel.PosEnd,
+                    pathIndexDelta = progression.Travel.PathIndexDelta,
+                    displacementM = Math.Round(progression.Travel.DisplacementM, 1),
+                    dispMinM = progression.Travel.DispMinM,
+                    observedMaxM = Math.Round(progression.Travel.ObservedMaxM, 1),
+                    failure = progression.Travel.Failure
+                }
+            },
             sampleCount = result.Samples.Count,
             samples = result.Samples,
             failures = result.Failures,
