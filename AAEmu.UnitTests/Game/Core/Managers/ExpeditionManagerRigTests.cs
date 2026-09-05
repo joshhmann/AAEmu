@@ -37,6 +37,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// 274 quests reference an acknowledged TODO stub whose fix requires a
 /// design decision on self-referencing starters.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class ExpeditionManagerRigTests
 {

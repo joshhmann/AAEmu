@@ -39,6 +39,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 ///     genuinely gates on the completed flag - the rig preseed is what
 ///     makes the objective count, it is not a harness auto-pass.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestCompleteQuestRigTests
 {

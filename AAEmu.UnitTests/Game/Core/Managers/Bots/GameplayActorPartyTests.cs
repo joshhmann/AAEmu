@@ -36,6 +36,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///    entered, so a retry cannot double-join.
 /// </summary>
 [NotInParallel]
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 public class GameplayActorPartyTests
 {
     [Test]

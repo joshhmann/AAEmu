@@ -79,6 +79,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 ///      the observed engine behavior (exception from the Data setter chain,
 ///      no in-world evidence doodad); fixing the ordering is owner territory.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class PvpFlaggingRigTests
 {

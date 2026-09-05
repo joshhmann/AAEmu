@@ -34,6 +34,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// change; the existing trigger path (DamageEffect → RollProcsForKind) fires
 /// them.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class ItemProcBindingTests
 {

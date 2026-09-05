@@ -31,6 +31,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.NPChar;
 /// - gentle slope (0.3m over one step): still walkable, NPC advances
 /// - missing heightmap data: gate skipped, legacy fallback movement kept
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel] // seeds the shared WorldManager singleton + AppConfiguration — same convention as QuestActCheckSphereTests
 public class NpcMoveTowardsTests
 {

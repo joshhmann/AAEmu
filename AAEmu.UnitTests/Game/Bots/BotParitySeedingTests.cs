@@ -31,6 +31,7 @@ namespace AAEmu.UnitTests.Game.Bots;
 /// actability catalog; NO MySQL. The real 34-row / starter-kit counts ride the
 /// live rig + prod verification.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class BotParitySeedingTests
 {

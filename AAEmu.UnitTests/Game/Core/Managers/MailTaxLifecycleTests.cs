@@ -47,6 +47,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// - Expiry: a Billing mail (SenderId 0) can never bounce and is not Charged,
 ///   so the sweep destroys it without refund.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public sealed class MailTaxLifecycleTests
 {

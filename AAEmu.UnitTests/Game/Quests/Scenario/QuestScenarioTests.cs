@@ -21,6 +21,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// per test run, so this class must not execute in parallel with itself or with
 /// other classes that touch the same singletons.
 /// </remarks>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestScenarioTests
 {

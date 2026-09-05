@@ -47,6 +47,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// resets the objective — so the event path is asserted immediately after the
 /// final use, and the full-lifecycle advance test uses cleanup=false.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class GameplayActorMateLevelRigTests
 {

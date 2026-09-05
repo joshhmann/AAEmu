@@ -31,6 +31,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// does not yet seed; (3) the RESET stage is not handled by the driver. After
 /// the WI-10 driver change all three resolve.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestDailyResetRigTests
 {

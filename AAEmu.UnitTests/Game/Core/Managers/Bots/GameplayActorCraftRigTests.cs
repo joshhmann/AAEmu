@@ -34,6 +34,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///    entry — → CraftEffect.Apply → EndCraft) completes a step through the
 ///    rig surface: materials consumed before product granted.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel] // touches process-wide singletons (CraftManager/SkillManager/WorldManager) + AppConfiguration
 public class GameplayActorCraftRigTests
 {

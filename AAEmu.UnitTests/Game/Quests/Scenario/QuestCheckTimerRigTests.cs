@@ -27,6 +27,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// default branch -> step assertion fails); after the driver change the stage
 /// passes. The engine-level pin passes on both (it drives the engine directly).
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestCheckTimerRigTests
 {

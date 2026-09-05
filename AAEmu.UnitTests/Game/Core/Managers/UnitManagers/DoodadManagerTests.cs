@@ -9,6 +9,7 @@ using AAEmu.Game.Models.Game.World;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.UnitManagers;
 
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 public class DoodadManagerTests
 {
     #region Constructor Tests

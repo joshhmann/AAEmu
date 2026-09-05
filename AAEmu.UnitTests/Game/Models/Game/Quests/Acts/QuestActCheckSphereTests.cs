@@ -23,6 +23,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.Quests.Acts;
 /// evaluation — writing the Objectives array at index 0xFF crashed with
 /// IndexOutOfRangeException (Objectives has MaxObjectiveCount = 5 entries).
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel] // touches shared statics (SphereQuestManager._sphereQuests + QuestManager singleton) — same convention as QuestScenarioTests
 public class QuestActCheckSphereTests
 {

@@ -24,6 +24,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///
 /// No generated evidence files: these tests are pure asserts.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel] // process-wide TeamManager singleton + ExecutionBoundary pin
 public class PartyDecisionScenarioRigTests
 {

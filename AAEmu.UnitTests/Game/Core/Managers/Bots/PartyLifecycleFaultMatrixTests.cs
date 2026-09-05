@@ -24,6 +24,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// family for identity/inventory; party-mid-route restart leg stays on the
 /// forward-hardening queue.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class PartyLifecycleFaultMatrixTests
 {

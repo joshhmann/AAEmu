@@ -29,6 +29,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// mapped-but-contentless pack (canonical OQ-1: zero loots/groups/actability
 /// rows, so GetPack returns null and the corpse is silently empty).
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class GameplayActorLootGrantTests
 {

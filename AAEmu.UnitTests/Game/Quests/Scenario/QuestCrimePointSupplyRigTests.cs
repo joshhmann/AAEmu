@@ -20,6 +20,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// adds them). Pass-after: this rig drives the family through the full
 /// lifecycle, and the census flips all 7 to PASS.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestCrimePointSupplyRigTests
 {

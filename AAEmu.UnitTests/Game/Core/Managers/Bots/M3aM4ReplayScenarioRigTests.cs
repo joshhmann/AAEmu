@@ -53,6 +53,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///
 /// H stays UNKNOWN — proxy/bot-functional evidence only.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel] // process-wide MySQL.SetConfiguration + singleton state
 public class M3aM4ReplayScenarioRigTests
 {

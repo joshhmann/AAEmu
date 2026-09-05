@@ -30,6 +30,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// (census SKIP / unsampled). Pass-after: this rig drives both branches
 /// through the full lifecycle and the census flips all 6 to PASS.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestMateLevelRigTests
 {

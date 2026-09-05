@@ -28,6 +28,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// carriers to PASS (6069 was DROPPED 2026-08-09, register §8 t_6810ebd4 -
 /// unreachable ltd with zero accept surfaces; it is no longer a carrier).
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestAbilityLevelRigTests
 {

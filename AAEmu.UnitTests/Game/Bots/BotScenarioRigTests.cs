@@ -31,6 +31,7 @@ namespace AAEmu.UnitTests.Game.Bots;
 /// block (§17 taxonomy). The run wrapper writes the evidence table to
 /// scorecard-explorations/bot-template-rig.md (deterministic header).
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class BotScenarioRigTests
 {

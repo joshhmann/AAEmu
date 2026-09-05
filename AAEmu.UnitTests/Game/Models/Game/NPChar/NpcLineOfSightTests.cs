@@ -43,6 +43,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.NPChar;
 /// - pack assist (UpdateAggroHelp): pack-link within AggroLinkHelpDist (6.0m)
 ///   still pulls linked mobs (no regression)
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel] // seeds the shared WorldManager/ZoneManager/SkillManager/FactionManager singletons + AppConfiguration — same convention as NpcMoveTowardsTests
 public class NpcLineOfSightTests
 {

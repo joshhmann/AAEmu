@@ -20,6 +20,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.Quests.Acts;
 /// the engine's Unit.DoDie kill event. Monster-hunt credit remains a separate
 /// QuestManager event; this suite specifically exercises OnKill attribution.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestActObjAggroTests
 {

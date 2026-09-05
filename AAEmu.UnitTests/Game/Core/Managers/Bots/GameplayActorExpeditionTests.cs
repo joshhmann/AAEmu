@@ -42,6 +42,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// The ACTOR swallows exactly that terminal failure (RunExpeditionEngineCall)
 /// and post-checks verified state, so these tests need no save swallowing.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class GameplayActorExpeditionTests
 {

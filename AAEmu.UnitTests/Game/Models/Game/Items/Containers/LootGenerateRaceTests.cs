@@ -20,6 +20,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.Items.Containers;
 /// loot. The guard is now atomic under ItemsLock: hammering it from 16
 /// threads must always leave exactly one generation behind.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class LootGenerateRaceTests
 {

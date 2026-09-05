@@ -29,6 +29,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.NPChar;
 /// grows, so the hammer storms it with many DISTINCT attacker NPCs released
 /// at once — cold table, concurrent growth plus a repeated death clear.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class NpcAggroRaceTests
 {

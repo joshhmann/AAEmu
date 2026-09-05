@@ -56,6 +56,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// contract's Observe (region graph) perceives them — the same convention
 /// as AdventurerSpikeScenarioRigTests. compact.sqlite3 read-only.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class LevelingLoopScenarioRigTests
 {

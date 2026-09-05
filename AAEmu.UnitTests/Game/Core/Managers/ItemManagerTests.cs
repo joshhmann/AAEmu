@@ -11,6 +11,7 @@ using AAEmu.Game.Models.Game.Units;
 
 namespace AAEmu.UnitTests.Game.Core.Managers;
 
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 public class ItemManagerTests
 {
     #region Constructor Tests

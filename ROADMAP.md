@@ -41,7 +41,7 @@
 
 | # | Card (parent) | Readiness |
 |---|---|---|
-| Q1 | G0 full-gate / honor-flake diagnostic | DONE investigation 2026-09-05 (root-caused; fix is separate build card) |
+| Q1 | G0 full-gate / honor-flake diagnostic | DONE 2026-09-05 (root-caused + serialized; background-rate watch ongoing) |
 | Q2 | B5 runner fidelity (runner-only) | DONE 2026-09-05 (fixed + fake-runner + real subset green) |
 | Q3 | PB-001 routed-geometry gate (branch-local) | REVIEWED 2026-09-05 NOT gate-ready (0/7); fix punch-list recorded, branch UNMERGED |
 | Q4 | M5-B1 loot + bag conservation | RIG PROOF DONE 2026-09-05 (11/11 + suite 2855/0/1); live hunt-leg artifact pending |
@@ -68,6 +68,7 @@
     scope is per-class, not global. Full-suite collisions are timing-rare (0 or 1
     FAIL), matching the observed flake profile. Fix (shared parallel constraint
     or serialized fixture) is a separate build card — this card stays investigation.
+  - **Fix landed 2026-09-05 (test-only, shared `ParallelLimiter<SequentialParallelLimit>` lane):** 48 singleton-mutating classes serialized on the existing housing-lane primitive (bare `[NotInParallel]` does not serialize, even within a class — see `HousingStorageFurnitureTests.cs:33-40`). Validation B+C consecutive full-suite greens 2855/0/1 on the held tree; three interim distinct single-flakes disclosed as ~1/2855 background rate with next-hunt pointer at `WorldInstance`/`WorldManager` character-registry leakage. `NpcLineOfSightTests.UpdateAggroHelp_…` fails isolated with and without this change (pre-existing, untouched).
   - Evidence PLANNED: none — investigation closed by the above. Full-gate closure
     still requires a pinned-SHA 0-fail gate claim recorded separately (the
     `fc58e58b6` green above is the candidate artifact).

@@ -61,6 +61,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.DoodadObj;
 /// SingletonContainer.ServiceProvider per-test and restored (World is null
 /// outside unit tests).
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel] // touches process-wide SingletonContainer.ServiceProvider + singletons
 public class CropHarvestLoopTests
 {

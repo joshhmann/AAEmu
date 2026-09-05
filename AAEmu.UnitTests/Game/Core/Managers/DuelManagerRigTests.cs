@@ -17,6 +17,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 /// into Warn logs by design, so the rig asserts the OBSERVABLE state that
 /// survives each stage rather than assuming the full path ran.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class DuelManagerRigTests
 {

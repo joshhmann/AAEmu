@@ -26,7 +26,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// exercised on the live stack.
 /// </summary>
 [NotInParallel]
-[ParallelLimiter<SchedulerSequentialParallelLimit>]
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 public class PlayerBotSchedulerDeathWatchTests
 {
     private sealed class RecordingLifecycle : IPlayerBotLifecycleService

@@ -26,6 +26,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// no template/AI/spawner scaffolding for a full DoDie. Real damage is the
 /// E2E's job (PartySpikeE2eTests).
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class PartySpikeScenarioRigTests
 {

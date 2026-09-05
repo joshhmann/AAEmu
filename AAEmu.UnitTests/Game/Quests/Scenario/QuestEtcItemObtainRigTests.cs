@@ -34,6 +34,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 ///     needed - RunAct's >= comparison is trivially satisfied, matching
 ///     sibling ObjItemGather semantics for Count == 0.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestEtcItemObtainRigTests
 {

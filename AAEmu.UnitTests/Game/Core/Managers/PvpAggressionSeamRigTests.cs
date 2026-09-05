@@ -51,6 +51,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers;
 ///     — Peace-state protection unchanged (ZONE-01).
 ///   - Hostile-relation attacker: damage lands unchanged.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class PvpAggressionSeamRigTests
 {

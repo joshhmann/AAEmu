@@ -12,6 +12,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// <see cref="ExecutionBoundary.RunUnscoped"/> is the dispatch seam that
 /// stops the leak; these tests pin the mechanism from both sides.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class ExecutionBoundaryScopeTests
 {

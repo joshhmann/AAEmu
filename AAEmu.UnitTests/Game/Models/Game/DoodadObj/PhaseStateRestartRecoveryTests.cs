@@ -48,6 +48,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.DoodadObj;
 /// Singleton discipline (t_4f11a519): seeds only what is missing; the
 /// crop/door/calf chains are ADDITIVE on the existing DoodadManager.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel] // touches process-wide SingletonContainer.ServiceProvider + singletons
 public class PhaseStateRestartRecoveryTests
 {

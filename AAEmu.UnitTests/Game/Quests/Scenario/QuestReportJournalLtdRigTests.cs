@@ -21,6 +21,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// journal-only report, copper reward) and asserts the full lifecycle PASS —
 /// regression would stall the quest at Progress forever.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestReportJournalLtdRigTests
 {

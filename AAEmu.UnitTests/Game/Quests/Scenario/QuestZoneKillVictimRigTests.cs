@@ -26,6 +26,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 ///      before pin (stall at Progress) flipped to a full-lifecycle PASS -
 ///      this test is now the regression pin for the fix.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestZoneKillVictimRigTests
 {

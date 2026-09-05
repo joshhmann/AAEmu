@@ -26,6 +26,7 @@ namespace AAEmu.UnitTests.Game.Models.Game.Items.Containers;
 /// Fixture ids 90_04x are unique to this suite (the shared 9000x range is
 /// claimed by other suites); each keeps ONE slot type process-wide.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class EquipmentContainerLevelGateTests
 {

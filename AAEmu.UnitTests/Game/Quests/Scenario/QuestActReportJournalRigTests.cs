@@ -16,6 +16,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 ///    (`+=` in Finalize) — after N quest cycles the handler fired N times
 ///    per event.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestActReportJournalRigTests
 {

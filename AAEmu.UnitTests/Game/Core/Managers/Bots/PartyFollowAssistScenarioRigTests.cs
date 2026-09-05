@@ -10,6 +10,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// composition over the existing MoveToUnit and SetTarget contract actions.
 /// The two ordinary Characters share one real TeamManager party and world.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class PartyFollowAssistScenarioRigTests
 {

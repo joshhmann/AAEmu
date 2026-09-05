@@ -21,6 +21,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// branch evaluates the expect against the completed/dropped main quest ->
 /// step mismatch). After the WI-10 driver change the stage passes.
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestCheckGuardRigTests
 {

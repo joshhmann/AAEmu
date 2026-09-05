@@ -26,6 +26,7 @@ namespace AAEmu.UnitTests.Game.Quests.Scenario;
 /// churn commits (M2a acceptance). The band denominators + signature-zone map
 /// come from Manifests/census-meta.json (written by gen-manifests.py).
 /// </summary>
+[ParallelLimiter<AAEmu.UnitTests.Game.Housing.SequentialParallelLimit>]
 [NotInParallel]
 public class QuestScenarioTierTests
 {
