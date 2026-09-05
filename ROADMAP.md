@@ -41,7 +41,7 @@
 
 | # | Card (parent) | Readiness |
 |---|---|---|
-| Q1 | G0 full-gate / honor-flake diagnostic | P0 investigation |
+| Q1 | G0 full-gate / honor-flake diagnostic | DONE investigation 2026-09-05 (root-caused; fix is separate build card) |
 | Q2 | B5 runner fidelity (runner-only) | P0 build |
 | Q3 | PB-001 routed-geometry gate (branch-local) | P0 build |
 | Q4 | M5-B1 loot + bag conservation | P0 investigate, build if gap |
@@ -52,8 +52,25 @@
 - **Q1 — G0 full-gate / honor-flake diagnostic.**
   - Contract: full gate green at a pinned SHA, or the single FAIL reproduced with an isolation note (test-order / concurrency / load axes — cause not predetermined)
   - Negative: the isolated `PvpFlaggingRigTests` 11/11 is determinism evidence only — it must not be cited as proof the flake is unrelated
-  - Evidence EXISTS: gate @ `322390b32` 2836 pass / 1 fail / 1 skip; MCP smokes 39 + 24
-  - Evidence PLANNED: test-order / concurrency / load isolation runs (a bot-count ladder is one diagnostic axis among others — NOT a presumed cause); report artifact with exact SHA/command/failure lines
+  - Evidence EXISTS: gate @ `322390b32` 2836 pass / 1 fail / 1 skip; MCP smokes 39 + 24.
+    Full UnitTests GREEN @ `fc58e58b6` 2844 total / 2843 passed / 0 failed / 1 skipped
+    (2026-09-05 rerun; code-identical to b2 tip modulo docs).
+  - **Root cause FOUND (2026-09-05, rerun evidence):** cross-class global-singleton
+    swap race. `PvpFlaggingRigTests` 11/11 + `PvpAggressionSeamRigTests` 6/6 green
+    isolated; bundled (`--treenode-filter "/*/*/Pvp*/*"`) 11/17 FAIL with
+    `InvalidOperationException: SkillManager has no parameterless constructor`.
+    Mechanism: `PvpAggressionSeamRigTests.SeedSkillManager` swaps global
+    `Singleton<SkillManager>` per-test while `PvpFlaggingRigTests` (DoDie honor
+    path + line ~428) resolves `SkillManager.Instance`; same pattern covers
+    `Singleton<ZoneManager>` (`SeedConflictZone` vs `MailTaxLifecycleTests`
+    nulling, `SpecialtyManagerTests`, `M4Exit`, `EconomyDayCycle`, `LevelingLoop`).
+    `[NotInParallel]` on both classes did NOT serialize them ⇒ TUnit default
+    scope is per-class, not global. Full-suite collisions are timing-rare (0 or 1
+    FAIL), matching the observed flake profile. Fix (shared parallel constraint
+    or serialized fixture) is a separate build card — this card stays investigation.
+  - Evidence PLANNED: none — investigation closed by the above. Full-gate closure
+    still requires a pinned-SHA 0-fail gate claim recorded separately (the
+    `fc58e58b6` green above is the candidate artifact).
   - Dependencies: none. Non-goal: honor redesign. Done (investigation state only): flake root-caused or isolation bounds documented with rerun evidence. Full-gate closure separately still requires 0-fail at a pinned SHA — this card never closes the gate by itself
 - **Q2 — B5 runner fidelity (no engine/scenario changes).**
   - Contract: a failed scenario propagates nonzero exit; a requested subset runs exactly the requested set; all runtime/log paths resolve under the isolated E2E root; every report tags source/runtime provenance
