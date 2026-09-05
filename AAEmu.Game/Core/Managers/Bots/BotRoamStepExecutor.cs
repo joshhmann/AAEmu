@@ -320,7 +320,19 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                     if (targetUnit != null && targetUnit.Hp <= 0)
                     {
                         var loot = actor.Loot(targetUnit.ObjId);
-                        if (loot is { IsTerminal: true, State: not ActorLifecycleState.Completed })
+                        // Granted count is the boxed int Result of a Completed Loot request
+                        // (GameplayActor.Loot: Complete(request, granted, ...)). The three
+                        // terminal outcomes are told apart here: caller grant (Completed,
+                        // granted > 0), no-op (Completed, 0 granted — OpenBag granted
+                        // nothing), and Rejected-or-foreign-take (non-Completed terminal).
+                        var granted = loot.Result is int grantedCount ? grantedCount : 0;
+                        if (loot is { IsTerminal: true, State: ActorLifecycleState.Completed } && granted > 0)
+                            Logger.Debug("Roam loot granted for bot {CharacterId}: corpse {NpcName} ({NpcId}, template {TemplateId}) — {Granted} item(s)",
+                                bot.CharacterId, targetUnit.Name, targetUnit.ObjId, targetUnit.TemplateId, granted);
+                        else if (loot is { IsTerminal: true, State: ActorLifecycleState.Completed })
+                            Logger.Debug("Roam loot no-op for bot {CharacterId}: corpse {NpcName} ({NpcId}, template {TemplateId}) — Completed with 0 granted ({Detail})",
+                                bot.CharacterId, targetUnit.Name, targetUnit.ObjId, targetUnit.TemplateId, loot.Detail);
+                        else if (loot.IsTerminal)
                             Logger.Debug("Roam loot rejected for bot {CharacterId}: corpse {NpcName} ({NpcId}, template {TemplateId}) — {State} ({Detail})",
                                 bot.CharacterId, targetUnit.Name, targetUnit.ObjId, targetUnit.TemplateId, loot.State, loot.Detail);
                     }
