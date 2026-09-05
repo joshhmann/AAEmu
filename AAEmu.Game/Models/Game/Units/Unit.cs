@@ -713,7 +713,10 @@ public class Unit : BaseUnit, IUnit
 
         foreach (var bonus in new List<Bonus>(bonuses))
         {
-            if (bonus.Template != null && bonus.Template.Attribute == attribute)
+            // Torn reads under concurrent buff mutation can surface null
+            // slots (plot-thread GetBonuses vs game-loop Add/Remove) — skip
+            // them instead of throwing (live Npc.Armor NRE).
+            if (bonus?.Template != null && bonus.Template.Attribute == attribute)
             {
                 bonuses.Remove(bonus);
             }
@@ -731,7 +734,7 @@ public class Unit : BaseUnit, IUnit
         {
             foreach (var bonus in new List<Bonus>(bonuses))
             {
-                if (bonus.Template != null && bonus.Template.Attribute == attribute)
+                if (bonus?.Template != null && bonus.Template.Attribute == attribute)
                 {
                     result.Add(bonus);
                 }
@@ -756,7 +759,7 @@ public class Unit : BaseUnit, IUnit
 
         foreach (var bonus in new List<DynamicBonus>(bonuses))
         {
-            if (bonus.Template != null && bonus.Template.Attribute == attribute)
+            if (bonus?.Template != null && bonus.Template.Attribute == attribute)
             {
                 bonuses.Remove(bonus);
             }
@@ -779,7 +782,7 @@ public class Unit : BaseUnit, IUnit
         {
             foreach (var bonus in new List<DynamicBonus>(bonuses))
             {
-                if (bonus.Template != null && bonus.Template.Attribute == attribute)
+                if (bonus?.Template != null && bonus.Template.Attribute == attribute)
                 {
                     result.Add(bonus);
                 }

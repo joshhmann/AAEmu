@@ -80,10 +80,16 @@ public class LootingContainer(IBaseUnit owner)
     /// <param name="killer"></param>
     public void GenerateLoot(IBaseUnit killer)
     {
-        // Do not allow multiple generations of loot 
-        if (AlreadyGenerated)
-            return;
-        AlreadyGenerated = true;
+        lock (ItemsLock)
+        {
+            // Do not allow multiple generations of loot: concurrent killing
+            // blows (bot skill-plot threads) can reach DoDie for the same
+            // NPC — without an atomic guard the generations interleave
+            // Items.Clear/Add and corrupt the dictionary.
+            if (AlreadyGenerated)
+                return;
+            AlreadyGenerated = true;
+        }
 
         // Initialize some things
         LootOwnerType = LootOwner switch

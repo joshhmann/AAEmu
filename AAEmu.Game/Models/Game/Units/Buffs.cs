@@ -385,8 +385,12 @@ public class Buffs : IBuffs
 
                 toleranceCounter.LastStep = DateTime.UtcNow;
             }
-            else if (buffTolerance != null)
+            else if (buffTolerance != null && !_toleranceCounters.ContainsKey(buffTolerance.Id))
             {
+                // First hit for this tolerance: start stepping. When the
+                // tolerance's immunity buff is already active the counter
+                // exists — leave it alone instead of re-adding (duplicate
+                // key: the live BuffEffect crash on repeated bot CC).
                 _toleranceCounters.Add(buffTolerance.Id, new BuffToleranceCounter
                 {
                     Tolerance = buffTolerance,
