@@ -1,21 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-03 · PB-002 QuestActObjAbilityLevel support + 70 component-only ruling (prior:
-2026-09-02 · A5 post-remediation follow-up (user/Mai operational evidence; prior:
-2026-09-02 · A5 memory-pressure diagnosis (user/live operational evidence; prior:
-2026-09-01 · A5 physics/tick stall investigation dossier (read-only; prior:
-2026-08-31 · undefined world-mechanics census + ledger reconciliation (read-only dossier; prior:
-2026-08-31 · archaeology MCP current-slice record (greenfield read-only data server; prior:
-2026-08-30 · discovery-channel re-census at `9b8ba6317` (PB-002 evidence refresh; prior:
-2026-08-28 · local source/test checkpoint reconciliation; prior:
-(PB-007 live closure + PB-002 item-use evidence; prior:
-2026-08-26
-(Mail S3 acceptance and recovery reconciliation; G2-A5 + A4 near-term gates
-MET with live evidence; PB-002 quest-discovery primitive and item-use slice
-landed; PB-003 closed premise-refuted; PB-004 found-by-measurement + fixed same
-day; first-class InteractWith doodad contract action; SERVER-PERF wave — see
-scorecard-explorations/generated/g2-a3-storm-report.md)
-Branch of record: develop; current local source/test HEAD is `322390b32`
+Updated: 2026-09-05 · zoom-out specs + corrections (docs-only); develop `135c4f14e` / source `322390b32`
+Branch of record: develop 135c4f14e (docs zoom-out HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
@@ -24,6 +10,11 @@ primitive remains integrated in `LevelingLoop`'s accept choice at
 consumer only, and broad M5 policy/universal autonomy remain open. M6 includes
 `950cfd279` cancellation, `c97909f4f` population isolation, and opt-in
 six-hour leg `155c82c66` integrated here.
+Current honest state (2026-09-05): deployed `135c4f14e` (source `322390b32`) healthy
+per director session report (not freshly queried); full gate 2836/1/1 NOT green (1 PvP-honor flake);
+soak #2 in flight, report pending; A5 OPEN with FINAL = (shape) + (quiescence-budget) +
+(actual timer progression, planned) — H is separate and NOT an A5 criterion; H states unchanged
+(DEFERRED stays deferred, UNKNOWN stays unknown).
 
 **Hierarchy note:** Current work is under **Post-M7 readiness and closure**, an
 umbrella scope rather than a new numbered milestone. PB-001/PB-002/PB-005/PB-007
@@ -31,6 +22,63 @@ are capability/blocker tracks; A3/A4/A5 are population/scaling acceptance
 gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
+renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-05 — Corrections (docs-only; dated history below preserved, current mirrors corrected)
+
+- **Deploy receipt (director session report, not freshly queried):** .165 presence-demo is deployed at
+  `135c4f14e` (source `322390b32`; HEAD itself is docs-only), observed healthy with 250-bot
+  config/provisioning, latest 10-min window 0 errors / 0 boundary violations / 0 fast-move alerts.
+- **Full gate NOT green:** `322390b32` gate = 2836 pass / 1 fail / 1 skip. The 1 FAIL is the known
+  load-dependent PvP honor flake; isolated honor 11/11 is determinism evidence only, NOT proof the
+  flake is unrelated. No green claim.
+- **Test-runner ticks are not the verdict:** steady `[+0/x0/?0]` lines in soak logs are harness
+  progress counters, not breach evidence. The verdict lives ONLY in
+  `g2-a5-tier3-sixhour-report.json` (lowercase `failures` / `passed`).
+- **Soak #1 cause UNKNOWN:** vanished at +72 min (ticks to 1h12m). The "EXTERNAL kill /
+  SIGKILL-class teardown ~06:33 UTC, killer unknown" line below is an UNPROVED hypothesis (no exit
+  markers/OOM/disk noted); historic OOM is NOT reliably excludable. Partial evidence only, not a pass.
+- **Soak #2 clock (formula, never a promised time):** the 6h window is measured from the post-warmup
+  baseline — `RunDormantTimerSoakAsync` starts its Stopwatch only after `WaitForRssQuiescenceAsync`
+  (`AAEmu.IntegrationTests/E2e/Gate/A5Tier3AcceptanceProbeTests.cs`, report comment "window is
+  measured from the post-warmup baseline"). Log header start 09:28:34Z includes
+  build/boot/seed/quiescence; the `A5_WARMUP_READY` marker 09:33:11Z means the window likely starts
+  there → ETA ≈ warmup-ready + 6h (≈15:33Z+ finalize). SUPERSEDES the fixed "ETA ~15:28" below. No
+  pass claim until the fresh report lands with `passed=true`.
+- **A5 FINAL triad (binding; H separate, never an A5 criterion):** FINAL = (a) SHAPE: 1,000
+  registered / ≤50 embodied, RSS within 15% of the 50-only baseline, wake-to-visible p95 < 3 s
+  (SHAPE MEASURED 2026-08-26) + (b) QUIESCENCE-BUDGET leg over 6h: per-sample runtime-metrics
+  counters within budget with NOBODY embodied (soak #2 is this leg's candidate) + (c) ACTUAL TIMER
+  PROGRESSION: harvest/travel timers advance over the 6h — PLANNED, no probe assertion yet, so a
+  zero-breach `passed=true` alone proves quiescence, never progression. A5 remains OPEN until all
+  three hold. "Preferably 12-hour" is a recommendation-only follow-up, never the exit gate: exit =
+  near-term MET + shape MEASURED + 6h legs PENDING. H states are recorded per milestone (DEFERRED
+  stays deferred, UNKNOWN stays unknown) — H is never flipped by soak evidence.
+- **Spline:** `5fdb7a385` (spline/corner-blending) is branch-only (`/root/aaemu-splinework`), NOT
+  merged; receipts are unit-only. Corner-geometry smoothing (lateral deviation / heading rate /
+  broadcast slew) is UNPROVEN — no navigation proof claim. Acceptance gate (clauses A1–A4) is
+  reviewed in `scorecard-explorations/mechanics/navigation-domain.md`.
+- **Wildlife prerequisites (canonical, already in engine):** NPC loot via `LootingContainer.GenerateLoot`
+  (atomic under ItemsLock) + the `Unit.DoDie` loot path; livestock doodad butcher (`DoodadFuncButcher`,
+  `Butcher` interaction, canonical cow chain). A missing NPC-corpse→butcher link is NOT a canonical
+  requirement — it is not specced as a gap.
+- **Loot semantics (current source, not guaranteed-already):** `GameplayActor.Loot`
+  (`AAEmu.Game/Core/Managers/Bots/GameplayActor.cs:1277-1305`) may Complete with granted 0
+  (`$"nothing to loot … (empty or already looted)"`, :1303-1305) — granted counts the CONTAINER
+  delta (`before - container.Items.Count`, :1294-1302, engine removes each granted entry via
+  `TryReserveLootItem`), never the per-caller bag. Specs REQUIRE per-caller bag/money deltas
+  contrasted with the container delta (caller grant vs no-op `Completed(0)` vs concurrent foreign
+  take) — never container deltas alone, never already-guaranteed outcomes.
+- **B5 scope (INDEX already DONE, not missing):** scenario INDEX landed 2026-08-26 (`46fe4332d`,
+  `scorecard-explorations/generated/b5-scenario-library-2026-08-26.md`); C1 schedules (`62f13fdc7`)
+  and C2 social (`8c198f13d`) DONE by historic evidence. The NEW B5 contract is runner evidence
+  reliability only (set -u coverage, pipefail absence, hardcoded E2E root, scenario-selection
+  collision) — no code fixes, no respec of landed items.
+- **Roadmap/spec links (2026-09-05, docs-only, revised):**
+  [roadmap zoom-out](ROADMAP.md) (`## Post-M7 readiness — roadmap zoom-out` — mandatory acceptance,
+  queue table + Q1–Q8, correction register, A5 triad reconciliation, M8 contracts, Historical note) ·
+  [corner-blending acceptance gate](scorecard-explorations/mechanics/navigation-domain.md)
+  (`## Addendum — 2026-09-05 corner-blending acceptance gate`, clauses A1–A4, branch NOT merged).
 
 ## 2026-09-05 — Closeout: loot-test gap closed, combat kill-races fixed, soak #1 externally killed, soak #2 rerun on `322390b32` (docs-only)
 

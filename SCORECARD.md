@@ -119,6 +119,16 @@ feel.)
   evidence, not a pass. Soak #2 rerun ON `322390b32` detached (PPID=1), log
   `soak-run-20260905-022834.log`, ETA ~15:28 UTC 2026-09-05; A5 stays OPEN, soak #2 is the
   candidate — no pass claim until the fresh report lands with `passed=true`.
+- **2026-09-05 evidence-lane corrections (docs-only; dated bullets above preserved):** deployed pointer
+  is `135c4f14e` (source `322390b32`), 250-bot 10-min 0/0/0 per director session report (not freshly
+  queried) — supersedes the `7c0772f12`/5-min pointer; gate 2836/1/1 is NOT green (1 PvP-honor flake;
+  11/11 isolated is determinism evidence only); soak #1 cause UNKNOWN (external-kill unproved);
+  soak #2 window runs from post-warmup baseline (`A5_WARMUP_READY` 09:33:11Z → ETA ≈ warmup-ready +
+  6h, formula never a promised clock) — supersedes fixed 15:28; A5 FINAL = (shape) +
+  (quiescence-budget; soak #2 is this leg's candidate, runtime-metrics counters) + (actual timer
+  progression, PLANNED) — H separate, never an A5 criterion; "preferably 12-hour" is
+  recommendation-only; spline `5fdb7a385` branch-only/unit-only, geometry unproven. No grade
+  changes; H grades unchanged (DEFERRED stays deferred, U stays U).
 - The prior full gate at source/test `0ce518ac03a18de00fff1516aa9e794e8566bee6`
   remains historical at 2504 total / 2503 passed / 0 failed / 1 skipped,
   compiler 0/0, MCP 39. H remains U (UNKNOWN) and no M6 full-exit claim is

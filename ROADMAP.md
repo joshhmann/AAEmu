@@ -16,6 +16,142 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
+## Post-M7 readiness — roadmap zoom-out: prioritized post-M7 work and M8 horizon (2026-09-05, docs-only)
+
+- Provenance: develop `135c4f14e` (docs zoom-out HEAD; runtime source/test `322390b32`)
+  - docs-only HEAD over source/test `322390b32`; no code/test/config/data edits, no builds/gates/deploys
+- IDs: stable existing only (M0–M8, PB-001/002/005/007, A1–A6, B1–B5, C1–C5, G0–G4, REQ-*, deferred gates #1–#4 + M7 feel, ledger states 1–7); no new kanban IDs
+- History below preserved with dates; the current register in this section stands alone (act on this section without reconciling old paragraphs)
+- Grades: VERIFIED = opened this session; SESSION-REPORT = prior dated record or assignment-supplied baseline trusted as record (not re-executed); INFERENCE marked
+- Layout: existing mandatory acceptance (already-gated bars, cited) → recommended queue (proposed order, not governance) → correction register → A5 reconciliation → M8 contracts
+- Companion: [scorecard-explorations/mechanics/navigation-domain.md](scorecard-explorations/mechanics/navigation-domain.md) 2026-09-05 addendum (spline gate); no new spec files
+
+### Existing mandatory acceptance (already on the books — cited, not invented)
+
+- G2-A3 wake-storm: 1,000-bot transition p99 < 100 ms — MET 2026-08-25 (unstaggered 0.00008 ms / staggered 0.000061 ms)
+- G2-A4 save: autosave p95 < 2 s @ 250 characters, zero `_isSaving` skips — MET (p95 393.1 ms, 80.3% headroom)
+- G2-A5 FINAL Tier-3: (a) SHAPE + (b1) 6 h quiescence-budget leg + (b2) business-state progression — OPEN (reconciliation below)
+- M8 exit: 2 farmers / 1 crafter / 2 haulers / 3 adventurers, full day, ≥3 restarts, auditable economy, 25 embodied in G1 budgets — OPEN
+- M5.3: IMPL COMPLETE + MERGED 2026-08-17 + Rei gate ACCEPT — dossier t_5189977b → Move rework 8e9c0713a → Observe/Stop/Target/Cast + exit 7b9e81d7f → rework 6b4ffe1d2; full 2102/0/1 + targeted 13/13 + 1/1 + 30/30 + 5/5; H UNKNOWN (progression-board.md DoD-table M5.3 row + `M5.3 core surface COMPLETE + MERGED` entry — preserved historic evidence, not restated as fresh missing work). Today's open scope is geometry/fidelity REGRADE against changed movement (trapezoidal profile a38484f9e, corner-blending proposal → Q3)
+- Ledger rule: bot/proxy evidence never flips state 7; H UNKNOWN (no verdict attempted) vs DEFERRED (recorded Josh-owned decision) kept distinct per item below
+
+### Recommended queue (proposed order; each card independently doable)
+
+- Priority / readiness key: P0 = ready-for-build or investigation now; P1 = next; BLOCKED = named blocker, listed not opened
+
+| # | Card (parent) | Readiness |
+|---|---|---|
+| Q1 | G0 full-gate / honor-flake diagnostic | P0 investigation |
+| Q2 | B5 runner fidelity (runner-only) | P0 build |
+| Q3 | PB-001 routed-geometry gate (branch-local) | P0 build |
+| Q4 | M5-B1 loot + bag conservation | P0 investigate, build if gap |
+| Q5 | NPC wildlife skills data audit (read-only) | P0 investigation |
+| Q6 | PB-002 bounded interzone loop (existing data) | P0 live-proof (loop exists) |
+| Q7 | PB-005 named grounding decisions | BLOCKED on rulings |
+| Q8 | PB-007 WAR-HONOR (deferred) | BLOCKED, listed not opened |
+- **Q1 — G0 full-gate / honor-flake diagnostic.**
+  - Contract: full gate green at a pinned SHA, or the single FAIL reproduced with an isolation note (test-order / concurrency / load axes — cause not predetermined)
+  - Negative: the isolated `PvpFlaggingRigTests` 11/11 is determinism evidence only — it must not be cited as proof the flake is unrelated
+  - Evidence EXISTS: gate @ `322390b32` 2836 pass / 1 fail / 1 skip; MCP smokes 39 + 24
+  - Evidence PLANNED: test-order / concurrency / load isolation runs (a bot-count ladder is one diagnostic axis among others — NOT a presumed cause); report artifact with exact SHA/command/failure lines
+  - Dependencies: none. Non-goal: honor redesign. Done (investigation state only): flake root-caused or isolation bounds documented with rerun evidence. Full-gate closure separately still requires 0-fail at a pinned SHA — this card never closes the gate by itself
+- **Q2 — B5 runner fidelity (no engine/scenario changes).**
+  - Contract: a failed scenario propagates nonzero exit; a requested subset runs exactly the requested set; all runtime/log paths resolve under the isolated E2E root; every report tags source/runtime provenance
+  - Negative/recovery: a forced test failure must FAIL the scenario and the run (currently PASSES — see observed evidence)
+  - Evidence EXISTS (observed 2026-09-05, throwaway copy + fake-`dotnet`, no live runtime/network; experiment removed after recording): with `dotnet test` forced to exit 1, all 7 scenarios reported PASS and the run exited 0; `SCENARIOS="fishing"` still ran all 7 keys; publish invoked the hardcoded `/root/aaemu-e2e/runtime/game` despite an `E2E_ROOT` override
+  - Evidence PLANNED: runner fix (pipefail + pipeline-status capture + `E2E_ROOT`-resolved runtime/log paths + working env-subset selection) + fake-runner green + one real subset run (`SCENARIOS="fishing" ./Scripts/e2e/bot-regression-pass.sh` from the repo root against the isolated E2E stack; artifact: per-scenario JSON under the isolated `$E2E_ROOT/logs/`)
+  - Repro recipe (durable throwaway; fake-`dotnet` ONLY — never a real build, publish, or live run):
+    ```bash
+    tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+    cp Scripts/e2e/bot-regression-pass.sh "$tmp/run.sh"
+    mkdir -p "$tmp/fakebin" "$tmp/runtime"
+    printf '#!/usr/bin/env bash\necho "fake-dotnet $*"\n[[ "$1" == test ]] && exit 1\nexit 0\n' > "$tmp/fakebin/dotnet"
+    chmod +x "$tmp/fakebin/dotnet"
+    (cd "$tmp" && SCENARIOS="fishing" E2E_ROOT="$tmp/runtime" PATH="$tmp/fakebin:$PATH" bash run.sh); echo "exit=$?"
+    ```
+  - Expected observed output: all 7 keys run (subset selection dead); every `test` prints the simulated failure yet each scenario reports `✓ PASS`; summary `7 passed / 0 failed`; exit code 0; publish called with the hardcoded `/root/aaemu-e2e/runtime/game` despite the override; cleanup via the `trap` on the `mktemp -d` dir (no hardcoded `/tmp` removal)
+  - Dependencies: none. Non-goal: engine/scenario/registry changes, telemetry padding. Done: failed-scenario-nonzero + exact-subset + path-isolation demonstrated post-fix
+- **Q3 — PB-001 routed-geometry gate (branch `spline/corner-blending` @ `5fdb7a385`, clean, UNMERGED).**
+  - Contract per [navigation-domain.md 2026-09-05 addendum](scorecard-explorations/mechanics/navigation-domain.md) A3.1–A3.7: max lateral deviation ≤ configured radius (PROPOSED); single-tick heading ≤ 360°/s × dt (EXISTING) with velocity-vector continuity; endpoint within ArrivalRadius 0.5 f (EXISTING, VERIFIED `GameplayActor.cs:75`); detour-leg clearance; steep-leg behavior demonstrated; short-leg bounded handling; real routed callsite; wire yaw-rate; single-point VALID / empty-pre-index / non-finite reject
+  - Negative: minimum-distance-to-corner alone, seam-only evidence, or a keep-out cut each FAIL the gate
+  - Evidence EXISTS: branch diff (`GameplayActor.cs` +70, `GameplayActorTests.cs` +103); 3 named blend tests (insufficient alone); reported unit counts 37+4+11+5+27
+  - Evidence PLANNED: per-clause rig numbers + `SCOneUnitMovementPacket` wire capture + deviation/yaw/clearance tables on a stated tip, including real-routed-callsite runs
+  - Dependencies: none (branch-local). Non-goal: merge, new pathfinding, obstacle-index changes. Done: all clauses green + review; a failing clause ends fix-or-drop, never a relaxed bound
+- **Q4 — M5-B1 loot grant proof (existing paths only). Priority: HIGH — genuine acceptance gap.**
+  - Actual contract (`GameplayActor.cs:1277-1305` — VERIFIED): `Rejected` covers preflight ONLY (owner not found / out of `MaxLootingRange` / empty at entry); after `OpenBag` the request returns `Completed(granted)` with `granted` = container before-after count — INCLUDING `Completed(0)`. The count is not bag/money proof
+  - Contract: the CALLER's bag + money deltas are the grant proof. Three outcomes told apart, never conflated: caller grant (deltas match the generated pack, eligibility-gated) vs no-op `Completed(0)` (zero caller delta — needs corroboration, is neither receipt nor failure) vs concurrent foreign take (container delta with zero caller delta — another looter's grant, not ours)
+  - Negative/recovery: retry (or a second looter) after success observes empty-preflight `Rejected` or `Completed(0)` with zero caller delta — nothing granted twice (existing `TryReserveLootItem` semantics, demonstrated not cited); full-bag pins the actual engine outcome (partial grant permitted — conservation asserted, reject-everything NOT required)
+  - Evidence EXISTS: concurrent-generation regression `7c0772f12` (40×16-thread hammer); `Loot` preflight/Completed states
+  - Evidence PLANNED: grant-attribution accounting rig (caller-delta vs no-op vs foreign-take; fail-pre/pass-post if a gap is found) + live hunt-leg caller-delta artifact
+  - Dependencies: wildlife loot-pack census (from Q5 census — NOT the MateLevel carrier decision; no cross-link)
+  - Non-goal: `GenerateLoot`/picker/butcher changes; template drop guarantees (RNG packs — assert eligibility/range/conservation, not contents); logging mandates (request detail carries the reason; logging alone is not proof)
+  - Done: caller-delta proof on the live path
+- **Q5 — NPC wildlife canonical skills data audit (read-only, no code).**
+  - Contract: per live wildlife template (fox 3492 + Solzreed boar/wolf set from `Data/Worlds/main_world/npc_spawns_solzreed_wildlife.json`): `InCombat` skill rows vs `BaseSkillId`-only flag, cooldowns/ranges, `SkillUseParam1/2` note, verdict (random-among-N / single-attack / event-only); plus loot-pack census per template (which carry packs — feeds Q4)
+  - Negative/recovery: a live template with no `np_skills` rows, or ambiguous `SkillUseParam1/2` semantics, gets verdict UNKNOWN (never inferred) — the audit records the gap and proceeds with the remaining templates
+  - Evidence EXISTS: the spawn set ([npc_spawns_solzreed_wildlife.json](AAEmu.Game/Data/Worlds/main_world/npc_spawns_solzreed_wildlife.json)) + the loader/picker shape (`NpcGameData`/`np_skills`, `Behavior.cs` filter/pick — code VERIFIED); no per-template verdict table exists yet — that table is the PLANNED output
+  - Evidence PLANNED: dossier table + recommendation (rotation weights? cooldown-only? health-gated?) via archaeology MCP against DB md5 `78b3bdbf038db3b927056106efdf91af`
+  - Dependencies: archaeology MCP + spawn JSON. Non-goal: picker changes, rotation implementation, skinning. Done: table + verdicts recorded
+- **Q6 — PB-002 bounded interzone loop on existing data (no new content). Live proof of the EXISTING loop, not a new build.**
+  - Contract: bot exhausts Solzreed offerings → level ≥ 10 mounts the arterial highway (PB-MOUNT) → Dewstone Lilyut hub → perceives (AdaptiveBand) and clears canonical early chain 44 (Afindelle 673) / 328 (Royster 680) / 48 / 55 (Brann 679, Medd 5849) with `GatherLeg` fallback (herb doodad/item 2796/5264); death → Nui-shrine recovery → resume at the implemented recovery level (70% MaxHp floor + 70% MaxMp — VERIFIED `LevelingLoopScenario.cs:3074-3077`); stuck → bounded unstick or `TimedOut(Navigation)`; every turn-in shows quest-reward deltas; restart mid-route → resume without dup/loss; credit only from live engine events (no synthetic writes)
+  - Negative/recovery: unresolvable objective fails closed (`WrongDecision`/taxonomy reason); empty-corpse loot tolerated + recorded, never blocking
+  - Evidence EXISTS: `LevelingLoopScenarioRigTests` 38/38 (Dewstone chain) + 37/37 (interzone + death); gates 2774/2760; `BotMountManagerTests` 4/4; `CombatDecisionTreeTests` 9/9
+  - Evidence PLANNED: live/E2E loop artifact (restart + death legs, reward deltas)
+  - Dependencies: none new (loop, highway waypoints, and existing straight-leg/routed nav already exist; the corner-blending branch is NOT required). Non-goal: new quests/carriers; Marianople ≥20 leg listed, not opened. Done: live artifact green. H: UNKNOWN (no feel verdict attempted)
+- **Q7 — PB-005 named grounding decisions (rulings first, then build).**
+  - Contract: each open item gets a recorded ruling, then only the implementation the ruling unlocks: cave/deck/submerged classification; duplicate-row policy beyond the landed 733 exact-dedup (key UnitId+XYZ @ 0.01 m); disposition of the 593 non-whitelisted terrain-replay residuals
+  - Negative/recovery: a ruling overturned by new canonical evidence reopens that item only (other rulings stand); excision without a recorded ruling is rejected (revert to the last ruled state)
+  - Evidence EXISTS: [pb005-residual-evidence-2026-08-29.md](scorecard-explorations/generated/pb005-residual-evidence-2026-08-29.md); gate 2778
+  - Evidence PLANNED: rulings + follow-through diffs. Dependencies: canonical census per decision. Non-goal: mass excision without a ruling. Done: rulings recorded + implemented
+- **Q8 — PB-007 WAR-HONOR: explicitly deferred, listed not opened.**
+  - Narrow flagged-aggression handshake CLOSED (live E2E 1/1 + PEACE-BLOCK + crime branch — EXISTS); WAR-HONOR (>251 kills + conflict timer) deferred — no claim, no work until the deferral lifts
+  - Exemption (recorded, not an omission): while WAR-HONOR stays deferred, no contract/evidence/done fields apply — this entry exists only to fence WAR-HONOR scope out of the narrow handshake closure
+
+### Correction register (current evidenced state; history below unchanged)
+- Deploy pointer: `.165` = `135c4f14e` containing source `322390b32` (HEAD docs-only over source)
+  - Observed 10-min window 0 threw / 0 boundary / 0 fast @ 250 provisioned bots = liveness snapshot only: specified races are defended by the hammer/regression tests (`7c0772f12`, `BuffToleranceTests`, `NpcAggroRaceTests`); the window shows non-recurrence only — never absolute validation
+- Gate @ `322390b32`: 2838 total = 2836 pass / 1 fail / 1 skip; MCP smokes 39 + 24
+  - NOT full-green; isolated 11/11 is determinism evidence only, not proof the honor flake is unrelated (→ Q1)
+- Soak #1 (@ `9ad5735b2`): interrupted ~72 min, no fresh report, cause UNKNOWN (external-termination hypothesis; current memory/dmesg silence is not historical exclusion); partial evidence only
+- Soak #2 (@ `322390b32`, candidate): started 09:28:34Z 5 Sep, last observed 5h11m @ ~14:40Z (latest observation timestamp; no notification/closure promised); report `g2-a5-tier3-sixhour-report.json` ABSENT at last check
+  - Window completes ~15:33Z + finalization (warmup-anchored: `A5_WARMUP_READY` 09:33:11Z + 360 min — NOT 09:28 + 6 exact)
+  - Heartbeats `[+0/x0/?0]` are test-runner counters, NOT zero-breach proof — verdict lives only in `report.failures` / `report.passed`
+- Wildlife/loot facts: NPC picker uniform-random among off-cooldown/in-range `np_skills` (`Behavior.cs:55-61` filter, `:95` pick — VERIFIED); `CombatDecisionTree` = bot offense only; `actor.Loot` real path exists; the roam callsite discards the loot-request outcome (`_ = actor.Loot(...)`, `BotRoamStepExecutor.cs:322` — VERIFIED); `LevelingLoop` loots + auto-equips; doodad livestock butcher exists; NPC-corpse→doodad conversion not present in the inspected death path (`Npc.DoDie` → `Unit.DoDie` → `GenerateLoot`) and a canonical requirement is unestablished (name-hit absence is not exhaustive proof); canonical audit before skinning (→ Q5)
+- Spline branch: 1 commit ahead of develop, clean, UNMERGED; receipts unit-only (reported 37+4+11+5+27)
+  - 1 m skip is corner-cutting, not a proven spline; max-deviation bound NOT proven; `route[^1]`-before-`Count` seam defect (→ Q3)
+
+### A5 Tier-3 contract reconciliation (reconciles the §G2 scale-ladder FINAL Tier-3 acceptance with the longer-soak recommendation)
+
+- FINAL Tier-3 exit conjunction = (a) SHAPE + (b1) + (b2)
+  - (a) SHAPE (ROADMAP §G2 scale-ladder, FINAL Tier-3 acceptance): 1,000 registered / ≤50 embodied, RSS within 15% of the 50-only baseline, wake-to-visible p95 < 3 s (MEASURED 2026-08-26: RSS Δ +0.13%, wake p95 280.2 ms)
+  - (b1) 6 h quiescence-budget leg: what `AAEmu.IntegrationTests/E2e/Gate/A5Tier3AcceptanceProbeTests.cs` Run+Write+`Assert.Empty(failures)` (`:343-347`, timer started AFTER quiescence `:378`, sample loop `:388-421` with NO endpoint sample) plus per-sample snapshots (`:457-519`, incl. `ValidateDormantTimerSample` `:487-519`) assert — embodied==0, dormantSpecs floor, 0 materializations/dematerializations, tick/region/save budgets, queues==0, failures==0, RSS growth ≤ 512 MB
+  - (b2) business-state progression: harvest/travel timers actually advancing (before/due/after/restart-conservation) — asserted NOWHERE in `:296-449`; planned, not evidenced
+- Window gate (no exact-count pin): window ≥ 360 min + `windowCompleted` + `windowStatus` FULL + nonempty appropriate-cadence samples + exact source commit + `passed=true` AND `failures` empty (`Assert.Empty(failures)`, `:347` — both required, names alone never suffice) (sampleCount 360/361 is implementation-dependent — never demand exactly 361)
+- A `passed=true` report closes (b1) only; FULL Tier-3 additionally needs (a) re-shown at the same tip and (b2) asserted. Explicit A5 work: A5-W1 collect the (b1) report at the pinned tip (readiness: BLOCKED on soak #2 completion, operator lane — do not touch the running lane); A5-W2 design + run the (b2) timer-state assertion (readiness: P0 investigation/design)
+- "Preferably 12-hour" (recommendation in the G2 scale-ladder section) stays a RECOMMENDATION (follow-up hardening after the conjunction), never a gate; H stays separate (never an A5 criterion); budgets NOT relaxed
+- Soak #2 is the (b1) candidate; A5 stays OPEN/UNCLOSED until a comparable post-change run shows zero breaches
+
+### M8 living-village contracts (proposed; C1/C2 foundations DONE, integration not started)
+
+- Foundations recorded: C1 schedules v1 DONE `62f13fdc7` (`BotScheduleService` phase machine, default OFF); C2 social v1 DONE `8c198f13d` (`BotChatterService` 8 archetypes × 4 lines, default OFF, = M8.5a). Sequence follows the existing G4/C order (C1 → C2 → C3 → C4 → C5); changes need a recorded rationale (normal planning, not a new gate)
+- **C3 farmer v1:** owned mature crop → harvest through the real `Doodad.Use` path → deposit yield → replant approved crop → shortage report
+  - Proposed acceptances: owned-plot precheck; immature / foreign-or-occupied / despawn-scheduled doodads reject with taxonomy reasons (exact labels pinned by the implementing slice against the Harvest precedents — not fixed here); restart mid-cycle → no dup and no lost inputs (yield + replant conservation)
+  - Anchors: M3aM4 replay harvest legs, `GameplayActorHarvestTests`, `LivestockInteractionTests`, economy-cycle harvest stage
+- **C4 hauler/trader v1:** craft pack → load onto vehicle → drive route → specialty sale → deposit proceeds → return home (materials/products/currency/labor conservation across the chain per the ledger reconciliation laws)
+  - Proposed acceptances: missing inputs fail closed (no phantom pack); inventory-full triggers a vendoring trip or hold (never delete); blocked route reroutes or holds with reason; sale refusal holds with reason; restart mid-route → attachment byte-equality + ledger equality (no dup proceeds)
+  - Anchors: `EconomyDayCycleE2eTests` (kill-9 ledger equality), `M51AttachedPackRestartE2eTests` (byte-equal attachments), merchant-trio rigs, `BotBagManagerTests`
+- **Crafter (M8.2, per B2):** inputs → withdraw materials → workstation craft → store output → shortage report
+  - Proposed acceptances: missing inputs fail closed (never phantom output); recipe-scaled input consumption and product yields with separate currency/labor charges, all on the normal engine path — no physical equality asserted between unlike items; a busy/occupied workstation holds with reason (proposed hold)
+- **C5 day integration:** C3 + C4 + C1/C2 villagers operate a full day with ≥3 restarts; schedule/home/profession/inventory/ledger fidelity asserted after each restart; auditable economy (B4-flushed M5 audit trail + ledger-reconciliation assertion); 25 embodied within G1 budgets
+  - Anchors: B4 2-checkpoint restart replay, scheduler soak STAGE-1 pattern, A5/G1 gates
+- Depends: M3b + M4 + M7 + A5/G1 + B3 arbitration + B4 persistence (existing M8 Depends line)
+- Optional expansion candidates behind the dependable loop (listed, never required; absence-of-code alone never promotes them): AGGRO-PACK-01, RESPAWN-LADDER-01, AUCTION-BANK-DOODAD-01, NPC-INTERACTION-01, BOOK-01 (`undefined-world-mechanics-2026-08-31.md`)
+- H per item, ledger-accurate: C1/C2 H UNKNOWN (no verdict attempted); M8 exit feel has NO recorded deferral yet, so it stays UNKNOWN (not DEFERRED) until a decision records otherwise
+- LLM LAST (standing rule, unchanged): zero-LLM launch (canned + procedural first); the model selects validated goals only, never raw commands
+
+> **Historical note (2026-09-05):** the "Current source/test checkpoint (2026-08-30)" paragraph below is retained verbatim as history; the current register is the section above.
+
+
 **Current source/test checkpoint (2026-08-30):** local `develop` source/test
 HEAD is `f5e7a1980`; CompleteQuest composition, non-objective act
 classification, and Level objective pursuit are landed. M5 proposal
