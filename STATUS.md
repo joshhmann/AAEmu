@@ -31,7 +31,7 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
 - **Correction:** pushed `948bf9662` (b2 helper build + full UnitTests gate)
   did NOT prove runtime; prior "canaries mature ~67 min at GrowthRate 3600"
   was wrong 1000x (14.4M ms / 3600 ≈ 4 s, not ~67 min).
-- **Correction committed as `a88f4df20` on `948bf9662`, stack-free verification only (no
+- **Correction committed as `54f7e741a` (amended) on `948bf9662`, stack-free verification only (no
   commit/push, no runtime):** explicit per-isolated-run `E2E_GROWTH_RATE`
   (default stays 3600); 6h-canary rate 3 → ~80 min post-plant, due checked
   60–120 min INTO window; restart rate 120 → ~2 min; actual wither is the
